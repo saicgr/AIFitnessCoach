@@ -921,6 +921,11 @@ class ChatMessageBubble extends ConsumerWidget {
   ///     (the kettlebell JSON-leak bug). Only flat `{...}` blocks that look like
   ///     an action envelope are removed, so ordinary prose with braces (e.g.
   ///     "a deficit (about 500 kcal)") is left untouched.
+  ///  3. Bracket/paren function-call syntax the lite model re-emits when a tool
+  ///     FAILED — e.g. `[generate_quick_workout(user_id="...", duration=45)]` or
+  ///     `word(kwarg=value)`. Mirrors the backend `strip_leaked_tool_json`
+  ///     upgrade so the app self-heals even against older backends. Requiring
+  ///     the word to abut the `(` keeps prose like "rate (max 220)" safe.
   String _scrubLegacyActionTokens(String content) {
     final legacy = RegExp(
       r'\baction\s+navigate\s+destination\s+\w+\b',
@@ -931,8 +936,17 @@ class ChatMessageBubble extends ConsumerWidget {
       caseSensitive: false,
       dotAll: true,
     );
+    final leakedCall = RegExp(
+      r'\[?\s*(?:(?:add_exercise_to_workout|remove_exercise_from_workout|'
+      r'replace_all_exercises|modify_workout_intensity|reschedule_workout|'
+      r'delete_workout|generate_quick_workout|propose_workout_change|'
+      r'check_exercise_form|compare_exercise_form|suggest_actions|'
+      r'swap_single_exercise|add_set)\s*\([^()]*\)|\w+\([^()]*=[^()]*\))\s*\]?',
+      caseSensitive: false,
+    );
     final scrubbed = content
         .replaceAll(leakedJson, ' ')
+        .replaceAll(leakedCall, ' ')
         .replaceAll(legacy, '')
         .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
         .trim();

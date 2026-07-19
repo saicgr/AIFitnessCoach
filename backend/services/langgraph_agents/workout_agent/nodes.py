@@ -6,6 +6,7 @@ The workout agent can:
 2. Respond autonomously with exercise advice without tools
 """
 import json
+import re
 from typing import Dict, Any, Literal
 from datetime import datetime
 
@@ -41,6 +42,27 @@ from core.logger import get_logger
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+
+def _content_to_text(content: Any) -> str:
+    """Flatten an LLM message content (str or list-of-blocks) to plain text."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                parts.append(block.get("text", ""))
+            elif isinstance(block, str):
+                parts.append(block)
+        return "".join(parts)
+    return str(content) if content else ""
+
+
+def _normalize_ws(text: str) -> str:
+    """Collapse all whitespace so a scrub is compared on content, not spacing."""
+    return re.sub(r"\s+", " ", text or "").strip()
+
 
 # Workout agent tools
 WORKOUT_TOOLS = [
@@ -680,9 +702,19 @@ async def workout_response_node(state: WorkoutAgentState) -> Dict[str, Any]:
         workout = state["current_workout"]
         context_parts.append(f"\nWorkout: {workout.get('name', 'Current Workout')}")
 
-    if state.get("tool_results"):
+    # Did the tools actually succeed? A turn that ran tools but produced NO
+    # success (or only success==False results) FAILED — we must NOT tell the
+    # model "completed successfully" or it will fabricate/leak the failed call
+    # (the lite model re-emits it as prose). Compute this once and branch below.
+    tool_results = state.get("tool_results") or []
+    tool_succeeded = any(
+        isinstance(r, dict) and r.get("success") is True for r in tool_results
+    )
+    tool_failed = bool(tool_results) and not tool_succeeded
+
+    if tool_results and tool_succeeded:
         context_parts.append("\nACTIONS COMPLETED:")
-        for result in state.get("tool_results", []):
+        for result in tool_results:
             if isinstance(result, dict) and result.get("success"):
                 action = result.get("action", "modification")
                 context_parts.append(f"- Successfully {action}")
@@ -697,7 +729,22 @@ async def workout_response_node(state: WorkoutAgentState) -> Dict[str, Any]:
     ai_settings = state.get("ai_settings")
     base_system_prompt = get_workout_system_prompt(ai_settings, locale=state.get("locale") or "en")
 
-    system_prompt = f"""{base_system_prompt}
+    if tool_failed:
+        # FAILURE branch — never claim success, never restate params/IDs/tool
+        # names (that is exactly how the lite model leaks the raw call).
+        logger.warning("[Workout Response] Tool turn FAILED — building apology prompt")
+        system_prompt = f"""{base_system_prompt}
+
+CONTEXT:
+{context}
+
+IMPORTANT:
+- The workout could not be generated due to a temporary error.
+- Briefly and warmly apologize, and offer to try again.
+- Do NOT restate any parameters, tool names, function calls, IDs, or technical details.
+- Keep it to 1-2 sentences.""" + _locale_system_suffix(state.get("locale") or "en")
+    else:
+        system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
@@ -734,11 +781,32 @@ IMPORTANT:
 
     response = await llm.ainvoke(messages_with_system)
 
-    logger.info(f"[Workout Response] Final: {response.content[:100]}...")
+    final_content = response.content
+
+    # Belt-and-suspenders: on a FAILED turn we must never depend on the LLM
+    # behaving. If the reply still leaked a tool call or restated params (the
+    # sanitizer detects both JSON envelopes and bracket/paren call syntax),
+    # replace it wholesale with a fixed, friendly retry line.
+    if tool_failed:
+        from services.langgraph_service import strip_leaked_tool_json
+
+        original = _content_to_text(final_content)
+        scrubbed, _ = strip_leaked_tool_json(original)
+        if _normalize_ws(scrubbed) != _normalize_ws(original):
+            logger.warning(
+                "[Workout Response] Failed-turn reply leaked a tool call — "
+                "replacing with deterministic retry line"
+            )
+            final_content = (
+                "I hit a snag building that workout — mind trying again? "
+                "I'll get it right this time."
+            )
+
+    logger.info(f"[Workout Response] Final: {_content_to_text(final_content)[:100]}...")
 
     return {
-        "ai_response": response.content,
-        "final_response": response.content,
+        "ai_response": final_content,
+        "final_response": final_content,
     }
 
 

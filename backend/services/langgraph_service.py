@@ -78,38 +78,78 @@ _LEAKED_TOOL_JSON_RE = re.compile(
 )
 
 
+# The lite model, when a tool actually FAILED, sometimes apologizes and then
+# re-emits the call it should have made as literal PROSE using bracket/paren
+# function-call syntax instead of the JSON envelope above — e.g.
+#   [generate_quick_workout(user_id="...", duration_minutes=45, ...)]
+#   generate_quick_workout(user_id=..., intensity="moderate")
+# The JSON regex only matches curly-brace envelopes, so this shape slipped
+# through both sanitizers. We strip it two ways: (1) any KNOWN workout tool name
+# followed by a parenthesized arglist (optionally wrapped in [...]), and (2) any
+# `word(kwarg=value)` call — an identifier ABUTTING an opening paren whose body
+# contains a keyword-arg `=`. Requiring the word to touch the paren keeps
+# ordinary prose safe (e.g. "a deficit (about 500 kcal)" has a space, so it is
+# never a function-call match).
+_WORKOUT_TOOL_NAMES = (
+    "add_exercise_to_workout", "remove_exercise_from_workout", "replace_all_exercises",
+    "modify_workout_intensity", "reschedule_workout", "delete_workout",
+    "generate_quick_workout", "propose_workout_change", "check_exercise_form",
+    "compare_exercise_form", "suggest_actions", "swap_single_exercise", "add_set",
+)
+_LEAKED_TOOL_CALL_RE = re.compile(
+    r"\[?\s*(?:"
+    r"(?:" + "|".join(_WORKOUT_TOOL_NAMES) + r")\s*\([^()]*\)"  # known tool, any args
+    r"|"
+    r"\w+\([^()]*=[^()]*\)"                                      # any word(kwarg=value) call
+    r")\s*\]?",
+    re.IGNORECASE,
+)
+
+
 def strip_leaked_tool_json(text: str) -> Tuple[str, Optional[Dict[str, Any]]]:
-    """Remove any leaked tool-call JSON envelope from visible reply text.
+    """Remove any leaked tool-call syntax from visible reply text.
+
+    Strips BOTH shapes a confused model emits as prose: the JSON action
+    envelope (``{"action_ids": ...}``) and bracket/paren function-call syntax
+    (``[generate_quick_workout(...)]``, ``word(kwarg=value)``).
 
     Returns (clean_text, recovered_payload). ``recovered_payload`` is the parsed
-    envelope (so callers can fold valid ``action_ids`` back into real
-    ``action_data``) or None when nothing leaked. Defensive: a parse failure
-    still strips the offending block so the user never sees raw JSON.
+    JSON envelope (so callers can fold valid ``action_ids`` back into real
+    ``action_data``) or None when nothing JSON-shaped leaked. Defensive: a parse
+    failure still strips the offending block so the user never sees raw tokens.
     """
-    if not text or "{" not in text:
+    if not text:
         return text, None
 
     recovered: Optional[Dict[str, Any]] = None
+    cleaned = text
 
-    def _capture(match: "re.Match") -> str:
-        nonlocal recovered
-        blob = match.group(0).strip()
-        # Pull out just the {...} for a parse attempt (drop any code fence).
-        brace_start = blob.find("{")
-        brace_end = blob.rfind("}")
-        if brace_start != -1 and brace_end != -1 and recovered is None:
-            try:
-                import json as _json
-                recovered = _json.loads(blob[brace_start:brace_end + 1])
-            except Exception:
-                recovered = None
-        return " "
+    # 1. JSON action envelopes (only worth scanning when a brace is present).
+    if "{" in cleaned:
+        def _capture(match: "re.Match") -> str:
+            nonlocal recovered
+            blob = match.group(0).strip()
+            # Pull out just the {...} for a parse attempt (drop any code fence).
+            brace_start = blob.find("{")
+            brace_end = blob.rfind("}")
+            if brace_start != -1 and brace_end != -1 and recovered is None:
+                try:
+                    import json as _json
+                    recovered = _json.loads(blob[brace_start:brace_end + 1])
+                except Exception:
+                    recovered = None
+            return " "
 
-    cleaned = _LEAKED_TOOL_JSON_RE.sub(_capture, text)
-    # Collapse the whitespace the substitution may have left behind.
+        cleaned = _LEAKED_TOOL_JSON_RE.sub(_capture, cleaned)
+
+    # 2. Bracket/paren function-call syntax (no brace required).
+    if "(" in cleaned:
+        cleaned = _LEAKED_TOOL_CALL_RE.sub(" ", cleaned)
+
+    # Collapse the whitespace the substitutions may have left behind.
     cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip()
     if not cleaned:
-        # The leaked envelope was the ENTIRE message — leave a graceful line
+        # The leaked call was the ENTIRE message — leave a graceful line
         # rather than an empty bubble (never silently blank).
         cleaned = "Here's what I put together for you."
     return cleaned, recovered

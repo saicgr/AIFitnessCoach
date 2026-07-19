@@ -111,6 +111,26 @@ _SCHEDULE_PHRASES = (
 )
 
 
+# Technique/instruction cues. The "How to do X" chip must only fire when the
+# reply actually offers a how-to — otherwise a bare exercise-name mention (e.g.
+# "nice chest press today!") wrongly emits a tutorial chip. Requiring one of
+# these signals keeps the chip relevant to a genuine form/technique reply.
+_HOWTO_CUES = (
+    "how to",
+    "how do you",
+    "how do i",
+    "form",
+    "technique",
+    "demo",
+    "tutorial",
+    "proper",
+    "properly",
+    "instructions",
+    "cue",
+    "step",
+)
+
+
 def _text_has_any(text_lower: str, phrases) -> bool:
     return any(p in text_lower for p in phrases)
 
@@ -317,14 +337,24 @@ def infer_inline_action(
         # 6. reference_exercise — only when the reply names a REAL library
         #    exercise (multi-word match against the cached library vocabulary,
         #    so no false positives). Emits name + id for the "How to do X" button.
-        ex = _match_exercise(body)
-        if ex is not None:
-            logger.info("[Inline Action] Inferred reference_exercise (%s)", ex.get("name"))
-            return {
-                "action": "reference_exercise",
-                "exercise_name": ex.get("name"),
-                "exercise_id": ex.get("id"),
-            }
+        #    TWO extra guards so we never emit an irrelevant tutorial chip:
+        #      (a) a FAILED tool turn (e.g. workout gen errored) produced no
+        #          real how-to — the exercise name is incidental, so suppress.
+        #      (b) the reply must carry an actual technique/instruction cue, not
+        #          just a bare exercise-name mention ("nice chest press today!").
+        failed_turn = (
+            any(isinstance(r, dict) and r.get("success") is False for r in tool_results)
+            and not any(isinstance(r, dict) and r.get("success") is True for r in tool_results)
+        )
+        if not failed_turn and _text_has_any(body_lower, _HOWTO_CUES):
+            ex = _match_exercise(body)
+            if ex is not None:
+                logger.info("[Inline Action] Inferred reference_exercise (%s)", ex.get("name"))
+                return {
+                    "action": "reference_exercise",
+                    "exercise_name": ex.get("name"),
+                    "exercise_id": ex.get("id"),
+                }
 
         return None
     except Exception as e:  # never break a chat turn
