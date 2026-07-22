@@ -11,7 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import 'menu_log_from_saved.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'menu_analysis_sheet.dart';
@@ -142,10 +144,20 @@ class _MenuAnalysisHistoryScreenState
         foodItems: items,
         analysisType: type,
         isDark: Theme.of(context).brightness == Brightness.dark,
-        onLogItems: (selected) {
-          // Saved-menu reopen: route through the standard log-selected-items
-          // endpoint to honor the same persistence path as a fresh scan.
-          // No-op here — the Menu Analysis sheet caller normally handles it.
+        // Saved-menu reopen: persist through the same /log-selected-items
+        // endpoint a fresh scan uses. This used to be an empty stub, so the
+        // sheet's button said "Logged" and nothing was ever written.
+        onLogItems: (selected) async {
+          final uid = ref.read(authStateProvider).user?.id;
+          if (uid == null || uid.isEmpty) return false;
+          return logItemsFromSavedMenu(
+            ref: ref,
+            context: context,
+            userId: uid,
+            items: selected,
+            analysisType: type,
+            imageUrl: photos.isNotEmpty ? photos.first : null,
+          );
         },
         menuPhotoUrls: photos,
         elapsedSeconds: elapsed,

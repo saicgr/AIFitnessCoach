@@ -23,14 +23,17 @@ import '../../data/models/nutrition.dart';
 import '../../data/models/recipe.dart';
 import '../../data/providers/recipe_favorites_provider.dart';
 import '../../data/providers/recipe_providers.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import 'menu_log_from_saved.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/nav_bar_hider_mixin.dart';
 import 'menu_analysis_sheet.dart';
 import 'recipes/recipe_detail_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: saved foods (DB-backed, newest first)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -346,7 +349,7 @@ class _RecipesTab extends ConsumerWidget {
         // by that and stamp each row with it.
         final items = [...resp.items]
           ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           color: colors.accent,
           onRefresh: () async {
             ref.invalidate(favoriteRecipesProvider(userId));
@@ -433,7 +436,7 @@ class _FoodsTab extends ConsumerWidget {
             hint: AppLocalizations.of(context).savedHubSaveAMealOr,
           );
         }
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           color: colors.accent,
           onRefresh: () async {
             ref.invalidate(savedFoodsHubProvider(userId));
@@ -502,7 +505,7 @@ class _MenusTab extends ConsumerWidget {
             hint: AppLocalizations.of(context).savedHubScanARestaurantMenu,
           );
         }
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           color: colors.accent,
           onRefresh: () async {
             ref.invalidate(savedMenusHubProvider);
@@ -562,7 +565,22 @@ class _MenusTab extends ConsumerWidget {
         foodItems: items,
         analysisType: data['analysis_type'] as String? ?? 'menu',
         isDark: Theme.of(context).brightness == Brightness.dark,
-        onLogItems: (_) {/* reopen-only — logging handled by the sheet */},
+        // Persist through the same /log-selected-items endpoint a fresh scan
+        // uses. This used to be an empty stub whose comment wrongly claimed
+        // the sheet handled logging — it did not, so "Log N items" on a saved
+        // menu reported success and wrote nothing.
+        onLogItems: (selected) async {
+          final uid = ref.read(authStateProvider).user?.id;
+          if (uid == null || uid.isEmpty) return false;
+          return logItemsFromSavedMenu(
+            ref: ref,
+            context: context,
+            userId: uid,
+            items: selected,
+            analysisType: data['analysis_type'] as String? ?? 'menu',
+            imageUrl: photos.isNotEmpty ? photos.first : null,
+          );
+        },
         menuPhotoUrls: photos,
         elapsedSeconds: elapsed,
         restaurantName: data['restaurant_name'] as String?,

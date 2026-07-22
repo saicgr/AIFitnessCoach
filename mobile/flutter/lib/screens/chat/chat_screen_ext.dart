@@ -150,10 +150,12 @@ extension __ChatScreenStateExt on _ChatScreenState {
 
 
   /// Log selected dishes from a FoodAnalysisResultCard (buffet/menu analysis).
-  Future<void> _logAnalysisItems(List<Map<String, dynamic>> items) async {
-    if (items.isEmpty) return;
+  /// Returns true only when the write landed — MenuAnalysisSheet shows
+  /// "Logged" on the strength of it, so a failure must not report success.
+  Future<bool> _logAnalysisItems(List<Map<String, dynamic>> items) async {
+    if (items.isEmpty) return false;
     final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) return;
+    if (userId == null) return false;
 
     // Determine meal type from time of day
     final hour = DateTime.now().hour;
@@ -209,7 +211,8 @@ extension __ChatScreenStateExt on _ChatScreenState {
 
       // Bail out if the chat screen unmounted while logging — touching ref
       // after dispose throws "Cannot use ref after the widget was disposed".
-      if (!mounted) return;
+      // The write already succeeded, so this is still a success.
+      if (!mounted) return true;
 
       // Refresh nutrition tab
       if (userId.isNotEmpty) {
@@ -223,14 +226,16 @@ extension __ChatScreenStateExt on _ChatScreenState {
           duration: const Duration(seconds: 2),
         ),
       );
+      return true;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).chatScreenExtFailedToLogFood),
           behavior: SnackBarBehavior.floating,
         ),
       );
+      return false;
     }
   }
 

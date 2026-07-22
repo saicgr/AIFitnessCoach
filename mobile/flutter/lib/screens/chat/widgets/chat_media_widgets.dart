@@ -216,7 +216,9 @@ class _StageDot extends StatelessWidget {
 /// Compact summary card for food analysis with 6+ items.
 class FoodAnalysisSummaryCard extends StatelessWidget {
   final List<Map<String, dynamic>> foodItems;
-  final void Function(List<Map<String, dynamic>>)? onViewAll;
+  /// Doubles as the plate-analysis log callback (see `_openMenuSheet`), so it
+  /// must report whether the write succeeded.
+  final Future<bool> Function(List<Map<String, dynamic>>)? onViewAll;
 
   const FoodAnalysisSummaryCard({
     super.key,
@@ -335,7 +337,8 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
         foodItems: foodItems,
         analysisType: 'plate',
         isDark: isDark,
-        onLogItems: (selected) => onViewAll?.call(selected),
+        onLogItems: (selected) async =>
+            await onViewAll?.call(selected) ?? false,
       ),
     );
   }

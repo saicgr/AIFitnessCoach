@@ -1372,7 +1372,16 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// MenuAnalysisSheet save flow, the fresh scan results are PATCHed onto that
   /// saved `menu_analyses` row (no duplicate) and a refreshed saved-menu sheet
   /// is opened. See [_analyzeMultiImages] for where the branch lands.
-  Future<void> _scanMenu({String? updateSavedMenuId}) async {
+  Future<void> _scanMenu({
+    String? updateSavedMenuId,
+    /// Which surface the menu is being captured from. Drives the backend's
+    /// OCR prompt preamble — a backlit menu board and a DoorDash screenshot
+    /// need different instructions than a paper menu.
+    String sourceHint = 'printed',
+    /// 'menu' for a menu/board/digital menu, 'bill' for an itemized check or
+    /// delivery order. Both render the same MenuAnalysisSheet checklist.
+    String analysisMode = 'menu',
+  }) async {
     // #15 — when the sheet was opened via `showMenuRescanSheet(...)` (the
     // one-tap re-scan entry from the Saved Menu sheet), the saved-menu id is
     // stashed in a library-level var because `autoOpenMenuScan` calls
@@ -1382,7 +1391,6 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       updateSavedMenuId = _pendingMenuRescanId;
       _pendingMenuRescanId = null;
     }
-    final picker = ImagePicker();
     final amber = const Color(0xFFF59E0B);
     final source = await showGlassSheet<ImageSource>(
       context: context,
@@ -1414,7 +1422,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            AppLocalizations.of(ctx).logMealSheetScanMenu,
+                            analysisMode == 'bill'
+                                ? 'Scan bill or order'
+                                : AppLocalizations.of(ctx).logMealSheetScanMenu,
                             style: ZType.disp(18, color: colors.textPrimary),
                           ),
                         ),
@@ -1423,7 +1433,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   ),
                   _GlassMenuOption(
                     icon: Icons.camera_alt_outlined,
-                    label: AppLocalizations.of(ctx).logMealSheetTakeMenuPhoto,
+                    label: analysisMode == 'bill'
+                        ? 'Photograph the bill'
+                        : AppLocalizations.of(ctx).logMealSheetTakeMenuPhoto,
                     color: amber,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.camera),
@@ -1431,8 +1443,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   const SizedBox(height: 10),
                   _GlassMenuOption(
                     icon: Icons.collections_outlined,
-                    label: AppLocalizations.of(ctx).logMealSheetChooseMenuPhotos,
-                    subtitle: AppLocalizations.of(ctx).logMealSheetUpTo5Pages,
+                    label: analysisMode == 'bill'
+                        ? 'Choose from photos'
+                        : AppLocalizations.of(ctx).logMealSheetChooseMenuPhotos,
+                    subtitle: analysisMode == 'bill'
+                        ? 'Receipt or delivery-order screenshot'
+                        : 'Up to $_kMaxMenuPages pages',
                     color: amber,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, ImageSource.gallery),
@@ -1446,15 +1462,24 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     );
     if (source == null) return;
 
-    List<XFile> files = [];
+    // Both sources now go through the SAME preparation (full resolution,
+    // upright, EXIF stripped). Preparing them differently is what made a
+    // gallery import of a menu read fewer dishes than snapping it in-app.
     String snapPrompt = '';
+    List<File> files;
     if (source == ImageSource.camera) {
-      final result = await _captureMultipleFromCamera(maxCount: 5, noun: 'page');
+      final result = await _captureMenuPagesFromCamera(
+        maxCount: _kMaxMenuPages,
+        noun: analysisMode == 'bill' ? 'receipt' : 'page',
+      );
       files = result.files;
       snapPrompt = result.prompt;
     } else {
-      files = await picker.pickMultiImage(imageQuality: 90);
-      if (files.length > 5) files = files.take(5).toList();
+      final pages = await pickMenuPages(
+        source: ImageSource.gallery,
+        maxPages: _kMaxMenuPages,
+      );
+      files = [for (final p in pages) p.file];
     }
     if (files.isEmpty) return;
 
@@ -1466,12 +1491,37 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     final userMessage = merged.isEmpty ? null : merged;
 
     await _analyzeMultiImages(
-      files: files,
-      analysisMode: 'menu',
-      inputType: 'menu_scan',
+      files: [for (final f in files) XFile(f.path)],
+      analysisMode: analysisMode,
+      inputType: analysisMode == 'bill' ? 'bill_scan' : 'menu_scan',
+      sourceHint: sourceHint,
       userMessage: userMessage,
       updateSavedMenuId: updateSavedMenuId,
     );
+  }
+
+  /// Multi-page capture loop for menus/bills. Same "add another?" UX as the
+  /// food-photo loop, but every shot goes through [pickMenuPages] so it is
+  /// full-resolution and upright — the food path's 1600px cap would cost
+  /// dishes here.
+  Future<({List<File> files, String prompt})> _captureMenuPagesFromCamera({
+    required int maxCount,
+    required String noun,
+  }) async {
+    final files = <File>[];
+    String finalPrompt = '';
+    while (files.length < maxCount) {
+      final shot = await pickMenuPages(source: ImageSource.camera, maxPages: 1);
+      if (shot.isEmpty) break;
+      files.add(shot.first.file);
+      if (files.length >= maxCount) break;
+      if (!mounted) break;
+      final result = await _showAddAnotherPrompt(noun: noun, count: files.length);
+      if (result == null) break;
+      finalPrompt = result.prompt;
+      if (!result.addAnother) break;
+    }
+    return (files: files, prompt: finalPrompt);
   }
 
   /// "+" tile on the open MenuAnalysisSheet's photo strip — photograph/pick
@@ -1502,16 +1552,21 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     final source = await _pickScanImageSource('Add menu pages', amber);
     if (source == null || !mounted) return const [];
 
+    // Same full-resolution, upright preparation as the initial scan — added
+    // pages must not read worse than the ones already in the sheet.
     List<XFile> files;
     String snapPrompt = '';
     if (source == ImageSource.camera) {
-      final result =
-          await _captureMultipleFromCamera(maxCount: 5, noun: 'page');
-      files = result.files;
+      final result = await _captureMenuPagesFromCamera(
+          maxCount: _kMaxMenuPages, noun: 'page');
+      files = [for (final f in result.files) XFile(f.path)];
       snapPrompt = result.prompt;
     } else {
-      files = await ImagePicker().pickMultiImage(imageQuality: 90);
-      if (files.length > 5) files = files.take(5).toList();
+      final pages = await pickMenuPages(
+        source: ImageSource.gallery,
+        maxPages: _kMaxMenuPages,
+      );
+      files = [for (final p in pages) XFile(p.file.path)];
     }
     if (files.isEmpty) return const [];
 
@@ -2152,6 +2207,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     /// this saved `menu_analyses` row instead of opening the normal save flow.
     /// Only honored for menu/buffet modes (a plate re-scan has no saved row).
     String? updateSavedMenuId,
+    /// printed | board | digital — selects the backend's OCR prompt preamble.
+    String sourceHint = 'printed',
   }) async {
     final isGuest = ref.read(isGuestModeProvider);
     if (isGuest) {
@@ -2178,7 +2235,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       _isLoading = true;
       _showLoadingIndicator = false;
       _error = null;
-      _sourceType = analysisMode == 'menu' ? 'menu' : analysisMode == 'buffet' ? 'buffet' : 'image';
+      // A bill is still a restaurant meal — it shares the 'menu' source
+      // bucket (the backend's source_type allowlist has no 'bill' value).
+      _sourceType = analysisMode == 'buffet'
+          ? 'buffet'
+          : (analysisMode == 'menu' || analysisMode == 'bill' ? 'menu' : 'image');
       _inputType = inputType;
       _capturedImagePath = files.first.path;
       _currentStep = 0;
@@ -2205,8 +2266,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       // streaming sheet — instead we silently accumulate every page's items
       // and image urls here, then PATCH the saved row once the scan finishes.
       // This keeps a cancelled/failed scan from ever touching the saved menu.
-      final bool isRescan = updateSavedMenuId != null &&
-          (analysisMode == 'menu' || analysisMode == 'buffet');
+      final bool isRescan =
+          updateSavedMenuId != null && _kChecklistModes.contains(analysisMode);
       final List<Map<String, dynamic>> rescanItems = [];
       final List<String> rescanPhotoUrls = [];
 
@@ -2257,6 +2318,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               }
+              return ok;
             },
           ),
         );
@@ -2270,12 +2332,13 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         analysisMode: analysisMode,
         userMessage: userMessage,
         inputType: inputType,
+        sourceHint: sourceHint,
         // Auto / plate modes go through a human-consent review step:
         // backend returns analysis only; client renders _buildNutritionPreview
-        // and the user taps "Log This Meal" to persist. Menu/buffet still
+        // and the user taps "Log This Meal" to persist. Menu/buffet/bill still
         // use MenuAnalysisSheet's existing selection flow (which is itself a
         // review step) and don't need this flag.
-        confirmBeforeLog: analysisMode != 'menu' && analysisMode != 'buffet',
+        confirmBeforeLog: !_kChecklistModes.contains(analysisMode),
       )) {
         if (!mounted) return;
 
@@ -2564,6 +2627,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
               Navigator.of(context).pop(); // close MenuAnalysisSheet
               Navigator.of(context).pop(); // close LogMealSheet
             }
+            return ok;
           },
         ),
       );
@@ -2835,6 +2899,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             Navigator.of(context).pop(); // close MenuAnalysisSheet
             Navigator.of(context).pop(); // close LogMealSheet
           }
+          return ok;
         },
       ),
     );

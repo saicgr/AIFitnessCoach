@@ -41,7 +41,7 @@ class ChatMessageBubble extends ConsumerWidget {
   final ChatMessage message;
   final String? previousUserMessage;
   final CoachPersona coach;
-  final void Function(List<Map<String, dynamic>>)? onLogAnalysisItems;
+  final Future<bool> Function(List<Map<String, dynamic>>)? onLogAnalysisItems;
   final VoidCallback? onRetry;
   final VoidCallback? onRegenerate;
   // Issue 2: invoked when the user taps a row in EquipmentMatchCard.
