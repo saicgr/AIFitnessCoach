@@ -6,7 +6,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
@@ -33,6 +33,7 @@ async def respond_to_recommendation(
 
     If accepted, updates the user's nutrition preferences with recommended values.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"User {user_id} responding to recommendation {recommendation_id}: accepted={accepted}")
 
     try:
@@ -85,6 +86,7 @@ async def get_weekly_recommendation(user_id: str, current_user: dict = Depends(g
     """
     Get the latest pending weekly nutrition recommendation for a user.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting weekly recommendation for user {user_id}")
 
     try:
@@ -142,6 +144,7 @@ async def get_checkin_weekly_summary(request: Request, user_id: str, current_use
     """
     Get the weekly nutrition summary for a user (last 7 days) — used by the weekly check-in sheet.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting weekly summary for user {user_id}")
 
     try:
@@ -226,6 +229,7 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
     """
     Generate a new weekly nutrition recommendation based on adaptive TDEE calculation.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Generating weekly recommendation for user {user_id}")
 
     try:

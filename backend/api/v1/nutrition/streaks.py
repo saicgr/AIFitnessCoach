@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from core.timezone_utils import resolve_timezone, get_user_today, _safe_zone
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 
@@ -15,7 +15,26 @@ from api.v1.nutrition.models import NutritionStreakResponse
 router = APIRouter()
 logger = get_logger(__name__)
 
-@router.get("/streak/{user_id}", response_model=NutritionStreakResponse)
+
+async def _verify_path_user_is_caller(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    """Ownership gate for `/streak/{user_id}`, declared as a ROUTE dependency.
+
+    `get_nutrition_streak` is also awaited in-process (the freeze endpoint below
+    returns through it with just a user_id). FastAPI only resolves `Depends` for
+    real HTTP requests, so an in-body check would see the unresolved dependency
+    sentinel on that call and 500 the legitimate path.
+    """
+    verify_user_ownership(current_user, user_id)
+
+
+@router.get(
+    "/streak/{user_id}",
+    response_model=NutritionStreakResponse,
+    dependencies=[Depends(_verify_path_user_is_caller)],
+)
 async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get nutrition streak for a user.
@@ -62,9 +81,13 @@ async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_cu
                 tz = _safe_zone(tz_str)
                 today_local: date_type = datetime.now(tz).date()
                 cutoff_utc = (datetime.now(ZoneInfo("UTC")) - timedelta(days=90)).isoformat()
+                # Food logs are SOFT-deleted (deleted_at). Without this filter a
+                # meal the user explicitly DELETED still counts as a logged day
+                # and keeps a streak alive the user has actually broken.
                 logs_result = db.client.table("food_logs") \
                     .select("logged_at") \
                     .eq("user_id", user_id) \
+                    .is_("deleted_at", "null") \
                     .gte("logged_at", cutoff_utc) \
                     .order("logged_at", desc=True) \
                     .execute()
@@ -130,6 +153,9 @@ async def use_streak_freeze(request: Request, user_id: str, current_user: dict =
     """
     Use a streak freeze to preserve current streak.
     """
+    # Freezes are a scarce per-user resource — without this, any caller could
+    # spend someone else's freeze allowance.
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Using streak freeze for user {user_id}")
 
     try:

@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 
@@ -306,6 +306,8 @@ async def reset_nutrition_onboarding(user_id: str, current_user: dict = Depends(
     Sets nutrition_onboarding_completed to false while preserving
     all food logs and nutrition history.
     """
+    verify_user_ownership(current_user, user_id)
+
     logger.info(f"Resetting nutrition onboarding for user {user_id}")
 
     try:
@@ -335,6 +337,8 @@ async def recalculate_nutrition_targets(user_id: str, current_user: dict = Depen
 
     Useful after weight changes or profile updates.
     """
+    verify_user_ownership(current_user, user_id)
+
     logger.info(f"Recalculating nutrition targets for user {user_id}")
 
     try:

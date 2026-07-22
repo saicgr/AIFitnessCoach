@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
 
 from core.timezone_utils import resolve_timezone, get_user_now_iso, target_date_to_utc_iso
 from core.rate_limiter import limiter
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
@@ -51,6 +51,9 @@ async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = 
     1. Creates a saved_foods entry in the database
     2. Stores the meal in ChromaDB for semantic search
     """
+    # user_id arrives in the form body — a client assertion. Unverified it lets
+    # any caller plant saved foods (and RAG entries) in another user's library.
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Saving food for user {user_id}: {request.name if request else 'N/A'}")
 
     try:
@@ -173,6 +176,7 @@ async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(.
     1. Creates a saved_foods entry in the database
     2. Stores the meal in ChromaDB for semantic search
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Saving food for user {user_id}: {request.name}")
 
     try:
@@ -304,6 +308,7 @@ async def list_saved_foods(
     """
     List saved foods (favorite recipes) for a user.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Listing saved foods for user {user_id}")
 
     _VALID_SORT_FIELDS = {"times_logged", "total_protein_g", "total_calories", "total_carbs_g", "total_fat_g", "name"}
@@ -406,6 +411,7 @@ async def get_saved_food(saved_food_id: str, user_id: str = Query(...), current_
     """
     Get a specific saved food.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting saved food {saved_food_id} for user {user_id}")
 
     try:
@@ -460,6 +466,9 @@ async def delete_saved_food(saved_food_id: str, user_id: str = Query(...), curre
     """
     Delete a saved food (soft delete).
     """
+    # Without this the query-param user_id alone scopes the update — any caller
+    # could soft-delete another user's saved food.
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Deleting saved food {saved_food_id} for user {user_id}")
 
     try:
@@ -503,6 +512,9 @@ async def relog_saved_food(
     """
     Re-log a saved food to a meal diary. Optionally specify a target date.
     """
+    # This WRITES a food_log row for `user_id` — unverified it lets any caller
+    # inject meals into another user's diary and skew their targets.
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Re-logging saved food {saved_food_id} for user {user_id}, target_date={target_date}")
 
     try:
@@ -598,6 +610,7 @@ async def search_saved_foods(
     """
     Search saved foods using semantic search.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Searching saved foods for user {user_id}: {request.query}")
 
     try:

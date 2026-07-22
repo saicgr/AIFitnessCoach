@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 
@@ -49,6 +49,7 @@ async def get_daily_micronutrients(
     (iron + magnesium emphasis during menstruation, etc.) on top of the
     existing static/dynamic pinning. A no-op for everyone else.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
@@ -348,6 +349,7 @@ async def get_nutrient_contributors(
 
     Shows which foods contributed the most to the day's intake.
     """
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
@@ -471,6 +473,7 @@ async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate, 
 
     Maximum 8 nutrients can be pinned.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Updating pinned nutrients for user {user_id}")
 
     if len(request.pinned_nutrients) > 8:
@@ -568,6 +571,7 @@ async def get_antioxidant_score(
     copper, manganese flagged via nutrient_rdas.is_antioxidant) — a food-truth
     answer to Samsung's wrist-optical Antioxidant Index. Returns today's 0-100
     score, a 14-day trend, and the top contributing foods."""
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)

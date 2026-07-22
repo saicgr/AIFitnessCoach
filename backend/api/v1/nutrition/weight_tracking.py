@@ -5,8 +5,13 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from core.timezone_utils import resolve_timezone, get_user_today
-from core.auth import get_current_user
+from core.timezone_utils import (
+    resolve_timezone,
+    get_user_today,
+    local_day_bounds,
+    local_range_bounds,
+)
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 
@@ -26,6 +31,9 @@ async def create_weight_log(request: WeightLogCreate, current_user: dict = Depen
 
     Used for tracking weight over time and enabling adaptive TDEE calculations.
     """
+    # The body-supplied user_id is a client ASSERTION — unverified it lets any
+    # caller write weight history into someone else's adaptive-TDEE data set.
+    verify_user_ownership(current_user, request.user_id)
     logger.info(f"Creating weight log for user {request.user_id}: {request.weight_kg} kg")
 
     try:
@@ -108,6 +116,7 @@ async def create_weight_log(request: WeightLogCreate, current_user: dict = Depen
 
 @router.get("/weight-logs/{user_id}", response_model=List[WeightLogResponse])
 async def get_weight_logs(
+    request: Request,
     user_id: str,
     current_user: dict = Depends(get_current_user),
     limit: int = Query(30, description="Maximum number of logs to return"),
@@ -119,10 +128,12 @@ async def get_weight_logs(
 
     Returns logs sorted by date descending (newest first).
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting weight logs for user {user_id}")
 
     try:
         db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
 
         query = db.client.table("weight_logs")\
             .select("*")\
@@ -130,10 +141,15 @@ async def get_weight_logs(
             .order("logged_at", desc=True)\
             .limit(limit)
 
+        # from_date/to_date are the caller's LOCAL calendar days, logged_at is a
+        # UTC timestamptz — concatenating the two ("2026-07-22T00:00:00") shifts
+        # each edge by the UTC offset and drops/steals a slice of a day. Resolve
+        # each bound through the user's timezone; to_date stays inclusive as a
+        # calendar day via the half-open upper bound.
         if from_date:
-            query = query.gte("logged_at", f"{from_date}T00:00:00")
+            query = query.gte("logged_at", local_day_bounds(from_date, user_tz)[0])
         if to_date:
-            query = query.lte("logged_at", f"{to_date}T23:59:59")
+            query = query.lt("logged_at", local_day_bounds(to_date, user_tz)[1])
 
         result = query.execute()
 
@@ -165,6 +181,13 @@ async def delete_weight_log(
     """
     Delete a weight log entry.
     """
+    # `user_id` is documented as "for verification" but was only ever used as the
+    # delete filter — i.e. the client chose whose row to scope the delete to, so
+    # any caller could delete another user's weight logs. The param is kept (the
+    # app already sends it) but is now asserted against the token identity, and
+    # the row filter uses the AUTHENTICATED id so a client value can never drive
+    # it.
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Deleting weight log {log_id} for user {user_id}")
 
     try:
@@ -173,7 +196,7 @@ async def delete_weight_log(
         result = db.client.table("weight_logs")\
             .delete()\
             .eq("id", log_id)\
-            .eq("user_id", user_id)\
+            .eq("user_id", current_user["id"])\
             .execute()
 
         return {"success": True, "message": "Weight log deleted"}
@@ -195,6 +218,7 @@ async def get_weight_trend(
 
     Uses exponential moving average for smoothing.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Calculating weight trend for user {user_id} over {days} days")
 
     try:
@@ -202,13 +226,20 @@ async def get_weight_trend(
         user_tz = resolve_timezone(request, db, user_id)
 
         today_str = get_user_today(user_tz)
-        from_date_obj = datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=days)
-        from_date = from_date_obj.isoformat()
+        from_date_str = (datetime.strptime(today_str, "%Y-%m-%d") - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        # logged_at is a UTC timestamptz: a bare local date string lands on the
+        # wrong instant (off by the UTC offset), pulling in or dropping a day's
+        # worth of weigh-ins at each edge. local_range_bounds gives the real
+        # half-open UTC window for local [from_date .. today], so the trend
+        # analyzes exactly `days` local days up to the end of today.
+        window_start, window_end = local_range_bounds(from_date_str, today_str, user_tz)
 
         result = db.client.table("weight_logs")\
             .select("weight_kg, logged_at")\
             .eq("user_id", user_id)\
-            .gte("logged_at", from_date)\
+            .gte("logged_at", window_start)\
+            .lt("logged_at", window_end)\
             .order("logged_at", desc=False)\
             .execute()
 

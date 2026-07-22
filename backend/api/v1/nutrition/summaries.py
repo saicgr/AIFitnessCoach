@@ -118,6 +118,9 @@ async def get_daily_summary(
 
     Returns total calories, macros, and list of meals for the day.
     """
+    # IDOR guard — MUST sit before the try so the 403 isn't swallowed and
+    # re-raised as a 500 by the blanket `except Exception` handler below.
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         # `tz` query param is a client-supplied fallback so day-boundary
@@ -253,6 +256,8 @@ async def get_optional_trackers(
     each food log (no new extraction); the client renders a counter card per
     enabled tracker with an over-limit nudge. When ``days``>1, also returns a
     daily `series` (oldest→newest) for the per-tracker detail screen."""
+    # IDOR guard — before the try so the 403 isn't laundered into a 500.
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))
@@ -353,6 +358,8 @@ async def get_weekly_summary(
 
     Returns daily summaries for 7 days starting from start_date.
     """
+    # IDOR guard — before the try so the 403 isn't laundered into a 500.
+    verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         user_tz = (await run_db(lambda: resolve_timezone(request, db, user_id)))

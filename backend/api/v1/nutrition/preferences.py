@@ -20,7 +20,28 @@ from api.v1.nutrition.models import (
 router = APIRouter()
 logger = get_logger(__name__)
 
-@router.get("/preferences/{user_id}", response_model=NutritionPreferencesResponse)
+
+async def _verify_path_user_is_caller(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    """Ownership gate for `/preferences/{user_id}`, declared as a ROUTE dependency.
+
+    It has to be a route dependency rather than the in-body
+    `verify_user_ownership(...)` call used everywhere else in this module because
+    `get_nutrition_preferences` is also awaited IN-PROCESS with just a user_id
+    (the PUT below, plus onboarding complete/recalculate). FastAPI only resolves
+    `Depends` for real HTTP requests, so an in-body check would see the
+    unresolved dependency sentinel on those calls and 500 the legitimate path.
+    """
+    verify_user_ownership(current_user, user_id)
+
+
+@router.get(
+    "/preferences/{user_id}",
+    response_model=NutritionPreferencesResponse,
+    dependencies=[Depends(_verify_path_user_is_caller)],
+)
 async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(get_current_user)):
     """
     Get user's nutrition preferences.
@@ -136,6 +157,7 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
 
     Allows updating goals, targets, dietary restrictions, and settings.
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Updating nutrition preferences for user {user_id}")
 
     try:
@@ -533,6 +555,7 @@ async def get_dynamic_nutrition_targets(
     - Whether it's a fasting day (for 5:2, ADF protocols)
     - User's preferences for training/rest day adjustments
     """
+    verify_user_ownership(current_user, user_id)
     logger.info(f"Getting dynamic nutrition targets for user {user_id}")
 
     try:
