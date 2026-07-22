@@ -10,16 +10,21 @@ These endpoints are aggregation-only — they reuse the existing
 `get_daily_nutrition_summary` / `get_weekly_nutrition_summary` helpers and
 add an AI narrative + tomorrow-improvement suggestions on top.
 """
-from datetime import datetime, timedelta, date as date_type
+from datetime import timedelta, date as date_type
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
+from core.timezone_utils import (
+    get_user_today,
+    local_date_to_utc_range,
+    resolve_timezone,
+)
 from services.gemini_service import GeminiService
 
 router = APIRouter()
@@ -54,6 +59,23 @@ class WeeklyNutritionReport(BaseModel):
     user_first_name: Optional[str] = None
 
 
+def _validated_date(value: Optional[str], field: str) -> Optional[str]:
+    """Return *value* as a 'YYYY-MM-DD' string, or 400 if it isn't one.
+
+    The date is a client assertion and feeds the local→UTC window builder,
+    which raises on anything else — a 400 tells the caller what's wrong
+    instead of surfacing as an opaque 500.
+    """
+    if not value:
+        return None
+    try:
+        return date_type.fromisoformat(value).isoformat()
+    except ValueError:
+        raise HTTPException(
+            status_code=400, detail=f"Invalid {field} '{value}' — expected YYYY-MM-DD"
+        )
+
+
 def _resolve_first_name(db, user_id: str) -> Optional[str]:
     try:
         row = (
@@ -75,6 +97,7 @@ def _resolve_first_name(db, user_id: str) -> Optional[str]:
 
 @router.post("/reports/daily", response_model=DailyNutritionReport)
 async def daily_nutrition_report(
+    request: Request,
     report_date: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
@@ -86,21 +109,31 @@ async def daily_nutrition_report(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
-        target_date = report_date or datetime.utcnow().date().isoformat()
+        # The report covers a USER-LOCAL day. Defaulting to the server's UTC
+        # date handed a CST user tomorrow's (empty) date after 18:00 local,
+        # and the UTC day window sliced the shared card across two local days.
+        user_tz = resolve_timezone(request, db, user_id)
+        target_date = _validated_date(report_date, "report_date") or get_user_today(user_tz)
 
-        summary = db.get_daily_nutrition_summary(user_id, target_date) or {}
+        summary = db.get_daily_nutrition_summary(
+            user_id, target_date, timezone_str=user_tz
+        ) or {}
 
         # Inflammation aggregate from food_logs (column added in
         # migrations/add_food_logs_inflammation.sql).
         infl_score: Optional[float] = None
         contributors: List[str] = []
         try:
+            day_start, day_end = local_date_to_utc_range(target_date, user_tz)
             rows = (
                 db.client.table("food_logs")
                 .select("food_name,inflammation_score,inflammation_signals")
                 .eq("user_id", user_id)
-                .gte("logged_at", f"{target_date}T00:00:00")
-                .lte("logged_at", f"{target_date}T23:59:59")
+                # Soft-deleted meals are gone from the user's day — counting
+                # them here would score a meal they already removed.
+                .is_("deleted_at", "null")
+                .gte("logged_at", day_start)
+                .lte("logged_at", day_end)
                 .execute()
             ).data or []
             scored = [r for r in rows if r.get("inflammation_score") is not None]
@@ -151,6 +184,7 @@ async def daily_nutrition_report(
 
 @router.post("/reports/weekly", response_model=WeeklyNutritionReport)
 async def weekly_nutrition_report(
+    request: Request,
     week_start: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
@@ -161,16 +195,22 @@ async def weekly_nutrition_report(
     try:
         db = get_supabase_db()
         user_id = current_user["id"]
+        user_tz = resolve_timezone(request, db, user_id)
 
-        # Default: most recent ISO week (Mon..Sun)
-        today = datetime.utcnow().date()
-        if week_start:
-            ws = date_type.fromisoformat(week_start)
+        # Default: most recent ISO week (Mon..Sun) in the USER's calendar —
+        # the server's UTC date rolls a day early for western timezones and
+        # would pick the wrong week every Sunday evening.
+        today = date_type.fromisoformat(get_user_today(user_tz))
+        validated_start = _validated_date(week_start, "week_start")
+        if validated_start:
+            ws = date_type.fromisoformat(validated_start)
         else:
             ws = today - timedelta(days=today.weekday())
         we = ws + timedelta(days=6)
 
-        weekly = db.get_weekly_nutrition_summary(user_id, ws.isoformat()) or {}
+        weekly = db.get_weekly_nutrition_summary(
+            user_id, ws.isoformat(), timezone_str=user_tz
+        ) or {}
 
         daily_cals = weekly.get("daily_calories", []) or []
         daily_macros = weekly.get("daily_macros", []) or []
@@ -188,12 +228,14 @@ async def weekly_nutrition_report(
         try:
             for i in range(7):
                 day = ws + timedelta(days=i)
+                day_start, day_end = local_date_to_utc_range(day.isoformat(), user_tz)
                 rows = (
                     db.client.table("food_logs")
                     .select("inflammation_score")
                     .eq("user_id", user_id)
-                    .gte("logged_at", f"{day.isoformat()}T00:00:00")
-                    .lte("logged_at", f"{day.isoformat()}T23:59:59")
+                    .is_("deleted_at", "null")
+                    .gte("logged_at", day_start)
+                    .lte("logged_at", day_end)
                     .execute()
                 ).data or []
                 scored = [r["inflammation_score"] for r in rows if r.get("inflammation_score") is not None]
@@ -203,7 +245,9 @@ async def weekly_nutrition_report(
 
         # Week-over-week delta
         prev_start = ws - timedelta(days=7)
-        prev_weekly = db.get_weekly_nutrition_summary(user_id, prev_start.isoformat()) or {}
+        prev_weekly = db.get_weekly_nutrition_summary(
+            user_id, prev_start.isoformat(), timezone_str=user_tz
+        ) or {}
         prev_cals = prev_weekly.get("daily_calories", []) or []
         prev_avg = int(sum(prev_cals) / len(prev_cals)) if prev_cals else 0
         delta = {

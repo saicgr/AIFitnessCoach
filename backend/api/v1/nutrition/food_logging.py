@@ -12,7 +12,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, U
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso, _safe_zone
 from core.rate_limiter import limiter
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
@@ -225,6 +225,7 @@ def _compute_sleep_risk_flag(
     user_id: str,
     food_items: List[dict],
     user_tz: str,
+    logged_at_iso: Optional[str] = None,
 ) -> Optional[dict]:
     """Phase E1 — flag a logged food for sleep-disrupting content.
 
@@ -244,12 +245,22 @@ def _compute_sleep_risk_flag(
         if not bedtime_goal:
             return None  # no bedtime goal => cannot place a wind-down window
 
-        # The log's wall-clock time in the user's local timezone.
+        # The log's wall-clock time in the user's local timezone. Uses the
+        # log's OWN timestamp when we have one — a meal backfilled onto a past
+        # date must be measured against that evening's wind-down window, not
+        # against whatever time it happens to be while the user backfills.
         try:
             tz = pytz.timezone(user_tz)
         except Exception:
             tz = pytz.UTC
         logged_at_local = datetime.now(tz)
+        if logged_at_iso:
+            try:
+                logged_at_local = datetime.fromisoformat(
+                    str(logged_at_iso).replace("Z", "+00:00")
+                ).astimezone(tz)
+            except ValueError:
+                pass  # keep "now" — a bad stamp must not suppress the flag
 
         result = flag_food_items_for_sleep(
             food_items, logged_at_local, bedtime_goal
@@ -260,17 +271,87 @@ def _compute_sleep_risk_flag(
         return None
 
 
-def _update_nutrition_streak(user_id: str, user_tz: str) -> None:
+# How far back the streak recompute looks for logged days. Matches the reach
+# of the app's date strip (53 weeks) so any day the user can actually backfill
+# is inside the window.
+_STREAK_WINDOW_DAYS = 400
+# PostgREST caps an un-ranged select at 1000 rows. A truncated window is
+# indistinguishable from "the user stopped logging" — i.e. it would reset a
+# real streak — so the fetch pages explicitly instead of trusting one page.
+_STREAK_PAGE_SIZE = 1000
+
+
+def _contiguous_run(dates_desc: List[date_type]) -> int:
+    """Length of the consecutive-day run starting at ``dates_desc[0]``."""
+    if not dates_desc:
+        return 0
+    run = 1
+    for i in range(1, len(dates_desc)):
+        if (dates_desc[i - 1] - dates_desc[i]).days == 1:
+            run += 1
+        else:
+            break
+    return run
+
+
+def _logged_local_dates(db, user_id: str, tz, since_iso: str) -> List[date_type]:
+    """Distinct LOCAL dates (newest first) the user has surviving food logs on.
+
+    Soft-deleted rows are excluded — a deleted meal is not a logged day.
+    Stops paging as soon as the newest run is already terminated by a real
+    gap (older rows can no longer extend it), so the common case is one query.
+    """
+    dates: set = set()
+    offset = 0
+    while True:
+        rows = (
+            db.client.table("food_logs")
+            .select("logged_at")
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .gte("logged_at", since_iso)
+            .order("logged_at", desc=True)
+            .range(offset, offset + _STREAK_PAGE_SIZE - 1)
+            .execute()
+        ).data or []
+        for r in rows:
+            raw = r.get("logged_at")
+            if not raw:
+                continue
+            dates.add(
+                datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+                .astimezone(tz)
+                .date()
+            )
+        if len(rows) < _STREAK_PAGE_SIZE:
+            break
+        ordered = sorted(dates, reverse=True)
+        if _contiguous_run(ordered) < len(ordered):
+            break
+        offset += _STREAK_PAGE_SIZE
+    return sorted(dates, reverse=True)
+
+
+def _update_nutrition_streak(
+    user_id: str, user_tz: str, log_logged_at: Optional[str] = None
+) -> None:
     """Recalculate and persist the nutrition streak after any food log.
 
-    Idempotent for the same calendar day — calling twice on the same day is
-    safe. Runs as a BackgroundTask so it never blocks the log response.
+    Derived from the local dates the user actually HAS food logs on, never
+    from "server now". The old incremental version anchored on today: logging
+    a past day (Nutrition tab → previous date) with a last_logged_date two or
+    more days back fell into the "gap" branch and reset a real streak to 1,
+    while stamping last_logged_date as today — a day with no food on it. A
+    recompute makes any order of logging (today, yesterday, last week)
+    converge on the same answer, so a backfill can no longer destroy a streak.
+
+    Idempotent — calling it twice for the same log is safe. Runs as a
+    BackgroundTask so it never blocks the log response.
     """
     try:
-        import pytz
         db = get_supabase_db()
 
-        tz = pytz.timezone(user_tz)
+        tz = _safe_zone(user_tz)
         today_local: date_type = datetime.now(tz).date()
 
         result = db.client.table("nutrition_streaks") \
@@ -280,39 +361,111 @@ def _update_nutrition_streak(user_id: str, user_tz: str) -> None:
             .execute()
         data: dict = (result.data if result else None) or {}
 
-        current_streak: int = data.get("current_streak_days", 0)
-        total_logged: int = data.get("total_days_logged", 0)
-        longest: int = data.get("longest_streak_ever", 0)
+        total_logged: int = data.get("total_days_logged", 0) or 0
+        longest: int = data.get("longest_streak_ever", 0) or 0
 
-        raw = data.get("last_logged_date")
-        if raw:
-            last_logged = date_type.fromisoformat(str(raw)[:10])
-        else:
-            last_logged = None
+        window_start = (today_local - timedelta(days=_STREAK_WINDOW_DAYS)).isoformat()
+        since_iso, _ = local_date_to_utc_range(window_start, user_tz)
+        logged_dates = _logged_local_dates(db, user_id, tz, since_iso)
 
-        # Already counted today — nothing to do.
-        if last_logged == today_local:
+        # A streak freeze (/streak/{id}/freeze) credits days that have NO food
+        # logs by advancing last_logged_date to the freeze day (it writes only
+        # last_logged_date — there is no frozen-days table). The run derived
+        # from food_logs alone breaks across those days and would reset a streak
+        # the user paid a freeze to keep. last_logged_date is only ever set to a
+        # real log day (normal recompute / self-heal) or ADVANCED past the
+        # newest log by a freeze, so any gap between the newest real log at-or-
+        # before it and last_logged_date is freeze-covered: bridge EVERY day in
+        # that gap, not just the endpoint. Crediting only the single endpoint
+        # (the prior fix) left a hole whenever the user spent two freezes in a
+        # row — only the latest survives in last_logged_date — and the run still
+        # broke on the earlier frozen day, resetting the streak.
+        raw_last = data.get("last_logged_date")
+        if raw_last:
+            frozen_through = date_type.fromisoformat(str(raw_last)[:10])
+            if frozen_through <= today_local:
+                anchor = max(
+                    (d for d in logged_dates if d <= frozen_through), default=None
+                )
+                if anchor is not None and anchor < frozen_through:
+                    bridge = {
+                        anchor + timedelta(days=i)
+                        for i in range(1, (frozen_through - anchor).days + 1)
+                    }
+                    logged_dates = sorted(set(logged_dates) | bridge, reverse=True)
+
+        if not logged_dates:
+            # Nothing to derive a streak from (read failed, or every log for
+            # this user is soft-deleted). Leave the stored streak untouched
+            # rather than fabricating one.
             return
 
-        yesterday = today_local - timedelta(days=1)
-        new_total = total_logged + 1
+        most_recent = logged_dates[0]
+        run = _contiguous_run(logged_dates)
+        # The streak is live only while the newest logged day is today or
+        # yesterday — same rule as the self-heal in streaks.py.
+        current_streak = run if (today_local - most_recent).days <= 1 else 0
 
-        if last_logged == yesterday:
-            new_streak = current_streak + 1
-            update = {
-                "current_streak_days": new_streak,
-                "total_days_logged": new_total,
-                "longest_streak_ever": max(longest, new_streak),
-                "last_logged_date": today_local.isoformat(),
-            }
+        # total_days_logged counts distinct days across ALL time, which the
+        # window can't see — so only count THIS log, and only when it is the
+        # first surviving log on its own local day.
+        counted_date = today_local.isoformat()
+        if log_logged_at:
+            try:
+                counted_date = (
+                    datetime.fromisoformat(str(log_logged_at).replace("Z", "+00:00"))
+                    .astimezone(tz)
+                    .date()
+                    .isoformat()
+                )
+            except ValueError:
+                logger.warning(
+                    f"[streak] unparseable logged_at {log_logged_at!r} for {user_id}; "
+                    f"counting the day as {counted_date}"
+                )
+        day_start, day_end = local_date_to_utc_range(counted_date, user_tz)
+        same_day = (
+            db.client.table("food_logs")
+            .select("id", count="exact")
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .gte("logged_at", day_start)
+            .lte("logged_at", day_end)
+            .limit(1)
+            .execute()
+        )
+        raw_count = getattr(same_day, "count", None) if same_day else None
+        if raw_count is None:
+            # A missing/garbled PostgREST count must NOT be read as "0 logs
+            # today" — right after the insert the real count is >= 1, so 0 is
+            # impossible and would wrongly treat every count failure as the
+            # first log of the day, inflating total_days_logged. Leave the
+            # cumulative counter untouched rather than fabricate a value.
+            logger.warning(
+                f"[streak] same-day count unavailable for {user_id}; "
+                f"leaving total_days_logged at {total_logged}"
+            )
+            new_total = total_logged
         else:
-            update = {
-                "current_streak_days": 1,
-                "streak_start_date": today_local.isoformat(),
-                "total_days_logged": new_total,
-                "longest_streak_ever": max(longest, 1),
-                "last_logged_date": today_local.isoformat(),
-            }
+            # Only the FIRST surviving log on a local day advances the all-time
+            # counter (the just-inserted row makes the count 1).
+            new_total = total_logged + 1 if raw_count <= 1 else total_logged
+
+        update = {
+            "current_streak_days": current_streak,
+            "total_days_logged": new_total,
+            "longest_streak_ever": max(longest, run),
+            "last_logged_date": most_recent.isoformat(),
+        }
+        if current_streak > 0:
+            update["streak_start_date"] = (
+                most_recent - timedelta(days=run - 1)
+            ).isoformat()
+        else:
+            # A dead streak (current_streak_days == 0) must not keep a stale
+            # streak_start_date, or the client renders a 0-day streak that still
+            # claims a start date. Clear it alongside the 0.
+            update["streak_start_date"] = None
 
         db.client.table("nutrition_streaks") \
             .upsert({"user_id": user_id, **update}, on_conflict="user_id") \
@@ -485,12 +638,13 @@ async def log_food_from_image(
         await invalidate_daily_summary_cache(user_id)
         await invalidate_bootstrap_cache(user_id)
 
-        # Background: update nutrition streak
-        db = get_supabase_db()
+        # Background: update nutrition streak (tz reused from above; the
+        # streak is credited to the LOG's own local day, not server-now).
         background_tasks.add_task(
             _update_nutrition_streak,
             user_id=user_id,
-            user_tz=resolve_timezone(request, db, user_id),
+            user_tz=user_tz,
+            log_logged_at=(created_log or {}).get('logged_at') or user_tz_logged_at,
         )
 
         # Background: Log activity analytics (non-critical, don't block response)
@@ -520,7 +674,9 @@ async def log_food_from_image(
         confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
 
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
-        sleep_risk = _compute_sleep_risk_flag(user_id, food_items, user_tz)
+        sleep_risk = _compute_sleep_risk_flag(
+            user_id, food_items, user_tz, user_tz_logged_at
+        )
 
         return LogFoodResponse(
             success=True,
@@ -877,11 +1033,13 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
 
-        # Background: update nutrition streak (reuses the tz resolved above)
+        # Background: update nutrition streak (reuses the tz resolved above;
+        # credited to the LOG's own local day, not server-now)
         background_tasks.add_task(
             _update_nutrition_streak,
             user_id=body.user_id,
             user_tz=user_tz,
+            log_logged_at=(created_log or {}).get('logged_at') or user_tz_logged_at,
         )
 
         # Background: Log activity analytics (non-critical, don't block response)
@@ -913,7 +1071,9 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
         # (health_goals lookup is blocking → pool; tz reused from above.)
         sleep_risk = await _run_blocking(
-            lambda: _compute_sleep_risk_flag(body.user_id, food_items, user_tz)
+            lambda: _compute_sleep_risk_flag(
+                body.user_id, food_items, user_tz, user_tz_logged_at
+            )
         )
 
         # Gap 1 — water-in-text. Await the concurrent hydration detection and
@@ -1084,35 +1244,55 @@ async def log_food_direct(
             if value is not None:
                 micronutrients[field] = value
 
-        # Resolve timezone for logged_at timestamp.
-        # Client-supplied logged_at wins (used when user is viewing a past date
-        # in the Nutrition tab — the log must belong to that date, not "now").
-        # Guard against the future and ancient history: reject anything more
-        # than 1 hour ahead or older than 30 days.
-        user_tz_logged_at = None
-        if body.logged_at:
-            try:
-                from datetime import datetime as _dt, timezone as _tz, timedelta as _td
-                parsed = _dt.fromisoformat(body.logged_at.replace("Z", "+00:00"))
-                if parsed.tzinfo is None:
-                    parsed = parsed.replace(tzinfo=_tz.utc)
-                now_utc = _dt.now(_tz.utc)
-                if parsed <= now_utc + _td(hours=1) and parsed >= now_utc - _td(days=30):
-                    user_tz_logged_at = body.logged_at
-                else:
-                    logger.warning(
-                        f"[LOG-DIRECT] Rejecting out-of-range logged_at={body.logged_at}; "
-                        f"falling back to server now"
-                    )
-            except Exception as e:
-                logger.warning(f"[LOG-DIRECT] Invalid logged_at '{body.logged_at}': {e}")
         # Resolve timezone ONCE and reuse it for logged_at, the streak
         # background task, and sleep-risk flags (was resolved up to 3x per
         # request, each a potential blocking DB fallback).
         user_tz = await _run_blocking(
             lambda: resolve_timezone(request, db, body.user_id)
         )
-        if not user_tz_logged_at and request:
+
+        # Client-supplied logged_at wins (used when the user is viewing a past
+        # date in the Nutrition tab — the log must belong to THAT date, not
+        # "now"). The app sends a naive local wall-clock stamp
+        # (`DateTime(y, m, d, h, m, s).toIso8601String()`), so a value without
+        # an offset is the USER's clock, not the server's: reading it as UTC
+        # shifted every backfilled meal by the whole offset and rolled
+        # early-morning meals onto the previous day.
+        user_tz_logged_at = None
+        if body.logged_at:
+            from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+            try:
+                parsed = _dt.fromisoformat(body.logged_at.replace("Z", "+00:00"))
+            except ValueError as e:
+                # Never fall back to server-now: that relocates the user's meal
+                # to a different day without telling anyone.
+                logger.warning(f"[LOG-DIRECT] Invalid logged_at '{body.logged_at}': {e}")
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid logged_at '{body.logged_at}' — expected ISO-8601",
+                )
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=_safe_zone(user_tz))
+            # A meal cannot be eaten in the future, and the client offers no
+            # future-date picker — a stamp more than an hour ahead is therefore
+            # a fast device clock on a live "now" log, never an intentional
+            # backfill. Clamp it to server-now (the meal's true moment is ~now)
+            # instead of 400-ing: the Flutter offline queue classifies 4xx as
+            # permanent and QUARANTINES the body, silently losing the meal.
+            # Clamping keeps it on the correct real day; honouring the skewed
+            # stamp is what would push it onto the wrong (future) day. Past
+            # timestamps are still honoured exactly as sent — the date strip
+            # reaches 53 weeks back, so legitimate backfills are untouched.
+            now_utc = _dt.now(_tz.utc)
+            if parsed > now_utc + _td(hours=1):
+                logger.warning(
+                    f"[LOG-DIRECT] logged_at {body.logged_at} is >1h in the "
+                    f"future for user {body.user_id}; clamping to server-now "
+                    f"(device clock skew)"
+                )
+                parsed = now_utc
+            user_tz_logged_at = parsed.astimezone(_tz.utc).isoformat()
+        elif request:
             user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Apply per-user food overrides. Skip any item the client just edited
@@ -1232,11 +1412,14 @@ async def log_food_direct(
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
 
-        # Background: update nutrition streak (reuses the tz resolved above)
+        # Background: update nutrition streak (reuses the tz resolved above).
+        # Passing the log's OWN timestamp is what keeps a past-date backfill
+        # from being credited to — and resetting — today's streak.
         background_tasks.add_task(
             _update_nutrition_streak,
             user_id=body.user_id,
             user_tz=user_tz,
+            log_logged_at=(created_log or {}).get('logged_at') or user_tz_logged_at,
         )
 
         # Backfill rich scoring (inflammation, NOVA, FODMAP, micronutrients)
@@ -1272,7 +1455,9 @@ async def log_food_direct(
         # Covers menu-scan and direct logging (input_type="menu_scan" etc.).
         # (health_goals lookup is blocking → pool; tz reused from above.)
         sleep_risk = await _run_blocking(
-            lambda: _compute_sleep_risk_flag(body.user_id, body.food_items, user_tz)
+            lambda: _compute_sleep_risk_flag(
+                body.user_id, body.food_items, user_tz, user_tz_logged_at
+            )
         )
 
         return LogFoodResponse(
@@ -1300,6 +1485,11 @@ async def log_food_direct(
             fodmap_rating=body.fodmap_rating,
             fodmap_reason=body.fodmap_reason,
         )
+    except HTTPException:
+        # A deliberate 4xx (e.g. an unusable client logged_at) must reach the
+        # client as-is — the bare `except Exception` below would otherwise
+        # relabel it as a 500 and hide what the caller sent wrong.
+        raise
     except Exception as e:
         logger.error(f"Error logging food directly: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

@@ -10,14 +10,13 @@ Wiring of this endpoint into the cardio_logs insert path (so we precompute
 weather snapshots etc.) is owned by a later agent — this router only
 exposes a read-only on-demand prescriber.
 """
-from datetime import date
-
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
+from core.timezone_utils import get_user_today, resolve_timezone
 from services.refuel_service import RefuelPrescription, compute_refuel
 
 logger = get_logger(__name__)
@@ -27,6 +26,7 @@ router = APIRouter()
 @router.get("/{cardio_log_id}", response_model=RefuelPrescription)
 async def get_refuel_for_cardio(
     cardio_log_id: str,
+    request: Request,
     response: Response,
     current_user: dict = Depends(get_current_user),
 ):
@@ -60,10 +60,17 @@ async def get_refuel_for_cardio(
         user_row = db.get_user(user_id) or {}
         weight_kg = user_row.get("weight_kg")
 
-        # Today's nutrition consumption + targets.
-        today_iso = date.today().isoformat()
+        # Today's nutrition consumption + targets. "Today" must be the USER's
+        # day: on server UTC an evening session in the Americas already falls
+        # on tomorrow's date, so the summary came back empty and the
+        # prescription over-fed carbs the user had already eaten.
+        # (Resolved once — resolve_timezone also write-throughs users.timezone.)
+        user_tz = resolve_timezone(request, db, user_id)
+        today_iso = get_user_today(user_tz)
         try:
-            daily_summary = db.get_daily_nutrition_summary(user_id, today_iso) or {}
+            daily_summary = db.get_daily_nutrition_summary(
+                user_id, today_iso, timezone_str=user_tz
+            ) or {}
         except Exception as e:  # noqa: BLE001 — non-fatal, treat as unknown
             logger.warning(f"[CardioRefuel] nutrition summary failed: {e}")
             daily_summary = {}

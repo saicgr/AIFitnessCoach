@@ -819,7 +819,13 @@ class ReportsAdapter {
         .select('total_calories, protein_g, carbs_g, fat_g, logged_at')
         .eq('user_id', userId)
         .gte('logged_at', monthStart.toIso8601String())
-        .lt('logged_at', monthEnd.toIso8601String());
+        .lt('logged_at', monthEnd.toIso8601String())
+        // Deleted meals are soft-deleted (deleted_at stamped, row kept). This
+        // is one of the few reads that hits PostgREST directly instead of the
+        // backend, so it does not inherit the server-side soft-delete guard —
+        // without this the monthly nutrition shareable reports calories the
+        // user already deleted.
+        .filter('deleted_at', 'is', null);
     final list = (res as List).cast<Map<String, dynamic>>();
     if (list.isEmpty) {
       return _starterFallback(
