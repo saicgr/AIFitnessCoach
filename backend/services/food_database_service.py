@@ -14,6 +14,59 @@ logger = get_logger(__name__)
 OFF_API_BASE_URL = "https://world.openfoodfacts.org/api/v2"
 OFF_USER_AGENT = f"AIFitnessCoach/1.0 ({branding.SUPPORT_EMAIL})"
 
+# Bump when the cached nutrient shape changes so stale rows are never served.
+# v2: rows written before this carry no micronutrients at all, and a sodium value
+# that the old magnitude heuristic left 1000x low for salt/bouillon/seasoning —
+# serving them for the rest of their 30-day TTL would keep logging bad nutrition.
+BARCODE_CACHE_KEY_VERSION = "v2"
+
+# OFF `_100g` contract: Open Food Facts' `<nutrient>_100g` field is ALREADY
+# NORMALISED TO GRAMS for every weight nutrient (sodium + all micronutrients),
+# whatever unit the contributor entered. The sibling `<nutrient>_unit` describes
+# the AS-ENTERED `<nutrient>_value` pair — NOT `_100g`. Applying a unit factor to
+# `_100g` therefore DOUBLE-CONVERTS: an as-entered "mg" would scale the already-
+# grams `_100g` down another 1000x. So we trust `_100g` as grams and never read
+# `_unit`. (Verified live: barcode 0038000138416 → iron_100g=0.00107 g with
+# iron_unit="g"; across ~250 products every micronutrient `_unit` API v2 returned
+# was "g".) An earlier magnitude heuristic ("a small number must be grams")
+# under-reported sodium 1000x for salt/bouillon/seasoning — that too is gone.
+
+# Every micronutrient field on ProductNutrients holds GRAMS per 100g (OFF's
+# native unit); every food_logs column wants mg / µg / IU. This table is the one
+# place that conversion is defined:
+#   field -> (create_food_log kwarg, factor from GRAMS, decimal places)
+# 1 g = 1_000 mg = 1_000_000 µg. Vitamin D's column is IU and 1 µg of
+# cholecalciferol = 40 IU, so grams -> IU is 1_000_000 × 40 = 40_000_000.
+# The completeness check below refuses to import if a micronutrient is ever added
+# to ProductNutrients without an entry here — that is how 8 nutrients previously
+# shipped with no conversion at all, understated by 1,000x to 1,000,000x.
+MICRONUTRIENT_LOG_FIELDS: Dict[str, Any] = {
+    "vitamin_a_100g":   ("vitamin_a_ug", 1_000_000.0, 2),
+    "vitamin_c_100g":   ("vitamin_c_mg", 1_000.0, 2),
+    "vitamin_d_100g":   ("vitamin_d_iu", 40_000_000.0, 1),
+    "calcium_100g":     ("calcium_mg", 1_000.0, 1),
+    "iron_100g":        ("iron_mg", 1_000.0, 2),
+    "potassium_100g":   ("potassium_mg", 1_000.0, 1),
+    "magnesium_100g":   ("magnesium_mg", 1_000.0, 1),
+    "zinc_100g":        ("zinc_mg", 1_000.0, 2),
+    "vitamin_e_100g":   ("vitamin_e_mg", 1_000.0, 3),
+    "vitamin_k_100g":   ("vitamin_k_ug", 1_000_000.0, 2),
+    "vitamin_b1_100g":  ("vitamin_b1_mg", 1_000.0, 3),
+    "vitamin_b2_100g":  ("vitamin_b2_mg", 1_000.0, 3),
+    "vitamin_b3_100g":  ("vitamin_b3_mg", 1_000.0, 3),
+    "vitamin_b6_100g":  ("vitamin_b6_mg", 1_000.0, 3),
+    "vitamin_b9_100g":  ("vitamin_b9_ug", 1_000_000.0, 2),
+    "vitamin_b12_100g": ("vitamin_b12_ug", 1_000_000.0, 2),
+    "selenium_100g":    ("selenium_ug", 1_000_000.0, 2),
+    "phosphorus_100g":  ("phosphorus_mg", 1_000.0, 3),
+    "copper_100g":      ("copper_mg", 1_000.0, 3),
+    "manganese_100g":   ("manganese_mg", 1_000.0, 3),
+    "iodine_100g":      ("iodine_ug", 1_000_000.0, 2),
+    "cholesterol_100g": ("cholesterol_mg", 1_000.0, 3),
+    "omega3_100g":      ("omega3_g", 1.0, 3),
+    "omega6_100g":      ("omega6_g", 1.0, 3),
+}
+
 
 @dataclass
 class ProductNutrients:
@@ -23,7 +76,10 @@ class ProductNutrients:
     fat_per_100g: float
     fiber_per_100g: float
     sugar_per_100g: float
-    sodium_per_100g: float
+    # Sodium is the one nutrient carried in MILLIGRAMS per 100g (it is written
+    # straight into food_logs.sodium_mg). Optional because a product OFF has no
+    # sodium figure for must read as "unknown", not as a fabricated 0 mg.
+    sodium_per_100g: Optional[float]
     saturated_fat_per_100g: float
     serving_size: Optional[str]
     serving_size_g: Optional[float]
@@ -31,7 +87,10 @@ class ProductNutrients:
     protein_per_serving: Optional[float]
     carbs_per_serving: Optional[float]
     fat_per_serving: Optional[float]
-    # Micronutrients (from Open Food Facts)
+    # Micronutrients — ALWAYS GRAMS per 100g, whatever the source (OFF native,
+    # or normalized into grams from the override table's µg/mg/IU columns and
+    # from USDA's mg/µg). One unit for the whole surface is what makes the single
+    # MICRONUTRIENT_LOG_FIELDS conversion at log time correct for every path.
     vitamin_a_100g: Optional[float] = None
     vitamin_c_100g: Optional[float] = None
     vitamin_d_100g: Optional[float] = None
@@ -41,8 +100,7 @@ class ProductNutrients:
     magnesium_100g: Optional[float] = None
     zinc_100g: Optional[float] = None
     # F5 — extended OFF micro extraction (was 8; now the full RDA-tracked set
-    # OFF can carry). Units below are the OFF native units we convert at log
-    # time to match nutrient_rdas (vit A µg, vit D IU, etc.).
+    # OFF can carry). Same grams-per-100g contract as the eight above.
     vitamin_e_100g: Optional[float] = None
     vitamin_k_100g: Optional[float] = None
     vitamin_b1_100g: Optional[float] = None
@@ -59,6 +117,20 @@ class ProductNutrients:
     cholesterol_100g: Optional[float] = None
     omega3_100g: Optional[float] = None
     omega6_100g: Optional[float] = None
+
+    @classmethod
+    def micronutrient_fields(cls) -> tuple:
+        """Names of the micronutrient fields (all GRAMS per 100g).
+
+        Derived from the dataclass rather than hand-listed so `to_dict`, the
+        cache reader and the log-time conversion table can never drift apart —
+        a hand-listed subset in `to_dict` is what stripped micros out of the
+        cache and made a second scan of the same barcode log different numbers.
+        """
+        return tuple(
+            f for f in cls.__dataclass_fields__
+            if f.endswith("_100g") and not f.endswith("_per_100g")
+        )
 
     def to_dict(self) -> Dict[str, Any]:
         d = {
@@ -77,14 +149,39 @@ class ProductNutrients:
             "carbs_per_serving": self.carbs_per_serving,
             "fat_per_serving": self.fat_per_serving,
         }
-        # Only include micronutrients that have values
-        for key in ("vitamin_a_100g", "vitamin_c_100g", "vitamin_d_100g",
-                     "calcium_100g", "iron_100g", "potassium_100g",
-                     "magnesium_100g", "zinc_100g"):
+        # Every micronutrient that has a value — this dict IS what gets cached,
+        # so anything omitted here is silently lost on the next scan.
+        for key in self.micronutrient_fields():
             val = getattr(self, key)
             if val is not None and val > 0:
                 d[key] = val
         return d
+
+
+def unmapped_micronutrients() -> list:
+    """Micronutrient fields on ProductNutrients with no grams->column mapping.
+
+    Exposed so a unit test can `assert not unmapped_micronutrients()`. It is NOT
+    raised at import: barcode.py imports this module and main.py mounts
+    barcode.py, so a bare `raise` here would take the ENTIRE API down on boot
+    over a mapping gap. And the failure mode is mild — the log-time loop iterates
+    MICRONUTRIENT_LOG_FIELDS (not the dataclass), so an unmapped field is simply
+    skipped, never written unconverted into a column. A boot crash is a wildly
+    disproportionate response; a loud error log is the right severity.
+    """
+    return [
+        f for f in ProductNutrients.micronutrient_fields()
+        if f not in MICRONUTRIENT_LOG_FIELDS
+    ]
+
+
+_UNMAPPED_MICROS = unmapped_micronutrients()
+if _UNMAPPED_MICROS:
+    logger.error(
+        "MICRONUTRIENT_LOG_FIELDS is missing a grams->column conversion for: "
+        f"{', '.join(_UNMAPPED_MICROS)}. These nutrients will not be logged "
+        "until a mapping is added."
+    )
 
 
 @dataclass
@@ -152,6 +249,35 @@ class FoodDatabaseService:
         except (ValueError, TypeError):
             return default
 
+    def _off_grams_per_100g(self, nutriments: Dict[str, Any], *keys: str) -> Optional[float]:
+        """Read an OFF nutrient as GRAMS per 100g from its `_100g` field.
+
+        Contract (see the OFF `_100g` note above): OFF's `<key>_100g` is ALREADY
+        grams for every weight nutrient, regardless of the as-entered `_unit`, so
+        we return it verbatim — applying a unit factor here would double-convert.
+        We deliberately do NOT consult `_unit`: it only ever described the sibling
+        `_value`, and gating on it silently dropped legitimate values (sodium →
+        NULL) whenever the unit string was "iu"/"% dv"/absent, a regression from
+        products that previously reported those nutrients fine.
+
+        Returns None when OFF carries no value for any of `keys`. A 0 under one
+        synonym key is treated as absent so it cannot shadow a real value under
+        the next key (vitamin-b9_100g:0 must fall through to folates_100g); the
+        downstream `x or None` collapses 0 to None anyway, so nothing is lost.
+        """
+        for key in keys:
+            raw = nutriments.get(f"{key}_100g")
+            if raw is None:
+                continue
+            try:
+                value = float(raw)
+            except (TypeError, ValueError):
+                continue
+            if value == 0:
+                continue
+            return value
+        return None
+
     def _parse_nutrients(self, nutriments: Dict[str, Any], product: Dict[str, Any]) -> ProductNutrients:
         calories = self._parse_float(nutriments.get("energy-kcal_100g"))
         if calories == 0:
@@ -163,36 +289,45 @@ class FoodDatabaseService:
         fat = self._parse_float(nutriments.get("fat_100g"))
         fiber = self._parse_float(nutriments.get("fiber_100g"))
         sugar = self._parse_float(nutriments.get("sugars_100g"))
-        sodium = self._parse_float(nutriments.get("sodium_100g"))
         saturated_fat = self._parse_float(nutriments.get("saturated-fat_100g"))
 
-        # Micronutrients from Open Food Facts
-        vitamin_a = self._parse_float(nutriments.get("vitamin-a_100g"))
-        vitamin_c = self._parse_float(nutriments.get("vitamin-c_100g"))
-        vitamin_d = self._parse_float(nutriments.get("vitamin-d_100g"))
-        calcium = self._parse_float(nutriments.get("calcium_100g"))
-        iron = self._parse_float(nutriments.get("iron_100g"))
-        potassium = self._parse_float(nutriments.get("potassium_100g"))
-        magnesium = self._parse_float(nutriments.get("magnesium_100g"))
-        zinc = self._parse_float(nutriments.get("zinc_100g"))
-        # F5 — extended micros (OFF native units, mostly grams per 100g except
-        # the IU/µg vitamins, converted at log time).
-        vit_e = self._parse_float(nutriments.get("vitamin-e_100g"))
-        vit_k = self._parse_float(nutriments.get("vitamin-k_100g"))
-        vit_b1 = self._parse_float(nutriments.get("vitamin-b1_100g"))
-        vit_b2 = self._parse_float(nutriments.get("vitamin-b2_100g"))
-        vit_b3 = self._parse_float(nutriments.get("vitamin-pp_100g") or nutriments.get("vitamin-b3_100g"))
-        vit_b6 = self._parse_float(nutriments.get("vitamin-b6_100g"))
-        vit_b9 = self._parse_float(nutriments.get("vitamin-b9_100g") or nutriments.get("folates_100g"))
-        vit_b12 = self._parse_float(nutriments.get("vitamin-b12_100g"))
-        selenium = self._parse_float(nutriments.get("selenium_100g"))
-        phosphorus = self._parse_float(nutriments.get("phosphorus_100g"))
-        copper = self._parse_float(nutriments.get("copper_100g"))
-        manganese = self._parse_float(nutriments.get("manganese_100g"))
-        iodine = self._parse_float(nutriments.get("iodine_100g"))
-        cholesterol = self._parse_float(nutriments.get("cholesterol_100g"))
-        omega3 = self._parse_float(nutriments.get("omega-3-fat_100g"))
-        omega6 = self._parse_float(nutriments.get("omega-6-fat_100g"))
+        # Sodium and every micronutrient go through the declared-unit reader:
+        # OFF publishes the unit per nutrient, so there is never a reason to
+        # infer one from how big the number looks.
+        grams = self._off_grams_per_100g
+        sodium = grams(nutriments, "sodium")
+
+        # Micronutrients from Open Food Facts — GRAMS per 100g, NOT rounded here.
+        # Vitamin A/D and zinc are ~0.0009 g, so rounding at gram scale flattened
+        # them to 0.0 and destroyed them before the g -> mg/µg conversion at log
+        # time ever ran. Convert first, round last.
+        vitamin_a = grams(nutriments, "vitamin-a")
+        vitamin_c = grams(nutriments, "vitamin-c")
+        vitamin_d = grams(nutriments, "vitamin-d")
+        calcium = grams(nutriments, "calcium")
+        iron = grams(nutriments, "iron")
+        potassium = grams(nutriments, "potassium")
+        magnesium = grams(nutriments, "magnesium")
+        zinc = grams(nutriments, "zinc")
+        # F5 — extended micros. Same grams-per-100g contract; the alternate keys
+        # are OFF's synonyms (niacin is filed under `vitamin-pp`, folate under
+        # `folates` on older entries).
+        vit_e = grams(nutriments, "vitamin-e")
+        vit_k = grams(nutriments, "vitamin-k")
+        vit_b1 = grams(nutriments, "vitamin-b1")
+        vit_b2 = grams(nutriments, "vitamin-b2")
+        vit_b3 = grams(nutriments, "vitamin-pp", "vitamin-b3")
+        vit_b6 = grams(nutriments, "vitamin-b6")
+        vit_b9 = grams(nutriments, "vitamin-b9", "folates")
+        vit_b12 = grams(nutriments, "vitamin-b12")
+        selenium = grams(nutriments, "selenium")
+        phosphorus = grams(nutriments, "phosphorus")
+        copper = grams(nutriments, "copper")
+        manganese = grams(nutriments, "manganese")
+        iodine = grams(nutriments, "iodine")
+        cholesterol = grams(nutriments, "cholesterol")
+        omega3 = grams(nutriments, "omega-3-fat")
+        omega6 = grams(nutriments, "omega-6-fat")
 
         serving_size = product.get("serving_size")
         serving_quantity = self._parse_float(product.get("serving_quantity"))
@@ -212,7 +347,9 @@ class FoodDatabaseService:
             fat_per_100g=round(fat, 1),
             fiber_per_100g=round(fiber, 1),
             sugar_per_100g=round(sugar, 1),
-            sodium_per_100g=round(sodium * 1000, 1) if sodium < 10 else round(sodium, 1),
+            # 1 g = 1000 mg. `sodium` is already grams (declared unit applied),
+            # so this is the only sodium conversion — no magnitude test.
+            sodium_per_100g=round(sodium * 1000, 1) if sodium is not None else None,
             saturated_fat_per_100g=round(saturated_fat, 1),
             serving_size=serving_size,
             serving_size_g=serving_quantity if serving_quantity > 0 else None,
@@ -220,30 +357,30 @@ class FoodDatabaseService:
             protein_per_serving=prot_srv,
             carbs_per_serving=carbs_srv,
             fat_per_serving=fat_srv,
-            vitamin_a_100g=round(vitamin_a, 2) if vitamin_a > 0 else None,
-            vitamin_c_100g=round(vitamin_c, 2) if vitamin_c > 0 else None,
-            vitamin_d_100g=round(vitamin_d, 2) if vitamin_d > 0 else None,
-            calcium_100g=round(calcium, 1) if calcium > 0 else None,
-            iron_100g=round(iron, 2) if iron > 0 else None,
-            potassium_100g=round(potassium, 1) if potassium > 0 else None,
-            magnesium_100g=round(magnesium, 1) if magnesium > 0 else None,
-            zinc_100g=round(zinc, 2) if zinc > 0 else None,
-            vitamin_e_100g=round(vit_e, 4) if vit_e > 0 else None,
-            vitamin_k_100g=round(vit_k, 6) if vit_k > 0 else None,
-            vitamin_b1_100g=round(vit_b1, 4) if vit_b1 > 0 else None,
-            vitamin_b2_100g=round(vit_b2, 4) if vit_b2 > 0 else None,
-            vitamin_b3_100g=round(vit_b3, 4) if vit_b3 > 0 else None,
-            vitamin_b6_100g=round(vit_b6, 4) if vit_b6 > 0 else None,
-            vitamin_b9_100g=round(vit_b9, 8) if vit_b9 > 0 else None,
-            vitamin_b12_100g=round(vit_b12, 8) if vit_b12 > 0 else None,
-            selenium_100g=round(selenium, 8) if selenium > 0 else None,
-            phosphorus_100g=round(phosphorus, 4) if phosphorus > 0 else None,
-            copper_100g=round(copper, 6) if copper > 0 else None,
-            manganese_100g=round(manganese, 6) if manganese > 0 else None,
-            iodine_100g=round(iodine, 8) if iodine > 0 else None,
-            cholesterol_100g=round(cholesterol, 4) if cholesterol > 0 else None,
-            omega3_100g=round(omega3, 4) if omega3 > 0 else None,
-            omega6_100g=round(omega6, 4) if omega6 > 0 else None,
+            vitamin_a_100g=vitamin_a or None,
+            vitamin_c_100g=vitamin_c or None,
+            vitamin_d_100g=vitamin_d or None,
+            calcium_100g=calcium or None,
+            iron_100g=iron or None,
+            potassium_100g=potassium or None,
+            magnesium_100g=magnesium or None,
+            zinc_100g=zinc or None,
+            vitamin_e_100g=vit_e or None,
+            vitamin_k_100g=vit_k or None,
+            vitamin_b1_100g=vit_b1 or None,
+            vitamin_b2_100g=vit_b2 or None,
+            vitamin_b3_100g=vit_b3 or None,
+            vitamin_b6_100g=vit_b6 or None,
+            vitamin_b9_100g=vit_b9 or None,
+            vitamin_b12_100g=vit_b12 or None,
+            selenium_100g=selenium or None,
+            phosphorus_100g=phosphorus or None,
+            copper_100g=copper or None,
+            manganese_100g=manganese or None,
+            iodine_100g=iodine or None,
+            cholesterol_100g=cholesterol or None,
+            omega3_100g=omega3 or None,
+            omega6_100g=omega6 or None,
         )
 
     def _is_valid_barcode(self, barcode: str) -> bool:
@@ -312,6 +449,26 @@ class FoodDatabaseService:
                 except (TypeError, ValueError):
                     return 0.0
 
+            def _of(k):
+                """Optional read — a NULL column stays NULL, never a fabricated 0."""
+                v = row.get(k)
+                try:
+                    return float(v) if v is not None else None
+                except (TypeError, ValueError):
+                    return None
+
+            # This table stores micros in DISPLAY units (µg / mg / IU) while
+            # ProductNutrients carries GRAMS, so normalize on the way in.
+            # Skipping this would make the single grams->column conversion at log
+            # time fire on an already-converted number (1,000,000x over-report).
+            _MG = 0.001        # 1 mg = 0.001 g
+            _UG = 0.000001     # 1 µg = 0.000001 g
+            _IU_VIT_D = _UG / 40.0   # 40 IU of vitamin D = 1 µg cholecalciferol
+
+            def _g(k, unit_in_grams):
+                v = _of(k)
+                return v * unit_in_grams if v else None
+
             nutrients = ProductNutrients(
                 calories_per_100g=_f("calories_per_100g"),
                 protein_per_100g=_f("protein_per_100g"),
@@ -319,7 +476,7 @@ class FoodDatabaseService:
                 fat_per_100g=_f("fat_per_100g"),
                 fiber_per_100g=_f("fiber_per_100g"),
                 sugar_per_100g=_f("sugar_per_100g"),
-                sodium_per_100g=_f("sodium_mg"),
+                sodium_per_100g=_of("sodium_mg"),
                 saturated_fat_per_100g=_f("saturated_fat_g"),
                 serving_size=None,
                 serving_size_g=row.get("default_serving_g"),
@@ -327,14 +484,31 @@ class FoodDatabaseService:
                 protein_per_serving=None,
                 carbs_per_serving=None,
                 fat_per_serving=None,
-                vitamin_a_100g=row.get("vitamin_a_ug"),
-                vitamin_c_100g=row.get("vitamin_c_mg"),
-                vitamin_d_100g=row.get("vitamin_d_iu"),
-                calcium_100g=row.get("calcium_mg"),
-                iron_100g=row.get("iron_mg"),
-                potassium_100g=row.get("potassium_mg"),
-                magnesium_100g=row.get("magnesium_mg"),
-                zinc_100g=row.get("zinc_mg"),
+                vitamin_a_100g=_g("vitamin_a_ug", _UG),
+                vitamin_c_100g=_g("vitamin_c_mg", _MG),
+                vitamin_d_100g=_g("vitamin_d_iu", _IU_VIT_D),
+                calcium_100g=_g("calcium_mg", _MG),
+                iron_100g=_g("iron_mg", _MG),
+                potassium_100g=_g("potassium_mg", _MG),
+                magnesium_100g=_g("magnesium_mg", _MG),
+                zinc_100g=_g("zinc_mg", _MG),
+                # The override table carries the extended set too — pass it
+                # through rather than dropping curated data on the floor.
+                vitamin_e_100g=_g("vitamin_e_mg", _MG),
+                vitamin_k_100g=_g("vitamin_k_ug", _UG),
+                vitamin_b1_100g=_g("vitamin_b1_mg", _MG),
+                vitamin_b2_100g=_g("vitamin_b2_mg", _MG),
+                vitamin_b3_100g=_g("vitamin_b3_mg", _MG),
+                vitamin_b6_100g=_g("vitamin_b6_mg", _MG),
+                vitamin_b9_100g=_g("vitamin_b9_ug", _UG),
+                vitamin_b12_100g=_g("vitamin_b12_ug", _UG),
+                selenium_100g=_g("selenium_ug", _UG),
+                phosphorus_100g=_g("phosphorus_mg", _MG),
+                copper_100g=_g("copper_mg", _MG),
+                manganese_100g=_g("manganese_mg", _MG),
+                cholesterol_100g=_g("cholesterol_mg", _MG),
+                omega3_100g=_g("omega3_g", 1.0),
+                omega6_100g=_g("omega6_g", 1.0),
             )
             logger.info(
                 f"[Barcode] verified override hit for {barcode} "
@@ -486,7 +660,7 @@ class FoodDatabaseService:
 
             result = db.client.table("food_search_cache") \
                 .select("results") \
-                .eq("query_hash", f"barcode:{barcode}") \
+                .eq("query_hash", f"barcode:{BARCODE_CACHE_KEY_VERSION}:{barcode}") \
                 .eq("source", "barcode") \
                 .gt("expires_at", datetime.utcnow().isoformat()) \
                 .limit(1) \
@@ -494,8 +668,16 @@ class FoodDatabaseService:
 
             if result.data and len(result.data) > 0:
                 cached_data = result.data[0]["results"]
-                # Reconstruct BarcodeProduct from cached dict
+                # Reconstruct BarcodeProduct from cached dict. Restore EVERY
+                # micronutrient the cache holds (derived from the dataclass, so a
+                # new nutrient is picked up automatically) — a partial rebuild is
+                # why scanning the same barcode twice logged different nutrition
+                # the second time.
                 nutrients_data = cached_data.get("nutrients", {})
+                micro_kwargs = {
+                    f: nutrients_data.get(f)
+                    for f in ProductNutrients.micronutrient_fields()
+                }
                 nutrients = ProductNutrients(
                     calories_per_100g=nutrients_data.get("calories_per_100g", 0),
                     protein_per_100g=nutrients_data.get("protein_per_100g", 0),
@@ -503,7 +685,7 @@ class FoodDatabaseService:
                     fat_per_100g=nutrients_data.get("fat_per_100g", 0),
                     fiber_per_100g=nutrients_data.get("fiber_per_100g", 0),
                     sugar_per_100g=nutrients_data.get("sugar_per_100g", 0),
-                    sodium_per_100g=nutrients_data.get("sodium_per_100g", 0),
+                    sodium_per_100g=nutrients_data.get("sodium_per_100g"),
                     saturated_fat_per_100g=nutrients_data.get("saturated_fat_per_100g", 0),
                     serving_size=nutrients_data.get("serving_size"),
                     serving_size_g=nutrients_data.get("serving_size_g"),
@@ -511,6 +693,7 @@ class FoodDatabaseService:
                     protein_per_serving=nutrients_data.get("protein_per_serving"),
                     carbs_per_serving=nutrients_data.get("carbs_per_serving"),
                     fat_per_serving=nutrients_data.get("fat_per_serving"),
+                    **micro_kwargs,
                 )
                 return BarcodeProduct(
                     barcode=cached_data.get("barcode", barcode),
@@ -524,6 +707,11 @@ class FoodDatabaseService:
                     nova_group=cached_data.get("nova_group"),
                     ingredients_text=cached_data.get("ingredients_text"),
                     allergens=cached_data.get("allergens"),
+                    # Cached by to_dict() but previously never read back, so the
+                    # second scan lost the eco/labels/additives badges.
+                    ecoscore_grade=cached_data.get("ecoscore_grade"),
+                    labels_tags=cached_data.get("labels_tags"),
+                    additives_tags=cached_data.get("additives_tags"),
                 )
         except Exception as e:
             logger.warning(f"Cache lookup failed: {e}", exc_info=True)
@@ -538,7 +726,7 @@ class FoodDatabaseService:
             expires_at = datetime.utcnow() + timedelta(days=30)
 
             db.client.table("food_search_cache").upsert({
-                "query_hash": f"barcode:{barcode}",
+                "query_hash": f"barcode:{BARCODE_CACHE_KEY_VERSION}:{barcode}",
                 "query_text": barcode,
                 "source": "barcode",
                 "results": product.to_dict(),
@@ -649,7 +837,7 @@ class FoodDatabaseService:
     async def _lookup_usda_barcode(self, barcode: str) -> Optional[BarcodeProduct]:
         """Search USDA for products matching this barcode (gtin_upc)."""
         try:
-            from services.usda_food_service import get_usda_food_service
+            from services.usda_food_service import get_usda_food_service, NUTRIENT_IDS
 
             usda = get_usda_food_service()
 
@@ -664,22 +852,76 @@ class FoodDatabaseService:
             # Find exact barcode match (gtin_upc field)
             for food in result.foods:
                 if food.gtin_upc == barcode:
+                    un = food.nutrients
+                    present = un.present_nutrient_ids or set()
+
+                    # USDA already fetched every micronutrient below — it used to
+                    # be parsed and then thrown away, so a USDA-only product
+                    # logged zero vitamins. USDA reports in mg / µg / g and this
+                    # dataclass is GRAMS per 100g, so scale on the way in.
+                    _MG = 0.001        # 1 mg = 0.001 g
+                    _UG = 0.000001     # 1 µg = 0.000001 g
+
+                    def _u(usda_key: str, value: float, unit_in_grams: float):
+                        """None unless USDA actually reported this nutrient.
+
+                        The USDANutrients floats default to 0.0 whether USDA
+                        measured a zero or never carried the nutrient at all;
+                        `present_nutrient_ids` is the only way to tell, and
+                        logging an unmeasured nutrient as 0 would fake a
+                        deficiency in RDA tracking.
+                        """
+                        nid = NUTRIENT_IDS.get(usda_key)
+                        if nid is None or nid not in present or not value:
+                            return None
+                        return value * unit_in_grams
+
                     # Convert USDA food to BarcodeProduct format
                     nutrients = ProductNutrients(
-                        calories_per_100g=food.nutrients.calories_per_100g,
-                        protein_per_100g=food.nutrients.protein_per_100g,
-                        carbs_per_100g=food.nutrients.carbs_per_100g,
-                        fat_per_100g=food.nutrients.fat_per_100g,
-                        fiber_per_100g=food.nutrients.fiber_per_100g,
-                        sugar_per_100g=food.nutrients.sugar_per_100g,
-                        sodium_per_100g=food.nutrients.sodium_mg_per_100g,
-                        saturated_fat_per_100g=food.nutrients.saturated_fat_per_100g,
-                        serving_size=food.nutrients.serving_size,
-                        serving_size_g=food.nutrients.serving_size_g,
+                        calories_per_100g=un.calories_per_100g,
+                        protein_per_100g=un.protein_per_100g,
+                        carbs_per_100g=un.carbs_per_100g,
+                        fat_per_100g=un.fat_per_100g,
+                        fiber_per_100g=un.fiber_per_100g,
+                        sugar_per_100g=un.sugar_per_100g,
+                        sodium_per_100g=(
+                            un.sodium_mg_per_100g
+                            if NUTRIENT_IDS["sodium"] in present else None
+                        ),
+                        saturated_fat_per_100g=un.saturated_fat_per_100g,
+                        serving_size=un.serving_size,
+                        serving_size_g=un.serving_size_g,
                         calories_per_serving=None,
                         protein_per_serving=None,
                         carbs_per_serving=None,
                         fat_per_serving=None,
+                        vitamin_a_100g=_u("vitamin_a", un.vitamin_a_mcg_per_100g, _UG),
+                        vitamin_c_100g=_u("vitamin_c", un.vitamin_c_mg_per_100g, _MG),
+                        vitamin_d_100g=_u("vitamin_d", un.vitamin_d_mcg_per_100g, _UG),
+                        calcium_100g=_u("calcium", un.calcium_mg_per_100g, _MG),
+                        iron_100g=_u("iron", un.iron_mg_per_100g, _MG),
+                        potassium_100g=_u("potassium", un.potassium_mg_per_100g, _MG),
+                        magnesium_100g=_u("magnesium", un.magnesium_mg_per_100g, _MG),
+                        zinc_100g=_u("zinc", un.zinc_mg_per_100g, _MG),
+                        vitamin_e_100g=_u("vitamin_e", un.vitamin_e_mg_per_100g, _MG),
+                        vitamin_k_100g=_u("vitamin_k", un.vitamin_k_ug_per_100g, _UG),
+                        vitamin_b1_100g=_u("vitamin_b1", un.vitamin_b1_mg_per_100g, _MG),
+                        vitamin_b2_100g=_u("vitamin_b2", un.vitamin_b2_mg_per_100g, _MG),
+                        vitamin_b3_100g=_u("vitamin_b3", un.vitamin_b3_mg_per_100g, _MG),
+                        vitamin_b6_100g=_u("vitamin_b6", un.vitamin_b6_mg_per_100g, _MG),
+                        vitamin_b9_100g=_u("folate", un.folate_mcg_per_100g, _UG),
+                        vitamin_b12_100g=_u("vitamin_b12", un.vitamin_b12_mcg_per_100g, _UG),
+                        selenium_100g=_u("selenium", un.selenium_ug_per_100g, _UG),
+                        phosphorus_100g=_u("phosphorus", un.phosphorus_mg_per_100g, _MG),
+                        copper_100g=_u("copper", un.copper_mg_per_100g, _MG),
+                        manganese_100g=_u("manganese", un.manganese_mg_per_100g, _MG),
+                        # USDA has no iodine nutrient id — stays unknown.
+                        iodine_100g=None,
+                        cholesterol_100g=_u("cholesterol", un.cholesterol_mg_per_100g, _MG),
+                        # Already summed from the individual fatty-acid ids, so a
+                        # non-zero total means at least one id was present.
+                        omega3_100g=un.omega3_g_per_100g or None,
+                        omega6_100g=un.omega6_g_per_100g or None,
                     )
 
                     result = BarcodeProduct(

@@ -65,7 +65,8 @@ import '../../widgets/fullscreen_image_viewer.dart';
 import 'menu_analysis_sheet.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../chat/widgets/media_picker_helper.dart' show
-  pickFoodScanArtifacts, pickFoodScanArtifactsBatch, FoodScanArtifacts;
+  pickFoodScanArtifacts, pickFoodScanArtifactsBatch, FoodScanArtifacts,
+  pickMenuPages;
 
 part 'log_meal_sheet_ui.dart';
 
@@ -76,6 +77,15 @@ part 'widgets/quick_log_pills.dart';
 
 const String _kMealTypeLastUsedKey = 'meal_type';
 const String _kFoodBrowserLastUsedKey = 'food_browser_filter';
+
+/// Menu/bill pages per scan. The backend accepts 10; the client used to stop
+/// at 5, which quietly truncated big multi-page menus.
+const int _kMaxMenuPages = 10;
+
+/// Analysis modes that return a tick-list instead of auto-logging a plate.
+/// All three render `MenuAnalysisSheet`, and none of them need
+/// `confirmBeforeLog` (the checklist IS the confirmation step).
+const Set<String> _kChecklistModes = {'menu', 'buffet', 'bill'};
 
 /// A1 + L2 — the AI-logging modes. `snap` is the one-tap instant
 /// single-photo path; `describe` is the multi-photo + prominent-
@@ -553,9 +563,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
 
           // Calculate adjusted values based on portion multiplier
           final adjustedCalories = (response.totalCalories * portionMultiplier).round();
-          final adjustedProtein = response.proteinG * portionMultiplier;
-          final adjustedCarbs = response.carbsG * portionMultiplier;
-          final adjustedFat = response.fatG * portionMultiplier;
+          // Nullable macros (null = server couldn't determine). Coerced for the
+          // rescale preview; the server re-derives the authoritative value.
+          final adjustedProtein = (response.proteinG ?? 0) * portionMultiplier;
+          final adjustedCarbs = (response.carbsG ?? 0) * portionMultiplier;
+          final adjustedFat = (response.fatG ?? 0) * portionMultiplier;
           final adjustedFiber = (response.fiberG ?? 0) * portionMultiplier;
 
           return AlertDialog(
@@ -631,9 +643,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   PortionAmountInput(
                     initialMultiplier: portionMultiplier,
                     baseCalories: response.totalCalories,
-                    baseProtein: response.proteinG,
-                    baseCarbs: response.carbsG,
-                    baseFat: response.fatG,
+                    baseProtein: response.proteinG ?? 0,
+                    baseCarbs: response.carbsG ?? 0,
+                    baseFat: response.fatG ?? 0,
                     isDark: isDark,
                     onMultiplierChanged: (newMultiplier) {
                       setDialogState(() {
@@ -1390,33 +1402,40 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
     );
   }
 
+  // The API carries every micronutrient in GRAMS per 100 g (Open Food Facts'
+  // native unit), while these rows are labelled µg and mg. Without scaling here
+  // a 900 µg vitamin A rendered as "0.0 µg" — the user saw a number 1,000x to
+  // 1,000,000x wrong before they even confirmed the log.
+  static const double _gToMg = 1000.0; // 1 g = 1,000 mg
+  static const double _gToUg = 1000000.0; // 1 g = 1,000,000 µg
+
   List<Widget> _buildMicronutrientRows() {
     final p = widget.product;
     final rows = <Widget>[];
 
     if (p.vitaminA100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminA, value: AppLocalizations.of(context)!.logMealSheetG6(p.vitaminA100g.toStringAsFixed(1)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminA, value: AppLocalizations.of(context)!.logMealSheetG6((p.vitaminA100g * _gToUg).toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.vitaminC100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminC, value: AppLocalizations.of(context)!.logMealSheetMg(p.vitaminC100g.toStringAsFixed(1)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminC, value: AppLocalizations.of(context)!.logMealSheetMg((p.vitaminC100g * _gToMg).toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.vitaminD100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminD, value: AppLocalizations.of(context)!.logMealSheetG7(p.vitaminD100g.toStringAsFixed(2)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealVitaminD, value: AppLocalizations.of(context)!.logMealSheetG7((p.vitaminD100g * _gToUg).toStringAsFixed(2)), isDark: widget.isDark));
     }
     if (p.calcium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealCalcium, value: AppLocalizations.of(context)!.logMealSheetMg2(p.calcium100g.toStringAsFixed(1)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealCalcium, value: AppLocalizations.of(context)!.logMealSheetMg2((p.calcium100g * _gToMg).toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.iron100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: AppLocalizations.of(context)!.logMealSheetMg3(p.iron100g.toStringAsFixed(2)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealIron, value: AppLocalizations.of(context)!.logMealSheetMg3((p.iron100g * _gToMg).toStringAsFixed(2)), isDark: widget.isDark));
     }
     if (p.potassium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4(p.potassium100g.toStringAsFixed(1)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealPotassium, value: AppLocalizations.of(context)!.logMealSheetMg4((p.potassium100g * _gToMg).toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.magnesium100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5(p.magnesium100g.toStringAsFixed(1)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealMagnesium, value: AppLocalizations.of(context)!.logMealSheetMg5((p.magnesium100g * _gToMg).toStringAsFixed(1)), isDark: widget.isDark));
     }
     if (p.zinc100g > 0) {
-      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: AppLocalizations.of(context)!.logMealSheetMg6(p.zinc100g.toStringAsFixed(2)), isDark: widget.isDark));
+      rows.add(NutritionInfoRow(label: AppLocalizations.of(context).logMealZinc, value: AppLocalizations.of(context)!.logMealSheetMg6((p.zinc100g * _gToMg).toStringAsFixed(2)), isDark: widget.isDark));
     }
 
     return rows;

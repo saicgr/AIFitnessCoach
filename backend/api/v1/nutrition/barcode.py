@@ -10,7 +10,10 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
-from services.food_database_service import get_food_database_service
+from services.food_database_service import (
+    MICRONUTRIENT_LOG_FIELDS,
+    get_food_database_service,
+)
 
 from api.v1.nutrition.models import (
     BarcodeProductResponse,
@@ -213,47 +216,24 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
         food_item["is_ultra_processed"] = is_ultra_processed
 
         # Calculate micronutrients based on serving multiplier
-        sugar_g = round(product.nutrients.sugar_per_100g * multiplier, 1) if product.nutrients.sugar_per_100g else None
-        sodium_mg = round(product.nutrients.sodium_per_100g * multiplier, 1) if product.nutrients.sodium_per_100g else None
-        saturated_fat_g = round(product.nutrients.saturated_fat_per_100g * multiplier, 1) if product.nutrients.saturated_fat_per_100g else None
-
-        vitamin_a_ug = round(product.nutrients.vitamin_a_100g * multiplier, 2) if product.nutrients.vitamin_a_100g else None
-        vitamin_c_mg = round(product.nutrients.vitamin_c_100g * multiplier, 2) if product.nutrients.vitamin_c_100g else None
-        vitamin_d_iu = None  # OFF gives µg, conversion to IU = µg * 40
-        if product.nutrients.vitamin_d_100g:
-            vitamin_d_iu = round(product.nutrients.vitamin_d_100g * multiplier * 40, 1)
-        calcium_mg = round(product.nutrients.calcium_100g * multiplier, 1) if product.nutrients.calcium_100g else None
-        iron_mg = round(product.nutrients.iron_100g * multiplier, 2) if product.nutrients.iron_100g else None
-        potassium_mg = round(product.nutrients.potassium_100g * multiplier, 1) if product.nutrients.potassium_100g else None
-        magnesium_mg = round(product.nutrients.magnesium_100g * multiplier, 1) if product.nutrients.magnesium_100g else None
-        zinc_mg = round(product.nutrients.zinc_100g * multiplier, 2) if product.nutrients.zinc_100g else None
-
-        # F5 — extended micros from OFF. OFF reports most micros in GRAMS per
-        # 100g; nutrient_rdas wants mg (×1000) or µg (×1_000_000). Vitamin B9 /
-        # selenium / iodine / vit-K are µg-scale; the rest mg-scale. We only
-        # emit a value when OFF actually carried it (None otherwise → never read
-        # as 0 intake downstream).
-        def _mg(v):  # grams → mg
-            return round(v * multiplier * 1000, 3) if v else None
-        def _ug(v):  # grams → µg
-            return round(v * multiplier * 1_000_000, 2) if v else None
         n = product.nutrients
-        vitamin_e_mg = _mg(n.vitamin_e_100g)
-        vitamin_k_ug = _ug(n.vitamin_k_100g)
-        vitamin_b1_mg = _mg(n.vitamin_b1_100g)
-        vitamin_b2_mg = _mg(n.vitamin_b2_100g)
-        vitamin_b3_mg = _mg(n.vitamin_b3_100g)
-        vitamin_b6_mg = _mg(n.vitamin_b6_100g)
-        vitamin_b9_ug = _ug(n.vitamin_b9_100g)
-        vitamin_b12_ug = _ug(n.vitamin_b12_100g)
-        selenium_ug = _ug(n.selenium_100g)
-        phosphorus_mg = _mg(n.phosphorus_100g)
-        copper_mg = _mg(n.copper_100g)
-        manganese_mg = _mg(n.manganese_100g)
-        iodine_ug = _ug(n.iodine_100g)
-        cholesterol_mg = _mg(n.cholesterol_100g)
-        omega3_g = round(n.omega3_100g * multiplier, 3) if n.omega3_100g else None
-        omega6_g = round(n.omega6_100g * multiplier, 3) if n.omega6_100g else None
+        sugar_g = round(n.sugar_per_100g * multiplier, 1) if n.sugar_per_100g else None
+        sodium_mg = round(n.sodium_per_100g * multiplier, 1) if n.sodium_per_100g else None
+        saturated_fat_g = round(n.saturated_fat_per_100g * multiplier, 1) if n.saturated_fat_per_100g else None
+
+        # Every micronutrient goes through MICRONUTRIENT_LOG_FIELDS — the single
+        # field -> column -> factor table in food_database_service. ProductNutrients
+        # holds GRAMS per 100g whatever the source (OFF / verified override / USDA);
+        # the columns want mg, µg or IU. Iterating the table instead of hand-listing
+        # the nutrients is what makes a missed conversion impossible: the table is
+        # completeness-checked against the dataclass at import, and 8 nutrients
+        # previously bypassed conversion entirely (understated 1,000x-1,000,000x).
+        micro_kwargs = {}
+        for _field, (_column, _from_grams, _ndigits) in MICRONUTRIENT_LOG_FIELDS.items():
+            _grams = getattr(n, _field)
+            micro_kwargs[_column] = (
+                round(_grams * multiplier * _from_grams, _ndigits) if _grams else None
+            )
 
         # F1 — apply the user's learned per-food correction on top of the
         # barcode/label macros, so a personal override (e.g. they always log a
@@ -298,33 +278,11 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             sugar_g=sugar_g,
             sodium_mg=sodium_mg,
             saturated_fat_g=saturated_fat_g,
-            vitamin_a_ug=vitamin_a_ug,
-            vitamin_c_mg=vitamin_c_mg,
-            vitamin_d_iu=vitamin_d_iu,
-            calcium_mg=calcium_mg,
-            iron_mg=iron_mg,
-            potassium_mg=potassium_mg,
-            magnesium_mg=magnesium_mg,
-            zinc_mg=zinc_mg,
-            # F5 — extended micros (only set when OFF carried them).
-            vitamin_e_mg=vitamin_e_mg,
-            vitamin_k_ug=vitamin_k_ug,
-            vitamin_b1_mg=vitamin_b1_mg,
-            vitamin_b2_mg=vitamin_b2_mg,
-            vitamin_b3_mg=vitamin_b3_mg,
-            vitamin_b6_mg=vitamin_b6_mg,
-            vitamin_b9_ug=vitamin_b9_ug,
-            vitamin_b12_ug=vitamin_b12_ug,
-            selenium_ug=selenium_ug,
-            phosphorus_mg=phosphorus_mg,
-            copper_mg=copper_mg,
-            manganese_mg=manganese_mg,
-            iodine_ug=iodine_ug,
-            cholesterol_mg=cholesterol_mg,
-            omega3_g=omega3_g,
-            omega6_g=omega6_g,
             inflammation_score=inflammation_score,
             is_ultra_processed=is_ultra_processed,
+            # Micronutrients — every one converted above (None when the source
+            # never carried it, so it is never read as 0 intake downstream).
+            **micro_kwargs,
         )
 
         food_log_id = created_log.get('id') if created_log else "unknown"
