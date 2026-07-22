@@ -2699,19 +2699,29 @@ class LoggedMealsSection extends StatelessWidget {
   // ============================================
 
   void _showEditTimeDialog(BuildContext context, FoodLog meal) async {
+    // `logged_at` arrives as tz-aware UTC ISO (backend `core/timezone_utils.to_utc_iso`),
+    // so `meal.loggedAt` is a UTC DateTime. Reading hour/day straight off it opens the
+    // picker on the UTC wall clock — and rebuilds the date from the UTC calendar day,
+    // which for an evening meal (22:30 CDT = 03:30 UTC the NEXT day) saved it onto the
+    // wrong date. Work entirely in local wall-clock, the same convention the row itself
+    // renders with (TimeFormatters.logTime -> toLocal).
+    final localLoggedAt = meal.loggedAt.toLocal();
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(meal.loggedAt),
+      initialTime: TimeOfDay.fromDateTime(localLoggedAt),
     );
     if (time != null) {
-      final newDateTime = DateTime(
-        meal.loggedAt.year,
-        meal.loggedAt.month,
-        meal.loggedAt.day,
+      final newLocal = DateTime(
+        localLoggedAt.year,
+        localLoggedAt.month,
+        localLoggedAt.day,
         time.hour,
         time.minute,
       );
-      onUpdateMealTime(meal.id, newDateTime);
+      // Hand back the absolute instant: the caller serializes with a bare
+      // toIso8601String(), and a local-flavoured DateTime emits no offset — the
+      // backend would then read that wall clock as UTC and shift the meal again.
+      onUpdateMealTime(meal.id, newLocal.toUtc());
     }
   }
 

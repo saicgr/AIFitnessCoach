@@ -13,6 +13,7 @@ import '../models/food_patterns.dart';
 import '../models/micronutrients.dart';
 import '../models/nutrition_preferences.dart';
 import '../models/companion_suggestion.dart';
+import '../models/dish_image.dart';
 import '../models/recipe.dart';
 import '../models/ai_suggested_food.dart';
 import '../services/api_client.dart';
@@ -70,6 +71,84 @@ final nutritionMetaProvider =
     StateNotifierProvider<NutritionMetaNotifier, NutritionMetaState>((ref) {
   return NutritionMetaNotifier(ref.watch(nutritionRepositoryProvider), ref);
 });
+
+/// Response header naming WHY `GET /nutrition/adherence/{id}/summary` had no
+/// summary to return. Server-side source of truth:
+/// `backend/api/v1/nutrition/tdee_adherence.py` (`_REASON_HEADER`).
+const String kAdherenceUnavailableHeader = 'X-Nutrition-Adherence-Unavailable';
+
+/// Why the server had no adherence summary to give. Every one of these is a
+/// NORMAL state, never an error — errors are 5xx and surface as
+/// [AdherenceSummaryResult.failed].
+enum AdherenceUnavailableReason {
+  /// The user has no configured nutrition targets (fresh account, nutrition
+  /// onboarding skipped, or a row whose target columns are still NULL).
+  /// Targets are nullable BY DESIGN: "not configured" stays representable as
+  /// not-configured here and is never scored against an invented plan.
+  targetsNotConfigured,
+
+  /// Targets ARE configured, but the user logged no food inside the requested
+  /// window. Distinct from the above: the fix is "log a meal", not "set up
+  /// nutrition".
+  noLogsInWindow,
+
+  /// The server said "nothing to score" without naming a reason (header
+  /// absent or unrecognised — e.g. a proxy stripped it). Still authoritative:
+  /// there is no summary, we just can't say which unknown it is.
+  unspecified,
+}
+
+/// Outcome of one adherence-summary read.
+///
+/// Three states, because two of them are NOT the same thing:
+///   * [available]   — a real, scored summary.
+///   * [unavailable] — the server AFFIRMED there is nothing to score, and said
+///                     why. Authoritative: a cached summary is now stale.
+///   * [failed]      — the read did not complete (offline, 5xx, bad body). We
+///                     do NOT know whether data exists; callers must keep any
+///                     cached value rather than render/persist an empty state.
+@immutable
+class AdherenceSummaryResult {
+  const AdherenceSummaryResult.available(AdherenceSummary this.summary)
+      : reason = null,
+        failed = false;
+
+  const AdherenceSummaryResult.unavailable(
+    AdherenceUnavailableReason this.reason,
+  )   : summary = null,
+        failed = false;
+
+  const AdherenceSummaryResult.failed()
+      : summary = null,
+        reason = null,
+        failed = true;
+
+  /// The scored summary, or null when there is none / the read failed.
+  final AdherenceSummary? summary;
+
+  /// Why there is no summary. Null when one was returned, and null when the
+  /// read failed — a failure is not a reason for emptiness.
+  final AdherenceUnavailableReason? reason;
+
+  /// The request itself did not complete. Emptiness is UNKNOWN.
+  final bool failed;
+
+  /// The server affirmatively reported "there is nothing to score". Safe to
+  /// act on: clear caches, render the honest empty state.
+  bool get isKnownEmpty => summary == null && !failed;
+}
+
+AdherenceUnavailableReason _adherenceReasonFromHeader(String? header) {
+  switch (header) {
+    // Values ship from `_REASON_NO_TARGETS` / `_REASON_NO_LOGS`.
+    case 'targets-not-configured':
+      return AdherenceUnavailableReason.targetsNotConfigured;
+    case 'no-logs-in-window':
+      return AdherenceUnavailableReason.noLogsInWindow;
+    default:
+      return AdherenceUnavailableReason.unspecified;
+  }
+}
 
 /// Nutrition repository
 class NutritionRepository {
@@ -158,15 +237,147 @@ class NutritionRepository {
     }
   }
 
+  /// The account the API client is currently authenticated as, or null when
+  /// signed out (`clearAuth` wipes it on the Supabase signedOut event).
+  ///
+  /// This is the SAME id every nutrition caller passes around, so it is the
+  /// only trustworthy answer to "whose queue may we replay right now?" — an
+  /// in-memory `_lastLoadedUserId` outlives a sign-out and would replay one
+  /// account's stranded meals under the next account's session.
+  Future<String?> currentUserId() => _client.getUserId();
+
+  // --- Deleted-while-still-saving tombstones (A12d) ---------------------
+  //
+  // Idempotency keys of meals the user deleted BEFORE their `/log-direct`
+  // write confirmed. Skipping the server call for an `optimistic_` id is not
+  // enough on its own: the POST that will CREATE that row is still in flight
+  // (or still sitting in the offline queue), so seconds later the server
+  // materialises the meal the user just swiped away and the next refresh
+  // brings it back. The idempotency key is the only identifier shared by the
+  // optimistic row, the live POST body and the queued body, so the tombstone
+  // is keyed by it and consumed by [_enforcePendingDelete] the instant the
+  // write confirms.
+  static final Set<String> _pendingDeleteKeys = <String>{};
+  static const int _maxPendingDeleteKeys = 200;
+
+  /// Remember that [idempotencyKey]'s meal is already deleted. Insertion
+  /// ordered + capped so a write that never confirms can't grow this forever.
+  static void _rememberPendingDelete(String idempotencyKey) {
+    _pendingDeleteKeys.add(idempotencyKey);
+    while (_pendingDeleteKeys.length > _maxPendingDeleteKeys) {
+      _pendingDeleteKeys.remove(_pendingDeleteKeys.first);
+    }
+  }
+
+  /// Honour a delete the user made while this write was still unconfirmed.
+  ///
+  /// Runs on EVERY `/log-direct` completion — the live POST and the offline
+  /// replay alike. The row exists server-side now, so a client-side tombstone
+  /// alone would leave it on the server (and on every other device) and let it
+  /// reappear on the next refresh. A delete that itself fails is persisted to
+  /// [_PendingDeleteQueue] and retried on the next flush, never dropped.
+  ///
+  /// Returns true when this write's meal was deleted mid-flight, so the caller
+  /// can skip the follow-up work (HealthKit sync) for a meal that is gone.
+  Future<bool> _enforcePendingDelete(
+    String userId,
+    String? idempotencyKey,
+    Object? responseData,
+  ) async {
+    if (idempotencyKey == null || idempotencyKey.isEmpty) return false;
+    if (!_pendingDeleteKeys.remove(idempotencyKey)) return false;
+
+    final rawId = responseData is Map ? responseData['food_log_id'] : null;
+    final realId = rawId is String ? rawId : null;
+    if (realId == null || realId.isEmpty) {
+      debugPrint(
+          '⚠️ [Nutrition] meal deleted mid-write confirmed without a food_log_id — cannot remove it server-side');
+      return true;
+    }
+    debugPrint(
+        '🥗 [Nutrition] log $realId was deleted while saving — removing it server-side');
+    try {
+      await _client.delete('/nutrition/food-logs/$realId');
+    } on DioException catch (e) {
+      // 404 = the row is already gone; the user's deletion has won either way.
+      if (e.response?.statusCode == 404) return true;
+      debugPrint(
+          '❌ [Nutrition] mid-write delete of $realId failed: $e — queued for retry');
+      await _PendingDeleteQueue.enqueue(userId, realId);
+    } catch (e) {
+      debugPrint(
+          '❌ [Nutrition] mid-write delete of $realId failed: $e — queued for retry');
+      await _PendingDeleteQueue.enqueue(userId, realId);
+    }
+    return true;
+  }
+
   /// Replay a previously-queued meal-log request body verbatim. Used by the
   /// offline-queue flush — the body already carries its stable
   /// `idempotency_key` so the server de-dupes any write that already landed.
   Future<void> replayQueuedMealLog(Map<String, dynamic> body) async {
-    await _client.post('/nutrition/log-direct', data: body);
+    final response = await _client.post('/nutrition/log-direct', data: body);
+    // The user can delete a queued meal while the flush is already POSTing it
+    // (the queue entry is gone, but the row now exists) — honour the delete.
+    final rawKey = body['idempotency_key'];
+    // Resolve the row owner for a possible retry-queued delete. The queue is
+    // replayed FOR the currently-authenticated user, so the live session id is
+    // the trustworthy owner; the body field is only a fallback. An empty string
+    // here would reach _PendingDeleteQueue.enqueue, which early-returns on an
+    // empty userId and would SILENTLY DROP a failed mid-write delete — the meal
+    // the user swiped away then resurrects on the next refresh. If neither
+    // source yields an id we log loudly rather than pretend the delete is safe.
+    final rawUser = body['user_id'];
+    var userId = rawUser is String && rawUser.isNotEmpty ? rawUser : '';
+    if (userId.isEmpty) {
+      userId = await currentUserId() ?? '';
+    }
+    if (userId.isEmpty && rawKey is String && rawKey.isNotEmpty) {
+      debugPrint(
+          '❌ [Nutrition] replay of $rawKey has no owner id — a mid-write delete could not be queued for retry');
+    }
+    await _enforcePendingDelete(
+      userId,
+      rawKey is String ? rawKey : null,
+      response.data,
+    );
   }
 
-  /// Delete a food log
-  Future<void> deleteFoodLog(String logId) async {
+  /// Delete a food log.
+  ///
+  /// A log whose `/log-direct` write hasn't confirmed yet carries a synthetic
+  /// `optimistic_<micros>_<idx>` id, not a server UUID. There is no server row
+  /// to delete: the backend now guards this with `is_uuid` and answers a
+  /// non-UUID id with `200 {"never_persisted": true}` (it no longer 22P02 →
+  /// 500 — see `backend/api/v1/nutrition/food_logs.py::delete_food_log`). We
+  /// still short-circuit here rather than call it, because simply issuing the
+  /// delete would leave the still-running (or still queued) write to resurrect
+  /// the meal seconds later. So the WRITE is cancelled instead: its queued body
+  /// is removed, and a tombstone makes [_enforcePendingDelete] delete the row
+  /// the moment the POST confirms.
+  Future<void> deleteFoodLog(
+    String logId, {
+    /// Owner of the row — needed to drop a matching offline-queued write.
+    String? userId,
+    /// The pending write's `idempotency_key` (stamped on the optimistic row by
+    /// `spliceLog`). Without it an unconfirmed delete cannot be matched to the
+    /// write that is about to create the row, and the meal comes back.
+    String? idempotencyKey,
+  }) async {
+    if (logId.startsWith('optimistic_')) {
+      if (idempotencyKey == null || idempotencyKey.isEmpty) {
+        debugPrint(
+            '⚠️ [Nutrition] unconfirmed log $logId deleted without an idempotency key — its in-flight write cannot be cancelled');
+        return;
+      }
+      _rememberPendingDelete(idempotencyKey);
+      if (userId != null && userId.isNotEmpty) {
+        await _MealWriteQueue.removeByIdempotencyKey(userId, idempotencyKey);
+      }
+      debugPrint(
+          '🥗 [Nutrition] cancelled unconfirmed log $logId ($idempotencyKey)');
+      return;
+    }
     try {
       await _client.delete('/nutrition/food-logs/$logId');
     } catch (e) {
@@ -1082,6 +1293,11 @@ class NutritionRepository {
     String analysisMode = 'auto',
     String? userMessage,
     String? inputType,
+    /// Where a menu/bill photo was captured: 'printed' (paper menu),
+    /// 'board' (overhead / drive-thru display) or 'digital' (QR menu, PDF,
+    /// restaurant site, delivery-app screenshot). Selects the backend's OCR
+    /// prompt preamble; ignored for plate mode.
+    String sourceHint = 'printed',
     /// When true, backend analyzes but does NOT persist a food_log row for
     /// plate-classified responses; the client is responsible for opening a
     /// review UI and calling [logFoodDirect] on confirmation.
@@ -1138,6 +1354,7 @@ class NutritionRepository {
         MapEntry('analysis_mode', analysisMode),
         if (userMessage != null && userMessage.isNotEmpty) MapEntry('user_message', userMessage),
         if (inputType != null && inputType.isNotEmpty) MapEntry('input_type', inputType),
+        MapEntry('source_hint', sourceHint),
         if (confirmBeforeLog) const MapEntry('confirm_before_log', 'true'),
       ]);
       formData.files.addAll(multipart);
@@ -1273,6 +1490,73 @@ class NutritionRepository {
       },
     );
     return Map<String, dynamic>.from(response.data as Map);
+  }
+
+  /// Resolve dish thumbnails for a batch of menu items — FREE sources only.
+  ///
+  /// The backend chain is cache → the user's own past photos → food_database
+  /// → free-licence web. It never generates, so this call always costs
+  /// nothing. Names it can't resolve are simply absent from the map: the card
+  /// then renders a placeholder rather than some other dish's photo.
+  Future<Map<String, DishImage>> resolveDishImages({
+    required List<String> names,
+    bool allowWeb = true,
+  }) async {
+    if (names.isEmpty) return const {};
+    try {
+      final response = await _client.post(
+        '/nutrition/dish-images/resolve',
+        data: {'names': names, 'allow_web': allowWeb},
+      );
+      final raw = (response.data as Map<String, dynamic>?)?['images']
+              as Map<String, dynamic>? ??
+          const {};
+      return {
+        for (final entry in raw.entries)
+          if (entry.value is Map)
+            entry.key:
+                DishImage.fromJson(Map<String, dynamic>.from(entry.value as Map)),
+      };
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] resolveDishImages failed: $e');
+      // No image is a fine outcome — the card shows its placeholder.
+      return const {};
+    }
+  }
+
+  /// Generate ONE dish image (costs ~$0.02 on a cache miss).
+  ///
+  /// Only called for the Recommended picks and dishes the user taps. Returns
+  /// null when the feature is off, the daily cap is spent, or generation
+  /// failed — the caller keeps its placeholder and, for the cap case, should
+  /// surface [DishImageException.message].
+  Future<DishImage?> generateDishImage({
+    required String name,
+    String? restaurantName,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/dish-images/generate',
+        data: {
+          'name': name,
+          if (restaurantName != null && restaurantName.isNotEmpty)
+            'restaurant_name': restaurantName,
+        },
+      );
+      return DishImage.fromJson(Map<String, dynamic>.from(response.data as Map));
+    } on DioException catch (e) {
+      final detail = (e.response?.data is Map)
+          ? (e.response!.data as Map)['detail']?.toString()
+          : null;
+      debugPrint('⚠️ [Nutrition] generateDishImage failed: ${detail ?? e.message}');
+      throw DishImageException(
+        detail ?? 'Could not create an image for this dish.',
+        isCapReached: e.response?.statusCode == 429,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] generateDishImage failed: $e');
+      throw const DishImageException('Could not create an image for this dish.');
+    }
   }
 
   /// Fetch typical-companion suggestions for a primary food.
@@ -1465,8 +1749,19 @@ class NutritionRepository {
     }
   }
 
-  /// Get adherence summary with sustainability score
-  Future<AdherenceSummary?> getAdherenceSummary(
+  /// Get adherence summary with sustainability score, WITH the reason when
+  /// there is none.
+  ///
+  /// `GET /nutrition/adherence/{id}/summary` answers `200` + a JSON `null` body
+  /// when there is nothing to score, naming the reason in the
+  /// [kAdherenceUnavailableHeader] header
+  /// (`backend/api/v1/nutrition/tdee_adherence.py::_adherence_unavailable`).
+  /// Real failures are 5xx, so a null body NEVER means "something broke" — and
+  /// a 5xx never means "no data". Folding both into a bare `null` return (the
+  /// old behaviour) threw that distinction away, which is why a stale adherence
+  /// card could never be cleared: the caller had no way to tell "the server
+  /// says you have nothing" from "the request failed, keep what you have".
+  Future<AdherenceSummaryResult> getAdherenceSummaryResult(
     String userId, {
     int weeks = 4,
   }) async {
@@ -1477,16 +1772,90 @@ class NutritionRepository {
         queryParameters: {'weeks': weeks},
       );
 
-      if (response.data == null) {
-        return null;
+      final data = response.data;
+      if (data == null) {
+        final reason = _adherenceReasonFromHeader(
+          response.headers.value(kAdherenceUnavailableHeader),
+        );
+        debugPrint('ℹ️ [Nutrition] No adherence summary to show (${reason.name})');
+        return AdherenceSummaryResult.unavailable(reason);
       }
 
-      return AdherenceSummary.fromJson(response.data as Map<String, dynamic>);
+      if (data is! Map) {
+        // A 200 whose body is neither JSON `null` nor an object breaks the
+        // contract. Treat it as a FAILURE, not as "no data": clearing a cached
+        // summary on a body we could not understand would be a guess.
+        debugPrint(
+          '❌ [Nutrition] Adherence summary body was ${data.runtimeType}, '
+          'expected a JSON object or null',
+        );
+        return const AdherenceSummaryResult.failed();
+      }
+
+      return AdherenceSummaryResult.available(
+        AdherenceSummary.fromJson(Map<String, dynamic>.from(data)),
+      );
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        // A 404 is only "you have no configured targets" when the SERVER said
+        // so SEMANTICALLY. The current backend never 404s this route — the
+        // no-targets case is a 200 with a JSON `null` body plus the
+        // X-Nutrition-Adherence-Unavailable header. The ONLY 404 that means
+        // targets-not-configured is the legacy pre-null contract, whose body
+        // was `{"detail": "Nutrition preferences not found"}`. A generic 404
+        // (gateway hiccup, route rename, transient edge error, wrong host) does
+        // NOT mean the user has no data — and promoting it to `unavailable`
+        // makes `isKnownEmpty` true, which the provider treats as authoritative
+        // emptiness: it WIPES the memory + disk cache and repaints "not enough
+        // data", destroying real cached data on a transient failure. So only a
+        // positively-recognised legacy no-targets 404 clears caches; any other
+        // 404 is a failed read that must PRESERVE whatever is cached.
+        final headerReason =
+            e.response?.headers.value(kAdherenceUnavailableHeader);
+        final body = e.response?.data;
+        final detail = body is Map ? body['detail'] : null;
+        final isLegacyNoTargets = headerReason == 'targets-not-configured' ||
+            (detail is String &&
+                detail
+                    .toLowerCase()
+                    .contains('nutrition preferences not found'));
+        if (isLegacyNoTargets) {
+          debugPrint(
+            'ℹ️ [Nutrition] Adherence summary 404 (legacy no-targets response) '
+            'for $userId — treating as targets-not-configured',
+          );
+          return const AdherenceSummaryResult.unavailable(
+            AdherenceUnavailableReason.targetsNotConfigured,
+          );
+        }
+        debugPrint(
+          '❌ [Nutrition] Adherence summary 404 without a no-targets signal for '
+          '$userId — treating as a failed read so the cached summary is kept',
+        );
+        return const AdherenceSummaryResult.failed();
+      }
+      debugPrint(
+        '❌ [Nutrition] Error getting adherence summary '
+        '(${e.response?.statusCode ?? e.type.name}): $e',
+      );
+      return const AdherenceSummaryResult.failed();
     } catch (e) {
       debugPrint('❌ [Nutrition] Error getting adherence summary: $e');
-      return null;
+      return const AdherenceSummaryResult.failed();
     }
   }
+
+  /// Adherence summary, or null when there is none *or* the read failed.
+  ///
+  /// Convenience wrapper for callers that genuinely cannot act on the
+  /// difference (the weekly check-in bundle below just hides the section
+  /// either way). Anything that CACHES the result must use
+  /// [getAdherenceSummaryResult] instead — see [AdherenceSummaryResult].
+  Future<AdherenceSummary?> getAdherenceSummary(
+    String userId, {
+    int weeks = 4,
+  }) async =>
+      (await getAdherenceSummaryResult(userId, weeks: weeks)).summary;
 
   /// Get multi-option recommendations (aggressive, moderate, conservative)
   Future<RecommendationOptions?> getRecommendationOptions(String userId) async {

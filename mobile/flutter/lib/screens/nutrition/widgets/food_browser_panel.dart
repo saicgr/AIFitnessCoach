@@ -380,33 +380,49 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
   Future<void> _logLegacyCopy(FoodLog log, String stateKey) async {
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.copyFoodLog(
+      final response = await repo.copyFoodLog(
         logId: log.id,
         mealType: widget.mealType.value,
         date: _targetDateString,
       );
       ref.read(xpProvider.notifier).markMealLogged();
-      // Source log has all nutrition data already — splice a copy immediately
+      final notifier = ref.read(dailyNutritionProvider(_logDateKey).notifier);
+      // The copy endpoint returns the id of the row it just created. Minting a
+      // synthetic `optimistic_` id instead left a row nothing ever reconciled —
+      // the real server row merged in beside it and the meal was double-counted
+      // for good (and the phantom could never be deleted, being a non-UUID).
+      final newId = response['new_id'];
       final now = DateTime.now();
-      ref.read(dailyNutritionProvider(_logDateKey).notifier).spliceRawLog(
-        FoodLog(
-          id: 'optimistic_${now.millisecondsSinceEpoch}',
-          userId: widget.userId,
-          mealType: widget.mealType.value,
-          loggedAt: _logDateTime,
-          foodItems: log.foodItems,
-          totalCalories: log.totalCalories,
-          proteinG: log.proteinG,
-          carbsG: log.carbsG,
-          fatG: log.fatG,
-          fiberG: log.fiberG,
-          imageUrl: log.imageUrl,
-          sourceType: log.sourceType,
-          userQuery: log.userQuery,
-          createdAt: now,
-        ),
-        widget.userId,
-      );
+      if (newId is String && newId.isNotEmpty && newId != 'unknown') {
+        // Source log has all nutrition data already — splice the copy instantly.
+        notifier.spliceRawLog(
+          FoodLog(
+            id: newId,
+            userId: widget.userId,
+            mealType: widget.mealType.value,
+            loggedAt: _logDateTime,
+            foodItems: log.foodItems,
+            totalCalories: log.totalCalories,
+            proteinG: log.proteinG,
+            carbsG: log.carbsG,
+            fatG: log.fatG,
+            fiberG: log.fiberG,
+            imageUrl: log.imageUrl,
+            sourceType: log.sourceType,
+            userQuery: log.userQuery,
+            createdAt: now,
+          ),
+          widget.userId,
+        );
+      } else {
+        // No id came back, so there is nothing to reconcile a local row against
+        // — pull the authoritative rows rather than invent one that would
+        // double-count forever.
+        debugPrint(
+            '⚠️ [FoodBrowser] copy returned no new_id — refreshing instead of splicing');
+        unawaited(notifier.load(widget.userId, forceRefresh: true));
+        unawaited(notifier.loadLogs(widget.userId, forceRefresh: true));
+      }
       if (!mounted) return;
       setState(() => _logStates[stateKey] = _LogState.done);
       widget.onFoodLogged();
@@ -468,6 +484,12 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         (s, it) => s + ((it['fat_g'] as num?)?.toDouble() ?? 0),
       );
 
+      // (A11) One stable key for this write. Offline, the body is queued and
+      // replayed on reconnect — without a key the server has nothing to de-dupe
+      // against and the meal is logged twice, permanently. Stamping the SAME
+      // key on the optimistic row also lets the summary merge recognise the
+      // server row as this meal instead of re-adding a phantom beside it.
+      final idempotencyKey = NutritionRepository.newMealIdempotencyKey();
       final response = await repo.logAdjustedFood(
         userId: widget.userId,
         mealType: widget.mealType.value,
@@ -482,10 +504,13 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         sourceType: 'history',
         imageUrl: source.imageUrl,
         loggedAt: _loggedAtIso,
+        idempotencyKey: idempotencyKey,
       );
 
       ref.read(xpProvider.notifier).markMealLogged();
-      ref.read(dailyNutritionProvider(_logDateKey).notifier).spliceLog(response, widget.mealType.value, widget.userId);
+      ref.read(dailyNutritionProvider(_logDateKey).notifier).spliceLog(
+          response, widget.mealType.value, widget.userId,
+          idempotencyKey: idempotencyKey);
       if (!mounted) return;
       setState(() => _logStates[stateKey] = _LogState.done);
       widget.onFoodLogged();

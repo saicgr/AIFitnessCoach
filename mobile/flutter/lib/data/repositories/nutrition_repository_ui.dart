@@ -1,5 +1,44 @@
 part of 'nutrition_repository.dart';
 
+/// Thrown when a food-log request targets a row whose `/log-direct` write has
+/// not confirmed yet.
+///
+/// Such a row carries a synthetic `optimistic_<micros>_<idx>` id, not a server
+/// UUID. Sending it filters a Postgres `uuid` column, which raises 22P02
+/// ("invalid input syntax for type uuid") rather than matching zero rows — a
+/// 500, not a 404. The backend now rejects these safely, but there is no point
+/// spending a round-trip on a request that cannot succeed, and `toString()`
+/// here is surfaced directly to the user by the meal edit/move/time/notes
+/// handlers.
+class PendingLogWriteException implements Exception {
+  const PendingLogWriteException();
+
+  @override
+  String toString() => 'still saving — try again in a moment';
+}
+
+/// Build the URL for a food-log-scoped request, refusing unpersisted ids.
+///
+/// Every `/nutrition/food-logs/{id}` call in this file routes through here, so
+/// the optimistic-id check lives in exactly one place instead of being
+/// re-derived at each call site (and forgotten at the next one).
+String _foodLogPath(String logId, [String suffix = '']) {
+  if (logId.startsWith('optimistic_')) {
+    throw const PendingLogWriteException();
+  }
+  return '/nutrition/food-logs/$logId$suffix';
+}
+
+/// One micronutrient response, split into the typed summary and the optional
+/// additive `coverage` block. See
+/// [NutritionRepository.getDailyMicronutrientsWithCoverage] — both halves come
+/// from a single GET so no caller has to fetch the same endpoint twice.
+typedef DailyMicronutrientsWithCoverage = ({
+  DailyMicronutrientSummary summary,
+  int? foodsWithMicroData,
+  int? totalFoods,
+});
+
 /// Result returned by the backend `/save-as-recipe` endpoint. Defined in this
 /// part file so the repository can reference it without an import (since
 /// `part of` files can't add their own imports).
@@ -112,7 +151,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   /// placeholder permanently.
   Future<String?> refreshFoodLogImageUrl(String logId) async {
     try {
-      final response = await _client.get('/nutrition/food-logs/$logId/image-url');
+      final response = await _client.get(_foodLogPath(logId, '/image-url'));
       if (response.statusCode == 200 && response.data is Map) {
         return (response.data as Map)['image_url'] as String?;
       }
@@ -248,7 +287,7 @@ extension NutritionRepositoryExt on NutritionRepository {
       }
 
       final response = await _client.put(
-        '/nutrition/food-logs/$logId',
+        _foodLogPath(logId),
         data: body,
       );
       return response.data as Map<String, dynamic>;
@@ -261,7 +300,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   /// Fetch per-field edit history for a food log.
   Future<List<FoodLogEditRecord>> listFoodLogEdits(String logId) async {
     try {
-      final response = await _client.get('/nutrition/food-logs/$logId/edits');
+      final response = await _client.get(_foodLogPath(logId, '/edits'));
       final data = response.data;
       if (data is! List) return const [];
       return data
@@ -282,7 +321,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   }) async {
     try {
       final response = await _client.put(
-        '/nutrition/food-logs/$logId',
+        _foodLogPath(logId),
         data: {'meal_type': mealType},
       );
       return response.data as Map<String, dynamic>;
@@ -300,7 +339,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   }) async {
     try {
       final response = await _client.put(
-        '/nutrition/food-logs/$logId',
+        _foodLogPath(logId),
         data: {'logged_at': loggedAt},
       );
       return response.data as Map<String, dynamic>;
@@ -318,7 +357,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   }) async {
     try {
       final response = await _client.put(
-        '/nutrition/food-logs/$logId',
+        _foodLogPath(logId),
         data: {'notes': notes},
       );
       return response.data as Map<String, dynamic>;
@@ -345,7 +384,7 @@ extension NutritionRepositoryExt on NutritionRepository {
       if (energyLevel != null) body['energy_level'] = energyLevel;
 
       final response = await _client.patch(
-        '/nutrition/food-logs/$logId/mood',
+        _foodLogPath(logId, '/mood'),
         data: body,
       );
       // Best-effort cancel — don't block the mood save if it throws.
@@ -411,7 +450,7 @@ extension NutritionRepositoryExt on NutritionRepository {
       if (itemIndex != null) body['item_index'] = itemIndex;
       body['create_cook_event'] = createCookEvent;
       final response = await _client.post(
-        '/nutrition/food-logs/$logId/schedule',
+        _foodLogPath(logId, '/schedule'),
         data: body,
       );
       final data = response.data as Map<String, dynamic>;
@@ -446,7 +485,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   }) async {
     try {
       final response = await _client.post(
-        '/nutrition/food-logs/$logId/save-as-recipe',
+        _foodLogPath(logId, '/save-as-recipe'),
         queryParameters: {
           if (itemIndex != null) 'item_index': itemIndex,
           'create_cook_event': createCookEvent,
@@ -472,7 +511,7 @@ extension NutritionRepositoryExt on NutritionRepository {
   }) async {
     try {
       final response = await _client.post(
-        '/nutrition/food-logs/$logId/copy',
+        _foodLogPath(logId, '/copy'),
         queryParameters: {
           'meal_type': mealType,
           if (date != null) 'target_date': date,
@@ -784,13 +823,21 @@ extension NutritionRepositoryExt on NutritionRepository {
     /// (or defaulted here) so the SAME key is reused across an offline retry.
     String? idempotencyKey,
   }) async {
+    // (A11) EVERY write carries an idempotency key — generated here when the
+    // caller didn't supply one. Without a key an offline-queued meal replayed
+    // after reconnect has nothing for the server to de-dupe against (a
+    // permanent duplicate), and a delete made while the write is in flight has
+    // no way to name the write it must cancel.
+    final effectiveKey =
+        idempotencyKey ?? NutritionRepository.newMealIdempotencyKey();
+
     // Build the request body once so it can be either POSTed live or — when
     // offline — persisted verbatim to the meal write queue (A11).
     final body = <String, dynamic>{
           'user_id': userId,
           'meal_type': mealType,
           'food_items': foodItems,
-          if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
+          'idempotency_key': effectiveKey,
           'total_calories': totalCalories,
           'total_protein': totalProtein,
           'total_carbs': totalCarbs,
@@ -850,6 +897,12 @@ extension NutritionRepositoryExt on NutritionRepository {
     // body carries its stable `idempotency_key` so the reconnect replay
     // can't double-log.
     if (!await NutritionRepository.isOnline()) {
+      // Stamp WHEN the user logged it. A queued body with no `logged_at` is
+      // stamped server-side at REPLAY time, so a Tuesday-evening meal logged
+      // offline lands on whatever day the queue happens to flush — Thursday's
+      // totals gain a meal Tuesday never gets. Local (no offset), matching the
+      // `loggedAt` every caller sends on the online path.
+      body['logged_at'] ??= DateTime.now().toIso8601String();
       final queued = await _MealWriteQueue.enqueue(userId, body);
       if (!queued) {
         // Couldn't even persist to the local sync queue — do NOT return a fake
@@ -895,26 +948,35 @@ extension NutritionRepositoryExt on NutritionRepository {
       );
       final result = LogFoodResponse.fromJson(response.data);
 
+      // The user can swipe this meal away while the POST is still in flight.
+      // The row exists now, so the delete has to reach the server or the meal
+      // reappears on the next refresh — and it must not reach HealthKit either.
+      final deletedWhileSaving =
+          await _enforcePendingDelete(userId, effectiveKey, response.data);
+
       // Fire-and-forget: sync meal to Health Connect / HealthKit
-      HealthService.syncMealToHealthIfEnabled(
-        mealType: mealType,
-        calories: totalCalories.toDouble(),
-        proteinG: totalProtein.toDouble(),
-        carbsG: totalCarbs.toDouble(),
-        fatG: totalFat.toDouble(),
-        fiberG: totalFiber?.toDouble(),
-        sodiumMg: sodiumMg,
-        sugarG: sugarG,
-        saturatedFatG: saturatedFatG,
-        cholesterolMg: cholesterolMg,
-        potassiumMg: potassiumMg,
-        vitaminAIu: vitaminAUg,
-        vitaminCMg: vitaminCMg,
-        vitaminDIu: vitaminDIu,
-        calciumMg: calciumMg,
-        ironMg: ironMg,
-        name: foodItems.isNotEmpty ? (foodItems.first['name'] as String?) : null,
-      );
+      if (!deletedWhileSaving) {
+        HealthService.syncMealToHealthIfEnabled(
+          mealType: mealType,
+          calories: totalCalories.toDouble(),
+          proteinG: totalProtein.toDouble(),
+          carbsG: totalCarbs.toDouble(),
+          fatG: totalFat.toDouble(),
+          fiberG: totalFiber?.toDouble(),
+          sodiumMg: sodiumMg,
+          sugarG: sugarG,
+          saturatedFatG: saturatedFatG,
+          cholesterolMg: cholesterolMg,
+          potassiumMg: potassiumMg,
+          vitaminAIu: vitaminAUg,
+          vitaminCMg: vitaminCMg,
+          vitaminDIu: vitaminDIu,
+          calciumMg: calciumMg,
+          ironMg: ironMg,
+          name:
+              foodItems.isNotEmpty ? (foodItems.first['name'] as String?) : null,
+        );
+      }
 
       return result;
     } catch (e) {
@@ -944,9 +1006,11 @@ extension NutritionRepositoryExt on NutritionRepository {
     /// than server-side "now".
     String? loggedAt,
     List<FoodItemEdit> itemEdits = const [],
-    /// Client-generated idempotency key (A11) — see [logAdjustedFood]. When
-    /// null, [logAdjustedFood] is called without one; callers that need
-    /// double-tap protection should pass [NutritionRepository.newMealIdempotencyKey].
+    /// Client-generated idempotency key (A11) — see [logAdjustedFood], which
+    /// generates one when this is null. Callers that need DOUBLE-TAP protection
+    /// (two calls, one meal) must still pass their own stable
+    /// [NutritionRepository.newMealIdempotencyKey] — a defaulted key is unique
+    /// per call and only de-dupes that call's own offline replay.
     String? idempotencyKey,
     /// Gap 7 — opt-in tracker inputs from the analysis ({added_sugar_g,
     /// caffeine_mg, alcohol_g}), carried out-of-band of LogFoodResponse. Scaled
@@ -962,9 +1026,12 @@ extension NutritionRepositoryExt on NutritionRepository {
       final v = trackerMicros?[key];
       return v is num ? v.toDouble() * portionMultiplier : null;
     }
-    final adjustedProtein = (analyzedFood.proteinG * portionMultiplier).round();
-    final adjustedCarbs = (analyzedFood.carbsG * portionMultiplier).round();
-    final adjustedFat = (analyzedFood.fatG * portionMultiplier).round();
+    // Nullable macros (null = unknown). This adjusted total is re-sent to the
+    // server, which re-runs enforce_macro_integrity as the authority, so a 0
+    // here is a transient client value, not a fabricated persisted fact.
+    final adjustedProtein = ((analyzedFood.proteinG ?? 0) * portionMultiplier).round();
+    final adjustedCarbs = ((analyzedFood.carbsG ?? 0) * portionMultiplier).round();
+    final adjustedFat = ((analyzedFood.fatG ?? 0) * portionMultiplier).round();
     final adjustedFiber = ((analyzedFood.fiberG ?? 0) * portionMultiplier).round();
 
     // Adjust micronutrients by portion multiplier
@@ -1416,11 +1483,17 @@ extension NutritionRepositoryExt on NutritionRepository {
     }
   }
 
-  /// F5 — raw micronutrient response. Same endpoint as [getDailyMicronutrients]
-  /// but returns the decoded JSON map so callers can read the additive
-  /// `coverage: {foods_with_micro_data, total_foods}` block without a model
-  /// migration. Returns an empty map on a null/non-map body.
-  Future<Map<String, dynamic>> getDailyMicronutrientsRaw({
+  /// F5 — the typed summary AND the additive
+  /// `coverage: {foods_with_micro_data, total_foods}` block from ONE request.
+  ///
+  /// Replaces the old pair of methods (`getDailyMicronutrients` for the model +
+  /// a `…Raw` variant for coverage). Both read the SAME endpoint off the SAME
+  /// body, so calling them in sequence issued two identical GETs for one
+  /// answer — visible in production logs as a doubled
+  /// `/nutrition/micronutrients/{id}`. Coverage is optional server-side, so
+  /// it comes back null when the block is absent; the summary is not optional
+  /// and a non-map body throws rather than degrading to invented data.
+  Future<DailyMicronutrientsWithCoverage> getDailyMicronutrientsWithCoverage({
     required String userId,
     String? date,
   }) async {
@@ -1431,7 +1504,24 @@ extension NutritionRepositoryExt on NutritionRepository {
       queryParameters: queryParams.isNotEmpty ? queryParams : null,
     );
     final data = response.data;
-    return data is Map<String, dynamic> ? data : <String, dynamic>{};
+    if (data is! Map<String, dynamic>) {
+      throw StateError(
+        'micronutrients: unexpected response shape ${data.runtimeType}',
+      );
+    }
+    final summary = DailyMicronutrientSummary.fromJson(data);
+    final coverage = data['coverage'];
+    int? withData;
+    int? total;
+    if (coverage is Map) {
+      withData = (coverage['foods_with_micro_data'] as num?)?.toInt();
+      total = (coverage['total_foods'] as num?)?.toInt();
+    }
+    return (
+      summary: summary,
+      foodsWithMicroData: withData,
+      totalFoods: total,
+    );
   }
 
 

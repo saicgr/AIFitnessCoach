@@ -106,9 +106,14 @@ class MealLogPersistException implements Exception {
 /// schema mismatch drops the queue rather than crashing.
 class _MealWriteQueue {
   static const _prefix = 'meal_write_queue_v1::';
+  // Bodies the server has permanently REJECTED. Parked here (never deleted)
+  // so a poison item stops blocking the queue without destroying the meal the
+  // user logged — see [_QueueSendOutcome.permanent].
+  static const _quarantinePrefix = 'meal_write_quarantine_v1::';
   static const _schemaVersion = 1;
 
   static String _key(String userId) => '$_prefix$userId';
+  static String _quarantineKey(String userId) => '$_quarantinePrefix$userId';
 
   /// Append a meal-log request body to the on-disk queue, de-duping on the
   /// embedded `idempotency_key`.
@@ -177,30 +182,63 @@ class _MealWriteQueue {
     );
   }
 
-  /// Drain the queue in FIFO order via [send]. Stops on the first transient
-  /// failure and re-persists the remainder so order + idempotency hold for
-  /// the next online event. Returns the number of writes flushed.
-  static Future<int> flush(
+  /// Drop a queued write by its `idempotency_key` — the user deleted the meal
+  /// before it ever reached the server, so replaying it would resurrect a meal
+  /// they removed. Returns true when an entry was actually dropped.
+  static Future<bool> removeByIdempotencyKey(String userId, String key) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = await _read(prefs, userId);
+      final kept = list.where((b) => b['idempotency_key'] != key).toList();
+      if (kept.length == list.length) return false;
+      await _persist(prefs, userId, kept);
+      debugPrint('🥗 [MealQueue] dropped queued write $key (deleted before sync)');
+      return true;
+    } catch (e) {
+      debugPrint('🥗 [MealQueue] removeByIdempotencyKey failed: $e');
+      return false;
+    }
+  }
+
+  /// Drain the queue in FIFO order via [send]. A transient failure stops the
+  /// drain and re-persists the remainder so order + idempotency hold for the
+  /// next online event; a PERMANENT rejection is quarantined and the drain
+  /// continues, so one poison body can't wedge every later meal forever.
+  static Future<_MealQueueFlushResult> flush(
     String userId,
-    Future<bool> Function(Map<String, dynamic> body) send,
+    Future<_QueueSendOutcome> Function(Map<String, dynamic> body) send,
   ) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       var list = await _read(prefs, userId);
-      if (list.isEmpty) return 0;
+      if (list.isEmpty) return (flushed: 0, quarantined: 0, remaining: 0);
       var flushed = 0;
+      var quarantined = 0;
       while (list.isNotEmpty) {
-        final ok = await send(list.first);
-        if (!ok) break; // transient failure — keep the rest queued
+        final body = list.first;
+        final outcome = await send(body);
+        if (outcome == _QueueSendOutcome.retry) break; // keep the rest queued
+        if (outcome == _QueueSendOutcome.permanent) {
+          // Park it rather than discard it — the meal the user logged is still
+          // their data, and the pending-sync surface reports the count.
+          await _quarantine(prefs, userId, body);
+          quarantined++;
+        } else {
+          flushed++;
+        }
         list = list.sublist(1);
-        flushed++;
         await _persist(prefs, userId, list);
       }
-      debugPrint('🥗 [MealQueue] flushed $flushed, remaining ${list.length}');
-      return flushed;
+      debugPrint(
+          '🥗 [MealQueue] flushed $flushed, quarantined $quarantined, remaining ${list.length}');
+      return (
+        flushed: flushed,
+        quarantined: quarantined,
+        remaining: list.length
+      );
     } catch (e) {
       debugPrint('🥗 [MealQueue] flush failed: $e');
-      return 0;
+      return (flushed: 0, quarantined: 0, remaining: await depth(userId));
     }
   }
 
@@ -210,6 +248,235 @@ class _MealWriteQueue {
       return (await _read(prefs, userId)).isEmpty;
     } catch (_) {
       return true;
+    }
+  }
+
+  // ── Quarantine (permanently-rejected bodies) ────────────────────────────
+
+  static Future<List<Map<String, dynamic>>> _readQuarantine(
+      SharedPreferences prefs, String userId) async {
+    final raw = prefs.getString(_quarantineKey(userId));
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final envelope = jsonDecode(raw);
+      if (envelope is! Map<String, dynamic>) return [];
+      if (envelope['v'] != _schemaVersion) return [];
+      final items = envelope['items'];
+      if (items is! List) return [];
+      return items
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> _quarantine(SharedPreferences prefs, String userId,
+      Map<String, dynamic> body) async {
+    final items = await _readQuarantine(prefs, userId);
+    final key = body['idempotency_key'];
+    if (key != null && items.any((b) => b['idempotency_key'] == key)) return;
+    items.add(body);
+    await prefs.setString(
+      _quarantineKey(userId),
+      jsonEncode({'v': _schemaVersion, 'items': items}),
+    );
+  }
+
+  /// How many writes the server rejected outright. Surfaced so a meal that
+  /// will NEVER sync can never look synced.
+  static Future<int> quarantineDepth(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return (await _readQuarantine(prefs, userId)).length;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Move every quarantined body back onto the live queue (user tapped retry
+  /// on the failed-sync surface). Returns how many were re-queued.
+  static Future<int> requeueQuarantined(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final failed = await _readQuarantine(prefs, userId);
+      if (failed.isEmpty) return 0;
+      final list = await _read(prefs, userId);
+      for (final body in failed) {
+        final key = body['idempotency_key'];
+        if (key != null && list.any((b) => b['idempotency_key'] == key)) {
+          continue;
+        }
+        list.add(body);
+      }
+      await _persist(prefs, userId, list);
+      await prefs.remove(_quarantineKey(userId));
+      return failed.length;
+    } catch (e) {
+      debugPrint('🥗 [MealQueue] requeueQuarantined failed: $e');
+      return 0;
+    }
+  }
+}
+
+/// Outcome of one attempt to replay a queued meal-log write.
+enum _QueueSendOutcome {
+  /// Accepted (or de-duped) by the server — drop the entry.
+  sent,
+
+  /// Transient (offline / timeout / 5xx) — stop and keep the rest queued.
+  retry,
+
+  /// The server will NEVER accept this body (a 4xx verdict). Quarantine it so
+  /// one poison entry can't block every meal logged after it.
+  permanent,
+}
+
+/// Tally from one [_MealWriteQueue.flush] drain.
+typedef _MealQueueFlushResult = ({int flushed, int quarantined, int remaining});
+
+/// True when [response] looks like it came from OUR FastAPI backend (a decoded
+/// JSON body, or a JSON content-type) rather than a captive portal / proxy
+/// (which answer HTML or a redirect). Gates the "permanent" quarantine verdict:
+/// the queue flush fires on connectivity-RESTORED, exactly when a portal is most
+/// likely to return a bogus 4xx to a request that never reached our API, so a
+/// portal-shaped 4xx must NOT permanently quarantine a good meal.
+bool _looksLikeApiResponse(Response? response) {
+  if (response == null) return false;
+  // Dio decodes JSON bodies to Map/List; a portal's HTML page stays a String.
+  final data = response.data;
+  if (data is Map || data is List) return true;
+  final contentType = response.headers.value(Headers.contentTypeHeader);
+  return contentType != null &&
+      contentType.toLowerCase().contains('application/json');
+}
+
+
+/// Disk-backed set of food_log ids whose DELETE still has to reach the server.
+///
+/// A meal deleted while its `/log-direct` write was still in flight is removed
+/// by `NutritionRepository._enforcePendingDelete` the instant that write
+/// confirms. If THAT delete fails (offline again, 5xx) the row would quietly
+/// come back on the next refresh, so its id lands here and is retried on every
+/// queue flush — the user's deletion survives even a cold start.
+class _PendingDeleteQueue {
+  static const _prefix = 'meal_delete_queue_v1::';
+  // v2: entries carry a per-id attempt count so a delete that keeps failing can
+  // be dead-lettered (v1 was a bare id list). _read migrates v1 in place so
+  // already-stranded deletes survive the upgrade instead of resurrecting.
+  static const _schemaVersion = 2;
+
+  // flush() fires on EVERY nutrition refresh / tab visit, so an id whose DELETE
+  // keeps 500ing would otherwise be re-issued forever. After this many failed
+  // attempts the id is dropped (dead-lettered): a persistently-failing delete is
+  // a stuck server row that the normal summary merge will surface honestly,
+  // rather than a request worth hammering on every screen open indefinitely.
+  static const _maxAttempts = 12;
+
+  static String _key(String userId) => '$_prefix$userId';
+
+  static Future<void> enqueue(String userId, String logId) async {
+    if (userId.isEmpty || logId.isEmpty) {
+      // A dropped delete intent means the row can silently resurrect — never
+      // swallow it invisibly. (userId is empty here, so nothing PII is logged.)
+      debugPrint(
+          '⚠️ [MealDeleteQueue] stranded delete NOT queued — empty ${userId.isEmpty ? "userId" : "logId"} (logId="$logId")');
+      return;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final entries = await _read(prefs, userId);
+      if (entries.any((e) => e['id'] == logId)) return;
+      entries.add(<String, dynamic>{'id': logId, 'attempts': 0});
+      await _persist(prefs, userId, entries);
+      debugPrint('🥗 [MealDeleteQueue] stranded delete queued (depth=${entries.length})');
+    } catch (e) {
+      debugPrint('🥗 [MealDeleteQueue] enqueue failed: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> _read(
+      SharedPreferences prefs, String userId) async {
+    final raw = prefs.getString(_key(userId));
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final envelope = jsonDecode(raw);
+      if (envelope is! Map<String, dynamic>) return [];
+      final v = envelope['v'];
+      if (v == 1) {
+        // Migrate legacy v1 (bare id list) → attempt-tracked entries so a delete
+        // stranded before this upgrade isn't dropped (which would resurrect it).
+        final ids = envelope['ids'];
+        if (ids is! List) return [];
+        return [
+          for (final id in ids.whereType<String>())
+            <String, dynamic>{'id': id, 'attempts': 0},
+        ];
+      }
+      if (v != _schemaVersion) return [];
+      final entries = envelope['entries'];
+      if (entries is! List) return [];
+      return entries
+          .whereType<Map>()
+          .map((m) => <String, dynamic>{
+                'id': m['id'],
+                'attempts': (m['attempts'] as num?)?.toInt() ?? 0,
+              })
+          .where((m) => m['id'] is String && (m['id'] as String).isNotEmpty)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> _persist(SharedPreferences prefs, String userId,
+      List<Map<String, dynamic>> entries) async {
+    if (entries.isEmpty) {
+      await prefs.remove(_key(userId));
+      return;
+    }
+    await prefs.setString(
+      _key(userId),
+      jsonEncode({'v': _schemaVersion, 'entries': entries}),
+    );
+  }
+
+  /// Retry every stranded delete. [send] returns true once the row is gone
+  /// server-side (a 404 counts — the deletion won). Ids that exceed
+  /// [_maxAttempts] consecutive failures are dead-lettered (dropped) so a
+  /// permanently-failing delete stops re-firing on every flush. Returns how many
+  /// ids are still stranded afterwards.
+  static Future<int> flush(
+    String userId,
+    Future<bool> Function(String logId) send,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final entries = await _read(prefs, userId);
+      if (entries.isEmpty) return 0;
+      final kept = <Map<String, dynamic>>[];
+      var deadLettered = 0;
+      for (final e in entries) {
+        final id = e['id'] as String;
+        if (await send(id)) continue; // gone server-side — deletion won
+        final attempts = (e['attempts'] as int) + 1;
+        if (attempts >= _maxAttempts) {
+          deadLettered++;
+          debugPrint(
+              '⚠️ [MealDeleteQueue] dead-lettered $id after $attempts failed attempts');
+          continue;
+        }
+        kept.add(<String, dynamic>{'id': id, 'attempts': attempts});
+      }
+      await _persist(prefs, userId, kept);
+      if (deadLettered > 0) {
+        debugPrint('⚠️ [MealDeleteQueue] $deadLettered stranded delete(s) dead-lettered');
+      }
+      return kept.length;
+    } catch (e) {
+      debugPrint('🥗 [MealDeleteQueue] flush failed: $e');
+      return 0;
     }
   }
 }
@@ -422,18 +689,28 @@ class NutritionMetaState {
   /// stranded write visible instead of silently lost.
   final int pendingMealSyncCount;
 
+  /// Number of queued meal writes the server REJECTED outright (a 4xx that can
+  /// never succeed on a replay). They are quarantined instead of retried — one
+  /// poison body must not block every meal logged after it — but a meal that
+  /// will never sync must never look synced, so the count is surfaced here for
+  /// the pending-sync affordance to report (and offer a retry on).
+  final int failedMealSyncCount;
+
   const NutritionMetaState({
     this.targets,
     this.pendingMealSyncCount = 0,
+    this.failedMealSyncCount = 0,
   });
 
   NutritionMetaState copyWith({
     NutritionTargets? targets,
     int? pendingMealSyncCount,
+    int? failedMealSyncCount,
   }) {
     return NutritionMetaState(
       targets: targets ?? this.targets,
       pendingMealSyncCount: pendingMealSyncCount ?? this.pendingMealSyncCount,
+      failedMealSyncCount: failedMealSyncCount ?? this.failedMealSyncCount,
     );
   }
 }
@@ -464,12 +741,30 @@ class NutritionMetaNotifier extends StateNotifier<NutritionMetaState> {
           r == ConnectivityResult.vpn);
       if (online) {
         // Defer slightly so the radio + DNS settle before hitting the API.
-        Future.delayed(const Duration(milliseconds: 800), () {
-          final uid = _lastLoadedUserId;
-          if (uid != null) flushMealQueue(uid);
+        Future.delayed(const Duration(milliseconds: 800), () async {
+          // Flush for whoever is signed in RIGHT NOW. `_lastLoadedUserId`
+          // survives a sign-out, so trusting it meant a connectivity event
+          // after an account switch replayed account A's stranded meals under
+          // account B's session — a cross-account write.
+          final uid = await _repository.currentUserId();
+          if (uid != null && uid.isNotEmpty) await flushMealQueue(uid);
         });
       }
     });
+  }
+
+  /// Every field on this notifier is scoped to ONE account, but the notifier
+  /// itself is a session-long singleton — so without an explicit reset the next
+  /// user inherits the previous user's targets and pending-sync badge. Called
+  /// at the top of every user-scoped entry point.
+  void _ensureUserScope(String userId) {
+    if (_lastLoadedUserId != null && _lastLoadedUserId != userId) {
+      debugPrint(
+          '🥗 [Nutrition] account switch ${_lastLoadedUserId!} → $userId — resetting user-scoped state');
+      _targetsLoadTime = null;
+      state = const NutritionMetaState();
+    }
+    _lastLoadedUserId = userId;
   }
 
   @override
@@ -500,6 +795,7 @@ class NutritionMetaNotifier extends StateNotifier<NutritionMetaState> {
 
   /// Load nutrition targets (5-minute freshness cache).
   Future<void> loadTargets(String userId, {bool forceRefresh = false}) async {
+    _ensureUserScope(userId);
     if (!forceRefresh &&
         _lastLoadedUserId == userId &&
         _targetsLoadTime != null &&
@@ -540,16 +836,73 @@ class NutritionMetaNotifier extends StateNotifier<NutritionMetaState> {
   }
 
   /// Public retry hook for the "N meals waiting to sync" affordance.
+  ///
+  /// The pending count folds in quarantined (server-rejected) writes — they are
+  /// the ONLY sync surface and a quarantined meal must never silently vanish —
+  /// so this Retry has to move any quarantined bodies back onto the live queue
+  /// before draining, otherwise tapping Retry on a bar that is non-zero purely
+  /// because of quarantined items would do nothing.
   Future<void> retryPendingMealWrites(String userId) async {
+    await _MealWriteQueue.requeueQuarantined(userId);
     await flushMealQueue(userId);
   }
 
-  /// Recompute the offline-queue depth into state so the "waiting to sync"
-  /// surface reflects reality.
+  /// Public retry hook for the "N meals couldn't sync" affordance — moves the
+  /// quarantined bodies back onto the live queue and drains it again. Used when
+  /// the user (or a later app version / server fix) wants another attempt at a
+  /// write the server had rejected outright.
+  Future<void> retryFailedMealWrites(String userId) async {
+    final requeued = await _MealWriteQueue.requeueQuarantined(userId);
+    if (requeued > 0) {
+      debugPrint('🥗 [Nutrition] re-queued $requeued rejected meal write(s)');
+    }
+    await flushMealQueue(userId);
+  }
+
+  /// Recompute the offline-queue depths into state so the "waiting to sync" /
+  /// "couldn't sync" surfaces reflect reality.
   Future<void> refreshPendingMealCount(String userId) async {
     final depth = await _MealWriteQueue.depth(userId);
-    if (state.pendingMealSyncCount != depth) {
-      state = state.copyWith(pendingMealSyncCount: depth);
+    final failed = await _MealWriteQueue.quarantineDepth(userId);
+    // The only sync affordance (_PendingSyncBar) watches pendingMealSyncCount,
+    // and failedMealSyncCount has no consumer anywhere in the app. A quarantined
+    // meal is still NOT on the server, so folding it into the WATCHED total is
+    // what keeps a stranded write visible/actionable instead of vanishing
+    // silently — the exact "silent loss" the house rules forbid. The separate
+    // failedMealSyncCount is retained so a future surface can distinguish them.
+    final visible = depth + failed;
+    if (state.pendingMealSyncCount != visible ||
+        state.failedMealSyncCount != failed) {
+      state = state.copyWith(
+        pendingMealSyncCount: visible,
+        failedMealSyncCount: failed,
+      );
+    }
+  }
+
+  /// Retry deletes that never reached the server (the user removed a meal whose
+  /// write was still in flight, and the follow-up delete failed). A stranded
+  /// delete would otherwise let the meal reappear on the next refresh, so this
+  /// runs BEFORE the write drain — a deletion the user already made outranks
+  /// anything still queued.
+  Future<void> _drainPendingDeletes(String userId) async {
+    final stranded = await _PendingDeleteQueue.flush(userId, (logId) async {
+      try {
+        await _repository.deleteFoodLog(logId);
+        return true;
+      } on DioException catch (e) {
+        // Already gone server-side — the deletion has effectively succeeded.
+        if (e.response?.statusCode == 404) return true;
+        debugPrint('🥗 [Nutrition] stranded delete $logId failed: $e');
+        return false;
+      } catch (e) {
+        debugPrint('🥗 [Nutrition] stranded delete $logId failed: $e');
+        return false;
+      }
+    });
+    if (stranded > 0) {
+      debugPrint(
+          '⚠️ [Nutrition] $stranded meal delete(s) still stranded — retrying on next sync');
     }
   }
 
@@ -557,27 +910,64 @@ class NutritionMetaNotifier extends StateNotifier<NutritionMetaState> {
   /// queued body is replayed verbatim so its stable `idempotency_key` lets the
   /// server de-dupe any write that already landed.
   Future<void> flushMealQueue(String userId) async {
-    _lastLoadedUserId = userId;
-    if (_isFlushingMealQueue) return;
-    if (await _MealWriteQueue.isEmpty(userId)) {
-      // Nothing queued — make sure any stale "waiting to sync" badge clears.
-      if (state.pendingMealSyncCount != 0) {
-        state = state.copyWith(pendingMealSyncCount: 0);
-      }
+    if (userId.isEmpty) return;
+    // A queue is user-scoped on disk, but this notifier and the connectivity
+    // listener outlive a sign-out — never replay one account's stranded meals
+    // while a DIFFERENT account holds the session.
+    final authedId = await _repository.currentUserId();
+    if (authedId != null && authedId.isNotEmpty && authedId != userId) {
+      debugPrint(
+          '🥗 [Nutrition] skipped meal-queue flush for $userId — $authedId is signed in');
       return;
     }
+    _ensureUserScope(userId);
+    if (_isFlushingMealQueue) return;
     _isFlushingMealQueue = true;
     try {
-      final flushed = await _MealWriteQueue.flush(userId, (body) async {
+      await _drainPendingDeletes(userId);
+      if (await _MealWriteQueue.isEmpty(userId)) return;
+      final result = await _MealWriteQueue.flush(userId, (body) async {
         try {
           await _repository.replayQueuedMealLog(body);
-          return true;
-        } catch (e) {
+          return _QueueSendOutcome.sent;
+        } on DioException catch (e) {
+          final status = e.response?.statusCode;
+          // A 4xx verdict is the server saying this exact body can never be
+          // accepted (malformed payload, rejected meal type, unknown food id).
+          // Retrying it forever blocks every meal queued behind it, so
+          // quarantine it. 401/403 (token mid-refresh) and 408/429 (try again)
+          // are about the ATTEMPT, not the body — those stay retryable.
+          //
+          // BUT this drain fires on connectivity-RESTORED — exactly the moment a
+          // captive portal / interception proxy is most likely to answer a bogus
+          // 4xx (400/404/407/511…) to a request that NEVER reached our API.
+          // Quarantining on that would permanently strand a perfectly good meal.
+          // So only treat a 4xx as permanent when the response actually LOOKS
+          // like our FastAPI backend (a JSON body); a portal's HTML/redirect
+          // stays retryable so it flushes for real once past the portal.
+          if (status != null &&
+              status >= 400 &&
+              status < 500 &&
+              status != 401 &&
+              status != 403 &&
+              status != 407 &&
+              status != 408 &&
+              status != 429 &&
+              _looksLikeApiResponse(e.response)) {
+            debugPrint(
+                '🥗 [Nutrition] queued meal permanently rejected ($status): ${e.response?.data}');
+            return _QueueSendOutcome.permanent;
+          }
           debugPrint('🥗 [Nutrition] queued meal flush item failed: $e');
-          return false; // transient — keep it (and the rest) queued
+          return _QueueSendOutcome.retry;
+        } catch (e) {
+          // Not an HTTP verdict (socket drop, parse, cancel) — always retry;
+          // a logged meal is never discarded on an ambiguous error.
+          debugPrint('🥗 [Nutrition] queued meal flush item failed: $e');
+          return _QueueSendOutcome.retry;
         }
       });
-      if (flushed > 0) {
+      if (result.flushed > 0) {
         // Reconcile: server now holds the real rows. forceRefresh so the
         // optimistic splices are replaced by authoritative data in place.
         final today = todayNutritionKey();
@@ -585,9 +975,13 @@ class NutritionMetaNotifier extends StateNotifier<NutritionMetaState> {
         await n.load(userId, forceRefresh: true);
         await n.loadLogs(userId, forceRefresh: true);
       }
+      if (result.quarantined > 0) {
+        debugPrint(
+            '⚠️ [Nutrition] ${result.quarantined} queued meal(s) rejected outright — surfaced as failed syncs');
+      }
     } finally {
       _isFlushingMealQueue = false;
-      // Whatever remains queued stays visible via the pending badge.
+      // Whatever remains queued (or quarantined) stays visible via the badges.
       await refreshPendingMealCount(userId);
     }
   }
@@ -616,6 +1010,19 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// incoming server summary so an in-flight refresh can't resurrect them.
   /// Per-date (this instance only).
   final Set<String> _deletedTombstones = {};
+
+  /// Maps an optimistic id → the authoritative server id a reconcile carried a
+  /// tombstone forward to. Lets [restoreLog] (which only ever holds the ORIGINAL
+  /// optimistic snapshot) lift the tombstone that now lives under the real id,
+  /// so an Undo tapped AFTER `/log-direct` reconciled the row still cancels the
+  /// deferred server delete.
+  final Map<String, String> _reconciledDeleteAlias = {};
+
+  /// How long a resurrected-row server delete waits before firing, matching the
+  /// Undo snackbar window in `nutrition_screen._deleteMeal` (4s) plus a small
+  /// margin. The delete is deferred so an Undo during the window genuinely
+  /// undoes it instead of racing a DELETE that already reached the server.
+  static const Duration _resurrectedDeleteUndoWindow = Duration(seconds: 5);
 
   /// Monotonic counter — each load increments it. A response whose epoch no
   /// longer matches has been superseded by a newer load and is dropped.
@@ -894,10 +1301,47 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     ]);
   }
 
-  /// Delete a food log (synchronous flow — force-refresh after).
-  Future<void> deleteLog(String userId, String logId) async {
+  /// The idempotency key stamped on a still-unconfirmed local row. A delete of
+  /// such a row has to cancel the write that is about to CREATE it, and that
+  /// key is the only identifier the two share. Null for already-persisted rows
+  /// (they delete by id) and for rows spliced without a key.
+  String? _idempotencyKeyFor(String logId) {
+    if (!mounted) return null;
+    for (final m in state.logs) {
+      if (m.id == logId) return m.idempotencyKey;
+    }
+    for (final m in state.summary?.meals ?? const <FoodLog>[]) {
+      if (m.id == logId) return m.idempotencyKey;
+    }
+    return null;
+  }
+
+  /// Delete a row that only came into existence AFTER the user removed it
+  /// locally. Persists the intent when the call fails so the next queue flush
+  /// retries it — the user's deletion must win, not merely look like it did.
+  Future<void> _deleteResurrectedRow(String? userId, String logId) async {
     try {
       await _repository.deleteFoodLog(logId);
+      return;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return; // already gone — delete won
+      debugPrint('🥗 [Nutrition] delete of resurrected log $logId failed: $e');
+    } catch (e) {
+      debugPrint('🥗 [Nutrition] delete of resurrected log $logId failed: $e');
+    }
+    if (userId != null && userId.isNotEmpty) {
+      await _PendingDeleteQueue.enqueue(userId, logId);
+    }
+  }
+
+  /// Delete a food log (synchronous flow — force-refresh after).
+  Future<void> deleteLog(String userId, String logId) async {
+    // Capture the key BEFORE the delete — an unconfirmed row's in-flight write
+    // is cancelled by key, and the row leaves local state moments later.
+    final pendingKey = _idempotencyKeyFor(logId);
+    try {
+      await _repository.deleteFoodLog(logId,
+          userId: userId, idempotencyKey: pendingKey);
       unawaited(_bustCoachInsightCaches(userId));
       // The two reloads are independent (refreshAll runs them in a
       // Future.wait too) — parallelize instead of paying two serial
@@ -986,6 +1430,30 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     // flight refresh can't resurrect the now-persisted row.
     if (_deletedTombstones.remove(optimisticId)) {
       _deletedTombstones.add(realId);
+      // Remember the id swap so an Undo (which only knows the optimistic id) can
+      // lift the tombstone that now lives under realId — see restoreLog.
+      _reconciledDeleteAlias[optimisticId] = realId;
+      // A local tombstone only hides the row HERE. The write just created it
+      // server-side, so it is still on the server (and on every other device)
+      // and would return on the next cold start — delete it for real. Covers
+      // the window where the user swipes AFTER `/log-direct` returned but
+      // BEFORE this reconcile ran, which the write-time cancellation in
+      // `deleteFoodLog` cannot see.
+      //
+      // BUT the delete of the optimistic row was issued under the SAME undoable
+      // snackbar flow (`nutrition_screen._deleteMeal` defers its own commit
+      // until the 4s window elapses). Firing this server DELETE immediately
+      // would delete the row while the user can still tap Undo, and Undo could
+      // not take it back. So defer it too, and only fire if the deletion still
+      // stands (Undo lifts the realId tombstone via the alias above).
+      final uid = _lastLoadedUserId;
+      Future.delayed(_resurrectedDeleteUndoWindow, () {
+        _reconciledDeleteAlias.remove(optimisticId);
+        // Read the instance Set directly (valid even after dispose) — if Undo
+        // ran it lifted realId, so we must NOT delete the row the user restored.
+        if (!_deletedTombstones.contains(realId)) return;
+        unawaited(_deleteResurrectedRow(uid, realId));
+      });
     }
 
     List<FoodLog> reconcileList(List<FoodLog> list) {
@@ -1030,6 +1498,11 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     if (summary == null) return;
     // Undo — lift the tombstone so the meal can re-appear from the server.
     _deletedTombstones.remove(meal.id);
+    // If a reconcile carried this optimistic row's tombstone forward to its real
+    // server id, lift THAT too and drop the alias — otherwise the deferred
+    // resurrected-row delete would still fire and Undo wouldn't truly undo.
+    final aliasedRealId = _reconciledDeleteAlias.remove(meal.id);
+    if (aliasedRealId != null) _deletedTombstones.remove(aliasedRealId);
     final list = [...summary.meals];
     int insertAt = list.length;
     for (var i = 0; i < list.length; i++) {
@@ -1116,9 +1589,13 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       loggedAt: loggedAt,
       foodItems: foodItems,
       totalCalories: response.totalCalories,
-      proteinG: response.proteinG,
-      carbsG: response.carbsG,
-      fatG: response.fatG,
+      // Macros are nullable on the response (null = server could not determine
+      // them, e.g. a photo the model couldn't macro-estimate). FoodLog stores a
+      // concrete double; the authoritative unknown state lives server-side and
+      // is re-derived on the next enrich, so coerce to 0 for the local row.
+      proteinG: response.proteinG ?? 0,
+      carbsG: response.carbsG ?? 0,
+      fatG: response.fatG ?? 0,
       fiberG: response.fiberG,
       healthScore: response.healthScore,
       aiFeedback: response.aiSuggestion,
@@ -1382,7 +1859,10 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// error.
   Future<void> commitDeleteLog(String userId, String logId, FoodLog snapshot) async {
     try {
-      await _repository.deleteFoodLog(logId);
+      // The snapshot is the row `optimisticRemoveLog` just pulled out of state,
+      // so it still carries the key that cancels an unconfirmed write.
+      await _repository.deleteFoodLog(logId,
+          userId: userId, idempotencyKey: snapshot.idempotencyKey);
       // Server has now dropped the row — future refreshes can't resurrect it,
       // so the tombstone is no longer needed (and keeping it would hide a
       // genuine re-log of a recycled id).
