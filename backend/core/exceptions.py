@@ -100,6 +100,25 @@ def safe_internal_error(e: Exception, context: str = "", **extras: Any) -> HTTPE
         # Never block the error path on Sentry plumbing.
         pass
 
+    # 22P02 = "invalid input syntax for type <T>". This is Postgres rejecting a
+    # value the CLIENT supplied — a non-UUID id filtered against a uuid column,
+    # a literal path segment captured by a shadowing route ("assignments",
+    # "active"), an unparseable timestamp. It is never a server fault, so 500 is
+    # the wrong status: it tells the app to retry something that can never
+    # succeed, and it buries real crashes in Sentry noise.
+    #
+    # This is a backstop, NOT a licence to skip validation. The correct fix at
+    # each site is still to reject the bad id up front (see `is_uuid` in
+    # core/db/base.py) or to stop the route from shadowing. Sentry capture above
+    # happens FIRST and unconditionally, so downgrading the status here does not
+    # hide the underlying bug — those events stay searchable via
+    # `error_class:APIError pgrst_code:22P02`.
+    if _extract_pgrst_code(e) == "22P02":
+        return HTTPException(
+            status_code=400,
+            detail="Invalid identifier format.",
+        )
+
     return HTTPException(
         status_code=500,
         detail="An internal error occurred. Please try again."

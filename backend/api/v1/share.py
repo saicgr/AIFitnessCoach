@@ -42,6 +42,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
+from models.saved_workouts import DifficultyLevel
 from services.intent_classifier import (
     INTENT_ROUTING,
     VALID_INTENTS,
@@ -714,27 +715,49 @@ async def import_workout(
     user_id = current_user["id"]
     db = get_supabase_db()
 
-    # Persist as a "saved workout" row — uses the existing saved_workouts
-    # table convention rather than inventing a new schema. Fields beyond the
-    # core columns live in a JSON `data` field per repo convention.
+    # Persist as a "saved workout" row using the REAL saved_workouts columns
+    # (migration 029): workout_name / workout_description / exercises /
+    # total_exercises / estimated_duration_minutes / difficulty_level / folder /
+    # tags / notes. There is no `title`, `exercises_json` or catch-all `data`
+    # column — those three keys 42703'd the whole insert, so every share-funnel
+    # workout import failed. Mirrors api/v1/saved_workouts.py's insert.
+    #
+    # difficulty_level is read back through models.saved_workouts.DifficultyLevel,
+    # so an out-of-vocabulary extraction value must become NULL rather than
+    # poison every later GET.
+    difficulty_level: Optional[str] = None
+    if request.difficulty:
+        candidate = request.difficulty.strip().lower()
+        if candidate in {d.value for d in DifficultyLevel}:
+            difficulty_level = candidate
+
+    # The origin URL has no column of its own; workout_description is the
+    # human-readable provenance line (saved_workouts.py writes "Saved from
+    # <friend>'s workout" there), so the import source goes in the same place.
+    description = (
+        f"Imported from {request.source_url}"
+        if request.source_url
+        else "Imported from a shared link"
+    )
+
     saved_payload = {
         "user_id": user_id,
-        "title": request.title,
-        "exercises_json": request.exercises,
-        "data": {
-            "estimated_duration_min": request.estimated_duration_min,
-            "equipment_needed": request.equipment_needed,
-            "difficulty": request.difficulty,
-            "source_url": request.source_url,
-            "notes": request.notes,
-            "imported_via": "share_funnel",
-        },
+        "workout_name": request.title,
+        "workout_description": description,
+        "exercises": request.exercises,
+        "total_exercises": len(request.exercises),  # NOT NULL column
+        "estimated_duration_minutes": request.estimated_duration_min,
+        "difficulty_level": difficulty_level,
+        "folder": "Imported",
+        "tags": ["imported", "share_funnel"],
+        "notes": request.notes,
     }
     try:
         res = db.client.table("saved_workouts").insert(saved_payload).execute()
     except Exception as exc:
+        # No fallback store: the import must surface as an error rather than
+        # report success for a workout that was never persisted.
         logger.warning(f"[ImportWorkout] saved_workouts insert failed: {exc}")
-        # Fall back to a generic imported_workouts collection if table differs
         raise safe_internal_error(exc, "share_import_workout")
 
     entity_id: Optional[str] = None
@@ -749,6 +772,10 @@ async def import_workout(
             "extracted_payload": {
                 "exercises_count": len(request.exercises),
                 "duration_min": request.estimated_duration_min,
+                # saved_workouts has no equipment column; keep the reviewed
+                # equipment list on the shared_items row (real jsonb column,
+                # surfaced by /share/history) instead of dropping it.
+                "equipment_needed": request.equipment_needed,
             },
         })
         _merge_tags(request.shared_item_id, user_id, {
@@ -834,6 +861,85 @@ async def history_list(
     )
 
 
+# ===========================================================================
+# /share/history/export — CSV export of the user's imports
+# ===========================================================================
+
+@router.get("/history/export")
+async def history_export(
+    current_user: dict = Depends(get_current_user),
+):
+    """Stream a CSV of every imports row the caller owns. Suitable for
+    backing up / data portability. Columns are stable — clients can
+    import into a spreadsheet."""
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse as _StreamingResponse
+
+    user_id = current_user["id"]
+    db = get_supabase_db()
+
+    def stream():
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow([
+            "id", "created_at", "source_kind", "source_origin", "source_url",
+            "classifier_intent", "user_override_intent", "classifier_confidence",
+            "target_entity_kind", "target_entity_id", "status",
+            "category", "format", "origin",
+            "raw_text_preview",
+        ])
+        yield buf.getvalue()
+        buf.seek(0)
+        buf.truncate(0)
+
+        page_size = 200
+        cursor = None
+        while True:
+            qb = (
+                db.client.table("shared_items")
+                .select("*")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(page_size)
+            )
+            if cursor:
+                qb = qb.lt("created_at", cursor)
+            res = qb.execute()
+            rows = res.data or []
+            if not rows:
+                break
+            for r in rows:
+                tags = (r.get("tags") or {})
+                writer.writerow([
+                    r["id"], r["created_at"], r["source_kind"],
+                    r.get("source_origin") or "", r.get("source_url") or "",
+                    r.get("classifier_intent") or "",
+                    r.get("user_override_intent") or "",
+                    r.get("classifier_confidence") or "",
+                    r.get("target_entity_kind") or "",
+                    str(r.get("target_entity_id") or ""),
+                    r.get("status") or "",
+                    str(tags.get("category") or ""),
+                    str(tags.get("format") or ""),
+                    str(tags.get("origin") or ""),
+                    (r.get("raw_text") or "").replace("\n", " ")[:200],
+                ])
+                yield buf.getvalue()
+                buf.seek(0)
+                buf.truncate(0)
+            if len(rows) < page_size:
+                break
+            cursor = rows[-1]["created_at"]
+
+    return _StreamingResponse(
+        stream(),
+        media_type="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="zealova-imports.csv"'},
+    )
+
+
+# NOTE: /history/export MUST stay above /history/{item_id} — see backend/scripts/audit_route_shadowing.py
 @router.get("/history/{item_id}")
 async def history_detail(
     item_id: str,
@@ -957,79 +1063,3 @@ async def history_clear(
     return {"cleared": True}
 
 
-# ===========================================================================
-# /share/history/export — CSV export of the user's imports
-# ===========================================================================
-
-@router.get("/history/export")
-async def history_export(
-    current_user: dict = Depends(get_current_user),
-):
-    """Stream a CSV of every imports row the caller owns. Suitable for
-    backing up / data portability. Columns are stable — clients can
-    import into a spreadsheet."""
-    import csv
-    import io
-    from fastapi.responses import StreamingResponse as _StreamingResponse
-
-    user_id = current_user["id"]
-    db = get_supabase_db()
-
-    def stream():
-        buf = io.StringIO()
-        writer = csv.writer(buf)
-        writer.writerow([
-            "id", "created_at", "source_kind", "source_origin", "source_url",
-            "classifier_intent", "user_override_intent", "classifier_confidence",
-            "target_entity_kind", "target_entity_id", "status",
-            "category", "format", "origin",
-            "raw_text_preview",
-        ])
-        yield buf.getvalue()
-        buf.seek(0)
-        buf.truncate(0)
-
-        page_size = 200
-        cursor = None
-        while True:
-            qb = (
-                db.client.table("shared_items")
-                .select("*")
-                .eq("user_id", user_id)
-                .order("created_at", desc=True)
-                .limit(page_size)
-            )
-            if cursor:
-                qb = qb.lt("created_at", cursor)
-            res = qb.execute()
-            rows = res.data or []
-            if not rows:
-                break
-            for r in rows:
-                tags = (r.get("tags") or {})
-                writer.writerow([
-                    r["id"], r["created_at"], r["source_kind"],
-                    r.get("source_origin") or "", r.get("source_url") or "",
-                    r.get("classifier_intent") or "",
-                    r.get("user_override_intent") or "",
-                    r.get("classifier_confidence") or "",
-                    r.get("target_entity_kind") or "",
-                    str(r.get("target_entity_id") or ""),
-                    r.get("status") or "",
-                    str(tags.get("category") or ""),
-                    str(tags.get("format") or ""),
-                    str(tags.get("origin") or ""),
-                    (r.get("raw_text") or "").replace("\n", " ")[:200],
-                ])
-                yield buf.getvalue()
-                buf.seek(0)
-                buf.truncate(0)
-            if len(rows) < page_size:
-                break
-            cursor = rows[-1]["created_at"]
-
-    return _StreamingResponse(
-        stream(),
-        media_type="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="zealova-imports.csv"'},
-    )

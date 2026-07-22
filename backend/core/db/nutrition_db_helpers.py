@@ -12,7 +12,7 @@ Handles all nutrition-related CRUD operations including:
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
 import logging
-from core.db.base import BaseDB
+from core.db.base import BaseDB, is_uuid
 from core.db.nutrition_db_helpers_part2 import NutritionDBPart2
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,17 @@ _FOOD_LOG_SOURCE_TYPES = frozenset({
 # Where to map an out-of-allowlist value. 'history' is the closest bucket for
 # re-logs/copies of a prior entry (the most common offender, e.g. 'recent').
 _FOOD_LOG_SOURCE_TYPE_FALLBACK = "history"
+
+# food_logs_input_type_check (migration 1960, extended by 2319 with
+# 'bill_scan'). Same failure mode as source_type: one out-of-allowlist value
+# 500s the whole insert, so it gets the same normalize-at-the-chokepoint
+# treatment rather than trusting every call site.
+_FOOD_LOG_INPUT_TYPES = frozenset({
+    "text", "voice", "camera", "gallery", "barcode",
+    "menu_scan", "buffet_scan", "bill_scan", "multi_image_scan",
+    "chat", "ai_suggestion", "manual", "image", "copy", "watch",
+})
+_FOOD_LOG_INPUT_TYPE_FALLBACK = "manual"
 
 
 class NutritionDB(NutritionDBPart2, BaseDB):
@@ -105,6 +116,10 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # barcode / manual / watch. Schema CHECK constraint enforces allowlist.
         input_type: Optional[str] = None,
         user_query: Optional[str] = None,
+        # Free-text note attached to the log. Menu scans put the dish's printed
+        # menu description here (or whatever the user typed over it) so the row
+        # still says what the dish actually was months later.
+        notes: Optional[str] = None,
         # Inflammation / ultra-processed tracking
         inflammation_score: Optional[int] = None,
         is_ultra_processed: Optional[bool] = None,
@@ -180,8 +195,19 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
         if input_type:
-            # Normalize to lowercase to match CHECK constraint allowlist.
-            data["input_type"] = input_type.lower()
+            # Normalize to lowercase to match CHECK constraint allowlist, and
+            # bucket anything outside it rather than letting one bad value 500
+            # the insert (same guard source_type has had since 2272).
+            normalized_input_type = input_type.lower()
+            if normalized_input_type not in _FOOD_LOG_INPUT_TYPES:
+                logger.warning(
+                    "[NutritionDB] Invalid food_logs.input_type=%r "
+                    "(user_id=%s); normalizing to %r to satisfy "
+                    "food_logs_input_type_check",
+                    input_type, user_id, _FOOD_LOG_INPUT_TYPE_FALLBACK,
+                )
+                normalized_input_type = _FOOD_LOG_INPUT_TYPE_FALLBACK
+            data["input_type"] = normalized_input_type
 
         # Set explicit logged_at timestamp if provided (timezone-aware)
         if logged_at:
@@ -195,6 +221,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # Capture originating user input (search query, chat message, caption, etc.)
         if user_query:
             data["user_query"] = user_query
+        if notes and notes.strip():
+            data["notes"] = notes.strip()
 
         # Add inflammation / ultra-processed fields if provided
         if inflammation_score is not None:
@@ -312,8 +340,17 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             log_id: Food log UUID
 
         Returns:
-            Food log record or None
+            Food log record or None (including when log_id isn't a UUID at all)
         """
+        # food_logs.id is uuid — handing Postgres a non-UUID raises 22P02
+        # ("invalid input syntax for type uuid") which surfaces as a 500, not a
+        # 404. The app's optimistic-write path mints synthetic ids like
+        # `optimistic_1784685004510300_2` and can delete a row before its write
+        # confirms, so a non-UUID here means "no such row" — return None and let
+        # callers 404 normally. Guarding at this chokepoint covers every caller.
+        if not is_uuid(log_id):
+            logger.info(f"get_food_log: non-UUID id {log_id!r} — treating as not found")
+            return None
         result = self.client.table("food_logs").select("*").eq("id", log_id).is_("deleted_at", "null").execute()
         return result.data[0] if result.data else None
 
@@ -380,7 +417,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             carbs_g: Updated carb grams
             fat_g: Updated fat grams
             fiber_g: Updated fiber grams
-            weight_g: Updated weight grams
+            weight_g: Accepted for API compatibility. NOT a food_logs column —
+                per-item weight lives inside food_items (see note below).
             meal_type: Updated meal type (for move between meals)
             logged_at: Updated timestamp (for time edits)
             notes: Updated notes text
@@ -402,8 +440,16 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             update_data["fat_g"] = fat_g
         if fiber_g is not None:
             update_data["fiber_g"] = fiber_g
-        if weight_g is not None:
-            update_data["weight_g"] = weight_g
+        # NOTE: weight_g is deliberately NOT written to the food_logs row.
+        # There is no food_logs.weight_g column — weight lives per ITEM inside
+        # the food_items JSONB (see FoodItem.weight_g / food_logs.py's
+        # `items[i]["weight_g"]` portion math), and the portion-adjust caller
+        # that sends weight_g always sends the recomputed `food_items` array in
+        # the same request, so the new weight IS persisted there. Writing the
+        # phantom key made PostgREST reject the ENTIRE update (42703), losing
+        # the calories/macros/meal_type/notes/tags edits alongside it. The
+        # parameter stays in the signature so the route + facade contract is
+        # unchanged.
         if meal_type is not None:
             update_data["meal_type"] = meal_type
         if logged_at is not None:
@@ -419,6 +465,15 @@ class NutritionDB(NutritionDBPart2, BaseDB):
 
         # Only updated_at means nothing to change
         if len(update_data) <= 1:
+            return None
+
+        # Same 22P02 trap as get_food_log: the PUT/PATCH routes hand us the raw
+        # path param without going through get_food_log first, so an
+        # unconfirmed optimistic row's synthetic id reaches food_logs.id (uuid)
+        # directly. Editing, moving, retiming or re-noting a meal whose
+        # /log-direct write is still in flight would otherwise 500.
+        if not is_uuid(log_id):
+            logger.info(f"update_food_log: non-UUID id {log_id!r} — treating as not found")
             return None
 
         result = (
@@ -491,6 +546,11 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         food_log_id: str,
     ) -> List[Dict[str, Any]]:
         """Return all edit-history rows for a given food log, newest first."""
+        # food_log_edits.food_log_id is uuid — an optimistic row has no edit
+        # history by definition, so a synthetic id is an empty list, not a 500.
+        if not is_uuid(food_log_id):
+            logger.info(f"list_food_log_edits: non-UUID id {food_log_id!r} — no history")
+            return []
         result = (
             self.client.table("food_log_edits")
             .select("*")
@@ -670,8 +730,14 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             log_id: Food log UUID
 
         Returns:
-            True on success
+            True on success, False when log_id can't identify a row at all
         """
+        # Safe today only because delete_food_log_endpoint calls get_food_log
+        # first; guard here too so the helper can't 22P02 if a future caller
+        # skips that precheck.
+        if not is_uuid(log_id):
+            logger.info(f"delete_food_log: non-UUID id {log_id!r} — nothing to delete")
+            return False
         self.client.table("food_logs") \
             .update({"deleted_at": datetime.utcnow().isoformat()}) \
             .eq("id", log_id) \
@@ -694,27 +760,32 @@ class NutritionDB(NutritionDBPart2, BaseDB):
     # ==================== NUTRITION SUMMARIES ====================
 
     def get_daily_nutrition_summary(
-        self, user_id: str, date: str, timezone_str: Optional[str] = None
+        self, user_id: str, date: str, timezone_str: str
     ) -> Dict[str, Any]:
         """
         Get nutrition totals for a specific day.
 
         Args:
             user_id: User's UUID
-            date: Date in YYYY-MM-DD format
-            timezone_str: IANA timezone (e.g. 'America/Los_Angeles').
-                          When provided, the day boundaries are computed in the
-                          user's local timezone then converted to UTC for querying.
+            date: Date in YYYY-MM-DD format, in the USER'S local calendar
+            timezone_str: IANA timezone (e.g. 'America/Los_Angeles'). REQUIRED —
+                          `date` is a local calendar day and `logged_at` is a UTC
+                          timestamptz, so the boundaries are meaningless without it.
+
+        `timezone_str` used to be optional, falling back to naive
+        f"{date}T00:00:00" bounds that Postgres resolved at the session zone
+        (UTC). Every caller that omitted it got the previous evening's logs
+        attributed to `date` — the same defect that made the coach card report
+        3,630 kcal on a 786 kcal day. Callers must pass the tz they already
+        resolved; pass "UTC" explicitly if there is genuinely none.
 
         Returns:
             Dictionary with nutrition totals and meal breakdown
         """
-        if timezone_str:
-            from core.timezone_utils import local_date_to_utc_range
-            start_of_day, end_of_day = local_date_to_utc_range(date, timezone_str)
-        else:
-            start_of_day = f"{date}T00:00:00"
-            end_of_day = f"{date}T23:59:59"
+        from core.timezone_utils import local_date_to_utc_range
+
+        # Closed interval: list_food_logs filters with .lte on to_date.
+        start_of_day, end_of_day = local_date_to_utc_range(date, timezone_str)
 
         logs = self.list_food_logs(
             user_id, from_date=start_of_day, to_date=end_of_day, limit=100
@@ -767,15 +838,17 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         }
 
     def get_weekly_nutrition_summary(
-        self, user_id: str, start_date: str, timezone_str: Optional[str] = None
+        self, user_id: str, start_date: str, timezone_str: str
     ) -> List[Dict[str, Any]]:
         """
         Get nutrition totals for a week starting from start_date.
 
         Args:
             user_id: User's UUID
-            start_date: Start date in YYYY-MM-DD format
-            timezone_str: IANA timezone for day-boundary resolution
+            start_date: Start date in YYYY-MM-DD format (user's local calendar)
+            timezone_str: IANA timezone for day-boundary resolution. REQUIRED —
+                          it fans out into 7 daily windows, so a missing tz
+                          mis-buckets all seven days, not one.
 
         Returns:
             List of daily nutrition summaries

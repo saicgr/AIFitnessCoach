@@ -284,6 +284,36 @@ async def get_user_custom_exercises(
         raise safe_internal_error(e, "custom_exercises")
 
 
+@router.get("/equipment/list")
+async def list_equipment_with_exercises(current_user: dict = Depends(get_current_user)):
+    """List all equipment types that have exercises (library or custom)."""
+    db = get_supabase_db()
+
+    try:
+        # Get equipment from library
+        lib_result = db.client.table("exercise_library").select("equipment").execute()
+        lib_equipment = set(ex["equipment"] for ex in lib_result.data if ex.get("equipment"))
+
+        # Get equipment from custom exercises (public only)
+        custom_result = db.client.table("custom_exercises").select("equipment").eq(
+            "is_public", True
+        ).execute()
+        custom_equipment = set(ex["equipment"] for ex in custom_result.data if ex.get("equipment"))
+
+        # Combine and sort
+        all_equipment = sorted(lib_equipment | custom_equipment)
+
+        return {
+            "equipment": all_equipment,
+            "count": len(all_equipment)
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Failed to list equipment: {e}", exc_info=True)
+        raise safe_internal_error(e, "custom_exercises")
+
+
+# NOTE: /equipment/list MUST stay above /{user_id}/{exercise_id} — see backend/scripts/audit_route_shadowing.py
 @router.get("/{user_id}/{exercise_id}", response_model=CustomExerciseResponse)
 async def get_custom_exercise(user_id: str, exercise_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific custom exercise."""
@@ -558,33 +588,6 @@ async def search_combined_exercises(
         raise safe_internal_error(e, "custom_exercises")
 
 
-@router.get("/equipment/list")
-async def list_equipment_with_exercises(current_user: dict = Depends(get_current_user)):
-    """List all equipment types that have exercises (library or custom)."""
-    db = get_supabase_db()
-
-    try:
-        # Get equipment from library
-        lib_result = db.client.table("exercise_library").select("equipment").execute()
-        lib_equipment = set(ex["equipment"] for ex in lib_result.data if ex.get("equipment"))
-
-        # Get equipment from custom exercises (public only)
-        custom_result = db.client.table("custom_exercises").select("equipment").eq(
-            "is_public", True
-        ).execute()
-        custom_equipment = set(ex["equipment"] for ex in custom_result.data if ex.get("equipment"))
-
-        # Combine and sort
-        all_equipment = sorted(lib_equipment | custom_equipment)
-
-        return {
-            "equipment": all_equipment,
-            "count": len(all_equipment)
-        }
-
-    except Exception as e:
-        logger.error(f"❌ Failed to list equipment: {e}", exc_info=True)
-        raise safe_internal_error(e, "custom_exercises")
 
 
 # =============================================================================

@@ -168,6 +168,35 @@ async def mark_all_notifications_read(
     return {"message": f"Marked {count} notifications as read", "count": count}
 
 
+@router.delete("/clear-all")
+async def clear_all_notifications(
+    user_id: str = Query(..., description="Current user ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Delete all notifications for the current user.
+
+    Args:
+        user_id: Current user's ID
+
+    Returns:
+        Success message with count of deleted notifications
+    """
+    verify_user_ownership(current_user, user_id)
+    supabase = get_supabase_client()
+
+    result = supabase.table("social_notifications").delete().eq(
+        "user_id", user_id
+    ).execute()
+
+    count = len(result.data) if result.data else 0
+
+    return {"message": f"Deleted {count} notifications", "count": count}
+
+
+# NOTE: /clear-all MUST stay above /{notification_id} — the parameterised route
+# matches the literal "clear-all" otherwise and Clear All silently deletes
+# nothing (see backend/scripts/audit_route_shadowing.py).
 @router.delete("/{notification_id}")
 async def delete_notification(
     notification_id: str,
@@ -202,32 +231,6 @@ async def delete_notification(
     supabase.table("social_notifications").delete().eq("id", notification_id).execute()
 
     return {"message": "Notification deleted"}
-
-
-@router.delete("/clear-all")
-async def clear_all_notifications(
-    user_id: str = Query(..., description="Current user ID"),
-    current_user: dict = Depends(get_current_user),
-):
-    """
-    Delete all notifications for the current user.
-
-    Args:
-        user_id: Current user's ID
-
-    Returns:
-        Success message with count of deleted notifications
-    """
-    verify_user_ownership(current_user, user_id)
-    supabase = get_supabase_client()
-
-    result = supabase.table("social_notifications").delete().eq(
-        "user_id", user_id
-    ).execute()
-
-    count = len(result.data) if result.data else 0
-
-    return {"message": f"Deleted {count} notifications", "count": count}
 
 
 # ============================================================

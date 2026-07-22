@@ -4,12 +4,31 @@ Base database class for Supabase operations.
 Provides common functionality shared across all database modules.
 """
 from typing import Optional, List, Dict, Any
+from uuid import UUID
 from supabase import Client
 
 from core.supabase_client import get_supabase, SupabaseManager
 from core.logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def is_uuid(value: Any) -> bool:
+    """True when `value` can be used against a Postgres `uuid` column.
+
+    Filtering a uuid column by a non-UUID string does NOT return zero rows —
+    Postgres raises 22P02 ("invalid input syntax for type uuid"), which
+    PostgREST surfaces as an APIError and FastAPI turns into a 500. Any lookup
+    that takes an id straight from a URL path or client payload must gate on
+    this first and treat a failure as "not found", not as a server error.
+    """
+    if not value:
+        return False
+    try:
+        UUID(str(value))
+        return True
+    except (ValueError, AttributeError, TypeError):
+        return False
 
 
 class BaseDB:

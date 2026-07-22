@@ -1,6 +1,7 @@
 """Food log CRUD endpoints."""
 import asyncio
 from core.db import get_supabase_db
+from core.db.base import is_uuid
 from datetime import date, datetime, time as dt_time, timedelta
 from typing import List, Optional
 import json
@@ -147,6 +148,75 @@ async def list_food_logs(
         raise safe_internal_error(e, "nutrition")
 
 
+# ⚠️ ROUTE ORDER IS LOAD-BEARING BELOW THIS LINE ⚠️
+#
+# `GET /food-logs/{user_id}/{log_id}` is a two-segment pattern, so it also
+# matches `/food-logs/<id>/edits` and `/food-logs/<id>/image-url` — binding
+# user_id=<the food log id> and log_id="edits". Starlette matches in
+# declaration order, so whichever is declared FIRST wins. When these two GETs
+# sat below it they were permanently unreachable: the ownership check
+# (`current_user["id"] != user_id`) could never pass, so every request 403'd —
+# expired food photos never recovered and edit history was dead in the app.
+#
+# Any new `GET /food-logs/{log_id}/<literal>` route MUST be declared here,
+# above the two-segment route. (POST/PATCH/DELETE siblings are unaffected —
+# they differ by method.) `backend/scripts/audit_route_shadowing.py --check`
+# enforces this.
+@router.get("/food-logs/{log_id}/image-url")
+async def refresh_food_log_image_url(log_id: str, current_user: dict = Depends(get_current_user)):
+    """Return a fresh 24-hour presigned URL for a food log's image.
+
+    Clients call this when a cached image URL has expired (Image.network
+    errorBuilder fires) to avoid showing a broken thumbnail indefinitely
+    on old logs. Returns 404 if the log has no image or doesn't belong to
+    this user.
+    """
+    user_id = current_user.get("id") or current_user.get("sub")
+    try:
+        db = get_supabase_db()
+        log = db.get_food_log(log_id)
+        if not log or log.get("user_id") != user_id:
+            raise HTTPException(status_code=404, detail="Food log not found")
+        image_url = log.get("image_url")
+        if not image_url:
+            raise HTTPException(status_code=404, detail="No image for this log")
+        fresh = resign_food_image_url(image_url)
+        return {"image_url": fresh}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to refresh food log image URL: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.get("/food-logs/{log_id}/edits", response_model=List[FoodItemEditResponse])
+async def list_food_log_edits(log_id: str, current_user: dict = Depends(get_current_user)):
+    """Return the per-field edit history for a food log (newest first)."""
+    user_id = current_user.get("id") or current_user.get("sub")
+    try:
+        db = get_supabase_db()
+        rows = db.list_food_log_edits(user_id=user_id, food_log_id=log_id)
+        # Normalize timestamps/UUIDs to strings for the pydantic response model
+        return [
+            FoodItemEditResponse(
+                id=str(r["id"]),
+                food_log_id=str(r["food_log_id"]),
+                food_item_index=int(r["food_item_index"]),
+                food_item_name=r["food_item_name"],
+                food_item_id=r.get("food_item_id"),
+                edited_field=r["edited_field"],
+                previous_value=float(r["previous_value"]),
+                updated_value=float(r["updated_value"]),
+                edit_source=r["edit_source"],
+                edited_at=str(r["edited_at"]),
+            )
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error(f"Failed to list food log edits: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
 @router.get("/food-logs/{user_id}/{log_id}", response_model=FoodLogResponse)
 async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(get_current_user)):
     """Get a specific food log."""
@@ -231,6 +301,14 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
         log = db.get_food_log(log_id)
 
         if log is None:
+            # A synthetic optimistic id (`optimistic_<micros>_<idx>`) means the
+            # row's /log-direct write never confirmed, so there is nothing on
+            # the server to delete — and querying the uuid column with it would
+            # raise 22P02 → 500. Idempotent success: the client already dropped
+            # it locally, which is the state the caller wanted.
+            if not is_uuid(log_id):
+                logger.info(f"Delete for non-UUID food log id {log_id!r} — nothing persisted, returning success")
+                return {"status": "deleted", "id": log_id, "never_persisted": True}
             # Check if it was already soft-deleted (vs never existed)
             existing = db.client.table("food_logs").select("id, user_id, deleted_at").eq("id", log_id).execute()
             if existing.data:
@@ -487,61 +565,6 @@ async def attach_food_log_image(
         raise safe_internal_error(e, "nutrition")
 
 
-@router.get("/food-logs/{log_id}/image-url")
-async def refresh_food_log_image_url(log_id: str, current_user: dict = Depends(get_current_user)):
-    """Return a fresh 24-hour presigned URL for a food log's image.
-
-    Clients call this when a cached image URL has expired (Image.network
-    errorBuilder fires) to avoid showing a broken thumbnail indefinitely
-    on old logs. Returns 404 if the log has no image or doesn't belong to
-    this user.
-    """
-    user_id = current_user.get("id") or current_user.get("sub")
-    try:
-        db = get_supabase_db()
-        log = db.get_food_log(log_id)
-        if not log or log.get("user_id") != user_id:
-            raise HTTPException(status_code=404, detail="Food log not found")
-        image_url = log.get("image_url")
-        if not image_url:
-            raise HTTPException(status_code=404, detail="No image for this log")
-        fresh = resign_food_image_url(image_url)
-        return {"image_url": fresh}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Failed to refresh food log image URL: {e}", exc_info=True)
-        raise safe_internal_error(e, "nutrition")
-
-
-@router.get("/food-logs/{log_id}/edits", response_model=List[FoodItemEditResponse])
-async def list_food_log_edits(log_id: str, current_user: dict = Depends(get_current_user)):
-    """Return the per-field edit history for a food log (newest first)."""
-    user_id = current_user.get("id") or current_user.get("sub")
-    try:
-        db = get_supabase_db()
-        rows = db.list_food_log_edits(user_id=user_id, food_log_id=log_id)
-        # Normalize timestamps/UUIDs to strings for the pydantic response model
-        return [
-            FoodItemEditResponse(
-                id=str(r["id"]),
-                food_log_id=str(r["food_log_id"]),
-                food_item_index=int(r["food_item_index"]),
-                food_item_name=r["food_item_name"],
-                food_item_id=r.get("food_item_id"),
-                edited_field=r["edited_field"],
-                previous_value=float(r["previous_value"]),
-                updated_value=float(r["updated_value"]),
-                edit_source=r["edit_source"],
-                edited_at=str(r["edited_at"]),
-            )
-            for r in rows
-        ]
-    except Exception as e:
-        logger.error(f"Failed to list food log edits: {e}", exc_info=True)
-        raise safe_internal_error(e, "nutrition")
-
-
 @router.patch("/food-logs/{log_id}/mood")
 async def update_food_log_mood(log_id: str, body: UpdateMoodRequest, current_user: dict = Depends(get_current_user)):
     """Update mood/wellness tracking on an existing food log (post-logging review)."""
@@ -564,6 +587,12 @@ async def update_food_log_mood(log_id: str, body: UpdateMoodRequest, current_use
 
         if not update_data:
             return {"status": "no_changes", "id": log_id}
+
+        # This route writes food_logs.id (uuid) directly rather than going
+        # through a guarded DB helper, so a post-meal check-in on a row whose
+        # /log-direct write hasn't confirmed would 22P02 → 500.
+        if not is_uuid(log_id):
+            raise HTTPException(status_code=404, detail="Food log not found")
 
         result = supabase.client.table("food_logs").update(update_data).eq(
             "id", log_id
@@ -1161,17 +1190,28 @@ async def swap_dish_variant(
         "override_id": body.new_override_id,
     })
 
-    total_cal = sum(int(it.get("calories", 0)) for it in items)
-    total_p = sum(float(it.get("protein_g", 0)) for it in items)
-    total_c = sum(float(it.get("carbs_g", 0)) for it in items)
-    total_f = sum(float(it.get("fat_g", 0)) for it in items)
+    # `.get(key, 0)` only defaults when the key is ABSENT — an item whose macros
+    # are genuinely unknown carries the key with value None (see
+    # services/gemini/parsers.flag_unknown_macros), and float(None) raises.
+    # Semantics match enforce_macro_integrity: one unknown item makes the MEAL
+    # total unknown (NULL), never a silent under-count that reads as fact.
+    def _meal_total(key: str) -> Optional[float]:
+        values = [it.get(key) for it in items if isinstance(it, dict)]
+        if any(v is None for v in values):
+            return None
+        return round(sum(float(v or 0) for v in values), 1)
 
+    total_cal = sum(int(it.get("calories") or 0) for it in items if isinstance(it, dict))
+
+    # Column names are protein_g / carbs_g / fat_g. There are no total_*_g
+    # columns on food_logs — writing them made PostgREST reject this ENTIRE
+    # update (PGRST204), so every dish-variant swap silently failed to persist.
     update_payload = {
         "food_items": items,
         "total_calories": total_cal,
-        "total_protein_g": round(total_p, 1),
-        "total_carbs_g": round(total_c, 1),
-        "total_fat_g": round(total_f, 1),
+        "protein_g": _meal_total("protein_g"),
+        "carbs_g": _meal_total("carbs_g"),
+        "fat_g": _meal_total("fat_g"),
     }
     try:
         db.client.table("food_logs").update(update_payload).eq("id", body.food_log_id).execute()
