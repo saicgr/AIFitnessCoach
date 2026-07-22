@@ -69,6 +69,20 @@ class SupabaseManager:
                 settings.supabase_key,
             )
 
+            # Soft-delete read guard. `food_logs` rows are never removed — a
+            # delete stamps `deleted_at` — so a read that forgets
+            # `.is_("deleted_at", "null")` counts meals the user threw away
+            # (2026-07 sweep: 36 of 74 reads did exactly that, poisoning the
+            # nutrition/health scores, streaks, weekly email, nudges, wrapped
+            # and XP). Installing it on the one client every runtime read goes
+            # through fixes the class instead of 36 call sites. Writes and all
+            # other tables are untouched — see core/db/soft_delete.py.
+            # Imported here, not at module scope: `core.db.__init__` pulls in
+            # core.db.base, which imports this module — a top-level import
+            # would be circular.
+            from core.db.soft_delete import install_soft_delete_guard
+            install_soft_delete_guard(self._supabase)
+
             # Dedicated client for Supabase Auth operations (sign_in, sign_up,
             # update_user, get_user, etc). supabase-py's auth listener mutates
             # the shared Authorization header on SIGNED_IN / TOKEN_REFRESHED,

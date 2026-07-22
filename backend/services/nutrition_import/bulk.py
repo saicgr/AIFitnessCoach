@@ -74,6 +74,14 @@ def _existing_idem_keys(user_id: str, keys: list[str]) -> set[str]:
         try:
             res = (
                 db.client.table("food_logs")
+                # Tombstone read (explicit opt-out of the soft-delete guard):
+                # this pre-filter exists to keep a re-import from colliding in
+                # the food_logs idempotency_key unique index, and that index has
+                # NO deleted_at predicate. If the guard hid soft-deleted rows,
+                # their keys would be invisible here yet still collide on insert,
+                # turning a re-import of a previously-deleted meal into a unique
+                # violation instead of the intended de-dupe no-op.
+                .include_soft_deleted()
                 .select("idempotency_key")
                 .eq("user_id", user_id)
                 .in_("idempotency_key", chunk)
