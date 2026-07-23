@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/allergen.dart';
 import '../../../../data/models/menu_item.dart';
+import '../../../chat/widgets/fullscreen_image_viewer.dart';
 import '../health_breakdown_sheet.dart';
 import '../score_explain_sheet.dart';
 
@@ -38,6 +39,24 @@ class MenuAnalysisItemCard extends StatelessWidget {
   /// "Applied: Ate ½". Shown as a hint under the Adjust pill.
   final String? adjustmentSummary;
 
+  /// Tapping the thumbnail placeholder asks for an image to be created for
+  /// this dish. Null hides the affordance (chat flow, or generation disabled).
+  final VoidCallback? onRequestImage;
+
+  /// True while [onRequestImage] is in flight for this dish.
+  final bool isGeneratingImage;
+
+  /// Share this single dish — available BEFORE logging, straight off the scan.
+  final VoidCallback? onShare;
+
+  /// Pin / edit a personal note on this dish (pre-filled with the menu's own
+  /// description). Null hides the bookmark affordance.
+  final VoidCallback? onEditNote;
+
+  /// The note already pinned to this dish, if any. Replaces the menu
+  /// description in the card so the user sees what will actually be saved.
+  final String? pinnedNote;
+
   const MenuAnalysisItemCard({
     super.key,
     required this.item,
@@ -47,6 +66,11 @@ class MenuAnalysisItemCard extends StatelessWidget {
     required this.onPortionChanged,
     this.onAdjust,
     this.adjustmentSummary,
+    this.onRequestImage,
+    this.isGeneratingImage = false,
+    this.onShare,
+    this.onEditNote,
+    this.pinnedNote,
   });
 
   @override
@@ -56,13 +80,17 @@ class MenuAnalysisItemCard extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Match allergens against the dish's REAL printed description when we
+    // have one — "Iceberg Wedge Salad" says nothing about blue cheese, its
+    // description does. Falls back to the coach tip only when the menu
+    // printed no description.
     final allergenHits = allergenProfile == null
         ? const <String>[]
         : allergenProfile!
             .matchesForDish(
               dishName: item.name,
               detectedAllergens: item.detectedAllergens,
-              dishDescription: item.coachTip,
+              dishDescription: item.description ?? item.coachTip,
             )
             .toList();
 
@@ -97,6 +125,13 @@ class MenuAnalysisItemCard extends StatelessWidget {
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
                 ),
+                _DishThumbnail(
+                  item: item,
+                  isGenerating: isGeneratingImage,
+                  onRequestImage: onRequestImage,
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,6 +148,25 @@ class MenuAnalysisItemCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                          if (onEditNote != null)
+                            _IconAction(
+                              icon: pinnedNote != null && pinnedNote!.isNotEmpty
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              tooltip: pinnedNote != null && pinnedNote!.isNotEmpty
+                                  ? 'Edit your note'
+                                  : 'Save a note with this dish',
+                              active: pinnedNote != null && pinnedNote!.isNotEmpty,
+                              onTap: onEditNote!,
+                              isDark: isDark,
+                            ),
+                          if (onShare != null)
+                            _IconAction(
+                              icon: Icons.ios_share_rounded,
+                              tooltip: 'Share this dish',
+                              onTap: onShare!,
+                              isDark: isDark,
+                            ),
                           if (item.rating != null)
                             _RatingPill(
                               rating: item.rating!,
@@ -125,6 +179,50 @@ class MenuAnalysisItemCard extends StatelessWidget {
                             ),
                         ],
                       ),
+                      // The menu's own words for this dish — the thing that
+                      // makes a logged "Bacon & Eggs" still mean something in
+                      // three months. A pinned note replaces it (that's the
+                      // text that will actually be saved).
+                      if ((pinnedNote != null && pinnedNote!.isNotEmpty) ||
+                          item.description != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 3),
+                          child: _DishDescription(
+                            text: (pinnedNote != null && pinnedNote!.isNotEmpty)
+                                ? pinnedNote!
+                                : item.description!,
+                            isNote: pinnedNote != null && pinnedNote!.isNotEmpty,
+                            color: textSecondary,
+                            accent: isDark ? AppColors.orange : AppColorsLight.orange,
+                          ),
+                        ),
+                      if (item.includedChoices != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.add_circle_outline,
+                                  size: 12,
+                                  color: isDark
+                                      ? AppColors.orange
+                                      : AppColorsLight.orange),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  item.includedChoices!,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.orange
+                                        : AppColorsLight.orange,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       if (item.weightG != null || item.amount != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
@@ -210,6 +308,224 @@ class MenuAnalysisItemCard extends StatelessWidget {
     return parts.join(' · ');
   }
 
+}
+
+/// 44×44 dish thumbnail at the head of the row.
+///
+/// Three states, and the empty one matters most: when no image resolved we
+/// show the dish's initials, NOT a stock photo of something else. Tapping the
+/// placeholder is what spends money (one generation), so it's always an
+/// explicit user action — never a side effect of scrolling.
+class _DishThumbnail extends StatelessWidget {
+  final MenuItem item;
+  final bool isGenerating;
+  final VoidCallback? onRequestImage;
+  final bool isDark;
+
+  const _DishThumbnail({
+    required this.item,
+    required this.isGenerating,
+    required this.onRequestImage,
+    required this.isDark,
+  });
+
+  static const double _size = 44;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final url = item.dishImageUrl;
+
+    Widget shell(Widget child, {VoidCallback? onTap}) {
+      final box = Container(
+        width: _size,
+        height: _size,
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : Colors.grey.shade300,
+            width: 0.5,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: child,
+      );
+      if (onTap == null) return box;
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: box,
+      );
+    }
+
+    if (url != null && url.isNotEmpty) {
+      return shell(
+        Image.network(
+          url,
+          width: _size,
+          height: _size,
+          fit: BoxFit.cover,
+          // A dead image URL falls back to initials rather than Flutter's
+          // broken-image glyph.
+          errorBuilder: (_, __, ___) => _initials(muted),
+          loadingBuilder: (_, child, progress) =>
+              progress == null ? child : _initials(muted),
+        ),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => FullscreenImageViewer(
+              imageUrl: url,
+              heroTag: 'dish-${item.id}',
+              title: item.name,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (isGenerating) {
+      return shell(
+        Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+          ),
+        ),
+      );
+    }
+
+    return shell(
+      Stack(
+        fit: StackFit.expand,
+        children: [
+          _initials(muted),
+          if (onRequestImage != null)
+            Positioned(
+              right: 2,
+              bottom: 2,
+              child: Icon(Icons.auto_awesome, size: 11, color: accent),
+            ),
+        ],
+      ),
+      onTap: onRequestImage,
+    );
+  }
+
+  Widget _initials(Color muted) {
+    final words = item.name.trim().split(RegExp(r'\s+'));
+    final letters = words
+        .where((w) => w.isNotEmpty && RegExp(r'[A-Za-z]').hasMatch(w[0]))
+        .take(2)
+        .map((w) => w[0].toUpperCase())
+        .join();
+    return Center(
+      child: Text(
+        letters.isEmpty ? '·' : letters,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: muted,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+/// The menu's printed description (or the user's pinned note), collapsed to
+/// two lines and expandable in place — a Disney-style menu description runs
+/// long and truncating it permanently would defeat the point of capturing it.
+class _DishDescription extends StatefulWidget {
+  final String text;
+  final bool isNote;
+  final Color color;
+  final Color accent;
+
+  const _DishDescription({
+    required this.text,
+    required this.isNote,
+    required this.color,
+    required this.accent,
+  });
+
+  @override
+  State<_DishDescription> createState() => _DishDescriptionState();
+}
+
+class _DishDescriptionState extends State<_DishDescription> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextStyle(
+      fontSize: 11.5,
+      height: 1.3,
+      color: widget.color,
+    );
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => setState(() => _expanded = !_expanded),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.isNote) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(Icons.bookmark_rounded, size: 11, color: widget.accent),
+            ),
+            const SizedBox(width: 4),
+          ],
+          Expanded(
+            child: Text(
+              widget.text,
+              style: style,
+              maxLines: _expanded ? null : 2,
+              overflow: _expanded ? null : TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small square icon button used for the per-dish note + share affordances.
+class _IconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final bool isDark;
+  final bool active;
+
+  const _IconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    required this.isDark,
+    this.active = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Tooltip(
+      message: tooltip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 18,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Icon(icon, size: 16, color: active ? accent : muted),
+        ),
+      ),
+    );
+  }
 }
 
 /// L5 — compact "Adjust" affordance shown on a selected menu dish. Tapping
@@ -661,6 +977,37 @@ class _MacroLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // A bill line whose dish name couldn't be identified has no nutrition.
+    // Saying so is the only honest option — rendering "0 cal" would read as
+    // a real (and very wrong) estimate.
+    if (item.nutritionUnknown) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.help_outline_rounded, size: 13, color: color),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              "Couldn't estimate nutrition — tap Adjust to describe it",
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: color,
+              ),
+            ),
+          ),
+          if (item.price != null) ...[
+            const SizedBox(width: 8),
+            Text(
+              _formatPrice(item.price!, item.currency),
+              style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w700, color: color,
+              ),
+            ),
+          ],
+        ],
+      );
+    }
     return Wrap(
       spacing: 10,
       runSpacing: 2,

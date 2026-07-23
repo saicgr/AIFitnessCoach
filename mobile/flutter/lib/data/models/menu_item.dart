@@ -23,6 +23,39 @@ class MenuItem {
   /// Short Gemini-provided serving-size caption (e.g. "1 cup heaping").
   final String? amount;
 
+  /// The description printed under the dish on the menu, verbatim
+  /// ("Maple-lacquered Pork Belly, Smoked Cheese Grits, Perfect Egg").
+  /// Null when the menu prints none — never generated, because an invented
+  /// description would drive the allergen matcher off real ingredients.
+  /// On a BILL this holds the line's modifiers instead ("Béarnaise, Mashed
+  /// Potatoes"), which is what identifies whose dish it was.
+  final String? description;
+
+  /// `'sauce' | 'side' | 'topping' | 'enhancement' | 'upgrade'` when this item
+  /// is an accompaniment rather than a standalone dish. Drives the "Add from
+  /// this menu" picker on a selected dish. Null for standalone dishes.
+  final String? addonGroup;
+
+  /// Verbatim "comes with" line that applies to this dish, e.g. "Served with
+  /// choice of one (1) Side and one (1) Sauce". Shown as the header hint in
+  /// the add-on picker so the user knows what's already included in the price.
+  final String? includedChoices;
+
+  /// Resolved thumbnail for this dish, if one was found or generated.
+  /// Populated after the scan by the dish-image resolver — never blocks the
+  /// list from rendering.
+  final String? dishImageUrl;
+
+  /// Credit / disclosure line that MUST render with [dishImageUrl] (licence
+  /// attribution for web photos, "AI-generated illustration" for generated
+  /// ones). Null when the image needs no caption.
+  final String? dishImageCaption;
+
+  /// True when the backend could not estimate nutrition for this item (bill
+  /// lines whose name didn't resolve). The card shows "couldn't estimate"
+  /// instead of presenting 0 kcal as if it were real.
+  final bool nutritionUnknown;
+
   final double calories;
   final double proteinG;
   final double carbsG;
@@ -87,6 +120,12 @@ class MenuItem {
     required this.name,
     required this.section,
     this.amount,
+    this.description,
+    this.addonGroup,
+    this.includedChoices,
+    this.dishImageUrl,
+    this.dishImageCaption,
+    this.nutritionUnknown = false,
     required this.calories,
     required this.proteinG,
     required this.carbsG,
@@ -128,15 +167,27 @@ class MenuItem {
     return mult.clamp(0.25, 5.0).toDouble();
   }
 
+  /// True when this item is an accompaniment the user can attach to a dish
+  /// (a sauce, side or enhancement) rather than something ordered on its own.
+  bool get isAddon => addonGroup != null || section == 'addons';
+
   MenuItem copyWith({
     double? portionMultiplier,
     String? section,
+    String? dishImageUrl,
+    String? dishImageCaption,
   }) {
     return MenuItem(
       id: id,
       name: name,
       section: section ?? this.section,
       amount: amount,
+      description: description,
+      addonGroup: addonGroup,
+      includedChoices: includedChoices,
+      dishImageUrl: dishImageUrl ?? this.dishImageUrl,
+      dishImageCaption: dishImageCaption ?? this.dishImageCaption,
+      nutritionUnknown: nutritionUnknown,
       calories: calories,
       proteinG: proteinG,
       carbsG: carbsG,
@@ -174,11 +225,22 @@ class MenuItem {
     double? numN(dynamic v) => v == null ? null : (v as num).toDouble();
     int? intN(dynamic v) => v == null ? null : (v as num).toInt();
 
+    String? str(dynamic v) {
+      final s = (v as String?)?.trim();
+      return (s == null || s.isEmpty) ? null : s;
+    }
+
     return MenuItem(
       id: id,
       name: (json['name'] as String?)?.trim() ?? 'Unknown',
       section: _canonicalSection(json['section']),
       amount: json['amount'] as String?,
+      description: str(json['description']),
+      addonGroup: str(json['addon_group']),
+      includedChoices: str(json['included_choices']),
+      dishImageUrl: str(json['dish_image_url']),
+      dishImageCaption: str(json['dish_image_caption']),
+      nutritionUnknown: json['nutrition_unknown'] as bool? ?? false,
       calories: num0(json['calories']),
       proteinG: num0(json['protein_g'] ?? json['protein']),
       carbsG: num0(json['carbs_g'] ?? json['carbs']),
@@ -204,12 +266,15 @@ class MenuItem {
       imageUrl: json['image_url'] as String? ?? fallbackImageUrl,
       detectedAllergens: Allergen.parseAll(json['detected_allergens'] as List?),
       goalScore: intN(json['goal_score']),
+      // Bill lines arrive pre-multiplied ("2 x Filet" → 2.0) so the portion
+      // stepper opens on the quantity that was actually ordered.
+      portionMultiplier: numN(json['portion_multiplier']) ?? 1.0,
     );
   }
 
   static String _canonicalSection(dynamic raw) {
     const allowed = {
-      'breakfast', 'appetizers', 'mains', 'sides',
+      'breakfast', 'appetizers', 'mains', 'sides', 'addons',
       'desserts', 'drinks', 'specials', 'uncategorized',
     };
     if (raw == null) return 'uncategorized';
@@ -261,6 +326,9 @@ const List<String> kCanonicalSectionOrder = [
   'appetizers',
   'mains',
   'sides',
+  // Sauces / enhancements / extras. Sits after Sides because that's the order
+  // a menu reads: pick the dish, pick what goes on it.
+  'addons',
   'desserts',
   'drinks',
   'specials',
@@ -273,6 +341,7 @@ String displaySectionName(String section) {
     case 'appetizers': return 'Appetizers';
     case 'mains': return 'Mains';
     case 'sides': return 'Sides';
+    case 'addons': return 'Add-ons & Sauces';
     case 'desserts': return 'Desserts';
     case 'drinks': return 'Drinks';
     case 'specials': return 'Specials';

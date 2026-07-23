@@ -14,6 +14,112 @@ import '../data/models/menu_item.dart';
 class MenuRecommendationService {
   const MenuRecommendationService();
 
+  /// "Complete this meal" — given what the user has already picked, rank the
+  /// menu's REMAINING dishes for what would round the plate out.
+  ///
+  /// Deterministic and instant (no AI): it prefers sides / add-ons and dishes
+  /// whose macros complement what's already selected — extra protein when the
+  /// selection is carb-heavy, a vegetable side when it's all protein — and
+  /// respects the calories left in the day when a budget is known. This is the
+  /// menu-side "what goes best with this" surface.
+  static List<MealCompletionSuggestion> completeMyMeal({
+    required List<MenuItem> allItems,
+    required Set<String> selectedIds,
+    double? remainingCalories,
+    int topK = 5,
+  }) {
+    final selected = allItems.where((i) => selectedIds.contains(i.id)).toList();
+    final candidates = allItems
+        .where((i) => !selectedIds.contains(i.id))
+        .toList();
+    if (candidates.isEmpty) return const [];
+
+    // What the current selection is short on. With nothing selected yet we
+    // just surface the healthiest sides/mains.
+    final selCal = selected.fold<double>(0, (s, i) => s + i.scaledCalories);
+    final selProtein = selected.fold<double>(0, (s, i) => s + i.scaledProteinG);
+    final selCarbs = selected.fold<double>(0, (s, i) => s + i.scaledCarbsG);
+    // Protein-per-100-cal of the current plate; below ~7g/100cal reads as
+    // "needs protein", a very carb-heavy plate reads as "needs a vegetable".
+    final proteinDensity = selCal > 0 ? (selProtein / selCal) * 100 : 0;
+    final carbHeavy = selCal > 0 && (selCarbs * 4 / selCal) > 0.55;
+
+    final scored = <MealCompletionSuggestion>[];
+    for (final item in candidates) {
+      // Don't suggest something the day can't fit.
+      if (remainingCalories != null &&
+          remainingCalories > 0 &&
+          item.scaledCalories > remainingCalories + 50) {
+        continue;
+      }
+
+      double score = 0;
+      final reasons = <String>[];
+
+      // Sides + add-ons are the natural "completion" — that's what the
+      // section exists for.
+      if (item.isAddon || item.section == 'sides') {
+        score += 0.35;
+        reasons.add('rounds out the plate');
+      }
+
+      // Complementary macros.
+      if (proteinDensity < 7 && item.proteinG >= 20) {
+        score += 0.4;
+        reasons.add('adds protein');
+      }
+      if (carbHeavy && _looksLikeVegetable(item)) {
+        score += 0.3;
+        reasons.add('adds vegetables');
+      }
+
+      // Health quality — a green dish beats a red one, all else equal.
+      score += switch (item.rating) {
+        'green' => 0.2,
+        'yellow' => 0.05,
+        'red' => -0.1,
+        _ => 0.0,
+      };
+
+      // Budget fit — reward dishes that use the remaining room well without
+      // blowing it.
+      if (remainingCalories != null && remainingCalories > 0) {
+        final fit = item.scaledCalories / remainingCalories;
+        if (fit <= 0.5) score += 0.15;
+      }
+
+      if (reasons.isEmpty) reasons.add('good addition');
+      scored.add(MealCompletionSuggestion(
+        item: item,
+        score: score,
+        reason: reasons.first,
+      ));
+    }
+
+    scored.sort((a, b) => b.score.compareTo(a.score));
+    // Keep variety: at most 2 from any one section in the shortlist.
+    final perSection = <String, int>{};
+    final out = <MealCompletionSuggestion>[];
+    for (final s in scored) {
+      final n = perSection[s.item.section] ?? 0;
+      if (n >= 2) continue;
+      perSection[s.item.section] = n + 1;
+      out.add(s);
+      if (out.length >= topK) break;
+    }
+    return out;
+  }
+
+  static bool _looksLikeVegetable(MenuItem item) {
+    final hay = '${item.name} ${item.description ?? ''}'.toLowerCase();
+    const veg = [
+      'salad', 'spinach', 'broccoli', 'asparagus', 'greens', 'vegetable',
+      'kale', 'brussels', 'green bean', 'mushroom', 'cauliflower', 'slaw',
+      'tomato', 'cucumber', 'zucchini', 'carrot', 'pepper',
+    ];
+    return veg.any(hay.contains);
+  }
+
   /// Main entry point. Returns up to `topK` ranked items + the ones
   /// rejected by hard filters (for debug/analytics). The caller
   /// typically renders the `picks` directly.
@@ -576,6 +682,19 @@ class RejectedItem {
   final MenuItem item;
   final RejectionReason reason;
   const RejectedItem({required this.item, required this.reason});
+}
+
+/// One "complete this meal" suggestion — a remaining menu dish that would
+/// round out the current selection, with a short human reason.
+class MealCompletionSuggestion {
+  final MenuItem item;
+  final double score;
+  final String reason;
+  const MealCompletionSuggestion({
+    required this.item,
+    required this.score,
+    required this.reason,
+  });
 }
 
 class RecommendedItem {

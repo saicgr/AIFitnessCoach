@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/models/menu_item.dart';
 import '../../data/models/nutrition.dart';
 import '../shareable_data.dart';
 
@@ -396,6 +397,128 @@ class NutritionAdapter {
       fatG: fatG,
       fiberG: fiberG,
     );
+  }
+
+  // ─── Menu-scan shares (pre-logging) ────────────────────────────────────
+
+  /// Share a whole scanned menu before anything is logged.
+  ///
+  /// When the user has already ticked dishes, the card is about that
+  /// selection (their picks + running total). With nothing ticked it's the
+  /// restaurant itself — top dishes at a glance. Either way it works entirely
+  /// from in-memory scan state, so it's shareable the moment the scan lands
+  /// and identically on a menu reopened from Saved Menus.
+  static Shareable? fromMenuAnalysis({
+    required String? restaurantName,
+    required List<MenuItem> items,
+    required Set<String> selectedIds,
+    required Color accent,
+    List<String> menuPhotoUrls = const [],
+  }) {
+    if (items.isEmpty) return null;
+    final selected = items.where((i) => selectedIds.contains(i.id)).toList();
+    final showing = selected.isNotEmpty ? selected : items;
+
+    final title = (restaurantName != null && restaurantName.trim().isNotEmpty)
+        ? restaurantName.trim()
+        : (selected.isNotEmpty ? 'My picks' : 'Menu');
+    final mealLabel = selected.isNotEmpty
+        ? '${selected.length} picked'
+        : '${items.length} dishes';
+
+    final cal = showing.fold<double>(0, (s, i) => s + i.scaledCalories);
+    final protein = showing.fold<double>(0, (s, i) => s + i.scaledProteinG);
+    final carbs = showing.fold<double>(0, (s, i) => s + i.scaledCarbsG);
+    final fat = showing.fold<double>(0, (s, i) => s + i.scaledFatG);
+
+    return Shareable(
+      kind: ShareableKind.foodLog,
+      title: title,
+      mealLabel: mealLabel,
+      periodLabel: DateFormat('MMM d').format(DateTime.now()),
+      // Only sum macros for an actual selection — summing a whole menu would
+      // be a nonsense "you ate the entire restaurant" total.
+      nutrition: selected.isNotEmpty
+          ? _nutritionOf(
+              calories: cal.round(),
+              proteinG: protein,
+              carbsG: carbs,
+              fatG: fat,
+              fiberG: null,
+            )
+          : null,
+      foodItems: [
+        for (final i in showing.take(12))
+          ShareableFood(
+            name: i.name,
+            amount: i.description,
+            calories: i.scaledCalories.round(),
+            proteinG: i.scaledProteinG,
+            carbsG: i.scaledCarbsG,
+            fatG: i.scaledFatG,
+          ),
+      ],
+      foodImageUrls: _menuImageUrls(showing, menuPhotoUrls),
+      accentColor: accent,
+    );
+  }
+
+  /// Share a single dish off a scanned menu — before logging.
+  static Shareable? fromMenuItem(
+    MenuItem item, {
+    String? restaurantName,
+    required Color accent,
+  }) {
+    if (item.name.trim().isEmpty) return null;
+    return Shareable(
+      kind: ShareableKind.foodLog,
+      title: item.name,
+      mealLabel: (restaurantName != null && restaurantName.trim().isNotEmpty)
+          ? restaurantName.trim()
+          : 'From a menu',
+      periodLabel: DateFormat('MMM d').format(DateTime.now()),
+      nutrition: _nutritionOf(
+        calories: item.scaledCalories.round(),
+        proteinG: item.scaledProteinG,
+        carbsG: item.scaledCarbsG,
+        fatG: item.scaledFatG,
+        fiberG: item.fiberG,
+      ),
+      foodItems: [
+        ShareableFood(
+          name: item.name,
+          amount: item.description ?? item.amount,
+          calories: item.scaledCalories.round(),
+          proteinG: item.scaledProteinG,
+          carbsG: item.scaledCarbsG,
+          fatG: item.scaledFatG,
+        ),
+      ],
+      logText: item.description,
+      healthScore: item.goalScore,
+      foodImageUrls:
+          (item.dishImageUrl ?? '').isNotEmpty ? [item.dishImageUrl!] : null,
+      accentColor: accent,
+    );
+  }
+
+  /// Resolved dish thumbnails first (real food), falling back to the scanned
+  /// menu-page photos. Null when nothing usable — photo templates need a
+  /// non-empty list.
+  static List<String>? _menuImageUrls(
+    List<MenuItem> items,
+    List<String> menuPhotoUrls,
+  ) {
+    final dish = [
+      for (final i in items)
+        if ((i.dishImageUrl ?? '').startsWith('http')) i.dishImageUrl!,
+    ];
+    if (dish.isNotEmpty) return dish;
+    final pages = [
+      for (final u in menuPhotoUrls)
+        if (u.startsWith('http')) u,
+    ];
+    return pages.isEmpty ? null : pages;
   }
 
   /// Sum of fiber across logs — null when no log reported any fiber (so

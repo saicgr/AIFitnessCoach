@@ -29,6 +29,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../data/models/companion_suggestion.dart';
 import '../../../../data/models/menu_item.dart';
 import '../../../../widgets/glass_sheet.dart';
 
@@ -64,26 +65,25 @@ class MenuDishAdjustResult {
   });
 }
 
-/// One quick-adjust chip definition.
+/// One how-much-did-you-eat chip. Exclusive single-select: picking one
+/// replaces any other.
 class _Chip {
   final String id;
   final String label;
 
-  /// When non-null, the chip scales the dish by this multiplier
-  /// (how-much-eaten chips). Mutually exclusive — picking one replaces
-  /// any other scaling chip.
+  /// Scales the dish's menu macros by this factor.
   final double? multiplier;
 
-  /// When non-null, the chip ADDS a separate item with these macros
-  /// rather than scaling the dish.
-  final Map<String, dynamic>? extraItem;
-
-  const _Chip(this.id, this.label, {this.multiplier, this.extraItem});
+  const _Chip(this.id, this.label, {this.multiplier});
 }
 
-/// Quick-adjust chips. How-much-eaten chips carry a [multiplier];
-/// add-a-side chips carry an [extraItem]. There is deliberately no
-/// "took leftovers" chip — it gives no amount (C11).
+/// Quick-adjust chips — how much of the dish was eaten. Exclusive
+/// single-select. There is deliberately no "took leftovers" chip: it gives no
+/// amount (C11).
+///
+/// There is also no generic "+ Bread/sides" chip any more. It invented a
+/// 150-cal side out of thin air; the real sides are printed on the menu the
+/// user just scanned, and they're offered below with their real macros.
 const List<_Chip> _kChips = [
   _Chip('half', 'Ate ½', multiplier: 0.5),
   _Chip('third', 'Ate ⅓', multiplier: 0.33),
@@ -91,17 +91,6 @@ const List<_Chip> _kChips = [
   _Chip('shared', 'Shared it', multiplier: 0.5),
   _Chip('lunch_size', 'Lunch/small size', multiplier: 0.7),
   _Chip('extra', 'Extra portion', multiplier: 1.5),
-  _Chip(
-    'bread',
-    '+ Bread/sides',
-    extraItem: {
-      'name': 'Bread / side',
-      'calories': 150,
-      'protein_g': 4.0,
-      'carbs_g': 28.0,
-      'fat_g': 2.0,
-    },
-  ),
 ];
 
 /// Show the per-dish adjustment sheet. [item] is the dish being logged.
@@ -109,17 +98,36 @@ const List<_Chip> _kChips = [
 /// it receives the dish + the typed note (+ chip hint) and returns the
 /// corrected item list, or null on failure / no input.
 ///
+/// [menuAddons] are the sauces / sides / enhancements from the SAME scanned
+/// menu — real names, real macros, real prices. [companions] are the
+/// history/global suggestions from `/nutrition/companions`, used only when
+/// the menu itself listed no add-ons, so the user is never left with nothing
+/// to attach.
+///
+/// [openOnAddons] scrolls straight to the add-on block (used when the dish
+/// says "served with choice of one side and one sauce").
+///
 /// Returns null if the user cancelled.
 Future<MenuDishAdjustResult?> showMenuDishAdjustSheet(
   BuildContext context, {
   required MenuItem item,
   required Future<List<Map<String, dynamic>>?> Function(String note) onRefine,
+  List<MenuItem> menuAddons = const [],
+  List<CompanionSuggestion> companions = const [],
+  bool openOnAddons = false,
 }) {
   return showGlassSheet<MenuDishAdjustResult>(
     context: context,
     builder: (_) => GlassSheet(
       showHandle: true,
-      child: _MenuDishAdjustBody(item: item, onRefine: onRefine),
+      maxHeightFraction: 0.9,
+      child: _MenuDishAdjustBody(
+        item: item,
+        onRefine: onRefine,
+        menuAddons: menuAddons,
+        companions: companions,
+        openOnAddons: openOnAddons,
+      ),
     ),
   );
 }
@@ -127,8 +135,17 @@ Future<MenuDishAdjustResult?> showMenuDishAdjustSheet(
 class _MenuDishAdjustBody extends StatefulWidget {
   final MenuItem item;
   final Future<List<Map<String, dynamic>>?> Function(String note) onRefine;
+  final List<MenuItem> menuAddons;
+  final List<CompanionSuggestion> companions;
+  final bool openOnAddons;
 
-  const _MenuDishAdjustBody({required this.item, required this.onRefine});
+  const _MenuDishAdjustBody({
+    required this.item,
+    required this.onRefine,
+    this.menuAddons = const [],
+    this.companions = const [],
+    this.openOnAddons = false,
+  });
 
   @override
   State<_MenuDishAdjustBody> createState() => _MenuDishAdjustBodyState();
@@ -140,8 +157,11 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
   /// Selected how-much-eaten chip id (only one at a time).
   String? _scalingChipId;
 
-  /// Selected add-a-side chip ids (multiple allowed).
-  final Set<String> _sideChipIds = {};
+  /// Add-ons picked off THIS menu, keyed by MenuItem.id.
+  final Set<String> _menuAddonIds = {};
+
+  /// Companion suggestions picked, keyed by lowercased name.
+  final Set<String> _companionKeys = {};
 
   bool _refining = false;
 
@@ -157,27 +177,102 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
     return chip.multiplier ?? 1.0;
   }
 
+  /// Every picked add-on, as its own log payload.
+  ///
+  /// Add-ons are logged as SEPARATE rows, never folded into the dish — a
+  /// béarnaise is 180 calories the user should be able to see, edit and
+  /// delete on its own. `parent_dish_name` is what keeps the pairing legible
+  /// afterwards.
   List<Map<String, dynamic>> get _extraItems => [
-    for (final id in _sideChipIds)
-      Map<String, dynamic>.from(
-        _kChips.firstWhere((c) => c.id == id).extraItem!,
-      ),
+    for (final addon in widget.menuAddons)
+      if (_menuAddonIds.contains(addon.id))
+        {
+          'name': addon.name,
+          'calories': addon.calories.round(),
+          'protein_g': addon.proteinG,
+          'carbs_g': addon.carbsG,
+          'fat_g': addon.fatG,
+          if (addon.fiberG != null) 'fiber_g': addon.fiberG,
+          if (addon.weightG != null) 'weight_g': addon.weightG!.round(),
+          if (addon.description != null) 'description': addon.description,
+          if (addon.addonGroup != null) 'addon_group': addon.addonGroup,
+          'parent_dish_name': widget.item.name,
+          if (addon.inflammationScore != null)
+            'inflammation_score': addon.inflammationScore,
+          if (addon.isUltraProcessed != null)
+            'is_ultra_processed': addon.isUltraProcessed,
+          if (addon.glycemicLoad != null) 'glycemic_load': addon.glycemicLoad,
+          if (addon.fodmapRating != null) 'fodmap_rating': addon.fodmapRating,
+          if (addon.fodmapReason != null) 'fodmap_reason': addon.fodmapReason,
+          if (addon.addedSugarG != null) 'added_sugar_g': addon.addedSugarG,
+          if (addon.inflammationTriggers != null)
+            'inflammation_triggers': addon.inflammationTriggers,
+          if (addon.rating != null) 'rating': addon.rating,
+          if (addon.ratingReason != null) 'rating_reason': addon.ratingReason,
+        },
+    for (final companion in widget.companions)
+      if (_companionKeys.contains(_companionKey(companion)))
+        {
+          ...companion.toLogItem(),
+          'parent_dish_name': widget.item.name,
+        },
   ];
+
+  int get _selectedAddonCount => _menuAddonIds.length + _companionKeys.length;
+
+  /// Calories the picked add-ons contribute on top of the dish.
+  double get _addonCalories {
+    double total = 0;
+    for (final addon in widget.menuAddons) {
+      if (_menuAddonIds.contains(addon.id)) total += addon.calories;
+    }
+    for (final companion in widget.companions) {
+      if (_companionKeys.contains(_companionKey(companion))) {
+        total += companion.estCalories;
+      }
+    }
+    return total;
+  }
+
+  static String _companionKey(CompanionSuggestion c) =>
+      c.name.trim().toLowerCase();
+
+  /// Menu add-ons grouped by kind, in the order a menu prints them.
+  Map<String, List<MenuItem>> get _addonsByGroup {
+    const order = ['side', 'sauce', 'topping', 'enhancement', 'upgrade'];
+    final grouped = <String, List<MenuItem>>{};
+    for (final addon in widget.menuAddons) {
+      final key = addon.addonGroup ?? 'side';
+      grouped.putIfAbsent(key, () => []).add(addon);
+    }
+    return {
+      for (final key in order)
+        if (grouped.containsKey(key)) key: grouped[key]!,
+      for (final entry in grouped.entries)
+        if (!order.contains(entry.key)) entry.key: entry.value,
+    };
+  }
 
   void _toggleChip(_Chip chip) {
     HapticFeedback.selectionClick();
+    // How-much-eaten chips are exclusive single-select.
     setState(() {
-      if (chip.extraItem != null) {
-        // Add-a-side chip — toggle independently.
-        if (_sideChipIds.contains(chip.id)) {
-          _sideChipIds.remove(chip.id);
-        } else {
-          _sideChipIds.add(chip.id);
-        }
-      } else {
-        // How-much-eaten chip — exclusive single-select.
-        _scalingChipId = _scalingChipId == chip.id ? null : chip.id;
-      }
+      _scalingChipId = _scalingChipId == chip.id ? null : chip.id;
+    });
+  }
+
+  void _toggleMenuAddon(MenuItem addon) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (!_menuAddonIds.remove(addon.id)) _menuAddonIds.add(addon.id);
+    });
+  }
+
+  void _toggleCompanion(CompanionSuggestion companion) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      final key = _companionKey(companion);
+      if (!_companionKeys.remove(key)) _companionKeys.add(key);
     });
   }
 
@@ -260,10 +355,203 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
     if (_scalingChipId != null) {
       parts.add(_kChips.firstWhere((c) => c.id == _scalingChipId).label);
     }
-    for (final id in _sideChipIds) {
-      parts.add(_kChips.firstWhere((c) => c.id == id).label);
+    for (final addon in widget.menuAddons) {
+      if (_menuAddonIds.contains(addon.id)) parts.add('+ ${addon.name}');
+    }
+    for (final companion in widget.companions) {
+      if (_companionKeys.contains(_companionKey(companion))) {
+        parts.add('+ ${companion.name}');
+      }
     }
     return parts.isEmpty ? 'Logged as served' : 'Applied: ${parts.join(', ')}';
+  }
+
+  /// "Add from this menu" — the sauces / sides / enhancements printed on the
+  /// menu the user just scanned, with their real macros and prices.
+  ///
+  /// Falls back to `/nutrition/companions` suggestions only when the menu
+  /// listed no add-ons of its own, and labels them differently so it's clear
+  /// those are suggestions rather than something the restaurant offers.
+  List<Widget> _buildAddonSection(ThemeColors colors, Color accent) {
+    final grouped = _addonsByGroup;
+    final hasMenuAddons = grouped.isNotEmpty;
+    final hasCompanions = widget.companions.isNotEmpty;
+    if (!hasMenuAddons && !hasCompanions) return const [];
+
+    return [
+      Row(
+        children: [
+          Icon(Icons.add_circle_outline, size: 14, color: accent),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              hasMenuAddons ? 'Add from this menu' : 'Often eaten with this',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colors.textSecondary,
+              ),
+            ),
+          ),
+          if (_selectedAddonCount > 0)
+            Text(
+              '+${_addonCalories.round()} cal',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: accent,
+              ),
+            ),
+        ],
+      ),
+      // What the price already covers, in the menu's own words.
+      if (widget.item.includedChoices != null) ...[
+        const SizedBox(height: 4),
+        Text(
+          widget.item.includedChoices!,
+          style: TextStyle(
+            fontSize: 11,
+            fontStyle: FontStyle.italic,
+            color: colors.textMuted,
+          ),
+        ),
+      ],
+      const SizedBox(height: 8),
+      if (hasMenuAddons)
+        for (final entry in grouped.entries) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 4),
+            child: Text(
+              _groupLabel(entry.key, entry.value.length),
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: colors.textMuted,
+              ),
+            ),
+          ),
+          for (final addon in entry.value)
+            _addonRow(
+              colors: colors,
+              accent: accent,
+              selected: _menuAddonIds.contains(addon.id),
+              title: addon.name,
+              subtitle: _addonSubtitle(addon),
+              detail: addon.description,
+              onTap: () => _toggleMenuAddon(addon),
+            ),
+        ]
+      else
+        for (final companion in widget.companions)
+          _addonRow(
+            colors: colors,
+            accent: accent,
+            selected: _companionKeys.contains(_companionKey(companion)),
+            title: companion.name,
+            subtitle: '${companion.estCalories} cal'
+                '${companion.estProteinG > 0 ? ' · ${companion.estProteinG.toStringAsFixed(0)}g P' : ''}',
+            detail: companion.why.isEmpty ? null : companion.why,
+            onTap: () => _toggleCompanion(companion),
+          ),
+      const SizedBox(height: 16),
+    ];
+  }
+
+  static String _groupLabel(String group, int count) {
+    final plural = count == 1 ? '' : 'S';
+    return switch (group) {
+      'sauce' => 'SAUCE$plural',
+      'side' => 'SIDE$plural',
+      'topping' => 'TOPPING$plural',
+      'enhancement' => 'ENHANCEMENT$plural',
+      'upgrade' => 'UPGRADE$plural',
+      _ => group.toUpperCase(),
+    };
+  }
+
+  static String _addonSubtitle(MenuItem addon) {
+    final parts = <String>['${addon.calories.round()} cal'];
+    if (addon.proteinG > 0) {
+      parts.add('${addon.proteinG.toStringAsFixed(0)}g P');
+    }
+    if (addon.price != null) {
+      parts.add('\$${addon.price!.toStringAsFixed(2)}');
+    }
+    return parts.join(' · ');
+  }
+
+  Widget _addonRow({
+    required ThemeColors colors,
+    required Color accent,
+    required bool selected,
+    required String title,
+    required String subtitle,
+    String? detail,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: selected ? accent.withValues(alpha: 0.10) : colors.elevated,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  selected
+                      ? Icons.check_circle_rounded
+                      : Icons.radio_button_unchecked_rounded,
+                  color: selected ? accent : colors.textMuted,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                      if (detail != null && detail.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          detail,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textMuted,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -333,6 +621,8 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
               ],
             ),
             const SizedBox(height: 16),
+            // ── Add-ons from THIS menu ──
+            ..._buildAddonSection(colors, accent),
             // ── Free-text correction ──
             Text(
               AppLocalizations.of(context).menuDishAdjustOrDescribeIt,
@@ -388,7 +678,8 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
             if (_noteController.text.trim().isEmpty)
               Text(
                 'This dish: ~$previewCal cal · ${previewP}g protein'
-                '${_sideChipIds.isEmpty ? '' : '  (+${_sideChipIds.length} side)'}',
+                '${_selectedAddonCount == 0 ? '' : '  (+$_selectedAddonCount add-on'
+                    '${_selectedAddonCount == 1 ? '' : 's'}, +${_addonCalories.round()} cal, logged separately)'}',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -435,10 +726,7 @@ class _MenuDishAdjustBodyState extends State<_MenuDishAdjustBody> {
   }
 
   Widget _chipWidget(_Chip chip, ThemeColors colors, Color accent) {
-    final isSide = chip.extraItem != null;
-    final active = isSide
-        ? _sideChipIds.contains(chip.id)
-        : _scalingChipId == chip.id;
+    final active = _scalingChipId == chip.id;
     return Material(
       color: active
           ? accent.withValues(alpha: 0.15)

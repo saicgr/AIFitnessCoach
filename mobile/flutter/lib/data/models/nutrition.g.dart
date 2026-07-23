@@ -22,8 +22,13 @@ FoodItem _$FoodItemFromJson(Map<String, dynamic> json) => FoodItem(
   weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
   inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
   isUltraProcessed: json['is_ultra_processed'] as bool?,
+  // Menu-scan provenance (hand-edited; build_runner forbidden).
+  description: json['description'] as String?,
+  addonGroup: json['addon_group'] as String?,
+  parentDishName: json['parent_dish_name'] as String?,
   confidence: json['confidence'] as String?,
   requiresUserConfirmation: json['requires_user_confirmation'] as bool?,
+  macrosUnknown: json['macros_unknown'] as bool?,
 );
 
 Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
@@ -40,8 +45,12 @@ Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
   'weight_per_unit_g': instance.weightPerUnitG,
   'inflammation_score': instance.inflammationScore,
   'is_ultra_processed': instance.isUltraProcessed,
+  'description': instance.description,
+  'addon_group': instance.addonGroup,
+  'parent_dish_name': instance.parentDishName,
   'confidence': instance.confidence,
   'requires_user_confirmation': instance.requiresUserConfirmation,
+  'macros_unknown': instance.macrosUnknown,
 };
 
 FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
@@ -326,11 +335,16 @@ Map<String, dynamic> _$USDANutrientDataToJson(USDANutrientData instance) =>
 
 AiPerGramData _$AiPerGramDataFromJson(Map<String, dynamic> json) =>
     AiPerGramData(
-      calories: (json['calories'] as num?)?.toDouble() ?? 0,
-      protein: (json['protein'] as num?)?.toDouble() ?? 0,
-      carbs: (json['carbs'] as num?)?.toDouble() ?? 0,
-      fat: (json['fat'] as num?)?.toDouble() ?? 0,
-      fiber: (json['fiber'] as num?)?.toDouble() ?? 0,
+      // Hand-edited (build_runner is forbidden in this repo). NO `?? 0`:
+      // `flag_unknown_macros` STRIPS the protein/carbs/fat factors when a
+      // meal item's macros are unknown, and coercing the resulting absent key
+      // to `0` rebuilt a confident "0 g per gram" that scales to a fabricated
+      // 0 g at every portion. Absent stays null == unknown.
+      calories: (json['calories'] as num?)?.toDouble(),
+      protein: (json['protein'] as num?)?.toDouble(),
+      carbs: (json['carbs'] as num?)?.toDouble(),
+      fat: (json['fat'] as num?)?.toDouble(),
+      fiber: (json['fiber'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$AiPerGramDataToJson(AiPerGramData instance) =>
@@ -374,6 +388,7 @@ FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
       verifiedMatchName: json['verified_match_name'] as String?,
       servingLabel: json['serving_label'] as String?,
       servingsPerContainer: (json['servings_per_container'] as num?)?.toInt(),
+      macrosUnknown: json['macros_unknown'] as bool?,
     );
 
 Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
@@ -402,6 +417,7 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
       'verified_match_name': instance.verifiedMatchName,
       'serving_label': instance.servingLabel,
       'servings_per_container': instance.servingsPerContainer,
+      'macros_unknown': instance.macrosUnknown,
     };
 
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
@@ -410,10 +426,19 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       foodLogId: json['food_log_id'] as String?,
       foodItems: _foodItemRankingListFromJson(json['food_items']),
       totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
-      proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0.0,
-      carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0.0,
-      fatG: (json['fat_g'] as num?)?.toDouble() ?? 0.0,
+      // Hand-edited (build_runner is forbidden in this repo). NO `?? 0.0` on
+      // the macros: the backend NULLs a meal's protein/carbs/fat when any item
+      // has calories but no macro split, and coercing that to 0.0 here turned
+      // "unknown" into a confident "zero grams" everywhere downstream.
+      proteinG: (json['protein_g'] as num?)?.toDouble(),
+      carbsG: (json['carbs_g'] as num?)?.toDouble(),
+      fatG: (json['fat_g'] as num?)?.toDouble(),
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
+      macrosUnknown: json['macros_unknown'] as bool?,
+      macrosUnknownItems: (json['macros_unknown_items'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
+      macrosKnownSubtotal: json['macros_known_subtotal'] as Map<String, dynamic>?,
       overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
       healthScore: (json['health_score'] as num?)?.toInt(),
       healthScoreReasons: (json['health_score_reasons'] as List<dynamic>?)
@@ -473,6 +498,9 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'carbs_g': instance.carbsG,
       'fat_g': instance.fatG,
       'fiber_g': instance.fiberG,
+      'macros_unknown': instance.macrosUnknown,
+      'macros_unknown_items': instance.macrosUnknownItems,
+      'macros_known_subtotal': instance.macrosKnownSubtotal,
       'overall_meal_score': instance.overallMealScore,
       'health_score': instance.healthScore,
       'health_score_reasons': instance.healthScoreReasons,

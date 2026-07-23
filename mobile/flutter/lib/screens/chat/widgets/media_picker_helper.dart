@@ -193,6 +193,104 @@ Future<List<FoodScanArtifacts>> pickFoodScanArtifactsBatch() async {
   }
 }
 
+/// A menu / bill page, prepared identically no matter where it came from.
+///
+/// The camera and gallery paths used to prepare menu photos differently — the
+/// camera capped every shot at 1600px and baked EXIF orientation as a side
+/// effect of that resize, while the gallery handed the raw pick straight
+/// through. Same menu, two different inputs, and gallery imports came back
+/// with noticeably fewer dishes. [pickMenuPages] is the single path both now
+/// use: full resolution (menus are read, not glanced at — nothing is
+/// downscaled), orientation baked in and EXIF stripped so a portrait photo is
+/// never fed to the model sideways.
+///
+/// Deliberately NOT [FoodScanArtifacts]: that type carries a 768px thumb for
+/// the Vision call, which is the right trade for a plate of food and
+/// catastrophic for 8-pt menu print.
+class MenuPageArtifact {
+  /// Upright, EXIF-stripped, full-resolution JPEG ready to upload.
+  final File file;
+
+  /// Pixel dimensions after orientation correction, for diagnostics.
+  final int sizeBytes;
+
+  const MenuPageArtifact({required this.file, required this.sizeBytes});
+}
+
+/// Pick menu / bill pages from the camera (one shot) or the gallery (many),
+/// normalized for OCR. [maxPages] caps how many are returned.
+///
+/// Returns an empty list when the user cancels.
+Future<List<MenuPageArtifact>> pickMenuPages({
+  required ImageSource source,
+  int maxPages = 10,
+}) async {
+  try {
+    final picker = ImagePicker();
+    final List<XFile> picked;
+    if (source == ImageSource.camera) {
+      // No maxWidth/maxHeight: capping the capture is exactly what was
+      // costing us dishes. Quality 95 keeps small type legible.
+      final shot = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 95,
+      );
+      picked = shot == null ? const <XFile>[] : <XFile>[shot];
+    } else {
+      picked = await picker.pickMultiImage(imageQuality: 95, limit: maxPages);
+    }
+    if (picked.isEmpty) return const [];
+
+    final out = <MenuPageArtifact>[];
+    for (final xf in picked.take(maxPages)) {
+      out.add(await _normalizeMenuPage(xf));
+    }
+    return out;
+  } catch (e, st) {
+    debugPrint('[menu-scan] pickMenuPages failed: $e\n$st');
+    return const [];
+  }
+}
+
+/// Bake EXIF orientation and re-encode at full resolution.
+///
+/// `minWidth`/`minHeight` of 1 mean "never scale down" in
+/// flutter_image_compress — the call is here purely for
+/// `autoCorrectionAngle`, which rotates the pixels and drops the EXIF tag so
+/// no downstream consumer has to interpret it. On failure we hand back the
+/// original file rather than dropping the page.
+Future<MenuPageArtifact> _normalizeMenuPage(XFile xf) async {
+  final original = File(xf.path);
+  try {
+    final bytes = await FlutterImageCompress.compressWithFile(
+      xf.path,
+      minWidth: 1,
+      minHeight: 1,
+      quality: 95,
+      format: CompressFormat.jpeg,
+      autoCorrectionAngle: true,
+      keepExif: false,
+    );
+    if (bytes == null || bytes.isEmpty) {
+      final size = await original.length();
+      debugPrint('[menu-scan] normalize returned null — using original');
+      return MenuPageArtifact(file: original, sizeBytes: size);
+    }
+    final dir = original.parent;
+    final normalized = File(
+      '${dir.path}/menu_page_${DateTime.now().microsecondsSinceEpoch}.jpg',
+    );
+    await normalized.writeAsBytes(bytes, flush: true);
+    debugPrint(
+      '[menu-scan] page normalized: ${(bytes.lengthInBytes / 1024).toStringAsFixed(0)}KB',
+    );
+    return MenuPageArtifact(file: normalized, sizeBytes: bytes.lengthInBytes);
+  } catch (e) {
+    debugPrint('[menu-scan] normalize failed ($e) — using original');
+    return MenuPageArtifact(file: original, sizeBytes: await original.length());
+  }
+}
+
 /// Result of a media pick operation - supports single or multiple media
 class PickedMediaResult {
   final List<PickedMedia> media;
