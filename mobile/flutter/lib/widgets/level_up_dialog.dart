@@ -568,12 +568,30 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                     AnimatedBuilder(
                       animation: _barController,
                       builder: (context, _) {
-                        final xpNeeded = _xpForLevelUp(widget.event.newLevel);
-                        final xpInLevel = widget.event.totalXp -
-                            _cumulativeXpForLevel(widget.event.newLevel);
-                        final progress = (xpInLevel / xpNeeded).clamp(0.0, 1.0) *
-                            _barController.value;
-                        final xpToNext = xpNeeded - xpInLevel;
+                        // Server-owned curve. The old client-side `_kXpTable`
+                        // disagreed with the backend curve (migrations 1901 /
+                        // 2317) by up to 13x, which is what rendered
+                        // "NEXT REWARD IN 0 XP" with the bar pinned full. Read
+                        // the authoritative xp_in_current_level / xp_to_next
+                        // straight from UserXP; only fall back to the local
+                        // table if the state hasn't resolved to this level yet.
+                        final userXp = ref.read(userXpProvider);
+                        final bool serverReady = userXp != null &&
+                            userXp.currentLevel == widget.event.newLevel &&
+                            userXp.xpToNextLevel > 0;
+                        final xpNeeded = serverReady
+                            ? userXp.xpToNextLevel
+                            : _xpForLevelUp(widget.event.newLevel);
+                        final xpInLevel = serverReady
+                            ? userXp.xpInCurrentLevel
+                            : (widget.event.totalXp -
+                                _cumulativeXpForLevel(widget.event.newLevel));
+                        final progress = xpNeeded > 0
+                            ? (xpInLevel / xpNeeded).clamp(0.0, 1.0) *
+                                _barController.value
+                            : _barController.value;
+                        final xpToNext =
+                            (xpNeeded - xpInLevel).clamp(0, xpNeeded);
 
                         return Column(
                           children: [

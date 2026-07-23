@@ -427,29 +427,36 @@ class MainShell extends ConsumerWidget {
           ref.read(xpProvider.notifier).clearLevelUp();
           return;
         }
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (context.mounted) {
-            final showProg = ref
-                .read(accessibilityProvider)
-                .showLevelUpProgression;
-            // A spotlight tour can be mid-flight when the level-up lands
-            // (nav tour on a brand-new account + first-time XP bonus is the
-            // common case). Abort it silently — no seen flag is written, so
-            // the tour re-fires on the next visit to its host screen —
-            // instead of popping the dialog on top of the spotlight.
-            if (ref.read(appTourControllerProvider).isVisible) {
-              ref.read(appTourControllerProvider.notifier).abort();
-            }
-            // Through the first-run queue so a level-up celebration never stacks
-            // on top of (or under) a What's New / health-connect modal on the
-            // first home load after onboarding.
-            FirstRunModalQueue.enqueue(
-              () => showLevelUpDialog(context, next, () {
-                ref.read(xpProvider.notifier).clearLevelUp();
-              }, showProgression: showProg),
-            );
+        // The celebration must never pop over an in-flight surface — the user
+        // reported it landing in the MIDDLE of a restaurant menu scan right
+        // after sign-up. Defer (do NOT drop) until the shell route is topmost
+        // (no bottom sheet / dialog open) AND no analysis/tour is running,
+        // re-checking on a short timer. The event stays set until we actually
+        // show it, so nothing is lost.
+        void tryFireLevelUp() {
+          if (!context.mounted) return;
+          final route = ModalRoute.of(context);
+          final routeIsTop = route != null && route.isCurrent == true;
+          final tourVisible = ref.read(appTourControllerProvider).isVisible;
+          if (!routeIsTop || tourVisible) {
+            // A sheet (menu analysis / log-meal) or a coach-mark tour is up —
+            // wait and retry rather than stacking the confetti on top of it.
+            Future.delayed(const Duration(milliseconds: 900), tryFireLevelUp);
+            return;
           }
-        });
+          final showProg =
+              ref.read(accessibilityProvider).showLevelUpProgression;
+          // Through the first-run queue so a level-up celebration never stacks
+          // on top of (or under) a What's New / health-connect modal on the
+          // first home load after onboarding.
+          FirstRunModalQueue.enqueue(
+            () => showLevelUpDialog(context, next, () {
+              ref.read(xpProvider.notifier).clearLevelUp();
+            }, showProgression: showProg),
+          );
+        }
+
+        WidgetsBinding.instance.addPostFrameCallback((_) => tryFireLevelUp());
       }
     });
 
