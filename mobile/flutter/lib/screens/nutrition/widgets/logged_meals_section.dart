@@ -50,6 +50,10 @@ class LoggedMealsSection extends StatelessWidget {
   final void Function(FoodLog meal, {SchedulePreset initialPreset, int? itemIndex}) onScheduleMeal;
   final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
   final void Function(FoodLog meal) onShareMeal;
+  /// AI-generate a cookable recipe (ingredients + steps) FROM a logged meal —
+  /// the post-log "Make this recipe" long-press action. Optional so existing
+  /// callers that don't wire it simply don't show the tile.
+  final void Function(FoodLog meal)? onMakeRecipeFromMeal;
   /// Share every food logged under one meal-type (all of breakfast, etc.).
   final void Function(String mealType) onShareMealGroup;
   final void Function(String? mealType) onLogMeal;
@@ -100,6 +104,7 @@ class LoggedMealsSection extends StatelessWidget {
     required this.onScheduleMeal,
     required this.onAddToShoppingList,
     required this.onShareMeal,
+    this.onMakeRecipeFromMeal,
     required this.onShareMealGroup,
     required this.onLogMeal,
     this.onFetchItemEdits,
@@ -138,9 +143,17 @@ class LoggedMealsSection extends StatelessWidget {
     // sit directly on the surface, separated by 1px hairline rules.
     final hairline = isDark ? AppColors.hairline : AppColorsLight.cardBorder;
 
-    // Group meals by type
+    // Group meals by type. Dedupe by id first: an optimistic insert followed
+    // by a refetch that isn't reconciled can put the SAME log in the list
+    // twice (observed: one 680-cal menu-scan row rendering twice while the DB
+    // held a single row). Rendering a physical duplicate is never correct, so
+    // guard it at this chokepoint regardless of which upstream path double-fed.
+    final seenMealIds = <String>{};
     final mealsByType = <String, List<FoodLog>>{};
     for (final meal in meals) {
+      if (meal.id.isNotEmpty && !seenMealIds.add(meal.id)) {
+        continue; // already grouped this exact log
+      }
       mealsByType.putIfAbsent(meal.mealType, () => []).add(meal);
     }
 
@@ -1223,19 +1236,20 @@ class LoggedMealsSection extends StatelessWidget {
                 children: [
                   _MacroSummaryItem(
                     label: 'Protein',
-                    value: '${meal.proteinG.toStringAsFixed(0)}g',
+                    // Single-meal macro → "—" when unknown, never "0g".
+                    value: macroGrams(meal.proteinG),
                     color: AppColors.purple,
                     isDark: isDarkTheme,
                   ),
                   _MacroSummaryItem(
                     label: 'Carbs',
-                    value: '${meal.carbsG.toStringAsFixed(0)}g',
+                    value: macroGrams(meal.carbsG),
                     color: AppColors.orange,
                     isDark: isDarkTheme,
                   ),
                   _MacroSummaryItem(
                     label: 'Fat',
-                    value: '${meal.fatG.toStringAsFixed(0)}g',
+                    value: macroGrams(meal.fatG),
                     color: AppColors.error,
                     isDark: isDarkTheme,
                   ),
@@ -1445,6 +1459,17 @@ class LoggedMealsSection extends StatelessWidget {
                   onSaveMealAsRecipe(meal, createCookEvent: asLeftovers);
                 },
               ),
+              if (onMakeRecipeFromMeal != null)
+                _ActionTile(
+                  icon: Icons.restaurant_menu,
+                  label: 'Make this recipe',
+                  iconColor: teal,
+                  textColor: textPrimary,
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    onMakeRecipeFromMeal!(meal);
+                  },
+                ),
               _ActionTile(
                 icon: Icons.event_available,
                 label: 'Log again tomorrow',
@@ -1749,10 +1774,15 @@ class LoggedMealsSection extends StatelessWidget {
     // the user overrides a whole-meal macro. Capturing whole-meal AND
     // per-item baselines lets us distribute a whole-meal correction back
     // to items proportionally by each item's pre-edit share of that macro.
+    // `?? 0` is sanctioned here (NOT a display): these baselines only seed the
+    // portion-rescale edit controllers and multiplier math, which is re-sent to
+    // the server where macros are re-derived authoritatively. An unknown macro
+    // seeds an editable "0" the user can correct — it is never rendered as a
+    // read-only meal total.
     final baselineMealCal = meal.totalCalories.toDouble();
-    final baselineMealP = meal.proteinG;
-    final baselineMealC = meal.carbsG;
-    final baselineMealF = meal.fatG;
+    final baselineMealP = meal.proteinG ?? 0;
+    final baselineMealC = meal.carbsG ?? 0;
+    final baselineMealF = meal.fatG ?? 0;
     final itemBaselines = [
       for (final it in meal.foodItems)
         {
@@ -4184,10 +4214,15 @@ class _MealSectionState extends State<_MealSection> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
+    // Section total = sum-of-known across this meal-type's logs. `?? 0` INSIDE
+    // the sum treats an unknown-macro meal as "not counted", never as 0 for the
+    // meal itself — the section subtotal must not collapse to "—" because one
+    // meal's macros are unknown (daily/section aggregates are out of the
+    // per-item "unknown" rule).
     final totalCal = widget.typeMeals.fold<int>(0, (s, m) => s + m.totalCalories);
-    final totalProtein = widget.typeMeals.fold<double>(0, (s, m) => s + m.proteinG);
-    final totalCarbs = widget.typeMeals.fold<double>(0, (s, m) => s + m.carbsG);
-    final totalFat = widget.typeMeals.fold<double>(0, (s, m) => s + m.fatG);
+    final totalProtein = widget.typeMeals.fold<double>(0, (s, m) => s + (m.proteinG ?? 0));
+    final totalCarbs = widget.typeMeals.fold<double>(0, (s, m) => s + (m.carbsG ?? 0));
+    final totalFat = widget.typeMeals.fold<double>(0, (s, m) => s + (m.fatG ?? 0));
 
     // Count line ("1 item" / "menu scan · 3 items"). A menu-scan log inside
     // the section earns the "menu scan ·" prefix per the Signature reference.
@@ -4515,7 +4550,8 @@ class _FoodGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = _groupTitle();
-    final summary = '${meal.foodItems.length} items · ${meal.totalCalories} cal · ${meal.proteinG.round()}g protein';
+    // Single-meal summary → "—" protein when unknown, never "0g".
+    final summary = '${meal.foodItems.length} items · ${meal.totalCalories} cal · ${macroGrams(meal.proteinG)} protein';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

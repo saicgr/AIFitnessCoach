@@ -47,13 +47,18 @@ class MacroPieCardTemplate extends StatelessWidget {
 
     // Calorie contribution per macro (4/4/9 kcal/g) — the same basis the pie
     // painter uses, so the legend percentages match the wedge sizes exactly.
-    final pKcal = math.max(0.0, nutrition.proteinG) * 4;
-    final cKcal = math.max(0.0, nutrition.carbsG) * 4;
-    final fKcal = math.max(0.0, nutrition.fatG) * 9;
+    // An UNKNOWN macro (null) contributes 0 kcal: it is excluded from the pie
+    // and from the percent denominator, never drawn as a 0-gram slice.
+    final pKcal = math.max(0.0, nutrition.proteinG ?? 0) * 4;
+    final cKcal = math.max(0.0, nutrition.carbsG ?? 0) * 4;
+    final fKcal = math.max(0.0, nutrition.fatG ?? 0) * 9;
     final totalKcal = pKcal + cKcal + fKcal;
 
-    int pct(double part) =>
-        totalKcal <= 0 ? 0 : ((part / totalKcal) * 100).round();
+    // Percent share of the KNOWN total. Null (unknown macro) → null → "—" in
+    // the legend, so an unknown macro never reads as a fabricated "0%".
+    int? pct(double? grams, double part) => grams == null
+        ? null
+        : (totalKcal <= 0 ? 0 : ((part / totalKcal) * 100).round());
 
     return ShareableCanvas(
       aspect: aspect,
@@ -129,7 +134,7 @@ class MacroPieCardTemplate extends StatelessWidget {
             _LegendRow(
               label: 'Protein',
               grams: nutrition.proteinG,
-              percent: pct(pKcal),
+              percent: pct(nutrition.proteinG, pKcal),
               color: AppColors.macroProtein,
               mul: mul,
             ),
@@ -137,7 +142,7 @@ class MacroPieCardTemplate extends StatelessWidget {
             _LegendRow(
               label: 'Carbs',
               grams: nutrition.carbsG,
-              percent: pct(cKcal),
+              percent: pct(nutrition.carbsG, cKcal),
               color: AppColors.macroCarbs,
               mul: mul,
             ),
@@ -145,7 +150,7 @@ class MacroPieCardTemplate extends StatelessWidget {
             _LegendRow(
               label: 'Fat',
               grams: nutrition.fatG,
-              percent: pct(fKcal),
+              percent: pct(nutrition.fatG, fKcal),
               color: AppColors.macroFat,
               mul: mul,
             ),
@@ -165,8 +170,10 @@ class MacroPieCardTemplate extends StatelessWidget {
 /// lines up with the donut wedge sizes.
 class _LegendRow extends StatelessWidget {
   final String label;
-  final double grams;
-  final int percent;
+  // Nullable: an unknown macro renders "—" grams and "—" percent, never
+  // a fabricated "0g" / "0%".
+  final double? grams;
+  final int? percent;
   final Color color;
   final double mul;
 
@@ -204,7 +211,7 @@ class _LegendRow extends StatelessWidget {
           ),
         ),
         Text(
-          '${grams.round()}g',
+          shareableMacroGrams(grams),
           style: TextStyle(
             color: Colors.white,
             fontSize: 16 * mul,
@@ -223,7 +230,7 @@ class _LegendRow extends StatelessWidget {
             border: Border.all(color: color.withValues(alpha: 0.4)),
           ),
           child: Text(
-            '$percent%',
+            percent == null ? '—' : '$percent%',
             style: TextStyle(
               color: color,
               fontSize: 12 * mul,

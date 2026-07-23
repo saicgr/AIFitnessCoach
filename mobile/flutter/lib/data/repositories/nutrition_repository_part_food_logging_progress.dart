@@ -1893,10 +1893,15 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     var fat = 0.0;
     var fiber = 0.0;
     for (final m in meals) {
+      // DAILY total = sum-of-known. A meal with an unknown macro (null) is
+      // NOT counted (contributes 0) rather than nulling the whole day — a
+      // day-level ring must never read "—" because one snack's macros are
+      // unknown. This aggregate is deliberately outside the per-item/per-meal
+      // "unknown → em dash" rule (that lives in the UI via macroGrams()).
       cal += m.totalCalories;
-      protein += m.proteinG;
-      carbs += m.carbsG;
-      fat += m.fatG;
+      protein += m.proteinG ?? 0;
+      carbs += m.carbsG ?? 0;
+      fat += m.fatG ?? 0;
       fiber += m.fiberG ?? 0;
     }
     return DailyNutritionSummary(

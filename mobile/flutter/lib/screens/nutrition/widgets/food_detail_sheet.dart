@@ -236,7 +236,7 @@ class FoodDetailSheet extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _MacroDot(
-                        value: meal.proteinG.round(),
+                        value: meal.proteinG,
                         label: 'Protein',
                         color: AppColors.macroProtein,
                         muted: c.textMuted,
@@ -244,7 +244,7 @@ class FoodDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 26),
                       _MacroDot(
-                        value: meal.carbsG.round(),
+                        value: meal.carbsG,
                         label: 'Carbs',
                         color: AppColors.macroCarbs,
                         muted: c.textMuted,
@@ -252,7 +252,7 @@ class FoodDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 26),
                       _MacroDot(
-                        value: meal.fatG.round(),
+                        value: meal.fatG,
                         label: 'Fat',
                         color: AppColors.macroFat,
                         muted: c.textMuted,
@@ -581,7 +581,8 @@ class _ServingTapTarget extends StatelessWidget {
 }
 
 class _MacroDot extends StatelessWidget {
-  final int value;
+  /// Nullable: null == UNKNOWN macro → renders "—", never a fabricated 0.
+  final double? value;
   final String label;
   final Color color;
   final Color muted;
@@ -606,7 +607,7 @@ class _MacroDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(height: 5),
-        Text('$value', style: ZType.disp(20, color: primary, letterSpacing: 0.4)),
+        Text(macroGramsValue(value), style: ZType.disp(20, color: primary, letterSpacing: 0.4)),
         const SizedBox(height: 2),
         Text(label.toUpperCase(), style: ZType.lbl(9, color: muted, letterSpacing: 2)),
       ],

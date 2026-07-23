@@ -265,15 +265,44 @@ class ShareableFood {
   });
 }
 
+/// Renders a share-card macro-gram label honestly: `"—"` (em dash) for a
+/// genuinely-unknown macro (null grams), otherwise whole grams with a `"g"`
+/// suffix (e.g. `"32g"`). This is the shareables-layer mirror of
+/// `macroGrams()` in the nutrition model (`nutrition_part_food_mood.dart`).
+/// It is kept local so the shareables layer does not depend on the
+/// nutrition-model file, and is the SINGLE source of truth every template /
+/// widget routes macro labels through — a null macro must never print `"0g"`.
+String shareableMacroGrams(double? g) => g == null ? '—' : '${g.round()}g';
+
+/// Same contract as [shareableMacroGrams] but without the unit suffix, for
+/// callers that supply their own `"g"` column or render a bare number
+/// (e.g. a value cell whose header already reads "Protein (g)").
+String shareableMacroGramsValue(double? g) => g == null ? '—' : '${g.round()}';
+
 /// Aggregate macro totals for a food/meal share, optionally with daily
 /// goals. Fed to `MacroViz` — when [hasGoals] is true, ring/bar styles
 /// render goal-relative progress arcs; otherwise they render absolute grams.
+///
+/// Macro nullability contract — a macro field is `null` ONLY when it is
+/// genuinely UNKNOWN, and it renders `"—"` (via [shareableMacroGrams]), never
+/// a fabricated `"0g"`. Two shapes feed this model:
+///   • SINGLE-ITEM / SINGLE-MEAL cards (`NutritionAdapter.fromFoodLog`, and a
+///     one-log `fromMeal`/`fromFoodLogs`): a `null` backend macro propagates
+///     through as `null` here — the card honestly shows "—" for that macro.
+///   • AGGREGATE cards (a whole day/week, goal totals, a macro dashboard
+///     summing many meals): the adapter sums the KNOWN values (a null log
+///     contributes 0) and stores a non-null total, so one unknown snack never
+///     turns a whole day's macro into "—".
 @immutable
 class ShareableNutrition {
   final int calories;
-  final double proteinG;
-  final double carbsG;
-  final double fatG;
+
+  /// Grams of each macro. `null` = genuinely unknown (single-item/meal share);
+  /// a non-null value (including a summed 0) = a known total. See the
+  /// class-level nullability contract above.
+  final double? proteinG;
+  final double? carbsG;
+  final double? fatG;
   final double? fiberG;
 
   /// Optional daily goals — present for meal/day shares, null for a single
@@ -285,9 +314,9 @@ class ShareableNutrition {
 
   const ShareableNutrition({
     this.calories = 0,
-    this.proteinG = 0,
-    this.carbsG = 0,
-    this.fatG = 0,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
     this.fiberG,
     this.calorieGoal,
     this.proteinGoal,

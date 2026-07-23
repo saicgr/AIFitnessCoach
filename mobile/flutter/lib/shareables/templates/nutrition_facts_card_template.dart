@@ -357,7 +357,9 @@ class NutritionFactsCardTemplate extends StatelessWidget {
 /// FDA panel's bold nutrient lines.
 class _MacroRow extends StatelessWidget {
   final String label;
-  final double grams;
+  // Nullable: a genuinely-unknown macro (null) renders "—", never "0g". The
+  // fiber row passes a non-null value (only shown when > 0).
+  final double? grams;
   final Color color;
   final Color ink;
   final double mul;
@@ -399,7 +401,7 @@ class _MacroRow extends StatelessWidget {
             ),
           ),
           Text(
-            '${grams.round()}g',
+            shareableMacroGrams(grams),
             style: TextStyle(
               color: ink,
               fontSize: 16 * mul,

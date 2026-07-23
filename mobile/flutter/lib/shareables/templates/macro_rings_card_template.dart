@@ -179,7 +179,7 @@ class _MacroLegend extends StatelessWidget {
     );
   }
 
-  Widget _entry(String label, double grams, Color color) {
+  Widget _entry(String label, double? grams, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -200,7 +200,8 @@ class _MacroLegend extends StatelessWidget {
               ),
             ),
             TextSpan(
-              text: '${grams.round()}g',
+              // "—" for a genuinely-unknown macro, never a fabricated "0g".
+              text: shareableMacroGrams(grams),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 13 * mul,

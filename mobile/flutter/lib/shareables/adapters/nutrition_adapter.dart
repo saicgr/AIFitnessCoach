@@ -263,6 +263,10 @@ class NutritionAdapter {
       periodLabel: _shortDate(log.loggedAt),
       nutrition: _nutritionOf(
         calories: log.totalCalories,
+        // SINGLE-ITEM card: the log's real macros pass straight through. A
+        // genuinely-unknown macro (backend SQL NULL → FoodLog.proteinG == null)
+        // stays null so the card honestly renders "—" (shareableMacroGrams),
+        // exactly like the in-app surfaces — never a fabricated "0g".
         proteinG: log.proteinG,
         carbsG: log.carbsG,
         fatG: log.fatG,
@@ -272,6 +276,62 @@ class NutritionAdapter {
       healthScore: log.healthScore,
       logText: _nonEmpty(log.userQuery),
       foodImageUrls: _imageList([log]),
+      accentColor: accent,
+    );
+  }
+
+  /// Build a `Shareable` from a food-analysis result BEFORE it is logged —
+  /// the "Share" action on the pre-log review sheet (photo / text analyses;
+  /// menu scans use [fromMenuAnalysis]). Works entirely from in-memory
+  /// analysis state, so it's shareable the moment the analysis lands.
+  static Shareable? fromAnalysis(
+    LogFoodResponse response, {
+    required Color accent,
+    String? mealType,
+    String? query,
+    String? imageUrl,
+  }) {
+    final ranked = response.foodItemsRanked;
+    if (response.totalCalories == 0 && ranked.isEmpty) return null;
+
+    final items = <ShareableFood>[
+      for (final it in ranked)
+        if (it.name.trim().isNotEmpty)
+          ShareableFood(
+            name: it.name.trim(),
+            amount: _nonEmpty(it.amount),
+            calories: it.calories ?? 0,
+            proteinG: it.proteinG ?? 0,
+            carbsG: it.carbsG ?? 0,
+            fatG: it.fatG ?? 0,
+          ),
+    ];
+
+    final title = ranked.length == 1
+        ? ranked.first.name
+        : (_nonEmpty(query) ??
+            (ranked.isNotEmpty ? ranked.first.name : 'Meal'));
+
+    return Shareable(
+      kind: ShareableKind.foodLog,
+      title: title,
+      mealLabel: mealType != null ? _mealLabel(mealType) : null,
+      periodLabel: _shortDate(DateTime.now()),
+      nutrition: _nutritionOf(
+        calories: response.totalCalories,
+        // Propagate the analysis totals; a genuinely-unknown macro stays null
+        // so the card honestly renders "—", never a fabricated "0g".
+        proteinG: response.proteinG,
+        carbsG: response.carbsG,
+        fatG: response.fatG,
+        fiberG: response.fiberG,
+      ),
+      foodItems: items,
+      healthScore: response.healthScore,
+      logText: _nonEmpty(response.dishDescription) ?? _nonEmpty(query),
+      foodImageUrls: (imageUrl != null && imageUrl.trim().isNotEmpty)
+          ? [imageUrl]
+          : const [],
       accentColor: accent,
     );
   }
@@ -295,8 +355,9 @@ class NutritionAdapter {
 
     // Title: a single-log meal reads as the dish; a multi-log meal reads as
     // the meal name itself (e.g. "Lunch") since there is no one dish.
-    final title = logs.length == 1
-        ? _dishTitle(logs.first)
+    final single = logs.length == 1 ? logs.first : null;
+    final title = single != null
+        ? _dishTitle(single)
         : _mealLabel(logs.first.mealType);
 
     return Shareable(
@@ -306,9 +367,19 @@ class NutritionAdapter {
       periodLabel: _shortDate(logs.first.loggedAt),
       nutrition: _nutritionOf(
         calories: totalCalories,
-        proteinG: logs.fold<double>(0, (s, l) => s + l.proteinG),
-        carbsG: logs.fold<double>(0, (s, l) => s + l.carbsG),
-        fatG: logs.fold<double>(0, (s, l) => s + l.fatG),
+        // A one-log meal IS a single dish card (see title above): propagate
+        // its real macros so a genuinely-unknown macro (null) renders "—".
+        // A multi-log meal is an AGGREGATE: sum-of-known — an unknown-macro
+        // log (null) contributes 0, never nulls the whole meal-card total.
+        proteinG: single != null
+            ? single.proteinG
+            : logs.fold<double>(0, (s, l) => s + (l.proteinG ?? 0)),
+        carbsG: single != null
+            ? single.carbsG
+            : logs.fold<double>(0, (s, l) => s + (l.carbsG ?? 0)),
+        fatG: single != null
+            ? single.fatG
+            : logs.fold<double>(0, (s, l) => s + (l.fatG ?? 0)),
         fiberG: _sumFiber(logs),
       ),
       foodItems: _mapFoodItems(allItems),
@@ -333,6 +404,7 @@ class NutritionAdapter {
     final totalCalories = sorted.fold<int>(0, (s, l) => s + l.totalCalories);
     if (totalCalories == 0 && allItems.isEmpty) return null;
 
+    final single = sorted.length == 1 ? sorted.first : null;
     return Shareable(
       kind: ShareableKind.foodLog,
       title: _dayTitle(sorted),
@@ -340,9 +412,19 @@ class NutritionAdapter {
       periodLabel: _shortDate(sorted.first.loggedAt),
       nutrition: _nutritionOf(
         calories: totalCalories,
-        proteinG: sorted.fold<double>(0, (s, l) => s + l.proteinG),
-        carbsG: sorted.fold<double>(0, (s, l) => s + l.carbsG),
-        fatG: sorted.fold<double>(0, (s, l) => s + l.fatG),
+        // A one-log "day" is really a single item: propagate its real macros
+        // so a genuinely-unknown macro (null) renders "—". A multi-log day is
+        // an AGGREGATE: sum-of-known — an unknown-macro log (null) contributes
+        // 0, never nulls the whole-day total.
+        proteinG: single != null
+            ? single.proteinG
+            : sorted.fold<double>(0, (s, l) => s + (l.proteinG ?? 0)),
+        carbsG: single != null
+            ? single.carbsG
+            : sorted.fold<double>(0, (s, l) => s + (l.carbsG ?? 0)),
+        fatG: single != null
+            ? single.fatG
+            : sorted.fold<double>(0, (s, l) => s + (l.fatG ?? 0)),
         fiberG: _sumFiber(sorted),
       ),
       foodItems: _mapFoodItems(allItems),
@@ -381,13 +463,16 @@ class NutritionAdapter {
     ];
   }
 
-  /// Aggregate macro totals. Goals stay null in Phase A (a logged meal has
-  /// no per-meal goal); fiber is null when no log carried fiber data.
+  /// Macro totals for a share. Macros are nullable to carry "unknown" honestly:
+  /// a SINGLE-ITEM/SINGLE-MEAL caller passes a possibly-null macro through so
+  /// the card renders "—"; an AGGREGATE caller passes a non-null sum-of-known.
+  /// Goals stay null in Phase A (a logged meal has no per-meal goal); fiber is
+  /// null when no log carried fiber data.
   static ShareableNutrition _nutritionOf({
     required int calories,
-    required double proteinG,
-    required double carbsG,
-    required double fatG,
+    required double? proteinG,
+    required double? carbsG,
+    required double? fatG,
     required double? fiberG,
   }) {
     return ShareableNutrition(

@@ -67,22 +67,41 @@ class MacroViz extends StatelessWidget {
   Color get _faint => textColor.withValues(alpha: 0.30);
 
   // ─── Derived nutrition values ──────────────────────────────────────────
-  double get _proteinG => math.max(0, nutrition.proteinG);
-  double get _carbsG => math.max(0, nutrition.carbsG);
-  double get _fatG => math.max(0, nutrition.fatG);
-  double get _fiberG => math.max(0, nutrition.fiberG ?? 0);
+  // Macro grams; `null` = genuinely unknown (single-item/meal share) and must
+  // render "—", never "0g". Aggregate shares carry a non-null value. Negative
+  // inputs clamp to 0 (a share never shows a negative gram count).
+  double? get _proteinG => _clampMacro(nutrition.proteinG);
+  double? get _carbsG => _clampMacro(nutrition.carbsG);
+  double? get _fatG => _clampMacro(nutrition.fatG);
+  double? get _fiberG => _clampMacro(nutrition.fiberG);
+  static double? _clampMacro(double? v) => v == null ? null : math.max(0.0, v);
   int get _calories => math.max(0, nutrition.calories);
+
+  /// Grams label for display: "32g" for a known macro, "—" for a genuinely-
+  /// unknown one (null). Single source for every gram label this widget prints
+  /// — routed through the shareables-layer helper so a null never shows "0g".
+  String _macroLabel(double? g) => shareableMacroGrams(g);
+
+  /// Bare grams number ("32" / "—"), for centers/labels that carry the unit
+  /// separately or none at all.
+  String _macroValue(double? g) => shareableMacroGramsValue(g);
 
   /// Calorie contribution of each macro (4/4/9 kcal per gram). The basis for
   /// every "by calorie share" style (pie, plate, stacked bar, waffle) — the
-  /// painters size wedges/segments by these relative values directly.
-  double get _pKcal => _proteinG * 4;
-  double get _cKcal => _carbsG * 4;
-  double get _fKcal => _fatG * 9;
+  /// painters size wedges/segments by these relative values directly. An
+  /// UNKNOWN macro (null) contributes 0 kcal, so its wedge/segment is simply
+  /// not drawn (excluded from the chart), never a misleading 0-gram slice.
+  double get _pKcal => (_proteinG ?? 0) * 4;
+  double get _cKcal => (_carbsG ?? 0) * 4;
+  double get _fKcal => (_fatG ?? 0) * 9;
 
-  /// True when there is genuinely nothing to show.
+  /// True when there is genuinely nothing to show (no calories and no known
+  /// macro grams). An unknown macro (null) counts as nothing here.
   bool get _isEmpty =>
-      _calories == 0 && _proteinG == 0 && _carbsG == 0 && _fatG == 0;
+      _calories == 0 &&
+      (_proteinG ?? 0) == 0 &&
+      (_carbsG ?? 0) == 0 &&
+      (_fatG ?? 0) == 0;
 
   /// Goal-relative progress for a macro, clamped to allow a 1.5× overshoot
   /// lick. Returns null when no goal is set for that macro.
@@ -185,23 +204,25 @@ class MacroViz extends StatelessWidget {
 
   Widget _appleRings() {
     final hasGoals = nutrition.hasGoals;
+    // An unknown macro (null) with goals draws an empty (0-progress) ring —
+    // no fill, which honestly reads as "no data", not a filled/partial arc.
     final rings = <MacroRing>[
       MacroRing(
-        hasGoals ? (_progress(_proteinG, nutrition.proteinGoal) ?? 1.0) : 1.0,
+        hasGoals ? (_progress(_proteinG ?? 0, nutrition.proteinGoal) ?? 1.0) : 1.0,
         _pColor,
       ),
       MacroRing(
-        hasGoals ? (_progress(_carbsG, nutrition.carbsGoal) ?? 1.0) : 1.0,
+        hasGoals ? (_progress(_carbsG ?? 0, nutrition.carbsGoal) ?? 1.0) : 1.0,
         _cColor,
       ),
       MacroRing(
-        hasGoals ? (_progress(_fatG, nutrition.fatGoal) ?? 1.0) : 1.0,
+        hasGoals ? (_progress(_fatG ?? 0, nutrition.fatGoal) ?? 1.0) : 1.0,
         _fColor,
       ),
     ];
     if (showFiber) {
       rings.add(MacroRing(
-        hasGoals ? (_progress(_fiberG, null) ?? 1.0) : 1.0,
+        hasGoals ? (_progress(_fiberG ?? 0, null) ?? 1.0) : 1.0,
         _fiberColor,
       ));
     }
@@ -276,20 +297,22 @@ class MacroViz extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _miniChip('P', _g(_proteinG), _pColor),
+        _miniChip('P', _macroLabel(_proteinG), _pColor),
         SizedBox(width: 8 * scale),
-        _miniChip('C', _g(_carbsG), _cColor),
+        _miniChip('C', _macroLabel(_carbsG), _cColor),
         SizedBox(width: 8 * scale),
-        _miniChip('F', _g(_fatG), _fColor),
+        _miniChip('F', _macroLabel(_fatG), _fColor),
         if (showFiber) ...[
           SizedBox(width: 8 * scale),
-          _miniChip('Fb', _g(_fiberG), _fiberColor),
+          _miniChip('Fb', _macroLabel(_fiberG), _fiberColor),
         ],
       ],
     );
   }
 
-  Widget _miniChip(String label, String grams, Color color) {
+  /// [value] is the fully-formatted gram label ("32g" or "—"); this builder
+  /// never appends its own unit, so an unknown macro shows "—" not "—g".
+  Widget _miniChip(String label, String value, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: 9 * scale,
@@ -311,7 +334,7 @@ class MacroViz extends StatelessWidget {
             ),
           ),
           TextSpan(
-            text: '${grams}g',
+            text: value,
             style: TextStyle(
               fontSize: 11 * scale,
               fontWeight: FontWeight.w600,
@@ -346,7 +369,8 @@ class MacroViz extends StatelessWidget {
   }
 
   Widget _singleDonut(_MacroDatum d) {
-    final progress = _progress(d.grams, d.goal) ?? 1.0;
+    // Unknown macro (null) → 0 progress (empty ring) and "—" in the center.
+    final progress = _progress(d.grams ?? 0, d.goal) ?? 1.0;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -364,7 +388,7 @@ class MacroViz extends StatelessWidget {
                 ),
                 child: const SizedBox.expand(),
               ),
-              _text(_g(d.grams), size: 21, weight: FontWeight.w800),
+              _text(_macroValue(d.grams), size: 21, weight: FontWeight.w800),
             ],
           ),
         ),
@@ -562,16 +586,17 @@ class MacroViz extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _barLabel('P', _g(_proteinG), _pColor),
-            _barLabel('C', _g(_carbsG), _cColor),
-            _barLabel('F', _g(_fatG), _fColor),
+            _barLabel('P', _macroLabel(_proteinG), _pColor),
+            _barLabel('C', _macroLabel(_carbsG), _cColor),
+            _barLabel('F', _macroLabel(_fatG), _fColor),
           ],
         ),
       ],
     );
   }
 
-  Widget _barLabel(String label, String grams, Color color) {
+  /// [value] is the fully-formatted gram label ("40g" or "—").
+  Widget _barLabel(String label, String value, Color color) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -592,7 +617,7 @@ class MacroViz extends StatelessWidget {
               ),
             ),
             TextSpan(
-              text: '${grams}g',
+              text: value,
               style: TextStyle(
                 fontSize: 12 * scale,
                 fontWeight: FontWeight.w600,
@@ -630,9 +655,13 @@ class MacroViz extends StatelessWidget {
 
   Widget _progressRow(_MacroDatum d) {
     final hasGoal = d.goal != null && d.goal! > 0;
-    final fraction = hasGoal ? (d.grams / d.goal!).clamp(0.0, 1.0) : 1.0;
-    final valueText =
-        hasGoal ? '${_g(d.grams)}g / ${_g(d.goal!)}g' : '${_g(d.grams)}g';
+    // Unknown macro (null) → no fill and a "—" value (or "— / Yg" against a
+    // goal), never a fabricated "0g".
+    final fraction =
+        hasGoal ? ((d.grams ?? 0) / d.goal!).clamp(0.0, 1.0) : 1.0;
+    final valueText = hasGoal
+        ? '${_macroLabel(d.grams)} / ${_g(d.goal!)}g'
+        : _macroLabel(d.grams);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -709,7 +738,7 @@ class MacroViz extends StatelessWidget {
               for (final d in cols)
                 Expanded(
                   child: _text(
-                    '${_g(d.grams)}g',
+                    _macroLabel(d.grams),
                     size: 13,
                     weight: FontWeight.w800,
                   ),
@@ -721,7 +750,11 @@ class MacroViz extends StatelessWidget {
             height: 96 * scale,
             child: CustomPaint(
               painter: ColumnChartPainter(
-                columns: [for (final d in cols) ChartColumn(d.grams, d.color)],
+                // Unknown macro (null) → 0 height: the column is not drawn
+                // (excluded from the chart), never a phantom 0-gram bar.
+                columns: [
+                  for (final d in cols) ChartColumn(d.grams ?? 0, d.color)
+                ],
               ),
               child: const SizedBox.expand(),
             ),
@@ -775,14 +808,14 @@ class MacroViz extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           spacing: 8 * scale,
           children: [
-            _numberMacro('P', _g(_proteinG), _pColor),
+            _numberMacro('P', _macroLabel(_proteinG), _pColor),
             _dotSep(),
-            _numberMacro('C', _g(_carbsG), _cColor),
+            _numberMacro('C', _macroLabel(_carbsG), _cColor),
             _dotSep(),
-            _numberMacro('F', _g(_fatG), _fColor),
+            _numberMacro('F', _macroLabel(_fatG), _fColor),
             if (showFiber) ...[
               _dotSep(),
-              _numberMacro('Fb', _g(_fiberG), _fiberColor),
+              _numberMacro('Fb', _macroLabel(_fiberG), _fiberColor),
             ],
           ],
         ),
@@ -790,7 +823,8 @@ class MacroViz extends StatelessWidget {
     );
   }
 
-  Widget _numberMacro(String label, String grams, Color color) {
+  /// [value] is the fully-formatted gram label ("32g" or "—").
+  Widget _numberMacro(String label, String value, Color color) {
     return Text.rich(
       TextSpan(children: [
         TextSpan(
@@ -802,7 +836,7 @@ class MacroViz extends StatelessWidget {
           ),
         ),
         TextSpan(
-          text: '${grams}g',
+          text: value,
           style: TextStyle(
             fontSize: 16 * scale,
             fontWeight: FontWeight.w600,
@@ -831,15 +865,16 @@ class MacroViz extends StatelessWidget {
       spacing: 10 * scale,
       runSpacing: 10 * scale,
       children: [
-        _bigPill('Protein', _g(_proteinG), _pColor),
-        _bigPill('Carbs', _g(_carbsG), _cColor),
-        _bigPill('Fat', _g(_fatG), _fColor),
-        if (showFiber) _bigPill('Fiber', _g(_fiberG), _fiberColor),
+        _bigPill('Protein', _macroLabel(_proteinG), _pColor),
+        _bigPill('Carbs', _macroLabel(_carbsG), _cColor),
+        _bigPill('Fat', _macroLabel(_fatG), _fColor),
+        if (showFiber) _bigPill('Fiber', _macroLabel(_fiberG), _fiberColor),
       ],
     );
   }
 
-  Widget _bigPill(String label, String grams, Color color) {
+  /// [value] is the fully-formatted gram label ("32g" or "—").
+  Widget _bigPill(String label, String value, Color color) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: 16 * scale,
@@ -861,7 +896,7 @@ class MacroViz extends StatelessWidget {
             ),
           ),
           TextSpan(
-            text: '${grams}g',
+            text: value,
             style: TextStyle(
               fontSize: 14 * scale,
               fontWeight: FontWeight.w600,
@@ -1034,16 +1069,16 @@ class MacroViz extends StatelessWidget {
           SizedBox(height: 4 * scale),
           _labelRule(rule, 3.5 * scale),
           SizedBox(height: 5 * scale),
-          _labelRow('Total Fat', '${_g(_fatG)}g', _fColor),
+          _labelRow('Total Fat', _macroLabel(_fatG), _fColor),
           _labelThinRule(rule),
-          _labelRow('Total Carbohydrate', '${_g(_carbsG)}g', _cColor),
+          _labelRow('Total Carbohydrate', _macroLabel(_carbsG), _cColor),
           if ((nutrition.fiberG ?? 0) > 0 || showFiber) ...[
             _labelThinRule(rule),
-            _labelRow('  Dietary Fiber', '${_g(_fiberG)}g', _fiberColor,
+            _labelRow('  Dietary Fiber', _macroLabel(_fiberG), _fiberColor,
                 indent: true),
           ],
           _labelThinRule(rule),
-          _labelRow('Protein', '${_g(_proteinG)}g', _pColor),
+          _labelRow('Protein', _macroLabel(_proteinG), _pColor),
         ],
       ),
     );
@@ -1153,11 +1188,13 @@ class _SquareViz extends StatelessWidget {
 }
 
 /// Internal per-macro bundle so the style builders don't repeat 5-tuples.
+/// [grams] is nullable: `null` = genuinely unknown, rendered "—" (never "0g")
+/// and excluded from bar/column geometry.
 @immutable
 class _MacroDatum {
   final String label;
   final String short;
-  final double grams;
+  final double? grams;
   final Color color;
   final double? goal;
 

@@ -30,6 +30,22 @@ enum FoodMood {
   }
 }
 
+/// The single honest renderer for one food item's or one meal's macro grams.
+///
+/// null == UNKNOWN (the backend stored SQL NULL because it genuinely doesn't
+/// know this macro) → renders an em dash "—". A real value renders "12g".
+/// Every per-food / per-meal macro label MUST route through this instead of
+/// re-inventing a `?? 0` at the call site, which fabricates a confident "0g".
+///
+/// This is for a SINGLE item or SINGLE meal. Daily TOTALS are a server-computed
+/// sum-of-known (DailyNutritionSummary) and never pass through here — a whole
+/// day must not read "—" because one snack's macros are unknown.
+String macroGrams(double? g) => g == null ? '—' : '${g.round()}g';
+
+/// Same contract as [macroGrams] but without the unit suffix, for callers that
+/// render the "g" separately (e.g. a value + unit split across two styles).
+String macroGramsValue(double? g) => g == null ? '—' : '${g.round()}';
+
 @JsonSerializable()
 class FoodLog {
   final String id;
@@ -43,12 +59,20 @@ class FoodLog {
   final List<FoodItem> foodItems;
   @JsonKey(name: 'total_calories')
   final int totalCalories;
+  // NULLABLE, and deliberately WITHOUT a `= 0` default. The backend macro-
+  // integrity chokepoint (`services/gemini/parsers.enforce_macro_integrity`)
+  // stores SQL NULL for a meal total that includes an item with known calories
+  // but unknown protein/carbs/fat. Coercing that NULL to `0` on read-back
+  // resurrected the exact fabrication this effort exists to kill: a persisted
+  // unknown-macro meal would render a confident "0 g". null == UNKNOWN — render
+  // "—" via `macroGrams`, never print 0 g. Daily TOTALS are a separate
+  // server-computed model (DailyNutritionSummary) and stay non-nullable.
   @JsonKey(name: 'protein_g')
-  final double proteinG;
+  final double? proteinG;
   @JsonKey(name: 'carbs_g')
-  final double carbsG;
+  final double? carbsG;
   @JsonKey(name: 'fat_g')
-  final double fatG;
+  final double? fatG;
   @JsonKey(name: 'fiber_g')
   final double? fiberG;
   @JsonKey(name: 'health_score')
@@ -162,9 +186,9 @@ class FoodLog {
     required this.loggedAt,
     this.foodItems = const [],
     this.totalCalories = 0,
-    this.proteinG = 0,
-    this.carbsG = 0,
-    this.fatG = 0,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
     this.fiberG,
     this.healthScore,
     this.healthScoreReasons,
@@ -637,34 +661,53 @@ class USDANutrientData {
   }
 }
 
+/// AI-estimated per-gram scaling factors.
+///
+/// EVERY field is nullable and null-defaulted, never `0`. The backend emits a
+/// macro factor ONLY when the AI actually returned that macro
+/// (`services/gemini/parsers.build_ai_per_gram`), and `flag_unknown_macros`
+/// deliberately STRIPS the protein/carbs/fat factors off an item whose macros
+/// it just nulled — precisely so the client cannot re-multiply fabricated
+/// zeros back into the daily totals.
+///
+/// The old `(json['protein'] as num?)?.toDouble() ?? 0` decode undid that at
+/// the client boundary: a stripped factor rehydrated as a confident "0 g per
+/// gram", which scales to a confident 0 g at ANY portion. null means "no
+/// factor for this macro" — consumers must leave the macro unknown.
 @JsonSerializable()
 class AiPerGramData {
-  final double calories;
-  final double protein;
-  final double carbs;
-  final double fat;
-  final double fiber;
+  final double? calories;
+  final double? protein;
+  final double? carbs;
+  final double? fat;
+  final double? fiber;
 
   const AiPerGramData({
-    this.calories = 0,
-    this.protein = 0,
-    this.carbs = 0,
-    this.fat = 0,
-    this.fiber = 0,
+    this.calories,
+    this.protein,
+    this.carbs,
+    this.fat,
+    this.fiber,
   });
 
   factory AiPerGramData.fromJson(Map<String, dynamic> json) =>
       _$AiPerGramDataFromJson(json);
   Map<String, dynamic> toJson() => _$AiPerGramDataToJson(this);
 
-  /// Calculate nutrition for a given weight in grams
-  Map<String, double> getForWeight(double weightG) {
+  /// True when the macro factors were stripped because the macros are unknown.
+  bool get hasUnknownMacros => protein == null && carbs == null && fat == null;
+
+  /// Calculate nutrition for a given weight in grams.
+  ///
+  /// A null factor yields a null result — the macro stays UNKNOWN at the new
+  /// portion. It is never scaled to 0.
+  Map<String, double?> getForWeight(double weightG) {
     return {
-      'calories': calories * weightG,
-      'protein_g': protein * weightG,
-      'carbs_g': carbs * weightG,
-      'fat_g': fat * weightG,
-      'fiber_g': fiber * weightG,
+      'calories': calories == null ? null : calories! * weightG,
+      'protein_g': protein == null ? null : protein! * weightG,
+      'carbs_g': carbs == null ? null : carbs! * weightG,
+      'fat_g': fat == null ? null : fat! * weightG,
+      'fiber_g': fiber == null ? null : fiber! * weightG,
     };
   }
 }
@@ -739,6 +782,12 @@ class FoodItemRanking {
   // "N per container" / whole-item caption. Null when unknown.
   @JsonKey(name: 'servings_per_container')
   final int? servingsPerContainer;
+  // Set by the backend macro-integrity chokepoint
+  // (`services/gemini/parsers.flag_unknown_macros`) when this item's calories
+  // are known but its protein/carbs/fat are not. The macro fields above are
+  // then NULL — null means UNKNOWN, never zero. Render "—"/prompt, never 0 g.
+  @JsonKey(name: 'macros_unknown')
+  final bool? macrosUnknown;
 
   const FoodItemRanking({
     required this.name,
@@ -765,7 +814,15 @@ class FoodItemRanking {
     this.verifiedMatchName,
     this.servingLabel,
     this.servingsPerContainer,
+    this.macrosUnknown,
   });
+
+  /// True when the macro split for this item is unknown — either the backend
+  /// flagged it explicitly, or every macro came back null. Callers must branch
+  /// on this instead of substituting `?? 0`.
+  bool get hasUnknownMacros =>
+      macrosUnknown == true ||
+      (proteinG == null && carbsG == null && fatG == null);
 
   /// L4 — true when this item is shaky enough to ask the user to confirm.
   /// Verified-DB items are never flagged (the cross-check trumps a low AI
@@ -874,8 +931,12 @@ class FoodItemRanking {
   FoodItemRanking withWeight(double newWeightG, {int? newCount}) {
     if (!canScale) return this;
 
-    int newCalories;
-    double newProtein, newCarbs, newFat, newFiber;
+    // Nullable on purpose: an AI per-gram record whose macro factors were
+    // stripped (macros unknown) must scale to NULL macros at the new portion,
+    // not to a confident 0 g. Only `calories` is always known.
+    int? newCalories;
+    double? newProtein, newCarbs, newFat, newFiber;
+    bool scaledMacrosUnknown = macrosUnknown == true;
 
     if (usdaData != null) {
       // Use USDA per-100g data
@@ -885,14 +946,16 @@ class FoodItemRanking {
       newCarbs = nutrition['carbs_g']!;
       newFat = nutrition['fat_g']!;
       newFiber = nutrition['fiber_g']!;
+      scaledMacrosUnknown = false;
     } else if (aiPerGram != null) {
       // Use AI per-gram estimate
       final nutrition = aiPerGram!.getForWeight(newWeightG);
-      newCalories = nutrition['calories']!.round();
-      newProtein = nutrition['protein_g']!;
-      newCarbs = nutrition['carbs_g']!;
-      newFat = nutrition['fat_g']!;
-      newFiber = nutrition['fiber_g']!;
+      newCalories = nutrition['calories']?.round();
+      newProtein = nutrition['protein_g'];
+      newCarbs = nutrition['carbs_g'];
+      newFat = nutrition['fat_g'];
+      newFiber = nutrition['fiber_g'];
+      if (aiPerGram!.hasUnknownMacros) scaledMacrosUnknown = true;
     } else {
       return this;
     }
@@ -910,10 +973,10 @@ class FoodItemRanking {
       name: name,
       amount: amountStr,
       calories: newCalories,
-      proteinG: double.parse(newProtein.toStringAsFixed(1)),
-      carbsG: double.parse(newCarbs.toStringAsFixed(1)),
-      fatG: double.parse(newFat.toStringAsFixed(1)),
-      fiberG: double.parse(newFiber.toStringAsFixed(1)),
+      proteinG: _round1(newProtein),
+      carbsG: _round1(newCarbs),
+      fatG: _round1(newFat),
+      fiberG: _round1(newFiber),
       goalScore: goalScore,
       goalAlignment: goalAlignment,
       reason: reason,
@@ -933,6 +996,8 @@ class FoodItemRanking {
       verifiedMatchName: verifiedMatchName,
       servingLabel: servingLabel,
       servingsPerContainer: servingsPerContainer,
+      // Rescaling never turns an unknown macro split into a known one.
+      macrosUnknown: scaledMacrosUnknown ? true : null,
     );
   }
 
@@ -980,6 +1045,10 @@ class FoodItemRanking {
       verifiedMatchName: verifiedMatchName,
       servingLabel: servingLabel,
       servingsPerContainer: servingsPerContainer,
+      // A user-supplied macro resolves the unknown; otherwise it persists.
+      macrosUnknown: (proteinG != null || carbsG != null || fatG != null)
+          ? null
+          : macrosUnknown,
     );
   }
 
@@ -1011,6 +1080,8 @@ class FoodItemRanking {
       verifiedMatchName: verifiedMatchName,
       servingLabel: servingLabel,
       servingsPerContainer: servingsPerContainer,
+      // Confirming the PORTION does not reveal an unknown macro split.
+      macrosUnknown: macrosUnknown,
     );
   }
 }
@@ -1146,14 +1217,35 @@ class LogFoodResponse {
   final List<FoodItemRanking> foodItems;
   @JsonKey(name: 'total_calories', defaultValue: 0)
   final int totalCalories;
-  @JsonKey(name: 'protein_g', defaultValue: 0.0)
-  final double proteinG;
-  @JsonKey(name: 'carbs_g', defaultValue: 0.0)
-  final double carbsG;
-  @JsonKey(name: 'fat_g', defaultValue: 0.0)
-  final double fatG;
+  // NULLABLE, and deliberately WITHOUT a `defaultValue: 0.0`. The backend
+  // macro-integrity chokepoint
+  // (`services/gemini/parsers.enforce_macro_integrity`) sets the meal totals to
+  // NULL whenever the meal contains an item with calories but no
+  // protein/carbs/fat. Coercing that null to `0.0` here turned an honest
+  // "we don't know" into a confident "zero grams" on the macro card, in the
+  // daily totals, and in the row this response gets written back as.
+  // null == UNKNOWN. Render "—" or prompt; never print 0 g.
+  @JsonKey(name: 'protein_g')
+  final double? proteinG;
+  @JsonKey(name: 'carbs_g')
+  final double? carbsG;
+  @JsonKey(name: 'fat_g')
+  final double? fatG;
   @JsonKey(name: 'fiber_g')
   final double? fiberG;
+  /// True when the totals above are null because at least one item's macro
+  /// split is unknown. Mirrors `enforce_macro_integrity`'s `macros_unknown`.
+  @JsonKey(name: 'macros_unknown')
+  final bool? macrosUnknown;
+  /// Names of the items whose macros are unknown — lets the confirm sheet say
+  /// exactly WHICH food it needs help with instead of a vague warning.
+  @JsonKey(name: 'macros_unknown_items')
+  final List<String>? macrosUnknownItems;
+  /// Partial sum over the items whose macros we DO know, keyed
+  /// `protein_g`/`carbs_g`/`fat_g`/`fiber_g`. Explicitly a subtotal — it must
+  /// never be presented as the meal total.
+  @JsonKey(name: 'macros_known_subtotal')
+  final Map<String, dynamic>? macrosKnownSubtotal;
   // Enhanced goal-based analysis fields
   @JsonKey(name: 'overall_meal_score')
   final int? overallMealScore;  // 1-10 weighted average
@@ -1222,6 +1314,11 @@ class LogFoodResponse {
   @JsonKey(name: 'plate_description')
   final String? plateDescription;
 
+  // Friendly "what is this dish" line — populated for ALL analysis modes
+  // (text, photo, menu), unlike plateDescription which is image-only.
+  @JsonKey(name: 'dish_description')
+  final String? dishDescription;
+
   // Inflammation tracking
   @JsonKey(name: 'inflammation_score')
   final int? inflammationScore;
@@ -1263,10 +1360,13 @@ class LogFoodResponse {
     this.foodLogId,  // Optional for analyze-only responses
     this.foodItems = const [],
     required this.totalCalories,
-    required this.proteinG,
-    required this.carbsG,
-    required this.fatG,
+    this.proteinG,
+    this.carbsG,
+    this.fatG,
     this.fiberG,
+    this.macrosUnknown,
+    this.macrosUnknownItems,
+    this.macrosKnownSubtotal,
     this.overallMealScore,
     this.healthScore,
     this.healthScoreReasons,
@@ -1294,6 +1394,7 @@ class LogFoodResponse {
     this.imageUrl,
     this.imageStorageKey,
     this.plateDescription,
+    this.dishDescription,
     this.inflammationScore,
     this.isUltraProcessed,
     this.appliedInstructionNote,
@@ -1309,6 +1410,17 @@ class LogFoodResponse {
 
   /// Backwards-compat alias. Prefer [foodItems] directly — it is already typed.
   List<FoodItemRanking> get foodItemsRanked => foodItems;
+
+  /// True when this meal's macro totals are UNKNOWN (not zero). Presentation
+  /// code must branch on this before rendering any macro figure: show "—",
+  /// the [macrosKnownSubtotal] labelled as partial, or a prompt to fill the
+  /// gap — never `proteinG ?? 0`.
+  bool get hasUnknownMacros =>
+      macrosUnknown == true ||
+      proteinG == null ||
+      carbsG == null ||
+      fatG == null ||
+      foodItems.any((i) => i.hasUnknownMacros);
 
   /// Get color for overall meal score
   String get mealScoreColor {
@@ -1368,6 +1480,8 @@ class LogFoodResponse {
         estimateReasoning: item.estimateReasoning,
         requiresUserConfirmation: item.requiresUserConfirmation,
         verifiedSource: item.verifiedSource,
+        // Scaling a portion cannot reveal a macro split we never knew.
+        macrosUnknown: item.macrosUnknown,
       );
     }).toList();
 
@@ -1376,10 +1490,16 @@ class LogFoodResponse {
       foodLogId: foodLogId,
       foodItems: scaledFoodItems,
       totalCalories: (totalCalories * multiplier).round(),
-      proteinG: proteinG * multiplier,
-      carbsG: carbsG * multiplier,
-      fatG: fatG * multiplier,
+      // null × multiplier stays null — an unknown macro is unknown at every
+      // portion size. Never `(proteinG ?? 0) * multiplier`.
+      proteinG: proteinG != null ? proteinG! * multiplier : null,
+      carbsG: carbsG != null ? carbsG! * multiplier : null,
+      fatG: fatG != null ? fatG! * multiplier : null,
       fiberG: fiberG != null ? fiberG! * multiplier : null,
+      macrosUnknown: macrosUnknown,
+      macrosUnknownItems: macrosUnknownItems,
+      // The subtotal scales with the portion just like the totals do.
+      macrosKnownSubtotal: _scaleKnownSubtotal(macrosKnownSubtotal, multiplier),
       overallMealScore: overallMealScore,
       healthScore: healthScore,
       goalAlignmentPercentage: goalAlignmentPercentage,
@@ -1405,6 +1525,7 @@ class LogFoodResponse {
       imageUrl: imageUrl,
       imageStorageKey: imageStorageKey,
       plateDescription: plateDescription,
+      dishDescription: dishDescription,
       inflammationScore: inflammationScore,
       isUltraProcessed: isUltraProcessed,
       appliedInstructionNote: appliedInstructionNote,
@@ -1438,6 +1559,9 @@ class LogFoodResponse {
       carbsG: carbsG,
       fatG: fatG,
       fiberG: fiberG,
+      macrosUnknown: macrosUnknown,
+      macrosUnknownItems: macrosUnknownItems,
+      macrosKnownSubtotal: macrosKnownSubtotal,
       overallMealScore: overallMealScore ?? this.overallMealScore,
       healthScore: healthScore ?? this.healthScore,
       healthScoreReasons: healthScoreReasons ?? this.healthScoreReasons,
@@ -1465,6 +1589,7 @@ class LogFoodResponse {
       imageUrl: imageUrl,
       imageStorageKey: imageStorageKey,
       plateDescription: plateDescription,
+      dishDescription: dishDescription,
       inflammationScore: inflammationScore,
       isUltraProcessed: isUltraProcessed,
       appliedInstructionNote: appliedInstructionNote,
@@ -1691,6 +1816,23 @@ class SavedFoodsResponse {
   factory SavedFoodsResponse.fromJson(Map<String, dynamic> json) =>
       _$SavedFoodsResponseFromJson(json);
   Map<String, dynamic> toJson() => _$SavedFoodsResponseToJson(this);
+}
+
+/// Rounds a macro to 1 decimal, PRESERVING null. `null` means the macro is
+/// unknown; there is no honest 1-decimal rendering of "unknown", so it stays
+/// null rather than collapsing to 0.0.
+double? _round1(double? value) =>
+    value == null ? null : double.parse(value.toStringAsFixed(1));
+
+/// Scales `macros_known_subtotal` by a portion multiplier, preserving nulls
+/// and dropping any non-numeric entry rather than defaulting it to zero.
+Map<String, dynamic>? _scaleKnownSubtotal(
+  Map<String, dynamic>? subtotal,
+  double multiplier,
+) {
+  if (subtotal == null) return null;
+  return subtotal.map((key, value) =>
+      MapEntry(key, value is num ? value.toDouble() * multiplier : null));
 }
 
 /// Normalizes a raw JSON map that may contain already-hydrated nested models.

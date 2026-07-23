@@ -122,9 +122,10 @@ class FoodReceiptTemplate extends StatelessWidget {
                     bold: true, suffix: ' kcal'),
                 SizedBox(height: 10 * mul),
                 Text(
-                  'P ${nutrition.proteinG.round()}g    '
-                  'C ${nutrition.carbsG.round()}g    '
-                  'F ${nutrition.fatG.round()}g',
+                  // "—" for a genuinely-unknown macro, never a fabricated "0g".
+                  'P ${shareableMacroGrams(nutrition.proteinG)}    '
+                  'C ${shareableMacroGrams(nutrition.carbsG)}    '
+                  'F ${shareableMacroGrams(nutrition.fatG)}',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontFamily: _mono,

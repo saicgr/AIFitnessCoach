@@ -227,7 +227,7 @@ class _FoodLogTile extends StatelessWidget {
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            '${log.proteinG.round()}P · ${log.carbsG.round()}C · ${log.fatG.round()}F',
+                            '${macroGramsValue(log.proteinG)}P · ${macroGramsValue(log.carbsG)}C · ${macroGramsValue(log.fatG)}F',
                             style: ZType.data(11, color: textMuted),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -590,9 +590,12 @@ class _EditFoodLogSheetState extends ConsumerState<_EditFoodLogSheet> {
               child: PortionAmountInput(
                 initialMultiplier: 1.0,
                 baseCalories: widget.log.totalCalories,
-                baseProtein: widget.log.proteinG,
-                baseCarbs: widget.log.carbsG,
-                baseFat: widget.log.fatG,
+                // Portion-rescale input, re-sent to the server (which re-derives
+                // macros). `?? 0` is arithmetic seed, not display — matches
+                // log_meal_sheet's established pattern for non-null base params.
+                baseProtein: widget.log.proteinG ?? 0,
+                baseCarbs: widget.log.carbsG ?? 0,
+                baseFat: widget.log.fatG ?? 0,
                 isDark: widget.isDark,
                 onMultiplierChanged: (m) => setState(() => _multiplier = m),
               ),

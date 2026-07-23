@@ -66,9 +66,10 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
           .toList() ??
       const [],
   totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
-  proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0,
-  carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0,
-  fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
+  // NO `?? 0`: a server NULL macro is genuinely unknown and must stay null.
+  proteinG: (json['protein_g'] as num?)?.toDouble(),
+  carbsG: (json['carbs_g'] as num?)?.toDouble(),
+  fatG: (json['fat_g'] as num?)?.toDouble(),
   fiberG: (json['fiber_g'] as num?)?.toDouble(),
   healthScore: (json['health_score'] as num?)?.toInt(),
   healthScoreReasons: (json['health_score_reasons'] as List<dynamic>?)
@@ -473,6 +474,7 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       imageUrl: json['image_url'] as String?,
       imageStorageKey: json['image_storage_key'] as String?,
       plateDescription: json['plate_description'] as String?,
+      dishDescription: json['dish_description'] as String?,
       inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
       isUltraProcessed: json['is_ultra_processed'] as bool?,
       appliedInstructionNote: json['applied_instruction_note'] as String?,
@@ -528,6 +530,7 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'image_url': instance.imageUrl,
       'image_storage_key': instance.imageStorageKey,
       'plate_description': instance.plateDescription,
+      'dish_description': instance.dishDescription,
       'inflammation_score': instance.inflammationScore,
       'is_ultra_processed': instance.isUltraProcessed,
       'applied_instruction_note': instance.appliedInstructionNote,

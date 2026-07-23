@@ -7,9 +7,6 @@ library;
 import '../shareable_data.dart';
 import 'card_doc.dart';
 
-/// Formats grams as a compact string ("13g", "104g").
-String _grams(double g) => '${g.round()}g';
-
 /// Thousands-separated integer ("1042318" -> "1,042,318").
 String _commas(int v) {
   final s = v.abs().toString();
@@ -55,12 +52,15 @@ String resolveText(
       return data.healthScore?.toString() ?? '';
     case BindingSource.calories:
       return (n?.calories ?? 0).toString();
+    // A genuinely-unknown macro (null) renders "—" via the shared helper,
+    // never a fabricated "0g". Aggregate shares carry a non-null sum here so
+    // they still render a number.
     case BindingSource.proteinG:
-      return _grams(n?.proteinG ?? 0);
+      return shareableMacroGrams(n?.proteinG);
     case BindingSource.carbsG:
-      return _grams(n?.carbsG ?? 0);
+      return shareableMacroGrams(n?.carbsG);
     case BindingSource.fatG:
-      return _grams(n?.fatG ?? 0);
+      return shareableMacroGrams(n?.fatG);
     case BindingSource.foodItemName:
       return idx >= 0 && idx < items.length ? items[idx].name : literalFallback;
     case BindingSource.foodItemAmount:
