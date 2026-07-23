@@ -521,6 +521,9 @@ For EACH distinct dish (up to {max_dishes}):
     * "grilled chicken breast" not "chicken"
     * "ihop original buttermilk pancakes" if a chain logo is visible
     * "scrambled eggs" not just "eggs"
+    * an alcoholic drink or cocktail keeps a "cocktail"/"beer"/"wine"
+      qualifier so it is not mistaken for a snack — e.g. "twisted fig
+      cocktail", NOT "twisted fig". If it is a drink, set meal_type_guess=drink.
   Use lowercase, plain words separated by spaces. Backend re-normalizes.
 - weight_g_estimate: realistic single-serving weight in grams. Don't guess
   the WHOLE PLATE's weight when there are multiple dishes — estimate each.
@@ -1372,7 +1375,7 @@ Guidelines:
 RULES:
 1. Return EXACTLY one entry per line above, in the same order, with "name" copied verbatim so the caller can match them up.
 2. Assume a typical RESTAURANT portion (bigger and richer than a home-cooked version, cooked with butter/oil unless the name says otherwise).
-3. NUTRITION MUST NOT BE ROUND — derive calories from a realistic portion weight (weight_g x kcal/g). 387 / 462 / 518, not 400 / 450 / 500. Decimal precision on protein_g / carbs_g / fat_g.
+3. Derive calories from a realistic portion weight (weight_g x kcal/g) and report your BEST estimate for that dish. Do NOT force numbers to be artificially precise or artificially round — the same dish must produce the same figure every time, so estimate from the food, not from a desire to avoid round numbers.
 4. ALWAYS include weight_g.
 5. DETECT allergens per FDA Big 9 into detected_allergens: milk, egg, fish, crustacean_shellfish, tree_nuts, wheat, peanuts, soybeans, sesame.
 6. Fill EVERY health field: rating + rating_reason (<= 8 words), inflammation_score (0-10), inflammation_triggers (1-3 tags), glycemic_load (null only under 2g carbs), fodmap_rating, fodmap_reason (null only when low), added_sugar_g (0.0 when none), is_ultra_processed, coach_tip (<= 18 words).
@@ -1714,7 +1717,7 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
                 prompt = f"""Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not skip any.
 
 CRITICAL RULES:
-1. NUTRITION MUST NOT BE ROUND — derive calories from realistic portion weight (weight_g × kcal/g). Acceptable: 387, 462, 518. NOT acceptable: 400, 450, 500 every time. Decimal precision for macros (42.6 not 40.0).
+1. Derive calories from realistic portion weight (weight_g × kcal/g) and report your BEST estimate. Do NOT force numbers to be artificially precise or artificially round — the same dish must produce the same figure every time, so estimate from the food itself.
 2. ALWAYS include weight_g — your best estimate of the single-serving weight in grams.
 3. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame".
 
@@ -1771,7 +1774,7 @@ COMPLETENESS CONTRACT (read first):
 0b. If a section header is visible (e.g. "Burgers", "Bowls", "Drinks"), that section MUST appear in the output, even if you only have room for the most common 1-2 dishes from it.
 
 CRITICAL RULES:
-1. NUTRITION MUST NOT BE ROUND — derive calories from realistic portion weight (weight_g × kcal/g). Acceptable values: 387, 462, 518. NOT acceptable: 400, 450, 500 every time. Same rule for protein_g / carbs_g / fat_g — decimal precision expected (e.g. 42.6, not 40.0).
+1. Derive calories from realistic portion weight (weight_g × kcal/g) and report your BEST estimate. Do NOT force numbers to be artificially precise or artificially round — the same dish must produce the same figure every time, so estimate from the food itself, not from a desire to avoid round numbers.
 2. ALWAYS include weight_g — your best estimate of the dish's serving weight in grams (typical restaurant portions: naan 80-100g, curry bowl 200-300g, rice 150-250g, entrée protein 150-250g, salad 150-250g, soup 240-300g).
 3. NORMALIZE section_name to ONE of: "breakfast" | "appetizers" | "mains" | "sides" | "addons" | "desserts" | "drinks" | "specials" | "uncategorized". Map restaurant labels like "Starters" → "appetizers", "Entrées" → "mains", "Beverages" → "drinks", and "Sauces" / "Enhancements" / "Extras" / "Add-Ons" / "Toppings" → "addons".
 4. EXTRACT price as a number when visible on the menu (keep the currency in a "currency" string like "USD" / "INR" / "EUR"). Return null ONLY if truly not shown.
