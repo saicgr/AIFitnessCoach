@@ -1,10 +1,11 @@
 """Recipe import endpoints — URL, text, handwritten image; pantry suggestions; per-row analyzer."""
 import json
 import logging
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
@@ -30,6 +31,12 @@ from services.vision_service import VisionService
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+class GenerateFromDishRequest(BaseModel):
+    """Request to generate a cookable recipe from an analyzed dish."""
+    dish_name: str = Field(..., max_length=200)
+    component_names: Optional[List[str]] = Field(default=None)
 
 
 @router.post("/recipes/analyze-ingredient", response_model=IngredientAnalyzeResponse)
@@ -90,6 +97,27 @@ async def import_recipe_text(
 
     async def stream():
         async for evt in importer.import_text(request.text, user_id=user_id):
+            yield _sse(evt)
+
+    return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+@router.post("/recipes/generate-from-dish")
+async def generate_recipe_from_dish(
+    request: GenerateFromDishRequest,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """SSE-stream a generated home-cookable recipe for an analyzed dish
+    (the "Make this recipe" action off the food-analysis sheet)."""
+    importer = get_recipe_import_service()
+
+    async def stream():
+        async for evt in importer.generate_from_dish(
+            request.dish_name,
+            component_names=request.component_names,
+            user_id=user_id,
+        ):
             yield _sse(evt)
 
     return StreamingResponse(stream(), media_type="text/event-stream")

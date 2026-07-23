@@ -3790,6 +3790,221 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
   }
 
+  // ==========================================================================
+  // Recipe actions off the pre-log analysis sheet (Add to recipe / Make this
+  // recipe). Both reuse the existing recipe primitives — no new persistence.
+  // ==========================================================================
+
+  /// Map the analyzed items to recipe-ingredient rows (grams + macros).
+  List<RecipeIngredientCreate> _analysisItemsToIngredients(LogFoodResponse response) {
+    final items = response.foodItemsRanked;
+    final out = <RecipeIngredientCreate>[];
+    for (var i = 0; i < items.length; i++) {
+      final it = items[i];
+      final grams = it.weightG;
+      out.add(RecipeIngredientCreate(
+        foodName: it.name,
+        amount: grams != null && grams > 0 ? grams : 1,
+        unit: grams != null && grams > 0 ? 'g' : (it.unit ?? 'serving'),
+        amountGrams: grams,
+        calories: it.calories?.toDouble(),
+        proteinG: it.proteinG,
+        carbsG: it.carbsG,
+        fatG: it.fatG,
+        fiberG: it.fiberG,
+        ingredientOrder: i,
+      ));
+    }
+    return out;
+  }
+
+  String _analysisDishName(LogFoodResponse response) {
+    final items = response.foodItemsRanked;
+    if (items.length == 1) return items.first.name;
+    if (items.isNotEmpty) {
+      return _descriptionController.text.trim().isNotEmpty
+          ? _descriptionController.text.trim()
+          : '${items.first.name} + ${items.length - 1} more';
+    }
+    return _descriptionController.text.trim().isNotEmpty
+        ? _descriptionController.text.trim()
+        : 'New recipe';
+  }
+
+  /// "Add to recipe" — pick an existing recipe to append these items to, or
+  /// start a new recipe prefilled from them.
+  Future<void> _handleAddToRecipe(LogFoodResponse response) async {
+    HapticService.light();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ingredients = _analysisItemsToIngredients(response);
+    if (ingredients.isEmpty) return;
+
+    RecipesResponse? recipesResp;
+    try {
+      recipesResp = await ref
+          .read(nutritionRepositoryProvider)
+          .getRecipes(userId: widget.userId, limit: 50);
+    } catch (_) {
+      recipesResp = null;
+    }
+    if (!mounted) return;
+    final recipes = recipesResp?.items ?? const <RecipeSummary>[];
+
+    await showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 16, right: 16, top: 16,
+            bottom: MediaQuery.of(ctx).padding.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Add to recipe',
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary)),
+              const SizedBox(height: 4),
+              Text('${ingredients.length} item${ingredients.length == 1 ? '' : 's'} from this meal',
+                  style: TextStyle(fontSize: 12,
+                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
+              const SizedBox(height: 12),
+              // New recipe
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.add_circle_outline,
+                    color: AccentColorScope.of(ctx).getColor(isDark)),
+                title: const Text('New recipe…'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  final prefill = RecipeCreate(
+                    name: _analysisDishName(response),
+                    description: response.dishDescription ?? response.plateDescription,
+                    ingredients: ingredients,
+                  );
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => RecipeCreateScreen(
+                        userId: widget.userId, isDark: isDark, prefill: prefill),
+                  ));
+                },
+              ),
+              if (recipes.isNotEmpty) ...[
+                const Divider(height: 16),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: recipes.length,
+                    itemBuilder: (_, i) {
+                      final r = recipes[i];
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.menu_book_outlined),
+                        title: Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        onTap: () async {
+                          Navigator.pop(ctx);
+                          await _appendItemsToRecipe(r, ingredients);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _appendItemsToRecipe(
+      RecipeSummary recipe, List<RecipeIngredientCreate> ingredients) async {
+    final repo = ref.read(nutritionRepositoryProvider);
+    var added = 0;
+    for (final ing in ingredients) {
+      try {
+        await repo.addIngredient(
+            userId: widget.userId, recipeId: recipe.id, ingredient: ing);
+        added++;
+      } catch (_) {/* skip a failed ingredient, keep going */}
+    }
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(added > 0
+          ? 'Added $added item${added == 1 ? '' : 's'} to "${recipe.name}"'
+          : 'Couldn\'t add items to "${recipe.name}"'),
+    ));
+  }
+
+  /// "Share" — share this analyzed meal BEFORE logging it.
+  Future<void> _handleShareAnalysis(LogFoodResponse response) async {
+    HapticService.light();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final shareable = NutritionAdapter.fromAnalysis(
+      response,
+      accent: accent,
+      mealType: _selectedMealType.value,
+      query: _descriptionController.text.trim().isNotEmpty
+          ? _descriptionController.text.trim()
+          : null,
+      imageUrl: response.imageUrl,
+    );
+    if (shareable == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nothing to share yet.')),
+      );
+      return;
+    }
+    await ShareableSheet.show(context, data: shareable);
+  }
+
+  /// "Make this recipe" — AI-generate a cookable recipe for this dish and open
+  /// it in the recipe editor.
+  Future<void> _handleMakeThisRecipe(LogFoodResponse response) async {
+    if (_makingRecipe) return;
+    HapticService.light();
+    setState(() => _makingRecipe = true);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dishName = _analysisDishName(response);
+    final components =
+        response.foodItemsRanked.map((e) => e.name).toList();
+
+    RecipeCreate? generated;
+    String? error;
+    try {
+      await for (final evt in ref.read(recipeRepositoryProvider).importStream(
+        mode: 'generate_from_dish',
+        userId: widget.userId,
+        dishName: dishName,
+        componentNames: components,
+      )) {
+        if (evt.step == 'done' && evt.recipe != null) {
+          generated = RecipeCreate.fromJson(evt.recipe!);
+        } else if (evt.step == 'error') {
+          error = evt.message;
+        }
+      }
+    } catch (e) {
+      error = 'Couldn\'t generate a recipe. Please try again.';
+    }
+
+    if (!mounted) return;
+    setState(() => _makingRecipe = false);
+    if (generated != null) {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => RecipeCreateScreen(
+            userId: widget.userId, isDark: isDark, prefill: generated),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(error ?? 'Couldn\'t generate a recipe.'),
+      ));
+    }
+  }
+
 }
 
 /// Result returned by [_LogMealSheetState._showAddAnotherPrompt] — bundles

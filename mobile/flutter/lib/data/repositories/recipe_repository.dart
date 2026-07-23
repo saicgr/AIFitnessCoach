@@ -91,17 +91,20 @@ class RecipeRepository {
 
   /// Stream import progress events for URL/text/handwritten/social import.
   Stream<ImportProgressEvent> importStream({
-    required String mode, // 'url' | 'text' | 'handwritten' | 'social'
+    required String mode, // 'url' | 'text' | 'handwritten' | 'social' | 'generate_from_dish'
     required String userId,
     String? url,
     String? text,
     String? imageB64,
+    String? dishName,
+    List<String>? componentNames,
   }) async* {
     final endpoint = switch (mode) {
       'url' => '/nutrition/recipes/import-url',
       'text' => '/nutrition/recipes/import-text',
       'handwritten' => '/nutrition/recipes/import-handwritten',
       'social' => '/nutrition/recipes/import-social',
+      'generate_from_dish' => '/nutrition/recipes/generate-from-dish',
       _ => throw ArgumentError('unknown import mode: $mode'),
     };
 
@@ -110,6 +113,10 @@ class RecipeRepository {
       'text' => {'text': text ?? ''},
       'handwritten' => {'image_b64': imageB64 ?? ''},
       'social' => {'url': url ?? ''},
+      'generate_from_dish' => {
+          'dish_name': dishName ?? '',
+          'component_names': componentNames ?? const <String>[],
+        },
       _ => const {},
     };
 

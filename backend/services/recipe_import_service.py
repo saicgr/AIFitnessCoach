@@ -458,6 +458,29 @@ class RecipeImportService:
             "message": f"Estimating nutrition for {len(ingredients_raw)} ingredients",
         }
 
+        recipe_create = await self._build_recipe_create(
+            recipe, user_id, source_type, source_url,
+        )
+
+        yield {
+            "step": "done",
+            "message": "Recipe ready",
+            "recipe": recipe_create.model_dump(mode="json"),
+            "confidence": parsed.get("confidence", 0),
+        }
+
+    async def _build_recipe_create(
+        self,
+        recipe: dict,
+        user_id: Optional[str],
+        source_type: RecipeSourceType,
+        source_url: Optional[str] = None,
+    ) -> RecipeCreate:
+        """Turn a parsed/generated recipe dict (the `_RECIPE_PARSE_PROMPT`
+        shape) into a `RecipeCreate`, estimating per-ingredient nutrition.
+        Shared by the import paths and by `generate_from_dish`."""
+        ingredients_raw = recipe.get("ingredients") or []
+
         # FAST PATH: the recipe-parse Gemini call now returns per-ingredient
         # nutrition inline (amount_grams + calories/protein/carbs/fat/fiber).
         # So for ingredients that came back with nutrition we build the row
@@ -558,7 +581,7 @@ class RecipeImportService:
         except ValueError:
             cooking_method = None
 
-        recipe_create = RecipeCreate(
+        return RecipeCreate(
             name=recipe.get("name") or "Imported recipe",
             description=recipe.get("description"),
             servings=safe_int(recipe.get("servings"), default=1),
@@ -574,11 +597,82 @@ class RecipeImportService:
             ingredients=ingredients,
         )
 
+    # ------------------------------------------------------------------
+    # Generate a cookable recipe FROM an analyzed dish (no source text)
+    # ------------------------------------------------------------------
+
+    async def generate_from_dish(
+        self,
+        dish_name: str,
+        component_names: Optional[List[str]] = None,
+        user_id: Optional[str] = None,
+    ) -> AsyncIterator[Dict]:
+        """Generate a full home-cookable recipe for an analyzed dish — the
+        "Make this recipe" action off the food-analysis sheet. Unlike the
+        import paths (which PARSE existing recipe text), this GENERATES the
+        ingredients + steps from the dish name, then reuses the same
+        nutrition-estimating assembly and returns a `done` event with a
+        RecipeCreate the client opens in the recipe editor."""
+        dish_name = (dish_name or "").strip()
+        if not dish_name:
+            yield {"step": "error", "message": "No dish to make a recipe from."}
+            return
+
+        components = ", ".join([c for c in (component_names or []) if c]) or dish_name
+        yield {"step": "parsing", "message": f"Writing a recipe for {dish_name}…"}
+
+        gen_prompt = (
+            "You are a recipe developer. Write a realistic, home-cookable recipe "
+            f'for the dish "{dish_name}" (its components: {components}).\n'
+            "Return ONLY valid JSON in EXACTLY this schema (no markdown, no prose):\n"
+            "{\n"
+            '  "is_recipe": true,\n'
+            '  "confidence": 90,\n'
+            '  "recipe": {\n'
+            '    "name": "...", "description": "1-2 sentences", "servings": 2,\n'
+            '    "prep_time_minutes": 0, "cook_time_minutes": 0, "cuisine": "...",\n'
+            '    "category": "breakfast|lunch|dinner|snack|dessert|drink|other",\n'
+            '    "cooking_method": "raw|baked|grilled|fried|boiled|steamed|roasted|sauteed|slow_cooked|pressure_cooked|air_fried|smoked|other|null",\n'
+            '    "instructions": "Step 1. ...\\nStep 2. ...",\n'
+            '    "tags": [],\n'
+            '    "ingredients": [\n'
+            '      {"food_name": "...", "amount": 1.0, "unit": "g|oz|cup|tbsp|tsp|ml|piece",\n'
+            '       "amount_grams": 0.0, "calories": 0, "protein_g": 0.0, "carbs_g": 0.0,\n'
+            '       "fat_g": 0.0, "fiber_g": 0.0}\n'
+            "    ]\n"
+            "  }\n"
+            "}\n"
+            "Estimate each ingredient's nutrition for the AMOUNT used (not per-100g). "
+            "Use standard nutrition knowledge. Keep the recipe faithful to the named dish."
+        )
+
+        try:
+            raw = await gemini_text(
+                gen_prompt, temperature=0.4, method_name="recipe_generate_from_dish",
+            )
+            parsed = json.loads(_strip_markdown_json(raw))
+        except Exception as exc:
+            logger.exception("[RecipeGenerate] Gemini generation failed")
+            yield {"step": "error", "message": f"Couldn't write a recipe: {exc}"}
+            return
+
+        recipe = parsed.get("recipe") or {}
+        if not recipe.get("ingredients"):
+            yield {"step": "error", "message": "Couldn't write a recipe for this dish."}
+            return
+
+        yield {
+            "step": "analyzing",
+            "message": f"Estimating nutrition for {len(recipe.get('ingredients') or [])} ingredients",
+        }
+        recipe_create = await self._build_recipe_create(
+            recipe, user_id, RecipeSourceType.AI_GENERATED,
+        )
         yield {
             "step": "done",
             "message": "Recipe ready",
             "recipe": recipe_create.model_dump(mode="json"),
-            "confidence": parsed.get("confidence", 0),
+            "confidence": parsed.get("confidence", 90),
         }
 
 

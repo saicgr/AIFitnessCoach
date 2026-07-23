@@ -14,6 +14,8 @@ import '../../widgets/design_system/zealova.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/models/recipe.dart';
+import '../../data/repositories/recipe_repository.dart';
+import 'recipes/recipe_create_screen.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/providers/recipe_save_jobs_provider.dart';
 import '../../data/providers/schedule_save_jobs_provider.dart';
@@ -371,6 +373,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     ref.listenManual<DailyNutritionState>(
         dailyNutritionProvider(nutritionKeyFor(_selectedDate)), (prev, next) {
       if (_userId == null) return;
+      // The day's summary RESOLVING is not a log. Without this guard the very
+      // first network/disk load (null summary → N meals) read as "the user just
+      // logged something", so opening the tab fired /nutrition/micronutrients
+      // twice: once from `_loadData()` and once from here, with the in-memory
+      // TTL deliberately nulled. Only compare against a previous REAL summary.
+      if (prev?.summary == null || next.summary == null) return;
       final prevCount = prev?.summary?.meals.length ?? 0;
       final nextCount = next.summary?.meals.length ?? 0;
       final prevKcal = prev?.summary?.totalCalories ?? 0;
@@ -936,6 +944,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onAddToShoppingList: (meal, {int? itemIndex}) =>
                                 _addMealToShoppingList(meal, itemIndex: itemIndex),
                             onShareMeal: (meal) => _shareMeal(meal),
+                            onMakeRecipeFromMeal: (meal) => _makeRecipeFromMeal(meal),
                             onShareMealGroup: (mealType) =>
                                 _shareMealGroup(mealType),
                             onFetchItemEdits: _fetchItemEdits,
@@ -1571,6 +1580,56 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       ref
           .read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier)
           .load(_userId!);
+    }
+  }
+
+  /// "Make this recipe" long-press action on a logged meal — AI-generate a
+  /// cookable recipe (ingredients + steps) for the meal and open it in the
+  /// recipe editor. Mirrors the pre-log "Make this recipe" flow.
+  Future<void> _makeRecipeFromMeal(FoodLog meal) async {
+    if (_userId == null) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dishName = meal.foodItems.isNotEmpty
+        ? (meal.foodItems.length == 1
+            ? meal.foodItems.first.name
+            : (meal.userQuery?.trim().isNotEmpty ?? false
+                ? meal.userQuery!.trim()
+                : '${meal.foodItems.first.name} + ${meal.foodItems.length - 1} more'))
+        : (meal.userQuery?.trim() ?? 'Meal');
+    final components = meal.foodItems.map((e) => e.name).toList();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Writing a recipe for $dishName…')),
+    );
+
+    RecipeCreate? generated;
+    String? error;
+    try {
+      await for (final evt in ref.read(recipeRepositoryProvider).importStream(
+        mode: 'generate_from_dish',
+        userId: _userId!,
+        dishName: dishName,
+        componentNames: components,
+      )) {
+        if (evt.step == 'done' && evt.recipe != null) {
+          generated = RecipeCreate.fromJson(evt.recipe!);
+        } else if (evt.step == 'error') {
+          error = evt.message;
+        }
+      }
+    } catch (_) {
+      error = 'Couldn\'t generate a recipe. Please try again.';
+    }
+    if (!mounted) return;
+    if (generated != null) {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => RecipeCreateScreen(
+            userId: _userId!, isDark: isDark, prefill: generated),
+      ));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error ?? 'Couldn\'t generate a recipe.')),
+      );
     }
   }
 

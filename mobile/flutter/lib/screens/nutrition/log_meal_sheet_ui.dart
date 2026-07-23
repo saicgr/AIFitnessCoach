@@ -783,17 +783,45 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                            if (response.plateDescription != null && response.plateDescription!.isNotEmpty) ...[
+                            if ((response.plateDescription ?? response.dishDescription) != null &&
+                                (response.plateDescription ?? response.dishDescription)!.isNotEmpty) ...[
                               if (_detectedItemsSummary(response).isNotEmpty)
                                 const SizedBox(height: 3),
                               Text(
-                                response.plateDescription!,
+                                (response.plateDescription ?? response.dishDescription)!,
                                 style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: textMuted),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                // AI "what is this dish" line for NON-image analyses (text /
+                // menu) — image analyses show it in the thumbnail row above.
+                if (_sourceType != 'image' &&
+                    response.dishDescription != null &&
+                    response.dishDescription!.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.auto_awesome, size: 13, color: textMuted),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          response.dishDescription!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                            color: textMuted,
+                            height: 1.35,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -897,6 +925,60 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                           ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
                           : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted),
                     ),
+                    // Add to recipe — append the analyzed items to an existing
+                    // recipe, or start a new one from them.
+                    GestureDetector(
+                      onTap: () => _handleAddToRecipe(response),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.menu_book_outlined, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text('Add to recipe',
+                              style: TextStyle(fontSize: 12, color: textMuted)),
+                        ],
+                      ),
+                    ),
+                    // Make this recipe — AI-generate a cookable recipe (steps +
+                    // ingredients) for this dish, opened in the recipe editor.
+                    Builder(builder: (ctx) {
+                      final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+                      return GestureDetector(
+                        onTap: _makingRecipe ? null : () => _handleMakeThisRecipe(response),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_makingRecipe)
+                              SizedBox(
+                                width: 12, height: 12,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: purple),
+                              )
+                            else
+                              Icon(Icons.restaurant_menu, size: 14, color: purple),
+                            const SizedBox(width: 4),
+                            Text('Make this recipe',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: purple,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      );
+                    }),
+                    // Share — share this analyzed meal BEFORE logging it.
+                    GestureDetector(
+                      onTap: () => _handleShareAnalysis(response),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.ios_share, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text('Share',
+                              style: TextStyle(fontSize: 12, color: textMuted)),
+                        ],
+                      ),
+                    ),
                     // Report — flag an inaccurate AI analysis. Always last.
                     GestureDetector(
                       onTap: () {
@@ -965,9 +1047,11 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   child: Row(
                     children: [
                       AnimatedCalorieChip(calories: response.totalCalories, color: AppColors.coral),
-                      CompactMacroChip(icon: Icons.fitness_center, value: '${response.proteinG.toStringAsFixed(0)}g', unit: 'Protein', color: AppColors.macroProtein),
-                      CompactMacroChip(icon: Icons.grain, value: '${response.carbsG.toStringAsFixed(0)}g', unit: 'Carbs', color: AppColors.macroCarbs),
-                      CompactMacroChip(icon: Icons.opacity, value: '${response.fatG.toStringAsFixed(0)}g', unit: 'Fat', color: AppColors.macroFat),
+                      // null = server couldn't determine this macro; show "—"
+                      // rather than a fabricated 0g.
+                      CompactMacroChip(icon: Icons.fitness_center, value: response.proteinG != null ? '${response.proteinG!.toStringAsFixed(0)}g' : '—', unit: 'Protein', color: AppColors.macroProtein),
+                      CompactMacroChip(icon: Icons.grain, value: response.carbsG != null ? '${response.carbsG!.toStringAsFixed(0)}g' : '—', unit: 'Carbs', color: AppColors.macroCarbs),
+                      CompactMacroChip(icon: Icons.opacity, value: response.fatG != null ? '${response.fatG!.toStringAsFixed(0)}g' : '—', unit: 'Fat', color: AppColors.macroFat),
                     ],
                   ),
                 ),

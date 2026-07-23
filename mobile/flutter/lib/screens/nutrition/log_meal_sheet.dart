@@ -20,6 +20,11 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../data/repositories/recipe_repository.dart';
+import '../../data/models/recipe.dart';
+import 'recipes/recipe_create_screen.dart';
+import '../../shareables/shareable_sheet.dart';
+import '../../shareables/adapters/nutrition_adapter.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/models/hydration.dart' show HydrationSource;
 import '../../data/repositories/auth_repository.dart';
@@ -279,6 +284,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _awaitingCoachTip = false;
   // Re-entrancy guard for the Refine-with-AI correction flow.
   bool _refiningMeal = false;
+  // Re-entrancy guard for the "Make this recipe" AI generation flow.
+  bool _makingRecipe = false;
   String _sourceType = 'text';
   /// Specific input method — sent to backend so food_logs.input_type is
   /// populated. Values match the migration-1960 CHECK allowlist: text, voice,

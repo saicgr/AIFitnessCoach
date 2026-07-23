@@ -38,6 +38,7 @@ import 'goal_row.dart';
 import 'nutrition_stats_section.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 class DailyTab extends ConsumerStatefulWidget {
   final String userId;
   final DailyNutritionSummary? summary;
@@ -61,6 +62,7 @@ class DailyTab extends ConsumerStatefulWidget {
   final void Function(FoodLog meal, {SchedulePreset initialPreset, int? itemIndex}) onScheduleMeal;
   final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
   final void Function(FoodLog meal) onShareMeal;
+  final void Function(FoodLog meal)? onMakeRecipeFromMeal;
   final void Function(String mealType) onShareMealGroup;
   /// Share the whole day's nutrition card. Surface 3.1 — share moved off
   /// the screen header into the calorie card; null hides the in-card icon.
@@ -115,6 +117,7 @@ class DailyTab extends ConsumerStatefulWidget {
     required this.onScheduleMeal,
     required this.onAddToShoppingList,
     required this.onShareMeal,
+    this.onMakeRecipeFromMeal,
     required this.onShareMealGroup,
     this.onShareDay,
     this.onFetchItemEdits,
@@ -474,7 +477,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
     super.build(context); // required by AutomaticKeepAliveClientMixin
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         await _loadFavorites();
         widget.onRefresh();
@@ -645,6 +648,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     onUpdateMealMood: widget.onUpdateMealMood,
                     onSaveFoodToFavorites: widget.onSaveFoodToFavorites,
                     onSaveMealAsRecipe: widget.onSaveMealAsRecipe,
+                    onMakeRecipeFromMeal: widget.onMakeRecipeFromMeal,
                     onScheduleMeal: widget.onScheduleMeal,
                     onAddToShoppingList: widget.onAddToShoppingList,
                     onShareMeal: widget.onShareMeal,
