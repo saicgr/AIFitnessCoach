@@ -22,6 +22,7 @@ import boto3
 from core.config import get_settings
 from core.logger import get_logger
 from models.gemini_schemas import (
+    BillAnalysisResponse,
     BuffetAnalysisResponse,
     FoodAnalysisResponse,
     MenuAnalysisResponse,
@@ -59,6 +60,252 @@ def _get_nutrition_cache() -> Optional[str]:
         return GeminiService._nutrition_analysis_cache
     except Exception:
         return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Image tokenization resolution
+#
+# Gemini renders every image Part into a fixed token budget BEFORE the model
+# ever sees it. That budget — not our upload path — is where menu detail was
+# being lost: a tight 1600px single-page camera shot survives the default
+# budget, but a 4032×3024 whole-menu photo imported from the gallery gets
+# squeezed into the SAME budget, so 8-pt descriptions and half the dish names
+# dissolve. That was the entire "gallery import returns fewer items than
+# snapping" bug — nothing in our pipeline resized anything.
+#
+# OCR-shaped modes (menu / buffet / bill) therefore pin ULTRA_HIGH so the
+# model tokenizes at maximum fidelity regardless of where the photo came from.
+# Plate mode keeps the default: a plate of food has no fine print to read and
+# the extra input tokens would be pure cost.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Modes whose accuracy depends on reading small printed text.
+_OCR_MODES = {"menu", "buffet", "bill"}
+
+
+def _media_resolution_for(analysis_mode: str) -> Optional[types.PartMediaResolutionLevel]:
+    """ULTRA_HIGH for text-dense modes, None (model default) otherwise."""
+    if analysis_mode in _OCR_MODES:
+        return types.PartMediaResolutionLevel.MEDIA_RESOLUTION_ULTRA_HIGH
+    return None
+
+
+def _build_image_parts(
+    image_data_list: List[bytes],
+    mime_types: List[str],
+    analysis_mode: str,
+) -> List[types.Part]:
+    """Build Gemini image Parts, pinning tokenization resolution per mode."""
+    resolution = _media_resolution_for(analysis_mode)
+    parts: List[types.Part] = []
+    for data, mime_type in zip(image_data_list, mime_types):
+        if resolution is not None:
+            parts.append(
+                types.Part.from_bytes(
+                    data=data, mime_type=mime_type, media_resolution=resolution
+                )
+            )
+        else:
+            parts.append(types.Part.from_bytes(data=data, mime_type=mime_type))
+    return parts
+
+
+# Where a menu photo came from. Each source fails differently, so each gets a
+# short preamble rather than one prompt trying to cover all three.
+_SOURCE_HINTS = {"printed", "board", "digital"}
+
+_SOURCE_HINT_BLOCKS = {
+    "board": """
+SOURCE — MENU BOARD (overhead / drive-thru / backlit display):
+- There are usually NO printed descriptions. Leave "description" null rather than inventing one.
+- Prices sit in trailing columns and may be right-aligned far from the name — match each price to the item on its own row.
+- Size and combo variants (Small/Medium/Large, "Make it a combo", "6 pc / 12 pc") are SEPARATE dishes: put the size in the name ("Large Fries", "12 pc Nuggets").
+- Expect glare, an angled shot and a partially cropped board. Extract what is legible; never guess an item you cannot read.
+""",
+    "digital": """
+SOURCE — DIGITAL MENU (QR menu, PDF, restaurant website, or a delivery-app screenshot such as DoorDash / Uber Eats):
+- This is a clean render, so descriptions ARE present — copy them verbatim.
+- IGNORE app chrome: cart / basket buttons, star ratings, review counts, "#1 Most Liked" badges, delivery-fee and promo banners, search bars, tab rows, navigation.
+- A price shown with a strikethrough is a discount: extract the CURRENT price.
+- Items are stacked as cards; each card is exactly one dish.
+""",
+}
+
+
+def _source_hint_block(analysis_mode: str, source_hint: str) -> str:
+    """Prompt preamble for where a menu image came from ('' for printed)."""
+    if analysis_mode not in ("menu", "bill"):
+        return ""
+    return _SOURCE_HINT_BLOCKS.get(source_hint, "")
+
+
+def _image_dimensions(data: bytes) -> Optional[tuple]:
+    """(width, height) parsed straight from the file header — no image lib.
+
+    Deliberately dependency-free (Pillow is not in requirements.txt, so it is
+    not guaranteed on Render). Returns None for formats we don't parse; the
+    caller only uses this for diagnostics.
+    """
+    try:
+        # PNG: 8-byte signature, then IHDR length/type, then W/H big-endian.
+        if data[:8] == b"\x89PNG\r\n\x1a\n":
+            return (
+                int.from_bytes(data[16:20], "big"),
+                int.from_bytes(data[20:24], "big"),
+            )
+        # WEBP (VP8X / VP8L / VP8 lossy).
+        if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            chunk = data[12:16]
+            if chunk == b"VP8X":
+                w = int.from_bytes(data[24:27], "little") + 1
+                h = int.from_bytes(data[27:30], "little") + 1
+                return (w, h)
+            if chunk == b"VP8 ":
+                w = int.from_bytes(data[26:28], "little") & 0x3FFF
+                h = int.from_bytes(data[28:30], "little") & 0x3FFF
+                return (w, h)
+            if chunk == b"VP8L":
+                bits = int.from_bytes(data[21:25], "little")
+                return ((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1)
+        # JPEG: walk the marker chain to the start-of-frame segment.
+        if data[:2] == b"\xff\xd8":
+            i = 2
+            n = len(data)
+            while i + 9 < n:
+                if data[i] != 0xFF:
+                    i += 1
+                    continue
+                marker = data[i + 1]
+                # Standalone markers carry no length payload.
+                if marker in (0xD8, 0xD9) or 0xD0 <= marker <= 0xD7:
+                    i += 2
+                    continue
+                seg_len = int.from_bytes(data[i + 2:i + 4], "big")
+                # SOF0-SOF15 except DHT (C4), JPG (C8) and DAC (CC).
+                if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+                    return (
+                        int.from_bytes(data[i + 7:i + 9], "big"),
+                        int.from_bytes(data[i + 5:i + 7], "big"),
+                    )
+                i += 2 + seg_len
+    except Exception:  # noqa: BLE001 — diagnostics must never break a scan
+        return None
+    return None
+
+
+def _log_image_parts(
+    image_data_list: List[bytes],
+    mime_types: List[str],
+    analysis_mode: str,
+    n_keys: int,
+) -> None:
+    """One line per image: what we actually handed Gemini.
+
+    This is the regression tripwire for the gallery-vs-camera recall bug —
+    without dimensions + resolution in the logs there is no way to tell a
+    quality problem from a prompt problem after the fact.
+    """
+    resolution = _media_resolution_for(analysis_mode)
+    res_label = resolution.value if resolution is not None else "model_default"
+    for idx, (data, mime) in enumerate(zip(image_data_list, mime_types)):
+        dims = _image_dimensions(data)
+        dim_label = f"{dims[0]}x{dims[1]}" if dims else "unknown"
+        logger.info(
+            f"[vision:image] mode={analysis_mode} img={idx + 1}/{n_keys} "
+            f"mime={mime} dims={dim_label} bytes={len(data)} "
+            f"media_resolution={res_label}"
+        )
+
+
+def _split_page_vertically(data: bytes, overlap: float = 0.12) -> Optional[List[bytes]]:
+    """Split a page into two vertically-overlapping halves.
+
+    The overlap matters: a dish whose name sits on the seam would otherwise be
+    cut in half and lost by both passes. 12% of the height is enough to keep
+    any single row intact in at least one half.
+
+    Returns None when the image can't be split (too short, or Pillow missing —
+    Pillow ships transitively via weasyprint/reportlab, but the recall gate
+    must degrade rather than break a scan if that ever changes).
+    """
+    try:
+        import io
+
+        from PIL import Image
+
+        with Image.open(io.BytesIO(data)) as img:
+            img = img.convert("RGB")
+            w, h = img.size
+            if h < 900:
+                # Already a small crop — splitting buys nothing and costs a call.
+                return None
+            band = int(h * overlap)
+            halves = [
+                img.crop((0, 0, w, min(h, h // 2 + band))),
+                img.crop((0, max(0, h // 2 - band), w, h)),
+            ]
+            out: List[bytes] = []
+            for half in halves:
+                buf = io.BytesIO()
+                half.save(buf, format="JPEG", quality=92, optimize=False)
+                out.append(buf.getvalue())
+            return out
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(f"[vision:recall_gate] page split failed: {exc}")
+        return None
+
+
+def _merge_menu_results(primary: dict, extra: dict) -> dict:
+    """Fold `extra`'s dishes into `primary`, de-duped by normalized dish name.
+
+    Section-aware: a dish recovered by the retry lands in its own section if
+    that section already exists, otherwise the section is appended. Order is
+    preserved so the sheet doesn't reshuffle between the two passes.
+    """
+    def _key(dish: dict) -> str:
+        return " ".join(str(dish.get("name", "")).lower().split())
+
+    seen = {_key(d) for d in _iter_menu_dishes(primary)}
+
+    # Buffet shape: flat dishes list.
+    if "dishes" in primary or "dishes" in extra:
+        merged = list(primary.get("dishes") or [])
+        for dish in (extra.get("dishes") or []):
+            if _key(dish) not in seen:
+                seen.add(_key(dish))
+                merged.append(dish)
+        primary["dishes"] = merged
+
+    # Menu shape: sections of dishes.
+    if "sections" in primary or "sections" in extra:
+        sections = list(primary.get("sections") or [])
+        by_name = {
+            str(s.get("section_name", "")).lower(): s
+            for s in sections
+            if isinstance(s, dict)
+        }
+        for section in (extra.get("sections") or []):
+            if not isinstance(section, dict):
+                continue
+            fresh = [d for d in (section.get("dishes") or []) if _key(d) not in seen]
+            if not fresh:
+                continue
+            for dish in fresh:
+                seen.add(_key(dish))
+            name = str(section.get("section_name", "")).lower()
+            target = by_name.get(name)
+            if target is not None:
+                target["dishes"] = list(target.get("dishes") or []) + fresh
+            else:
+                new_section = dict(section)
+                new_section["dishes"] = fresh
+                sections.append(new_section)
+                by_name[name] = new_section
+        primary["sections"] = sections
+
+    if not primary.get("restaurant_name") and extra.get("restaurant_name"):
+        primary["restaurant_name"] = extra["restaurant_name"]
+    return primary
 
 
 def _count_dishes(result: dict) -> int:
@@ -532,21 +779,20 @@ Return:
 
 For each item:
 - name: dish name as it appears on the menu (preserve as-is, the backend normalizes for lookup)
-- section: 'Appetizers' | 'Mains' | 'Entrees' | 'Desserts' | 'Drinks' | 'Sides' | 'Soups' | 'Salads' | 'Breakfast' | 'Brunch' | 'Lunch' | 'Dinner' | null
+- section: 'Appetizers' | 'Mains' | 'Entrees' | 'Desserts' | 'Drinks' | 'Sides' | 'Sauces' | 'Enhancements' | 'Soups' | 'Salads' | 'Breakfast' | 'Brunch' | 'Lunch' | 'Dinner' | null
+- description: the printed description under the dish name, copied VERBATIM and trimmed to 160 characters. NULL when the menu prints no description for that dish. Never invent one.
+- addon_group: 'sauce' | 'side' | 'topping' | 'enhancement' | 'upgrade' when the item is an add-on rather than a standalone dish (it sits under a SAUCES / SIDES / ENHANCEMENTS / EXTRAS / ADD-ONS / TOPPINGS heading, or is an "Add X" line). NULL for standalone dishes.
+- included_choices: when a heading says the dishes below it come with choices (e.g. "Served with choice of one (1) Side and one (1) Sauce"), copy that line VERBATIM onto every dish in that block. NULL otherwise.
 
 CRITICAL:
 - Do NOT include prices.
-- Do NOT include menu descriptions, ingredients, or marketing copy — just the dish NAME.
 - Do NOT include macros, calories, or nutrition info — that comes from database lookup.
-- Skip non-food items (drinks specials banner, hours, contact info).
+- Skip non-food items (drinks specials banner, hours, contact info, allergy notices, gratuity policy).
 
 Top-level JSON object with keys: restaurant_name, items.
 """
 
-        image_parts = [
-            types.Part.from_bytes(data=b, mime_type=m)
-            for b, m in zip(image_bytes_list, mime_types)
-        ]
+        image_parts = _build_image_parts(list(image_bytes_list), mime_types, "menu")
 
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
@@ -1091,6 +1337,232 @@ Guidelines:
                         continue
                 raise
 
+    async def estimate_dishes_from_names(
+        self,
+        dish_names: List[str],
+        restaurant_name: Optional[str] = None,
+        nutrition_context: Optional[dict] = None,
+    ) -> dict:
+        """Estimate nutrition + health signals for dishes we only know by name.
+
+        A bill tells us WHAT was ordered but nothing about what it contained,
+        so bill lines arrive with zero macros. Showing those zeros would be a
+        lie, so every bill scan runs its line names through this one text call
+        — the same field contract as menu mode, so a bill-logged steak carries
+        the same inflammation / FODMAP / glycemic data a menu-logged one does.
+
+        Returns a buffet-shaped `{"dishes": [...]}` dict.
+        """
+        if not dish_names:
+            return {"dishes": []}
+
+        listed = "\n".join(f"- {n}" for n in dish_names[:60])
+        ctx = (
+            f"\nThese were ordered at: {restaurant_name}."
+            if restaurant_name else ""
+        )
+        nutrition_ctx_str = (
+            f"\nUser's nutrition context: {json.dumps(nutrition_context)}"
+            if nutrition_context else ""
+        )
+        prompt = f"""Estimate restaurant-portion nutrition for each of these ordered dishes.{ctx}
+
+{listed}
+
+RULES:
+1. Return EXACTLY one entry per line above, in the same order, with "name" copied verbatim so the caller can match them up.
+2. Assume a typical RESTAURANT portion (bigger and richer than a home-cooked version, cooked with butter/oil unless the name says otherwise).
+3. NUTRITION MUST NOT BE ROUND — derive calories from a realistic portion weight (weight_g x kcal/g). 387 / 462 / 518, not 400 / 450 / 500. Decimal precision on protein_g / carbs_g / fat_g.
+4. ALWAYS include weight_g.
+5. DETECT allergens per FDA Big 9 into detected_allergens: milk, egg, fish, crustacean_shellfish, tree_nuts, wheat, peanuts, soybeans, sesame.
+6. Fill EVERY health field: rating + rating_reason (<= 8 words), inflammation_score (0-10), inflammation_triggers (1-3 tags), glycemic_load (null only under 2g carbs), fodmap_rating, fodmap_reason (null only when low), added_sugar_g (0.0 when none), is_ultra_processed, coach_tip (<= 18 words).
+7. If a name is too garbled to identify, still return it with your most conservative plausible estimate and say so in rating_reason.
+{nutrition_ctx_str}
+
+Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
+
+        response = await gemini_generate_with_retry(
+            model=self.model,
+            contents=[prompt],
+            config=types.GenerateContentConfig(
+                temperature=0.2,
+                response_mime_type="application/json",
+                max_output_tokens=48000,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),
+                response_schema=BuffetAnalysisResponse,
+            ),
+            method_name="vision_estimate_dishes_from_names",
+        )
+        content = (response.text or "").strip()
+        try:
+            result = json.loads(content)
+        except json.JSONDecodeError:
+            salvaged = _salvage_truncated_menu_json(content, "buffet")
+            if salvaged is None:
+                raise RuntimeError("Bill nutrition estimate returned unparseable JSON")
+            result = salvaged
+
+        for dish in _iter_menu_dishes(result):
+            _apply_dish_health_fallbacks(dish)
+        result["dishes"] = _safe_finalize(result.get("dishes") or [], "bill_estimate")
+        logger.info(
+            f"[vision:bill] estimated nutrition for "
+            f"{len(result.get('dishes') or [])}/{len(dish_names)} ordered dishes"
+        )
+        return result
+
+    async def analyze_menu_page(
+        self,
+        s3_key: str,
+        mime_type: str,
+        analysis_mode: str,
+        user_context: Optional[str] = None,
+        nutrition_context: Optional[dict] = None,
+        standing_rules_block: str = "",
+        source_hint: str = "printed",
+        recall_threshold: float = 0.85,
+    ) -> tuple:
+        """Analyze ONE menu/buffet/bill page behind a recall gate.
+
+        The gate exists because a silent under-read is the worst failure mode
+        this feature has: the user gets a plausible-looking menu that is
+        missing half the dishes and has no way to tell. So we ask the model
+        how many entries it can SEE (a much easier task than extracting them),
+        then hold the extraction to that number. If extraction came up short,
+        the page is re-run as two overlapping halves — each half gets the full
+        token budget and twice the effective resolution — and the results are
+        merged by dish name.
+
+        Returns `(result, diagnostics)` where diagnostics carries
+        expected/extracted/retried for the SSE page event + logs.
+        """
+        data = await self._download_image_from_s3(s3_key)
+
+        # Count and extract concurrently — the count is only used afterwards,
+        # so making the user wait for it serially would be pure latency.
+        count_task = asyncio.create_task(
+            self.count_menu_entries(data, mime_type, analysis_mode)
+        )
+        result = await self.analyze_food_from_s3_keys(
+            s3_keys=[s3_key],
+            mime_types=[mime_type],
+            user_context=user_context,
+            analysis_mode=analysis_mode,
+            nutrition_context=nutrition_context,
+            standing_rules_block=standing_rules_block,
+            source_hint=source_hint,
+            image_bytes_override=[data],
+        )
+        expected = await count_task
+
+        def _extracted(res: dict) -> int:
+            if analysis_mode == "bill":
+                return len(res.get("lines") or [])
+            return _count_dishes(res)
+
+        extracted = _extracted(result)
+        diagnostics = {
+            "expected": expected,
+            "extracted": extracted,
+            "retried": False,
+        }
+
+        short = (
+            expected is not None
+            and extracted < expected * recall_threshold
+            and analysis_mode in ("menu", "buffet")
+        )
+        if not short:
+            logger.info(
+                f"[vision:recall_gate] mode={analysis_mode} expected={expected} "
+                f"extracted={extracted} ok"
+            )
+            return result, diagnostics
+
+        halves = _split_page_vertically(data)
+        if not halves:
+            logger.warning(
+                f"[vision:recall_gate] mode={analysis_mode} expected={expected} "
+                f"extracted={extracted} SHORT but page could not be split"
+            )
+            return result, diagnostics
+
+        logger.warning(
+            f"[vision:recall_gate] mode={analysis_mode} expected={expected} "
+            f"extracted={extracted} SHORT — re-running page as 2 halves"
+        )
+        half_results = await asyncio.gather(
+            *[
+                self.analyze_food_from_s3_keys(
+                    s3_keys=[s3_key],
+                    mime_types=["image/jpeg"],
+                    user_context=user_context,
+                    analysis_mode=analysis_mode,
+                    nutrition_context=nutrition_context,
+                    standing_rules_block=standing_rules_block,
+                    source_hint=source_hint,
+                    image_bytes_override=[half],
+                )
+                for half in halves
+            ],
+            return_exceptions=True,
+        )
+        for half_result in half_results:
+            if isinstance(half_result, dict):
+                result = _merge_menu_results(result, half_result)
+            elif isinstance(half_result, BaseException):
+                logger.warning(f"[vision:recall_gate] half failed: {half_result}")
+
+        diagnostics["retried"] = True
+        diagnostics["extracted"] = _extracted(result)
+        logger.info(
+            f"[vision:recall_gate] after retry expected={expected} "
+            f"extracted={diagnostics['extracted']} (was {extracted})"
+        )
+        return result, diagnostics
+
+    async def count_menu_entries(
+        self,
+        image_bytes: bytes,
+        mime_type: str,
+        analysis_mode: str = "menu",
+    ) -> Optional[int]:
+        """How many entries are visible on this page, per the model's own eyes.
+
+        Deliberately its own tiny call (≈15 output tokens): counting is far
+        easier than extracting, so the count is a trustworthy expectation to
+        hold the extraction pass against. Returns None when the model doesn't
+        answer with a number — the caller then simply skips the recall gate
+        rather than blocking the scan.
+        """
+        noun = "line items (including tax/tip lines)" if analysis_mode == "bill" \
+            else "distinct dish names"
+        prompt = (
+            f"Count the {noun} visible in this image. "
+            "Answer with the integer only — no words, no punctuation."
+        )
+        try:
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[prompt] + _build_image_parts(
+                    [image_bytes], [mime_type], analysis_mode
+                ),
+                config=types.GenerateContentConfig(
+                    temperature=0.0,
+                    max_output_tokens=15,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
+                ),
+                method_name="vision_count_menu_entries",
+            )
+            digits = "".join(c for c in (response.text or "") if c.isdigit())
+            if not digits:
+                return None
+            count = int(digits[:4])
+            return count if 0 < count <= 300 else None
+        except Exception as exc:  # noqa: BLE001 — never block a scan on the gate
+            logger.warning(f"[vision:recall_gate] count call failed: {exc}")
+            return None
+
     async def _classify_food_images(self, image_parts: list) -> str:
         """Quick classification: plate, buffet, or menu."""
         classify_prompt = (
@@ -1122,18 +1594,28 @@ Guidelines:
         analysis_mode: str = "auto",
         nutrition_context: Optional[dict] = None,
         standing_rules_block: str = "",
+        source_hint: str = "printed",
+        image_bytes_override: Optional[List[bytes]] = None,
     ) -> dict:
         """
         Analyze multiple food images from S3 for nutrition estimation.
 
-        Supports plates, buffets, and restaurant menus.
+        Supports plates, buffets, restaurant menus and itemized bills.
 
         Args:
             s3_keys: List of S3 object keys for the images
             mime_types: List of MIME types for each image
             user_context: Optional user context message
-            analysis_mode: "auto", "plate", "buffet", or "menu"
+            analysis_mode: "auto", "plate", "buffet", "menu" or "bill"
             nutrition_context: User's daily targets + remaining budget
+            source_hint: Where a menu photo came from — "printed" (paper menu),
+                "board" (overhead / drive-thru / TV menu board) or "digital"
+                (QR menu, PDF, restaurant site, DoorDash screenshot). Swaps in
+                a short prompt preamble; ignored by plate mode.
+            image_bytes_override: Already-in-memory image bytes to analyze
+                instead of downloading `s3_keys` again. Used by the recall
+                gate, which re-submits cropped halves of a page it already
+                holds; `s3_keys` is then only used for logging.
 
         Returns:
             Dict with nutrition analysis results
@@ -1141,31 +1623,45 @@ Guidelines:
         logger.info(f"Analyzing {len(s3_keys)} food images, mode={analysis_mode}")
 
         try:
-            # Step 1: Download all images from S3 in parallel
-            download_tasks = [self._download_image_from_s3(key) for key in s3_keys]
-            image_data_list = await asyncio.gather(*download_tasks)
+            # Step 1: Download all images from S3 in parallel (unless the
+            # caller already has the bytes).
+            if image_bytes_override is not None:
+                image_data_list = list(image_bytes_override)
+            else:
+                download_tasks = [self._download_image_from_s3(key) for key in s3_keys]
+                image_data_list = await asyncio.gather(*download_tasks)
 
-            # Step 2: Create Gemini Parts for each image
-            image_parts = []
-            for data, mime_type in zip(image_data_list, mime_types):
-                image_parts.append(types.Part.from_bytes(data=data, mime_type=mime_type))
+            # Step 2: Create Gemini Parts for each image. The classifier only
+            # needs to tell a plate from a menu, so it runs at the default
+            # resolution; the real extraction call re-builds the parts below
+            # once the mode is known.
+            image_parts = _build_image_parts(image_data_list, mime_types, analysis_mode)
 
             # Step 3: Auto-classify if needed
             if analysis_mode == "auto":
                 analysis_mode = await self._classify_food_images(image_parts)
                 logger.info(f"Auto-classified food images as: {analysis_mode}")
+                # An auto-classified menu/buffet still deserves ULTRA_HIGH
+                # tokenization — rebuild the parts now that we know.
+                if analysis_mode in _OCR_MODES:
+                    image_parts = _build_image_parts(
+                        image_data_list, mime_types, analysis_mode
+                    )
+
+            _log_image_parts(image_data_list, mime_types, analysis_mode, len(s3_keys))
 
             # Step 4: Build prompt based on mode.
             # Menu + buffet modes use a trimmed inline schema to maximize dish
             # capacity under the token cap, so we bypass the nutrition cache
             # (which bakes in a heavier schema with recommended_order/tips/etc.)
             cache_name = _get_nutrition_cache()
-            if analysis_mode in ("menu", "buffet"):
+            if analysis_mode in ("menu", "buffet", "bill"):
                 cache_name = None
             nutrition_ctx_str = ""
             if nutrition_context:
                 nutrition_ctx_str = f"\nUser's nutrition context: {json.dumps(nutrition_context)}"
 
+            source_hint_block = _source_hint_block(analysis_mode, source_hint)
             user_ctx_str = f'\nUser says: "{user_context}"' if user_context else ""
             suggested_meal = self._get_suggested_meal_type()
 
@@ -1268,18 +1764,21 @@ Return ONLY this JSON, no other keys:
 
             elif analysis_mode == "menu":
                 prompt = f"""Analyze this restaurant menu. OCR extract EVERY dish across ALL sections — do not skip any, do not truncate.
-
+{source_hint_block}
 COMPLETENESS CONTRACT (read first):
-0. Before producing JSON, COUNT the dishes visible across ALL sections (including descriptions in small print). The final response MUST contain that exact count of dish entries. If you can't fit them all, drop the LONGEST descriptive prose first — never drop a dish.
+0. Before producing JSON, COUNT the dishes visible across ALL sections (including descriptions in small print). The final response MUST contain that exact count of dish entries. If you can't fit them all, shorten coach_tip / rating_reason first — never drop a dish and never drop a printed description.
 0a. Coverage > prose. coach_tip / rating_reason / fodmap_reason can be terse (≤ 6 words) so token budget goes to MORE DISHES rather than longer reasons.
 0b. If a section header is visible (e.g. "Burgers", "Bowls", "Drinks"), that section MUST appear in the output, even if you only have room for the most common 1-2 dishes from it.
 
 CRITICAL RULES:
 1. NUTRITION MUST NOT BE ROUND — derive calories from realistic portion weight (weight_g × kcal/g). Acceptable values: 387, 462, 518. NOT acceptable: 400, 450, 500 every time. Same rule for protein_g / carbs_g / fat_g — decimal precision expected (e.g. 42.6, not 40.0).
 2. ALWAYS include weight_g — your best estimate of the dish's serving weight in grams (typical restaurant portions: naan 80-100g, curry bowl 200-300g, rice 150-250g, entrée protein 150-250g, salad 150-250g, soup 240-300g).
-3. NORMALIZE section_name to ONE of: "breakfast" | "appetizers" | "mains" | "sides" | "desserts" | "drinks" | "specials" | "uncategorized". Map restaurant labels like "Starters" → "appetizers", "Entrées" → "mains", "Beverages" → "drinks".
+3. NORMALIZE section_name to ONE of: "breakfast" | "appetizers" | "mains" | "sides" | "addons" | "desserts" | "drinks" | "specials" | "uncategorized". Map restaurant labels like "Starters" → "appetizers", "Entrées" → "mains", "Beverages" → "drinks", and "Sauces" / "Enhancements" / "Extras" / "Add-Ons" / "Toppings" → "addons".
 4. EXTRACT price as a number when visible on the menu (keep the currency in a "currency" string like "USD" / "INR" / "EUR"). Return null ONLY if truly not shown.
-5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from dish description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
+5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from the dish name AND its printed description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
+6. DESCRIPTION — copy the description printed under each dish VERBATIM into "description", trimmed to 160 characters (e.g. "Maple-lacquered Pork Belly, Smoked Cheese Grits, Perfect Egg"). Use null when that dish has no printed description. NEVER invent, paraphrase or generate one.
+7. ADD-ONS — set "addon_group" ("sauce" | "side" | "topping" | "enhancement" | "upgrade") on any item that is an accompaniment rather than a standalone dish: everything under a SAUCES / SIDES / ENHANCEMENTS / EXTRAS / ADD-ONS / TOPPINGS heading, and any "Add …" line. Standalone dishes get null.
+8. INCLUDED CHOICES — when a heading states what comes with the dishes below it ("Served with choice of one (1) Side and one (1) Sauce"), copy that line VERBATIM into "included_choices" on EVERY dish in that block. null elsewhere.
 
 REQUIRED per dish (NEVER omit any field below):
 - rating ("green" | "yellow" | "red") + rating_reason (≤ 8 words).
@@ -1305,6 +1804,9 @@ Return ONLY this JSON, no other keys:
             "dishes": [
                 {{
                     "name": "Tandoori Chicken Half",
+                    "description": "Yogurt-marinated, clay-oven roasted, served with mint chutney",
+                    "addon_group": null,
+                    "included_choices": "Served with choice of one (1) Side",
                     "price": 14.95,
                     "currency": "USD",
                     "calories": 487,
@@ -1325,6 +1827,45 @@ Return ONLY this JSON, no other keys:
                     "coach_tip": "Hits your protein target; skip the naan if possible."
                 }}
             ]
+        }}
+    ]
+}}"""
+
+            elif analysis_mode == "bill":
+                prompt = f"""Read this itemized restaurant check / delivery order and list EVERY line exactly as printed, in order.
+{source_hint_block}
+This is a BILL, not a menu — it records what was actually ordered. Do NOT estimate nutrition here.
+
+RULES:
+1. EVERY line on the receipt gets an entry, including the non-food ones. Flag those with is_food=false: subtotal, tax, tip, gratuity, service fee, delivery fee, small-order fee, promo/discount, rounding, bag fee, loyalty credit, "amount due", card footer. Never silently drop a line — the user needs to see nothing was missed.
+2. QUANTITY — "2 x Filet", "x2", "(2)" or a leading "2" means qty=2. Default qty=1. Keep the price EXACTLY as printed (that is the line total, not the unit price) and put the per-item price in unit_price only when the bill prints it separately.
+3. ABBREVIATIONS — receipts truncate. Expand to the real dish name: "CTR CUT FILET" -> "Center Cut Filet", "MAC N CHS" -> "Macaroni & Cheese", "SD CAESAR" -> "Side Caesar Salad", "BEV" -> the drink named. Keep the size/cut wording ("10-oz New York Strip"). If a line is genuinely unreadable, keep it verbatim rather than guessing a dish.
+4. MODIFIERS — indented sub-lines, "+" lines and "ADD/SUB/EXTRA/NO" lines belong to the item ABOVE them. Put them in that item's "modifiers" array, NOT as their own line item ("Add Avocado", "Sub sweet potato fries", "Extra Béarnaise", "No onions").
+5. A single check often covers several people. Do not merge or de-duplicate identical lines — two people ordering the same steak is two lines (or one line with qty=2, exactly as the bill shows it).
+6. RESTAURANT NAME from the header; currency from the symbol.
+{user_ctx_str}
+
+Return ONLY this JSON, no other keys:
+{{
+    "analysis_type": "bill",
+    "restaurant_name": "Steakhouse 71",
+    "currency": "USD",
+    "lines": [
+        {{
+            "name": "10-oz New York Strip",
+            "qty": 2,
+            "unit_price": 38.0,
+            "price": 76.0,
+            "modifiers": ["Béarnaise", "Mashed Potatoes"],
+            "is_food": true
+        }},
+        {{
+            "name": "Sales Tax",
+            "qty": 1,
+            "unit_price": null,
+            "price": 7.24,
+            "modifiers": null,
+            "is_food": false
         }}
     ]
 }}"""
@@ -1441,7 +1982,8 @@ Guidelines:
             # dishes — the cap was clipping the response mid-section. Gemini
             # 3 Flash supports 64k output; 48k leaves slack for retries and
             # keeps cost bounded. Plate stays at 4k.
-            max_tokens = 48000 if analysis_mode in ("menu", "buffet") else 4000
+            # Bill mode shares the headroom: a party check can run 40+ lines.
+            max_tokens = 48000 if analysis_mode in ("menu", "buffet", "bill") else 4000
 
             # Bind a Pydantic response_schema per mode so Gemini MUST emit
             # every required health field (inflammation_score +
@@ -1456,10 +1998,11 @@ Guidelines:
             schema_by_mode = {
                 "menu": MenuAnalysisResponse,
                 "buffet": BuffetAnalysisResponse,
+                "bill": BillAnalysisResponse,
                 "plate": FoodAnalysisResponse,
             }
             response_schema = None
-            if analysis_mode in ("menu", "buffet"):
+            if analysis_mode in ("menu", "buffet", "bill"):
                 response_schema = schema_by_mode[analysis_mode]
             elif analysis_mode == "plate" and not cache_name:
                 response_schema = schema_by_mode["plate"]
@@ -1491,14 +2034,20 @@ Guidelines:
             try:
                 result = json.loads(content)
             except json.JSONDecodeError as parse_err:
-                # Likely truncated JSON. Try to salvage for menu/buffet where we
-                # can drop the last incomplete dish and re-close the arrays.
-                if analysis_mode in ("menu", "buffet"):
+                # Likely truncated JSON. Try to salvage for the list-shaped
+                # modes, where we can drop the last incomplete entry and
+                # re-close the arrays.
+                if analysis_mode in ("menu", "buffet", "bill"):
                     salvaged = _salvage_truncated_menu_json(content, analysis_mode)
                     if salvaged is not None:
+                        recovered = (
+                            len(salvaged.get("lines") or [])
+                            if analysis_mode == "bill"
+                            else _count_dishes(salvaged)
+                        )
                         logger.warning(
                             f"Salvaged truncated {analysis_mode} JSON: "
-                            f"recovered {_count_dishes(salvaged)} dishes"
+                            f"recovered {recovered} entries"
                         )
                         result = salvaged
                     else:
@@ -1560,6 +2109,19 @@ Guidelines:
                 # (Gemini omitted it) or an empty string as null — no fallback.
                 rn = result.get("restaurant_name")
                 result["restaurant_name"] = rn if (isinstance(rn, str) and rn.strip()) else None
+
+            if analysis_mode == "bill":
+                result.setdefault("lines", [])
+                rn = result.get("restaurant_name")
+                result["restaurant_name"] = rn if (isinstance(rn, str) and rn.strip()) else None
+                food_lines = [
+                    ln for ln in result["lines"]
+                    if isinstance(ln, dict) and ln.get("is_food") is not False
+                ]
+                logger.info(
+                    f"[vision:bill] lines={len(result['lines'])} "
+                    f"food={len(food_lines)} restaurant={result['restaurant_name']!r}"
+                )
 
             result["analysis_type"] = analysis_mode
             # L2+L3 portion validation across all entry shapes.

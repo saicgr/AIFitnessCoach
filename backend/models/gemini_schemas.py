@@ -347,10 +347,60 @@ class FoodItemSchema(BaseModel):
     name: str = Field(..., description="Food name")
     amount: str = Field(..., description="Portion size description")
     calories: int = Field(..., ge=0, le=15000, description="Calories")
-    protein_g: float = Field(..., description="Protein in grams")
-    carbs_g: float = Field(..., description="Carbohydrates in grams")
-    fat_g: float = Field(..., description="Fat in grams")
-    fiber_g: float = Field(default=0, description="Fiber in grams")
+    # MACRO INTEGRITY (image/photo path). These three are REQUIRED — Gemini's
+    # structured-output mode will not omit a required key, which closes the
+    # "cake photo logged as 385 kcal · 0P/0C/0F" hole on the vision flow the
+    # same way the text prompt's PER-ITEM MACROS block closes it on text.
+    # The descriptions carry the physics so the model cannot satisfy the schema
+    # by writing three zeros: calories come from protein (4 kcal/g), carbs
+    # (4 kcal/g), fat (9 kcal/g) and ethanol (7 kcal/g). All three at 0 is only
+    # correct for a genuinely 0-calorie item OR an alcoholic drink whose energy
+    # is ethanol — and that case MUST declare `alcohol_g`.
+    protein_g: float = Field(
+        ...,
+        ge=0,
+        description=(
+            "Protein in grams for THIS portion. REQUIRED — never omit, never null. "
+            "0 only when the food genuinely contains no protein (oil, sugar, spirits)."
+        ),
+    )
+    carbs_g: float = Field(
+        ...,
+        ge=0,
+        description=(
+            "Carbohydrates in grams for THIS portion. REQUIRED — never omit, never null. "
+            "protein_g, carbs_g and fat_g must NOT all be 0 unless calories is 0 or the "
+            "item's energy comes from alcohol (then set alcohol_g)."
+        ),
+    )
+    fat_g: float = Field(
+        ...,
+        ge=0,
+        description=(
+            "Fat in grams for THIS portion. REQUIRED — never omit, never null. "
+            "Sanity-check 4*protein_g + 4*carbs_g + 9*fat_g + 7*alcohol_g against calories "
+            "(within ~15%)."
+        ),
+    )
+    fiber_g: float = Field(default=0, ge=0, description="Fiber in grams")
+    alcohol_g: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Grams of pure ethanol in THIS portion. REQUIRED for any alcoholic drink — "
+            "it is what explains the calories of spirits, which genuinely carry 0g "
+            "protein / 0g carbs / 0g fat. grams ≈ millilitres × ABV% / 100 × 0.79 "
+            "(a 44 ml / 1.5 oz shot of 40% ABV spirit ≈ 14 g). Null for non-alcoholic food."
+        ),
+    )
+    macros_unknown: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Set by the SERVER (never by the model) when an item arrived with calories "
+            "but no protein/carbs/fat and no alcohol explanation. The item's macros are "
+            "then nulled and the meal totals report unknown rather than a fabricated 0."
+        ),
+    )
     weight_g: Optional[float] = Field(default=None, ge=0.1, le=5000, description="Weight in grams (single item; nothing realistic exceeds 5kg)")
     unit: str = Field(default="g", description="Measurement unit")
     count: Optional[int] = Field(default=None, ge=1, le=200, description="Count for countable items")
@@ -458,6 +508,15 @@ class FoodAnalysisResponse(BaseModel):
     sugar_g: Optional[float] = Field(default=None, description="Total sugar in grams")
     cholesterol_mg: Optional[float] = Field(default=None, description="Cholesterol in mg")
     caffeine_mg: Optional[float] = Field(default=None, description="Caffeine in mg")
+    alcohol_g: Optional[float] = Field(
+        default=None,
+        ge=0,
+        description=(
+            "Total grams of pure ethanol across the meal (sum of the items' alcohol_g). "
+            "Null when nothing in the meal contains alcohol. This is what legitimately "
+            "explains calories on an item with 0g protein / 0g carbs / 0g fat."
+        ),
+    )
     # Spelling correction
     corrected_query: Optional[str] = Field(default=None, description="Corrected food description if user had typos/misspellings, null if no correction needed")
     # Feedback fields
@@ -506,6 +565,18 @@ class MenuDishSchema(BaseModel):
     that plate items don't have.
     """
     name: str = Field(..., description="Dish name as shown on the menu.")
+    description: Optional[str] = Field(
+        default=None,
+        description="The description printed under the dish on the menu, copied VERBATIM and trimmed to 160 chars (e.g. 'Maple-lacquered Pork Belly, Smoked Cheese Grits, Perfect Egg'). Null when the menu prints no description. NEVER invent or paraphrase one.",
+    )
+    addon_group: Optional[str] = Field(
+        default=None,
+        description="'sauce' | 'side' | 'topping' | 'enhancement' | 'upgrade' when this item is an add-on rather than a standalone dish — i.e. it sits under a SAUCES / SIDES / ENHANCEMENTS / EXTRAS / ADD-ONS / TOPPINGS heading, or is an 'Add …' line. Null for standalone dishes.",
+    )
+    included_choices: Optional[str] = Field(
+        default=None,
+        description="When a heading states the dishes below it come with choices ('Served with choice of one (1) Side and one (1) Sauce'), copy that line VERBATIM onto every dish in that block. Null otherwise.",
+    )
     calories: int = Field(..., description="Calories per single serving.")
     protein_g: float = Field(..., description="Protein grams per serving.")
     carbs_g: float = Field(..., description="Carb grams per serving.")
@@ -548,6 +619,36 @@ class MenuSectionSchema(BaseModel):
     """One section of a menu (appetizers / mains / desserts / etc.)."""
     section_name: str = Field(..., description="Normalised section: breakfast | appetizers | mains | sides | desserts | drinks | specials | uncategorized.")
     dishes: List[MenuDishSchema] = Field(..., description="Dishes within this section.")
+
+
+class BillLineSchema(BaseModel):
+    """One line item on an itemized restaurant check or delivery order.
+
+    A bill carries no nutrition at all — only what was ordered. Macros are
+    filled downstream by the same canonical-lookup path menu dishes use, so
+    this schema stays deliberately thin: getting the ITEM and the QUANTITY
+    right is the whole job.
+    """
+    name: str = Field(..., description="Item name with abbreviations expanded to a real dish name ('CTR CUT FILET' -> 'Center Cut Filet'). Keep the size/cut wording ('10-oz New York Strip').")
+    qty: int = Field(default=1, description="How many of this item were ordered. A '2 x' / 'x2' prefix means 2. Default 1.")
+    unit_price: Optional[float] = Field(default=None, description="Price for ONE of this item when the bill shows it; null otherwise.")
+    price: Optional[float] = Field(default=None, description="Line total as printed; null when not visible.")
+    modifiers: Optional[List[str]] = Field(
+        default=None,
+        description="Indented / '+' sub-lines attached to this item ('Add Avocado', 'Sub sweet potato fries', 'Extra Béarnaise'). These are add-ons of the line above, not their own line items.",
+    )
+    is_food: bool = Field(..., description="False for anything that is not eaten or drunk: subtotal, tax, tip, gratuity, service fee, delivery fee, small-order fee, promo/discount, rounding, bag fee, loyalty credit.")
+
+
+class BillAnalysisResponse(BaseModel):
+    """Schema for bill-mode analysis — a flat list of ordered line items."""
+    analysis_type: str = Field(default="bill", description="Always 'bill'.")
+    restaurant_name: Optional[str] = Field(
+        default=None,
+        description="Restaurant / merchant name from the header of the check or the delivery order. Null if not visible.",
+    )
+    currency: Optional[str] = Field(default=None, description="Currency code inferred from the symbol (USD/EUR/INR/GBP). Null when no prices are visible.")
+    lines: List[BillLineSchema] = Field(..., description="Every line on the bill, in printed order, including the non-food ones (flagged is_food=false) so nothing is silently dropped.")
 
 
 class MenuAnalysisResponse(BaseModel):
@@ -1406,7 +1507,19 @@ class Stage1MenuItem(BaseModel):
     name: str = Field(..., description="Dish name as it appears on the menu.")
     section: Optional[str] = Field(
         default=None,
-        description="Menu section if visible: 'Appetizers' | 'Mains' | 'Desserts' | 'Drinks' | 'Sides' | 'Soups' | 'Salads'.",
+        description="Menu section if visible: 'Appetizers' | 'Mains' | 'Desserts' | 'Drinks' | 'Sides' | 'Sauces' | 'Enhancements' | 'Soups' | 'Salads'.",
+    )
+    description: Optional[str] = Field(
+        default=None,
+        description="Printed dish description copied verbatim from the menu, trimmed to 160 chars. Null when the menu prints none — never invented.",
+    )
+    addon_group: Optional[str] = Field(
+        default=None,
+        description="'sauce' | 'side' | 'topping' | 'enhancement' | 'upgrade' when the item is an add-on rather than a standalone dish. Null otherwise.",
+    )
+    included_choices: Optional[str] = Field(
+        default=None,
+        description="Verbatim 'served with choice of…' line that applies to this dish. Null when the menu states none.",
     )
 
 

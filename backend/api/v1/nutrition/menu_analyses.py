@@ -42,11 +42,14 @@ class MenuAnalysisCreate(BaseModel):
     # Optional free-text restaurant address — any country, any format.
     # Never geocoded, never required (C11: both name + address optional).
     address: Optional[str] = None
-    analysis_type: str = Field(..., pattern=r"^(plate|menu|buffet)$")
+    analysis_type: str = Field(..., pattern=r"^(plate|menu|buffet|bill)$")
     sections: List[Dict[str, Any]] = Field(default_factory=list)
     food_items: List[Dict[str, Any]] = Field(default_factory=list)
     menu_photo_urls: List[str] = Field(default_factory=list)
     elapsed_seconds: Optional[float] = None
+    # Which surface this was captured from (printed | board | digital) so a
+    # re-scan of this saved menu uses the same OCR prompt branch.
+    source_hint: Optional[str] = Field(default=None, pattern=r"^(printed|board|digital)$")
 
 
 class MenuAnalysisUpdate(BaseModel):
@@ -63,6 +66,7 @@ class MenuAnalysisUpdate(BaseModel):
     menu_photo_urls: Optional[List[str]] = None
     elapsed_seconds: Optional[float] = None
     analysis_type: Optional[str] = None
+    source_hint: Optional[str] = None
 
 
 class MenuAnalysisOut(BaseModel):
@@ -75,6 +79,7 @@ class MenuAnalysisOut(BaseModel):
     food_items: List[Dict[str, Any]]
     menu_photo_urls: List[str]
     elapsed_seconds: Optional[float]
+    source_hint: Optional[str]
     is_pinned: bool
     times_opened: int
     last_opened_at: Optional[datetime]
@@ -118,6 +123,7 @@ def _row_to_out(row: Dict[str, Any]) -> MenuAnalysisOut:
         food_items=row.get("food_items") or [],
         menu_photo_urls=row.get("menu_photo_urls") or [],
         elapsed_seconds=row.get("elapsed_seconds"),
+        source_hint=row.get("source_hint"),
         is_pinned=bool(row.get("is_pinned", False)),
         times_opened=int(row.get("times_opened") or 0),
         last_opened_at=row.get("last_opened_at"),
@@ -286,6 +292,7 @@ async def create_menu_analysis(
         "food_items": payload.food_items,
         "menu_photo_urls": payload.menu_photo_urls,
         "elapsed_seconds": payload.elapsed_seconds,
+        "source_hint": payload.source_hint,
     }
     resp = db.client.table("menu_analyses").insert(row).execute()
     rows = resp.data or []
@@ -335,6 +342,8 @@ async def update_menu_analysis(
         updates["elapsed_seconds"] = payload.elapsed_seconds
     if payload.analysis_type is not None:
         updates["analysis_type"] = payload.analysis_type
+    if payload.source_hint is not None:
+        updates["source_hint"] = payload.source_hint
 
     if updates:
         # Bump updated_at so the Saved Menus list reflects the re-scan
@@ -440,6 +449,101 @@ class SimilarMenuItem(BaseModel):
 class SimilarMenuItemsResponse(BaseModel):
     query: str
     results: List[SimilarMenuItem]
+
+
+# ───────────────────────────────────────────────────────────────
+# Dish thumbnails — free-source batch resolve + paid single generate
+# ───────────────────────────────────────────────────────────────
+
+
+class DishImageResolveRequest(BaseModel):
+    names: List[str] = Field(..., max_length=120, description="Dish names to resolve, as shown on the menu.")
+    allow_web: bool = Field(default=True, description="Allow the free-licence web lookup step (network). False = DB sources only.")
+
+
+class DishImageOut(BaseModel):
+    url: str
+    source: str
+    attribution: Optional[str] = None
+    is_ai: bool = False
+    disclosure: Optional[str] = None
+
+
+class DishImageResolveResponse(BaseModel):
+    # name -> image (or absent when nothing free resolved). The client renders a
+    # placeholder for a missing name; it must never substitute another dish.
+    images: Dict[str, DishImageOut] = Field(default_factory=dict)
+    unresolved: List[str] = Field(default_factory=list)
+
+
+class DishImageGenerateRequest(BaseModel):
+    name: str = Field(..., max_length=160)
+    restaurant_name: Optional[str] = Field(default=None, max_length=160)
+
+
+@router.post("/dish-images/resolve", response_model=DishImageResolveResponse)
+async def resolve_dish_images_endpoint(
+    payload: DishImageResolveRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Batch-resolve dish thumbnails from FREE sources only.
+
+    Never generates (and so never costs anything): the chain is cache → the
+    user's own photos → food_database → free-licence web. Anything it can't
+    resolve comes back in `unresolved` so the client can show a placeholder
+    and, for the handful of dishes that matter, call /dish-images/generate.
+    """
+    from services.dish_image_service import resolve_dish_images
+
+    user_id = current_user["id"]
+    resolved = await resolve_dish_images(
+        user_id=user_id,
+        names=payload.names,
+        allow_web=payload.allow_web,
+    )
+    images = {
+        name: DishImageOut(**data)
+        for name, data in resolved.items()
+        if data is not None
+    }
+    return DishImageResolveResponse(
+        images=images,
+        unresolved=[name for name, data in resolved.items() if data is None],
+    )
+
+
+@router.post("/dish-images/generate")
+async def generate_dish_image_endpoint(
+    payload: DishImageGenerateRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate ONE dish image (Imagen 4 Fast, ~$0.02) — or re-serve a cached one.
+
+    Cost gates live in the service: kill-switch, per-user daily cap, and a
+    cross-user cache keyed on the normalized dish name so a given dish is only
+    ever generated once for the entire app.
+    """
+    from services.dish_image_service import (
+        DishImageCapReached,
+        DishImageDisabled,
+        DishImageError,
+        generate_dish_image,
+    )
+
+    user_id = current_user["id"]
+    try:
+        return await generate_dish_image(
+            user_id=user_id,
+            name=payload.name,
+            restaurant_name=payload.restaurant_name,
+        )
+    except DishImageDisabled as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except DishImageCapReached as exc:
+        raise HTTPException(status_code=429, detail=str(exc))
+    except DishImageError as exc:
+        logger.error(f"[DishImage] generate failed for {payload.name!r}: {exc}", exc_info=True)
+        raise HTTPException(status_code=502, detail=str(exc))
 
 
 @router.get("/menu-items/similar", response_model=SimilarMenuItemsResponse)

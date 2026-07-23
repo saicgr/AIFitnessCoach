@@ -36,6 +36,11 @@ from services.food_logging_rules_service import (
     fetch_food_logging_rules,
     build_rules_prompt_block,
 )
+# Macro-integrity gate — see services/gemini/parsers.enforce_macro_integrity.
+# Every streaming endpoint below runs it before it either streams a payload the
+# client will post to /log-direct or writes the row itself, so no fabricated
+# 0P/0C/0F can reach food_logs.
+from services.gemini.parsers import enforce_macro_integrity
 
 from api.v1.nutrition.models import (
     LogTextRequest,
@@ -438,6 +443,35 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     else:
                         _it.setdefault("verified_source", "override_db")
 
+            # ── MACRO-INTEGRITY GATE (text stream) ────────────────────────
+            # The cache-stack branch above (cache_source override /
+            # common_foods / multi_lookup / user_contributed) NEVER runs
+            # `_enhance_food_items_with_nutrition_db`, so it is a second live
+            # producer of "N kcal · 0P/0C/0F". Re-run the gate here — after the
+            # per-user overrides and the verified cross-check have rewritten
+            # both `food_items` and the local totals — so nothing that leaves
+            # this endpoint (or that the client posts on to /log-direct) claims
+            # a macro it does not know. Idempotent with the gate inside
+            # `analyze_food`.
+            _integrity = enforce_macro_integrity(
+                {
+                    "food_items": food_items,
+                    "protein_g": protein_g,
+                    "carbs_g": carbs_g,
+                    "fat_g": fat_g,
+                    "fiber_g": fiber_g,
+                },
+                f"STREAM text:{food_analysis.get('cache_source') or 'gemini'}",
+            )
+            food_items = _integrity["food_items"]
+            protein_g = _integrity["protein_g"]
+            carbs_g = _integrity["carbs_g"]
+            fat_g = _integrity["fat_g"]
+            fiber_g = _integrity["fiber_g"]
+            macros_unknown = bool(_integrity.get("macros_unknown"))
+            macros_unknown_items = _integrity.get("macros_unknown_items") or []
+            macros_known_subtotal = _integrity.get("macros_known_subtotal")
+
             overall_meal_score = food_analysis.get('overall_meal_score')
             health_score = food_analysis.get('health_score')
             health_score_reasons = food_analysis.get('health_score_reasons')
@@ -506,6 +540,13 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 "total_time_ms": elapsed_ms(),
                 "cache_hit": cache_hit,
                 "cache_source": cache_source,
+                # Macro integrity. When true, protein_g / carbs_g / fat_g /
+                # fiber_g above are null — the honest "we don't know" — and the
+                # client MUST ask the user before saving. `macros_known_subtotal`
+                # is the sum over the items we DO know, explicitly partial.
+                "macros_unknown": macros_unknown,
+                "macros_unknown_items": macros_unknown_items,
+                "macros_known_subtotal": macros_known_subtotal,
                 # Micronutrients
                 "sodium_mg": sodium_mg,
                 "sugar_g": sugar_g,
@@ -694,8 +735,15 @@ async def log_food_from_image_streaming(
                 _log_rules, has_per_log_instruction=False,
             )
 
-            # Run Gemini analysis and S3 upload concurrently with keep-alive pings
-            analysis_task = asyncio.create_task(asyncio.gather(
+            # Run Gemini analysis and S3 upload concurrently with keep-alive pings.
+            # NOTE: `asyncio.gather()` returns a _GatheringFuture, NOT a coroutine —
+            # `asyncio.create_task()` rejects it with
+            # "TypeError: a coroutine was expected, got <_GatheringFuture pending>",
+            # so this endpoint used to fail on EVERY request before reaching the
+            # analysis (verified on 3.12; create_task has required a coroutine
+            # since 3.8). `ensure_future` is the correct wrapper for a Future —
+            # it is what the sibling /analyze-image-stream already uses.
+            analysis_task = asyncio.ensure_future(asyncio.gather(
                 gemini_service.analyze_food_image(
                     image_base64=image_base64,
                     mime_type=content_type,
@@ -771,6 +819,32 @@ async def log_food_from_image_streaming(
                 protein_g = _verified_totals["protein_g"]
                 carbs_g = _verified_totals["carbs_g"]
                 fat_g = _verified_totals["fat_g"]
+
+            # ── MACRO-INTEGRITY GATE (image stream, PERSISTING path) ──────
+            # /log-image-stream writes straight to food_logs with no confirm
+            # step, so this is the last place a fabricated 0/0/0 can be caught.
+            # Unknown macros are written as SQL NULL (food_logs.protein_g /
+            # carbs_g / fat_g / fiber_g are all nullable) instead of a
+            # confident zero that would land in the user's daily totals and
+            # their coach's context.
+            _integrity = enforce_macro_integrity(
+                {
+                    "food_items": food_items,
+                    "protein_g": protein_g,
+                    "carbs_g": carbs_g,
+                    "fat_g": fat_g,
+                    "fiber_g": fiber_g,
+                },
+                "STREAM image",
+            )
+            food_items = _integrity["food_items"]
+            protein_g = _integrity["protein_g"]
+            carbs_g = _integrity["carbs_g"]
+            fat_g = _integrity["fat_g"]
+            fiber_g = _integrity["fiber_g"]
+            macros_unknown = bool(_integrity.get("macros_unknown"))
+            macros_unknown_items = _integrity.get("macros_unknown_items") or []
+            macros_known_subtotal = _integrity.get("macros_known_subtotal")
 
             # Extract micronutrients from analysis
             micronutrients = {}
@@ -905,6 +979,11 @@ async def log_food_from_image_streaming(
                 "total_time_ms": elapsed_ms(),
                 # L3 — "Zealova remembered your <food>" affirmation.
                 "remembered_message": _build_remembered_message(food_items),
+                # Macro integrity (see gate above). protein/carbs/fat are null
+                # when true — persisted as NULL, not as a fabricated 0.
+                "macros_unknown": macros_unknown,
+                "macros_unknown_items": macros_unknown_items,
+                "macros_known_subtotal": macros_known_subtotal,
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -1156,11 +1235,20 @@ async def analyze_food_from_image_streaming(
             yield send_progress(3, 3, "Calculating nutrition...", f"Found {len(food_items)} items")
             logger.info(f"[ANALYZE-STREAM:{request_id}] Step 3: Found {len(food_items)} food items")
 
+            # The phase-2 vision pipeline returns `total_protein_g` etc., the
+            # legacy path returns `protein_g`. Read BOTH — reading only the
+            # latter reported a hard 0.0 for every phase-2 photo log.
             total_calories = food_analysis.get('total_calories', 0)
-            protein_g = food_analysis.get('protein_g', 0.0)
-            carbs_g = food_analysis.get('carbs_g', 0.0)
-            fat_g = food_analysis.get('fat_g', 0.0)
-            fiber_g = food_analysis.get('fiber_g', 0.0)
+
+            def _meal_macro(short_key: str, long_key: str):
+                if short_key in food_analysis:
+                    return food_analysis.get(short_key)
+                return food_analysis.get(long_key)
+
+            protein_g = _meal_macro('protein_g', 'total_protein_g')
+            carbs_g = _meal_macro('carbs_g', 'total_carbs_g')
+            fat_g = _meal_macro('fat_g', 'total_fat_g')
+            fiber_g = _meal_macro('fiber_g', 'total_fiber_g')
 
             # Apply per-user overrides BEFORE returning the analysis to the
             # client — the log-meal-sheet preview should show the user's
@@ -1197,6 +1285,29 @@ async def analyze_food_from_image_streaming(
                 protein_g = _verified_totals["protein_g"]
                 carbs_g = _verified_totals["carbs_g"]
                 fat_g = _verified_totals["fat_g"]
+
+            # ── MACRO-INTEGRITY GATE (analyze-image-stream) ───────────────
+            # Last stop before the analysis payload the client posts on to
+            # /log-direct. Runs after the override + verified-crosscheck
+            # re-totalling so it sees the final numbers.
+            _integrity = enforce_macro_integrity(
+                {
+                    "food_items": food_items,
+                    "protein_g": protein_g,
+                    "carbs_g": carbs_g,
+                    "fat_g": fat_g,
+                    "fiber_g": fiber_g,
+                },
+                f"ANALYZE-STREAM:{request_id}",
+            )
+            food_items = _integrity["food_items"]
+            protein_g = _integrity["protein_g"]
+            carbs_g = _integrity["carbs_g"]
+            fat_g = _integrity["fat_g"]
+            fiber_g = _integrity["fiber_g"]
+            macros_unknown = bool(_integrity.get("macros_unknown"))
+            macros_unknown_items = _integrity.get("macros_unknown_items") or []
+            macros_known_subtotal = _integrity.get("macros_known_subtotal")
 
             # Micronutrients
             sodium_mg = food_analysis.get('sodium_mg')
@@ -1265,6 +1376,10 @@ async def analyze_food_from_image_streaming(
                 "health_score_reasons": health_score_reasons,
                 "source_type": "image",
                 "total_time_ms": elapsed_ms(),
+                # Macro integrity — protein/carbs/fat above are null when true.
+                "macros_unknown": macros_unknown,
+                "macros_unknown_items": macros_unknown_items,
+                "macros_known_subtotal": macros_known_subtotal,
                 # Micronutrients
                 "sodium_mg": sodium_mg,
                 "sugar_g": sugar_g,
@@ -1383,7 +1498,7 @@ async def analyze_food_from_image_streaming(
 
 
 _ALLOWED_SECTIONS = {
-    "breakfast", "appetizers", "mains", "sides",
+    "breakfast", "appetizers", "mains", "sides", "addons",
     "desserts", "drinks", "specials", "uncategorized",
 }
 
@@ -1401,7 +1516,46 @@ _SECTION_ALIASES = {
     "cocktails": "drinks", "wine": "drinks",
     "brunch": "breakfast", "breakfast": "breakfast",
     "special": "specials", "chef's specials": "specials", "specials": "specials",
+    # Accompaniment blocks — these are what a steakhouse prints as SAUCES /
+    # SIDES / ENHANCEMENTS. They're attachable to a dish rather than ordered
+    # on their own, so they get their own section and drive the add-on picker.
+    "sauce": "addons", "sauces": "addons",
+    "enhancement": "addons", "enhancements": "addons",
+    "add-on": "addons", "add-ons": "addons", "addon": "addons", "addons": "addons",
+    "extra": "addons", "extras": "addons",
+    "topping": "addons", "toppings": "addons",
+    "dipping sauces": "addons", "condiments": "addons",
 }
+
+# `addon_group` values the client understands. Anything else is dropped
+# rather than leaked into the UI as a free-form label.
+_ALLOWED_ADDON_GROUPS = {"sauce", "side", "topping", "enhancement", "upgrade"}
+
+
+def _normalize_addon_group(raw: Any) -> Optional[str]:
+    """Canonical add-on group, or None for a standalone dish."""
+    if not raw:
+        return None
+    key = str(raw).strip().lower().replace("_", " ").replace("-", "")
+    key = key.replace(" ", "")
+    for allowed in _ALLOWED_ADDON_GROUPS:
+        if key == allowed or key == allowed + "s":
+            return allowed
+    return None
+
+
+def _clean_description(raw: Any, limit: int = 160) -> Optional[str]:
+    """Menu description, whitespace-collapsed and length-capped.
+
+    Returns None for blanks and for the placeholder strings models sometimes
+    emit instead of null — a fabricated description is worse than none.
+    """
+    if not raw or not isinstance(raw, str):
+        return None
+    text = " ".join(raw.split())
+    if not text or text.lower() in {"null", "none", "n/a", "-", "—"}:
+        return None
+    return text[:limit]
 
 
 def _normalize_section(raw: Any) -> str:
@@ -1423,18 +1577,30 @@ def _normalize_section(raw: Any) -> str:
 
 
 def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
-    """Normalize the Gemini menu/buffet response into a flat list of dish
+    """Normalize the Gemini menu/buffet/bill response into a flat list of dish
     dicts ready to ship to the MenuAnalysisSheet. Includes per-dish
-    inflammation_score, coach_tip, weight_g, detected_allergens, and
-    price/currency so the sheet can surface them inline."""
+    inflammation_score, coach_tip, weight_g, detected_allergens,
+    price/currency, the printed menu description and add-on grouping so the
+    sheet can surface them inline."""
     flat_items: List[dict] = []
+    if actual_mode == "bill":
+        return _flatten_bill_lines(analysis_result)
     if actual_mode == "menu":
         for section in analysis_result.get("sections", []) or []:
             section_name = _normalize_section(section.get("section_name"))
             for dish in section.get("dishes", []) or []:
+                # A dish tagged as an add-on belongs in the add-ons group even
+                # when it was printed under, say, "Mains" ("Add Cheddar,
+                # Scallions, and Bacon" sits inside the SIDES block).
+                addon_group = _normalize_addon_group(dish.get("addon_group"))
                 flat_items.append({
                     "name": dish.get("name", "Unknown"),
-                    "section": section_name,
+                    "section": "addons" if addon_group else section_name,
+                    "description": _clean_description(dish.get("description")),
+                    "addon_group": addon_group,
+                    "included_choices": _clean_description(
+                        dish.get("included_choices"), limit=120
+                    ),
                     "calories": dish.get("calories", 0),
                     "protein_g": dish.get("protein_g", 0),
                     "carbs_g": dish.get("carbs_g", 0),
@@ -1453,6 +1619,7 @@ def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
         for dish in analysis_result.get("dishes", []) or []:
             flat_items.append({
                 "name": dish.get("name", "Unknown"),
+                "description": _clean_description(dish.get("description")),
                 "calories": dish.get("calories", 0),
                 "protein_g": dish.get("protein_g", 0),
                 "carbs_g": dish.get("carbs_g", 0),
@@ -1466,6 +1633,111 @@ def _flatten_menu_items(analysis_result: dict, actual_mode: str) -> List[dict]:
                 "coach_tip": dish.get("coach_tip"),
             })
     return flat_items
+
+
+def _flatten_bill_lines(analysis_result: dict) -> List[dict]:
+    """Turn bill lines into the same flat item shape the sheet renders.
+
+    A bill carries no nutrition, so macros stay 0 here and are filled by the
+    canonical-lookup enrichment pass (`_enrich_bill_items_with_nutrition`)
+    before the items reach the client — the sheet must never show a dish at
+    "0 cal" as if that were a real estimate.
+
+    Non-food lines (tax, tip, fees) are dropped from the checklist: they are
+    not food and cannot be logged. A `qty` of N becomes N portions of one
+    item rather than N rows, so the user adjusts it with the portion stepper
+    they already know.
+    """
+    items: List[dict] = []
+    currency = analysis_result.get("currency")
+    for line in analysis_result.get("lines", []) or []:
+        if not isinstance(line, dict):
+            continue
+        if line.get("is_food") is False:
+            continue
+        name = (line.get("name") or "").strip()
+        if not name:
+            continue
+        try:
+            qty = max(1, int(line.get("qty") or 1))
+        except (TypeError, ValueError):
+            qty = 1
+        modifiers = [
+            str(m).strip() for m in (line.get("modifiers") or []) if str(m).strip()
+        ]
+        items.append({
+            "name": name,
+            "section": "uncategorized",
+            # The modifiers ARE the description on a bill — "Béarnaise,
+            # Mashed Potatoes" tells the user which steak was theirs.
+            "description": ", ".join(modifiers) if modifiers else None,
+            "addon_group": None,
+            "included_choices": None,
+            "calories": 0,
+            "protein_g": 0,
+            "carbs_g": 0,
+            "fat_g": 0,
+            "weight_g": None,
+            "rating": None,
+            "rating_reason": None,
+            "amount": f"{qty} ordered" if qty > 1 else None,
+            "portion_multiplier": float(qty),
+            "price": line.get("unit_price") or line.get("price"),
+            "currency": currency,
+            "detected_allergens": [],
+            "inflammation_score": None,
+            "coach_tip": None,
+            # Each modifier becomes its own add-on candidate so "Add Avocado"
+            # can be ticked (and logged) separately, per the separate-rows
+            # logging decision.
+            "bill_modifiers": modifiers,
+        })
+    return items
+
+
+def _apply_bill_nutrition(items: List[dict], estimate: dict) -> List[dict]:
+    """Merge estimated macros/health signals onto the flattened bill items.
+
+    Matched by normalized name. An item the estimator didn't return keeps its
+    zeros and is marked `nutrition_unknown` so the client can show it as
+    "couldn't estimate" instead of a confident 0 kcal.
+    """
+    def _key(name: str) -> str:
+        return " ".join(str(name or "").lower().split())
+
+    by_name = {
+        _key(d.get("name")): d
+        for d in (estimate.get("dishes") or [])
+        if isinstance(d, dict)
+    }
+    for item in items:
+        match = by_name.get(_key(item.get("name")))
+        if not match:
+            item["nutrition_unknown"] = True
+            continue
+        item.update({
+            "calories": match.get("calories", 0),
+            "protein_g": match.get("protein_g", 0),
+            "carbs_g": match.get("carbs_g", 0),
+            "fat_g": match.get("fat_g", 0),
+            "weight_g": match.get("weight_g"),
+            "rating": match.get("rating"),
+            "rating_reason": match.get("rating_reason"),
+            "detected_allergens": match.get("detected_allergens") or [],
+            "inflammation_score": match.get("inflammation_score"),
+            "inflammation_triggers": match.get("inflammation_triggers"),
+            "glycemic_load": match.get("glycemic_load"),
+            "fodmap_rating": match.get("fodmap_rating"),
+            "fodmap_reason": match.get("fodmap_reason"),
+            "added_sugar_g": match.get("added_sugar_g"),
+            "is_ultra_processed": match.get("is_ultra_processed"),
+            "coach_tip": match.get("coach_tip"),
+        })
+        # The serving caption the estimator produced beats our "N ordered"
+        # placeholder, but the quantity must survive either way.
+        if match.get("serving_description") and item.get("portion_multiplier", 1.0) == 1.0:
+            item["amount"] = match["serving_description"]
+    return items
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1501,16 +1773,22 @@ async def log_food_from_multi_image_streaming(
     # about. Default False preserves backwards compatibility for any caller
     # that hasn't updated yet.
     confirm_before_log: bool = Form(False),
+    # Where a menu/bill photo came from. Menus fail differently depending on
+    # the surface — a backlit board has no descriptions, a DoorDash screenshot
+    # is full of app chrome — so the hint swaps in a short prompt preamble.
+    source_hint: str = Form("printed"),
     images: List[UploadFile] = File(...),
     current_user: dict = Depends(get_current_user),
 ):
-    """Log or analyze 1..N food images. Plate auto-logs; Menu/Buffet return structured data."""
+    """Log or analyze 1..N food images. Plate auto-logs; Menu/Buffet/Bill return structured data."""
     ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
     MAX_IMAGE_SIZE = 10 * 1024 * 1024
     MAX_IMAGES = 10
 
-    if analysis_mode not in {"auto", "plate", "menu", "buffet"}:
+    if analysis_mode not in {"auto", "plate", "menu", "buffet", "bill"}:
         raise HTTPException(status_code=400, detail="Invalid analysis_mode")
+    if source_hint not in {"printed", "board", "digital"}:
+        raise HTTPException(status_code=400, detail="Invalid source_hint")
     if not images:
         raise HTTPException(status_code=400, detail="At least one image required")
     if len(images) > MAX_IMAGES:
@@ -1588,7 +1866,11 @@ async def log_food_from_multi_image_streaming(
                 if targets:
                     nutrition_context = {"targets": targets}
                     today = get_user_today(user_tz)
-                    daily_summary = db.get_daily_nutrition_summary(user_id, today)
+                    # Same zone as `today` — a UTC window over the user's local
+                    # date counts last night's dinner as consumed today.
+                    daily_summary = db.get_daily_nutrition_summary(
+                        user_id, today, timezone_str=user_tz
+                    )
                     if daily_summary and daily_summary.get("total_calories"):
                         nutrition_context["consumed_today"] = {
                             "calories_consumed": daily_summary.get("total_calories", 0),
@@ -1603,13 +1885,17 @@ async def log_food_from_multi_image_streaming(
             # ~15-30s for all pages to finish as one batch. It also gives
             # each page its own full token budget, boosting dish recall on
             # large menus.
-            if analysis_mode in ("menu", "buffet"):
+            if analysis_mode in ("menu", "buffet", "bill"):
                 actual_mode = analysis_mode
                 logger.info(
                     f"[STREAM multi] per-image streaming mode={actual_mode} "
-                    f"user={user_id} images={n}"
+                    f"user={user_id} images={n} source_hint={source_hint}"
                 )
-                yield send_progress(3, 4, "Scanning pages...", f"{n} image{'s' if n != 1 else ''}")
+                scan_noun = "receipt" if actual_mode == "bill" else "page"
+                yield send_progress(
+                    3, 4, f"Scanning {scan_noun}s...",
+                    f"{n} image{'s' if n != 1 else ''}",
+                )
 
                 all_items: List[dict] = []
                 successful_pages = 0
@@ -1619,16 +1905,47 @@ async def log_food_from_multi_image_streaming(
                 for idx, (s3_key, mime) in enumerate(zip(storage_keys, mime_types)):
                     page_num = idx + 1
                     try:
-                        per_image_result = await asyncio.wait_for(
-                            vision.analyze_food_from_s3_keys(
-                                s3_keys=[s3_key], mime_types=[mime],
-                                user_context=user_message, analysis_mode=actual_mode,
+                        # The recall gate runs inside analyze_menu_page: it
+                        # asks the model how many entries the page HAS, and
+                        # re-runs the page in overlapping halves when the
+                        # extraction came up short. Timeout is generous
+                        # enough to cover that retry.
+                        per_image_result, recall = await asyncio.wait_for(
+                            vision.analyze_menu_page(
+                                s3_key=s3_key, mime_type=mime,
+                                analysis_mode=actual_mode,
+                                user_context=user_message,
                                 nutrition_context=nutrition_context,
                                 standing_rules_block=_multi_rules_block,
+                                source_hint=source_hint,
                             ),
-                            timeout=60,
+                            timeout=120,
                         )
                         page_items = _flatten_menu_items(per_image_result, actual_mode)
+                        # A bill has no nutrition on it — estimate the ordered
+                        # dishes by name so the checklist never shows 0 kcal.
+                        if actual_mode == "bill" and page_items:
+                            page_rn_for_estimate = (
+                                per_image_result.get("restaurant_name")
+                                or restaurant_name
+                            )
+                            try:
+                                estimate = await asyncio.wait_for(
+                                    vision.estimate_dishes_from_names(
+                                        dish_names=[i["name"] for i in page_items],
+                                        restaurant_name=page_rn_for_estimate,
+                                        nutrition_context=nutrition_context,
+                                    ),
+                                    timeout=60,
+                                )
+                                page_items = _apply_bill_nutrition(page_items, estimate)
+                            except Exception as est_err:
+                                logger.error(
+                                    f"[STREAM multi] bill nutrition estimate failed: {est_err}",
+                                    exc_info=True,
+                                )
+                                for item in page_items:
+                                    item["nutrition_unknown"] = True
                         all_items.extend(page_items)
                         successful_pages += 1
                         # Capture the restaurant name from the first page that
@@ -1646,6 +1963,12 @@ async def log_food_from_multi_image_streaming(
                             "image_url": image_urls[idx],
                             "storage_key": storage_keys[idx],
                             "elapsed_ms": elapsed_ms(),
+                            # Recall telemetry — how many entries the model
+                            # said the page had vs how many we extracted, and
+                            # whether the split-page retry fired.
+                            "expected_items": recall.get("expected"),
+                            "extracted_items": recall.get("extracted"),
+                            "recall_retried": recall.get("retried", False),
                         }
                         yield f"event: page\ndata: {json.dumps(page_event)}\n\n"
                     except asyncio.TimeoutError:
@@ -1671,19 +1994,23 @@ async def log_food_from_multi_image_streaming(
                     "menu_photo_urls": image_urls,  # alias for client readability
                     "storage_keys": storage_keys,
                     "mime_types": mime_types,
+                    "source_hint": source_hint,
                     "total_time_ms": elapsed_ms(),
                     "elapsed_seconds": round(elapsed_ms() / 1000.0, 2),
                 }
                 yield f"event: done\ndata: {json.dumps(done_event)}\n\n"
                 return
 
-            # Auto + plate: one-shot batch analysis (unchanged).
+            # Auto + plate: one-shot batch analysis (unchanged). Auto can still
+            # classify INTO menu/buffet, and `analyze_food_from_s3_keys` bumps
+            # those images to ULTRA_HIGH tokenization once it knows.
             analysis_result = await asyncio.wait_for(
                 vision.analyze_food_from_s3_keys(
                     s3_keys=storage_keys, mime_types=mime_types,
                     user_context=user_message, analysis_mode=analysis_mode,
                     nutrition_context=nutrition_context,
                     standing_rules_block=_multi_rules_block,
+                    source_hint=source_hint,
                 ),
                 timeout=90,
             )
@@ -1730,6 +2057,32 @@ async def log_food_from_multi_image_streaming(
                     fat_g = round(_sum_item_field("fat_g"), 1)
                 if not fiber_g:
                     fiber_g = round(_sum_item_field("fiber_g"), 1)
+
+                # ── MACRO-INTEGRITY GATE (multi-image) ────────────────────
+                # `_sum_item_field` above deliberately re-sums the items, which
+                # is exactly the "0-default" arithmetic that turns an unknown
+                # macro into a confident 0.0. Run the gate AFTER it so an
+                # unknown-macro item nulls the totals on both the review-sheet
+                # branch and the persisting branch below.
+                _integrity = enforce_macro_integrity(
+                    {
+                        "food_items": food_items,
+                        "protein_g": protein_g,
+                        "carbs_g": carbs_g,
+                        "fat_g": fat_g,
+                        "fiber_g": fiber_g,
+                    },
+                    "STREAM multi:plate",
+                )
+                food_items = _integrity["food_items"]
+                protein_g = _integrity["protein_g"]
+                carbs_g = _integrity["carbs_g"]
+                fat_g = _integrity["fat_g"]
+                fiber_g = _integrity["fiber_g"]
+                macros_unknown = bool(_integrity.get("macros_unknown"))
+                macros_unknown_items = _integrity.get("macros_unknown_items") or []
+                macros_known_subtotal = _integrity.get("macros_known_subtotal")
+
                 health_score = analysis_result.get("health_score")
                 health_score_reasons = analysis_result.get("health_score_reasons")
                 ai_feedback = analysis_result.get("feedback")
@@ -1779,6 +2132,9 @@ async def log_food_from_multi_image_streaming(
                         "image_urls": image_urls,
                         "storage_keys": storage_keys,
                         "total_time_ms": elapsed_ms(),
+                        "macros_unknown": macros_unknown,
+                        "macros_unknown_items": macros_unknown_items,
+                        "macros_known_subtotal": macros_known_subtotal,
                     }
                     yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
                     return
@@ -1822,6 +2178,9 @@ async def log_food_from_multi_image_streaming(
                     "is_ultra_processed": is_ultra_processed,
                     "image_urls": image_urls,
                     "total_time_ms": elapsed_ms(),
+                    "macros_unknown": macros_unknown,
+                    "macros_unknown_items": macros_unknown_items,
+                    "macros_known_subtotal": macros_known_subtotal,
                 }
                 yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
                 return
@@ -1889,6 +2248,19 @@ class SelectedItem(BaseModel):
     rating: Optional[str] = None
     rating_reason: Optional[str] = None
     coach_tip: Optional[str] = None
+    # The description printed on the menu, carried through so the logged row
+    # still says WHAT the dish was ("Maple-lacquered Pork Belly, Smoked Cheese
+    # Grits, Perfect Egg") months later in history.
+    description: Optional[str] = None
+    # Anything the user typed over that description before logging ("asked for
+    # no butter"). Wins over `description` when writing food_logs.notes.
+    note: Optional[str] = None
+    # Set on rows that came from the add-on picker: which menu block the item
+    # came from, and which dish it was ordered with. Add-ons are logged as
+    # their own rows (per product decision), so this is how the pairing is
+    # still recoverable afterwards.
+    addon_group: Optional[str] = None
+    parent_dish_name: Optional[str] = None
 
 
 class LogSelectedItemsRequest(BaseModel):
@@ -1920,9 +2292,12 @@ async def log_selected_items(
     if not body.items:
         raise HTTPException(status_code=400, detail="No items to log")
 
-    source_type = {"menu": "menu", "buffet": "buffet", "plate": "image"}.get(body.analysis_type, "image")
+    source_type = {
+        "menu": "menu", "buffet": "buffet", "bill": "menu", "plate": "image",
+    }.get(body.analysis_type, "image")
     input_type = (body.input_type or {
-        "menu": "menu_scan", "buffet": "buffet_scan", "plate": "multi_image_scan",
+        "menu": "menu_scan", "buffet": "buffet_scan", "bill": "bill_scan",
+        "plate": "multi_image_scan",
     }.get(body.analysis_type, "image")).lower()
 
     db = get_supabase_db()
@@ -1959,18 +2334,49 @@ async def log_selected_items(
                 food_item["rating"] = item.rating
             if item.rating_reason:
                 food_item["rating_reason"] = item.rating_reason
+            if item.description:
+                food_item["description"] = item.description
+            if item.addon_group:
+                food_item["addon_group"] = item.addon_group
+            if item.parent_dish_name:
+                food_item["parent_dish_name"] = item.parent_dish_name
+
+            # notes = whatever the user typed, else the menu's own description.
+            # Add-ons log as their own rows, so each one records the dish it
+            # was ordered with — "Béarnaise" alone in history is meaningless,
+            # "Béarnaise · With 10-oz New York Strip" is not.
+            note_parts: List[str] = []
+            if item.note and item.note.strip():
+                note_parts.append(item.note.strip())
+            elif item.description:
+                note_parts.append(item.description)
+            if item.parent_dish_name:
+                note_parts.append(f"With {item.parent_dish_name}")
+            notes = " · ".join(note_parts) if note_parts else None
 
             food_items = [food_item]
+            # ── MACRO-INTEGRITY GATE (menu/buffet selected items, PERSISTING) ──
+            # These items come straight off the menu-analysis card; a dish the
+            # analyzer could only price in calories must not be written as
+            # 0P/0C/0F.
+            enforce_macro_integrity(
+                {"food_items": food_items}, "log-selected-items"
+            )
             row = db.create_food_log(
                 user_id=body.user_id, meal_type=body.meal_type, food_items=food_items,
                 total_calories=food_items[0]["calories"],
                 protein_g=food_items[0]["protein_g"],
                 carbs_g=food_items[0]["carbs_g"],
                 fat_g=food_items[0]["fat_g"],
-                fiber_g=food_items[0].get("fiber_g") or 0,
+                # NULL (not 0) when the gate marked this item's macros unknown.
+                fiber_g=(
+                    food_items[0].get("fiber_g")
+                    if food_items[0].get("macros_unknown")
+                    else (food_items[0].get("fiber_g") or 0)
+                ),
                 ai_feedback=item.coach_tip, health_score=None, logged_at=logged_at,
                 image_url=body.image_url, image_storage_key=body.image_storage_key,
-                source_type=source_type, input_type=input_type,
+                source_type=source_type, input_type=input_type, notes=notes,
                 # Forward every health-condition score so the DB row captures
                 # what the user saw on the menu-analysis card.
                 inflammation_score=item.inflammation_score,
@@ -1996,7 +2402,7 @@ async def log_selected_items(
     # Background: flip `liked=true` on matching menu_items entries for
     # menu/buffet logs. Plate logs don't come from a menu scan so they
     # don't need this annotation.
-    if body.analysis_type in ("menu", "buffet"):
+    if body.analysis_type in ("menu", "buffet", "bill"):
         async def _mark_liked_bg():
             try:
                 from services.menu_items_rag_service import get_menu_items_rag
