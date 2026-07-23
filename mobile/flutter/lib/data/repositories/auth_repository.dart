@@ -53,6 +53,97 @@ import '../services/workouts_prewarmer.dart';
 import '../services/you_overview_prewarmer.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
+/// Backend `users.id` of the account that most recently authenticated on this
+/// device, and when. Used ONLY to detect an account switch so one person's
+/// leftover pre-auth quiz can't bleed into the next person's plan.
+///
+/// Both are cleared by [AuthRepository._clearLocalSideEffects], which every
+/// sign-out path funnels through — the user-initiated one, the 401 forced
+/// sign-out, the server-revocation listener, and the orphan-user 404 recovery.
+/// Clearing them in only ONE of those paths is what left a stale fingerprint
+/// behind and armed the account-switch wipe for the next sign-up.
+const String kLastAuthUserIdKey = 'lastAuthUserId';
+const String kLastAuthAtKey = 'lastAuthAt';
+
+/// Should the pre-auth quiz persisted on this device be discarded because it
+/// belongs to a DIFFERENT person than the one who just authenticated?
+///
+/// Extracted and pure so the rule is directly testable — it decides the fate of
+/// answers the user cannot re-enter without redoing the whole funnel.
+///
+/// The rule is a timestamp comparison, not an identity comparison. Answers
+/// touched after the previous account's last sign-in were necessarily typed
+/// while nobody was signed in, i.e. by the person now signing up — keep them.
+/// Answers touched before it belong to the previous session — discard them.
+///
+/// Both "no answers were ever persisted" and "we don't know when the previous
+/// session was" resolve to KEEP: there is nothing to protect in the first case,
+/// and in the second, wrongly discarding costs the user their whole quiz while
+/// wrongly keeping is corrected by the store's own 14-day staleness wipe.
+bool shouldClearQuizOnAccountSwitch({
+  required String? previousUserId,
+  required String currentUserId,
+  required DateTime? quizLastTouchedAt,
+  required DateTime? previousAuthAt,
+}) {
+  if (previousUserId == null) return false; // first account on this device
+  if (previousUserId == currentUserId) return false; // same person
+  if (quizLastTouchedAt == null) return false; // nothing persisted
+  if (previousAuthAt == null) return false; // can't date the previous session
+  return !quizLastTouchedAt.isAfter(previousAuthAt);
+}
+
+/// Mirror just-POSTed quiz answers onto the in-memory user so
+/// `User.hasCompletedPreAuthQuiz` agrees with what the backend now stores.
+///
+/// Without this the router has NO server-side signal for a fresh sign-up: the
+/// user object comes from `/auth/sync`, which creates a bare row, so its
+/// goals / equipment / preferences are all empty and the server-truth half of
+/// the quiz gate reads false no matter what the user answered. That leaves the
+/// gate resting entirely on local SharedPreferences — a single point of failure
+/// that any wipe or slow load turns into "send them back to question 1".
+///
+/// Mirrors the field mapping `_backupQuizToBackend` POSTs, and the exact keys
+/// `User.hasCompletedPreAuthQuiz` inspects. Never throws: a user that could not
+/// be patched is returned unchanged rather than failing the sign-in.
+app_user.User userWithQuizApplied(
+  app_user.User user,
+  PreAuthQuizData quizData,
+) {
+  try {
+    final goals = quizData.goals ?? const <String>[];
+    final equipment = <String>{
+      ...?quizData.equipment,
+      ...?quizData.customEquipment,
+    }.toList();
+
+    Map<String, dynamic> preferences = <String, dynamic>{};
+    if (user.preferences != null && user.preferences!.isNotEmpty) {
+      final decoded = jsonDecode(user.preferences!);
+      if (decoded is Map) preferences = Map<String, dynamic>.from(decoded);
+    }
+    if (quizData.daysPerWeek != null) {
+      preferences['days_per_week'] = quizData.daysPerWeek;
+    }
+    if (quizData.workoutDays != null) {
+      preferences['workout_days'] = quizData.workoutDays;
+    }
+    if (quizData.trainingSplit != null) {
+      preferences['training_split'] = quizData.trainingSplit;
+    }
+
+    return user.copyWith(
+      goals: goals.isEmpty ? user.goals : jsonEncode(goals),
+      equipment: equipment.isEmpty ? user.equipment : jsonEncode(equipment),
+      preferences:
+          preferences.isEmpty ? user.preferences : jsonEncode(preferences),
+    );
+  } catch (e) {
+    debugPrint('⚠️ [Auth] Could not apply quiz to user object: $e');
+    return user;
+  }
+}
+
 /// Auth state
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
@@ -682,6 +773,16 @@ class AuthRepository {
     await _runSignOutStep('activeWorkout.clear', () async {
       ActiveWorkoutSessionNotifier.clearCache();
     });
+    // Drop the last-authenticated fingerprint. This lives here — in the one
+    // helper EVERY sign-out path awaits — rather than in AuthNotifier.signOut,
+    // which is only the user-initiated path. A fingerprint that outlives the
+    // session it describes makes the next sign-up on this device look like an
+    // account switch, which wipes the quiz the new user just filled in.
+    await _runSignOutStep('prefs.clearAuthFingerprint', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(kLastAuthUserIdKey);
+      await prefs.remove(kLastAuthAtKey);
+    });
   }
 
   /// Drop every Drift row owned by [outgoingUserId] so the next user
@@ -1181,14 +1282,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._repository, this._ref) : super(const AuthState()) {
     _init();
-    _startSignedOutListener();
+    _startSupabaseAuthListener();
   }
 
   /// SharedPreferences key tracking the last user.id that signed in on this
   /// device. Used to detect account switches: if a different user signs in,
-  /// the previous user's pre-auth quiz answers are stale and must be cleared
-  /// before being applied to the new account.
-  static const _lastAuthUserIdKey = 'lastAuthUserId';
+  /// the previous user's pre-auth quiz answers may be stale — see
+  /// [_syncQuizAfterSignInImpl] for the staleness rule that decides.
+  static const _lastAuthUserIdKey = kLastAuthUserIdKey;
+  static const _lastAuthAtKey = kLastAuthAtKey;
 
   /// Subscription to Supabase auth events. We separately watch for
   /// `signedOut` so a server-side session revocation (admin sign-out, JWT
@@ -1202,40 +1304,96 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// and prevents the "signed out" debug log from printing twice).
   bool _userInitiatedSignOutInFlight = false;
 
-  void _startSignedOutListener() {
+  /// Set for the duration of any explicit sign-in / sign-up so the `signedIn`
+  /// branch below doesn't race the method that is already driving the flow.
+  bool _authFlowInFlight = false;
+
+  void _startSupabaseAuthListener() {
     try {
       _supabaseAuthSub = Supabase.instance.client.auth.onAuthStateChange.listen(
         (data) async {
-          if (data.event != AuthChangeEvent.signedOut) return;
-          if (_userInitiatedSignOutInFlight) {
-            debugPrint(
-              '🚪 [Auth] Ignoring signedOut event — user-initiated path already running',
-            );
-            return;
-          }
-          debugPrint(
-            '🚪 [Auth] Server-side signedOut detected — running full cleanup',
-          );
-          try {
-            // Reach into the repository's private helpers via the
-            // server-revocation path. We can't call `_repository.signOut`
-            // here — it would try to call Supabase.signOut again, which
-            // already happened (server side). Instead, run the same
-            // teardown directly.
-            await _repository._cleanupAfterRemoteSignOut();
-          } catch (e) {
-            debugPrint('⚠️ [Auth] Server-revocation cleanup error: $e');
-          }
-          if (mounted) {
-            state = const AuthState(status: AuthStatus.unauthenticated);
+          switch (data.event) {
+            case AuthChangeEvent.signedOut:
+              await _handleRemoteSignedOut();
+            case AuthChangeEvent.signedIn:
+              await _handleExternalSignedIn(data);
+            default:
+              return;
           }
         },
         onError: (Object e) {
-          debugPrint('❌ [Auth] signedOut listener error: $e');
+          debugPrint('❌ [Auth] Supabase auth listener error: $e');
         },
       );
     } catch (e) {
-      debugPrint('❌ [Auth] Failed to start signedOut listener: $e');
+      debugPrint('❌ [Auth] Failed to start Supabase auth listener: $e');
+    }
+  }
+
+  Future<void> _handleRemoteSignedOut() async {
+    if (_userInitiatedSignOutInFlight) {
+      debugPrint(
+        '🚪 [Auth] Ignoring signedOut event — user-initiated path already running',
+      );
+      return;
+    }
+    debugPrint(
+      '🚪 [Auth] Server-side signedOut detected — running full cleanup',
+    );
+    try {
+      // Reach into the repository's private helpers via the
+      // server-revocation path. We can't call `_repository.signOut`
+      // here — it would try to call Supabase.signOut again, which
+      // already happened (server side). Instead, run the same
+      // teardown directly.
+      await _repository._cleanupAfterRemoteSignOut();
+    } catch (e) {
+      debugPrint('⚠️ [Auth] Server-revocation cleanup error: $e');
+    }
+    if (mounted) {
+      state = const AuthState(status: AuthStatus.unauthenticated);
+    }
+  }
+
+  /// A Supabase session appeared without this notifier asking for one.
+  ///
+  /// The case that matters is the email-confirmation link: when Supabase is
+  /// configured to require confirmation, `signUp` returns NO session, so
+  /// [AuthRepository.signUpWithEmail] throws before it can call `/auth/sync`.
+  /// Nothing has created the `public.users` row, and the pre-auth quiz sitting
+  /// in SharedPreferences has never been backed up. Tapping the link later
+  /// establishes the session and fires exactly this event — which the app
+  /// previously discarded, stranding the user on the sign-in screen with a
+  /// valid session and no backend row, and (on the next cold start) restarting
+  /// the funnel from the top.
+  ///
+  /// `/users/auth/sync` is idempotent and is documented as the hook this
+  /// listener calls (see `backend/api/v1/users/auth.py::auth_sync`), so
+  /// resolving the session through [AuthRepository.restoreSession] here both
+  /// backfills the row and runs the normal quiz sync.
+  Future<void> _handleExternalSignedIn(sb.AuthState data) async {
+    if (_authFlowInFlight) return; // an explicit sign-in/up owns this session
+    if (!mounted) return;
+    if (state.status == AuthStatus.authenticated) return;
+    if (data.session == null) return;
+
+    debugPrint(
+      '🔑 [Auth] Session appeared outside an explicit auth call '
+      '(email-confirmation link / token refresh) — resolving backend user',
+    );
+    try {
+      final user = await _repository.restoreSession().timeout(
+        ApiConstants.authOpTimeout,
+      );
+      if (user == null || !mounted) return;
+      final synced = await _syncQuizAfterSignIn(user);
+      _firePrewarmers();
+      state = AuthState(status: AuthStatus.authenticated, user: synced);
+      await _repository._cacheUser(synced);
+      _updateDeviceInfo(synced.id, isFreshSignin: true);
+      unawaited(_flushPendingReferral());
+    } catch (e) {
+      debugPrint('⚠️ [Auth] External signedIn resolution failed: $e');
     }
   }
 
@@ -1294,9 +1452,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// slow network costs nothing.
   static const Duration _quizSyncTimeout = Duration(seconds: 6);
 
-  Future<void> _syncQuizAfterSignIn(app_user.User user) async {
+  /// Returns the user to publish as auth state — the SAME instance unless the
+  /// quiz was backed up to the backend, in which case it is patched so
+  /// `hasCompletedPreAuthQuiz` reflects what the server now holds. See
+  /// [userWithQuizApplied].
+  Future<app_user.User> _syncQuizAfterSignIn(app_user.User user) async {
     try {
-      await _syncQuizAfterSignInImpl(user).timeout(_quizSyncTimeout);
+      return await _syncQuizAfterSignInImpl(user).timeout(_quizSyncTimeout);
     } on TimeoutException {
       debugPrint(
         '⚠️ [Auth] _syncQuizAfterSignIn timed out after '
@@ -1305,46 +1467,99 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       debugPrint('⚠️ [Auth] _syncQuizAfterSignIn failed (non-fatal): $e');
     }
+    return user;
   }
 
-  Future<void> _syncQuizAfterSignInImpl(app_user.User user) async {
+  /// Decide whether the pre-auth quiz sitting in SharedPreferences belongs to
+  /// the person who just authenticated, then back it up or discard it.
+  ///
+  /// The account-switch rule used to be "different user.id ⇒ wipe", which is
+  /// wrong the moment it matters most: a second account created on a device
+  /// that already saw a first account. The quiz answers in that case were typed
+  /// minutes ago, by this person, in the funnel that led to this very sign-up —
+  /// and wiping them both discards the answers permanently (the backup below is
+  /// skipped once the quiz reads empty) and bounces the user back to question 1
+  /// of the quiz, because that wiped state is exactly what the router's
+  /// onboarding-step gate reads.
+  ///
+  /// The correct discriminator is WHEN the answers were typed, not WHO signed
+  /// in last. Answers touched after the previous account's last sign-in cannot
+  /// be that account's leftovers — nobody was signed in when they were entered.
+  /// So:
+  ///   * touched after the last sign-in → this person's fresh answers → KEEP.
+  ///   * touched before it → consumed by, or abandoned from, the previous
+  ///     session → WIPE (the original intent).
+  /// A missing touch timestamp means nothing was ever persisted, so there is
+  /// nothing to protect and nothing to wipe. A missing last-sign-in timestamp
+  /// (installs that predate [_lastAuthAtKey]) resolves to KEEP: re-asking a
+  /// completed quiz destroys real user input, while carrying answers forward
+  /// one extra time is recoverable and is additionally bounded by the store's
+  /// own 14-day staleness wipe.
+  Future<app_user.User> _syncQuizAfterSignInImpl(app_user.User user) async {
     final sp = await SharedPreferences.getInstance();
     final previousUserId = sp.getString(_lastAuthUserIdKey);
+    final previousAuthAtMs = sp.getInt(_lastAuthAtKey);
+    final notifier = _ref.read(preAuthQuizProvider.notifier);
 
     if (previousUserId != null && previousUserId != user.id) {
-      debugPrint(
-        '🔄 [Auth] Account switch detected ($previousUserId → ${user.id}), clearing stale quiz',
-      );
-      await _clearPreAuthQuiz();
+      final touchedAt = await notifier.lastTouchedAt();
+      final previousAuthAt = previousAuthAtMs == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(previousAuthAtMs);
+
+      if (shouldClearQuizOnAccountSwitch(
+        previousUserId: previousUserId,
+        currentUserId: user.id,
+        quizLastTouchedAt: touchedAt,
+        previousAuthAt: previousAuthAt,
+      )) {
+        debugPrint(
+          '🔄 [Auth] Account switch ($previousUserId → ${user.id}) with quiz '
+          'last touched $touchedAt (before previous sign-in $previousAuthAt) — '
+          'clearing stale quiz',
+        );
+        await _clearPreAuthQuiz();
+      } else {
+        debugPrint(
+          '🔄 [Auth] Account switch ($previousUserId → ${user.id}) but quiz was '
+          'touched $touchedAt (after previous sign-in $previousAuthAt) — '
+          'keeping this session\'s answers',
+        );
+      }
     }
     await sp.setString(_lastAuthUserIdKey, user.id);
+    await sp.setInt(_lastAuthAtKey, DateTime.now().millisecondsSinceEpoch);
 
     // User has finished onboarding — quiz state no longer relevant.
-    if (user.isPaywallComplete) return;
+    if (user.isPaywallComplete) return user;
 
-    final notifier = _ref.read(preAuthQuizProvider.notifier);
     final quizData = await notifier.ensureLoaded();
 
     if (quizData.isComplete) {
       // Local has quiz answers — back them up to the server now so they
       // survive an uninstall/reinstall mid-onboarding. coach_selection's
       // POST will re-submit later (idempotent), so this is best-effort.
-      await _backupQuizToBackend(user.id, quizData);
-    } else {
-      // Local quiz is empty but user is mid-onboarding. Try to recover
-      // their previously-saved answers from the backend.
-      await notifier.hydrateFromUserPreferences(user.toJson());
-      debugPrint(
-        '💧 [Auth] Hydrated pre-auth quiz from backend preferences for ${user.id}',
-      );
+      final backedUp = await _backupQuizToBackend(user.id, quizData);
+      if (backedUp) return userWithQuizApplied(user, quizData);
+      return user;
     }
+
+    // Local quiz is empty but user is mid-onboarding. Try to recover
+    // their previously-saved answers from the backend.
+    await notifier.hydrateFromUserPreferences(user.toJson());
+    debugPrint(
+      '💧 [Auth] Hydrated pre-auth quiz from backend preferences for ${user.id}',
+    );
+    return user;
   }
 
   /// Best-effort POST of local pre-auth quiz answers to the backend.
   /// Non-blocking failure — coach_selection_screen retries the same POST after
   /// the user picks a coach. This early POST exists purely for resilience to
   /// uninstall/reinstall during onboarding.
-  Future<void> _backupQuizToBackend(
+  /// Returns true when the POST landed — the caller uses that to decide whether
+  /// the in-memory user can be marked as having completed the quiz.
+  Future<bool> _backupQuizToBackend(
     String userId,
     PreAuthQuizData quizData,
   ) async {
@@ -1365,10 +1580,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
         data: payload,
       );
       debugPrint('✅ [Auth] Pre-auth quiz backed up to backend for $userId');
+      return true;
     } catch (e) {
       debugPrint(
         '⚠️ [Auth] Quiz backup POST failed (will retry at coach selection): $e',
       );
+      return false;
     }
   }
 
@@ -1438,6 +1655,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Initialize with cache-first pattern for instant auth
   Future<void> _init() async {
+    // Cold-start restore is an auth resolution too: hold the same gate the
+    // explicit sign-in paths use so a `signedIn` event arriving mid-restore
+    // doesn't resolve the session a second time in parallel.
+    _authFlowInFlight = true;
     try {
       // Step 1: Try to load cached user instantly (no loading state)
       final result = await _repository.restoreSessionWithCache();
@@ -1482,12 +1703,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
     } catch (e) {
       state = const AuthState(status: AuthStatus.unauthenticated);
+    } finally {
+      _authFlowInFlight = false;
     }
   }
 
   /// Sign in with Google
   Future<void> signInWithGoogle() async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    _authFlowInFlight = true;
     try {
       // Hard ceiling on the whole repo call (defense-in-depth): even though the
       // secure-storage layer is now timeout-capped, the notifier must NEVER sit
@@ -1498,16 +1722,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // Quiz sync (account-switch detection, backup, hydrate) runs BEFORE
       // state flips to authenticated so the router sees correct quiz state
       // on its next redirect. See _syncQuizAfterSignIn for the 3 jobs.
-      await _syncQuizAfterSignIn(user);
+      // It returns the user to publish — patched with the quiz answers when
+      // they were backed up, so the router's server-truth gate agrees.
+      final synced = await _syncQuizAfterSignIn(user);
       // Fire all 5 tab prewarmers BEFORE the state flip so their fetches
       // overlap with the router redirect + home mount frame.
       _firePrewarmers();
-      state = AuthState(status: AuthStatus.authenticated, user: user);
+      state = AuthState(status: AuthStatus.authenticated, user: synced);
       // Persist the freshly-signed-in user to cache so the next cold start
       // hits the cache-first happy path with THIS user — not whatever
       // previous account left a row in SharedPreferences.
-      await _repository._cacheUser(user);
-      _updateDeviceInfo(user.id);
+      await _repository._cacheUser(synced);
+      _updateDeviceInfo(synced.id);
       // Fire-and-forget referral flush — never block auth UX on this.
       unawaited(_flushPendingReferral());
     } on TimeoutException {
@@ -1527,21 +1753,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.error,
         errorMessage: _humanizeAuthException(e),
       );
+    } finally {
+      _authFlowInFlight = false;
     }
   }
 
   /// Sign in with Apple (iOS / iPadOS only)
   Future<void> signInWithApple() async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    _authFlowInFlight = true;
     try {
       final user = await _repository.signInWithApple().timeout(
         ApiConstants.authOpTimeout,
       );
-      await _syncQuizAfterSignIn(user);
+      final synced = await _syncQuizAfterSignIn(user);
       _firePrewarmers();
-      state = AuthState(status: AuthStatus.authenticated, user: user);
-      await _repository._cacheUser(user);
-      _updateDeviceInfo(user.id);
+      state = AuthState(status: AuthStatus.authenticated, user: synced);
+      await _repository._cacheUser(synced);
+      _updateDeviceInfo(synced.id);
       unawaited(_flushPendingReferral());
     } on TimeoutException {
       state = const AuthState(
@@ -1557,6 +1786,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.error,
         errorMessage: _humanizeAuthException(e),
       );
+    } finally {
+      _authFlowInFlight = false;
     }
   }
 
@@ -1606,15 +1837,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Sign in with email and password
   Future<void> signInWithEmail(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    _authFlowInFlight = true;
     try {
       final user = await _repository
           .signInWithEmail(email, password)
           .timeout(ApiConstants.authOpTimeout);
-      await _syncQuizAfterSignIn(user);
+      final synced = await _syncQuizAfterSignIn(user);
       _firePrewarmers();
-      state = AuthState(status: AuthStatus.authenticated, user: user);
-      await _repository._cacheUser(user);
-      _updateDeviceInfo(user.id, isFreshSignin: true);
+      state = AuthState(status: AuthStatus.authenticated, user: synced);
+      await _repository._cacheUser(synced);
+      _updateDeviceInfo(synced.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
     } on TimeoutException {
       state = const AuthState(
@@ -1632,6 +1864,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
             ? _humanizeAuthException(e)
             : e.toString(),
       );
+    } finally {
+      _authFlowInFlight = false;
     }
   }
 
@@ -1658,6 +1892,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     Map<String, dynamic>? quizMetadata,
   }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    _authFlowInFlight = true;
     try {
       final user = await _repository
           .signUpWithEmail(
@@ -1667,10 +1902,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
             quizMetadata: quizMetadata,
           )
           .timeout(ApiConstants.authOpTimeout);
-      await _syncQuizAfterSignIn(user);
-      state = AuthState(status: AuthStatus.authenticated, user: user);
-      await _repository._cacheUser(user);
-      _updateDeviceInfo(user.id, isFreshSignin: true);
+      final synced = await _syncQuizAfterSignIn(user);
+      state = AuthState(status: AuthStatus.authenticated, user: synced);
+      await _repository._cacheUser(synced);
+      _updateDeviceInfo(synced.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
     } on TimeoutException {
       state = const AuthState(
@@ -1680,6 +1915,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     } catch (e) {
       state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
+    } finally {
+      _authFlowInFlight = false;
     }
   }
 
@@ -1702,14 +1939,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     // we already executed.
     _userInitiatedSignOutInFlight = true;
     try {
+      // The last-auth fingerprint (kLastAuthUserIdKey / kLastAuthAtKey) is
+      // cleared inside _clearLocalSideEffects, which _repository.signOut()
+      // awaits — so every sign-out path gets it, not just this one.
       await _repository.signOut();
       await _clearPreAuthQuiz();
-      // Clear the last-auth-user fingerprint so the next sign-in is treated
-      // as a fresh session (no false-positive account-switch detection).
-      try {
-        final sp = await SharedPreferences.getInstance();
-        await sp.remove(_lastAuthUserIdKey);
-      } catch (_) {}
       await PendingReferralService.clear();
       // Reset live XP state — the provider persists (not autoDispose), so
       // stale userXp/lastLevelUp would survive logout and cause false
