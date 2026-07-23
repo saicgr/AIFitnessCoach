@@ -6,12 +6,352 @@ Also includes helpers to merge results from the `exercise_library` and
 `custom_exercise_library` ChromaDB collections.
 """
 
+import re
 from typing import Any, Dict, List, Optional
 
 from core.logger import get_logger
 from services.training_program_service import get_training_program_keywords_sync
 
 logger = get_logger(__name__)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Equipment normalization for query building
+#
+# WHY THIS EXISTS: the ChromaDB search is a *vector similarity* search over an
+# embedding of the query string. Every token in that string competes for the
+# embedding's direction. The old code inlined the user's raw equipment list
+# (`f"Equipment: {', '.join(equipment)}"`, no cap) — for a commercial-gym user
+# that is 83-88 entries / ~900 characters against a ~12-word focus phrase, so
+# the embedding pointed at "equipment nouns" instead of "the movement I asked
+# for". Observed symptom (beginner, full gym, focus=lower): Assault Airbike
+# Sprint, Air Swing Running, Balance Board Lateral Squat, Band Squat Row —
+# every pick matched an EQUIPMENT token, not the movement.
+#
+# THE REAL INVENTORIES THIS MUST HANDLE (transcribed from the Flutter client;
+# the tests pin literal copies so drift is caught):
+#
+#   1. `WorkoutEnvironment.commercialGym.defaultEquipment`
+#      (mobile/flutter/lib/core/providers/environment_equipment_provider.dart
+#      :137-228) — 83 entries and DELIBERATELY NO `full_gym` marker (see the
+#      comment at :134). This is the common gym-profile shape and it does NOT
+#      hit the full-gym collapse below; it goes through dedupe + rank + cap.
+#   2. `GymEquipmentSheet` (screens/home/widgets/gym_equipment_sheet.dart
+#      :212-218) STRIPS `full_gym` and writes back the 43 expanded category
+#      items — again no marker.
+#   3. `kCommercialGymEquipmentPreset` (onboarding,
+#      screens/onboarding/pre_auth_quiz_screen_ext.dart:22-126) — 88 entries
+#      and it DOES keep `full_gym`.
+#   4. `get_default_equipment_for_environment()` (backend/api/v1/users/models.py
+#      :10-20) — the literal one-element lists `['full_gym']` / `['home_gym']` /
+#      `['bodyweight']`.
+#
+# Those lists are full of the same implement in several spellings — 'cable_machine'
+# AND 'Cable Pulley Machine', 'ez_curl_bar' AND 'EZ Bar', 'lat_pulldown' AND
+# 'Lat Pull Down Machine', 'stationary_bike' AND 'Stationary Exercise Bike',
+# 'trx' AND 'suspension_trainer' AND 'Suspension Trainer' — plus one entry that
+# is itself two implements ('tire, sledgehammer'). Case, underscores, plurals,
+# a trailing/embedded "Machine", and multiword synonyms all have to collapse or
+# the dedupe is theatre.
+#
+# WHEN COLLAPSING TO A CAPABILITY PHRASE IS LEGITIMATE: only when the downstream
+# availability check is genuinely unconstrained, i.e. ONLY for the literal
+# `full_gym` marker, which `filters.filter_by_equipment` short-circuits with an
+# unconditional `return True` (filters.py:704-716 + :782-783). `home_gym` gets
+# NO such short-circuit — filters.py:727-729 EXPANDS it to
+# `HOME_EQUIPPED_EQUIPMENT` and then enforces every entry — so collapsing it to
+# "Equipment: home gym" would drop signal the filter still strictly needs. We
+# therefore mirror that same expansion here instead of collapsing, so the clause
+# describes exactly the set the filter will enforce.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Generic nouns dropped ANYWHERE in the string when computing the canonical key,
+# so "leg_press" == "Leg Press Machine" and "Hammer Strength Machines" ==
+# "hammer strength". Never allowed to empty the key (bare "machine" survives).
+_EQUIPMENT_NOISE_WORDS = {"machine", "machines", "equipment", "gear"}
+
+# Multiword / synonym aliases, applied AFTER noise-word removal + singularization.
+# Keys and values are both canonical-key space. Every entry here exists because
+# both spellings appear in one of the four real inventories above (or in
+# `filters.FULL_GYM_EQUIPMENT` / `filters.HOME_EQUIPPED_EQUIPMENT`, which is
+# what `home_gym` expands to).
+_EQUIPMENT_ALIASES = {
+    # Bars
+    "olympic barbell": "barbell",
+    "ez bar": "ez curl bar",
+    "ez curl bar": "ez curl bar",
+    # Cable stations
+    "cable pulley": "cable",
+    "cable crossover": "cable",
+    # Pulldown / row
+    "lat pull down": "lat pulldown",
+    "lat pulldown": "lat pulldown",
+    "pulldown": "lat pulldown",
+    "pull down": "lat pulldown",
+    # Benches: for a retrieval nudge every flat/incline/decline/adjustable bench
+    # and the bench-press station are the same concept. NOT the hyperextension
+    # bench, which is a back-extension station and stays distinct.
+    "bench press": "bench",
+    "flat bench": "bench",
+    "incline bench": "bench",
+    "decline bench": "bench",
+    "adjustable bench": "bench",
+    # Racks: a power rack and a squat rack select for the same exercises.
+    "power rack": "squat rack",
+    "rack": "squat rack",
+    # Plates
+    "bumper plate": "weight plate",
+    "plate": "weight plate",
+    # Bands
+    "loop resistance band": "resistance band",
+    "band": "resistance band",
+    # Suspension
+    "suspension trainer": "trx",
+    # Ab wheel
+    "ab roller": "ab wheel",
+    # Balls
+    "exercise ball": "stability ball",
+    "swiss ball": "stability ball",
+    # Pull-up hardware
+    "pullup bar": "pull up bar",
+    "chin up bar": "pull up bar",
+    "chinup bar": "pull up bar",
+    "assisted pullup": "assisted pull up",
+    "assisted pull up": "assisted pull up",
+    # Cardio
+    "stationary exercise bike": "stationary bike",
+    "exercise bike": "stationary bike",
+    "ski ergometer": "ski erg",
+    "airbike": "air bike",
+    "assault bike": "air bike",
+    "rowing": "rower",
+    # Machines whose two spellings differ by a qualifier
+    "seated hip abductor": "hip abductor",
+    "pec deck": "chest fly",
+    "pec fly": "chest fly",
+}
+
+# The ONLY marker that may collapse the whole inventory to a capability phrase.
+# Must stay in lockstep with the `has_full_gym` test in
+# `filters.filter_by_equipment` (filters.py:705-707), which is what makes the
+# collapse lossless: that function returns True unconditionally for these users.
+# "commercial gym" / "gym membership" are deliberately NOT here — nothing
+# short-circuits the filter for them, so collapsing them would lose signal.
+_FULL_GYM_MARKERS = ("full gym",)
+
+# Tokens the equipment FILTER expands rather than short-circuits. Mirrored here
+# (see module header) so the clause describes the enforced set.
+_HOME_GYM_MARKERS = ("home gym",)
+
+# Relevance order used when capping a long inventory. These are canonical keys
+# (post-alias), matched EXACTLY — no substring matching, which used to rank
+# "samtola indian barbell" as a barbell and "box" as a plyo box. Anything not
+# listed sorts after everything listed, then by original position, so an
+# unknown implement can never displace a known primary one.
+_EQUIPMENT_PRIORITY = (
+    "barbell", "dumbbell", "cable", "bench", "squat rack", "kettlebell",
+    "smith", "lat pulldown", "leg press", "pull up bar", "dip station",
+    "trap bar", "ez curl bar", "weight plate", "resistance band",
+    "landmine", "trx", "gymnastic ring",
+    "leg curl", "leg extension", "chest press", "shoulder press",
+    "chest fly", "seated row", "cable row", "hack squat", "calf raise",
+    "hip abductor", "tricep extension", "assisted pull up",
+    "hyperextension bench", "medicine ball", "slam ball", "stability ball",
+    "ab wheel", "plyo box",
+)
+_EQUIPMENT_PRIORITY_RANK = {k: i for i, k in enumerate(_EQUIPMENT_PRIORITY)}
+
+# Cap on how many equipment terms may enter the embedded query. Keeps the
+# equipment clause comfortably shorter than the focus phrase (~12-20 words), so
+# focus terms keep majority weight in the embedding.
+MAX_EQUIPMENT_TERMS_IN_QUERY = 6
+
+
+def split_equipment_entries(equipment: List[str]) -> List[str]:
+    """
+    Split inventory entries that pack several implements into one string.
+
+    Real data does this: `WorkoutEnvironment.commercialGym.defaultEquipment`
+    ships the single entry `'tire, sledgehammer'`. `filter_by_equipment` splits
+    exercise-side equipment on the same `[,/]` separators, so the query side
+    must too or 'tire, sledgehammer' dedupes as one bogus implement.
+    """
+    out: List[str] = []
+    for raw in equipment or []:
+        if raw is None:
+            continue
+        for part in re.split(r"[,/]", str(raw)):
+            part = part.strip()
+            if part:
+                out.append(part)
+    return out
+
+
+def canonical_equipment_key(raw: str) -> str:
+    """
+    Collapse one equipment string to a canonical comparison key.
+
+    Handles the case / snake_case / plural / embedded-"machine" / synonym
+    duplication that inflates the real inventories:
+
+        "leg_press"             -> "leg press"
+        "Leg Press Machine"     -> "leg press"
+        "smith_machine"         -> "smith"
+        "Smith Machine"         -> "smith"
+        "cable_machine"         -> "cable"
+        "Cable Pulley Machine"  -> "cable"
+        "ez_curl_bar" / "EZ Bar"-> "ez curl bar"
+        "lat_pulldown" / "Lat Pull Down Machine" -> "lat pulldown"
+        "stationary_bike" / "Stationary Exercise Bike" -> "stationary bike"
+        "trx" / "suspension_trainer" / "Suspension Trainer" -> "trx"
+        "Battle Ropes" / "battle_ropes" -> "battle rope"
+        "Dumbbells"             -> "dumbbell"
+
+    Returns "" for empty/garbage input (caller drops those).
+    """
+    t = (raw or "").replace("_", " ").replace("-", " ").lower()
+    t = re.sub(r"[^a-z0-9 ]+", " ", t)
+    t = re.sub(r"\s+", " ", t).strip()
+    if not t:
+        return ""
+
+    words = t.split()
+    # Drop generic nouns wherever they appear ("... Machine", "Machines ...")
+    # but never empty the key — a bare "machine" entry stays "machine".
+    stripped = [w for w in words if w not in _EQUIPMENT_NOISE_WORDS]
+    if stripped:
+        words = stripped
+    # Naive singularization so "dumbbells"/"dumbbell" and "ropes"/"rope" match.
+    words = [
+        w[:-1] if (len(w) > 3 and w.endswith("s") and not w.endswith("ss")) else w
+        for w in words
+    ]
+    key = " ".join(words)
+    return _EQUIPMENT_ALIASES.get(key, key)
+
+
+def dedupe_equipment(equipment: List[str]) -> List[str]:
+    """
+    Deduplicate an equipment inventory by canonical key, preserving order.
+
+    Multi-implement entries are split first (see `split_equipment_entries`).
+    The returned strings are display forms (underscores → spaces, collapsed
+    whitespace) of the FIRST spelling seen for each canonical key.
+    """
+    seen: set = set()
+    out: List[str] = []
+    for raw in split_equipment_entries(equipment):
+        key = canonical_equipment_key(raw)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        display = re.sub(r"\s+", " ", (raw or "").replace("_", " ")).strip()
+        out.append(display)
+    return out
+
+
+def _equipment_relevance_rank(display: str) -> int:
+    """Lower = more training-relevant. Unlisted items sort after listed ones."""
+    return _EQUIPMENT_PRIORITY_RANK.get(
+        canonical_equipment_key(display), len(_EQUIPMENT_PRIORITY)
+    )
+
+
+def _expand_home_gym_marker(equipment: List[str]) -> List[str]:
+    """
+    Replace a `home_gym` marker with the equipment set the FILTER enforces.
+
+    `filters.filter_by_equipment` (filters.py:727-729) expands 'home_gym' to
+    `HOME_EQUIPPED_EQUIPMENT` and then requires every retrieved candidate to
+    match that set. Collapsing the marker to the phrase "home gym" in the query
+    would leave the embedding blind to implements the filter still demands, so
+    we perform the identical expansion and let dedupe/ranking summarize it.
+    """
+    from .filters import HOME_EQUIPPED_EQUIPMENT
+
+    expanded: List[str] = []
+    for raw in equipment:
+        key = canonical_equipment_key(raw)
+        if any(m in key for m in _HOME_GYM_MARKERS):
+            expanded.extend(HOME_EQUIPPED_EQUIPMENT)
+        else:
+            expanded.append(raw)
+    return expanded
+
+
+def build_equipment_clause(
+    equipment: List[str],
+    max_terms: int = MAX_EQUIPMENT_TERMS_IN_QUERY,
+) -> str:
+    """
+    Build the short equipment clause for the embedded search query.
+
+    - A literal `full_gym` marker → the capability phrase "Equipment: full gym".
+      Lossless: `filter_by_equipment` returns True unconditionally for those
+      users (filters.py:782-783), so no availability signal exists to preserve.
+    - A `home_gym` marker → expanded to the exact set the filter enforces, then
+      summarized like any other inventory (NOT collapsed — the filter still
+      checks every entry).
+    - Otherwise → deduped inventory, capped at the `max_terms` highest-ranked
+      training-relevant items.
+    - Nothing parseable at all → "" (no clause). We do NOT claim "bodyweight":
+      an entry list that is non-empty but unparseable means "unknown", and
+      `filter_by_equipment` still treats such a user as EQUIPPED, so asserting
+      bodyweight would be a fabricated capability.
+
+    Truncation loses no correctness: availability is enforced downstream against
+    candidate metadata by `filter_by_equipment`; this clause only nudges the
+    embedding.
+    """
+    entries = split_equipment_entries(equipment)
+
+    if any(
+        any(m in canonical_equipment_key(e) for m in _FULL_GYM_MARKERS)
+        for e in entries
+    ):
+        return "Equipment: full gym"
+
+    deduped = dedupe_equipment(_expand_home_gym_marker(entries))
+    if not deduped:
+        if entries:
+            logger.warning(
+                "[RAG Query] equipment list had %d entries but none were "
+                "parseable (%r) — emitting NO equipment clause rather than "
+                "asserting a capability the user never declared",
+                len(entries), entries[:10],
+            )
+        return ""
+
+    if len(deduped) > max_terms:
+        ordered = sorted(
+            enumerate(deduped),
+            key=lambda pair: (_equipment_relevance_rank(pair[1]), pair[0]),
+        )
+        chosen_indices = sorted(idx for idx, _ in ordered[:max_terms])
+        deduped = [deduped[i] for i in chosen_indices]
+
+    return f"Equipment: {', '.join(deduped)}"
+
+
+def is_bodyweight_only_equipment(equipment: List[str]) -> bool:
+    """True when the inventory declares no equipment at all."""
+    from .filters import BODYWEIGHT_TOKENS
+
+    eq_norm = [(e or "").strip().lower() for e in (equipment or [])]
+    return (not eq_norm) or all(e in BODYWEIGHT_TOKENS for e in eq_norm)
+
+
+def equipment_query_clause(equipment: List[str]) -> str:
+    """
+    The exact equipment clause `build_search_query` embeds, for a given list.
+
+    Single source of truth so observability (service.py) reports the real
+    substring of the real query instead of recomputing a different one.
+    Returns "" when there is no honest clause to emit.
+    """
+    if is_bodyweight_only_equipment(equipment):
+        return "Equipment: bodyweight"
+    return build_equipment_clause(equipment)
 
 
 def merge_library_and_custom_results(
@@ -259,11 +599,12 @@ def build_search_query(
     """
     focus_query = FOCUS_AREA_KEYWORDS.get(focus_area, f"Exercises for {focus_area} workout")
 
-    from .filters import BODYWEIGHT_TOKENS
-    eq_norm = [(e or "").strip().lower() for e in equipment]
-    is_bw_only = (not eq_norm) or all(e in BODYWEIGHT_TOKENS for e in eq_norm)
+    # ONE source of truth for the clause — `equipment_query_clause` is what
+    # service.py logs, so the observability line always quotes the real
+    # substring of the real query.
+    equipment_clause = equipment_query_clause(equipment)
 
-    if is_bw_only:
+    if is_bodyweight_only_equipment(equipment):
         bw_emphasis = (
             "bodyweight calisthenics push-ups pull-ups squats lunges planks "
             "burpees mountain climbers glute bridges no equipment"
@@ -271,13 +612,19 @@ def build_search_query(
         query_parts = [
             bw_emphasis,
             focus_query,
-            "Equipment: bodyweight",
+            equipment_clause,
             f"Fitness level: {fitness_level}",
         ]
     else:
+        # Equipment is a FILTER, not a semantic signal — see the module header.
+        # A capped, deduped capability summary keeps the focus terms dominant in
+        # the embedding; the user's full inventory is still applied verbatim by
+        # `filter_by_equipment` on the retrieved candidates. `equipment_clause`
+        # may legitimately be "" (unparseable inventory) — dropped below rather
+        # than replaced with a fabricated capability.
         query_parts = [
             focus_query,
-            f"Equipment: {', '.join(equipment)}",
+            equipment_clause,
             f"Fitness level: {fitness_level}",
         ]
 
@@ -291,7 +638,7 @@ def build_search_query(
         if goal in training_program_keywords:
             query_parts.append(training_program_keywords[goal])
 
-    return " ".join(query_parts)
+    return " ".join(p for p in query_parts if p)
 
 
 async def build_search_query_with_custom_goals(

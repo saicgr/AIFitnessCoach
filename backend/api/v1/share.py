@@ -42,6 +42,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
+from api.v1.saved_workouts import _workout_ex_to_template
 from models.saved_workouts import DifficultyLevel
 from services.intent_classifier import (
     INTENT_ROUTING,
@@ -740,12 +741,24 @@ async def import_workout(
         else "Imported from a shared link"
     )
 
+    # The Flutter import shape is unvalidated (reps as "8-12" range strings,
+    # equipment as a list). Route every exercise through the shared
+    # _workout_ex_to_template mapper so the JSONB we write is already
+    # ExerciseTemplate-valid — otherwise SavedWorkout(**row) 500s on read-back.
+    # Rows with no name can't build a template (name is required), so drop them
+    # rather than raise on the whole import.
+    normalized_exercises = [
+        _workout_ex_to_template(ex) for ex in request.exercises if ex.get("name")
+    ]
+    if not normalized_exercises:
+        raise HTTPException(status_code=400, detail="Workout has no named exercises to import")
+
     saved_payload = {
         "user_id": user_id,
         "workout_name": request.title,
         "workout_description": description,
-        "exercises": request.exercises,
-        "total_exercises": len(request.exercises),  # NOT NULL column
+        "exercises": normalized_exercises,
+        "total_exercises": len(normalized_exercises),  # NOT NULL column
         "estimated_duration_minutes": request.estimated_duration_min,
         "difficulty_level": difficulty_level,
         "folder": "Imported",
@@ -770,7 +783,7 @@ async def import_workout(
             "target_entity_kind": "workout",
             "target_entity_id": entity_id,
             "extracted_payload": {
-                "exercises_count": len(request.exercises),
+                "exercises_count": len(normalized_exercises),
                 "duration_min": request.estimated_duration_min,
                 # saved_workouts has no equipment column; keep the reviewed
                 # equipment list on the shared_items row (real jsonb column,
@@ -780,7 +793,7 @@ async def import_workout(
         })
         _merge_tags(request.shared_item_id, user_id, {
             "category": "workout",
-            "exercise_count": len(request.exercises),
+            "exercise_count": len(normalized_exercises),
             "duration_s": (request.estimated_duration_min or 0) * 60,
         })
 

@@ -41,7 +41,12 @@ from .muscle_balance import (
     _muscles_for_candidate,  # noqa: F401 - re-exported for backward compatibility
     balance_candidate_window,
 )
-from .search import build_search_query, build_search_query_with_custom_goals
+from .search import (
+    build_equipment_clause,  # noqa: F401 - re-exported for backward compatibility
+    equipment_query_clause,
+    build_search_query,
+    build_search_query_with_custom_goals,
+)
 from .difficulty import (  # noqa: F401 - re-exported for backward compatibility
     DIFFICULTY_CEILING,
     CHALLENGE_DIFFICULTY_RANGE,
@@ -1331,6 +1336,38 @@ class ExerciseRAGService:
             )
         else:
             search_query = build_search_query(focus_area, equipment, validated_fitness_level, goals)
+
+        # Observability for embedding-composition regressions. This is a VECTOR
+        # similarity search — every token competes for the embedding direction,
+        # so a query that is mostly equipment nouns retrieves equipment-name
+        # matches ("Assault Airbike Sprint", "Balance Board Lateral Squat")
+        # instead of the requested movement pattern. `build_search_query` caps
+        # the equipment clause to a short capability summary
+        # (search.MAX_EQUIPMENT_TERMS_IN_QUERY); this log makes any future
+        # inventory dump visible in production instead of silent junk picks.
+        #
+        # `equipment_query_clause` is the SAME function `build_search_query`
+        # uses for both its bodyweight and equipped branches, so the clause
+        # logged here is verbatim the substring embedded in `search_query`, not
+        # a separately recomputed approximation. The share is only printed when
+        # that containment actually holds, so the percentage can never be a
+        # number computed against a string the query does not contain.
+        equipment_clause = equipment_query_clause(equipment)
+        clause_share = (
+            (len(equipment_clause) / len(search_query) * 100)
+            if (equipment_clause and search_query and equipment_clause in search_query)
+            else None
+        )
+        logger.info(
+            f"[RAG Query] focus={focus_area} len={len(search_query)} chars, "
+            f"equipment_clause={len(equipment_clause)} chars "
+            + (
+                f"({clause_share:.0f}% of query) "
+                if clause_share is not None
+                else "(share unknown: clause not found verbatim in query) "
+            )
+            + f"clause={equipment_clause!r} | {search_query[:300]}"
+        )
 
         # Get embedding for the search query
         query_embedding = await self.gemini_service.get_embedding_async(search_query)

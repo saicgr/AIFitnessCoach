@@ -12,8 +12,12 @@ def _normalize_equipment(value: Any) -> Any:
     detail dicts in the `equipment` field; the rich form belongs in
     `equipment_details`. Normalizing here keeps PUT /gym-profiles/{id} from
     422'ing while clients update."""
+    # A client that omits the field entirely sends null, not []. Coerce to an
+    # empty list rather than passing None through to a non-Optional List field,
+    # which 422s the whole request (2026-07-22: POST /gym-profiles/ failed with
+    # `equipment_details: Input should be a valid list` for every profile save).
     if value is None:
-        return value
+        return []
     if not isinstance(value, list):
         return value
     out: List[str] = []
@@ -52,6 +56,16 @@ class GymProfileBase(BaseModel):
     @classmethod
     def _coerce_equipment(cls, v):
         return _normalize_equipment(v)
+
+    @field_validator("equipment_details", mode="before")
+    @classmethod
+    def _coerce_equipment_details(cls, v):
+        """Null-tolerant: a client with no detail rows sends null, and this
+        non-Optional List field would otherwise 422 the entire profile save.
+        GymProfileUpdate already types this Optional — this keeps create and
+        update from disagreeing about whether null is acceptable."""
+        return [] if v is None else v
+
     workout_environment: str = Field(default="commercial_gym", max_length=50, description="Environment type: commercial_gym, home_gym, home, hotel, outdoors")
 
     # Location fields for geofencing/auto-switch
