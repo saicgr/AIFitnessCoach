@@ -15,7 +15,7 @@ from langchain_core.tools import tool
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
-from core.timezone_utils import get_user_today
+from core.timezone_utils import get_user_today, utc_to_local_date
 from .base import get_vision_service, run_async_in_sync
 
 logger = get_logger(__name__)
@@ -219,9 +219,13 @@ async def analyze_multi_food_images(
             }
             targets = {k: v for k, v in targets.items() if v is not None}
 
-            # Get today's nutrition summary for remaining budget
+            # Get today's nutrition summary for remaining budget. `today` is the
+            # user's LOCAL date and logged_at is a UTC timestamptz, so the tz has
+            # to travel with it — otherwise last night's dinner counts as today.
             today = get_user_today(timezone_str)
-            daily_summary = db.get_daily_nutrition_summary(user_id, today)
+            daily_summary = db.get_daily_nutrition_summary(
+                user_id, today, timezone_str=timezone_str
+            )
 
             if targets:
                 nutrition_context = {"targets": targets}
@@ -470,9 +474,12 @@ async def parse_app_screenshot(
         food_log_id = food_log.get("id") if food_log else None
         await _bust_daily_summary_cache(user_id)
 
-        # Get daily summary
+        # Get daily summary — `today` is the user's LOCAL date, so the summary
+        # must bound the day in that same tz (logged_at is UTC).
         today = get_user_today(timezone_str)
-        daily_summary = db.get_daily_nutrition_summary(user_id, today)
+        daily_summary = db.get_daily_nutrition_summary(
+            user_id, today, timezone_str=timezone_str
+        )
 
         # Format response
         food_list = ", ".join([
@@ -637,9 +644,12 @@ async def parse_nutrition_label(
         food_log_id = food_log.get("id") if food_log else None
         await _bust_daily_summary_cache(user_id)
 
-        # Get daily summary
+        # Get daily summary — `today` is the user's LOCAL date, so the summary
+        # must bound the day in that same tz (logged_at is UTC).
         today = get_user_today(timezone_str)
-        daily_summary = db.get_daily_nutrition_summary(user_id, today)
+        daily_summary = db.get_daily_nutrition_summary(
+            user_id, today, timezone_str=timezone_str
+        )
 
         # Format response
         servings_str = f" ({servings_consumed} servings)" if servings_consumed != 1.0 else ""
@@ -721,8 +731,14 @@ def get_nutrition_summary(
         if date is None:
             date = get_user_today(timezone_str)
 
+        # `date` is a LOCAL calendar date (either supplied by the agent or
+        # resolved above from the user's tz). Both summary helpers slice a UTC
+        # `logged_at` column, so the tz must travel with the date — otherwise
+        # every day in the window starts/ends at the wrong wall-clock moment.
         if period == "week":
-            summary = db.get_weekly_nutrition_summary(user_id, date)
+            summary = db.get_weekly_nutrition_summary(
+                user_id, date, timezone_str=timezone_str
+            )
 
             if not summary:
                 return {
@@ -758,7 +774,9 @@ def get_nutrition_summary(
             }
 
         else:
-            summary = db.get_daily_nutrition_summary(user_id, date)
+            summary = db.get_daily_nutrition_summary(
+                user_id, date, timezone_str=timezone_str
+            )
 
             if not summary or not summary.get("total_calories"):
                 return {
@@ -806,7 +824,8 @@ def get_nutrition_summary(
 @tool
 def get_recent_meals(
     user_id: str,
-    limit: int = 5
+    limit: int = 5,
+    timezone_str: str = "UTC",
 ) -> Dict[str, Any]:
     """
     Get the user's recent meal logs.
@@ -814,6 +833,8 @@ def get_recent_meals(
     Args:
         user_id: The user's ID (UUID string)
         limit: Maximum number of meals to return (default 5)
+        timezone_str: IANA timezone string used to date-stamp each meal in the
+                      user's own calendar (e.g. "America/Chicago")
 
     Returns:
         Result dict with list of recent meals
@@ -836,9 +857,10 @@ def get_recent_meals(
 
         meal_list = []
         for meal in meals:
-            logged_at = meal.get("logged_at", "")
-            if isinstance(logged_at, str) and "T" in logged_at:
-                logged_at = logged_at.split("T")[0]
+            # logged_at is a UTC timestamptz — slicing the raw string stamps a
+            # 9pm-local meal with TOMORROW's date in the list we read back to
+            # the user. Bucket into the user's local calendar day instead.
+            logged_at = utc_to_local_date(meal.get("logged_at"), timezone_str)
 
             food_items = meal.get("food_items", [])
             food_names = ", ".join([
@@ -1038,9 +1060,14 @@ async def log_food_from_text(
         food_log_id = food_log.get("id") if food_log else None
         await _bust_daily_summary_cache(user_id)
 
-        # Get today's nutrition summary
+        # Get today's nutrition summary — `today` is the user's LOCAL date, so
+        # the summary has to bound the day in that same tz (logged_at is UTC).
+        # Without it the "Today's Total" line we echo back double-counts the
+        # previous evening's meals.
         today = get_user_today(timezone_str)
-        daily_summary = db.get_daily_nutrition_summary(user_id, today)
+        daily_summary = db.get_daily_nutrition_summary(
+            user_id, today, timezone_str=timezone_str
+        )
 
         # Format food items for response
         food_list = ", ".join([
@@ -1538,7 +1565,7 @@ def get_micronutrient_gaps(
         sufficient, plus a `coverage` object; or `insufficient_data=True`.
     """
     try:
-        from core.timezone_utils import local_date_to_utc_range, get_user_today
+        from core.timezone_utils import local_range_bounds, get_user_today
 
         db = get_supabase_db()
         rda_rows = (
@@ -1566,15 +1593,17 @@ def get_micronutrient_gaps(
         from datetime import date as _d, timedelta as _td
         base = _d.fromisoformat(today)
         start_iso = (base - _td(days=days - 1)).isoformat()
-        start_utc, _ = local_date_to_utc_range(start_iso, timezone_str)
-        _, end_utc = local_date_to_utc_range(today, timezone_str)
+        # Half-open [start, end) over the user's local days — `end` is local
+        # midnight AFTER `today`, so .lt() (never .lte()) is the correct
+        # operator and DST-length days stay exact.
+        start_utc, end_utc = local_range_bounds(start_iso, today, timezone_str)
 
         logs = (
             db.client.table("food_logs").select("*")
             .eq("user_id", user_id)
             .is_("deleted_at", "null")
             .gte("logged_at", start_utc)
-            .lte("logged_at", end_utc)
+            .lt("logged_at", end_utc)
             .limit(300)
             .execute()
         ).data or []
@@ -1599,7 +1628,10 @@ def get_micronutrient_gaps(
                     has_any = True
             if has_any:
                 foods_with_micro += 1
-                la = str(log.get("logged_at") or "")[:10]
+                # Bucket by the user's LOCAL day — slicing the UTC string rolls
+                # a 9pm-local meal onto the next day, which both inflates the
+                # coverage day-count and dilutes the per-day averages below.
+                la = utc_to_local_date(log.get("logged_at"), timezone_str)
                 if la:
                     days_with_data.add(la)
 

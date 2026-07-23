@@ -6,7 +6,12 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
+from core.timezone_utils import (
+    resolve_timezone,
+    local_range_bounds,
+    utc_to_local_date,
+    get_user_today,
+)
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
@@ -266,12 +271,20 @@ async def calculate_adaptive_tdee(
         from_date_obj = datetime.strptime(to_date_str, "%Y-%m-%d") - timedelta(days=days)
         from_date_str = from_date_obj.strftime("%Y-%m-%d")
 
+        # logged_at is timestamptz (UTC). from/to are the user's LOCAL calendar
+        # dates, so the window must be built in their timezone — a naive
+        # "{date}T00:00:00" both starts on the wrong instant and (with no upper
+        # bound) sweeps in every log after the window, inflating the TDEE we
+        # persist. Half-open [start, end): .gte(start) / .lt(end).
+        window_start, window_end = local_range_bounds(from_date_str, to_date_str, user_tz)
+
         # Get food logs for the period
         food_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
             .is_("deleted_at", "null")\
-            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .gte("logged_at", window_start)\
+            .lt("logged_at", window_end)\
             .execute()
 
         food_logs = food_result.data or []
@@ -280,17 +293,20 @@ async def calculate_adaptive_tdee(
         weight_result = db.client.table("weight_logs")\
             .select("weight_kg, logged_at")\
             .eq("user_id", user_id)\
-            .gte("logged_at", f"{from_date_str}T00:00:00")\
+            .gte("logged_at", window_start)\
+            .lt("logged_at", window_end)\
             .order("logged_at", desc=False)\
             .execute()
 
         weight_logs = weight_result.data or []
 
-        # Check minimum data requirements
-        days_logged = len(set(
-            datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+        # Check minimum data requirements. Bucket by the user's LOCAL day —
+        # the UTC date rolls a 9pm-local dinner onto the next day, inflating
+        # days_logged and therefore deflating avg_daily_intake / TDEE below.
+        days_logged = len({
+            utc_to_local_date(log.get("logged_at"), user_tz)
             for log in food_logs
-        ))
+        } - {""})
         weight_entries = len(weight_logs)
 
         if days_logged < 6 or weight_entries < 2:
@@ -506,11 +522,16 @@ async def get_cycle_aware_adaptive(
         from_date_str = (today - timedelta(days=days)).strftime("%Y-%m-%d")
 
         # --- Weigh-ins over the window --------------------------------------
+        # logged_at is timestamptz (UTC); from_date_str/today_str are the
+        # user's LOCAL dates, so resolve the window in their timezone and
+        # close it — half-open [start, end), .gte/.lt.
+        window_start, window_end = local_range_bounds(from_date_str, today_str, user_tz)
         weight_result = (
             db.client.table("weight_logs")
             .select("id, weight_kg, logged_at, source")
             .eq("user_id", user_id)
-            .gte("logged_at", f"{from_date_str}T00:00:00")
+            .gte("logged_at", window_start)
+            .lt("logged_at", window_end)
             .order("logged_at", desc=False)
             .execute()
         )
@@ -612,13 +633,20 @@ async def get_cycle_aware_adaptive(
         svc = get_adaptive_tdee_service()
         trend = svc.get_weight_trend(weight_logs) if len(weight_logs) >= 2 else None
 
+        # Weigh-ins are timestamptz — every calendar-day read of one has to go
+        # through the user's timezone. `.date()` is the UTC day, which rolls a
+        # 9pm-local weigh-in onto tomorrow and mis-aligns it against the local
+        # cycle dates in cycle_periods.
+        def _local_date(log) -> date:
+            return date.fromisoformat(utc_to_local_date(log.logged_at, user_tz))
+
         # Phase-tagged series the frontend overlays onto the weight chart.
         weight_series = [
             {
                 "id": log.id,
                 "weight_kg": round(log.weight_kg, 2),
                 "logged_at": log.logged_at.isoformat(),
-                "logged_date": log.logged_at.date().isoformat(),
+                "logged_date": utc_to_local_date(log.logged_at, user_tz),
                 "source": log.source,
                 "cycle_phase": log.cycle_phase,  # None when tracking off
             }
@@ -725,7 +753,7 @@ async def get_cycle_aware_adaptive(
         same_point_last_cycle: Optional[dict] = None
         if tracking_enabled and weight_logs and len(period_starts) >= 2:
             latest = weight_logs[-1]
-            latest_date = latest.logged_at.date()
+            latest_date = _local_date(latest)
             # Anchor cycle = latest period start on/before the latest weigh-in.
             sorted_starts = sorted(period_starts)
             anchor = None
@@ -742,7 +770,7 @@ async def get_cycle_aware_adaptive(
                 best = None
                 best_gap = 4
                 for log in weight_logs:
-                    gap = abs((log.logged_at.date() - target_date).days)
+                    gap = abs((_local_date(log) - target_date).days)
                     if gap < best_gap:
                         best, best_gap = log, gap
                 if best is not None:
@@ -752,7 +780,7 @@ async def get_cycle_aware_adaptive(
                         "current_weight_kg": round(latest.weight_kg, 2),
                         "current_logged_date": latest_date.isoformat(),
                         "last_cycle_weight_kg": round(best.weight_kg, 2),
-                        "last_cycle_logged_date": best.logged_at.date().isoformat(),
+                        "last_cycle_logged_date": _local_date(best).isoformat(),
                         "last_cycle_phase": best.cycle_phase,
                         "delta_kg": delta,
                         "comparison_gap_days": best_gap,

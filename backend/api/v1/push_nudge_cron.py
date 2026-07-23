@@ -54,6 +54,7 @@ from core.logger import get_logger
 from core.exceptions import safe_internal_error
 from core.rate_limiter import limiter
 from core.i18n import get_template as _get_i18n_template
+from core.timezone_utils import local_day_bounds, local_range_bounds, utc_to_local_date
 from services.notification_service import get_notification_service
 from services.notification_suppression import should_suppress_notification
 from services.posthog_client import capture_lifecycle
@@ -1141,12 +1142,19 @@ async def _job_meal_reminders(supabase, notif_svc, users: List[dict]) -> int:
 
             # Check if meal already logged today
             try:
+                # logged_at is timestamptz — the user's local day is NOT the UTC
+                # day, so bound it with the DST-exact half-open local window.
+                # Concatenating the local date onto a +00:00 offset shifted the
+                # window by the UTC offset, wrong-suppressing dinner nudges for
+                # western users and re-firing breakfast for eastern ones.
+                day_start, day_end = local_day_bounds(user_today, tz_str)
                 today_meal = supabase.client.table("food_logs") \
                     .select("id") \
                     .eq("user_id", user_id) \
                     .eq("meal_type", meal_type) \
-                    .gte("logged_at", f"{user_today}T00:00:00") \
-                    .lte("logged_at", f"{user_today}T23:59:59") \
+                    .is_("deleted_at", "null") \
+                    .gte("logged_at", day_start) \
+                    .lt("logged_at", day_end) \
                     .limit(1) \
                     .execute()
                 if today_meal.data:
@@ -1451,12 +1459,16 @@ async def _job_trial_reminder(supabase, notif_svc) -> int:
 
     for days_left, target_date in targets:
         try:
+            # tz-allowlist: trial_end_date is set by the billing provider in UTC
+            # and is not a user-local calendar day, so this window stays UTC (see
+            # the cron-reference note above). Only the interval is corrected —
+            # ...T23:59:59 dropped the final second of the day.
             subs = supabase.client.table("user_subscriptions") \
                 .select("user_id") \
                 .eq("is_trial", True) \
                 .eq("status", "trial") \
                 .gte("trial_end_date", f"{target_date.isoformat()}T00:00:00") \
-                .lt("trial_end_date", f"{target_date.isoformat()}T23:59:59") \
+                .lt("trial_end_date", f"{(target_date + timedelta(days=1)).isoformat()}T00:00:00") \
                 .execute()
 
             if not subs.data:
@@ -1743,10 +1755,14 @@ async def _job_habit_streak_reward(supabase, notif_svc, users: List[dict]) -> in
             if not logs.data:
                 continue
 
-            # Extract unique dates and count consecutive days from today backward
+            # Extract unique dates and count consecutive days from today backward.
+            # created_at is timestamptz — bucket by the user's LOCAL day, since
+            # the walk-back below starts from the local date. Slicing the UTC
+            # string rolled a 9pm-local log onto the next day and broke the
+            # chain a day early/late.
             dates = set()
             for log in logs.data:
-                d = log.get("created_at", "")[:10]
+                d = utc_to_local_date(log.get("created_at"), tz_str)
                 if d:
                     dates.add(d)
 
@@ -1808,10 +1824,14 @@ async def _job_rest_day_engagement(supabase, notif_svc, users: List[dict]) -> in
 
         # Check no food_logs today (user hasn't opened app)
         try:
-            today_start = f"{user_today}T00:00:00"
+            # created_at is timestamptz — bound it to the user's LOCAL day. The
+            # naive local-date string read as UTC and had no upper bound, so
+            # last night's logs counted as "active today".
+            today_start, today_end = local_day_bounds(user_today, tz_str)
             food = supabase.client.table("food_logs") \
                 .select("id").eq("user_id", user_id) \
-                .gte("created_at", today_start).limit(1).execute()
+                .gte("created_at", today_start) \
+                .lt("created_at", today_end).limit(1).execute()
             if food.data:
                 continue  # User has been active
         except Exception:
@@ -1850,15 +1870,27 @@ async def _job_progress_comparison(supabase, notif_svc, users: List[dict]) -> in
             last_month_start = last_month_end.replace(day=1).strftime("%Y-%m-%d")
             last_month_end_str = last_month_end.strftime("%Y-%m-%d")
 
+            # completed_at is timestamptz — the month boundaries above are LOCAL
+            # calendar dates, so translate them to UTC instants. Comparing a bare
+            # local date string straight against UTC shifted both windows by the
+            # offset, and .lte(last_month_end_str) meant "<= midnight", dropping
+            # the whole final day of last month.
+            this_start, this_end = local_range_bounds(
+                this_month_start, local_now.strftime("%Y-%m-%d"), tz_str
+            )
+            last_start, last_end = local_range_bounds(
+                last_month_start, last_month_end_str, tz_str
+            )
             this_month = supabase.client.table("workout_logs") \
                 .select("id", count="exact") \
                 .eq("user_id", user_id) \
-                .gte("completed_at", this_month_start).execute()
+                .gte("completed_at", this_start) \
+                .lt("completed_at", this_end).execute()
             last_month = supabase.client.table("workout_logs") \
                 .select("id", count="exact") \
                 .eq("user_id", user_id) \
-                .gte("completed_at", last_month_start) \
-                .lte("completed_at", last_month_end_str).execute()
+                .gte("completed_at", last_start) \
+                .lt("completed_at", last_end).execute()
 
             this_count = this_month.count or 0
             last_count = last_month.count or 0
@@ -3427,7 +3459,11 @@ def _weekly_training_aggregates(
         if ca >= this_week_start:
             this_secs += secs
             this_count += 1
-            active_days.add(str(ca)[:10])
+            # completed_at is timestamptz — a 9pm-local session must count as
+            # that local day, not the next UTC one, or consistency_days is off.
+            local_day = utc_to_local_date(ca, tz_str)
+            if local_day:
+                active_days.add(local_day)
         elif ca >= prior_week_start:
             prior_secs += secs
             prior_count += 1
@@ -3492,7 +3528,12 @@ def _protein_under_target_days(
         ca = r.get("created_at")
         if not ca:
             continue
-        day = str(ca)[:10]
+        # created_at is timestamptz — group by the user's LOCAL day (the
+        # docstring's contract); a UTC slice split a late dinner off onto the
+        # next day and manufactured an extra under-target day.
+        day = utc_to_local_date(ca, tz_str)
+        if not day:
+            continue
         try:
             by_day[day] = by_day.get(day, 0.0) + float(r.get("protein_g") or 0)
         except (TypeError, ValueError):

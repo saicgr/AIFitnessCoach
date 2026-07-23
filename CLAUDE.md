@@ -509,6 +509,49 @@ no thin sessions slipped through.** The library is the noisy free-exercise datas
 — never select accessories alphabetically (ships junk like "180 Jump Turns"); the
 backfill's junk filter + movement buckets are what keep picks clean.
 
+## Local-day windows on timestamptz columns (UTC-window class → wrong daily totals)
+
+`logged_at` / `completed_at` / `created_at` / `achieved_at` are UTC `timestamptz`.
+Building a "user's day X" window by concatenating a LOCAL date with a UTC offset —
+`f"{local_date}T00:00:00+00:00"` … `T23:59:59+00:00"` — spans local 20:00 *yesterday*
+→ 19:59 *today* for a UTC-4 user, counting the previous evening's logs as today.
+2026-07-22: the coach card read **3630 kcal on a 786 kcal day** (5 dinner logs from
+the prior night). Same class also lived in tdee_adherence, adaptive TDEE (persisted a
+wrong `calculated_tdee`), push nudges, history_snapshot, weight trends, and every
+caller of `get_daily/weekly_nutrition_summary` (tz was optional → silently UTC).
+
+**The chokepoint (backend/core/timezone_utils.py) — always use these, never hand-roll:**
+- `local_day_bounds(date, tz)` → half-open `[start, end)` for ONE local day. `.gte(start)`/**`.lt(end)`**, never `.lte`. DST-exact.
+- `local_range_bounds(start_date, end_date, tz)` → `[start, end)` across a local range (end_date inclusive).
+- `utc_to_local_date(value, tz)` → replaces every `str(logged_at)[:10]` / `.date()` bucketing (UTC-date bucketing rolls a 9pm-local log onto the next day).
+- `local_date_to_utc_range` is the DEPRECATED closed-interval form (delegates to `local_day_bounds`); prefer the half-open one.
+- `get_daily/weekly_nutrition_summary(user_id, date, timezone_str)` — `timezone_str` is REQUIRED (no default). Thread the resolved tz; pass `"UTC"` only where genuinely global.
+Leave real DATE columns alone (`daily_activity.activity_date`, `coach_daily_insights.local_date`, `*.score_date`).
+
+**`workouts.scheduled_date` (timestamptz) convention is CLOSED: stored at NOON of the day** —
+noon-local via `target_date_to_utc_iso(date, tz)`, or noon-UTC when a writer has no tz. Noon
+(not midnight, not a bare date) because a noon anchor lands inside its own local-day window in
+every realistic tz, so day-window reads never mis-day a workout. Rules: **writers** must write
+noon (`target_date_to_utc_iso`), never a bare `YYYY-MM-DD` / midnight bound; **readers** must use
+a full-day window (`get_workouts_by_date_range`, or `.gte(date+"T00:00:00+00:00").lte(date+"T23:59:59.999999+00:00")`),
+never a bare-date `.eq`/`.lte` (which sits at 00:00Z and misses every noon row). Legacy midnight-UTC
+rows were re-anchored to noon by `scripts/backfill_workout_scheduled_date_noon.py`. Sibling DATE
+columns `schedule_items.scheduled_date` / `scheduled_workouts.scheduled_date` are real DATE — bare
+dates there are correct.
+
+Cached wrong bodies persist: after fixing, `DELETE FROM coach_daily_insights WHERE local_date >= CURRENT_DATE - 1;` (it regenerates lazily).
+
+**Gate — run after adding any backend query that windows/buckets a timestamptz by a user day:**
+
+```bash
+cd backend && .venv/bin/python scripts/audit_timezone_usage.py --check
+```
+
+Baseline-diff gate (`scripts/tz_audit_baseline.json`) — fails only on NEW findings; the
+~260-item backlog is grandfathered. AST rules catch tz-blind windows, UTC-date bucketing,
+and `.lte` on a half-open end. `--refresh-baseline` after clearing findings. Suppress an
+intentional UTC line with a trailing `# tz-allowlist: <reason>`.
+
 ## Remember
 
 > "Test first, deploy later. A senior developer tests the API before touching the device."

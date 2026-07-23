@@ -1,11 +1,11 @@
 """Detailed TDEE analysis, adherence tracking, and recommendation options endpoints."""
 from core.db import get_supabase_db
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 
-from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, user_today_date
+from core.timezone_utils import resolve_timezone, local_date_to_utc_range, local_range_bounds, get_user_today, utc_to_local_date
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
@@ -25,6 +25,104 @@ from api.v1.nutrition.models import (
 router = APIRouter()
 logger = get_logger(__name__)
 
+# The four columns that together constitute a *configured* nutrition plan.
+# All-or-nothing: a row with calories but no macro split cannot be scored
+# (`calculate_macro_adherence` does `target <= 0`, which raises TypeError on
+# a NULL) and must never be back-filled with invented macros.
+_TARGET_COLUMNS = ("target_calories", "target_protein_g", "target_carbs_g", "target_fat_g")
+
+# Machine-readable reason header on the "nothing to score" response, so a client
+# can tell WHICH unknown it is (no plan configured vs. plan configured but the
+# window is empty) instead of inferring it from the body.
+_REASON_HEADER = "X-Nutrition-Adherence-Unavailable"
+_REASON_NO_TARGETS = "targets-not-configured"
+_REASON_NO_LOGS = "no-logs-in-window"
+
+
+class _NoConfiguredTargets(Exception):
+    """Internal control-flow signal: the user has no nutrition targets set.
+
+    Distinct from a real failure so the caller can log it at INFO and leave
+    the derived score as *unknown* rather than substituting a number.
+    """
+
+
+def _configured_targets(prefs: Optional[dict]) -> Optional[ServiceNutritionTargets]:
+    """Return the user's nutrition targets, or ``None`` if they never set any.
+
+    Having no nutrition targets is a NORMAL state (fresh account, onboarding
+    that skipped the nutrition step) — not an error, and not something to
+    paper over. There is deliberately NO ``2000 / 150 / 200 / 65`` fallback
+    here: a fabricated target would (a) score an unconfigured user against a
+    plan they never chose, and (b) feed a bogus adherence number into the
+    recommendation engine, which then picks their deficit. This mirrors the
+    frontend contract — `currentCalorieTarget` / `hasConfiguredTargets` in
+    `nutrition_preferences_provider.dart` are nullable by design.
+
+    Returns None when the row is missing, when ANY of the four target columns
+    is NULL, or when any of them is non-positive.
+    """
+    if not prefs:
+        return None
+    values: dict = {}
+    for column in _TARGET_COLUMNS:
+        raw = prefs.get(column)
+        if raw is None:
+            return None
+        try:
+            numeric = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if numeric <= 0:
+            return None
+        values[column] = numeric
+    return ServiceNutritionTargets(
+        calories=int(values["target_calories"]),
+        protein_g=values["target_protein_g"],
+        carbs_g=values["target_carbs_g"],
+        fat_g=values["target_fat_g"],
+    )
+
+
+def _adherence_unavailable(reason: str) -> Response:
+    """``200 OK`` with a JSON ``null`` body — "there is no adherence to report".
+
+    Why a JSON ``null`` and not a 204, and not a populated body:
+
+    * **Not a populated 200 body.** The shipped Flutter client's
+      `AdherenceSummary.fromJson` coerces every null field to `0.0` /
+      `'medium'`, so ANY object body renders a "0% adherence / MEDIUM
+      sustainability" ring — a fabricated grade for someone with nothing to
+      grade.
+    * **Not a 204.** This was the round-1 choice and it was wrong at the client
+      boundary. `NutritionRepository.getAdherenceSummary` branches on
+      `response.data == null`, and Dio 5.9.2's default `FusedTransformer`
+      only yields `null` for a body it recognises as JSON
+      (`fused_transformer.dart:60-63` gates on the *content-type* header).
+      FastAPI's 204 carries no content-type, so the transformer falls through
+      to `utf8.decode(responseBytes)` (`:99-105`) and hands the client the
+      empty **string** `''` — which is not null, so the client proceeds to
+      `AdherenceSummary.fromJson('' as Map<String, dynamic>)` and throws a
+      TypeError. It ends up null only via the catch-all, logged as an error.
+    * **A JSON `null` at 200** sets `content-type: application/json`, so the
+      transformer takes the fast path, `jsonDecode('null')` → `null`, and the
+      client's *intended* `response.data == null → return null` branch fires.
+      `AdherenceCard` then renders its "not enough data" empty state. No
+      exception, no fabricated ring, no 404 noise on every home render.
+
+    `reason` is echoed in `X-Nutrition-Adherence-Unavailable` so a client can
+    distinguish the two unknowns (and distinguish both from an error, which is
+    a 5xx). Nothing in the shipped client reads it yet — see the
+    findingsNotFixed note for the exact client change that would.
+    """
+    return Response(
+        content="null",
+        media_type="application/json",
+        status_code=200,
+        headers={_REASON_HEADER: reason},
+    )
+
+
 @router.get("/tdee/{user_id}/detailed", response_model=DetailedTDEEResponse)
 async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(default=14, ge=7, le=30), current_user: dict = Depends(get_current_user)):
     """
@@ -36,6 +134,14 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
     - Metabolic adaptation detection
     - Data quality scoring
     """
+    # Ownership check — this endpoint reads another person's weight history and
+    # calorie intake. Its siblings (`/recommendations/{user_id}/options`,
+    # `/recommendations/{user_id}/select`) have always enforced this; it was
+    # missing here and on `/adherence/{user_id}/summary`, so any authenticated
+    # user could read any other user's data by swapping the path id.
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     logger.info(f"Getting detailed TDEE for user {user_id} over {days} days")
 
     try:
@@ -44,22 +150,34 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
         tdee_service = get_adaptive_tdee_service()
         adaptation_service = get_metabolic_adaptation_service()
 
-        # Get food logs for the period
+        # Get food logs for the period.
+        # start_date/end_date are LOCAL calendar days; `logged_at` is a UTC
+        # timestamptz, so the window has to be converted before it can filter
+        # the column. Bare date strings made `.lte(end_date)` mean midnight UTC,
+        # which dropped the entire current local day from the analysis.
         end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
         start_date = end_date - timedelta(days=days)
+        window_start, window_end = local_range_bounds(
+            start_date.isoformat(), end_date.isoformat(), user_tz
+        )
 
         food_logs_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
             .is_("deleted_at", "null")\
-            .gte("logged_at", start_date.isoformat())\
-            .lte("logged_at", end_date.isoformat())\
+            .gte("logged_at", window_start)\
+            .lt("logged_at", window_end)\
             .execute()
 
         # Aggregate food logs by day
         daily_calories = {}
         for log in food_logs_result.data or []:
-            log_date = datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            # Bucket by the user's LOCAL day — the raw UTC date rolls an
+            # evening log onto the next day and splits one day's meals in two.
+            local_day = utc_to_local_date(log["logged_at"], user_tz)
+            if not local_day:
+                continue
+            log_date = date.fromisoformat(local_day)
             if log_date not in daily_calories:
                 daily_calories[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0}
             daily_calories[log_date]["calories"] += log.get("total_calories", 0) or 0
@@ -78,11 +196,14 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
             for d, data in daily_calories.items()
         ]
 
-        # Get weight logs
+        # Get weight logs — same local-day window as the food logs, so the
+        # weight trend and the intake average cover the same span. The upper
+        # bound is new: an unbounded `.gte` collected future-dated entries too.
         weight_logs_result = db.client.table("weight_logs")\
             .select("id, user_id, weight_kg, logged_at")\
             .eq("user_id", user_id)\
-            .gte("logged_at", start_date.isoformat())\
+            .gte("logged_at", window_start)\
+            .lt("logged_at", window_end)\
             .order("logged_at")\
             .execute()
 
@@ -216,7 +337,25 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
         raise safe_internal_error(e, "nutrition")
 
 
-@router.get("/adherence/{user_id}/summary", response_model=AdherenceSummaryResponse)
+@router.get(
+    "/adherence/{user_id}/summary",
+    response_model=Optional[AdherenceSummaryResponse],
+    responses={
+        200: {
+            "description": (
+                "Either an adherence summary, or a JSON `null` body meaning "
+                "\"there is nothing to score\". `null` is returned when the user "
+                "has no configured nutrition targets, or has targets but logged "
+                "no food inside the requested window. Both are NORMAL states "
+                "(fresh account / nutrition onboarding skipped / hasn't logged "
+                "lately), NOT errors — the reason is in the "
+                "`X-Nutrition-Adherence-Unavailable` header "
+                "(`targets-not-configured` | `no-logs-in-window`). Errors are "
+                "5xx, so `null` never means \"something broke\"."
+            )
+        }
+    },
+)
 async def get_adherence_summary(request: Request, user_id: str, weeks: int = Query(default=4, ge=1, le=12), current_user: dict = Depends(get_current_user)):
     """
     Get adherence summary with sustainability score.
@@ -225,7 +364,22 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
     - Weekly adherence breakdown
     - Overall sustainability rating (high/medium/low)
     - Recommendations based on adherence patterns
+
+    Returns a **JSON `null` body (HTTP 200)** when there is nothing to score —
+    either the user never configured nutrition targets, or they have targets but
+    logged no food inside the requested window. The reason is in the
+    `X-Nutrition-Adherence-Unavailable` header.
+
+    The no-targets case used to be a 404 ("Nutrition preferences not found"),
+    which fired on EVERY home render for any account that skipped nutrition
+    onboarding — a permanent error in the logs and on the client for a state
+    that is entirely normal. See `_adherence_unavailable` for why a JSON `null`
+    at 200 and not a 204 (a 204 does NOT reach the client's null branch —
+    Dio hands it the empty string).
     """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
     logger.info(f"Getting adherence summary for user {user_id} over {weeks} weeks")
 
     try:
@@ -240,34 +394,52 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
             .maybe_single()\
             .execute()
 
-        if not prefs_result or not prefs_result.data:
-            raise HTTPException(status_code=404, detail="Nutrition preferences not found")
+        # `.maybe_single()` returns None (the response object itself) on 0 rows,
+        # so the result object — not just `.data` — has to be guarded.
+        prefs = (prefs_result.data if prefs_result else None) or None
+        targets = _configured_targets(prefs)
+        if targets is None:
+            # No row at all, or a row whose target columns are still NULL.
+            # Nothing to score — say so cleanly instead of 404-ing forever.
+            logger.info(
+                f"No configured nutrition targets for user {user_id} — "
+                f"returning a null adherence body (row_present={prefs is not None})"
+            )
+            return _adherence_unavailable(_REASON_NO_TARGETS)
 
-        prefs = prefs_result.data
-        targets = ServiceNutritionTargets(
-            calories=prefs.get("target_calories", 2000),
-            protein_g=prefs.get("target_protein_g", 150),
-            carbs_g=prefs.get("target_carbs_g", 200),
-            fat_g=prefs.get("target_fat_g", 65),
-        )
-
-        # Get daily nutrition summaries for the period
+        # Get daily nutrition summaries for the period.
+        # `timedelta(weeks=weeks * 7)` was a unit bug: for the default weeks=4
+        # it looked back 28 WEEKS, pulled ~7x the food_logs needed on every
+        # home render, and reported weeks_analyzed=29 for a 4-week request.
         end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
-        start_date = end_date - timedelta(weeks=weeks * 7)
+        start_date = end_date - timedelta(weeks=weeks)
+        # The window is LOCAL calendar days but `logged_at` is a UTC
+        # timestamptz. Filtering it with the bare date strings made
+        # `.lte(end_date)` mean midnight UTC, so today's logs never reached the
+        # numerator while the coverage denominator below still counted today —
+        # every adherence percentage came out structurally low.
+        window_start, window_end = local_range_bounds(
+            start_date.isoformat(), end_date.isoformat(), user_tz
+        )
 
         # Get food logs aggregated by day
         food_logs_result = db.client.table("food_logs")\
             .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
             .eq("user_id", user_id)\
             .is_("deleted_at", "null")\
-            .gte("logged_at", start_date.isoformat())\
-            .lte("logged_at", end_date.isoformat())\
+            .gte("logged_at", window_start)\
+            .lt("logged_at", window_end)\
             .execute()
 
         # Aggregate by day
         daily_totals = {}
         for log in food_logs_result.data or []:
-            log_date = datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+            # Local day, not the UTC date — otherwise an evening meal scores
+            # against tomorrow's targets.
+            local_day = utc_to_local_date(log["logged_at"], user_tz)
+            if not local_day:
+                continue
+            log_date = date.fromisoformat(local_day)
             if log_date not in daily_totals:
                 daily_totals[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "meals": 0}
             daily_totals[log_date]["calories"] += log.get("total_calories", 0) or 0
@@ -275,6 +447,17 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
             daily_totals[log_date]["carbs"] += float(log.get("carbs_g", 0) or 0)
             daily_totals[log_date]["fat"] += float(log.get("fat_g", 0) or 0)
             daily_totals[log_date]["meals"] += 1
+
+        if not daily_totals:
+            # Targets are set but the user logged NOTHING in the window. The
+            # scoring path would emit average_adherence=0.0 / rating="low" —
+            # a manufactured "you failed" score for someone who simply hasn't
+            # started logging. Report "no data" the same way as "no targets".
+            logger.info(
+                f"No food logs in the last {weeks} week(s) for user {user_id} — "
+                "returning a null adherence body rather than a 0% score"
+            )
+            return _adherence_unavailable(_REASON_NO_LOGS)
 
         # Calculate daily adherence
         daily_adherences = []
@@ -290,7 +473,17 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
             adherence = adherence_service.calculate_daily_adherence(targets, actuals)
             daily_adherences.append(adherence)
 
-        # Group by week and calculate summaries
+        # Group by week and calculate summaries.
+        #
+        # Two rules here, both of which the pre-fix loop broke:
+        #  1. A calendar week with NO logged days is *unknown*, not 0%. The
+        #     service now leaves its averages null and excludes it from the
+        #     adherence/consistency means (it still counts toward logging
+        #     coverage, which is a real observation).
+        #  2. The first and last buckets are usually PARTIAL — the window starts
+        #     mid-week and ends today — so their coverage denominator is the
+        #     number of in-window days, not a flat 7. Charging a user for the
+        #     rest of this week (days that haven't happened) is fabrication too.
         weekly_summaries = []
         current_week_start = start_date - timedelta(days=start_date.weekday())  # Monday
 
@@ -300,20 +493,54 @@ async def get_adherence_summary(request: Request, user_id: str, weeks: int = Que
                 a for a in daily_adherences
                 if current_week_start <= a.date <= week_end
             ]
-            summary = adherence_service.calculate_weekly_summary(week_adherences, current_week_start)
+            in_window_start = max(current_week_start, start_date)
+            in_window_end = min(week_end, end_date)
+            days_in_window = (in_window_end - in_window_start).days + 1
+            summary = adherence_service.calculate_weekly_summary(
+                week_adherences,
+                current_week_start,
+                days_in_week=max(days_in_window, 0),
+            )
             weekly_summaries.append(summary)
             current_week_start += timedelta(days=7)
 
-        # Calculate sustainability score
+        # Calculate sustainability score. None = no week in the window had a
+        # logged day, so there is nothing to grade.
         sustainability = adherence_service.calculate_sustainability_score(weekly_summaries)
+        if sustainability is None:
+            # Defensive: `daily_totals` was non-empty, so at least one week
+            # should have data. If bucketing ever drops them all (timezone
+            # skew putting a log outside every bucket), report unknown rather
+            # than crash or invent a score.
+            logger.warning(
+                f"Adherence bucketing produced no scored week for user {user_id} "
+                f"despite {len(daily_totals)} logged day(s) in the window "
+                f"[{start_date} .. {end_date}] — returning a null adherence body"
+            )
+            return _adherence_unavailable(_REASON_NO_LOGS)
 
+        # Only weeks that actually contain logged days are returned. An empty
+        # week has null averages, and the shipped client coerces nulls to 0.0 —
+        # which would draw a "0% adherence" bar in the weekly mini-chart for a
+        # week the user simply didn't log. Omitting it shows fewer bars, but
+        # every bar shown is a real measurement.
+        #
+        # NOT truncated with `[-weeks:]`: the window already bounds this to the
+        # requested span, and slicing it would report `weeks_analyzed` /
+        # chart bars over a different set of weeks than `average_adherence` was
+        # computed from. Chart bars == weeks analyzed == weeks that fed the
+        # average, exactly.
+        returned_weeks = [s for s in weekly_summaries if s.has_data]
         return AdherenceSummaryResponse(
-            weekly_adherence=[s.to_dict() for s in weekly_summaries[-weeks:]],
+            weekly_adherence=[s.to_dict() for s in returned_weeks],
             average_adherence=sustainability.avg_adherence,
             sustainability_score=sustainability.score,
             sustainability_rating=sustainability.rating.value,
             recommendation=sustainability.recommendation,
-            weeks_analyzed=len(weekly_summaries),
+            # Weeks that actually contributed a measurement — NOT every calendar
+            # week the window touched. The client renders this as "weeks
+            # analyzed" next to a chart of exactly `returned_weeks`.
+            weeks_analyzed=len(returned_weeks),
         )
 
     except HTTPException:
@@ -368,10 +595,13 @@ async def get_recommendation_options(request: Request, user_id: str, current_use
                     detail="No TDEE available. Please log food and weight data first."
                 )
 
-            current_tdee = prefs_data.get("calculated_tdee") or 2000
+            # No `or 2000` fallback: the guard above already proved
+            # calculated_tdee is present and truthy, and inventing a TDEE would
+            # silently set a real person's calorie target off a made-up number.
+            current_tdee = int(prefs_data["calculated_tdee"])
             current_goal = prefs_data.get("nutrition_goal") or "maintain"
         else:
-            current_tdee = tdee_data.get("calculated_tdee") or 2000
+            current_tdee = int(tdee_data["calculated_tdee"])
             # Get goal from preferences
             prefs = db.client.table("nutrition_preferences")\
                 .select("nutrition_goal")\
@@ -381,7 +611,10 @@ async def get_recommendation_options(request: Request, user_id: str, current_use
             prefs_data = getattr(prefs, 'data', None)
             current_goal = (prefs_data.get("nutrition_goal") or "maintain") if prefs_data else "maintain"
 
-        # Get adherence score via service (avoid calling route handler directly)
+        # Get adherence score via service (avoid calling route handler directly).
+        # adherence_score stays None when it cannot be honestly computed — an
+        # unknown adherence is NOT 50% adherence.
+        adherence_score: Optional[float] = None
         try:
             prefs_for_adh = db.client.table("nutrition_preferences")\
                 .select("target_calories, target_protein_g, target_carbs_g, target_fat_g")\
@@ -389,24 +622,37 @@ async def get_recommendation_options(request: Request, user_id: str, current_use
                 .maybe_single()\
                 .execute()
             adh_prefs = getattr(prefs_for_adh, 'data', None) or {}
-            adh_targets = ServiceNutritionTargets(
-                calories=adh_prefs.get("target_calories", 2000),
-                protein_g=adh_prefs.get("target_protein_g", 150),
-                carbs_g=adh_prefs.get("target_carbs_g", 200),
-                fat_g=adh_prefs.get("target_fat_g", 65),
-            )
-            end_date = user_today_date(request)
+            adh_targets = _configured_targets(adh_prefs)
+            if adh_targets is None:
+                # Same rule as /adherence/summary: no configured targets means
+                # there is nothing to be adherent TO. Scoring them against an
+                # invented 2000/150/200/65 plan used to decide which deficit we
+                # recommended to them.
+                raise _NoConfiguredTargets()
+            # Resolve the tz once and use it for BOTH the local end date and the
+            # UTC window below — same-day agreement between the logs that feed
+            # the numerator and the coverage denominator further down. Filtering
+            # the timestamptz `logged_at` with bare local date strings made
+            # `.lte(end_date)` mean midnight UTC and silently dropped today.
+            user_tz = resolve_timezone(request, db, user_id)
+            end_date = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
             start_date = end_date - timedelta(weeks=4)
+            window_start, window_end = local_range_bounds(
+                start_date.isoformat(), end_date.isoformat(), user_tz
+            )
             food_logs_result = db.client.table("food_logs")\
                 .select("logged_at, total_calories, protein_g, carbs_g, fat_g")\
                 .eq("user_id", user_id)\
                 .is_("deleted_at", "null")\
-                .gte("logged_at", start_date.isoformat())\
-                .lte("logged_at", end_date.isoformat())\
+                .gte("logged_at", window_start)\
+                .lt("logged_at", window_end)\
                 .execute()
             daily_totals: dict = {}
             for log in food_logs_result.data or []:
-                log_date = datetime.fromisoformat(str(log["logged_at"]).replace("Z", "+00:00")).date()
+                local_day = utc_to_local_date(log["logged_at"], user_tz)
+                if not local_day:
+                    continue
+                log_date = date.fromisoformat(local_day)
                 if log_date not in daily_totals:
                     daily_totals[log_date] = {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "meals": 0}
                 daily_totals[log_date]["calories"] += log.get("total_calories", 0) or 0
@@ -430,13 +676,38 @@ async def get_recommendation_options(request: Request, user_id: str, current_use
             while week_start <= end_date:
                 week_end = week_start + timedelta(days=6)
                 week_adh = [a for a in daily_adherences if week_start <= a.date <= week_end]
-                weekly_summaries.append(adherence_service.calculate_weekly_summary(week_adh, week_start))
+                # Same partial-week coverage denominator as /adherence/summary.
+                in_window_days = (
+                    min(week_end, end_date) - max(week_start, start_date)
+                ).days + 1
+                weekly_summaries.append(
+                    adherence_service.calculate_weekly_summary(
+                        week_adh, week_start, days_in_week=max(in_window_days, 0)
+                    )
+                )
                 week_start += timedelta(days=7)
             sustainability = adherence_service.calculate_sustainability_score(weekly_summaries)
-            adherence_score = sustainability.score
+            # None = not a single logged day in the last 4 weeks. That is an
+            # UNKNOWN adherence, not a zero and not a 0.5 — leave it null so
+            # `_generate_recommendation_options` falls back to the moderate
+            # default instead of unlocking or forcing an option.
+            adherence_score = sustainability.score if sustainability else None
+            if sustainability is None:
+                logger.info(
+                    f"No logged days in the last 4 weeks for user {user_id} — "
+                    "adherence_score left unknown (null) for recommendation options"
+                )
+        except _NoConfiguredTargets:
+            logger.info(
+                f"No configured nutrition targets for user {user_id} — "
+                "adherence_score left unknown (null) for recommendation options"
+            )
         except Exception as adh_err:
-            logger.warning(f"Failed to compute adherence score, defaulting to 0.5: {adh_err}", exc_info=True)
-            adherence_score = 0.5
+            # Was `adherence_score = 0.5` — a silent fabrication that read as
+            # "50% adherent" downstream and steered which deficit we
+            # recommended. Unknown must stay unknown.
+            logger.warning(f"Failed to compute adherence score, leaving it unknown: {adh_err}", exc_info=True)
+            adherence_score = None
 
         # Get TDEE history for adaptation detection
         history_result = db.client.table("adaptive_nutrition_calculations")\
@@ -490,15 +761,24 @@ async def get_recommendation_options(request: Request, user_id: str, current_use
 def _generate_recommendation_options(
     current_tdee: int,
     goal: str,
-    adherence_score: float,
+    adherence_score: Optional[float],
     has_adaptation: bool,
 ) -> List[RecommendationOption]:
-    """Generate 2-3 recommendation options based on user context."""
+    """Generate 2-3 recommendation options based on user context.
+
+    ``adherence_score`` is Optional: ``None`` means "we genuinely do not know
+    how adherent this user is" (no configured targets, or the computation
+    failed). Unknown is treated conservatively — never as a high score that
+    would unlock the aggressive deficit, and never as a low score that would
+    push them to the conservative one. They simply get the moderate default.
+    """
     options = []
+    known_adherence = adherence_score is not None
 
     if goal in ["lose_fat", "lose_weight"]:
-        # Aggressive option (only if high adherence and no adaptation)
-        if adherence_score >= 0.8 and not has_adaptation:
+        # Aggressive option (only if PROVEN high adherence and no adaptation).
+        # Unknown adherence must not unlock a 750 kcal deficit.
+        if known_adherence and adherence_score >= 0.8 and not has_adaptation:
             aggressive_cals = current_tdee - 750
             options.append(RecommendationOption(
                 option_type="aggressive",
@@ -523,11 +803,12 @@ def _generate_recommendation_options(
             expected_weekly_change_kg=-0.45,
             sustainability_rating="medium",
             description="Balanced approach. Steady progress without extreme restriction.",
-            is_recommended=not has_adaptation and adherence_score >= 0.6,
+            # Unknown adherence still lands here — moderate is the safe default.
+            is_recommended=not has_adaptation and (not known_adherence or adherence_score >= 0.6),
         ))
 
-        # Conservative option (for low adherence or adaptation)
-        if adherence_score < 0.7 or has_adaptation:
+        # Conservative option (for PROVEN low adherence, or adaptation)
+        if has_adaptation or (known_adherence and adherence_score < 0.7):
             conservative_cals = current_tdee - 250
             options.append(RecommendationOption(
                 option_type="conservative",
@@ -538,7 +819,7 @@ def _generate_recommendation_options(
                 expected_weekly_change_kg=-0.23,
                 sustainability_rating="high",
                 description="Slower but more sustainable. Better for long-term success.",
-                is_recommended=has_adaptation or adherence_score < 0.6,
+                is_recommended=has_adaptation or (known_adherence and adherence_score < 0.6),
             ))
 
     elif goal == "build_muscle":
@@ -621,8 +902,12 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
 
         db = get_supabase_db()
 
-        # Update user's nutrition targets
-        db.client.table("nutrition_preferences")\
+        # Update user's nutrition targets.
+        # PostgREST happily reports success for an UPDATE that matched ZERO
+        # rows, so a user with no nutrition_preferences row used to get
+        # {"success": true} back while nothing was written. Check the returned
+        # representation and tell them the truth instead.
+        update_result = db.client.table("nutrition_preferences")\
             .update({
                 "target_calories": selected.calories,
                 "target_protein_g": selected.protein_g,
@@ -632,6 +917,18 @@ async def select_recommendation(user_id: str, request: SelectRecommendationReque
             })\
             .eq("user_id", user_id)\
             .execute()
+
+        if not getattr(update_result, "data", None):
+            logger.warning(
+                f"select_recommendation matched 0 nutrition_preferences rows for user {user_id}"
+            )
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "Nutrition preferences have not been set up for this account yet. "
+                    "Complete nutrition setup before applying a recommendation."
+                ),
+            )
 
         # Log the decision for analytics
         await log_user_activity(

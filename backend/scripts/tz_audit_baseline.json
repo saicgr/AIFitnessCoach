@@ -1,0 +1,1434 @@
+{
+  "_comment": "Grandfathered timezone-audit findings. `--check` fails only on findings NOT listed here, so the known backlog cannot grow. Keyed by file + rule + matched source text (line numbers churn). Regenerate with `audit_timezone_usage.py --refresh-baseline` \u2014 and only ever shrink it.",
+  "total": 264,
+  "findings": [
+    {
+      "file": "backend/api/v1/activity.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ").lte(\"completed_at\", f\"{today}T23:59:59.999999\").execute()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/activity.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"completed_at\", f\"{today}T00:00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/activity.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"workouts\").select( \"id, name, estimated_calories, completed_at, generation_source, generation_method\" ).eq(\"user_id\", user_id).eq(\"is_completed\", True).gte( \"completed_at\", f\"{today}T",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/admin/live_chat_endpoints.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.utcnow().date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/admin/observability.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cutoff = (date.today() - timedelta(days=days)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/audio_coach.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "\"scheduled_date\", date.today().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/cardio_endpoints.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"2026-07-06T00:00:00.000T00:00:00\".",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/cardio_endpoints.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "This used to be a bare f-string (`f\"{start_date}T00:00:00\"`), which meant",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/cardio_endpoints.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "return f\"{raw}T23:59:59\" if end_of_day else f\"{raw}T00:00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/coach/daily_insight.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/coach/daily_insight.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_utc = datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "str(completed_at)[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"achieved_at\", f\"{day}T23:59:59.999999\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"recorded_at\", end_date.isoformat() + \"T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"scheduled_date\", end_date.isoformat() + \"T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{date_str}T23:59:59\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{date_str}T00:00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ").gte(\"achieved_at\", f\"{day}T00:00:00\").lte(",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"performance_logs\").select( \"weight_kg, reps_completed, recorded_at\" ).eq(\"user_id\", user_id).gte( \"recorded_at\", start_date.isoformat() ).lte( \"recorded_at\", end_date.isoformat() + \"T",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"strength_records\").select( \"exercise_name, achieved_at\" ).eq(\"user_id\", user_id).eq(\"is_pr\", True).in_( \"exercise_name\", exercise_names ).gte(\"achieved_at\", f\"{day}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"strength_records\").select( \"exercise_name, achieved_at\" ).eq(\"user_id\", user_id).eq(\"is_pr\", True).in_( \"exercise_name\", exercise_names ).gte(\"achieved_at\", f\"{day}T00:00:00\").lte( \"a",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/consistency_endpoints.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "completed_at[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/dashboard.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(fl.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/dashboard.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.utcnow().date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/diabetes.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"recorded_at\", to_date + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/diabetes.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "query.lte(\"recorded_at\", to_date + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lt(\"created_at\", f\"{window_end}T23:59:59\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lt(\"trial_end_date\", f\"{window_end}T23:59:59\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"completed_at\", f\"{earliest_str.split('T')[0]}T00:00:00\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"created_at\", f\"{window_start}T00:00:00\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"logged_at\", f\"{week_cutoff}T00:00:00\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"trial_end_date\", f\"{window_start}T00:00:00\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "supabase.client.table(\"food_logs\") \\ .select(\"logged_at, total_calories, protein_g\") \\ .eq(\"user_id\", user_id) \\ .gte(\"logged_at\", f\"{week_cutoff}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "supabase.client.table(\"users\") \\ .select(\"id, email, name, timezone, created_at\") \\ .gte(\"created_at\", f\"{window_start}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "supabase.client.table(\"users\") \\ .select(\"id, email, name, timezone, created_at\") \\ .gte(\"created_at\", f\"{window_start}T00:00:00\") \\ .lt(\"created_at\", f\"{window_end}T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/email_cron.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "supabase.client.table(\"workout_logs\") \\ .select(\"id\") \\ .eq(\"user_id\", user_id) \\ .gte(\"completed_at\", f\"{earliest_str.split('T')[0]}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/exercise_history.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "pr.get(\"achieved_at\", \"\")[:10]",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/fasting.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"start_time\", to_date + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/fasting_impact.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"completed_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/fasting_impact.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"created_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/fasting_impact.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/fasting_impact_endpoints.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(log.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/fasting_impact_endpoints.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"completed_at\") or \"\")[:10]",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/fasting_impact_endpoints.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"created_at\") or \"\")[:10]",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/fasting_impact_endpoints.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/fasting_impact_endpoints.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"start_time\", last_day.isoformat() + \"T23:59:59\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/feedback.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ").strftime(\"%Y-%m-%dT00:00:00+00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/feedback.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start_utc = f\"{start_user}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/home/bootstrap.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cutoff = (date.today() - timedelta(days=2)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/home_signals.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "completed_at.date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/home_signals.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/home_signals.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_iso = datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/home_signals.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "yest_iso = (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/hormonal_health.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()  # fallback for non-endpoint callers; endpoints should always pass today",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/injuries.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "update_data[\"actual_recovery_date\"] = datetime.utcnow().date().isoformat()",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/insights.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/insights.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "w.get('logged_at', 'N/A')[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/insights.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cutoff = (datetime.utcnow().date() - timedelta(days=21)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/insights.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cutoff_date = (datetime.utcnow().date() - timedelta(days=56)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/insights.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "end_exclusive = (datetime.utcnow().date() + timedelta(days=1)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/insights.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_iso = datetime.utcnow().date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/metrics.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"measured_at\", end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/notifications.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.utcnow().date()",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/notifications_endpoints.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.utcnow().date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/nutrition/ai_recommend.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "\"rec_date\": date.today().isoformat(),",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/nutrition/ai_recommend.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": ".eq(\"rec_date\", date.today().isoformat())",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/nutrition/ai_recommend.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cache_key = f\"{user_id}:{date.today().isoformat()}:{window}\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/nutrition/food_logging.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(created_log.get('logged_at') or '')[:10]",
+      "count": 3
+    },
+    {
+      "file": "backend/api/v1/nutrition/helpers.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "date_timestamp = datetime.utcnow().strftime('%Y-%m-%d_%H%M%S')",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/nutrition/micronutrients.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "str(log.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/nutrition/summaries.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "datetime.fromisoformat(f\"{start_iso}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/onboarding.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "goal_date = date.today() + timedelta(weeks=weeks)",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/onboarding.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "goal_date=date.today().isoformat(),",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/performance_db.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "completed_at.date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/periodization.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "\"week_start_date\", (date.today() - timedelta(days=7)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/periodization.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/plan_share_link.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/program_templates.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "\"start_date\": date.today().isoformat(),",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/program_templates.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "start = req.start_date or date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/program_templates.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "start = start_date or date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/program_templates.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "start_date=date.today(),",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/progress_rewards.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "earned_at=f\"{crate_date}T00:00:00Z\",",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/push_nudge_cron.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cutoff = (datetime.utcnow().date() - timedelta(days=_ADAPTIVE_CAP_WINDOW_DAYS)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/push_nudge_cron.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "cutoff = (datetime.utcnow().date() - timedelta(days=days)).isoformat()",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/push_nudge_cron.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"trial_end_date\", f\"{target_date.isoformat()}T00:00:00\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/push_nudge_cron.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".lt(\"trial_end_date\", f\"{(target_date + timedelta(days=1)).isoformat()}T00:00:00\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/race.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/saved_workouts.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "scheduled = request.scheduled_date or datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/scores_endpoints.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "log[\"logged_at\"][:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/scores_endpoints.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"logged_at\", f\"{week_end.isoformat()}T23:59:59\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/scores_endpoints.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"logged_at\", f\"{week_start.isoformat()}T00:00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/scores_endpoints.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"food_logs\").select(\"*\").eq( \"user_id\", request.user_id ).gte( \"logged_at\", f\"{week_start.isoformat()}T00:00:00\" )",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/scores_endpoints.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"food_logs\").select(\"*\").eq( \"user_id\", request.user_id ).gte( \"logged_at\", f\"{week_start.isoformat()}T00:00:00\" ).lte( \"logged_at\", f\"{week_end.isoformat()}T23:59:59\" )",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/senior_fitness.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "datetime.fromisoformat( completed_at.replace(\"Z\", \"+00:00\") ).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/share.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/share_ai.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(f.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/share_ai.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(w.get(\"completed_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/share_ai.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "date_iso = date or datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/share_growth.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "date_iso = date or datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/subscriptions/trial_v5.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/subscriptions/webhooks.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "\"trial_start_date\": date.today().isoformat(),",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/summaries.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"achieved_at\", str(end_date) + \"T23:59:59\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/summaries.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"scheduled_date\", str(end_date) + \"T23:59:59\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/summaries.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ").lte(\"submitted_at\", str(end_date) + \"T23:59:59\").order(\"submitted_at\").execute()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/summaries.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"personal_records\").select(\"*\").eq( \"user_id\", user_id ).gte(\"achieved_at\", str(start_date)).lte( \"achieved_at\", str(end_date) + \"T23:59:59\" )",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/trends_cardio.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "datetime.now(timezone.utc).date() - timedelta(days=days)",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "closed interval on a half-open bound \u2014 `local_day_bounds`/`local_range_bounds` ends need `.lt`, not `.lte`",
+      "snippet": "sb.client.table(\"workouts\").select( \"id, name, exercises_json, completed_at, duration_minutes, \" \"is_completed, scheduled_date\" ).eq(\"user_id\", user_id).gte( \"scheduled_date\", start_iso ).lte(\"schedul",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "closed interval on a half-open bound \u2014 `local_day_bounds`/`local_range_bounds` ends need `.lt`, not `.lte`",
+      "snippet": "sb.client.table(\"workouts\").select( \"id, name, template_id, exercises_json, scheduled_date\" ).eq(\"user_id\", user_id).gte( \"scheduled_date\", start_iso ).lte(\"scheduled_date\", end_iso)",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end_iso = f\"{today_iso}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end_iso = f\"{yesterday_iso}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "end_iso = f\"{today_local.isoformat()}T00:00:00+00:00\"",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "ninety_iso = f\"{(date.fromisoformat(today_iso) - timedelta(days=90)).isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "p1_start_iso = f\"{p1_start.isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "p2_start_iso = f\"{p2_start.isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start_iso = f\"{start_local.isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start_iso = f\"{today_iso}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start_iso = f\"{yesterday_iso}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "thirty_iso = f\"{(date.fromisoformat(today_iso) - timedelta(days=30)).isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "today_start_iso = f\"{today_iso}T00:00:00+00:00\"",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "window_end_iso = f\"{today_local.isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/user/history_snapshot.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "window_start_iso = f\"{window_start.isoformat()}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/users/data_export.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "date_str = datetime.utcnow().strftime(\"%Y-%m-%d\")",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/users/profile.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "future_iso = (date.today() + timedelta(days=8)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/users/profile.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "tomorrow_iso = (date.today() + timedelta(days=1)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/watch_sync.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "\"scheduled_date\": datetime.utcnow().date().isoformat(),",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/weekly_wrapped_cron.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "_reset_cardio_dedup_if_new_week(date.today())",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/card_context.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end = f\"{local_iso}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/card_context.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "start = f\"{today_iso}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/card_context.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{start}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/card_context.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ").lt(\"scheduled_date\", f\"{end}T00:00:00+00:00\").execute()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/card_context.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start = f\"{local_iso}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/generation_endpoints.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end_of_day = sched + \"T23:59:59.999999+00:00\" if len(sched) == 10 else sched",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/generation_streaming.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{sd_str}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/generation_streaming.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "_sd_hi = f\"{_sd_day}T23:59:59+00:00\" if _sd_day else None",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/generation_streaming.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{sd_str}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/generation_streaming.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "_sd_lo = f\"{_sd_day}T00:00:00+00:00\" if _sd_day else None",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/mood_analytics.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"check_in_time\", f\"{end_date}T23:59:59\") \\",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/quick.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/reshape.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "score_date = req.local_date or date.today().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/today.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "``user_today_str`` is required \u2014 never fall back to ``date.today()``",
+      "count": 2
+    },
+    {
+      "file": "backend/api/v1/workouts/user_preference_utils.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "str(achieved_at)[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts/versioning.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_str = datetime.utcnow().strftime(\"%Y-%m-%d\")",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts_db_generation.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end_of_day = sched + \"T23:59:59.999999+00:00\" if len(sched) == 10 else sched",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts_overhaul_extras.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(r.get(\"created_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts_overhaul_extras.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "since = (date.today() - timedelta(weeks=12)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/api/v1/workouts_overhaul_extras.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/core/db/nutrition_db_helpers.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "f\"{date}T00:00:00\" bounds that Postgres resolved at the session zone",
+      "count": 1
+    },
+    {
+      "file": "backend/core/db/workout_db.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{sd_str}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/core/db/workout_db.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "effective_to = to_date + \"T23:59:59.999999+00:00\" if len(to_date) == 10 else to_date",
+      "count": 2
+    },
+    {
+      "file": "backend/core/db/workout_db.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end_date + \"T23:59:59.999999+00:00\" if len(end_date) == 10 else end_date",
+      "count": 1
+    },
+    {
+      "file": "backend/core/db/workout_db.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "\"scheduled_date\", f\"{sd_str}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/core/db/workout_db.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "effective_from = from_date + \"T00:00:00+00:00\" if len(from_date) == 10 else from_date",
+      "count": 2
+    },
+    {
+      "file": "backend/core/db/workout_db.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start_date + \"T00:00:00+00:00\" if len(start_date) == 10 else start_date",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(log.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(r.get(\"completed_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(w.get(\"completed_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(w.get(\"logged_at\") or \"\")[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"achieved_at\", _iso(end) + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"logged_at\", _iso(end) + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"scheduled_date\", _iso(end) + \"T23:59:59.999999+00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"scheduled_date\", _iso(start) + \"T00:00:00+00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "client.table(\"hydration_logs\") .select(\"amount_ml, logged_at\") .eq(\"user_id\", user_id) .gte(\"logged_at\", _iso(start)) .lte(\"logged_at\", _iso(end) + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/reports/data.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "client.table(\"personal_records\") .select(\"*\") .eq(\"user_id\", user_id) .gte(\"achieved_at\", _iso(start)) .lte(\"achieved_at\", _iso(end) + \"T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/tools/coach.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "seven_ago = (datetime.now(timezone.utc).date() - timedelta(days=7)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/tools/coach.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/tools/coach.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/mcp/tools/workouts.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "Bare UTC `date.today()` would mis-day workouts for any user west of",
+      "count": 1
+    },
+    {
+      "file": "backend/services/achievements/computer.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "r[\"completed_at\"][:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/services/adaptive_tdee_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "log.logged_at.date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/adaptive_tdee_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "sorted_weights[-1].logged_at.date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/adaptive_tdee_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "sorted_weights[0].logged_at.date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/adaptive_weekly_job.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "since_iso = since.strftime(\"%Y-%m-%dT00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/cardio_metric_snapshot_job.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "snapshot_date = snapshot_date or date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/chroma/user_history_collection.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "end_iso = f\"{date_iso}T23:59:59+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/services/chroma/user_history_collection.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "start_iso = f\"{date_iso}T00:00:00+00:00\"",
+      "count": 1
+    },
+    {
+      "file": "backend/services/coach/chat_blocks.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "return datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/coach_voice.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "salt = selection_salt or f\"{template_key}:{date.today().isoformat()}\"",
+      "count": 1
+    },
+    {
+      "file": "backend/services/contextual_meal_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "logged_at[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/services/cycle/cycle_context.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "midnight \u2014 pass the timezone-resolved date, never ``date.today()``",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "completed_at[:10]",
+      "count": 2
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "generated_date = datetime.utcnow().strftime(\"%Y-%m-%d\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"achieved_at\", end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"completed_at\", end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"earned_at\", end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(\"recorded_at\", end_date + \"T23:59:59Z\")",
+      "count": 2
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "query = query.lte(date_col, end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "query.lte(\"achieved_at\", end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "query.lte(\"completed_at\", end_date + \"T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/data_export.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "query.lte(\"recorded_at\", end_date + \"T23:59:59Z\")",
+      "count": 2
+    },
+    {
+      "file": "backend/services/dish_image_service.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "return datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/exercise_context_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "(row.get(\"recorded_at\") or \"\")[:10]",
+      "count": 2
+    },
+    {
+      "file": "backend/services/exercise_context_service.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "since = (datetime.utcnow().date() - timedelta(days=days_back)).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/friend_streak_service.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "day = day or datetime.now(timezone.utc).date()",
+      "count": 3
+    },
+    {
+      "file": "backend/services/google_calendar_service.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "time_max = f\"{target_date}T23:59:59Z\"",
+      "count": 1
+    },
+    {
+      "file": "backend/services/google_calendar_service.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "time_min = f\"{target_date}T00:00:00Z\"",
+      "count": 1
+    },
+    {
+      "file": "backend/services/health_coaching.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "d = day or datetime.utcnow().date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/langgraph_agents/tools/coach_phase2_tools.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/langgraph_agents/tools/cycle_tools.py",
+      "rule": "UTC-naive `datetime.utcnow().date()` / `.strftime('%Y-%m-%d')` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "return datetime.utcnow().date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/langgraph_agents/tools/share_tools.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = anchor or date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/langgraph_agents/tools/share_tools.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/langgraph_agents/tools/workout_tools.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_utc = datetime.now(timezone.utc).date().isoformat()",
+      "count": 2
+    },
+    {
+      "file": "backend/services/langgraph_agents/tools/workout_tools.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ").lte(\"scheduled_date\", today_utc + \"T23:59:59Z\").order(",
+      "count": 1
+    },
+    {
+      "file": "backend/services/meal_plan_service.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"logged_at\", f\"{target_date.isoformat()}T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/meal_plan_service.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"logged_at\", f\"{target_date.isoformat()}T00:00:00Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/meal_plan_service.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "self.db.client.table(\"food_logs\") .select(\"recipe_id\") .eq(\"user_id\", user_id) .gte(\"logged_at\", f\"{target_date.isoformat()}T00:00:00Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/meal_plan_service.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "self.db.client.table(\"food_logs\") .select(\"recipe_id\") .eq(\"user_id\", user_id) .gte(\"logged_at\", f\"{target_date.isoformat()}T00:00:00Z\") .lte(\"logged_at\", f\"{target_date.isoformat()}T23:59:59Z\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "str(r[\"logged_at\"])[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"logged_at\", f\"{d}T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"logged_at\", f\"{hi}T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"logged_at\", f\"{d}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": ".gte(\"logged_at\", f\"{lo}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"food_logs\") .select(\"logged_at\") .eq(\"user_id\", user_id) .is_(\"deleted_at\", \"null\") .gte(\"logged_at\", f\"{lo}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"food_logs\") .select(\"logged_at\") .eq(\"user_id\", user_id) .is_(\"deleted_at\", \"null\") .gte(\"logged_at\", f\"{lo}T00:00:00\") .lte(\"logged_at\", f\"{hi}T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"food_logs\") .update({\"deleted_at\": now}) .eq(\"user_id\", user_id) .is_(\"deleted_at\", \"null\") .gte(\"logged_at\", f\"{d}T00:00:00\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/nutrition_import/bulk.py",
+      "rule": "tz-blind day window \u2014 use `local_day_bounds(date, tz)` with .gte/.lt",
+      "snippet": "db.client.table(\"food_logs\") .update({\"deleted_at\": now}) .eq(\"user_id\", user_id) .is_(\"deleted_at\", \"null\") .gte(\"logged_at\", f\"{d}T00:00:00\") .lte(\"logged_at\", f\"{d}T23:59:59\")",
+      "count": 1
+    },
+    {
+      "file": "backend/services/personal_records_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "self._parse_date(pr.get(\"achieved_at\")).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/plateau_break_orchestrator.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/progress_analysis_service.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "start = (datetime.now(timezone.utc).date() - timedelta(days=days)).isoformat()",
+      "count": 2
+    },
+    {
+      "file": "backend/services/readiness_service.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "by_day[date.today()] = int(ures.data[0][\"resting_heart_rate\"])",
+      "count": 1
+    },
+    {
+      "file": "backend/services/readiness_service.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "sd = (score_date or date.today()).isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/readiness_service.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/share_ai_service.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "return datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/strength_recalc.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.now(timezone.utc).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/training_load_service.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "days_of_history = (date.today() - first_active).days + 1",
+      "count": 1
+    },
+    {
+      "file": "backend/services/training_load_service.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = date.today()",
+      "count": 3
+    },
+    {
+      "file": "backend/services/training_load_service.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = today or date.today()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/user_context/event_logging.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "datetime.fromisoformat(s[\"created_at\"].replace(\"Z\", \"+00:00\")).date()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/user_context/neat_logging.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "a[\"created_at\"][:10]",
+      "count": 2
+    },
+    {
+      "file": "backend/services/user_state_assembler.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "if (m.get(\"logged_at\") or \"\").startswith(date.today().isoformat())",
+      "count": 1
+    },
+    {
+      "file": "backend/services/weekly_progress_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "str(r[\"logged_at\"])[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_builder.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_utc = datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_export/data_loader.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": "to_iso = to_date.isoformat() + \"T23:59:59Z\" if to_date else None",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_export/data_loader.py",
+      "rule": "midnight-UTC write \u2014 use `target_date_to_utc_iso(date, user_tz)`",
+      "snippet": "from_iso = from_date.isoformat() + \"T00:00:00Z\" if from_date else None",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_feedback_rag_service.py",
+      "rule": "UTC-date bucketing \u2014 use `utc_to_local_date(value, tz)`",
+      "snippet": "meta.get('completed_at', 'Unknown date')[:10]",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_naming/generator.py",
+      "rule": "UTC-naive `date.today()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_iso = date.today().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_novel_authoring.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today = datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_novel_authoring.py",
+      "rule": "UTC-naive `datetime.now(timezone.utc).date()` \u2014 use `get_user_today(user_tz)`",
+      "snippet": "today_utc = datetime.now(timezone.utc).date().isoformat()",
+      "count": 1
+    },
+    {
+      "file": "backend/services/workout_novel_authoring.py",
+      "rule": "end-of-day concat \u2014 use `local_date_to_utc_range(date, user_tz)`",
+      "snippet": ".lte(\"scheduled_date\", today + \"T23:59:59Z\")",
+      "count": 1
+    }
+  ]
+}

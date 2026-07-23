@@ -16,7 +16,7 @@ from datetime import datetime, date, timedelta
 from typing import List, Dict, Optional
 
 from core.logger import get_logger
-from core.timezone_utils import get_user_today
+from core.timezone_utils import get_user_today, local_day_bounds
 
 # Import services for background tasks
 from services.strength_calculator_service import StrengthCalculatorService
@@ -648,11 +648,18 @@ async def _send_post_workout_nutrition_nudge(user_id: str, workout_name: str):
         from zoneinfo import ZoneInfo
         user_today = datetime.now(ZoneInfo(tz_str) if tz_str != "UTC" else ZoneInfo("UTC")).strftime("%Y-%m-%d")
 
+        # food_logs.logged_at is a UTC timestamptz — pasting the user's LOCAL
+        # date onto it (f"{user_today}T00:00:00") shifts the window by the UTC
+        # offset, so a west-of-UTC user's yesterday-evening meals read as
+        # "today". Half-open [start, end) over the real local day instead.
+        day_start, day_end = local_day_bounds(user_today, tz_str)
+
         try:
             recent_meal = supabase.client.table("food_logs") \
                 .select("id") \
                 .eq("user_id", user_id) \
-                .gte("logged_at", f"{user_today}T00:00:00") \
+                .gte("logged_at", day_start) \
+                .lt("logged_at", day_end) \
                 .order("logged_at", desc=True) \
                 .limit(1) \
                 .execute()

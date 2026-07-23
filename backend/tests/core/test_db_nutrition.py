@@ -238,7 +238,7 @@ class TestNutritionDBDailySummary:
         from core.db.nutrition_db import NutritionDB
         db = NutritionDB(mock_supabase_manager)
 
-        result = db.get_daily_nutrition_summary("user-123", "2024-01-15")
+        result = db.get_daily_nutrition_summary("user-123", "2024-01-15", timezone_str="UTC")
         assert result["date"] == "2024-01-15"
         assert result["total_calories"] == 1000
         assert result["total_protein_g"] == 70
@@ -249,7 +249,7 @@ class TestNutritionDBDailySummary:
 
     def test_get_daily_nutrition_summary_empty(self, nutrition_db):
         """Should return zeros when no meals."""
-        result = nutrition_db.get_daily_nutrition_summary("user-123", "2024-01-15")
+        result = nutrition_db.get_daily_nutrition_summary("user-123", "2024-01-15", timezone_str="UTC")
         assert result["total_calories"] == 0
         assert result["total_protein_g"] == 0
         assert result["meal_count"] == 0
@@ -265,7 +265,7 @@ class TestNutritionDBDailySummary:
         from core.db.nutrition_db import NutritionDB
         db = NutritionDB(mock_supabase_manager)
 
-        result = db.get_daily_nutrition_summary("user-123", "2024-01-15")
+        result = db.get_daily_nutrition_summary("user-123", "2024-01-15", timezone_str="UTC")
         assert result["total_calories"] == 500
         assert result["total_protein_g"] == 30
 
@@ -281,7 +281,7 @@ class TestNutritionDBWeeklySummary:
         from core.db.nutrition_db import NutritionDB
         db = NutritionDB(mock_supabase_manager)
 
-        result = db.get_weekly_nutrition_summary("user-123", "2024-01-15")
+        result = db.get_weekly_nutrition_summary("user-123", "2024-01-15", timezone_str="UTC")
         assert len(result) == 7
 
     def test_get_weekly_nutrition_summary_dates(self, mock_supabase_manager):
@@ -291,7 +291,7 @@ class TestNutritionDBWeeklySummary:
         from core.db.nutrition_db import NutritionDB
         db = NutritionDB(mock_supabase_manager)
 
-        result = db.get_weekly_nutrition_summary("user-123", "2024-01-15")
+        result = db.get_weekly_nutrition_summary("user-123", "2024-01-15", timezone_str="UTC")
 
         # Check first and last dates
         assert result[0]["date"] == "2024-01-15"

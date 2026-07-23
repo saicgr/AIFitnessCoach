@@ -19,6 +19,7 @@ import httpx
 from core import branding
 from core.db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import get_user_today, resolve_timezone
 from mcp.tools import run_tool
 
 logger = get_logger(__name__)
@@ -36,12 +37,17 @@ async def _log_meal_from_text_impl(
     from services.langgraph_agents.tools.nutrition_tools import log_food_from_text
 
     # consumed_at is informational — the nutrition tool derives a timestamp itself.
+    # Resolve the real zone: log_food_from_text infers meal_type from the LOCAL
+    # hour, so a hardcoded "UTC" mislabels every non-UTC user's meals (a 7am
+    # Kolkata breakfast reads as UTC 01:30 → "dinner"). No Request here (MCP), so
+    # resolve from users.timezone.
+    user_tz = resolve_timezone(None, get_supabase_db(), user["id"])
     try:
         result = await log_food_from_text(
             user_id=user["id"],
             food_description=description,
             meal_type=meal_type,
-            timezone_str="UTC",
+            timezone_str=user_tz,
         )
     except Exception as e:
         logger.error(f"log_meal_from_text failed: {e}", exc_info=True)
@@ -115,10 +121,15 @@ async def _get_nutrition_summary_impl(
     from core.db.nutrition_db_helpers import get_daily_nutrition_summary  # noqa: F401
     # The facade re-exports the method; use it there to pick up any enrichment.
     db = get_supabase_db()
-    target_date = date or datetime.now(timezone.utc).date().isoformat()
+    # MCP has no HTTP Request, so the zone comes from users.timezone. Both the
+    # default date and the summary window must be in the USER's zone: server-UTC
+    # "today" is already tomorrow for an evening logger in the Americas, and a
+    # UTC window pulls last night's dinner into today's totals.
+    user_tz = resolve_timezone(None, db, user["id"])
+    target_date = date or get_user_today(user_tz)
 
     try:
-        summary = db.get_daily_nutrition_summary(user["id"], target_date, timezone_str=None)
+        summary = db.get_daily_nutrition_summary(user["id"], target_date, timezone_str=user_tz)
     except Exception as e:
         logger.error(f"get_nutrition_summary failed: {e}", exc_info=True)
         return {"ok": False, "error": "summary_failed", "detail": str(e)[:200]}

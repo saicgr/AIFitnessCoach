@@ -6,7 +6,7 @@ is correctly resolved regardless of their timezone.
 """
 
 import logging
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -15,22 +15,91 @@ logger = logging.getLogger(__name__)
 # ── public helpers ──────────────────────────────────────────────────────
 
 
-def local_date_to_utc_range(date_str: str, timezone_str: str) -> tuple[str, str]:
+def local_day_bounds(date_str: str, timezone_str: str) -> tuple[str, str]:
     """
-    Convert a 'YYYY-MM-DD' date in the user's timezone to a UTC start/end
-    ISO-timestamp pair covering that entire local day.
+    Canonical HALF-OPEN UTC window ``[start, end)`` covering one whole local day.
 
-    Returns:
-        (utc_start_iso, utc_end_iso) – both suitable for Supabase .gte/.lte filters.
+    THIS IS THE CHOKEPOINT for every "what did the user do on their day X"
+    query against a ``timestamptz`` column (``logged_at``, ``completed_at``,
+    ``created_at``, …). Use it with ``.gte(start)`` / ``.lt(end)`` — never
+    ``.lte(end)``.
+
+    Why half-open: the closed ``23:59:59`` form silently drops any row in the
+    final second of the local day, and — worse — invites the ``.lte`` /
+    ``.gte`` symmetry that makes two adjacent days both claim the boundary row.
+    ``end`` is local midnight of *the next day*, so 23h/25h DST transition days
+    are exact rather than off by an hour.
+
+    The bug this exists to prevent (2026-07-22): building a window by
+    concatenating a LOCAL date with a UTC offset —
+    ``f"{local_date}T00:00:00+00:00"`` — which for a UTC-4 user spans local
+    20:00 yesterday → 19:59 today. It attributed 2,844 kcal of the previous
+    evening's dinners to "today" on the coach card.
     """
     tz = _safe_zone(timezone_str)
-    y, m, d = int(date_str[:4]), int(date_str[5:7]), int(date_str[8:10])
-    local_start = datetime(y, m, d, 0, 0, 0, tzinfo=tz)
-    local_end = datetime(y, m, d, 23, 59, 59, tzinfo=tz)
+    d = date(int(date_str[:4]), int(date_str[5:7]), int(date_str[8:10]))
+    nxt = d + timedelta(days=1)
+    start = datetime(d.year, d.month, d.day, 0, 0, 0, tzinfo=tz)
+    end = datetime(nxt.year, nxt.month, nxt.day, 0, 0, 0, tzinfo=tz)
     return (
-        local_start.astimezone(ZoneInfo("UTC")).isoformat(),
-        local_end.astimezone(ZoneInfo("UTC")).isoformat(),
+        start.astimezone(ZoneInfo("UTC")).isoformat(),
+        end.astimezone(ZoneInfo("UTC")).isoformat(),
     )
+
+
+def local_range_bounds(
+    start_date: str, end_date: str, timezone_str: str
+) -> tuple[str, str]:
+    """
+    Half-open UTC window ``[start, end)`` spanning local ``start_date`` 00:00
+    through the END of local ``end_date`` (i.e. ``end_date + 1`` at 00:00).
+
+    ``end_date`` is INCLUSIVE as a calendar day — passing today's local date
+    covers everything logged so far today. Use ``.gte(start)`` / ``.lt(end)``.
+    """
+    return (
+        local_day_bounds(start_date, timezone_str)[0],
+        local_day_bounds(end_date, timezone_str)[1],
+    )
+
+
+def utc_to_local_date(value, timezone_str: str) -> str:
+    """
+    Bucket a ``timestamptz`` value into the user's local ``'YYYY-MM-DD'``.
+
+    Replaces every ``str(row["logged_at"])[:10]`` / ``.date()`` in aggregation
+    code. Slicing the raw UTC string buckets a 9pm-local log onto the *next*
+    day for western users, which silently corrupts day-counts, streaks, and
+    per-day averages even when the query window itself is correct.
+
+    Returns ``""`` on unparseable input (callers treat that as "no day").
+    """
+    s = to_utc_iso(value)
+    if not s:
+        return ""
+    try:
+        return (
+            datetime.fromisoformat(s)
+            .astimezone(_safe_zone(timezone_str))
+            .strftime("%Y-%m-%d")
+        )
+    except ValueError:
+        return ""
+
+
+def local_date_to_utc_range(date_str: str, timezone_str: str) -> tuple[str, str]:
+    """
+    DEPRECATED — closed-interval ``[start, end]`` form of :func:`local_day_bounds`.
+
+    Kept so existing ``.lte``-based call sites keep working unchanged. New code
+    must use :func:`local_day_bounds` (half-open, DST-exact) with ``.lt``.
+
+    Returns:
+        (utc_start_iso, utc_end_iso) – suitable for Supabase .gte/.lte filters.
+    """
+    start_iso, end_iso = local_day_bounds(date_str, timezone_str)
+    end = datetime.fromisoformat(end_iso) - timedelta(seconds=1)
+    return start_iso, end.isoformat()
 
 
 def get_user_today(timezone_str: str) -> str:

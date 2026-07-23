@@ -484,9 +484,15 @@ async def tool_executor_node(state: FitnessCoachState) -> Dict[str, Any]:
         tool_args = tool_call.get("args", {}).copy()  # Copy to avoid mutating original
         tool_id = tool_call.get("id", tool_name)
 
-        # Inject timezone_str from user profile if not provided by LLM
+        # Inject timezone_str from user profile if not provided by LLM.
+        # Must cover EVERY tz-accepting nutrition tool — a tool left off this
+        # allowlist falls back to its own "UTC" default, which mis-buckets the
+        # user's day (the coach-card 3630-vs-786 bug class). Names keyed exactly
+        # so we never inject into a tool that doesn't accept the arg (TypeError).
         if "timezone_str" not in tool_args and tool_name in (
-            "log_food_from_text", "get_nutrition_summary",
+            "log_food_from_text", "get_nutrition_summary", "get_recent_meals",
+            "get_calorie_remainder", "get_micronutrient_gaps", "recommend_meal",
+            "get_todays_workout_for_meal", "log_food_barcode",
             "analyze_multi_food_images", "parse_app_screenshot", "parse_nutrition_label",
         ):
             tool_args["timezone_str"] = (state.get("user_profile") or {}).get("timezone") or "UTC"

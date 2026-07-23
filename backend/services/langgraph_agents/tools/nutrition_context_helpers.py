@@ -21,7 +21,12 @@ from typing import Any, Dict, List, Optional
 
 from core.db import get_supabase_db
 from core.supabase_client import get_supabase
-from core.timezone_utils import get_user_today, local_date_to_utc_range
+from core.timezone_utils import (
+    get_user_today,
+    local_date_to_utc_range,
+    resolve_timezone,
+    utc_to_local_date,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -397,7 +402,13 @@ async def fetch_patterns_context(
 
         # Goal-vs-actual averages (4wk current vs 9wk baseline-ish). Light:
         # compare a 28-day intake average to the user's goals.
-        goal_gap = await _asyncio.to_thread(_fetch_goal_gap_summary, client, user_id)
+        # The per-day averaging below buckets a UTC `logged_at` into calendar
+        # days, so it needs the user's tz. There's no Request here (this runs
+        # from the agent's context pre-fetch), so users.timezone is the source.
+        tz = resolve_timezone(None, db, user_id)
+        goal_gap = await _asyncio.to_thread(
+            _fetch_goal_gap_summary, client, user_id, tz
+        )
         if goal_gap:
             lines.append(goal_gap)
 
@@ -429,10 +440,12 @@ def _safe_rows(res) -> List[Dict[str, Any]]:
     return getattr(res, "data", None) or []
 
 
-def _fetch_goal_gap_summary(client, user_id: str) -> Optional[str]:
+def _fetch_goal_gap_summary(client, user_id: str, timezone_str: str) -> Optional[str]:
     """Compare ~28-day avg intake (fiber/protein) to goals → one gentle line.
 
-    Sync (runs off the event loop via to_thread). Returns None on no data."""
+    Sync (runs off the event loop via to_thread). Returns None on no data.
+    `timezone_str` buckets each log into the user's own calendar day — the
+    per-day average is only meaningful against local days."""
     try:
         from datetime import datetime as _dt, timedelta as _td, timezone as _tz
         start = (_dt.now(_tz.utc) - _td(days=28)).isoformat()
@@ -447,10 +460,14 @@ def _fetch_goal_gap_summary(client, user_id: str) -> Optional[str]:
         rows = resp.data or []
         if not rows:
             return None
-        # Bucket by date for a per-day average.
+        # Bucket by the user's LOCAL day for a per-day average — slicing the raw
+        # UTC string rolls a 9pm-local log onto the next day, inflating the day
+        # count and diluting the average (the sibling of the window bug).
         per_day: Dict[str, Dict[str, float]] = {}
         for r in rows:
-            d = (r.get("logged_at") or "")[:10]
+            d = utc_to_local_date(r.get("logged_at"), timezone_str)
+            if not d:
+                continue
             b = per_day.setdefault(d, {"protein": 0.0, "fiber": 0.0})
             b["protein"] += float(r.get("protein_g") or 0)
             b["fiber"] += float(r.get("fiber_g") or 0)

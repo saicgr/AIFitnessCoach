@@ -40,7 +40,7 @@ from services.food_logging_rules_service import (
 # Every streaming endpoint below runs it before it either streams a payload the
 # client will post to /log-direct or writes the row itself, so no fabricated
 # 0P/0C/0F can reach food_logs.
-from services.gemini.parsers import enforce_macro_integrity
+from services.gemini.parsers import derive_meal_totals, enforce_macro_integrity
 
 from api.v1.nutrition.models import (
     LogTextRequest,
@@ -453,15 +453,19 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             # this endpoint (or that the client posts on to /log-direct) claims
             # a macro it does not know. Idempotent with the gate inside
             # `analyze_food`.
+            _integrity_label = f"STREAM text:{food_analysis.get('cache_source') or 'gemini'}"
             _integrity = enforce_macro_integrity(
-                {
-                    "food_items": food_items,
-                    "protein_g": protein_g,
-                    "carbs_g": carbs_g,
-                    "fat_g": fat_g,
-                    "fiber_g": fiber_g,
-                },
-                f"STREAM text:{food_analysis.get('cache_source') or 'gemini'}",
+                derive_meal_totals(
+                    {
+                        "food_items": food_items,
+                        "protein_g": protein_g,
+                        "carbs_g": carbs_g,
+                        "fat_g": fat_g,
+                        "fiber_g": fiber_g,
+                    },
+                    _integrity_label,
+                ),
+                _integrity_label,
             )
             food_items = _integrity["food_items"]
             protein_g = _integrity["protein_g"]
@@ -828,13 +832,16 @@ async def log_food_from_image_streaming(
             # confident zero that would land in the user's daily totals and
             # their coach's context.
             _integrity = enforce_macro_integrity(
-                {
-                    "food_items": food_items,
-                    "protein_g": protein_g,
-                    "carbs_g": carbs_g,
-                    "fat_g": fat_g,
-                    "fiber_g": fiber_g,
-                },
+                derive_meal_totals(
+                    {
+                        "food_items": food_items,
+                        "protein_g": protein_g,
+                        "carbs_g": carbs_g,
+                        "fat_g": fat_g,
+                        "fiber_g": fiber_g,
+                    },
+                    "STREAM image",
+                ),
                 "STREAM image",
             )
             food_items = _integrity["food_items"]
@@ -1291,13 +1298,16 @@ async def analyze_food_from_image_streaming(
             # /log-direct. Runs after the override + verified-crosscheck
             # re-totalling so it sees the final numbers.
             _integrity = enforce_macro_integrity(
-                {
-                    "food_items": food_items,
-                    "protein_g": protein_g,
-                    "carbs_g": carbs_g,
-                    "fat_g": fat_g,
-                    "fiber_g": fiber_g,
-                },
+                derive_meal_totals(
+                    {
+                        "food_items": food_items,
+                        "protein_g": protein_g,
+                        "carbs_g": carbs_g,
+                        "fat_g": fat_g,
+                        "fiber_g": fiber_g,
+                    },
+                    f"ANALYZE-STREAM:{request_id}",
+                ),
                 f"ANALYZE-STREAM:{request_id}",
             )
             food_items = _integrity["food_items"]
@@ -1902,14 +1912,26 @@ async def log_food_from_multi_image_streaming(
                 # First non-null restaurant name seen across all menu pages.
                 # Stays None if no page surfaced a name (emitted as null below).
                 restaurant_name: Optional[str] = None
-                for idx, (s3_key, mime) in enumerate(zip(storage_keys, mime_types)):
+                # Pages are analyzed CONCURRENTLY (was a strict sequential
+                # `for … await`, so a 4-page menu took 4×~15s). Each page is an
+                # independent Gemini call; we fire them all and stream a `page`
+                # event as each finishes (via as_completed), so perceived
+                # latency is the SLOWEST page, not the SUM. The FairGemini
+                # semaphore still caps real concurrency per user; a local
+                # semaphore bounds it further so one scan can't monopolize.
+                _page_sem = asyncio.Semaphore(4)
+                # page_num → items, so final `all_items` stays in page order
+                # regardless of completion order.
+                _page_items_by_num: Dict[int, List[dict]] = {}
+                _page_rn_by_num: Dict[int, str] = {}
+
+                async def _analyze_one_page(idx: int, s3_key: str, mime: str):
                     page_num = idx + 1
-                    try:
+                    async with _page_sem:
                         # The recall gate runs inside analyze_menu_page: it
                         # asks the model how many entries the page HAS, and
                         # re-runs the page in overlapping halves when the
-                        # extraction came up short. Timeout is generous
-                        # enough to cover that retry.
+                        # extraction came up short. Timeout covers that retry.
                         per_image_result, recall = await asyncio.wait_for(
                             vision.analyze_menu_page(
                                 s3_key=s3_key, mime_type=mime,
@@ -1925,10 +1947,7 @@ async def log_food_from_multi_image_streaming(
                         # A bill has no nutrition on it — estimate the ordered
                         # dishes by name so the checklist never shows 0 kcal.
                         if actual_mode == "bill" and page_items:
-                            page_rn_for_estimate = (
-                                per_image_result.get("restaurant_name")
-                                or restaurant_name
-                            )
+                            page_rn_for_estimate = per_image_result.get("restaurant_name")
                             try:
                                 estimate = await asyncio.wait_for(
                                     vision.estimate_dishes_from_names(
@@ -1946,14 +1965,20 @@ async def log_food_from_multi_image_streaming(
                                 )
                                 for item in page_items:
                                     item["nutrition_unknown"] = True
-                        all_items.extend(page_items)
+                        return page_num, idx, per_image_result, page_items, recall
+
+                _page_tasks = [
+                    asyncio.create_task(_analyze_one_page(idx, s3_key, mime))
+                    for idx, (s3_key, mime) in enumerate(zip(storage_keys, mime_types))
+                ]
+                for _fut in asyncio.as_completed(_page_tasks):
+                    try:
+                        page_num, idx, per_image_result, page_items, recall = await _fut
+                        _page_items_by_num[page_num] = page_items
                         successful_pages += 1
-                        # Capture the restaurant name from the first page that
-                        # surfaces one; later pages don't override it.
-                        if restaurant_name is None:
-                            page_rn = per_image_result.get("restaurant_name")
-                            if isinstance(page_rn, str) and page_rn.strip():
-                                restaurant_name = page_rn.strip()
+                        page_rn = per_image_result.get("restaurant_name")
+                        if isinstance(page_rn, str) and page_rn.strip():
+                            _page_rn_by_num[page_num] = page_rn.strip()
                         page_event = {
                             "type": "page",
                             "analysis_type": actual_mode,
@@ -1972,15 +1997,50 @@ async def log_food_from_multi_image_streaming(
                         }
                         yield f"event: page\ndata: {json.dumps(page_event)}\n\n"
                     except asyncio.TimeoutError:
-                        logger.warning(f"[STREAM multi] page {page_num} timed out")
-                        err_event = {"type": "page_error", "page": page_num,
+                        logger.warning("[STREAM multi] a menu page timed out")
+                        err_event = {"type": "page_error", "page": None,
                                      "total_pages": n, "error": "timeout"}
                         yield f"event: page_error\ndata: {json.dumps(err_event)}\n\n"
                     except Exception as e:
-                        logger.error(f"[STREAM multi] page {page_num} failed: {e}", exc_info=True)
-                        err_event = {"type": "page_error", "page": page_num,
+                        logger.error(f"[STREAM multi] a menu page failed: {e}", exc_info=True)
+                        err_event = {"type": "page_error", "page": None,
                                      "total_pages": n, "error": str(e)}
                         yield f"event: page_error\ndata: {json.dumps(err_event)}\n\n"
+
+                # Reassemble dishes in page order + pick the lowest-numbered
+                # page's restaurant name (matches the old "first page wins").
+                for _pn in sorted(_page_items_by_num):
+                    all_items.extend(_page_items_by_num[_pn])
+                for _pn in sorted(_page_rn_by_num):
+                    restaurant_name = _page_rn_by_num[_pn]
+                    break
+
+                # Cross-check every menu dish against the SAME verified food DB
+                # the text/photo paths use, then run the integrity gate. Without
+                # this, a menu-scanned "chocolate layer cake" and the same dish
+                # typed as text resolved through two totally separate stacks and
+                # returned different macros (680 vs 875 cal). Exact-match only
+                # (see apply_global_verified_crosscheck) so nothing is corrupted;
+                # unmatched dishes keep their AI estimate. Off-thread so the
+                # per-item DB lookups don't block the event loop. Bills have no
+                # on-menu nutrition, so their name-estimate already ran above —
+                # still gate them, but the cross-check is a no-op for unmatched.
+                if all_items:
+                    try:
+                        from services.food_override_service import (
+                            apply_global_verified_crosscheck,
+                        )
+                        all_items, _menu_vtotals, _menu_nverified = await asyncio.to_thread(
+                            apply_global_verified_crosscheck, all_items, user_message,
+                        )
+                        if _menu_nverified:
+                            logger.info(
+                                f"[STREAM multi] menu cross-check verified "
+                                f"{_menu_nverified}/{len(all_items)} dish(es) vs global DB"
+                            )
+                    except Exception as _mx:
+                        logger.error(f"[STREAM multi] menu cross-check failed: {_mx}", exc_info=True)
+                    enforce_macro_integrity({"food_items": all_items}, "STREAM menu")
 
                 done_event = {
                     "success": successful_pages > 0,
@@ -2030,50 +2090,29 @@ async def log_food_from_multi_image_streaming(
 
                 food_items = analysis_result.get("food_items", [])
                 total_calories = analysis_result.get("total_calories", 0)
-                protein_g = analysis_result.get("protein_g") or analysis_result.get("total_protein_g", 0.0)
-                carbs_g = analysis_result.get("carbs_g") or analysis_result.get("total_carbs_g", 0.0)
-                fat_g = analysis_result.get("fat_g") or analysis_result.get("total_fat_g", 0.0)
-                fiber_g = analysis_result.get("fiber_g", 0.0) or analysis_result.get("total_fiber_g", 0.0)
 
-                # Gemini occasionally leaves the meal-level macros at 0 even when
-                # every food_item has populated protein/carbs/fat. The hero card
-                # in the review sheet then reads "0g Protein / 0g Carbs / 0g Fat"
-                # while the items below clearly have macros. Fall back to summing
-                # the items so the user sees consistent numbers everywhere.
-                def _sum_item_field(key: str) -> float:
-                    s = 0.0
-                    for it in food_items or []:
-                        v = it.get(key) if isinstance(it, dict) else None
-                        if isinstance(v, (int, float)):
-                            s += v
-                    return s
-                if not total_calories:
-                    total_calories = int(round(_sum_item_field("calories")))
-                if not protein_g:
-                    protein_g = round(_sum_item_field("protein_g"), 1)
-                if not carbs_g:
-                    carbs_g = round(_sum_item_field("carbs_g"), 1)
-                if not fat_g:
-                    fat_g = round(_sum_item_field("fat_g"), 1)
-                if not fiber_g:
-                    fiber_g = round(_sum_item_field("fiber_g"), 1)
-
-                # ── MACRO-INTEGRITY GATE (multi-image) ────────────────────
-                # `_sum_item_field` above deliberately re-sums the items, which
-                # is exactly the "0-default" arithmetic that turns an unknown
-                # macro into a confident 0.0. Run the gate AFTER it so an
-                # unknown-macro item nulls the totals on both the review-sheet
-                # branch and the persisting branch below.
-                _integrity = enforce_macro_integrity(
+                # Meal totals are DERIVED from the items — Gemini often leaves
+                # the meal-level macros at 0 while every food_item carries real
+                # protein/carbs/fat (the "714 kcal · 0g/0g/0g" signature). Sum
+                # the items, treating a flagged-unknown item as unknown (not 0),
+                # then run the integrity gate to null + label anything unknown.
+                _derived = derive_meal_totals(
                     {
                         "food_items": food_items,
-                        "protein_g": protein_g,
-                        "carbs_g": carbs_g,
-                        "fat_g": fat_g,
-                        "fiber_g": fiber_g,
+                        "total_calories": total_calories,
+                        "protein_g": (analysis_result.get("protein_g")
+                                      or analysis_result.get("total_protein_g", 0.0)),
+                        "carbs_g": (analysis_result.get("carbs_g")
+                                    or analysis_result.get("total_carbs_g", 0.0)),
+                        "fat_g": (analysis_result.get("fat_g")
+                                  or analysis_result.get("total_fat_g", 0.0)),
+                        "fiber_g": (analysis_result.get("fiber_g", 0.0)
+                                    or analysis_result.get("total_fiber_g", 0.0)),
                     },
                     "STREAM multi:plate",
                 )
+                total_calories = _derived["total_calories"]
+                _integrity = enforce_macro_integrity(_derived, "STREAM multi:plate")
                 food_items = _integrity["food_items"]
                 protein_g = _integrity["protein_g"]
                 carbs_g = _integrity["carbs_g"]

@@ -627,9 +627,16 @@ class SupabaseDB:
         )
 
     def get_daily_nutrition_summary(
-        self, user_id: str, date: str, timezone_str: Optional[str] = None
+        self, user_id: str, date: str, timezone_str: str
     ) -> Dict[str, Any]:
-        """Get nutrition totals for a specific day."""
+        """Get nutrition totals for a specific day.
+
+        ``timezone_str`` is REQUIRED and deliberately has no default: ``date``
+        is a LOCAL calendar day, and the helper needs the same zone to build
+        the UTC window. A default here would absorb the requirement instead of
+        propagating it, and callers would silently get a UTC window — which for
+        a UTC-4 user counts last night's dinner as today.
+        """
         return self._nutrition_db.get_daily_nutrition_summary(user_id, date, timezone_str=timezone_str)
 
     def get_nutrition_preferences(self, user_id: str) -> Optional[Dict[str, Any]]:
@@ -637,9 +644,13 @@ class SupabaseDB:
         return self._nutrition_db.get_nutrition_preferences(user_id)
 
     def get_weekly_nutrition_summary(
-        self, user_id: str, start_date: str, timezone_str: Optional[str] = None
+        self, user_id: str, start_date: str, timezone_str: str
     ) -> List[Dict[str, Any]]:
-        """Get nutrition totals for a week."""
+        """Get nutrition totals for a week.
+
+        ``timezone_str`` is REQUIRED (see ``get_daily_nutrition_summary``) —
+        each day of the week is bucketed in the user's local zone.
+        """
         return self._nutrition_db.get_weekly_nutrition_summary(user_id, start_date, timezone_str=timezone_str)
 
     def update_food_log(

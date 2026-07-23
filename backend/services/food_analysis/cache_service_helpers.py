@@ -132,12 +132,12 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         food_names = [item.get("name", "food") for item in food_items]
         food_name = ", ".join(food_names)
 
-        total_cal = sum(item.get("calories", 0) for item in food_items)
-        total_protein = sum(float(item.get("protein_g", 0)) for item in food_items)
-        total_carbs = sum(float(item.get("carbs_g", 0)) for item in food_items)
-        total_fat = sum(float(item.get("fat_g", 0)) for item in food_items)
-        total_fiber = sum(float(item.get("fiber_g", 0)) for item in food_items)
-        total_sugar = sum(float(item.get("sugar_g", 0) or 0) for item in food_items)
+        total_cal = sum(item.get("calories") or 0 for item in food_items)
+        total_protein = sum(float(item.get("protein_g") or 0) for item in food_items)
+        total_carbs = sum(float(item.get("carbs_g") or 0) for item in food_items)
+        total_fat = sum(float(item.get("fat_g") or 0) for item in food_items)
+        total_fiber = sum(float(item.get("fiber_g") or 0) for item in food_items)
+        total_sugar = sum(float(item.get("sugar_g") or 0) for item in food_items)
 
         macros = {
             "calories": total_cal,
@@ -166,13 +166,16 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         protein_remaining_g = None
 
         daily_target = None
+        # Stored zone, used when the caller didn't hand us one (background
+        # re-enrichment has no request to read X-User-Timezone from).
+        user_timezone = None
         if user_id:
             try:
                 supabase = get_supabase()
                 async with supabase.get_session() as session:
                     # Get user goals
                     user_result = await session.execute(
-                        text("SELECT goals, daily_calorie_target FROM users WHERE id = :uid LIMIT 1"),
+                        text("SELECT goals, daily_calorie_target, timezone FROM users WHERE id = :uid LIMIT 1"),
                         {"uid": user_id},
                     )
                     user_row = user_result.fetchone()
@@ -187,6 +190,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                                 user_goals = [goals_val] if goals_val else []
 
                         daily_target = user_row._mapping.get("daily_calorie_target")
+                        user_timezone = user_row._mapping.get("timezone")
 
                     # Get nutrition targets from preferences
                     targets_result = await session.execute(
@@ -222,9 +226,18 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 # Get daily nutrition summary for calorie budget
                 try:
                     from core.timezone_utils import get_user_today
-                    today_str = get_user_today(timezone_str or "UTC")
+                    # Same resolution order as resolve_timezone: caller-supplied
+                    # (header-derived) zone first, then users.timezone. "Today"
+                    # and the summary window MUST agree on one zone — a UTC
+                    # window over a local date counts last night's dinner as
+                    # eaten today, which is how the coach card once claimed
+                    # 3,630 kcal on a 786 kcal day.
+                    tz = timezone_str or user_timezone or "UTC"
+                    today_str = get_user_today(tz)
                     nutrition_db = NutritionDB()
-                    daily_summary = nutrition_db.get_daily_nutrition_summary(user_id, today_str)
+                    daily_summary = nutrition_db.get_daily_nutrition_summary(
+                        user_id, today_str, timezone_str=tz
+                    )
                     calories_consumed_today = daily_summary.get("total_calories", 0)
 
                     # Use target from preferences first, then user table
@@ -303,6 +316,65 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         }
 
     async def analyze_food(
+        self,
+        description: str,
+        user_goals: Optional[List[str]] = None,
+        nutrition_targets: Optional[Dict] = None,
+        rag_context: Optional[str] = None,
+        use_cache: bool = True,
+        user_id: Optional[str] = None,
+        mood_before: Optional[str] = None,
+        meal_type: Optional[str] = None,
+        personal_history: Optional[List[Dict]] = None,
+        standing_rules_block: str = "",
+        fast_macros_only: bool = False,
+        defer_hit_tips: bool = False,
+    ) -> Dict[str, Any]:
+        """Public entry point — runs the cache stack, then the macro-integrity gate.
+
+        THIS is the chokepoint every text-logging caller goes through
+        (`/analyze-text-stream`, `/log-text`, `/analyze-text`, saved-food
+        re-analysis). The cache stack below has ELEVEN success returns
+        (saved_food, recent_log, user_contributed, override, common_foods,
+        multi_lookup, modified_override, analysis_cache, compound_decompose,
+        gemini_inflight, gemini_fresh) and most of them never touch
+        `_enhance_food_items_with_nutrition_db` — so the macro-integrity rule
+        cannot live in the enhancer alone. Wrapping here covers all eleven.
+
+        See `services.gemini.parsers.enforce_macro_integrity`: any item with
+        calories but no protein/carbs/fat (and no ethanol explanation) has its
+        fabricated zeros erased, and the meal totals become an explicit `None`
+        rather than a silent 0.0 that would be persisted as fact.
+        """
+        result = await self._analyze_food_uncensored(
+            description=description,
+            user_goals=user_goals,
+            nutrition_targets=nutrition_targets,
+            rag_context=rag_context,
+            use_cache=use_cache,
+            user_id=user_id,
+            mood_before=mood_before,
+            meal_type=meal_type,
+            personal_history=personal_history,
+            standing_rules_block=standing_rules_block,
+            fast_macros_only=fast_macros_only,
+            defer_hit_tips=defer_hit_tips,
+        )
+        try:
+            from services.gemini.parsers import enforce_macro_integrity
+            enforce_macro_integrity(
+                result, f"analyze_food:{(result or {}).get('cache_source') or 'unknown'}"
+            )
+        except Exception as e:  # noqa: BLE001
+            # Never fail a log because the integrity gate errored — but say so
+            # loudly; a silent skip here is how a 0/0/0 ships.
+            logger.error(
+                f"[MacroIntegrity] gate FAILED for {description[:60]!r}: {e}",
+                exc_info=True,
+            )
+        return result
+
+    async def _analyze_food_uncensored(
         self,
         description: str,
         user_goals: Optional[List[str]] = None,
@@ -501,12 +573,12 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
 
                 # Aggregate if EVERY component resolved via cache
                 if component_results and not gemini_components:
-                    total_cal = sum(it.get("calories", 0) for it in component_results)
-                    total_p = sum(float(it.get("protein_g", 0)) for it in component_results)
-                    total_c = sum(float(it.get("carbs_g", 0)) for it in component_results)
-                    total_f = sum(float(it.get("fat_g", 0)) for it in component_results)
-                    total_fib = sum(float(it.get("fiber_g", 0)) for it in component_results)
-                    total_sug = sum(float(it.get("sugar_g", 0) or 0) for it in component_results)
+                    total_cal = sum(it.get("calories") or 0 for it in component_results)
+                    total_p = sum(float(it.get("protein_g") or 0) for it in component_results)
+                    total_c = sum(float(it.get("carbs_g") or 0) for it in component_results)
+                    total_f = sum(float(it.get("fat_g") or 0) for it in component_results)
+                    total_fib = sum(float(it.get("fiber_g") or 0) for it in component_results)
+                    total_sug = sum(float(it.get("sugar_g") or 0) for it in component_results)
                     aggregated = {
                         "meal_type": meal_type or "snack",
                         "food_items": component_results,

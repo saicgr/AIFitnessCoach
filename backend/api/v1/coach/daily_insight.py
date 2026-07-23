@@ -43,7 +43,13 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.config import get_settings
-from core.timezone_utils import resolve_timezone, user_today_date
+from core.timezone_utils import (
+    local_day_bounds,
+    local_range_bounds,
+    resolve_timezone,
+    user_today_date,
+    utc_to_local_date,
+)
 
 from services.gemini.constants import (
     cost_tracker,
@@ -676,8 +682,16 @@ def _first_name(user_row: Dict[str, Any]) -> str:
     return raw.strip() or "there"
 
 
-def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
+def _collect_snapshot(
+    sb, user_id: str, local_date_iso: str, tz: str
+) -> Tuple[Dict[str, Any], Optional[Dict[str, Any]]]:
     """Assemble the today snapshot the prompt + validator both consume.
+
+    ``tz`` is the caller's resolved IANA timezone and is REQUIRED: every
+    timestamptz window below is derived from ``local_date_iso`` through
+    ``local_day_bounds`` / ``local_range_bounds``. Passing the wrong zone (or
+    formerly, none at all) silently attributes the previous evening's logs to
+    today — see the helper docstring in ``core/timezone_utils.py``.
 
     Lightweight queries — we deliberately don't reach into the full score
     pipeline here. The home daily-score card already computes the full
@@ -720,21 +734,21 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     # --- Nourish (food log totals) --------------------------------------
     # Schema reality: table is `food_logs` (plural), no `logged_local_date`
     # column — log timestamp is `logged_at` (UTC timestamptz). Calorie field
-    # is `total_calories`. Derive the local-day window from local_date_iso
-    # against the user's tz at query time.
+    # is `total_calories`.
+    #
+    # The window MUST come from local_day_bounds(local_date_iso, tz). This line
+    # previously concatenated the LOCAL date with a UTC offset
+    # (f"{local_date_iso}T00:00:00+00:00"), which for a UTC-4 user spans local
+    # 20:00 yesterday → 19:59 today: it reported 3,630 kcal on a day the user
+    # had eaten 786, by counting five of the previous evening's dinner logs.
+    # Half-open [start, end) with .gte/.lt — never .lte.
     try:
-        # ISO-format local date → UTC bounds. Without the user's tz here we
-        # fall back to a generous ±18h window around the local-date midnight
-        # in UTC, then group by logged_at::date in the user's tz on the
-        # client side (the totals are an approximation either way for the
-        # prompt; the validator only needs honest ground truth).
-        day_start_iso = f"{local_date_iso}T00:00:00+00:00"
-        day_end_iso = f"{local_date_iso}T23:59:59+00:00"
+        day_start_iso, day_end_iso = local_day_bounds(local_date_iso, tz)
         fl = sb.client.table("food_logs").select(
             "total_calories, protein_g, logged_at, deleted_at"
         ).eq("user_id", user_id).gte(
             "logged_at", day_start_iso
-        ).lte(
+        ).lt(
             "logged_at", day_end_iso
         ).is_("deleted_at", "null").execute()
         rows = fl.data or []
@@ -869,12 +883,17 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
         from datetime import date as _date, timedelta as _td
         base = _date.fromisoformat(local_date_iso)
         wk_start_iso = (base - _td(days=6)).isoformat()
-        wk_start_utc = f"{wk_start_iso}T00:00:00+00:00"
+        # 7 local days ending with today, as a half-open UTC window. An
+        # unbounded .gte(local-date-stamped-as-UTC) over-counted the tail of
+        # day-7 for western users and under-counted today's evening.
+        wk_start_utc, wk_end_utc = local_range_bounds(wk_start_iso, local_date_iso, tz)
         # Workouts completed this week.
         try:
             wkw = sb.client.table("workouts").select("id", count="exact").eq(
                 "user_id", user_id
-            ).eq("is_completed", True).gte("completed_at", wk_start_utc).execute()
+            ).eq("is_completed", True).gte(
+                "completed_at", wk_start_utc
+            ).lt("completed_at", wk_end_utc).execute()
             weekly["workouts_completed"] = int(wkw.count or 0) if wkw.count is not None else len(wkw.data or [])
         except Exception as e:
             logger.debug(f"[daily_insight] weekly workouts skipped: {e}")
@@ -896,8 +915,18 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
         try:
             wfl = sb.client.table("food_logs").select("logged_at").eq(
                 "user_id", user_id
-            ).gte("logged_at", wk_start_utc).is_("deleted_at", "null").execute()
-            days_logged = {str(r.get("logged_at"))[:10] for r in (wfl.data or []) if r.get("logged_at")}
+            ).gte("logged_at", wk_start_utc).lt(
+                "logged_at", wk_end_utc
+            ).is_("deleted_at", "null").execute()
+            # Bucket by the user's LOCAL day. str(logged_at)[:10] is the UTC
+            # date, which rolls a 9pm-local log onto the next day and can push
+            # nutrition_days_logged above 7 (or merge two local days into one).
+            days_logged = {
+                utc_to_local_date(r.get("logged_at"), tz)
+                for r in (wfl.data or [])
+                if r.get("logged_at")
+            }
+            days_logged.discard("")
             if days_logged:
                 weekly["nutrition_days_logged"] = len(days_logged)
         except Exception as e:
@@ -2047,7 +2076,8 @@ async def daily_insight(
             next_workout = None
         else:
             snapshot, next_workout = await loop.run_in_executor(
-                None, _collect_snapshot, sb, user_id, local_date_iso
+                None, _collect_snapshot, sb, user_id, local_date_iso,
+                tz_resolved or "UTC",
             )
 
         from zoneinfo import ZoneInfo

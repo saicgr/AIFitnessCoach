@@ -49,7 +49,13 @@ from zoneinfo import ZoneInfo
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
-from core.timezone_utils import resolve_timezone, user_today_date
+from core.timezone_utils import (
+    local_day_bounds,
+    local_range_bounds,
+    resolve_timezone,
+    user_today_date,
+    utc_to_local_date,
+)
 
 logger = logging.getLogger("user_history_snapshot")
 
@@ -218,7 +224,9 @@ def _yesterday_block(sb, user_id: str, yesterday_iso: str, tz: ZoneInfo,
                     {
                         "exercise": p.get("exercise_name"),
                         "value": f"{int(p['weight_kg']) if p.get('weight_kg') is not None else '?'}x{p.get('reps') or '?'}",
-                        "date": (p.get("achieved_at") or "")[:10],
+                        # achieved_at is UTC — slicing it would show an evening
+                        # PR as the next day for western users.
+                        "date": utc_to_local_date(p.get("achieved_at"), tz.key),
                     }
                     for p in (pr.data or [])
                 ]
@@ -232,13 +240,16 @@ def _yesterday_block(sb, user_id: str, yesterday_iso: str, tz: ZoneInfo,
 
     # Nutrition
     try:
-        start_iso = f"{yesterday_iso}T00:00:00+00:00"
-        end_iso = f"{yesterday_iso}T23:59:59+00:00"
+        # logged_at is UTC timestamptz — the window has to be the user's LOCAL
+        # day mapped into UTC, half-open. Gluing the local date onto "+00:00"
+        # spans 20:00 the previous evening → 19:59 for a UTC-4 user, which
+        # counted last night's dinners as this day's calories.
+        start_iso, end_iso = local_day_bounds(yesterday_iso, tz.key)
         fl = sb.client.table("food_logs").select(
             "total_calories, protein_g, fiber_g, logged_at, meal_type, deleted_at"
         ).eq("user_id", user_id).gte(
             "logged_at", start_iso
-        ).lte("logged_at", end_iso).is_("deleted_at", "null").execute()
+        ).lt("logged_at", end_iso).is_("deleted_at", "null").execute()
         rows = fl.data or []
         if rows:
             cal = sum(int(r.get("total_calories") or 0) for r in rows)
@@ -333,11 +344,20 @@ def _seven_day_patterns(sb, user_id: str, today_local: date, tz: ZoneInfo,
 
     # Food log aggregates over last 7d.
     try:
+        # logged_at is UTC timestamptz; the shared start_iso/end_iso above are
+        # local dates glued to "+00:00" and are shifted by the user's offset.
+        # The /7.0 denominators below only hold if this window is exactly the
+        # seven whole LOCAL days [today-7, today), so derive it from the zone.
+        food_start_iso, food_end_iso = local_range_bounds(
+            start_local.isoformat(),
+            (today_local - timedelta(days=1)).isoformat(),
+            tz.key,
+        )
         fl = sb.client.table("food_logs").select(
             "total_calories, protein_g, logged_at, meal_type, deleted_at"
         ).eq("user_id", user_id).gte(
-            "logged_at", start_iso
-        ).lt("logged_at", end_iso).is_("deleted_at", "null").execute()
+            "logged_at", food_start_iso
+        ).lt("logged_at", food_end_iso).is_("deleted_at", "null").execute()
         rows = fl.data or []
         # Bucket per local date.
         by_day: Dict[str, Dict[str, Any]] = defaultdict(
@@ -536,7 +556,8 @@ def _strain_volume_signals(sb, user_id: str, today_local: date) -> Dict[str, Any
     return out
 
 
-def _thirty_day_trends(sb, user_id: str, today_local: date) -> Dict[str, Any]:
+def _thirty_day_trends(sb, user_id: str, today_local: date,
+                       tz: ZoneInfo) -> Dict[str, Any]:
     """Compare last 30d vs prior 30d for volume/sleep/weight."""
     out: Dict[str, Any] = {}
     end_iso = f"{today_local.isoformat()}T00:00:00+00:00"
@@ -573,16 +594,28 @@ def _thirty_day_trends(sb, user_id: str, today_local: date) -> Dict[str, Any]:
 
     # Weight trend from weight_logs.
     try:
+        # logged_at is UTC timestamptz — the shared *_iso bounds above are local
+        # dates glued to "+00:00", so derive the 60-local-day window from the
+        # user's zone instead, and split the two periods on the LOCAL day a row
+        # belongs to (an evening weigh-in must not fall into the prior period).
+        w_start_iso, w_end_iso = local_range_bounds(
+            p2_start.isoformat(),
+            (today_local - timedelta(days=1)).isoformat(),
+            tz.key,
+        )
         wl = sb.client.table("weight_logs").select(
             "weight_kg, logged_at"
         ).eq("user_id", user_id).gte(
-            "logged_at", p2_start_iso
-        ).lt("logged_at", end_iso).order("logged_at").execute()
+            "logged_at", w_start_iso
+        ).lt("logged_at", w_end_iso).order("logged_at").execute()
         rows = wl.data or []
+        p1_split = p1_start.isoformat()
         p1 = [float(r["weight_kg"]) for r in rows
-              if r.get("weight_kg") is not None and r.get("logged_at", "") >= p1_start_iso]
+              if r.get("weight_kg") is not None
+              and utc_to_local_date(r.get("logged_at"), tz.key) >= p1_split]
         p2 = [float(r["weight_kg"]) for r in rows
-              if r.get("weight_kg") is not None and r.get("logged_at", "") < p1_start_iso]
+              if r.get("weight_kg") is not None
+              and utc_to_local_date(r.get("logged_at"), tz.key) < p1_split]
         if p1 and p2:
             avg_p1 = statistics.mean(p1)
             avg_p2 = statistics.mean(p2)
@@ -625,13 +658,22 @@ def _thirty_day_trends(sb, user_id: str, today_local: date) -> Dict[str, Any]:
     return out
 
 
-def _prs_since(sb, user_id: str, since_iso: str) -> List[Dict[str, Any]]:
+def _prs_since(sb, user_id: str, since_iso: str, until_iso: str,
+               tz_str: str) -> List[Dict[str, Any]]:
+    """PRs inside the half-open UTC window [since_iso, until_iso).
+
+    personal_records.achieved_at is written as a naive ``datetime.now()`` by
+    personal_records_service, i.e. UTC on our servers — so it is filtered and
+    bucketed here as a UTC instant.
+    """
     try:
         pr = sb.client.table("personal_records").select(
             "exercise_name, weight_kg, reps, estimated_1rm_kg, achieved_at"
         ).eq("user_id", user_id).gte(
             "achieved_at", since_iso
-        ).order("achieved_at", desc=True).limit(50).execute()
+        ).lt("achieved_at", until_iso).order(
+            "achieved_at", desc=True
+        ).limit(50).execute()
         out = []
         for p in (pr.data or []):
             w = p.get("weight_kg")
@@ -645,7 +687,8 @@ def _prs_since(sb, user_id: str, since_iso: str) -> List[Dict[str, Any]]:
             out.append({
                 "exercise": p.get("exercise_name"),
                 "value": value,
-                "date": (p.get("achieved_at") or "")[:10],
+                # Local day, not the UTC prefix — a 9pm PR belongs to that night.
+                "date": utc_to_local_date(p.get("achieved_at"), tz_str),
             })
         return out
     except Exception as e:
@@ -941,12 +984,18 @@ async def history_snapshot(
             sb, user_id, today_local, tzinfo,
             calorie_target, protein_target, hydration_target_cups,
         )
-        thirty = _thirty_day_trends(sb, user_id, today_local)
+        thirty = _thirty_day_trends(sb, user_id, today_local, tzinfo)
 
-        prs_7d_since = f"{(today_local - timedelta(days=7)).isoformat()}T00:00:00+00:00"
-        prs_30d_since = f"{(today_local - timedelta(days=30)).isoformat()}T00:00:00+00:00"
-        prs_7d = _prs_since(sb, user_id, prs_7d_since)
-        prs_30d = _prs_since(sb, user_id, prs_30d_since)
+        # PR lookback windows are LOCAL calendar days (last 7 / last 30 through
+        # the end of today), converted to UTC — achieved_at is stored in UTC.
+        prs_7d_since, prs_until = local_range_bounds(
+            (today_local - timedelta(days=7)).isoformat(), today_iso, tz_resolved
+        )
+        prs_30d_since, _ = local_day_bounds(
+            (today_local - timedelta(days=30)).isoformat(), tz_resolved
+        )
+        prs_7d = _prs_since(sb, user_id, prs_7d_since, prs_until, tz_resolved)
+        prs_30d = _prs_since(sb, user_id, prs_30d_since, prs_until, tz_resolved)
 
         today_row = _today_workout_row(sb, user_id, today_iso)
         similar = _last_similar_workout(sb, user_id, today_row, today_iso)

@@ -42,6 +42,11 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from core.db import get_supabase_db
+from core.timezone_utils import (
+    get_user_today,
+    resolve_timezone,
+    utc_to_local_date,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -501,13 +506,16 @@ def _build_weight_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
 
     # get_weight_logs orders logged_at DESC → reverse for chronological chart.
     rows_chrono = list(reversed(rows))
+    # logged_at is a UTC timestamptz — bucket each weigh-in into the user's
+    # LOCAL day so an evening weigh-in isn't x-labeled as the next day.
+    tz = resolve_timezone(None, db, user_id)
     points: List[float] = []
     labels: List[str] = []
     for r in rows_chrono:
         v = _safe_num(r.get("weight_kg"))
         if v is not None and v > 0:
             points.append(round(v, 1))
-            labels.append(_day_label(r.get("logged_at")))
+            labels.append(_day_label(utc_to_local_date(r.get("logged_at"), tz)))
 
     if len(points) < 2:
         return []
@@ -562,14 +570,22 @@ def _build_volume_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
         return []
 
     cutoff = _utc_today() - timedelta(weeks=_VOLUME_WEEKS)
+    # recorded_at is a UTC timestamptz — bucket each set into the user's LOCAL
+    # day before rolling it up into an ISO week, so a late-evening set lands in
+    # the right calendar week rather than being pushed forward a day (which can
+    # cross a week boundary). Slicing the raw UTC string would misattribute it.
+    tz = resolve_timezone(None, db, user_id)
     # week_key (ISO year-week) → [total_volume, week_start_date]
     buckets: Dict[tuple, Dict[str, Any]] = {}
     for log in logs:
         recorded = log.get("recorded_at")
         if not recorded:
             continue
+        local_d = utc_to_local_date(recorded, tz)
+        if not local_d:
+            continue
         try:
-            d = datetime.fromisoformat(str(recorded)[:10]).date()
+            d = datetime.fromisoformat(local_d).date()
         except (ValueError, TypeError):
             continue
         if d < cutoff:
@@ -635,8 +651,19 @@ def _build_nutrition_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
     """Protein (bar) + calories (line) over the trailing 7 LOGGED days, plus a
     latest-day protein-vs-target headline. Grounded in food_logs only."""
     try:
-        start = (_utc_today() - timedelta(days=6)).isoformat()
-        summaries = db.get_weekly_nutrition_summary(user_id, start) or []
+        # The weekly summary slices a UTC `logged_at` per day, so it needs the
+        # user's tz — passing it is now mandatory (the helper raises without it).
+        # No Request reaches this builder (it runs from chat/briefing/cron
+        # contexts), so we resolve from users.timezone. `start` is anchored on
+        # the user's LOCAL today, not UTC today, so a user ahead of UTC doesn't
+        # lose today from the trailing-7 window.
+        tz = resolve_timezone(None, db, user_id)
+        start = (
+            datetime.fromisoformat(get_user_today(tz)) - timedelta(days=6)
+        ).date().isoformat()
+        summaries = db.get_weekly_nutrition_summary(
+            user_id, start, timezone_str=tz
+        ) or []
     except Exception as e:
         logger.debug(f"chat_blocks(nutrition): query failed: {e}")
         return []
