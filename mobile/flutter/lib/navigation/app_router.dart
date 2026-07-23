@@ -241,6 +241,13 @@ class _AuthStateNotifier extends ChangeNotifier {
     _ref.listen<AccessibilitySettings>(accessibilityProvider, (_, __) {
       notifyListeners();
     });
+    // Eagerly construct the pre-auth quiz store (this `read` is what kicks its
+    // async load) and re-run the redirect the moment it finishes. Without the
+    // listener, `_getNextOnboardingStep` skips the quiz gate while the store is
+    // in flight and nothing would ever re-evaluate it, so a genuinely-new user
+    // could walk past the quiz entirely.
+    final quizNotifier = _ref.read(preAuthQuizProvider.notifier);
+    quizNotifier.loadedListenable.addListener(notifyListeners);
     // Onboarding v5.1: aiConsentProvider listener removed — consent is now
     // captured as an inline checkbox on the sign-in screen, not a separate
     // gated screen, so we no longer need a redirect-driving listener.
@@ -352,12 +359,24 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
   // This prevents race condition where SharedPreferences hasn't loaded yet on app reopen
   // and also handles users who signed up before the pre-auth quiz existed
   if (!user.isCoachSelected && !user.isPaywallComplete) {
+    // The quiz store loads from SharedPreferences asynchronously, but this is a
+    // synchronous redirect callback — so an early redirect can observe the
+    // EMPTY initial state and cannot distinguish "still loading" from "this
+    // user never took the quiz". Routing to /pre-auth-quiz on that ambiguity is
+    // destructive: the quiz has no resume, so it restarts at question 1 and the
+    // user re-answers everything. Never bounce on an unloaded store — the
+    // router re-evaluates as soon as it lands (routerProvider listens to
+    // `loadedListenable`), and the worst case is one extra step forward, which
+    // that re-evaluation corrects.
+    final quizNotifier = ref.read(preAuthQuizProvider.notifier);
     final quizData = ref.read(preAuthQuizProvider);
     // Trust SERVER truth as well as local state. The local quiz is wiped on an
     // account-switch / reinstall (and on the delete-recreate test loop), which
     // bounced users who'd JUST finished pre-onboarding back to step 1. If the
     // backend already has their quiz answers, never re-route them to the quiz.
-    if (!quizData.isComplete && !user.hasCompletedPreAuthQuiz) {
+    if (quizNotifier.isLoaded &&
+        !quizData.isComplete &&
+        !user.hasCompletedPreAuthQuiz) {
       return '/pre-auth-quiz';
     }
   }
