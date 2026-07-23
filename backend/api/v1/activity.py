@@ -22,7 +22,92 @@ router = APIRouter(prefix="/activity", tags=["Activity"])
 logger = get_logger(__name__)
 
 
-def _require_health_consent(user_id: str) -> None:
+# Machine-readable reason codes for this router's two DIFFERENT 403s, returned
+# as a response header. Both used to be bare 403s with only a human-readable
+# `detail` string, which made them indistinguishable — on the wire AND in the
+# logs. That matters because the client's ActivityService trips a *persistent*
+# "health consent denied" gate on any 403 from /activity/sync, so an ownership
+# 403 (a bug) silently disabled health sync as if the user had refused consent.
+# Sent as a header rather than inside `detail` because the Flutter client casts
+# `detail` with `as String?` — a dict there would throw a TypeError client-side.
+_ERR_CODE_HEADER = "X-Zealova-Error-Code"
+_ERR_CONSENT_REQUIRED = "health_data_consent_required"
+_ERR_USER_MISMATCH = "user_id_mismatch"
+_ERR_CONSENT_UNVERIFIABLE = "health_data_consent_unverifiable"
+
+
+def _consent_state(user_id: str) -> tuple[bool, str]:
+    """Return ``(granted, evidence)`` for the user's health-data consent flag.
+
+    `has_health_data_consent` (via `consent_guard.load_consent_flags`) fails
+    **closed**: any DB exception is swallowed and reported as
+    ``health_data_consent=False``. That is the right call for the *gate* — we
+    must never persist Art. 9 data we cannot prove consent for — but it makes
+    "the user has not opted in" and "Supabase was unreachable" indistinguishable
+    to the caller. During a Supabase outage every single sync then logged
+    "consent not granted" for users who HAD granted it, and (worse) got a 403,
+    which the Flutter ActivityService latches into a *persistent* per-install
+    "consent denied" gate — so a transient outage permanently disabled health
+    sync for consenting users until they toggled the setting.
+
+    So: the authoritative gate below still calls `has_health_data_consent`
+    (fail-closed semantics preserved, unchanged). Only when it refuses do we run
+    this one extra read to establish *why*, and report the two cases
+    differently — a provable "flag is false" is a 403, an unreadable flag is a
+    503 (transient, retryable, not latched).
+
+    ``evidence`` is one of:
+      * ``"flag_false"``       — a settings row exists and the flag is false/NULL
+      * ``"no_settings_row"``  — no row yet (opt-in has never been recorded)
+      * ``"lookup_failed: …"`` — the read itself failed; consent is UNKNOWN
+    """
+    try:
+        from core.supabase_client import get_supabase
+
+        result = (
+            get_supabase()
+            .client.table("user_ai_settings")
+            .select("health_data_consent")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+    except Exception as exc:  # noqa: BLE001 — the exception IS the evidence
+        return (False, f"lookup_failed: {type(exc).__name__}: {exc}")
+
+    rows = getattr(result, "data", None) or []
+    if not rows:
+        return (False, "no_settings_row")
+    granted = bool(rows[0].get("health_data_consent"))
+    return (granted, "flag_true" if granted else "flag_false")
+
+
+def _require_own_user(current_user: dict, claimed_user_id, endpoint: str) -> None:
+    """Reject a request whose body claims a user_id other than the caller's.
+
+    `current_user["id"]` is the backend `users.id` (get_current_user resolves it
+    from the JWT `sub` via `users.auth_id`), which is the same id the client
+    stores and sends in these payloads — do NOT compare against `auth_id` here.
+
+    Logs the refusal: this router's user_id lives in the request BODY, and the
+    logging middleware only extracts user_id from the query string or a path
+    UUID, so a rejected sync otherwise produced a bare `403` line with no user
+    and no reason.
+    """
+    caller_id = str(current_user.get("id"))
+    if caller_id != str(claimed_user_id):
+        logger.warning(
+            f"[{endpoint}] 403 user_id mismatch — caller={caller_id} "
+            f"claimed={claimed_user_id}"
+        )
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied",
+            headers={_ERR_CODE_HEADER: _ERR_USER_MISMATCH},
+        )
+
+
+def _require_health_consent(user_id: str, endpoint: str = "activity") -> None:
     """Refuse to persist GDPR Art. 9 / special-category health data without
     the user's explicit opt-in captured in user_ai_settings.health_data_consent.
 
@@ -30,8 +115,57 @@ def _require_health_consent(user_id: str) -> None:
     capture. The frontend should never hit this endpoint if consent is
     off, but a defensive 403 here guarantees a hostile or stale client
     cannot push HealthKit data into our database without opt-in.
+
+    A refusal here is a NORMAL state for a fresh account (health_data_consent
+    defaults to FALSE until the user opts in), so it is logged at WARNING with
+    the reason rather than left silent — an un-logged consent refusal is
+    indistinguishable from an auth failure when triaging a 403.
+
+    Two different refusals, deliberately given two different status codes
+    (see `_consent_state` for why):
+      * 403 — we READ the flag and it is false/absent. Permanent until the user
+        opts in; the client is right to stop retrying.
+      * 503 — we could NOT read the flag. Consent is unknown, so we still write
+        nothing (fail closed), but the caller is told this is transient so a
+        Supabase blip cannot latch a consenting user's sync off forever.
     """
     if not has_health_data_consent(user_id):
+        granted, evidence = _consent_state(user_id)
+        if evidence.startswith("lookup_failed"):
+            logger.error(
+                f"[{endpoint}] 503 health-data consent UNKNOWN for user {user_id} "
+                f"— the consent lookup itself failed ({evidence}). Refusing the "
+                "write (fail closed); NOT asserting the user withheld consent."
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Could not verify your health-data privacy setting right now. "
+                    "No data was stored. Please try again shortly."
+                ),
+                headers={_ERR_CODE_HEADER: _ERR_CONSENT_UNVERIFIABLE},
+            )
+        if granted:
+            # The gate's read and this read disagree — almost certainly the user
+            # flipped the toggle in between, or the gate's read failed and was
+            # masked as False. Either way we cannot claim they withheld consent.
+            logger.error(
+                f"[{endpoint}] 503 health-data consent gate refused user {user_id} "
+                "but a re-read shows the flag is TRUE — treating as transient "
+                "rather than asserting a refusal the data does not support."
+            )
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Could not verify your health-data privacy setting right now. "
+                    "No data was stored. Please try again shortly."
+                ),
+                headers={_ERR_CODE_HEADER: _ERR_CONSENT_UNVERIFIABLE},
+            )
+        logger.warning(
+            f"[{endpoint}] 403 health-data consent not granted for user {user_id} "
+            f"(evidence={evidence})"
+        )
         raise HTTPException(
             status_code=403,
             detail=(
@@ -40,6 +174,7 @@ def _require_health_consent(user_id: str) -> None:
                 "allow Zealova to store measurements from Health Connect "
                 "or HealthKit."
             ),
+            headers={_ERR_CODE_HEADER: _ERR_CONSENT_REQUIRED},
         )
 
 
@@ -254,9 +389,8 @@ async def sync_daily_activity(input: DailyActivityInput, background_tasks: Backg
 
     Uses upsert to update existing record for the same date or create new one.
     """
-    if str(current_user["id"]) != str(input.user_id):
-        raise HTTPException(status_code=403, detail="Access denied")
-    _require_health_consent(str(input.user_id))
+    _require_own_user(current_user, input.user_id, "activity/sync")
+    _require_health_consent(str(input.user_id), "activity/sync")
     logger.info(f"Syncing activity for user {input.user_id} on {input.activity_date}")
 
     db = get_supabase_db()
@@ -359,9 +493,8 @@ async def override_daily_activity(
     ``manual_override_fields`` so a later wearable re-sync can never silently
     overwrite the correction (see `upsert_daily_activity`).
     """
-    if str(current_user["id"]) != str(input.user_id):
-        raise HTTPException(status_code=403, detail="Access denied")
-    _require_health_consent(str(input.user_id))
+    _require_own_user(current_user, input.user_id, "activity/override")
+    _require_health_consent(str(input.user_id), "activity/override")
 
     db = get_supabase_db()
     candidate = {
@@ -717,9 +850,13 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
         return {"synced": 0, "results": []}
 
     user_id = activities[0].user_id
-    if str(current_user["id"]) != str(user_id):
-        raise HTTPException(status_code=403, detail="Access denied")
-    _require_health_consent(str(user_id))
+    # Ownership must be checked on EVERY item, not just activities[0]. The loop
+    # below writes `activity.user_id` verbatim, so validating only the first
+    # element let a payload whose first entry carried the caller's own id write
+    # health rows into any other account.
+    for activity in activities:
+        _require_own_user(current_user, activity.user_id, "activity/sync-batch")
+    _require_health_consent(str(user_id), "activity/sync-batch")
     logger.info(f"Batch syncing {len(activities)} activity records for user {user_id}")
 
     db = get_supabase_db()

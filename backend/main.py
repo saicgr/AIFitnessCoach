@@ -1111,7 +1111,24 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             )
         except Exception:
             pass
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    # `exc.headers` MUST be forwarded. This handler REPLACES FastAPI's built-in
+    # http_exception_handler, which passes `headers=exc.headers` through — so
+    # dropping them here silently deleted every header any route attached to an
+    # HTTPException. That broke two contracts at once:
+    #   * `WWW-Authenticate` on 401s (RFC 7235 requires it; FastAPI's own
+    #     OAuth2 helpers set it), and
+    #   * the machine-readable reason codes routes attach so a client can tell
+    #     two same-status refusals apart (e.g. `X-Zealova-Error-Code` on
+    #     /activity/*'s consent-vs-ownership 403s).
+    # Headers set on the exception win over the JSON defaults for the same key
+    # only if a route deliberately sets one; Starlette's `init_headers` fills in
+    # content-type/content-length for whatever it isn't given, so the normal
+    # (headers=None) path is byte-identical to before this change.
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=getattr(exc, "headers", None),
+    )
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
