@@ -34,7 +34,13 @@ class ZealovaChip extends StatelessWidget {
       child: Container(
         height: 28,
         padding: const EdgeInsets.symmetric(horizontal: 12),
-        alignment: Alignment.center,
+        // NO `alignment` here: a Container with a non-null alignment wraps its
+        // child in an Align, which expands to the parent's MAX width under a
+        // Wrap's loose constraints — so every chip claimed a full row and the
+        // post-meal check-in ("how your body feels" / "appetite") became a
+        // scroll-requiring stack of full-width bars. The inner Row is already
+        // mainAxisSize.min, so without alignment the chip sizes to its content
+        // and packs horizontally like a real chip.
         decoration: BoxDecoration(
           border: Border.all(
               color: selected ? tc.accent : AppColors.cardBorder),

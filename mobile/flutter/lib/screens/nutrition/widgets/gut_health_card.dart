@@ -110,7 +110,7 @@ class GutHealthCard extends ConsumerWidget {
                 Text(
                   hasLog && lastItem != null
                       ? 'Last: Type ${lastItem.type} · ${lastItem.label}'
-                      : 'Log a Bristol entry to track your rhythm',
+                      : "Log today's bathroom visit — takes 5 seconds",
                   style: TextStyle(
                     fontSize: 12,
                     color: hasLog && lastItem != null && _isIdeal(lastItem.type)
@@ -248,8 +248,13 @@ class _GutHealthSheetState extends ConsumerState<_GutHealthSheet> {
               ),
               const SizedBox(height: 6),
               Text(
-                'Bristol Stool Scale — 1 (hard) to 7 (liquid). 3–4 is ideal.',
+                'Consistency — 1 (hard lumps) to 7 (liquid). 3–4 is the healthy range.',
                 style: ZType.ser(13, color: tc.textMuted),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'This is the Bristol scale, the standard doctors use to read digestion.',
+                style: ZType.ser(11.5, color: tc.textMuted),
               ),
               const SizedBox(height: 16),
 

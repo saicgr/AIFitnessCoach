@@ -457,25 +457,39 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             rect == null ? null : rect.bottom + tip.targetPadding.bottom;
 
         // A target that spans most of the usable band (e.g. an entire
-        // tab haloed as one anchor) has no meaningful "spotlight": the
-        // cutout just dims thin margins, and there is nowhere adjacent to
-        // place the card so it ends up clamped under the status bar.
-        // Treat such a target as targetless — an even full-screen dim
-        // plus a clean bottom-anchored card that clears the nav.
+        // expanded section haloed as one anchor) can't be spotlighted whole —
+        // the cutout would just dim thin margins. Previously we dropped the
+        // cutout entirely and full-dimmed, which read as "nothing is
+        // highlighted" (the menu-analysis "Recommended for you" step bug).
+        // Instead, CLAMP an oversized target to a header-height band anchored
+        // at its TOP so we still punch a meaningful cutout around the section
+        // header, and place the card relative to that clamped band.
         final usableBand = safeBottom - safeTop;
-        final targetTooLarge = rect != null &&
+        final bool oversize = rect != null &&
             usableBand > 0 &&
             (spotBottom! - spotTop!) >= usableBand * 0.7;
-        // Whether to punch a cutout: only for a real, reasonably-sized
-        // target. `false` → the painter draws an even dim.
-        final showCutout = rect != null && !targetTooLarge;
+
+        Rect? effRect = rect;
+        double? effSpotTop = spotTop;
+        double? effSpotBottom = spotBottom;
+        if (rect != null && oversize) {
+          final clampedBottom =
+              (rect.top + usableBand * 0.35).clamp(rect.top, rect.bottom);
+          effRect = Rect.fromLTRB(
+              rect.left, rect.top, rect.right, clampedBottom);
+          effSpotTop = effRect.top - tip.targetPadding.top;
+          effSpotBottom = effRect.bottom + tip.targetPadding.bottom;
+        }
+
+        // Whether to punch a cutout: whenever we have any (possibly clamped)
+        // target rect. `false` only when layout hasn't resolved a rect yet.
+        final showCutout = effRect != null;
 
         Widget positionedCard;
-        if (rect == null || targetTooLarge) {
-          // No usable target (layout not resolved yet, or the target is
-          // too large to spotlight) — bottom-anchor the card inside the
-          // safe band so it clears the nav and never jams under the
-          // status bar.
+        if (rect == null) {
+          // No usable target yet (layout not resolved) — bottom-anchor the
+          // card inside the safe band so it clears the nav and never jams
+          // under the status bar.
           positionedCard = Positioned(
             left: sideInset,
             right: sideInset,
@@ -488,10 +502,10 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             ),
           );
         } else {
-          // Reached only when `rect`/`spotTop`/`spotBottom` are non-null
-          // (a real, reasonably-sized target).
-          final spotTopV = spotTop!;
-          final spotBottomV = spotBottom!;
+          // Reached when we have a target rect (possibly clamped to a
+          // header-height band for an oversized section).
+          final spotTopV = effSpotTop!;
+          final spotBottomV = effSpotBottom!;
           // Room on each side BETWEEN the spotlight and the safe edge.
           final spaceBelow = safeBottom - (spotBottomV + gap);
           final spaceAbove = (spotTopV - gap) - safeTop;
@@ -573,10 +587,11 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
                     return CustomPaint(
                       size: Size(constraints.maxWidth, constraints.maxHeight),
                       painter: _SpotlightPainter(
-                        // Suppress the cutout for an unresolved or
-                        // oversized target — an even dim reads cleaner
-                        // than a near-full-screen ring.
-                        target: showCutout ? rect : null,
+                        // Punch a cutout around the (possibly clamped) target.
+                        // An oversized section is clamped to a header band
+                        // above, so this highlights the header instead of
+                        // dropping the cutout and full-dimming.
+                        target: showCutout ? effRect : null,
                         padding: tip.targetPadding,
                         radius: tip.targetRadius,
                         accent: isDark ? AppColors.cyan : AppColorsLight.cyan,

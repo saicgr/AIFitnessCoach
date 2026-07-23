@@ -418,8 +418,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   /// single full-bleed animated background can sit behind all of it — the
   /// plan card stays outside, in the solid area below.
   Widget _buildHeroZone(OnboardingTheme t) {
-    // Progress reflects pre-auth quiz completion. Users who come directly to
-    // sign-in from /intro (without doing the quiz) shouldn't see "90% done".
+    // Quiz completion still drives the copy below, but no progress meter is
+    // shown — a "90%" pill reads as an arbitrary number on the one screen the
+    // user has to act on, so the header is just the back affordance now.
     final quizData = ref.watch(preAuthQuizProvider);
     final quizStarted =
         !widget.forceReturning &&
@@ -427,13 +428,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             quizData.fitnessLevel != null ||
             quizData.daysPerWeek != null ||
             (quizData.equipment?.isNotEmpty ?? false));
-    final showProgressPill = quizStarted;
-    final progressFraction = quizData.isComplete ? 0.9 : 0.5;
-    final progressPercent = (progressFraction * 100).round();
-    // "One quick step left" only holds up once we're actually at 90% —
-    // coach-selection/personal-info still follow sign-in either way, so
-    // don't imply near-completion earlier than that.
-    final showStepMicrocopy = quizData.isComplete;
 
     // Intro carousel now routes *everyone* here via a single "Continue"
     // button, so the copy must work for both new sign-ups and returning
@@ -492,85 +486,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
             ),
           ),
           const Spacer(),
-          // Glassmorphic progress pill — only shown if the user has started the quiz
-          if (showProgressPill)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: t.cardFill,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: t.borderDefault),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(
-                            width: 60,
-                            height: 6,
-                            child: Stack(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: t.borderDefault,
-                                    borderRadius: BorderRadius.circular(3),
-                                  ),
-                                ),
-                                FractionallySizedBox(
-                                  widthFactor: progressFraction,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          t.textPrimary.withValues(alpha: 0.9),
-                                          t.textPrimary.withValues(alpha: 0.6),
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '$progressPercent%',
-                            style: TextStyle(
-                              color: t.textPrimary.withValues(alpha: 0.9),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (showStepMicrocopy) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'One quick step left',
-                    style: TextStyle(
-                      color: t.accent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          const Spacer(),
-          const SizedBox(width: 44),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms);
@@ -578,8 +493,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     final heroContent = Column(
       children: [
         headerRow,
-        // Breathing room so the progress pill doesn't crowd the logo.
-        const SizedBox(height: 14),
+        // Holds the logo band at the same vertical position it sat at when the
+        // progress pill occupied the header, so the hero scene inset below
+        // still clears it.
+        const SizedBox(height: 30),
         // Pulsing app icon
         AnimatedBuilder(
           animation: _pulseController,
@@ -680,11 +597,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            // Inset the animated texture below the progress-pill + logo band.
+            // Inset the animated texture below the header + logo band.
             // The scenes anchor from top:0 of their own box, so filling the
             // whole zone painted the calendar-grid tiles right behind the
             // semi-transparent logo (they showed THROUGH it). Starting the
-            // background lower keeps the pill and logo on clean background.
+            // background lower keeps the header and logo on clean background.
             // Its top scrim stop is transparent, so there's no hard edge.
             Positioned(
               top: 150,

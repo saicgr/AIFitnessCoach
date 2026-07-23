@@ -115,6 +115,7 @@ import '../../core/services/fitness_snapshot_service.dart';
 import '../../core/perf/perf_trace.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
 
@@ -208,13 +209,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         title: l10n.homeScreenTourQuicklogTitle,
         description: l10n.homeScreenTourQuicklogDesc,
         position: TooltipPosition.above,
-        // Animated glow ring (instead of the flat solid ring) so the small "+"
-        // FAB clearly reads as the highlighted target. Warm hues match the
-        // FAB's orange accent border.
+        // Animated full-spectrum sweep ring so the small "+" FAB is unmistakably
+        // the highlighted target — a multi-hue rainbow reads as "special" where
+        // the old three-warm-hue ring just looked like a solid orange glow.
         highlightColors: const [
-          AppColors.orange,
-          AppColors.orangeLight,
-          AppColors.yellow,
+          Color(0xFFFF3B30), // red
+          Color(0xFFFF9500), // orange
+          Color(0xFFFFCC00), // yellow
+          Color(0xFF34C759), // green
+          Color(0xFF00C7BE), // teal
+          Color(0xFF007AFF), // blue
+          Color(0xFFAF52DE), // violet
         ],
       ),
       AppTourStep(
@@ -277,7 +282,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Auto-refresh when returning to app (with rate limiting). It has its
       // own internal guards but a defensive try here means any escape from
       // those guards still doesn't crash the app.
-      _autoRefreshIfNeeded();
+      // `fromResume: true` — this is a real foreground transition (the app was
+      // backgrounded), which is the only path allowed to refresh the coach
+      // card's numbers. The `didChangeDependencies` path (a routine paint /
+      // nav-back) deliberately passes false.
+      _autoRefreshIfNeeded(fromResume: true);
       // Pull latest CustomerInfo from RevenueCat so subscription state
       // reflects any out-of-app changes the user made (e.g. cancelling
       // from Google Play's Subscriptions page while the app was
@@ -353,7 +362,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// Auto-refresh workouts if enough time has passed since last refresh
   /// M13: Uses 5-minute interval and sets _lastRefreshTime at start to prevent double-refreshes
   /// L9: Only invalidates workoutsProvider after a successful refresh (staleness check)
-  Future<void> _autoRefreshIfNeeded() async {
+  Future<void> _autoRefreshIfNeeded({bool fromResume = false}) async {
     if (!mounted) return;
 
     final now = DateTime.now();
@@ -398,12 +407,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ref.invalidate(p);
         }
 
-        // Refresh the coach card's graph numbers on resume (cheap, no Gemini)
-        // so a return-from-background reflects anything logged elsewhere — and,
-        // importantly, the overnight Health-Connect sleep import that runs just
-        // below in `_checkForWorkoutImports()`. The sleep-value change also
-        // trips the coordinator's sleep listener, which regenerates the text.
-        ref.read(coachRefreshCoordinatorProvider).bumpNumbers();
+        // Coach card freshness on a real foreground transition only.
+        //
+        // What bumpNumbers() actually does (see
+        // `dailyCoachInsightNumbersRefreshProvider`): a debounced
+        // `/coach/daily-insight?fresh=true` — `fresh` alone, NOT `refresh`.
+        // The server recomputes the grounded graph blocks from the DB and
+        // returns the CACHED AI text: no Gemini call, no AI cost, no 3-4s
+        // regenerate. (An earlier comment here claimed the opposite; that was
+        // wrong, and dropping the call on that premise cost real freshness.)
+        // The expensive path is `dailyCoachInsightRefreshProvider`
+        // (`refresh=true&fresh=true`), which is NOT what bumpNumbers calls.
+        //
+        // Why it has to run here: the coordinator only listens to nutrition,
+        // workout, fasting and sleep. Every OTHER block on the card — steps /
+        // activity, hydration, weight, habit + streak counters — has no
+        // listener, so a change to any of them while the app was backgrounded
+        // (or made on another device) would never reach the card. Resume is
+        // the one cheap moment to reconcile them.
+        //
+        // Why it does NOT reintroduce fresh=true on routine paints: only the
+        // `AppLifecycleState.resumed` path passes fromResume, so a nav-back /
+        // rebuild (`didChangeDependencies`) never triggers it, and the
+        // 5-minute `_minRefreshInterval` gate above bounds it further. The
+        // coordinator's own 1.2s debounce collapses this with any listener
+        // bump firing from the invalidations above into ONE fetch.
+        if (fromResume) {
+          ref.read(coachRefreshCoordinatorProvider).bumpNumbers();
+        }
 
         // L9: The refresh() call above already updates provider state internally,
         // so we avoid a redundant ref.invalidate(workoutsProvider) which would
@@ -1164,9 +1195,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () async {
           debugPrint('🔄 [Home] Pull-to-refresh triggered');
+          // The GET-coalescing barrier is opened by [AppRefreshIndicator]
+          // before this handler runs — including ahead of the `refreshUser()`
+          // call below, which is why Home used to bump it by hand here. That
+          // hand-rolled bump is gone: it is the chokepoint's job now, for this
+          // screen and every other one.
           _lastRefreshTime = DateTime.now();
           // Reset carousel auto-generation so it can re-evaluate
           HeroWorkoutCarousel.resetAutoGeneration();
