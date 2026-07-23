@@ -180,6 +180,68 @@ class PromptContextResponse(BaseModel):
 
 
 # =============================================================================
+# API field -> senior_recovery_settings column mapping
+# =============================================================================
+# This module's field names drifted from the table migration 113 actually
+# created. Eight are pure rename drift (the column exists under another name);
+# six had NO column at all until migration 2318 added them.
+#
+# Why this mattered: PostgREST rejects an ENTIRE write payload when one key is
+# not a real column (PGRST204 / 42703), so every PUT /senior-fitness/{id}/settings
+# that touched any drifted field silently failed in full — including its valid
+# keys — behind the endpoint's try/except. Reads were equally dead: select("*")
+# succeeds, but every drifted key came back missing and fell through to the
+# Pydantic default, so a senior's saved preferences were never actually applied.
+#
+# Canonical column names verified against:
+#   - backend/scripts/schema_columns_snapshot.json (production information_schema)
+#   - migrations/113_senior_recovery_scaling.sql (the CREATE TABLE)
+#   - services/senior_workout_service.py, the sibling implementation, whose
+#     `allowed_fields` whitelist already uses the real names
+#   - tests/test_senior_fitness_api.py `generate_mock_senior_settings()`
+#
+# Reads AND writes both go through this map, so the two sides cannot drift
+# apart again.
+SETTINGS_COLUMN_MAP: Dict[str, str] = {
+    # --- name drift: the column already existed under a different name -------
+    "recovery_multiplier": "recovery_multiplier",
+    # The schema models rest days per modality (strength / cardio); this API
+    # exposes a single generic knob. The strength floor is the binding
+    # constraint — /recovery-status compares it against the last completed
+    # workout of ANY type, and the SQL check_senior_recovery_status() reads the
+    # same column for strength days. min_rest_days_cardio keeps its own value
+    # and is deliberately NOT overwritten by this generic field.
+    "min_rest_days_between_workouts": "min_rest_days_strength",
+    "max_intensity_percent": "max_intensity_percent",
+    "prefer_low_impact": "prefer_low_impact",
+    # "high impact" here means jumping/pounding movements (the low-impact
+    # alternatives table below is jump/plyo/cardio work) — the same preference
+    # migration 113 filed under joint-friendly settings.
+    "avoid_high_impact": "avoid_high_impact_cardio",
+    "warmup_extension_minutes": "extended_warmup_minutes",
+    "cooldown_extension_minutes": "extended_cooldown_minutes",
+    "include_balance_work": "include_balance_exercises",
+    # --- added by migration 2318 (no column existed for these at all) --------
+    "rest_between_sets_multiplier": "rest_between_sets_multiplier",
+    "prefer_seated_exercises": "prefer_seated_exercises",
+    "include_warmup_extension": "include_warmup_extension",
+    "include_cooldown_extension": "include_cooldown_extension",
+    "joint_protection_mode": "joint_protection_mode",
+    "protected_joints": "protected_joints",
+}
+
+# Import-time regression gate: a settings field added to the request model
+# without a column mapping would otherwise be dropped on the floor (or, worse,
+# poison the whole payload again). Fail loudly at startup instead.
+_UNMAPPED_SETTINGS_FIELDS = set(SeniorSettingsUpdate.model_fields) - set(SETTINGS_COLUMN_MAP)
+if _UNMAPPED_SETTINGS_FIELDS:  # pragma: no cover - startup guard
+    raise RuntimeError(
+        "senior_fitness: SeniorSettingsUpdate fields have no senior_recovery_settings "
+        f"column mapping: {sorted(_UNMAPPED_SETTINGS_FIELDS)}"
+    )
+
+
+# =============================================================================
 # Helper Functions
 # =============================================================================
 
@@ -489,27 +551,23 @@ async def get_senior_settings(user_id: str,
 
         if settings_result.data and len(settings_result.data) > 0:
             settings = settings_result.data[0]
+            # Read through SETTINGS_COLUMN_MAP so stored preferences actually
+            # reach the response. Only values the row genuinely holds are passed
+            # through — the field defaults declared on SeniorFitnessSettings own
+            # the "not configured" case, so no default is duplicated here.
+            stored = {
+                field: settings[column]
+                for field, column in SETTINGS_COLUMN_MAP.items()
+                if settings.get(column) is not None
+            }
             return SeniorFitnessSettings(
                 user_id=user_id,
                 is_senior=is_senior,
                 age=age,
                 age_bracket=age_bracket,
-                recovery_multiplier=float(settings.get("recovery_multiplier", 1.0)),
-                rest_between_sets_multiplier=float(settings.get("rest_between_sets_multiplier", 1.0)),
-                min_rest_days_between_workouts=settings.get("min_rest_days_between_workouts", 1),
-                max_intensity_percent=settings.get("max_intensity_percent", 100),
-                prefer_low_impact=settings.get("prefer_low_impact", False),
-                avoid_high_impact=settings.get("avoid_high_impact", False),
-                prefer_seated_exercises=settings.get("prefer_seated_exercises", False),
-                include_warmup_extension=settings.get("include_warmup_extension", True),
-                warmup_extension_minutes=settings.get("warmup_extension_minutes", 5),
-                include_cooldown_extension=settings.get("include_cooldown_extension", True),
-                cooldown_extension_minutes=settings.get("cooldown_extension_minutes", 5),
-                include_balance_work=settings.get("include_balance_work", True),
-                joint_protection_mode=settings.get("joint_protection_mode", False),
-                protected_joints=settings.get("protected_joints") or [],
                 created_at=settings.get("created_at"),
                 updated_at=settings.get("updated_at"),
+                **stored,
             )
         else:
             # Return defaults based on age
@@ -543,36 +601,61 @@ async def update_senior_settings(user_id: str, update: SeniorSettingsUpdate,
             "id"
         ).eq("user_id", user_id).execute()
 
-        # Build update data
-        update_data = {}
+        # Build update data. Every key below is a REAL senior_recovery_settings
+        # column (see SETTINGS_COLUMN_MAP for the API-field -> column reasoning);
+        # writing the API's own names instead made PostgREST reject the whole
+        # payload with PGRST204, so nothing was ever persisted.
+        #
+        # The keys are spelled out literally, rather than mapped in a
+        # comprehension, so scripts/audit_supabase_column_drift.py can keep
+        # statically extracting this payload — a comprehension is invisible to
+        # it, which would silently retire the gate on the exact file that had
+        # the worst drift in the tree. The map-completeness assertion below is
+        # what keeps the two representations honest.
+        update_data: Dict[str, Any] = {}
         if update.recovery_multiplier is not None:
             update_data["recovery_multiplier"] = update.recovery_multiplier
         if update.rest_between_sets_multiplier is not None:
             update_data["rest_between_sets_multiplier"] = update.rest_between_sets_multiplier
         if update.min_rest_days_between_workouts is not None:
-            update_data["min_rest_days_between_workouts"] = update.min_rest_days_between_workouts
+            update_data["min_rest_days_strength"] = update.min_rest_days_between_workouts
         if update.max_intensity_percent is not None:
             update_data["max_intensity_percent"] = update.max_intensity_percent
         if update.prefer_low_impact is not None:
             update_data["prefer_low_impact"] = update.prefer_low_impact
         if update.avoid_high_impact is not None:
-            update_data["avoid_high_impact"] = update.avoid_high_impact
+            update_data["avoid_high_impact_cardio"] = update.avoid_high_impact
         if update.prefer_seated_exercises is not None:
             update_data["prefer_seated_exercises"] = update.prefer_seated_exercises
         if update.include_warmup_extension is not None:
             update_data["include_warmup_extension"] = update.include_warmup_extension
         if update.warmup_extension_minutes is not None:
-            update_data["warmup_extension_minutes"] = update.warmup_extension_minutes
+            update_data["extended_warmup_minutes"] = update.warmup_extension_minutes
         if update.include_cooldown_extension is not None:
             update_data["include_cooldown_extension"] = update.include_cooldown_extension
         if update.cooldown_extension_minutes is not None:
-            update_data["cooldown_extension_minutes"] = update.cooldown_extension_minutes
+            update_data["extended_cooldown_minutes"] = update.cooldown_extension_minutes
         if update.include_balance_work is not None:
-            update_data["include_balance_work"] = update.include_balance_work
+            update_data["include_balance_exercises"] = update.include_balance_work
         if update.joint_protection_mode is not None:
             update_data["joint_protection_mode"] = update.joint_protection_mode
         if update.protected_joints is not None:
             update_data["protected_joints"] = update.protected_joints
+
+        # Nothing the caller set may be dropped on the floor. If a field is
+        # added to SeniorSettingsUpdate + SETTINGS_COLUMN_MAP but a write branch
+        # above is forgotten, fail loudly here instead of persisting a partial
+        # save the user thinks succeeded.
+        expected_columns = {
+            SETTINGS_COLUMN_MAP[field]
+            for field in update.model_dump(exclude_none=True)
+        }
+        missing_columns = expected_columns - set(update_data)
+        if missing_columns:
+            raise RuntimeError(
+                "senior_fitness: settings update would silently drop column(s) "
+                f"{sorted(missing_columns)} — add the write branch above."
+            )
 
         if not update_data:
             raise HTTPException(status_code=400, detail="No fields to update")

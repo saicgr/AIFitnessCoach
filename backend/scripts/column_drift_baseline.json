@@ -1,0 +1,6 @@
+{
+ "description": "Known-existing phantom-column violations, accepted as a backlog so that `--check` can answer 'did MY change add one?'. Keyed file|table|column (no line numbers). Regenerate deliberately with --update-baseline after triaging; never to silence a fresh failure. --strict ignores this file.",
+ "generated": "2026-07-22",
+ "count": 0,
+ "entries": []
+}

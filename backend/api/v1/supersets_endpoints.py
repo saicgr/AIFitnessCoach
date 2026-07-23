@@ -82,7 +82,12 @@ async def save_favorite_superset_pair(user_id: str = Query(...), request: Favori
         if existing.data:
             raise HTTPException(status_code=400, detail="This superset pair is already saved")
 
-        # Create new favorite pair
+        # Create new favorite pair.
+        # exercise_1_id/exercise_2_id/muscle_1/muscle_2/category are added by
+        # migration 2320 — favorite_superset_pairs shipped (migration 108) with
+        # only the two exercise names, so every insert here was rejected
+        # wholesale (42703) and no favorite pair was ever saved. They are read
+        # back by FavoriteSupersetPairResponse in this same module.
         pair_id = str(uuid.uuid4())
         insert_data = {
             "id": pair_id,
@@ -115,9 +120,12 @@ async def save_favorite_superset_pair(user_id: str = Query(...), request: Favori
             exercise_2_id=row.get("exercise_2_id"),
             muscle_1=row.get("muscle_1"),
             muscle_2=row.get("muscle_2"),
-            category=row.get("category", "custom"),
+            # `category` is nullable for rows saved before migration 2320 added
+            # it; .get(default) would still hand a literal NULL to a non-optional
+            # response field, so fall back on the value, not the key.
+            category=row.get("category") or "custom",
             notes=row.get("notes"),
-            times_used=row.get("times_used", 0),
+            times_used=row.get("times_used") or 0,
             created_at=row["created_at"],
         )
 
@@ -157,9 +165,9 @@ async def get_favorite_superset_pairs(user_id: str,
                 exercise_2_id=row.get("exercise_2_id"),
                 muscle_1=row.get("muscle_1"),
                 muscle_2=row.get("muscle_2"),
-                category=row.get("category", "custom"),
+                category=row.get("category") or "custom",
                 notes=row.get("notes"),
-                times_used=row.get("times_used", 0),
+                times_used=row.get("times_used") or 0,
                 created_at=row["created_at"],
             ))
 

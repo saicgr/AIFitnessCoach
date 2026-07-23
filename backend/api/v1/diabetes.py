@@ -64,10 +64,15 @@ class DiabetesProfileResponse(BaseModel):
     diagnosis_date: Optional[str] = None
     target_glucose_min_mg_dl: float
     target_glucose_max_mg_dl: float
+    fasting_target_min_mg_dl: Optional[float] = None
+    fasting_target_max_mg_dl: Optional[float] = None
     a1c_target: Optional[float] = None
     uses_insulin_pump: bool
     uses_cgm: bool
     cgm_device: Optional[str] = None
+    notifications_enabled: Optional[bool] = None
+    low_glucose_alert_threshold: Optional[float] = None
+    high_glucose_alert_threshold: Optional[float] = None
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
 
@@ -486,6 +491,82 @@ def _insulin_row_to_response(r: dict) -> "InsulinDoseResponse":
     )
 
 
+# diabetes_profiles carries the same request-field/DB-column drift: the API has
+# always spoken target_glucose_min_mg_dl / target_glucose_max_mg_dl / a1c_target,
+# while migration 114 named the columns target_glucose_low / target_glucose_high /
+# target_a1c. Every write of the API names was rejected wholesale (42703), so no
+# profile ever persisted. Column names below are written as literals, never built
+# from a lookup table, so scripts/audit_supabase_column_drift.py can keep seeing
+# them.
+def _mg_dl_column(value: Optional[float]) -> Optional[int]:
+    """Glucose columns are INTEGER mg/dL; the request models type them as float.
+
+    PostgREST will not coerce 70.0 into an integer column, so round here.
+    """
+    if value is None:
+        return None
+    return int(round(float(value)))
+
+
+# diabetes_profiles.diabetes_type is the Postgres enum `diabetes_type`
+# ('type_1', 'type_2', 'gestational', 'prediabetes' — migration 114). The API and
+# the Flutter DiabetesType enum both spell the first two without the underscore,
+# so an otherwise-valid profile still fails on the enum cast. Translate at the
+# boundary; anything outside the enum is rejected loudly rather than coerced into
+# some default diabetes type, which would be a clinically wrong guess.
+_DIABETES_TYPE_TO_ENUM = {
+    "type1": "type_1",
+    "type_1": "type_1",
+    "type2": "type_2",
+    "type_2": "type_2",
+    "gestational": "gestational",
+    "prediabetes": "prediabetes",
+}
+
+
+def _diabetes_type_column(value: str) -> str:
+    normalized = _DIABETES_TYPE_TO_ENUM.get((value or "").strip().lower())
+    if normalized is None:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Unsupported diabetes_type "
+                f"'{value}'. Expected one of: type1, type2, gestational, prediabetes."
+            ),
+        )
+    return normalized
+
+
+# Reverse of the above, so the API keeps speaking its own vocabulary on the way
+# out. Without it a stored 'type_1' reaches the Flutter DiabetesType enum, which
+# does not know that spelling and silently falls back to type 2 — a wrong
+# diabetes type shown to the user.
+_ENUM_TO_DIABETES_TYPE = {"type_1": "type1", "type_2": "type2"}
+
+
+def _profile_row_to_response(r: dict) -> "DiabetesProfileResponse":
+    stored_type = r["diabetes_type"]
+    return DiabetesProfileResponse(
+        id=r["id"],
+        user_id=r["user_id"],
+        diabetes_type=_ENUM_TO_DIABETES_TYPE.get(stored_type, stored_type),
+        diagnosis_date=r.get("diagnosis_date"),
+        target_glucose_min_mg_dl=r["target_glucose_low"],
+        target_glucose_max_mg_dl=r["target_glucose_high"],
+        fasting_target_min_mg_dl=r.get("fasting_target_min_mg_dl"),
+        fasting_target_max_mg_dl=r.get("fasting_target_max_mg_dl"),
+        a1c_target=r.get("target_a1c"),
+        uses_insulin_pump=r["uses_insulin_pump"],
+        uses_cgm=r["uses_cgm"],
+        cgm_device=r.get("cgm_device"),
+        notifications_enabled=r.get("notifications_enabled"),
+        low_glucose_alert_threshold=r.get("low_glucose_alert_threshold"),
+        high_glucose_alert_threshold=r.get("high_glucose_alert_threshold"),
+        created_at=r.get("created_at"),
+        updated_at=r.get("updated_at"),
+    )
+
+
 def _a1c_row_to_response(r: dict) -> "A1cResultResponse":
     return A1cResultResponse(
         id=r["id"],
@@ -520,19 +601,23 @@ async def create_diabetes_profile(request: CreateDiabetesProfileRequest, current
     profile_data = {
         "id": str(uuid.uuid4()),
         "user_id": request.user_id,
-        "diabetes_type": request.diabetes_type,
+        "diabetes_type": _diabetes_type_column(request.diabetes_type),
         "diagnosis_date": request.diagnosis_date,
-        "target_glucose_min_mg_dl": request.target_glucose_min_mg_dl,
-        "target_glucose_max_mg_dl": request.target_glucose_max_mg_dl,
-        "fasting_target_min_mg_dl": request.fasting_target_min_mg_dl,
-        "fasting_target_max_mg_dl": request.fasting_target_max_mg_dl,
-        "a1c_target": request.a1c_target,
+        # Real column names (migration 114) for the drifted request fields.
+        "target_glucose_low": _mg_dl_column(request.target_glucose_min_mg_dl),
+        "target_glucose_high": _mg_dl_column(request.target_glucose_max_mg_dl),
+        "target_a1c": request.a1c_target,
+        # Added by migration 2320 under their API names — the fasting RANGE the
+        # app configures has no equivalent in the legacy single-value
+        # target_glucose_fasting column, and the alert settings had nowhere to go.
+        "fasting_target_min_mg_dl": _mg_dl_column(request.fasting_target_min_mg_dl),
+        "fasting_target_max_mg_dl": _mg_dl_column(request.fasting_target_max_mg_dl),
+        "notifications_enabled": request.notifications_enabled,
+        "low_glucose_alert_threshold": _mg_dl_column(request.low_glucose_alert_threshold),
+        "high_glucose_alert_threshold": _mg_dl_column(request.high_glucose_alert_threshold),
         "uses_insulin_pump": request.uses_insulin_pump,
         "uses_cgm": request.uses_cgm,
         "cgm_device": request.cgm_device,
-        "notifications_enabled": request.notifications_enabled,
-        "low_glucose_alert_threshold": request.low_glucose_alert_threshold,
-        "high_glucose_alert_threshold": request.high_glucose_alert_threshold,
     }
 
     result = db.client.table("diabetes_profiles").insert(profile_data).execute()
@@ -546,7 +631,7 @@ async def create_diabetes_profile(request: CreateDiabetesProfileRequest, current
         {"diabetes_type": request.diabetes_type}
     )
 
-    return DiabetesProfileResponse(**result.data[0])
+    return _profile_row_to_response(result.data[0])
 
 
 @router.get("/profile/{user_id}", response_model=DiabetesProfileResponse)
@@ -563,7 +648,7 @@ async def get_diabetes_profile(user_id: str, current_user: dict = Depends(get_cu
     if not result.data:
         raise HTTPException(status_code=404, detail="Diabetes profile not found")
 
-    return DiabetesProfileResponse(**result.data[0])
+    return _profile_row_to_response(result.data[0])
 
 
 @router.patch("/profile/{user_id}/targets", response_model=DiabetesProfileResponse)
@@ -578,7 +663,25 @@ async def update_glucose_targets(user_id: str, request: UpdateGlucoseTargetsRequ
         if request.target_glucose_min_mg_dl > request.target_glucose_max_mg_dl:
             raise HTTPException(status_code=400, detail="Min target cannot exceed max target")
 
-    update_data = {k: v for k, v in request.dict().items() if v is not None}
+    # Same drift as the insert: splatting request.dict() straight into the update
+    # wrote request-model field names, which are not columns, so the whole PATCH
+    # was rejected (42703) and no target ever changed. Mapped explicitly, one
+    # literal column name per field.
+    update_data = {}
+    if request.target_glucose_min_mg_dl is not None:
+        update_data["target_glucose_low"] = _mg_dl_column(request.target_glucose_min_mg_dl)
+    if request.target_glucose_max_mg_dl is not None:
+        update_data["target_glucose_high"] = _mg_dl_column(request.target_glucose_max_mg_dl)
+    if request.fasting_target_min_mg_dl is not None:
+        update_data["fasting_target_min_mg_dl"] = _mg_dl_column(request.fasting_target_min_mg_dl)
+    if request.fasting_target_max_mg_dl is not None:
+        update_data["fasting_target_max_mg_dl"] = _mg_dl_column(request.fasting_target_max_mg_dl)
+    if request.a1c_target is not None:
+        update_data["target_a1c"] = request.a1c_target
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No glucose targets provided to update")
+
     update_data["updated_at"] = datetime.utcnow().isoformat()
 
     result = db.client.table("diabetes_profiles").update(update_data).eq(
@@ -588,7 +691,7 @@ async def update_glucose_targets(user_id: str, request: UpdateGlucoseTargetsRequ
     if not result.data:
         raise HTTPException(status_code=404, detail="Diabetes profile not found")
 
-    return DiabetesProfileResponse(**result.data[0])
+    return _profile_row_to_response(result.data[0])
 
 
 # ============================================================

@@ -13,7 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 
 from core.logger import get_logger
@@ -44,6 +44,18 @@ logger = get_logger(__name__)
 # ============================================
 # Helper Functions
 # ============================================
+
+def _utc_now_iso() -> str:
+    """UTC timestamp with an explicit offset, for timestamptz columns.
+
+    `datetime.utcnow()` returns a NAIVE datetime, so its isoformat() carries no
+    offset and Postgres interprets it in the SERVER timezone — silently wrong by
+    the session's UTC offset if that is ever not UTC. Every timestamp this module
+    writes (started_at, last_practiced_at, completed_at, created_at, updated_at)
+    is timestamptz, so emit the offset explicitly.
+    """
+    return datetime.now(timezone.utc).isoformat()
+
 
 def _normalize_category(raw: str) -> str:
     """Map legacy/dirty DB category values onto the SkillCategory enum.
@@ -536,8 +548,15 @@ async def start_progression_chain(user_id: str, chain_id: str,
         if first_step_result.data:
             first_step = _parse_step(first_step_result.data[0])
 
-        # Create progress record
-        now = datetime.utcnow().isoformat()
+        # Create progress record.
+        #
+        # Every key below is a real `user_skill_progress` column. `is_completed`,
+        # `is_active`, `created_at` and `updated_at` were absent from the table
+        # created by migration 081 — PostgREST rejects the WHOLE insert when one
+        # key is unknown (PGRST204/42703), so this endpoint 500'd for every user.
+        # Migration 2319 adds them (all four have readers: _parse_progress, the
+        # `active_only` filter, and the /summary active-vs-completed split).
+        now = _utc_now_iso()
         progress_data = {
             "id": str(uuid.uuid4()),
             "user_id": user_id,
@@ -633,7 +652,7 @@ async def log_skill_attempt(
         current_step = _parse_step(current_step_result.data[0])
 
         # Log the attempt
-        now = datetime.utcnow().isoformat()
+        now = _utc_now_iso()
         attempt_data = {
             "id": str(uuid.uuid4()),
             "user_id": user_id,
@@ -677,7 +696,10 @@ async def log_skill_attempt(
 
         can_unlock_next = unlock_criteria_met and len(next_step_result.data) > 0
 
-        # Update progress
+        # Update progress. `best_hold_at_current` (seconds — the only place a
+        # static-hold PR is kept; distinct from best_reps_at_current) and
+        # `updated_at` are added by migration 2319; without them PostgREST
+        # rejected this whole UPDATE, so no attempt ever advanced the row.
         update_data = {
             "attempts_at_current": progress_data.get("attempts_at_current", 0) + 1,
             "best_reps_at_current": best_reps,
@@ -803,8 +825,15 @@ async def unlock_next_step(user_id: str, chain_id: str,
         ).eq("step_order", current_step_order + 1).execute()
 
         if not next_step_result.data:
-            # No more steps - mark chain as completed
-            now = datetime.utcnow().isoformat()
+            # No more steps - mark chain as completed.
+            #
+            # This branch RETURNS, so this payload is the only one that reaches
+            # the DB on the completion path — it is not merged with the
+            # step-advance payload rebound further down. All three keys are
+            # added by migration 2319; `is_completed` is what /summary buckets
+            # on and `completed_at` is what the Flutter model reads to derive
+            # its own isCompleted, so both must be written together.
+            now = _utc_now_iso()
             update_data = {
                 "is_completed": True,
                 "completed_at": now,
@@ -841,7 +870,11 @@ async def unlock_next_step(user_id: str, chain_id: str,
         if current_step_order + 1 not in unlocked_steps:
             unlocked_steps.append(current_step_order + 1)
 
-        now = datetime.utcnow().isoformat()
+        # Step-advance payload. Distinct write from the completion payload above
+        # (that branch returns); the PRs are reset because they are scoped to the
+        # step the user just left. `best_hold_at_current` and `updated_at` come
+        # from migration 2319.
+        now = _utc_now_iso()
         update_data = {
             "current_step_order": current_step_order + 1,
             "unlocked_steps": unlocked_steps,
@@ -913,11 +946,13 @@ async def toggle_progression_active(user_id: str, chain_id: str, is_active: bool
                 detail="User has not started this progression chain"
             )
 
-        # Update active status
-        now = datetime.utcnow().isoformat()
+        # Update active status. `last_practiced_at` is deliberately NOT touched
+        # here — pausing/resuming is not practising, and the app derives
+        # "days since last practice" from that column. `is_active` and
+        # `updated_at` come from migration 2319.
         update_data = {
             "is_active": is_active,
-            "updated_at": now,
+            "updated_at": _utc_now_iso(),
         }
 
         update_result = db.client.table("user_skill_progress").update(

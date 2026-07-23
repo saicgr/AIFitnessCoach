@@ -15,7 +15,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from typing import Optional, List
+from typing import Dict, Optional, List
 from pydantic import BaseModel
 from enum import Enum
 
@@ -115,6 +115,48 @@ class FeaturedProgramsResponse(BaseModel):
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+# =============================================================================
+# ASSIGNMENT NAME / WEEK RESOLUTION
+#
+# user_program_assignments has NO `program_name` and NO `week_number` column.
+# The display name is `custom_program_name` (branded assignments copy the
+# branded_programs.name into it, exactly like the library assign endpoint), and
+# the week counter is `current_week`. Both names below existed only in the API
+# response shape, so every write 42703'd and every read KeyError'd.
+# =============================================================================
+
+
+def _resolve_branded_names(supabase, rows: List[dict]) -> Dict[str, str]:
+    """Batch-resolve branded_programs.name for assignment rows whose
+    custom_program_name is empty (rows written before the name was copied in).
+    One `in_` query for the whole page — never per row."""
+    ids = {
+        str(r.get("branded_program_id"))
+        for r in rows
+        if not (r.get("custom_program_name") or "").strip()
+        and r.get("branded_program_id")
+    }
+    if not ids:
+        return {}
+    try:
+        res = supabase.client.table("branded_programs").select(
+            "id, name"
+        ).in_("id", list(ids)).execute()
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Branded program name resolution failed: {e}")
+        return {}
+    return {str(r["id"]): (r.get("name") or "") for r in (res.data or [])}
+
+
+def _assignment_display_name(row: dict, branded_names: Dict[str, str]) -> str:
+    """Display name for an assignment row: the stored custom_program_name,
+    falling back to the branded program's own name."""
+    stored = (row.get("custom_program_name") or "").strip()
+    if stored:
+        return stored
+    return branded_names.get(str(row.get("branded_program_id")), "")
 
 
 # =============================================================================
@@ -404,14 +446,17 @@ async def assign_program_to_user(user_id: str, request: ProgramAssignRequest,
 
         # Create new program assignment
         now = datetime.utcnow().isoformat()
+        # custom_program_name is the display-name column (no program_name
+        # column exists), so the RESOLVED name is what gets stored — same
+        # convention as /library/branded-programs/assign. current_week is the
+        # week counter (no week_number column).
         assignment_data = {
             "user_id": user_id,
             "branded_program_id": request.branded_program_id,
-            "custom_program_name": request.custom_program_name,
-            "program_name": program_name,
+            "custom_program_name": program_name,
             "started_at": now,
             "is_active": True,
-            "week_number": 1,
+            "current_week": 1,
             "created_at": now,
             "updated_at": now,
         }
@@ -450,11 +495,11 @@ async def assign_program_to_user(user_id: str, request: ProgramAssignRequest,
             user_id=assignment["user_id"],
             branded_program_id=assignment.get("branded_program_id"),
             custom_program_name=assignment.get("custom_program_name"),
-            program_name=assignment["program_name"],
+            program_name=program_name,
             started_at=assignment["started_at"],
             completed_at=assignment.get("completed_at"),
             is_active=assignment["is_active"],
-            week_number=assignment.get("week_number", 1),
+            week_number=assignment.get("current_week", 1),
             created_at=assignment["created_at"],
             updated_at=assignment["updated_at"],
         )
@@ -491,17 +536,18 @@ async def get_current_program(user_id: str,
             return None
 
         assignment = result.data
+        branded_names = _resolve_branded_names(supabase, [assignment])
 
         return UserProgramAssignment(
             id=assignment["id"],
             user_id=assignment["user_id"],
             branded_program_id=assignment.get("branded_program_id"),
             custom_program_name=assignment.get("custom_program_name"),
-            program_name=assignment["program_name"],
+            program_name=_assignment_display_name(assignment, branded_names),
             started_at=assignment["started_at"],
             completed_at=assignment.get("completed_at"),
             is_active=assignment["is_active"],
-            week_number=assignment.get("week_number", 1),
+            week_number=assignment.get("current_week", 1),
             created_at=assignment["created_at"],
             updated_at=assignment["updated_at"],
         )
@@ -543,18 +589,21 @@ async def get_program_history(
 
         result = query.execute()
 
+        rows = result.data or []
+        branded_names = _resolve_branded_names(supabase, rows)
+
         assignments = []
-        for row in result.data or []:
+        for row in rows:
             assignments.append(UserProgramAssignment(
                 id=row["id"],
                 user_id=row["user_id"],
                 branded_program_id=row.get("branded_program_id"),
                 custom_program_name=row.get("custom_program_name"),
-                program_name=row["program_name"],
+                program_name=_assignment_display_name(row, branded_names),
                 started_at=row["started_at"],
                 completed_at=row.get("completed_at"),
                 is_active=row["is_active"],
-                week_number=row.get("week_number", 1),
+                week_number=row.get("current_week", 1),
                 created_at=row["created_at"],
                 updated_at=row["updated_at"],
             ))
@@ -678,7 +727,10 @@ async def complete_current_program(user_id: str,
             raise HTTPException(status_code=404, detail="No active program found")
 
         assignment_id = current_result.data["id"]
-        program_name = current_result.data["program_name"]
+        program_name = _assignment_display_name(
+            current_result.data,
+            _resolve_branded_names(supabase, [current_result.data]),
+        )
 
         # Mark as completed
         now = datetime.utcnow().isoformat()
@@ -721,11 +773,11 @@ async def complete_current_program(user_id: str,
             user_id=assignment["user_id"],
             branded_program_id=assignment.get("branded_program_id"),
             custom_program_name=assignment.get("custom_program_name"),
-            program_name=assignment["program_name"],
+            program_name=program_name,
             started_at=assignment["started_at"],
             completed_at=assignment.get("completed_at"),
             is_active=assignment["is_active"],
-            week_number=assignment.get("week_number", 1),
+            week_number=assignment.get("current_week", 1),
             created_at=assignment["created_at"],
             updated_at=assignment["updated_at"],
         )
@@ -823,7 +875,9 @@ async def update_program_week(user_id: str, week_number: int = Query(..., ge=1, 
             user_id=assignment["user_id"],
             branded_program_id=assignment.get("branded_program_id"),
             custom_program_name=assignment.get("custom_program_name"),
-            program_name=assignment.get("custom_program_name") or "",
+            program_name=_assignment_display_name(
+                assignment, _resolve_branded_names(supabase, [assignment])
+            ),
             started_at=assignment["started_at"],
             completed_at=assignment.get("completed_at"),
             is_active=assignment["is_active"],

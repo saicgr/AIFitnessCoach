@@ -331,12 +331,16 @@ async def start_live_chat(request: LiveChatStartRequest,
             db.client.table("support_tickets").delete().eq("id", ticket_id).execute()
             raise safe_internal_error(ValueError("Failed to add initial message"), "live_chat")
 
-        # Add to live chat queue
+        # Add to live chat queue.
+        # live_chat_queue is a pure queue row (ticket_id, user_id, priority,
+        # queued_at, assigned_at, estimated_wait_minutes) — it has no `category`
+        # or `escalated_from_ai` column. Both values are already persisted on the
+        # support_tickets row inserted above, and the live_chat_queue_status view
+        # (migration 127) joins support_tickets to surface the category to agents,
+        # so writing them here duplicated nothing and 42703'd the whole insert.
         queue_record = {
             "ticket_id": ticket_id,
             "user_id": request.user_id,
-            "category": request.category.value,
-            "escalated_from_ai": request.escalated_from_ai,
         }
 
         queue_result = db.client.table("live_chat_queue").insert(queue_record).execute()
@@ -472,12 +476,12 @@ async def escalate_to_live_chat(ticket_id: str, request: LiveChatEscalateRequest
 
         db.client.table("support_tickets").update(update_data).eq("id", ticket_id).execute()
 
-        # Add to live chat queue
+        # Add to live chat queue. Same as start_live_chat: category +
+        # escalated_from_ai live on support_tickets (updated immediately above),
+        # not on live_chat_queue — the queue table has no such columns.
         queue_record = {
             "ticket_id": ticket_id,
             "user_id": request.user_id,
-            "category": ticket_data["category"],
-            "escalated_from_ai": True,
         }
 
         db.client.table("live_chat_queue").insert(queue_record).execute()

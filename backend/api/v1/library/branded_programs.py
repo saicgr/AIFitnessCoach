@@ -203,23 +203,16 @@ async def assign_program(request: AssignProgramRequest):
         sessions_per_week = request.sessions_per_week or program.get("sessions_per_week", 5)
         total_workouts = duration_weeks * sessions_per_week
 
-        # Find the best matching variant if user selected duration/sessions
-        variant_id = None
-        if request.desired_weeks or request.sessions_per_week:
-            variants_result = db.client.table("program_variants").select(
-                "id, duration_weeks, sessions_per_week"
-            ).eq("base_program_id", request.program_id).eq(
-                "sessions_per_week", sessions_per_week
-            ).order("duration_weeks").execute()
-
-            if variants_result.data:
-                # Pick smallest anchor >= desired_weeks, or largest if none
-                for v in variants_result.data:
-                    if v["duration_weeks"] >= duration_weeks:
-                        variant_id = v["id"]
-                        break
-                if not variant_id:
-                    variant_id = variants_result.data[-1]["id"]
+        # NOTE: user_program_assignments has no variant_id / desired_weeks /
+        # sessions_per_week column, and nothing (backend response builders,
+        # row_to_user_program, or the Flutter UserProgram model) ever reads a
+        # variant or duration back off an assignment row. Writing those three
+        # keys made PostgREST reject the ENTIRE insert (42703), so assigning a
+        # program with a user-chosen duration or frequency always failed.
+        # The user's choice IS persisted, in total_workouts
+        # (= duration_weeks x sessions_per_week) computed above. The variant
+        # lookup that fed the dead variant_id key was removed with it — it was
+        # a per-assign round-trip whose only consumer was the phantom column.
 
         # Create new assignment
         assignment_data = {
@@ -234,14 +227,6 @@ async def assign_program(request: AssignProgramRequest):
             "workouts_completed": 0,
             "progress_percentage": 0,
         }
-
-        # Add variant tracking fields
-        if variant_id:
-            assignment_data["variant_id"] = variant_id
-        if request.desired_weeks:
-            assignment_data["desired_weeks"] = request.desired_weeks
-        if request.sessions_per_week:
-            assignment_data["sessions_per_week"] = request.sessions_per_week
 
         # Add HYROX-specific fields if provided
         if request.target_race_date:

@@ -441,7 +441,10 @@ async def _create_staple_workout_for_date(
             "exercises_json": exercises,
             "status": "ready",
             "is_completed": False,
-            "workout_name": workout_name,
+            # `name` is the real workouts column — there is no `workout_name`
+            # column, and that duplicate key 42703'd the entire insert, so the
+            # staple-only auto workout was never created (the failure was
+            # swallowed by the except below).
             "name": workout_name,
             "generation_method": "staple_auto",
             "difficulty": "medium",

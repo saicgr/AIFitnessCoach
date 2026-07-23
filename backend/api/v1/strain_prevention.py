@@ -92,9 +92,11 @@ class RecordStrainRequest(BaseModel):
     """Request to record a strain incident."""
     user_id: str
     body_part: str = Field(..., min_length=1)
+    # `muscle_group` is accepted for wire compatibility (the Report Strain screen
+    # sends it alongside body_part with the same value) but strain_history stores
+    # the affected area in `body_part` only — there is no muscle_group column.
     muscle_group: Optional[str] = None
     severity: str = Field(default="mild", pattern="^(mild|moderate|severe)$")
-    occurred_during: Optional[str] = None  # Exercise name
     pain_level: Optional[int] = Field(default=None, ge=0, le=10)
     notes: Optional[str] = None
 
@@ -405,12 +407,16 @@ async def record_strain(request_body: RecordStrainRequest,
 
         now = datetime.utcnow().isoformat()
         today = user_today_date(request, None, request_body.user_id)
+        # strain_history columns: user_id, body_part, strain_date, severity,
+        # activity_type, volume_at_time, volume_increase_percent, recovery_days,
+        # notes, created_at (+ pain_level, migration 2321).
+        # `muscle_group` and `occurred_during` are NOT columns — the affected
+        # area is `body_part` (the client sends muscle_group with the identical
+        # value), and nothing has ever written or read an exercise name here.
         strain_data = {
             "user_id": request_body.user_id,
             "body_part": request_body.body_part,
-            "muscle_group": request_body.muscle_group,
             "severity": request_body.severity,
-            "occurred_during": request_body.occurred_during,
             "pain_level": request_body.pain_level,
             "notes": request_body.notes,
             "strain_date": today.isoformat(),

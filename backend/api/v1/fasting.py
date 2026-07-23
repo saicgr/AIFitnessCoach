@@ -399,7 +399,6 @@ async def update_streak(user_id: str, completed_goal: bool, completion_percentag
         current_streak = streak_data.get("current_streak", 0)
         longest_streak = streak_data.get("longest_streak", 0)
         total_fasts = streak_data.get("total_fasts_completed", 0)
-        total_hours = streak_data.get("total_fasting_hours", 0)
 
         # Check if this is a new day or same day
         if last_fast_date:
@@ -446,7 +445,11 @@ async def update_streak(user_id: str, completed_goal: bool, completion_percentag
             "current_streak": 1 if streak_maintained else 0,
             "longest_streak": 1 if streak_maintained else 0,
             "total_fasts_completed": 1,
-            "total_fasting_hours": 0,
+            # fasting_streaks stores accumulated fasting time in MINUTES
+            # (total_fasting_minutes) — there is no total_fasting_hours column,
+            # and that key 42703'd the whole insert, so a user's first completed
+            # fast never created a streak row at all.
+            "total_fasting_minutes": 0,
             "last_fast_date": today.isoformat(),
             "streak_start_date": today.isoformat() if streak_maintained else None,
             "fasts_this_week": 1,
@@ -1010,6 +1013,12 @@ async def update_preferences(user_id: str, data: FastingPreferencesRequest, curr
             "notify_zone_transitions": data.notify_zone_transitions,
             "notify_goal_reached": data.notify_goal_reached,
             "notify_eating_window_end": data.notify_eating_window_end,
+            # fasting_preferences.is_keto_adapted is added by migration 2321 —
+            # row_to_preferences() already reads it back into
+            # FastingPreferencesResponse.is_keto_adapted (a required bool the
+            # zone-timeline shift is keyed off), so the column was genuinely
+            # missing rather than the write being wrong. Until that migration is
+            # applied this key 42703s the ENTIRE preferences upsert.
             "is_keto_adapted": data.is_keto_adapted,
             "weekly_schedule": data.weekly_schedule,
             "updated_at": datetime.utcnow().isoformat(),
