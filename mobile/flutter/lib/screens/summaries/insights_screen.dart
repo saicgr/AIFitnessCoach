@@ -18,6 +18,7 @@ import 'widgets/share_weekly_summary_sheet.dart';
 import 'widgets/weekly_percentile_hero.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'insights_screen_part_period_selector.dart';
 part 'insights_screen_part_body_card.dart';
 
@@ -138,7 +139,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                         isDark: isDark,
                         onRetry: _refresh,
                       )
-                    : RefreshIndicator(
+                    : AppRefreshIndicator(
                         onRefresh: _refresh,
                         color: purple,
                         child: ListView(

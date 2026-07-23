@@ -25,6 +25,7 @@ import '../home/widgets/habit_card.dart';
 
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'habits_screen_part_unified_habit_item.dart';
 part 'habits_screen_part_add_habit_sheet_content.dart';
 
@@ -102,7 +103,7 @@ class HabitsScreen extends ConsumerWidget {
       body: Stack(
         children: [
           // Main content
-          RefreshIndicator(
+          AppRefreshIndicator(
             onRefresh: () => habitsNotifier.loadHabits(force: true),
             child: CustomScrollView(
               slivers: [

@@ -14,6 +14,7 @@ import '../../widgets/design_system/zealova.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Screen displaying available and claimed rewards
 class RewardsScreen extends ConsumerStatefulWidget {
   const RewardsScreen({super.key});
@@ -476,7 +477,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadRewards,
       color: AppColors.gamGold,
       child: ListView.builder(

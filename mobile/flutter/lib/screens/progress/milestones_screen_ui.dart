@@ -6,7 +6,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
   Widget _buildMilestonesTab(bool isDark, MilestonesState state) {
     final categories = MilestoneCategory.values;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         await ref.read(milestonesProvider.notifier).refresh();
       },
@@ -134,7 +134,7 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         final userId = ref.read(authStateProvider).user?.id;
         if (userId != null) {

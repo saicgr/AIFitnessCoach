@@ -15,6 +15,7 @@ import '../../data/providers/consistency_provider.dart';
 import '../../data/services/api_client.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Consistency Insights Dashboard Screen
 /// Displays streak information, workout patterns, and recovery options
 class ConsistencyScreen extends ConsumerStatefulWidget {
@@ -78,7 +79,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
       ),
       body: _isLoading || _userId == null
           ? AppLoading.fullScreen()
-          : RefreshIndicator(
+          : AppRefreshIndicator(
               color: tc.accent,
               onRefresh: () => ref
                   .read(consistencyProvider.notifier)

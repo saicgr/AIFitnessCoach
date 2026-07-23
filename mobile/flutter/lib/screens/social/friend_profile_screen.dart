@@ -12,6 +12,7 @@ import '../../widgets/nav_bar_hider_mixin.dart';
 import 'conversation_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 class FriendProfileScreen extends ConsumerStatefulWidget {
   final String targetUserId;
 
@@ -225,7 +226,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
     final trophiesCount = _profile?['total_achievements'] as int? ?? 0;
     final streak = _profile?['current_streak'] as int? ?? 0;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadProfile,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

@@ -29,6 +29,7 @@ import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'widgets/leaderboard_row_adornments.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 // Gym-finder map (GymBeat-style). Disabled until Maps API key is provisioned.
 // See `widgets/gym_map_section.dart` for the full impl + re-enable steps.
 // import 'widgets/gym_map_section.dart';
@@ -201,7 +202,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
       backgroundColor: bg,
       body: Stack(
         children: [
-          RefreshIndicator(
+          AppRefreshIndicator(
         color: accent,
         onRefresh: () async {
           ref.invalidate(discoverSnapshotProvider);

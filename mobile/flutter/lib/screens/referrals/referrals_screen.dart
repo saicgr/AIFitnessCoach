@@ -14,6 +14,7 @@ import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 class ReferralsScreen extends ConsumerWidget {
   const ReferralsScreen({super.key});
 
@@ -32,7 +33,7 @@ class ReferralsScreen extends ConsumerWidget {
       backgroundColor: bg,
       body: Stack(
         children: [
-          RefreshIndicator(
+          AppRefreshIndicator(
             // Cache-first SWR: revalidate in place, no blocking spinner —
             // the current summary stays visible while the network refreshes.
             onRefresh: () => ref.read(referralSummaryProvider.notifier).refresh(),

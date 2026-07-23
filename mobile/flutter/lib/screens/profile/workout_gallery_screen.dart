@@ -18,6 +18,7 @@ import '../../data/services/share_service.dart';
 import 'package:dio/dio.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Full Workout Gallery Screen
 ///
 /// Shows all workout gallery images in a scrollable grid with:
@@ -225,7 +226,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
       return _buildEmptyState();
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadImages,
       child: GridView.builder(
         controller: _scrollController,

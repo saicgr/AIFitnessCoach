@@ -15,6 +15,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/segmented_tab_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Main flexibility assessment screen showing all tests and user progress
 class FlexibilityAssessmentScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -146,7 +147,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
   }
 
   Widget _buildOverviewTab(FlexibilityState state, ThemeData theme) {
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => ref.read(flexibilityProvider.notifier).refresh(userId: widget.userId),
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -255,7 +256,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
       testsByCategory.putIfAbsent(category, () => []).add(test);
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => ref.read(flexibilityProvider.notifier).loadTests(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
@@ -329,7 +330,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => ref.read(flexibilityProvider.notifier).loadStretchPlans(userId: widget.userId),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),

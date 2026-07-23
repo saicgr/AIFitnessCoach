@@ -21,6 +21,7 @@ import 'widgets/share_body_analyzer_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 class BodyAnalyzerScreen extends ConsumerStatefulWidget {
   const BodyAnalyzerScreen({super.key});
 
@@ -287,7 +288,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
             ? _buildSkeleton()
             : _error != null
                 ? _buildError(textMuted)
-                : RefreshIndicator(
+                : AppRefreshIndicator(
                     onRefresh: _load,
                     child: ListView(
                       padding: EdgeInsets.fromLTRB(

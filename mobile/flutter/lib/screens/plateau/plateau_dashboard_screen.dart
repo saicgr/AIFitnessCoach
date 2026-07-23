@@ -10,6 +10,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Provider for plateau dashboard data
 final plateauDashboardProvider =
     StateNotifierProvider<PlateauDashboardNotifier, PlateauDashboardState>(
@@ -123,7 +124,7 @@ class _PlateauDashboardScreenState
               ? _buildErrorState(colorScheme, state.error!)
               : state.data == null
                   ? _buildEmptyState(colorScheme)
-                  : RefreshIndicator(
+                  : AppRefreshIndicator(
                       onRefresh: () =>
                           ref.read(plateauDashboardProvider.notifier).loadData(),
                       child: SingleChildScrollView(

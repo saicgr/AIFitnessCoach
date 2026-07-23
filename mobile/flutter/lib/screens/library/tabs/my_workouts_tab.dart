@@ -11,6 +11,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../workout/import_workout_screen.dart';
+import '../../common/app_refresh_indicator.dart';
 
 /// Which slice of the user's `workouts` table this tab renders.
 enum MyWorkoutsMode {
@@ -100,7 +101,7 @@ class MyWorkoutsTab extends ConsumerWidget {
                   onRefresh: refresh,
                 );
               }
-              return RefreshIndicator(
+              return AppRefreshIndicator(
                 onRefresh: refresh,
                 child: ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -317,7 +318,7 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),

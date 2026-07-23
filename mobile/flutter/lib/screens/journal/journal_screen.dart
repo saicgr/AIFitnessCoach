@@ -6,6 +6,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Phase 6 #16 — Lifetime training journal.
 ///
 /// Unified searchable timeline across workouts + meals + progress photos + PRs.
@@ -110,7 +111,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                       ? _errorView(_error!, textSecondary)
                       : _items.isEmpty
                           ? _emptyView(textPrimary, textSecondary)
-                          : RefreshIndicator(
+                          : AppRefreshIndicator(
                               onRefresh: _load,
                               child: ListView.separated(
                                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),

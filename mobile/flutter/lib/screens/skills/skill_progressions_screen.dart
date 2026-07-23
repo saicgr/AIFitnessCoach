@@ -14,6 +14,7 @@ import 'widgets/category_filter_chips.dart';
 import 'widgets/skill_progress_summary_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Screen displaying all available skill progressions
 class SkillProgressionsScreen extends ConsumerStatefulWidget {
   const SkillProgressionsScreen({super.key});
@@ -154,7 +155,7 @@ class _SkillProgressionsScreenState
       return _buildEmptyProgressState(context, isDark);
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadData,
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -215,7 +216,7 @@ class _SkillProgressionsScreenState
     final chains = state.filteredChains;
     final categories = _extractCategories(state.chains);
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadData,
       child: CustomScrollView(
         slivers: [

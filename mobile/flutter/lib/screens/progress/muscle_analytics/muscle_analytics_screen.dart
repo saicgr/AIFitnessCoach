@@ -18,6 +18,7 @@ import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
 import 'widgets/muscle_frequency_chart.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../common/app_refresh_indicator.dart';
 
 /// Main muscle analytics dashboard with tabs for heatmap, frequency, and balance
 class MuscleAnalyticsScreen extends ConsumerStatefulWidget {
@@ -216,7 +217,7 @@ class _HeatmapTab extends ConsumerWidget {
         // (.first, .last, .map) in this chart-heavy tree.
         final sorted = heatmap.sortedByIntensity;
 
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           onRefresh: () async => ref.invalidate(muscleHeatmapProvider),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -311,7 +312,7 @@ class _FrequencyTab extends ConsumerWidget {
         final undertrained = frequency.frequencies.where((f) => f.isUndertrained).toList();
         final overtrained = frequency.frequencies.where((f) => f.isOvertrained).toList();
 
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           onRefresh: () async => ref.invalidate(muscleFrequencyProvider),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -400,7 +401,7 @@ class _BalanceTab extends ConsumerWidget {
           );
         }
 
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           onRefresh: () async => ref.invalidate(muscleBalanceProvider),
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),

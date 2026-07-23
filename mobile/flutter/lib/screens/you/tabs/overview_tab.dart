@@ -43,6 +43,7 @@ import '../widgets/health_overview_card.dart';
 import '../widgets/weight_tracking_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 // Cache lives in `youOverviewCache` (lib/data/services/you_overview_prewarmer.dart).
 // It's shared with the prewarmer service so post-sign-in / post-onboarding
 // pre-warming and the live tab read/write the same singleton.
@@ -329,7 +330,7 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
     final bottomInset =
         MediaQuery.of(context).viewPadding.bottom + kYouHubBodyBottomInset;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       color: accent,
       onRefresh: _manualRefresh,
       child: ListView(

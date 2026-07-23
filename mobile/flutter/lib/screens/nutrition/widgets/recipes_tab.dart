@@ -45,6 +45,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'recipe_search_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Inline-chip source groupings
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,7 +106,7 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
 
     return Stack(
       children: [
-        RefreshIndicator(
+        AppRefreshIndicator(
           color: accent,
           onRefresh: () async {
             ref.invalidate(upcomingSchedulesProvider(widget.userId));

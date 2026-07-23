@@ -11,6 +11,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Exercise Progressions — surfaces the leverage-based progression-chain
 /// engine (backend `exercise_progressions.py`).
 ///
@@ -157,7 +158,7 @@ class _ExerciseProgressionsScreenState
           if (data.mastery.isEmpty && data.suggestions.isEmpty) {
             return _EmptyState(accent: accent, onRefresh: _retry);
           }
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             color: accent,
             onRefresh: _refresh,
             child: _Content(

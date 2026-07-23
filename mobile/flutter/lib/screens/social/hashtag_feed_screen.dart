@@ -10,6 +10,7 @@ import 'widgets/comments_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Screen that shows all public posts with a specific hashtag.
 /// Supports pagination via infinite scroll.
 class HashtagFeedScreen extends ConsumerStatefulWidget {
@@ -215,7 +216,7 @@ class _HashtagFeedScreenState extends ConsumerState<HashtagFeedScreen> {
                         ],
                       ),
                     )
-                  : RefreshIndicator(
+                  : AppRefreshIndicator(
                       onRefresh: _loadPosts,
                       child: ListView.builder(
                         controller: _scrollController,

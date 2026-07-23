@@ -29,6 +29,7 @@ import '../../../widgets/design_system/section_header.dart';
 import '../you_hub_screen.dart' show kYouHubBodyBottomInset;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 class YouStatsRewardsTab extends ConsumerStatefulWidget {
   const YouStatsRewardsTab({super.key});
 
@@ -144,7 +145,7 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
     final bottomInset =
         MediaQuery.of(context).viewPadding.bottom + kYouHubBodyBottomInset;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       color: accent,
       onRefresh: _load,
       child: ListView(

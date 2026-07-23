@@ -22,6 +22,7 @@ import '../widgets/activity_share_sheet.dart';
 import '../widgets/stories_ring.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// Feed filter: show only my posts
 final feedMyPostsOnlyProvider = StateProvider<bool>((ref) => false);
 
@@ -162,7 +163,7 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                 : allActivities;
             final hasActivities = activities.isNotEmpty;
 
-            return RefreshIndicator(
+            return AppRefreshIndicator(
               onRefresh: () async {
                 HapticFeedback.mediumImpact();
                 ref.invalidate(activityFeedProvider(userId));

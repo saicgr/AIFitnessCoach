@@ -5,6 +5,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/pill_app_bar.dart';
+import '../../common/app_refresh_indicator.dart';
 
 /// Manage the user's persistent exercise substitutions ("swap going forward").
 ///
@@ -68,7 +69,7 @@ class _ExerciseSubstitutionsScreenState
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
-            : RefreshIndicator(
+            : AppRefreshIndicator(
                 onRefresh: _load,
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),

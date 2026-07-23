@@ -13,6 +13,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Main screen for hormonal health tracking and insights
 class HormonalHealthScreen extends ConsumerStatefulWidget {
   const HormonalHealthScreen({super.key});
@@ -159,7 +160,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
     HormonalProfile profile,
     AsyncValue<CyclePhaseInfo?> cyclePhaseAsync,
   ) {
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         ref.invalidate(hormonalProfileProvider);
         ref.invalidate(cyclePhaseProvider);

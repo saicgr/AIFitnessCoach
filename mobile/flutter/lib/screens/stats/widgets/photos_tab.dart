@@ -18,6 +18,7 @@ import '../../progress/comparison_gallery.dart';
 import '../../progress/photo_editor_screen.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 part 'photos_tab_ui.dart';
 
 
@@ -82,7 +83,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
 
     return Stack(
       children: [
-        RefreshIndicator(
+        AppRefreshIndicator(
           onRefresh: () => ref
               .read(progressPhotosNotifierProvider(widget.userId!).notifier)
               .loadAll(),

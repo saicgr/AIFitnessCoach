@@ -13,6 +13,7 @@ import '../../core/services/posthog_service.dart';
 import 'widgets/injury_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Filter tabs for injuries list
 enum InjuryFilter { active, recovering, healed }
 
@@ -313,7 +314,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
       return _buildEmptyState(textPrimary, textSecondary, textMuted, elevated, cardBorder);
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadInjuries,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),

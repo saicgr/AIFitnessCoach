@@ -8,6 +8,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/fitness_index_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Fitness Index detail — route `/health/fitness-index`.
 ///
@@ -80,7 +81,7 @@ class FitnessIndexDetailScreen extends ConsumerWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async => ref.invalidate(fitnessIndexProvider),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

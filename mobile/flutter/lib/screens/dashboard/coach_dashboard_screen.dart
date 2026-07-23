@@ -11,6 +11,7 @@ import '../../widgets/gradient_circular_progress_indicator.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Coach Dashboard — a "glance" view of the athlete's week.
 ///
 /// Displays workout compliance, nutrition adherence, readiness sparkline,
@@ -84,7 +85,7 @@ class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
           // hydrate any heavy sections from the quick payload (which leaves
           // them empty — the cards self-skeleton when their slice is empty).
           final data = _fullData ?? snapshot.data!;
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             onRefresh: () async {
               setState(() {
                 _fullData = null;

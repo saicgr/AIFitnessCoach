@@ -29,6 +29,7 @@ import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/streak_freeze_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/design_system/zealova.dart';
+import '../common/app_refresh_indicator.dart';
 
 class StreakFreezeScreen extends ConsumerWidget {
   const StreakFreezeScreen({super.key});
@@ -62,7 +63,7 @@ class StreakFreezeScreen extends ConsumerWidget {
           // so this error branch is defensive — show the same body for an empty
           // status either way.
           error: (_, __) => const _LoadingState(),
-          data: (status) => RefreshIndicator(
+          data: (status) => AppRefreshIndicator(
             color: _ice,
             onRefresh: () async {
               HapticService.light();

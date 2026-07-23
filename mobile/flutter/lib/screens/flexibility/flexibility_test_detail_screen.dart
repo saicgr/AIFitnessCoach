@@ -8,6 +8,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Detailed view of a specific flexibility test with progress tracking
 class FlexibilityTestDetailScreen extends ConsumerStatefulWidget {
   final FlexibilityTest test;
@@ -56,7 +57,7 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
           PillAppBarAction(icon: Icons.add_circle_outline, onTap: () => _showRecordSheet()),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () async {
           await ref.read(flexibilityProvider.notifier).loadTestProgress(
             testType: widget.test.id,

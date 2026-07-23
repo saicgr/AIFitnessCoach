@@ -10,6 +10,7 @@ import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// =========================================================================
 /// TrainingLoadScreen — `/cardio/training-load`
 /// =========================================================================
@@ -37,7 +38,7 @@ class TrainingLoadScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
-        child: RefreshIndicator(
+        child: AppRefreshIndicator(
           onRefresh: () async {
             // Invalidate both so the chart + hero refetch together.
             ref.invalidate(trainingLoadCurrentProvider);

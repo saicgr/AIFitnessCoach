@@ -38,6 +38,7 @@ import 'overview/month_highlight_card.dart';
 import 'overview/fitness_score_breakdown_section.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// Disk-cached snapshots for the Overview tab.
 ///
 /// The Overview-tab providers (`milestonesProvider`, `consistencyProvider`)
@@ -249,7 +250,7 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     // Update highlighted dates when search query changes
     _updateHighlightedDates(searchQuery);
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         final uid = await ref.read(apiClientProvider).getUserId();
         if (uid == null) return;

@@ -20,6 +20,7 @@ import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 class DiscoverScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -176,7 +177,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                   );
                 }
 
-                return RefreshIndicator(
+                return AppRefreshIndicator(
                   color: accent,
                   onRefresh: () => ref
                       .read(discoverRecipesCacheFirstProvider(args).notifier)

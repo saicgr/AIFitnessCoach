@@ -66,16 +66,18 @@ class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
         }
         return;
       }
-      // Read the raw response so we can pick up the additive `coverage` block
-      // alongside the typed summary without a model migration.
+      // ONE request for both halves. This used to call getDailyMicronutrients()
+      // and then a raw variant of the SAME endpoint for the additive `coverage`
+      // block — two identical GETs to render one screen.
       final repo = ref.read(nutritionRepositoryProvider);
-      final summary = await repo.getDailyMicronutrients(userId: userId);
-      final coverage = await _fetchCoverage(repo, userId);
+      final result = await repo.getDailyMicronutrientsWithCoverage(
+        userId: userId,
+      );
       if (!mounted) return;
       setState(() {
-        _summary = summary;
-        _foodsWithMicroData = coverage?.$1;
-        _totalFoods = coverage?.$2;
+        _summary = result.summary;
+        _foodsWithMicroData = result.foodsWithMicroData;
+        _totalFoods = result.totalFoods;
         _loading = false;
       });
     } catch (e) {
@@ -85,24 +87,6 @@ class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
         _error = 'Could not load your nutrients. Pull to retry.';
       });
     }
-  }
-
-  /// Pull the raw coverage block from the micronutrients endpoint. Returns
-  /// (foodsWithMicroData, totalFoods) or null when absent.
-  Future<(int, int)?> _fetchCoverage(
-      NutritionRepository repo, String userId) async {
-    try {
-      final raw = await repo.getDailyMicronutrientsRaw(userId: userId);
-      final coverage = raw['coverage'];
-      if (coverage is Map) {
-        final withData = (coverage['foods_with_micro_data'] as num?)?.toInt();
-        final total = (coverage['total_foods'] as num?)?.toInt();
-        if (withData != null && total != null) return (withData, total);
-      }
-    } catch (_) {
-      // Coverage is purely additive; absence is non-fatal.
-    }
-    return null;
   }
 
   @override

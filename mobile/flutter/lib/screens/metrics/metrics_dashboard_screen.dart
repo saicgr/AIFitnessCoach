@@ -17,6 +17,7 @@ import '../../widgets/trends/trend_correlation.dart' show TrendPoint;
 import '../../l10n/generated/app_localizations.dart';
 import 'widgets/key_metrics_grid.dart';
 import 'widgets/health_checks_section.dart';
+import '../common/app_refresh_indicator.dart';
 
 class MetricsDashboardScreen extends ConsumerStatefulWidget {
   const MetricsDashboardScreen({super.key});
@@ -80,7 +81,7 @@ class _MetricsDashboardScreenState
     return Scaffold(
       backgroundColor: AppColors.pureBlack,
       body: SafeArea(
-        child: RefreshIndicator(
+        child: AppRefreshIndicator(
           onRefresh: _loadMetrics,
           color: AppColors.cyan,
           child: CustomScrollView(

@@ -10,6 +10,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton_list.dart';
 import '../../../data/providers/workout_studio_providers.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../common/app_refresh_indicator.dart';
 
 /// "Saved" workouts — the user's bookmarked/saved workouts (the `saved_workouts`
 /// table), reached from the Library header's ☆ icon.
@@ -231,7 +232,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
     }
 
     if (workouts.isEmpty) {
-      return RefreshIndicator(
+      return AppRefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -250,7 +251,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _refresh,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),

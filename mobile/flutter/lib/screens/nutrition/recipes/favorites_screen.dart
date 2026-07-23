@@ -21,6 +21,7 @@ import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 class FavoritesScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -120,7 +121,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   );
                 }
 
-                return RefreshIndicator(
+                return AppRefreshIndicator(
                   color: accent,
                   onRefresh: () => ref
                       .read(favoriteRecipesCacheFirstProvider(widget.userId)

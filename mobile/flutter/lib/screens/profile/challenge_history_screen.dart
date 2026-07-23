@@ -14,6 +14,7 @@ import '../../widgets/segmented_tab_bar.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Challenge History Screen - Shows all challenges with outcomes and retry options
 class ChallengeHistoryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -237,7 +238,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             )
           : _error != null
               ? _buildErrorState()
-              : RefreshIndicator(
+              : AppRefreshIndicator(
                   onRefresh: _loadData,
                   child: Column(
                     children: [

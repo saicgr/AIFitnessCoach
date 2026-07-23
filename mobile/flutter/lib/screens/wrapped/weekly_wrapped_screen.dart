@@ -29,6 +29,7 @@ import '../../data/services/data_cache_service.dart';
 import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 class WeeklyWrappedScreen extends ConsumerStatefulWidget {
   final String? weekStart; // YYYY-MM-DD
   const WeeklyWrappedScreen({super.key, this.weekStart});
@@ -235,7 +236,7 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
     final tips =
         (s['ai_next_week_tips'] as List?)?.cast<String>() ?? const <String>[];
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _load,
       color: accent,
       child: ListView(

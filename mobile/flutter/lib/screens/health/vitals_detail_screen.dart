@@ -6,6 +6,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/vitals_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Vitals detail screen — route `/health/vitals`.
 ///
@@ -79,7 +80,7 @@ class VitalsDetailScreen extends ConsumerWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async => ref.invalidate(vitalsProvider),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),

@@ -629,7 +629,10 @@ class _HistoryListView extends StatelessWidget {
             // Per-day summary
             final dayLogs = entry.value;
             final dayCals = dayLogs.fold<int>(0, (s, l) => s + l.totalCalories);
-            final dayProtein = dayLogs.fold<double>(0, (s, l) => s + l.proteinG);
+            // Per-day sum-of-known: an unknown-macro meal contributes 0 to the
+            // day protein total (`?? 0` INSIDE the sum), never "—".
+            final dayProtein =
+                dayLogs.fold<double>(0, (s, l) => s + (l.proteinG ?? 0));
 
             return [
               // Date header with day totals

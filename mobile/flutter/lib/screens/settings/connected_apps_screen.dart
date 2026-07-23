@@ -10,6 +10,7 @@ import '../../data/repositories/strava_export_repository.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Catalog of supported providers. `requiresCredentials=true` means the
 /// provider doesn't expose a public OAuth flow and the user must type an
 /// email/password into a native sheet (Garmin, Peloton); everything else
@@ -107,7 +108,7 @@ class ConnectedAppsScreen extends ConsumerWidget {
         title: Text(AppLocalizations.of(context).connectedAppsConnectedApps),
         centerTitle: false,
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () async => ref.refresh(_connectedAccountsProvider.future),
         child: asyncAccounts.when(
           // Layout-matched skeleton: header card + one tile per catalog

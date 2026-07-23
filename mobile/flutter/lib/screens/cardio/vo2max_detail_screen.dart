@@ -9,6 +9,7 @@ import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// VO2max trend detail screen.
 ///
 /// Wave 2 (SLICE_VO2MAX). Self-contained — when MetricDetailScreen lands
@@ -46,7 +47,7 @@ class Vo2MaxDetailScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: RefreshIndicator(
+              child: AppRefreshIndicator(
                 onRefresh: () async {
                   // Invalidate both — providers re-fetch in parallel.
                   ref.invalidate(vo2MaxLatestProvider);

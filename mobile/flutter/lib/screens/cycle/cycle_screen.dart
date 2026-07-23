@@ -41,6 +41,7 @@ import 'widgets/today_cycle_length_sparkline.dart';
 import 'widgets/today_fertility_window_strip.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'cycle_screen_ui.dart';
 
 /// Cycle-feature accent — pink, per the plan. Mirrors `AccentColor.pink`'s

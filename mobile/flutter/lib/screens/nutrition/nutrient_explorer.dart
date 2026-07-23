@@ -10,6 +10,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'nutrient_explorer_part_nutrient_score_card.dart';
 part 'nutrient_explorer_part_tier_label.dart';
 
@@ -66,7 +67,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
         .where((n) => n.pinReason == 'cycle_phase')
         .toList();
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async => widget.onRefresh(),
       color: teal,
       child: SingleChildScrollView(

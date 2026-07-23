@@ -14,6 +14,7 @@ import '../../widgets/level_up_catch_up_banner.dart';
 import '../home/widgets/daily_crate_banner.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'inventory_screen_part_consumable_card.dart';
 
 part 'inventory_screen_ui.dart';
@@ -386,7 +387,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       backgroundColor: bgColor,
       body: Stack(
         children: [
-          RefreshIndicator(
+          AppRefreshIndicator(
             onRefresh: () async {
               await ref.read(xpProvider.notifier).loadConsumables();
             },

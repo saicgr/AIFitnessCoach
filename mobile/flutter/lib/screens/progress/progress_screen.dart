@@ -37,6 +37,7 @@ import 'widgets/strength_overview_card.dart';
 import 'widgets/pr_summary_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'progress_screen_part_analytics_nav_card.dart';
 
 part 'progress_screen_ui.dart';

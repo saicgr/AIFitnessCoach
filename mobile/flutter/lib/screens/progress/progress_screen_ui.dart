@@ -25,7 +25,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
   // ============================================
 
   Widget _buildScoresTab() {
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         await ref
             .read(scoresProvider.notifier)
@@ -169,7 +169,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
     final state = ref.watch(progressPhotosNotifierProvider(_userId!));
     final colorScheme = Theme.of(context).colorScheme;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => ref
           .read(progressPhotosNotifierProvider(_userId!).notifier)
           .loadAll(),

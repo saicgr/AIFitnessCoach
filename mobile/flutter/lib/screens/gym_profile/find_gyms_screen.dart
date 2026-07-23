@@ -10,6 +10,7 @@ import '../../data/services/haptic_service.dart';
 import '../../models/equipment_item.dart';
 import '../../widgets/glass_sheet.dart';
 import '../home/widgets/gym_equipment_sheet.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Find gyms near me (Feature 3B).
 ///
@@ -80,7 +81,7 @@ class _FindGymsScreenState extends ConsumerState<FindGymsScreen> {
                 if (result.gyms.isEmpty) {
                   return _EmptyState(query: _query, catalogOnly: result.catalogOnly);
                 }
-                return RefreshIndicator(
+                return AppRefreshIndicator(
                   onRefresh: () async => ref.invalidate(nearbyGymsProvider(_query)),
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

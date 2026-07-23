@@ -1,0 +1,102 @@
+{
+  "_comment": "Screenshot library for the Instagram content engine. Each entry maps a stable key -> a real, clean app screenshot the carousel/video renderers embed in phone frames. Keys are referenced from carousel specs (slide.screenshot / slide.image) and video specs. Paths are relative to the repo root. Refresh a shot by re-capturing on the simulator and overwriting the file (keep the key). See README.md for the capture guide.",
+  "device": "iPhone 17 Pro (1320x2868, clean capture, no marketing chrome)",
+  "shots": {
+    "menu-scan-result": {
+      "file": "docs/planning/marketing/screenshots/app/menu-scan-result.png",
+      "feature": "Menu scan",
+      "pillar": "menu-scan",
+      "desc": "Menu Analysis result — cal/protein/carb/fat rings, scanned MENU photo, Grilled Salmon graded Good with Inflammation 1/10. The flagship 'point camera at food -> instant graded scorecard' payoff."
+    },
+    "fridge-scan": {
+      "file": "docs/planning/marketing/screenshots/app/fridge-scan.png",
+      "feature": "Fridge scan",
+      "pillar": "menu-scan",
+      "desc": "'Your fridge can make 5 meals today' — fridge photo scanned, ingredients detected, recipes suggested."
+    },
+    "form-check-pushup": {
+      "file": "docs/planning/marketing/screenshots/app/form-check-pushup.png",
+      "feature": "AI form check",
+      "pillar": "form",
+      "desc": "AI Form Check — Push-up scored 80/Good, Form/Tempo/Range sub-scores, 'What you did well' + 'To improve'. The differentiator payoff for form content."
+    },
+    "strength-score": {
+      "file": "docs/planning/marketing/screenshots/app/strength-score.png",
+      "feature": "Strength score / Overload",
+      "pillar": "workout",
+      "desc": "Stats & Scores — Overall Strength 50 (Intermediate), 'stronger than 49% of comparable lifters', strength-by-muscle map + trend."
+    },
+    "coach-chat": {
+      "file": "docs/planning/marketing/screenshots/app/coach-chat.png",
+      "feature": "AI coach chat",
+      "pillar": "workout",
+      "desc": "Coach chat — logs 'two chicken tacos and a Corona', coach replies with macro-aware guidance; Scan Food / Analyze Menu / Nutrition quick chips."
+    },
+    "active-workout-set": {
+      "file": "docs/planning/marketing/screenshots/app/active-workout-set.png",
+      "feature": "Active workout",
+      "pillar": "workout",
+      "desc": "Guided active workout — Smith Machine Shoulder Press, set 1 of 4, 55x12 target, Log Set, Form check / Instructions tabs."
+    },
+    "home-coach-nudge": {
+      "file": "docs/planning/marketing/screenshots/app/home-coach-nudge.png",
+      "feature": "Home",
+      "pillar": "workout",
+      "desc": "Home — coach nudge ('Let's pick it up, Gigi'), protein/calories left, Get Started Challenge, Lower Body Focus hero card."
+    },
+    "home-recovery": {
+      "file": "docs/planning/marketing/screenshots/app/home-recovery.png",
+      "feature": "Home",
+      "pillar": "workout",
+      "desc": "Home (Thursday) — coach recovery nudge, macros, Lower Body Focus. Alt home shot."
+    },
+    "schedule-programs": {
+      "file": "docs/planning/marketing/screenshots/app/schedule-programs.png",
+      "feature": "Programs / schedule",
+      "pillar": "workout",
+      "desc": "Schedule — HYROX Race Prep + Functional Power + Full-Body Conditioning stacked; shows running multiple programs at once."
+    },
+    "schedule-week": {
+      "file": "docs/planning/marketing/screenshots/app/schedule-week.png",
+      "feature": "Programs / schedule",
+      "pillar": "workout",
+      "desc": "Schedule week view with workout cards (Lower Body Focus, Savage Beast Annihilation)."
+    },
+    "schedule-week-alt": {
+      "file": "docs/planning/marketing/screenshots/app/schedule-week-alt.png",
+      "feature": "Programs / schedule",
+      "pillar": "workout",
+      "desc": "Schedule week view alt (Full Body Activation, Upper Body Push & Core)."
+    },
+    "schedule-week-2": {
+      "file": "docs/planning/marketing/screenshots/app/schedule-week-2.png",
+      "feature": "Programs / schedule",
+      "pillar": "workout",
+      "desc": "Schedule week view (Upper Body Push, Lower Body Focus, Upper Body Power)."
+    },
+    "customize-program": {
+      "file": "docs/planning/marketing/screenshots/app/customize-program.png",
+      "feature": "Customize program",
+      "pillar": "workout",
+      "desc": "Customize Program — workout days/week, difficulty, duration slider. Shows the AI plan is fully adjustable."
+    },
+    "customize-perday-focus": {
+      "file": "docs/planning/marketing/screenshots/app/customize-perday-focus.png",
+      "feature": "Customize program",
+      "pillar": "workout",
+      "desc": "Customize Program Per-day — focus chips (Upper/Lower/Push/Pull/Legs/Core/Cardio/Mobility/Recovery), duration, intensity (Hell)."
+    },
+    "imports-ai": {
+      "file": "docs/planning/marketing/screenshots/app/imports-ai.png",
+      "feature": "Imports",
+      "pillar": "nutrition",
+      "desc": "Imports — 'Import anything with AI' (photo/PDF/audio/text), MyFitnessPal/MacroFactor/Cronometer/Apple Health."
+    },
+    "imports-ai-alt": {
+      "file": "docs/planning/marketing/screenshots/app/imports-ai-alt.png",
+      "feature": "Imports",
+      "pillar": "nutrition",
+      "desc": "Imports alt — includes Fitbod / Gravl workout export sources."
+    }
+  }
+}

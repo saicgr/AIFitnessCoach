@@ -15,6 +15,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// Detail screen showing analytics for a specific muscle group
 class MuscleDetailScreen extends ConsumerStatefulWidget {
   final String muscleGroup;
@@ -77,7 +78,7 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
       appBar: PillAppBar(
         title: _formatMuscleName(widget.muscleGroup),
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () async {
           ref.invalidate(muscleExercisesProvider(widget.muscleGroup));
           ref.invalidate(muscleHistoryProvider(widget.muscleGroup));

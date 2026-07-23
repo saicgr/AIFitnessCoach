@@ -17,6 +17,7 @@ import '../reports/widgets/report_share_sheet.dart';
 import 'widgets/milestone_celebration_dialog.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'milestones_screen_ui.dart';
 
 

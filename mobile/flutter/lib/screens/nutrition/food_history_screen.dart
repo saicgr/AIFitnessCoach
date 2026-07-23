@@ -390,9 +390,13 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
             await repo.updateFoodLog(
               logId: log.id,
               totalCalories: (log.totalCalories * multiplier).round(),
-              proteinG: log.proteinG * multiplier,
-              carbsG: log.carbsG * multiplier,
-              fatG: log.fatG * multiplier,
+              // Portion rescale re-sent to the server, which re-derives macros
+              // authoritatively — so `?? 0` here is arithmetic, not display: an
+              // unknown macro contributes 0 to the rescaled payload rather than
+              // blocking the edit. (updateFoodLog's params are non-null.)
+              proteinG: (log.proteinG ?? 0) * multiplier,
+              carbsG: (log.carbsG ?? 0) * multiplier,
+              fatG: (log.fatG ?? 0) * multiplier,
               fiberG: log.fiberG != null ? log.fiberG! * multiplier : null,
               portionMultiplier: multiplier,
             );
@@ -464,7 +468,12 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
   _QuickStats _computeStats() {
     if (_logs.isEmpty) return const _QuickStats();
     final totalCals = _logs.fold<int>(0, (sum, l) => sum + l.totalCalories);
-    final totalProtein = _logs.fold<double>(0, (sum, l) => sum + l.proteinG);
+    // Sum-of-known aggregate: an unknown-macro meal contributes 0 to the
+    // history protein total (`?? 0` INSIDE the sum), not "—". The subtotal of
+    // the meals we DO know is correct; a whole stat reading "—" for one unknown
+    // snack would be wrong.
+    final totalProtein =
+        _logs.fold<double>(0, (sum, l) => sum + (l.proteinG ?? 0));
 
     // Unique days
     final days = <String>{};

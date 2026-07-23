@@ -19,6 +19,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 part 'measurements_tab_ui.dart';
 
 
@@ -246,7 +247,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
 
     return Stack(
       children: [
-        RefreshIndicator(
+        AppRefreshIndicator(
           onRefresh: _loadMeasurements,
           color: cyan,
           child: SingleChildScrollView(

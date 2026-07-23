@@ -16,6 +16,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 part 'subscription_management_screen_ui.dart';
 
 
@@ -285,7 +286,7 @@ class _SubscriptionManagementScreenState
           ? _buildErrorState(isDark, textPrimary)
           : Stack(
               children: [
-                RefreshIndicator(
+                AppRefreshIndicator(
                   onRefresh: () => _loadSubscriptionDetails(),
                   color: AppColors.cyan,
                   child: SingleChildScrollView(

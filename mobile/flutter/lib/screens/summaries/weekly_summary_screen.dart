@@ -13,6 +13,7 @@ import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
   const WeeklySummaryScreen({super.key});
 
@@ -76,7 +77,7 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
             )
           : state.summaries.isEmpty
               ? _EmptyState(onGenerate: _generateSummary, isDark: isDark)
-              : RefreshIndicator(
+              : AppRefreshIndicator(
                   onRefresh: _loadData,
                   color: purple,
                   child: ListView.builder(

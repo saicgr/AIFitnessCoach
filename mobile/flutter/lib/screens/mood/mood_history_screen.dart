@@ -19,6 +19,7 @@ import 'widgets/mood_streak_card.dart';
 import 'widgets/mood_weekly_chart.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Screen showing mood check-in history and analytics
 class MoodHistoryScreen extends ConsumerStatefulWidget {
   const MoodHistoryScreen({super.key});
@@ -105,7 +106,7 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
         isFirstEver: _isFirstEver,
         traceLabel: 'mood_history',
         skeletonBuilder: (context) => const _MoodHistorySkeleton(),
-        contentBuilder: (context, data) => RefreshIndicator(
+        contentBuilder: (context, data) => AppRefreshIndicator(
               onRefresh: () => ref.read(moodHistoryProvider.notifier).refresh(),
               child: CustomScrollView(
                 controller: _scrollController,

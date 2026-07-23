@@ -9,6 +9,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'notifications_screen_part_empty_notifications_view.dart';
 
 
@@ -419,7 +420,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           ],
                         ),
                       )
-                    : RefreshIndicator(
+                    : AppRefreshIndicator(
             onRefresh: () => ref.read(unifiedNotificationsProvider.notifier).refresh(),
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 16),

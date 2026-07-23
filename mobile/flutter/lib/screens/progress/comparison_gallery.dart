@@ -12,6 +12,7 @@ import '../../widgets/glass_sheet.dart';
 import 'comparison_view.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Full-screen gallery of saved before/after comparisons
 class ComparisonGalleryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -49,7 +50,7 @@ class _ComparisonGalleryScreenState
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: () => ref
             .read(progressPhotosNotifierProvider(widget.userId).notifier)
             .loadAll(),

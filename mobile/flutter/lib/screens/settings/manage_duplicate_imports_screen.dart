@@ -6,6 +6,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/cardio_dedup_repository.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Manage Duplicate Imports
 ///
 /// Surfaces dedup groups created by `cardio_dedup_service` so the user can:
@@ -100,7 +101,7 @@ class _ManageDuplicateImportsScreenState
           }
           final groups = snap.data ?? const <DedupGroup>[];
           if (groups.isEmpty) {
-            return RefreshIndicator(
+            return AppRefreshIndicator(
               onRefresh: _refresh,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -111,7 +112,7 @@ class _ManageDuplicateImportsScreenState
               ),
             );
           }
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             onRefresh: _refresh,
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),

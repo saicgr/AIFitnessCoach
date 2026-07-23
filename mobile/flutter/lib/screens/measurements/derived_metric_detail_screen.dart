@@ -13,6 +13,7 @@ import '../../widgets/trends/trend_correlation.dart';
 
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'derived_metric_detail_screen_part_derived_metric_type.dart';
 part 'derived_metric_detail_screen_part_stat_item.dart';
 
@@ -96,7 +97,7 @@ class _DerivedMetricDetailScreenState
         child: Stack(
           children: [
             // Main content
-            RefreshIndicator(
+            AppRefreshIndicator(
               onRefresh: _loadMeasurements,
               color: cyan,
               child: CustomScrollView(

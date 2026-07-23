@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/share_growth_repository.dart';
 import '../../widgets/design_system/section_header.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// F14 — Friend Streak. A 1:1 shared streak (workout or food logging) kept
 /// alive when both friends log. Three surfaces:
@@ -151,7 +152,7 @@ class _FriendStreakScreenState extends ConsumerState<FriendStreakScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),

@@ -13,6 +13,7 @@ import '../../widgets/cosmetics/framed_avatar.dart';
 import '../../widgets/glass_back_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Cosmetics gallery — browse all badges / frames / etc., equip what's owned,
 /// see locked items with the level they unlock at.
 class CosmeticsGalleryScreen extends ConsumerStatefulWidget {
@@ -48,7 +49,7 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
       backgroundColor: bg,
       body: Stack(
         children: [
-          RefreshIndicator(
+          AppRefreshIndicator(
             onRefresh: () => ref.read(cosmeticsProvider.notifier).load(),
             color: accent,
             child: CustomScrollView(

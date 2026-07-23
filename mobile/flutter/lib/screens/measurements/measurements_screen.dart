@@ -28,6 +28,7 @@ import '../settings/dialogs/export_dialog.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'measurements_screen_part_add_measurement_sheet.dart';
 
 part 'measurements_screen_ui.dart';
@@ -176,7 +177,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             // Main content. Body view fits in one viewport (figure + derived
             // pill row above) — disable scrolling. Tile view scrolls normally
             // with pull-to-refresh.
-            RefreshIndicator(
+            AppRefreshIndicator(
               onRefresh: _loadMeasurements,
               color: cyan,
               child: CustomScrollView(

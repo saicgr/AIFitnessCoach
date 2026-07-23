@@ -207,9 +207,11 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
           _isAnalyzing = false;
           _hasAnalyzed = true;
           _caloriesController.text = response.totalCalories.toString();
-          _proteinController.text = response.proteinG.toStringAsFixed(1);
-          _carbsController.text = response.carbsG.toStringAsFixed(1);
-          _fatController.text = response.fatG.toStringAsFixed(1);
+          // null = unknown; leave the field blank so the user fills it in
+          // rather than pre-seeding a false 0.0 they might not notice.
+          _proteinController.text = response.proteinG?.toStringAsFixed(1) ?? '';
+          _carbsController.text = response.carbsG?.toStringAsFixed(1) ?? '';
+          _fatController.text = response.fatG?.toStringAsFixed(1) ?? '';
           _fiberController.text = (response.fiberG ?? 0).toStringAsFixed(1);
         });
       }

@@ -16,6 +16,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Provider for strain dashboard data
 final strainDashboardProvider =
     StateNotifierProvider<StrainDashboardNotifier, StrainDashboardState>(
@@ -223,7 +224,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
               ? _buildErrorState(colorScheme, state.error!)
               : state.data == null
                   ? _buildEmptyState(colorScheme)
-                  : RefreshIndicator(
+                  : AppRefreshIndicator(
                       onRefresh: () =>
                           ref.read(strainDashboardProvider.notifier).loadData(),
                       child: SingleChildScrollView(

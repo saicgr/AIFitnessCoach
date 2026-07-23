@@ -16,6 +16,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Leaderboard screen with XP, Streaks, and Workouts boards.
 ///
@@ -260,7 +261,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     final accentColor = ref.watch(accentColorProvider).getColor(isDark);
     final userXp = ref.watch(xpProvider).userXp;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadData,
       child: CustomScrollView(
         slivers: [
@@ -382,7 +383,7 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     final loading = _boardLoading[type] ?? false;
     final entries = _boardEntries[type];
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => _loadBoard(type, force: true),
       child: CustomScrollView(
         slivers: [

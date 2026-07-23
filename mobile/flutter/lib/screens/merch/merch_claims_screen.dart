@@ -11,6 +11,7 @@ import '../../data/services/haptic_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Screen showing physical merch rewards earned at milestone levels.
 /// Users tap "Accept" on unclaimed rewards and the ops team reaches out
@@ -47,7 +48,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
       backgroundColor: bg,
       body: Stack(
         children: [
-          RefreshIndicator(
+          AppRefreshIndicator(
             onRefresh: () => ref.read(merchClaimsProvider.notifier).load(),
             color: accent,
             child: CustomScrollView(

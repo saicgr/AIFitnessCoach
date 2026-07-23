@@ -16,6 +16,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 import '../../../l10n/generated/app_localizations.dart';
 // Import linked exercises types
 export '../../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
+import '../../common/app_refresh_indicator.dart';
 
 part 'my_1rms_screen_part_one_r_m_card.dart';
 
@@ -218,7 +219,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
     final sorted = List<UserExercise1RM>.from(oneRMs)
       ..sort((a, b) => a.exerciseName.compareTo(b.exerciseName));
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         await ref.read(userOneRMsProvider.notifier).refresh();
       },

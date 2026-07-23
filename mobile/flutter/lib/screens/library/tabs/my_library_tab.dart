@@ -16,6 +16,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../providers/library_providers.dart';
 import '../../workout/exercise_browse.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';
+import '../../common/app_refresh_indicator.dart';
 
 part 'my_library_tab_part_custom_exercises_section.dart';
 part 'my_library_tab_part_history_timeline_card.dart';
@@ -38,7 +39,7 @@ class MyLibraryTab extends ConsumerWidget {
       () => ref.read(customExercisesProvider.notifier).initialize(),
     );
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         ref.invalidate(exerciseHistoryProvider);
         ref.invalidate(categoryExercisesProvider);

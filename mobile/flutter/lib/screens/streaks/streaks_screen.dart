@@ -47,6 +47,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/leaderboard_service.dart';
 import '../../widgets/design_system/zealova.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Default weekly workout target when the user has no `workouts_per_week`
 /// preference set. Documented assumption (Gravl shows "4 days/week" by default).
@@ -284,7 +285,7 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
           }
         },
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         color: c.accent,
         onRefresh: () async {
           await _loadStreaks();

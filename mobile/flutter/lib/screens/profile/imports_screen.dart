@@ -34,6 +34,7 @@ import '../settings/nutrition_import_screen.dart';
 import '../settings/workout_history_import_screen.dart';
 import '../share/share_dispatch.dart';
 import '../share/share_routing_table.dart';
+import '../common/app_refresh_indicator.dart';
 
 // ===========================================================================
 // Source specs — the "bring your data" rail
@@ -459,7 +460,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: _refresh,
         color: accent,
         child: CustomScrollView(

@@ -10,6 +10,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/models/coach_memory.dart';
 import '../../data/repositories/coach_memory_repository.dart';
 import '../../widgets/design_system/zealova.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// "What Coach Remembers" — lets the user view, correct, and delete the AI
 /// coach's long-term memories, and turn memory on/off entirely.
@@ -257,7 +258,7 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
     CoachMemoryList list,
     bool enabled,
   ) {
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       color: accent,
       onRefresh: () async => _refresh(),
       child: ListView(

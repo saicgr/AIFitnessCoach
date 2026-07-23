@@ -13,6 +13,7 @@ import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'diabetes_dashboard_screen_part_glucose_status.dart';
 part 'diabetes_dashboard_screen_part_a1_c_card.dart';
 part 'diabetes_dashboard_screen_part_current_glucose_card.dart';
@@ -120,7 +121,7 @@ class _DiabetesDashboardScreenState
             }),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: _loadData,
         color: AppColors.cyan,
         backgroundColor: elevatedColor,

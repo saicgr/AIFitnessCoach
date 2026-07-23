@@ -20,6 +20,7 @@ import '../../widgets/trends/trend_correlation.dart';
 import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'measurement_detail_screen_part_stat_item.dart';
 
 part 'measurement_detail_screen_ui.dart';
@@ -114,7 +115,7 @@ class _MeasurementDetailScreenState
             // back button or share FAB in the exported image.
             RepaintBoundary(
               key: _shareRepaintKey,
-              child: RefreshIndicator(
+              child: AppRefreshIndicator(
               onRefresh: _loadMeasurements,
               color: cyan,
               child: CustomScrollView(

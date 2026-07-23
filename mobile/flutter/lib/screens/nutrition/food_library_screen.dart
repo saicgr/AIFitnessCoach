@@ -22,6 +22,7 @@ import 'recipe_builder_sheet.dart';
 import 'custom_food_builder_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'food_library_screen_part_food_library_card.dart';
 
 
@@ -1015,7 +1016,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
           emptyTitle, emptySubtitle, isDark, textPrimary, textMuted);
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         if (_userId != null) {
           await ref.read(foodLibraryProvider(_userId!).notifier).loadData();

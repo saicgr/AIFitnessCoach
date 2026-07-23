@@ -17,6 +17,7 @@ import 'staple_exercises_screen.dart';
 import 'exercise_queue_screen.dart';
 import 'avoided_exercises_screen.dart';
 import 'avoided_muscles_screen.dart';
+import '../../common/app_refresh_indicator.dart';
 
 /// Unified screen for all exercise preferences with a flat tab bar.
 /// Tabs: Favorites (0), Staples (1), Avoided (2), Queue (3), Custom (4)
@@ -556,7 +557,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
 
     return Stack(
       children: [
-        RefreshIndicator(
+        AppRefreshIndicator(
           onRefresh: () =>
               ref.read(customExercisesProvider.notifier).refresh(),
           child: ListView.builder(

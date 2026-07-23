@@ -16,6 +16,7 @@ import '../../widgets/glass_loading_overlay.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// "AI Integrations" settings screen.
 ///
@@ -55,7 +56,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
               foregroundColor: tc.accentContrast,
             )
           : null,
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         color: accent,
         onRefresh: () => ref.read(mcpIntegrationsProvider.notifier).load(),
         child: _buildBody(context, ref, state, accent, isDark),

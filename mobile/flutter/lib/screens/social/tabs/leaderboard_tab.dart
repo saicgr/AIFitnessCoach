@@ -20,6 +20,7 @@ import '../widgets/leaderboard_entry_card.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// Leaderboard Tab - Global, country, and friends rankings
 class LeaderboardTab extends ConsumerStatefulWidget {
   const LeaderboardTab({super.key});
@@ -373,7 +374,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     final lastUpdated = _leaderboardData?['last_updated'] as String?;
     final refreshesIn = _leaderboardData?['refreshes_in'] as String?;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadLeaderboard,
       child: CustomScrollView(
         slivers: [

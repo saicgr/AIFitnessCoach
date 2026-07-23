@@ -12,6 +12,7 @@ import 'muscle_score_breakdown_sheet.dart';
 import 'overview_tab.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 // ═══════════════════════════════════════════════════════════════════
 // STRENGTH TAB - Readiness, Strength Scores, PRs, Analytics
 // ═══════════════════════════════════════════════════════════════════
@@ -34,7 +35,7 @@ class StrengthTab extends ConsumerWidget {
 
     return Stack(
       children: [
-        RefreshIndicator(
+        AppRefreshIndicator(
           onRefresh: () async {
             await ref.read(scoresProvider.notifier).loadAllScores(userId: userId);
           },

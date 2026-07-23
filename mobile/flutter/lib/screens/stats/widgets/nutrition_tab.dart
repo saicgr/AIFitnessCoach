@@ -20,6 +20,7 @@ import '../../../widgets/nutrition_stats/tdee_card.dart';
 import '../../../widgets/nutrition_stats/adherence_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 part 'nutrition_tab_part_weekly_overview_card.dart';
 part 'nutrition_tab_part_adherence_card.dart';
 
@@ -58,7 +59,7 @@ class NutritionTab extends ConsumerWidget {
     final showCycleOverlay =
         tracksCycle && CyclePhaseChartOverlay.canRender(cyclePrediction);
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         // Clear both cache tiers first — a plain invalidate would re-serve the
         // stale-while-revalidate snapshot, making pull-to-refresh show last

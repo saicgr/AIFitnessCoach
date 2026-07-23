@@ -21,6 +21,7 @@ import '../../../widgets/pill_app_bar.dart';
 import '../../reports/widgets/report_share_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// Main screen showing list of most performed exercises and personal records
 /// Two-tab layout: "Exercises" tab and "PRs" tab
 class ExerciseHistoryScreen extends ConsumerStatefulWidget {
@@ -222,7 +223,7 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
               if (exercises.isEmpty) {
                 return _buildEmptyState(theme);
               }
-              return RefreshIndicator(
+              return AppRefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(mostPerformedExercisesProvider);
                 },
@@ -392,7 +393,7 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
 
     final recentPrs = prStats.recentPrs;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         if (_userId != null) {
           await ref.read(scoresProvider.notifier).loadPersonalRecords(

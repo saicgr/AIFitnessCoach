@@ -8,6 +8,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 final volumeHistoryProvider = StateNotifierProvider<VolumeHistoryNotifier, VolumeHistoryState>((ref) => VolumeHistoryNotifier(ref));
 
 class VolumeHistoryState {
@@ -177,7 +178,7 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
     }
     if (st.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text(AppLocalizations.of(context).volumeHistoryFailedToLoad, style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: Text(AppLocalizations.of(context).buttonRetry))]));
     if (st.history.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.history, color: tm, size: 48), const SizedBox(height: 16), Text(AppLocalizations.of(context).volumeHistoryNoHistoryYet, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 8), Text(AppLocalizations.of(context).volumeHistoryCompleteWorkoutsToSee, style: TextStyle(color: tm))]));
-    return RefreshIndicator(onRefresh: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: st.history.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _buildWeekCard(st.history[i], d, tp, tm, el)));
+    return AppRefreshIndicator(onRefresh: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: st.history.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _buildWeekCard(st.history[i], d, tp, tm, el)));
   }
 
   Widget _buildWeekCard(WeeklyVolume week, bool d, Color tp, Color tm, Color el) {

@@ -42,6 +42,42 @@ void clearNutritionStatsCache() {
 String? get _liveUserId =>
     Supabase.instance.client.auth.currentUser?.id;
 
+/// What one refetch established about the server's state.
+///
+/// The distinction that matters is AUTHORITY OVER EMPTINESS. "The server told
+/// us there is nothing" and "we could not find out" are opposite instructions
+/// for a cache: the first must clear it, the second must leave it alone. A bare
+/// `T?` cannot express that, which is why a stale value could never be dropped.
+@immutable
+class _Fetched<T> {
+  /// A real value came back — persist it to both tiers.
+  const _Fetched.data(T this.value) : knownEmpty = false;
+
+  /// The server affirmatively answered "there is nothing here". Any cached
+  /// value is now STALE and must be dropped.
+  const _Fetched.empty()
+      : value = null,
+        knownEmpty = true;
+
+  /// We could not find out (offline, 5xx, unparseable body). NOT evidence of
+  /// emptiness — keep the cache so the tab still paints last-known REAL data.
+  const _Fetched.failed()
+      : value = null,
+        knownEmpty = false;
+
+  final T? value;
+  final bool knownEmpty;
+}
+
+/// Adapter for repository getters whose `null` is AMBIGUOUS — they fold "no
+/// data" and "the request failed" into the same null, so the only safe reading
+/// is "we don't know", which can never clear a cache. Use a fetch that reports
+/// [_Fetched.empty] wherever the server actually distinguishes the two.
+Future<_Fetched<T>> _ambiguousNull<T>(Future<T?> Function() fetch) async {
+  final value = await fetch();
+  return value == null ? _Fetched<T>.failed() : _Fetched<T>.data(value);
+}
+
 /// Cache-first read with a TWO-tier cache (in-memory static + SharedPreferences
 /// disk) and stale-while-revalidate semantics. Only ever stores REAL server
 /// responses; never fabricates data.
@@ -51,14 +87,19 @@ String? get _liveUserId =>
 ///   2. Cold start (no in-memory) → seed from disk (incl. expired), return it,
 ///      refresh in background, write-through.
 ///   3. No cache anywhere → fetch synchronously, write-through to both tiers.
+///
+/// A background refetch that comes back [_Fetched.empty] CLEARS both tiers and
+/// calls [onCleared]. Instant painting is untouched: the clear happens in a
+/// microtask *after* the cached value has already been returned and painted.
 Future<T?> _cacheFirst<T>({
   required T? cached,
-  required Future<T?> Function() fetch,
+  required Future<_Fetched<T>> Function() fetch,
   required void Function(T?) writeMemory,
   required String label,
   required String diskKey,
   required Map<String, dynamic> Function(T) toJson,
   required T Function(Map<String, dynamic>) fromJson,
+  void Function()? onCleared,
 }) async {
   // Write-through helper: update both in-memory and disk with a REAL value.
   Future<void> persist(T value) async {
@@ -71,12 +112,32 @@ Future<T?> _cacheFirst<T>({
     }
   }
 
+  // Drop both tiers. Only ever called on a server-confirmed empty.
+  Future<void> clear() async {
+    writeMemory(null);
+    try {
+      await DataCacheService.instance.invalidate(diskKey, userId: _liveUserId);
+    } catch (e) {
+      debugPrint('⚠️ [$label] disk clear failed: $e');
+    }
+  }
+
   // Background revalidation — refresh next paint silently, don't block this one.
   void revalidate() {
     Future.microtask(() async {
       try {
         final fresh = await fetch();
-        if (fresh != null) await persist(fresh);
+        final value = fresh.value;
+        if (value != null) {
+          await persist(value);
+        } else if (fresh.knownEmpty) {
+          // The server says there is nothing to show. Without this, a user who
+          // stopped logging kept seeing last month's card on every launch —
+          // the cache had no way to be told "that data is gone".
+          debugPrint('🧹 [$label] server reports no data — clearing stale cache');
+          await clear();
+          onCleared?.call();
+        }
       } catch (e) {
         debugPrint('⚠️ [$label] background refresh failed: $e');
       }
@@ -104,11 +165,13 @@ Future<T?> _cacheFirst<T>({
     debugPrint('⚠️ [$label] disk seed failed: $e');
   }
 
-  // 3. No cache anywhere — fetch and write-through.
+  // 3. No cache anywhere — fetch and write-through. Nothing to clear here:
+  //    both tiers are already empty, so an empty answer is a no-op.
   try {
     final fresh = await fetch();
-    if (fresh != null) await persist(fresh);
-    return fresh;
+    final value = fresh.value;
+    if (value != null) await persist(value);
+    return value;
   } catch (e) {
     debugPrint('❌ [$label] fetch failed: $e');
     return null;
@@ -146,7 +209,9 @@ final weeklySummaryProvider =
     final repo = ref.watch(nutritionRepositoryProvider);
     return _cacheFirst<WeeklySummaryData>(
       cached: _weeklySummaryCache,
-      fetch: () => repo.getWeeklySummary(userId),
+      // `getWeeklySummary` returns null for BOTH "no data" and "the call
+      // failed", so its null cannot clear the cache.
+      fetch: () => _ambiguousNull(() => repo.getWeeklySummary(userId)),
       writeMemory: (v) => _weeklySummaryCache = v,
       label: 'WeeklySummary',
       diskKey: _kWeeklySummaryKey,
@@ -164,7 +229,8 @@ final detailedTDEEProvider =
     final repo = ref.watch(nutritionRepositoryProvider);
     return _cacheFirst<DetailedTDEE>(
       cached: _detailedTDEECache,
-      fetch: () => repo.getDetailedTDEE(userId),
+      // Ambiguous null — see [_ambiguousNull].
+      fetch: () => _ambiguousNull(() => repo.getDetailedTDEE(userId)),
       writeMemory: (v) => _detailedTDEECache = v,
       label: 'DetailedTDEE',
       diskKey: _kDetailedTDEEKey,
@@ -174,7 +240,13 @@ final detailedTDEEProvider =
   },
 );
 
-/// Provider for adherence summary with sustainability score
+/// Provider for adherence summary with sustainability score.
+///
+/// This is the one aggregate whose endpoint distinguishes "there is nothing to
+/// score" (200 + JSON null + a reason header) from "the read failed" (5xx /
+/// offline), so it is the one whose cache can be honestly CLEARED — a user who
+/// stops logging, or who never configured targets, stops seeing an old ring
+/// instead of carrying it forever.
 final adherenceSummaryProvider =
     FutureProvider.autoDispose.family<AdherenceSummary?, String>(
   (ref, userId) async {
@@ -182,8 +254,30 @@ final adherenceSummaryProvider =
     final repo = ref.watch(nutritionRepositoryProvider);
     return _cacheFirst<AdherenceSummary>(
       cached: _adherenceSummaryCache,
-      fetch: () => repo.getAdherenceSummary(userId),
+      fetch: () async {
+        final result = await repo.getAdherenceSummaryResult(userId);
+        final summary = result.summary;
+        if (summary != null) return _Fetched<AdherenceSummary>.data(summary);
+        // `isKnownEmpty` == the server affirmed there is nothing to score
+        // (no configured targets, or no logs in the window). A failed read
+        // stays "unknown" and leaves the cached card alone.
+        return result.isKnownEmpty
+            ? const _Fetched<AdherenceSummary>.empty()
+            : const _Fetched<AdherenceSummary>.failed();
+      },
       writeMemory: (v) => _adherenceSummaryCache = v,
+      onCleared: () {
+        // Re-run so the card repaints its honest "not enough data" state in
+        // THIS session. Loop-free: the re-run finds both cache tiers empty and
+        // takes the synchronous fetch path (branch 3), which never revalidates.
+        try {
+          ref.invalidateSelf();
+        } catch (_) {
+          // Provider disposed (tab closed / account switch) before the
+          // revalidation landed — the caches are already cleared, so the next
+          // read is correct regardless.
+        }
+      },
       label: 'AdherenceSummary',
       diskKey: _kAdherenceSummaryKey,
       toJson: (v) => v.toJson(),
@@ -200,7 +294,8 @@ final weeklyNutritionProvider =
     final repo = ref.watch(nutritionRepositoryProvider);
     return _cacheFirst<WeeklyNutritionData>(
       cached: _weeklyNutritionCache,
-      fetch: () => repo.getWeeklyNutrition(userId),
+      // Ambiguous null — see [_ambiguousNull].
+      fetch: () => _ambiguousNull(() => repo.getWeeklyNutrition(userId)),
       writeMemory: (v) => _weeklyNutritionCache = v,
       label: 'WeeklyNutrition',
       diskKey: _kWeeklyNutritionKey,

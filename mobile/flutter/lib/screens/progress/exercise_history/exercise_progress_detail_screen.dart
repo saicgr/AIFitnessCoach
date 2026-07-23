@@ -17,6 +17,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import '../../workout/widgets/exercise_strength_score_card.dart';
 import '../widgets/gym_progress_filter.dart';
 import 'widgets/ai_progress_pros_cons_card.dart';
+import '../../common/app_refresh_indicator.dart';
 
 /// Detail screen showing progression and history for a specific exercise
 class ExerciseProgressDetailScreen extends ConsumerStatefulWidget {
@@ -249,7 +250,7 @@ class _ProgressTab extends ConsumerWidget {
         );
 
         if (!history.hasData) {
-          return RefreshIndicator(
+          return AppRefreshIndicator(
             onRefresh: () async => ref.invalidate(gymExerciseHistoryProvider(args)),
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -273,7 +274,7 @@ class _ProgressTab extends ConsumerWidget {
             result!.isPerGym &&
             perGymContributors >= 2;
 
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           onRefresh: () async {
             ref.invalidate(gymExerciseHistoryProvider(args));
           },

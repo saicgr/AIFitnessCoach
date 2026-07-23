@@ -8,6 +8,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/heart_health_repository.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
+import '../common/app_refresh_indicator.dart';
 
 /// Heart Health Score detail — route `/health/heart-health`.
 ///
@@ -88,7 +89,7 @@ class HeartHealthDetailScreen extends ConsumerWidget {
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
     final scoreColor = _scoreColor(data.score);
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async => ref.invalidate(heartHealthProvider),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),

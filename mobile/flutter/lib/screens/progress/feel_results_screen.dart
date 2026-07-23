@@ -17,6 +17,7 @@ import '../../data/models/subjective_feedback.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Main screen for viewing subjective results/feel results
 class FeelResultsScreen extends ConsumerStatefulWidget {
   const FeelResultsScreen({super.key});
@@ -65,7 +66,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
       ),
       body: feedbackState.isLoading
           ? AppLoading.fullScreen()
-          : RefreshIndicator(
+          : AppRefreshIndicator(
               onRefresh: () async => _loadData(),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

@@ -19,6 +19,7 @@ import 'record_attempt_dialog.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Main screen for viewing and managing personal weekly goals
 class PersonalGoalsScreen extends ConsumerStatefulWidget {
   const PersonalGoalsScreen({super.key});
@@ -408,7 +409,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     final records = (_recordsData?['records'] as List?) ?? [];
     final prsThisWeek = _goalsData?['total_prs_this_week'] ?? 0;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadData,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

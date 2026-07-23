@@ -14,6 +14,7 @@
 
 - **The hard 20% (only you can do it):** record short faceless screen-recordings of Zealova (no camera, no face). You do this in a **weekend batch** — record ~12 reusable clips ONCE (`reels/broll-library.md`), then draw from them for weeks. Add a few fresh clips each weekend.
 - **The easy 80% (generated for you):** every caption, hook, hashtag set, trending-audio pick, X post, and Reddit comment. You paste and post.
+- **The night carousel is now 100% auto** (added 2026-07): the render engine (`frontend/scripts/instagram/`) outputs **finished** 1080×1350 IG + 1080×1920 TikTok slides — no CapCut, no design. Only the morning video needs your recorded footage.
 
 Your only daily job: **upload in the morning, upload at night, and handle comments** (you said you'll take care of engagement). Everything else is pre-written in the Daily Pack.
 
@@ -30,10 +31,10 @@ Your only daily job: **upload in the morning, upload at night, and handle commen
 | Slot | Time (your local, CST) | What goes out | Where |
 |---|---|---|---|
 | **☀️ Morning** | 7–9 AM | That day's **feature-demo video** | IG Reel + TikTok + X (clip) |
-| **🌙 Night** | 6–8 PM | A **second angle** — a tip, a "did you know," or a before/after on the same or an adjacent feature | IG Reel/Story + TikTok + X |
+| **🌙 Night** | 6–8 PM | An **auto-rendered carousel** on the same/adjacent feature (any of the 13 modes) | TikTok Photo Mode daily + IG feed the strong days |
 | **Always-on (do in downtime)** | anytime | 1 genuine Reddit value comment | Reddit |
 
-That's your "2×/day everywhere": two video uploads + one Reddit touch you slot in whenever.
+That's your "2×/day everywhere": **one video + one carousel** upload + one Reddit touch you slot in whenever. (The carousel needs no footage — it renders finished, so the night slot is basically free.)
 
 ---
 
@@ -41,38 +42,46 @@ That's your "2×/day everywhere": two video uploads + one Reddit touch you slot 
 
 Each day has **one feature focus**. The morning video demos it; the night video is a complementary angle on the same or adjacent feature.
 
-| Day | Feature focus (morning demo) | Night angle |
+| Day | ☀️ Morning video (feature demo) | 🌙 Night carousel (mode → CONTENT-ANGLES.md) |
 |---|---|---|
-| **Mon** | 🍽️ Food photo logging (strongest AI feature) | "log your weekend" / macro reveal |
-| **Tue** | 🏋️ AI workout generation (the headline) | equipment-based / "no gym" angle |
-| **Wed** | 📸 Menu scan (eating-out differentiator) | restaurant / "ordering out" POV |
-| **Thu** | 💬 Multi-agent coach chat | "ask your coach anything" Q&A |
-| **Fri** | ⏱️ Intermittent fasting tracker | weekend-prep / fasting stage ring |
-| **Sat** | 📈 Trends & correlations (progress) | **Reddit self-promo slot** (allowed subs only) |
-| **Sun** | 🎯 Best-of / recap feature | **batch-record next week's clips** |
+| **Mon** | 🍽️ Food photo logging (strongest AI feature) | **Comparison** — "this meal vs that, scored" |
+| **Tue** | 🏋️ AI workout generation (the headline) | **Cards** — "a program for your exact life" |
+| **Wed** | 📸 Menu scan (eating-out differentiator) | **Comparison / Reveal** — "82 vs 24" or a single food's inflammation score |
+| **Thu** | 💬 Multi-agent coach chat | **Insight** — "the coach caught something" (correlation / plateau) |
+| **Fri** | ⏱️ Intermittent fasting tracker | **Timeline** — the hour-by-hour fasting clock |
+| **Sat** | 📈 Trends & correlations (progress) | **Reveal / Radar** — strength score / fitness radar · + **Reddit self-promo** (allowed subs) |
+| **Sun** | 🎯 Best-of / recap feature | **Heatmap / Wrapped** — consistency streak · + **batch-record next week's clips** |
 
 Lead with food logging + menu scan + workout generation — per `_ZEALOVA_FACTS.md §2B` these are the most-tested, most-marketable features. Never claim anything in the `§5` banned list ("replaces your trainer," "guaranteed results," etc.).
 
 ---
 
-## How to generate each day's pack (the one command)
+## How to generate each day's content (the one command)
 
 Every morning (or the night before), open Claude Code and type:
 
 ```
-/daily-content
+/social-today
 ```
 
-That produces **tomorrow's Daily Pack** — a single file at `docs/planning/marketing/daily/YYYY-MM-DD.md` with a **☀️ MORNING** block and a **🌙 NIGHT** block, each holding paste-ready copy for every platform + which B-roll clip to grab. It pulls **today's** trending audio and fresh Reddit threads live (trends shift daily, so never reuse yesterday's).
+That builds **today's two posts as FINISHED files** (no CapCut, no Canva):
+- **☀️ Morning video** → an assembled reel (uses your recorded b-roll; if a clip
+  isn't recorded yet it renders with a placeholder + writes a `RECORD-THIS.md` shot list).
+- **🌙 Night carousel** → rendered slides in the right mode for today's feature.
+Both come out **native for IG and TikTok** (`content/<date>/instagram/` + `tiktok/`),
+each with its own caption. It runs live research every time (trending audio, a
+defensible hook) and rotates via `ROTATION-LOG.md` so nothing repeats.
 
 Variants:
-- `/daily-content` → tomorrow's full pack
-- `/daily-content 2026-07-15` → a specific date
-- `/daily-content week` → a whole week at once (batch on Sunday)
+- `/social-today` → today
+- `/social-today 2026-07-21` → a specific date
+- Ad-hoc, just ask: "make a reel about the fasting clock", "an insight carousel about the sleep-vs-bench thing"
 
 After you post, log it:
 - `log this posted Reel` (reels-producer logs to `reels/posted-log.md`)
 - `Reddit posted, log it`
+
+*(Legacy: `/daily-content` still exists for the older copy-only/Reddit pack — `/social-today` supersedes it for the IG/TikTok visual content.)*
 
 ---
 
@@ -107,7 +116,12 @@ After you post, log it:
 
 | What | Path |
 |---|---|
-| Daily packs (paste-ready) | `docs/planning/marketing/daily/YYYY-MM-DD.md` |
+| **Rendered posts (finished, per platform)** | `docs/planning/marketing/content/<date>/{instagram,tiktok}/` |
+| **Render engine (carousel + video code)** | `frontend/scripts/instagram/` (+ README) |
+| **Content-angle catalog (features → modes)** | `docs/planning/marketing/content/CONTENT-ANGLES.md` |
+| **Rotation ledger (no-repeat)** | `docs/planning/marketing/content/ROTATION-LOG.md` |
+| **Screenshot library (real app screens)** | `docs/planning/marketing/screenshots/` |
+| **Authoring agent** | `.claude/agents/marketing/community/social-content.md` |
 | Reusable B-roll shot list | `docs/planning/marketing/reels/broll-library.md` |
 | Reel shot lists + weekly plan | `docs/planning/marketing/reels/shot-lists.md` |
 | Reddit threads + comment drafts | `docs/planning/marketing/reddit/posts.md` |

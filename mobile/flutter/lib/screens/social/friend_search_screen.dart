@@ -12,6 +12,7 @@ import 'friend_profile_screen.dart';
 import 'widgets/user_search_result_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Friend Search Screen - Search for users and send friend requests
 class FriendSearchScreen extends ConsumerStatefulWidget {
   const FriendSearchScreen({super.key});
@@ -546,7 +547,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => _performSearch(_searchController.text),
       child: ListView.builder(
         controller: _searchScrollController,
@@ -648,7 +649,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: _loadSuggestions,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),

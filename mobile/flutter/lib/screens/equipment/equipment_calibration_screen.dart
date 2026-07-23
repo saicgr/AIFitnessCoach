@@ -7,6 +7,7 @@ import '../../data/repositories/equipment_calibration_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Per-user equipment calibration — Phase 1 of workouts overhaul.
 ///
 /// Lets the user tell the app the *actual* weight of their gym hardware so
@@ -51,7 +52,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
             if (items.isEmpty) {
               return _emptyView(context, textPrimary, () => _openEditor(context, ref, null));
             }
-            return RefreshIndicator(
+            return AppRefreshIndicator(
               onRefresh: () async {
                 ref.read(equipmentCalibrationRepositoryProvider).invalidate();
                 ref.invalidate(equipmentCalibrationListProvider);

@@ -27,6 +27,7 @@ import '../../../data/services/api_client.dart';
 import 'equipment_snap_flow.dart' show SnapMode;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 // ---------------------------------------------------------------------------
 // Model
 // ---------------------------------------------------------------------------
@@ -433,7 +434,7 @@ class _SnappedEquipmentSectionState
       return _buildEmpty(textMuted, textPrimary);
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () =>
           ref.read(snappedEquipmentProvider.notifier).refresh(),
       child: ListView.builder(
@@ -481,7 +482,7 @@ class _SnappedEquipmentSectionState
 
   Widget _buildEmpty(Color textMuted, Color textPrimary) {
     // Pull-to-refresh-able empty state so silent recovery still works.
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () =>
           ref.read(snappedEquipmentProvider.notifier).refresh(),
       child: ListView(

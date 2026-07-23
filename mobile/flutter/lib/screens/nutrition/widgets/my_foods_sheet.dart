@@ -15,6 +15,7 @@ import '../../../widgets/nutrition/food_mood_analytics_card.dart';
 import '../weekly_checkin_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// My Foods sheet with 2 tabs: Saved Foods + My Recipes
 class MyFoodsSheet extends StatefulWidget {
   final String userId;
@@ -614,7 +615,7 @@ class RecipesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async => onRefresh(),
       color: teal,
       child: recipes.isEmpty

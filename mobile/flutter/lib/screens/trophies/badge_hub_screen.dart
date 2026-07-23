@@ -46,6 +46,7 @@ import 'widgets/my_badges_showcase.dart';
 import 'widgets/personal_bests_grid.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 class BadgeHubScreen extends ConsumerStatefulWidget {
   const BadgeHubScreen({super.key});
 
@@ -156,7 +157,7 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
           ),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         color: accent,
         onRefresh: _refresh,
         child: ListView(

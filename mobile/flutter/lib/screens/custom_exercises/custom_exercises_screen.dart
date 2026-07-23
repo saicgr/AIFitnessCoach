@@ -14,6 +14,7 @@ import 'widgets/create_exercise_sheet.dart';
 import 'widgets/empty_custom_exercises.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Screen for viewing and managing custom exercises
 class CustomExercisesScreen extends ConsumerStatefulWidget {
   const CustomExercisesScreen({super.key});
@@ -268,7 +269,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () => ref.read(customExercisesProvider.notifier).refresh(),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),

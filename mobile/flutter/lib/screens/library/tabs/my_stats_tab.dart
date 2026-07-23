@@ -9,6 +9,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../components/exercise_stats_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 /// My Stats tab showing exercise history and performance
 class MyStatsTab extends ConsumerWidget {
   const MyStatsTab({super.key});
@@ -70,7 +71,7 @@ class MyStatsTab extends ConsumerWidget {
           );
         }
 
-        return RefreshIndicator(
+        return AppRefreshIndicator(
           onRefresh: () async {
             ref.invalidate(exerciseHistoryProvider);
           },

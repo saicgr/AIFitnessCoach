@@ -15,7 +15,7 @@ extension _CycleScreenUi on _CycleScreenState {
     final rawLogsAsync = ref.watch(cycleRawLogsProvider(120));
     final accent = _accent;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       color: accent,
       onRefresh: () async {
         ref.invalidate(cyclePredictionProvider);
@@ -158,7 +158,7 @@ extension _CycleScreenUi on _CycleScreenState {
     final rawLogsAsync = ref.watch(cycleRawLogsProvider(180));
     final accent = _accent;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       color: accent,
       onRefresh: () async {
         ref.invalidate(cyclePredictionProvider);
@@ -219,7 +219,7 @@ extension _CycleScreenUi on _CycleScreenState {
     final rawLogsAsync = ref.watch(cycleRawLogsProvider(120));
     final accent = _accent;
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       color: accent,
       onRefresh: () async {
         ref.invalidate(cyclePredictionProvider);

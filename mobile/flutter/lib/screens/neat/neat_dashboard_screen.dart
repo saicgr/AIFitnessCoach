@@ -9,6 +9,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 part 'neat_dashboard_screen_part_neat_score_card.dart';
 part 'neat_dashboard_screen_part_streaks_card.dart';
 
@@ -446,7 +447,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
           }),
         ],
       ),
-      body: RefreshIndicator(
+      body: AppRefreshIndicator(
         onRefresh: _loadData,
         color: AppColors.cyan,
         backgroundColor: elevatedColor,

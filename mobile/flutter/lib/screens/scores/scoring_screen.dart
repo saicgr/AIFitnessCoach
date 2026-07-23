@@ -13,6 +13,7 @@ import 'widgets/nutrition_score_card.dart';
 import 'widgets/consistency_score_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Full scoring screen showing detailed fitness score breakdown.
 class ScoringScreen extends ConsumerStatefulWidget {
   const ScoringScreen({super.key});
@@ -112,7 +113,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             )
           else
             SliverToBoxAdapter(
-              child: RefreshIndicator(
+              child: AppRefreshIndicator(
                 onRefresh: _onRefresh,
                 child: _buildContent(context, scoresState, isDark),
               ),

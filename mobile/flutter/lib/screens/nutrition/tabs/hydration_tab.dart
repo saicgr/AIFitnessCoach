@@ -14,6 +14,7 @@ import '../../../widgets/design_system/zealova.dart';
 import '../widgets/liquid_body_hydration.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../common/app_refresh_indicator.dart';
 part 'hydration_tab_part_stat_item.dart';
 
 
@@ -147,7 +148,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
       );
     }
 
-    return RefreshIndicator(
+    return AppRefreshIndicator(
       onRefresh: () async {
         if (widget.userId.isNotEmpty) {
           ref.read(hydrationProvider.notifier).loadTodaySummary(widget.userId);

@@ -11,6 +11,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../common/app_refresh_indicator.dart';
 /// Screen showing flexibility assessment history
 class FlexibilityHistoryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -113,7 +114,7 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
                 ? _buildHistorySkeleton()
                 : filteredHistory.isEmpty
                     ? _buildEmptyState(theme)
-                    : RefreshIndicator(
+                    : AppRefreshIndicator(
                         onRefresh: () async {
                           await ref.read(flexibilityProvider.notifier).loadAssessmentHistory(
                             userId: widget.userId,
