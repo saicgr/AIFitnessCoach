@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -448,6 +449,41 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   bool _isLoaded = false;
   bool get isLoaded => _isLoaded;
 
+  /// Flips to `true` exactly once, when [_loadFromPrefs] has finished (success
+  /// OR failure). The router listens to this so its redirect re-evaluates the
+  /// moment the persisted quiz lands.
+  ///
+  /// Why a separate listenable instead of the StateNotifier's own stream: when
+  /// the persisted quiz is empty, `_loadFromPrefs` assigns a value equal to the
+  /// initial state, so `StateNotifier` suppresses the notification and a
+  /// listener can never distinguish "not loaded yet" from "loaded, empty".
+  /// The router MUST be able to tell those apart — treating an in-flight load
+  /// as "no quiz" is what bounces a user back to question 1.
+  final ValueNotifier<bool> loadedListenable = ValueNotifier<bool>(false);
+
+  @override
+  void dispose() {
+    loadedListenable.dispose();
+    super.dispose();
+  }
+
+  /// When the persisted quiz was last modified by real user input, or null if
+  /// it has never been touched on this device.
+  ///
+  /// This is the signal that separates "answers the person in front of us just
+  /// typed" from "leftovers of whoever used this device before" — see
+  /// `AuthRepository._syncQuizAfterSignInImpl`.
+  Future<DateTime?> lastTouchedAt() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final ms = prefs.getInt(_lastTouchedAtKey);
+      if (ms == null) return null;
+      return DateTime.fromMillisecondsSinceEpoch(ms);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// True while [_loadFromPrefs] is executing. Used by [state] override to
   /// suppress timestamp updates triggered by hydration (only real user input
   /// should refresh the staleness clock).
@@ -480,7 +516,26 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     }
   }
 
+  /// Load persisted answers, then mark the store loaded — ALWAYS, including
+  /// when the read throws.
+  ///
+  /// A stalled or failed `SharedPreferences.getInstance()` used to leave
+  /// `_isLoaded` false forever with no notification ever emitted, and the
+  /// router's synchronous `ref.read` reads an empty quiz in that window and
+  /// cannot tell it apart from a genuinely-new user. `finally` guarantees the
+  /// loaded signal fires so the router re-evaluates instead of guessing.
   Future<void> _loadFromPrefs() async {
+    try {
+      await _loadFromPrefsImpl();
+    } catch (e) {
+      debugPrint('⚠️ [PreAuthQuiz] Failed to load persisted quiz: $e');
+    } finally {
+      _isLoaded = true;
+      loadedListenable.value = true;
+    }
+  }
+
+  Future<void> _loadFromPrefsImpl() async {
     final prefs = await SharedPreferences.getInstance();
 
     // Stale-data guard: if the quiz was last touched longer than
@@ -494,7 +549,6 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         await _wipeQuizKeys(prefs);
         await prefs.remove(_lastTouchedAtKey);
         state = PreAuthQuizData();
-        _isLoaded = true;
         return;
       }
     }
@@ -648,7 +702,6 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     } finally {
       _suppressTouch = false;
     }
-    _isLoaded = true;
   }
 
   Future<PreAuthQuizData> ensureLoaded() async {
@@ -1098,6 +1151,15 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_pullupCapacity', 'preAuth_plankCapacity',
       'preAuth_squatCapacity', 'preAuth_cardioCapacity',
       'preAuth_isTrainer',
+      // Keys that were WRITTEN by setters but never listed here — they
+      // survived clear() and bled into the next account on the device.
+      // `preAuth_limitations` is the worst of them: it carries injuries, so a
+      // stale value silently constrains a different person's generated plan.
+      // `preAuth_isComplete` is write-only legacy state (nothing reads it) but
+      // is wiped for the same hygiene reason. Guarded by the
+      // `_wipeQuizKeys covers every persisted preAuth_ key` regression test.
+      'preAuth_limitations', 'preAuth_nutritionEnabled',
+      'preAuth_workoutVariety', 'preAuth_isComplete',
       // Onboarding v5 fields
       'preAuth_referralSource', 'preAuth_priorAppsTried',
       'preAuth_referralCode', 'preAuth_coachName',
