@@ -76,6 +76,16 @@ def _score_status_exists(db) -> bool:
         return False
 
 
+# Skip only rows Gemini already declared unscoreable. NOTE: a bare
+# .neq("score_status", "unavailable") DROPS every score_status IS NULL row,
+# because SQL `NULL <> 'unavailable'` is NULL (not true) and PostgREST filters
+# it out — which is the ENTIRE candidate set on a fresh backfill (unscored rows
+# have score_status NULL). Express it as "NULL OR not-unavailable" so the
+# never-attempted rows are included. PostgREST AND-s repeated top-level `or=`
+# params, so a second .or_() intersects with _MISSING_FILTER correctly.
+_STATUS_FILTER = "score_status.is.null,score_status.neq.unavailable"
+
+
 def _base_query(db, has_status: bool):
     q = (
         db.client.table("food_logs")
@@ -83,8 +93,7 @@ def _base_query(db, has_status: bool):
         .or_(_MISSING_FILTER)
     )
     if has_status:
-        # Skip rows Gemini already declared unscoreable so we don't loop.
-        q = q.neq("score_status", "unavailable")
+        q = q.or_(_STATUS_FILTER)
     # Oldest-first so the user's history fills in chronologically.
     return q.order("created_at", desc=False)
 
@@ -93,7 +102,7 @@ async def _count(db, has_status: bool) -> int:
     # PostgREST exact count via a head/count call.
     q = db.client.table("food_logs").select("id", count="exact").or_(_MISSING_FILTER)
     if has_status:
-        q = q.neq("score_status", "unavailable")
+        q = q.or_(_STATUS_FILTER)
     res = q.limit(1).execute()
     return res.count or 0
 

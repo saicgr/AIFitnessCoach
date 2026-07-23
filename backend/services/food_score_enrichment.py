@@ -277,12 +277,30 @@ async def _try_cache_stack_enrichment(
     update_payload["is_ultra_processed"] = any(
         it.get("is_ultra_processed") for it in enriched_items
     )
-    # Rating — worst (red > yellow > green)
-    rating_priority = {"red": 3, "yellow": 2, "green": 1}
-    ratings = [it.get("rating") for it in enriched_items if it.get("rating")]
-    if ratings:
-        worst_rating = max(ratings, key=lambda r: rating_priority.get(r, 0))
-        update_payload["rating"] = worst_rating
+    # NOTE: the override rows also carry a `rating` traffic-light
+    # (green/yellow/red, mig 2064) but food_logs has NO `rating` column and the
+    # app never reads one — the Flutter FoodLog model
+    # (data/models/nutrition_part_food_mood.dart) parses health_score /
+    # health_score_reasons / inflammation_score / fodmap_rating and nothing
+    # else; the only red/yellow/green `rating` the UI renders belongs to
+    # menu-analysis DISHES (MenuDishItem), not to logged meals.
+    # We used to write update_payload["rating"] here, and because PostgREST
+    # rejects the WHOLE payload on one unknown key (PGRST204), that single line
+    # silently discarded all ~13 enrichment fields — health_score,
+    # inflammation_score, glycemic_load and 29 micronutrients — on every
+    # cache-hit enrichment, leaving those rows with a NULL health_score.
+    # (Scale, measured 2026-07-22 against production:
+    #    SELECT count(*), count(*) FILTER (WHERE health_score IS NULL)
+    #      FROM food_logs;   -> 222 rows, 107 with a NULL health_score.
+    #  That is a point-in-time number and drifts as rows are logged/backfilled.)
+    # Rows already affected are repaired by the EXISTING one-shot backfill,
+    # scripts/backfill_food_log_scores.py — it selects rows with a NULL
+    # inflammation_score OR health_score and re-runs this same enrichment
+    # function; it is idempotent and resumable, so no new tooling is required.
+    # health_score covers the per-meal "how good was this" signal the UI shows,
+    # so the traffic light is intentionally NOT propagated to the food_log.
+    # Regression guard: tests/test_column_drift_audit.py +
+    # scripts/audit_supabase_column_drift.py --check.
 
     # 29 micronutrients — sum across items (per-serving values)
     for col in (

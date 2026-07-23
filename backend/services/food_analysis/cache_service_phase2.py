@@ -206,6 +206,15 @@ def _row_macros_complete(row: Dict[str, Any]) -> bool:
     NOTE: a single macro being 0 is legitimate (chicken wings have ~0g
     carbs, butter has ~0g protein, protein powder has ~0g fat). Only
     reject when ALL three macros are missing/zero.
+
+    EXCEPTION — alcohol. Ethanol carries ~6.93 kcal/g and zero protein/carbs/
+    fat, so a distilled-spirit row IS legitimately 0/0/0 with real calories
+    (production row display_name='Vodka (80 Proof)', food_category='alcohol',
+    231 kcal/100g). Those rows are complete, not partial, and must not be
+    thrown to Stage-2 Gemini for a worse guess. Detection is data-driven
+    (alcohol mass column / alcohol taxonomy label / declared ABV-or-proof),
+    never a hardcoded list of liquor names — see
+    `services.gemini.parsers.alcohol_accounts_for_calories`.
     """
     cals = row.get("calories_per_100g")
     if cals is None or cals <= 0:
@@ -215,7 +224,21 @@ def _row_macros_complete(row: Dict[str, Any]) -> bool:
         v = row.get(col)
         if v is not None and v > 0:
             populated += 1
-    return populated >= 1
+    if populated >= 1:
+        return True
+    try:
+        from services.gemini.parsers import alcohol_accounts_for_calories
+        evidence = alcohol_accounts_for_calories(row, cals, 100.0)
+    except Exception:  # noqa: BLE001
+        evidence = None
+    if evidence:
+        logger.info(
+            f"[_row_macros_complete] ALCOHOL row accepted: "
+            f"{row.get('display_name') or row.get('food_name_normalized')!r} "
+            f"{cals} kcal/100g with 0P/0C/0F — energy is ethanol ({evidence})"
+        )
+        return True
+    return False
 
 
 def _row_to_food_item(
@@ -260,6 +283,11 @@ def _row_to_food_item(
     # Enrichment fields are per-dish (NOT scaled by portion — same intensity)
     for col in _ENRICHMENT_COLS:
         item[col] = row.get(col)
+    # Carry the row's taxonomy label onto the item. Without it a flattened
+    # spirit item (231 kcal, 0P/0C/0F) loses the only data that explains its
+    # calories and the macro-integrity gate would flag it as a data gap.
+    if row.get("food_category") is not None:
+        item["food_category"] = row.get("food_category")
     return item
 
 
@@ -495,11 +523,34 @@ class FoodAnalysisCacheServicePhase2:
                     await _canonical_cache.set(n, [], ttl_override=300)
         return out
 
+    # Minimum trigram similarity a fuzzy canonical match must clear to be
+    # trusted. Below this, a top-1 trigram hit is noise: "twisted fig" (a
+    # cocktail) trigram-matched a fig-snack row and inherited its 175 kcal /
+    # 40g-carb macros. A floor + a shared-token requirement keeps typo
+    # tolerance ("chicken bryani" → "chicken biryani") without letting an
+    # unrelated food's numbers leak in.
+    _FUZZY_CANONICAL_MIN_SIM = 0.6
+
+    @staticmethod
+    def _content_tokens(s: str) -> set:
+        """Lowercased word tokens of length >= 3, minus a few stopwords, used
+        to require that a fuzzy match shares a real head-noun with the query."""
+        _stop = {"the", "and", "with", "our", "of", "a", "an", "in", "on"}
+        return {
+            t for t in re.findall(r"[a-z]+", (s or "").lower())
+            if len(t) >= 3 and t not in _stop
+        }
+
     async def _fuzzy_canonical_lookup(
         self, name_normalized: str,
     ) -> Optional[Dict[str, Any]]:
         """Trigram fuzzy match for names that don't exact-match canonical.
-        Used for typo tolerance + cuisine-name variation."""
+        Used for typo tolerance + cuisine-name variation.
+
+        Gated by `_FUZZY_CANONICAL_MIN_SIM` (SQL side) AND a shared-token
+        requirement (Python side) so an unrelated food never donates its
+        macros to a superficially trigram-close name.
+        """
         if not name_normalized:
             return None
 
@@ -508,21 +559,39 @@ class FoodAnalysisCacheServicePhase2:
             async with supabase.get_session() as session:
                 result = await session.execute(
                     text("""
-                        SELECT * FROM food_nutrition_overrides_canonical
+                        SELECT *, similarity(food_name_normalized, :name) AS _sim
+                        FROM food_nutrition_overrides_canonical
                         WHERE food_name_normalized % :name
+                          AND similarity(food_name_normalized, :name) >= :min_sim
                         ORDER BY similarity(food_name_normalized, :name) DESC
                         LIMIT 1
                     """),
-                    {"name": name_normalized},
+                    {"name": name_normalized, "min_sim": self._FUZZY_CANONICAL_MIN_SIM},
                 )
                 row = result.fetchone()
                 return dict(row._mapping) if row else None
 
         try:
-            return await _resilient_db_execute("canonical_fuzzy", _query)
+            row = await _resilient_db_execute("canonical_fuzzy", _query)
         except Exception as e:  # noqa: BLE001
             logger.warning(f"[canonical_fuzzy] lookup failed for {name_normalized!r}: {e}")
             return None
+
+        if not row:
+            return None
+        # Require a shared content token — trigram closeness alone is not
+        # identity ("twisted fig" vs "fig bar" share 'fig' but rank on 'fig'
+        # trigrams; "signature latte" vs "signature roll" must NOT match).
+        q_tokens = self._content_tokens(name_normalized)
+        m_tokens = self._content_tokens(str(row.get("food_name_normalized") or ""))
+        if q_tokens and m_tokens and not (q_tokens & m_tokens):
+            logger.info(
+                f"[canonical_fuzzy] rejected {name_normalized!r} → "
+                f"{row.get('food_name_normalized')!r} (sim={row.get('_sim')}, no shared token)"
+            )
+            return None
+        row.pop("_sim", None)
+        return row
 
     # ---- Vision-shaped lookup (Stage 1.5) --------------------------------
 
@@ -615,16 +684,29 @@ class FoodAnalysisCacheServicePhase2:
         if not food_items:
             raise RuntimeError("Stage 1.5 produced no food items (all lookups + novel fallback failed)")
 
-        total_cal = sum(int(it.get("calories", 0)) for it in food_items)
-        total_p = sum(float(it.get("protein_g", 0)) for it in food_items)
-        total_c = sum(float(it.get("carbs_g", 0)) for it in food_items)
-        total_f = sum(float(it.get("fat_g", 0)) for it in food_items)
-        total_fib = sum(float(it.get("fiber_g", 0)) for it in food_items)
-        total_sugar = sum(float(it.get("sugar_g", 0) or 0) for it in food_items)
+        total_cal = sum(int(it.get("calories") or 0) for it in food_items)
+        total_p = sum(float(it.get("protein_g") or 0) for it in food_items)
+        total_c = sum(float(it.get("carbs_g") or 0) for it in food_items)
+        total_f = sum(float(it.get("fat_g") or 0) for it in food_items)
+        total_fib = sum(float(it.get("fiber_g") or 0) for it in food_items)
+        total_sugar = sum(float(it.get("sugar_g") or 0) for it in food_items)
 
-        return {
+        # Meal-level "what is this dish" line for the review sheet. For a single
+        # dish, use its own description; for a multi-item plate, list the dishes.
+        _descs = [str(it.get("description")).strip() for it in food_items
+                  if it.get("description")]
+        if len(food_items) == 1 and _descs:
+            dish_description = _descs[0]
+        elif len(food_items) > 1:
+            _names = [str(it.get("name")).strip() for it in food_items if it.get("name")]
+            dish_description = ", ".join(_names[:4]) if _names else None
+        else:
+            dish_description = _descs[0] if _descs else None
+
+        payload = {
             "meal_type": meal_type,
             "food_items": food_items,
+            "dish_description": dish_description,
             "total_calories": total_cal,
             "total_protein_g": round(total_p, 1),
             "total_carbs_g": round(total_c, 1),
@@ -641,6 +723,21 @@ class FoodAnalysisCacheServicePhase2:
                 "n_canonical_hits": sum(1 for r in canonical_results.values() if r),
             },
         }
+        # Macro-integrity chokepoint for the VISION cache stack (Stage-2 Gemini
+        # can also return an item priced in calories with no macros). Route the
+        # hand-summed totals above through the shared derive helper first so the
+        # meal total is always exactly the sum of the items (and honours the
+        # unknown-macro contract), then the gate nulls + labels anything unknown.
+        try:
+            from services.gemini.parsers import (
+                derive_meal_totals,
+                enforce_macro_integrity,
+            )
+            derive_meal_totals(payload, "analyze_dishes_from_vision")
+            enforce_macro_integrity(payload, "analyze_dishes_from_vision")
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"[MacroIntegrity] vision gate FAILED: {e}", exc_info=True)
+        return payload
 
     async def _stage2_gemini_for_novel(
         self,
@@ -751,7 +848,8 @@ DISHES:
 
 For EACH dish return:
 {{
-  "name": "<dish name>",
+  "name": "<dish name — copy the name above VERBATIM>",
+  "description": "<friendly 1-sentence description of what this dish is / how it's made, <=140 chars>",
   "calories": <int kcal>,
   "protein_g": <float>,
   "carbs_g": <float>,
@@ -761,11 +859,20 @@ For EACH dish return:
   "sodium_mg": <float>,
   "inflammation_score": <int 1-10>,
   "is_ultra_processed": <bool>,
+  "is_alcohol": <bool — true for any alcoholic drink/cocktail/beer/wine/spirit>,
+  "alcohol_g": <float grams of ethanol, only when is_alcohol is true>,
   "fodmap_rating": "low" | "medium" | "high" | null,
   "rating": <int 1-10>
 }}
 
 Top-level JSON: {{"items": [<entry>, <entry>, ...]}}
+
+NAME + LANGUAGE (CRITICAL):
+- Copy each dish's "name" VERBATIM from the DISHES list above. Do NOT rename, translate, or "canonicalize" it.
+- The name MUST stay in the SAME language/script the dish was given in. Never substitute a foreign-language or regional name (e.g. "berry cheesecake" must stay "berry cheesecake", NEVER "Cheesecake við Berjum").
+
+ALCOHOL (CRITICAL):
+- If a dish is an alcoholic drink or cocktail (e.g. "Twisted Fig", "Old Fashioned", "IPA"), set is_alcohol=true and estimate alcohol_g. Do NOT classify it as a fruit snack or dessert. Ethanol carries ~7 kcal/g with 0 protein/carbs/fat, so a spirit is legitimately 0P/0C/0F.
 
 Guidelines:
 - Match the dish ORDER exactly — entry i corresponds to dish i.
@@ -808,7 +915,11 @@ Guidelines:
             if cal <= 0 and p <= 0 and c <= 0 and f <= 0:
                 results.append(None)
                 continue
-            item.setdefault("name", dish.name)
+            # Force the Stage-1 identified name — never let Stage-2 rename or
+            # translate the dish (this is where "berry cheesecake" became
+            # "Cheesecake við Berjum"). dish.name is already in the user's
+            # language from the vision/text identification.
+            item["name"] = dish.name
             if cal > 0 and p <= 0 and c <= 0 and f <= 0:
                 item["_macro_unknown"] = True
             results.append(item)
@@ -828,7 +939,16 @@ Guidelines:
         sugar, and low fiber density relative to carbs (a refined-carb signal).
         ``carbs_g`` and ``sugar_g`` are optional — when omitted the refined-carb
         and sugar penalties are skipped (back-compatible with older callers).
+
+        Any argument may be None: since the macro-integrity gate reports an
+        UNKNOWN macro as None (never a fabricated 0), a meal containing an
+        unknown-macro item reaches here with None totals. None is treated as
+        "no evidence" — it earns no bonus and triggers no penalty, rather than
+        being scored as a confident zero.
         """
+        calories = calories or 0
+        protein_g = protein_g or 0
+        fiber_g = fiber_g or 0
         score = 5
         if protein_g >= 20:
             score += 2

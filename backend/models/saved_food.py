@@ -39,12 +39,25 @@ class USDANutrientData(BaseModel):
 
 
 class AiPerGramData(BaseModel):
-    """AI-estimated per-gram nutrition data (fallback when USDA has no match)."""
-    calories: float = 0.0
-    protein: float = 0.0
-    carbs: float = 0.0
-    fat: float = 0.0
-    fiber: float = 0.0
+    """AI-estimated per-gram nutrition data (fallback when USDA has no match).
+
+    EVERY field is Optional and defaults to None, never 0.0. `services.gemini
+    .parsers.build_ai_per_gram` emits a macro key ONLY when the AI actually
+    returned that macro, and `flag_unknown_macros` POPS the protein/carbs/fat
+    keys off an item whose macros it just nulled — precisely so nothing can
+    re-multiply a fabricated factor back into the daily totals.
+
+    With the old `float = 0.0` declaration that protection was undone right
+    here at the model boundary: an absent key was rehydrated as a confident
+    "0 g per gram", which scales to a confident 0 g at ANY portion size. None
+    means "no per-gram factor for this macro" — a consumer must skip the
+    macro (leaving it unknown), not scale it to zero.
+    """
+    calories: Optional[float] = None
+    protein: Optional[float] = None
+    carbs: Optional[float] = None
+    fat: Optional[float] = None
+    fiber: Optional[float] = None
 
 
 class SavedFoodItem(BaseModel):

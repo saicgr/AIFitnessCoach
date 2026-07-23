@@ -342,11 +342,33 @@ class LogDirectRequest(BaseModel):
     # Client-generated double-log guard (WR9/A11). Reused across an offline
     # replay so the SAME key dedupes against migration 2245's unique index.
     idempotency_key: Optional[str] = Field(default=None, max_length=64)
+    # Calories stay required — a meal always has a known calorie figure.
     total_calories: int
-    total_protein: int
-    total_carbs: int
-    total_fat: int
-    total_fiber: Optional[int] = None
+    # Macro totals are OPTIONAL because "unknown" is a real, representable
+    # state. `services/gemini/parsers.enforce_macro_integrity` NULLs the meal
+    # totals whenever ANY item carries calories but no protein/carbs/fat, and
+    # its `_TOTAL_KEY_FAMILIES` rewrites exactly these three key names
+    # (total_protein / total_carbs / total_fat). Declared as required ints,
+    # this model could not even TRANSMIT that honest NULL on the
+    # confirm-then-save path: the client had to substitute a fabricated 0 or
+    # eat a 422. None here means "we do not know" — it is NOT zero, and it
+    # must never be coerced to zero downstream.
+    #
+    # FLOAT, not int: an item like salmon (37.4 g protein) truncates to 37 as
+    # an int, and a whole meal's rounding error compounds across items. The
+    # DB columns are numeric; keep the fractional grams end to end.
+    total_protein: Optional[float] = None
+    total_carbs: Optional[float] = None
+    total_fat: Optional[float] = None
+    total_fiber: Optional[float] = None
+    # Companion signals emitted alongside the NULLed totals by
+    # `enforce_macro_integrity`. Pydantic drops undeclared keys, so without
+    # these the server could not distinguish "the analysis said unknown" from
+    # "an old client just omitted the field", and the reason for the NULL
+    # (which items, what the partial known sum was) was lost at the boundary.
+    macros_unknown: Optional[bool] = None
+    macros_unknown_items: Optional[List[str]] = None
+    macros_known_subtotal: Optional[dict] = None
     source_type: str = Field(default="restaurant", max_length=50)
     # Specific input method — populates food_logs.input_type. One of:
     # text, voice, camera, gallery, barcode, menu_scan, buffet_scan,
@@ -426,17 +448,25 @@ class LogDirectRequest(BaseModel):
 
 
 class FoodItemRanking(BaseModel):
-    """Individual food item with goal-based ranking."""
+    """Individual food item with goal-based ranking.
+
+    Macros are Optional/None-defaulted, never `0.0`-defaulted: an item flagged
+    `macros_unknown` by `services/gemini/parsers.flag_unknown_macros` has its
+    protein/carbs/fat explicitly set to None. A `float = 0.0` default silently
+    rewrote that "unknown" as a confident "zero grams".
+    """
     name: str
     amount: Optional[str] = None
-    calories: int = 0
-    protein_g: float = 0.0
-    carbs_g: float = 0.0
-    fat_g: float = 0.0
+    calories: Optional[int] = None
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
     fiber_g: Optional[float] = None
     goal_score: Optional[int] = None
     goal_alignment: Optional[str] = None
     reason: Optional[str] = None
+    # True when this item's calories are known but its macro split is not.
+    macros_unknown: Optional[bool] = None
 
 
 class LogFoodResponse(BaseModel):
@@ -444,11 +474,27 @@ class LogFoodResponse(BaseModel):
     success: bool
     food_log_id: str
     food_items: List[dict]
+    # Calories remain required — they are known even when the split is not.
     total_calories: int
-    protein_g: float
-    carbs_g: float
-    fat_g: float
+    # NULLABLE, and this is load-bearing. `enforce_macro_integrity` sets the
+    # meal totals to None whenever the meal contains an item with calories but
+    # no protein/carbs/fat, and food_logging.py passes those values straight
+    # into this model. Declared as non-Optional floats, that raised a Pydantic
+    # ValidationError on serialization — i.e. an honest "we don't know" became
+    # a 500 for the user. None here means unknown; the client MUST render a
+    # placeholder ("—") or prompt, never a 0.
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
     fiber_g: Optional[float] = None
+    # Why the totals above are None, carried through to the client so the
+    # confirm sheet can name the offending items and show the partial sum over
+    # the items we DO know. Populated from `enforce_macro_integrity`'s
+    # `macros_unknown` / `macros_unknown_items` / `macros_known_subtotal`.
+    # None on every meal whose macros are fully known.
+    macros_unknown: Optional[bool] = None
+    macros_unknown_items: Optional[List[str]] = None
+    macros_known_subtotal: Optional[dict] = None
     overall_meal_score: Optional[int] = None
     health_score: Optional[int] = None
     health_score_reasons: Optional[List[str]] = None

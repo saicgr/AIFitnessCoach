@@ -540,6 +540,8 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 "encouragements": encouragements,
                 "warnings": warnings,
                 "recommended_swap": recommended_swap,
+                "dish_description": (food_analysis.get('dish_description')
+                                     if food_analysis else None),
                 "source_type": "text",
                 "total_time_ms": elapsed_ms(),
                 "cache_hit": cache_hit,
@@ -1336,6 +1338,7 @@ async def analyze_food_from_image_streaming(
             iron_mg = food_analysis.get('iron_mg')
 
             plate_description = food_analysis.get('plate_description')
+            dish_description = food_analysis.get('dish_description')
 
             # Extract inflammation fields from analysis
             analyze_inflammation_score = food_analysis.get('inflammation_score')
@@ -1409,6 +1412,8 @@ async def analyze_food_from_image_streaming(
                 "image_storage_key": image_storage_key,
                 # Visual description of what AI sees
                 "plate_description": plate_description,
+                # Friendly "what is this dish" line for all analysis modes.
+                "dish_description": dish_description,
                 # Inflammation / ultra-processed tracking
                 "inflammation_score": analyze_inflammation_score,
                 "is_ultra_processed": analyze_is_ultra_processed,

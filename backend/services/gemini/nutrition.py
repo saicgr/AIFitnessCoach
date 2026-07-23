@@ -17,6 +17,7 @@ from services.gemini.constants import (
     _food_text_cache, settings, gemini_generate_with_retry,
 )
 from services.gemini.utils import _sanitize_for_prompt, safe_join_list
+from services.gemini.parsers import enforce_macro_integrity
 
 logger = logging.getLogger("gemini")
 
@@ -262,6 +263,11 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
                         response_schema=FoodAnalysisResponse,
                         max_output_tokens=8192,  # High limit to prevent truncation with micronutrients
                         temperature=0.3,
+                        # Gemini 3.x is a thinking model; every other food call
+                        # site disables thinking (see vision_service.py:~306 —
+                        # leaving it on burned the token budget and truncated
+                        # ~50% of responses). This legacy path was the one missed.
+                        thinking_config=types.ThinkingConfig(thinking_budget=0),
                     ),
                     user_id=user_id,
                     timeout=IMAGE_ANALYSIS_TIMEOUT,
@@ -387,6 +393,11 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
                         )
                 except Exception as e:
                     logger.warning(f"[IMAGE-ANALYSIS:{req_id}] USDA enhancement failed, using AI estimates | error={e}", exc_info=True)
+
+            # Macro-integrity chokepoint (runs even when the enhancement above
+            # raised): erase any fabricated 0/0/0 and null the meal totals that
+            # would otherwise silently under-report. See parsers.enforce_macro_integrity.
+            enforce_macro_integrity(result, f"IMAGE-ANALYSIS:{req_id}")
 
             # Check if we got empty food items
             if not result.get('food_items'):
@@ -606,7 +617,7 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
             )
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "alcohol_g": 0, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -635,7 +646,7 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
         elif user_goals or nutrition_targets:
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "alcohol_g": 0, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -668,7 +679,7 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
         else:
             response_format = '''{{
   "food_items": [
-    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "alcohol_g": 0, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
   ],
   "total_calories": 450,
   "protein_g": 25,
@@ -690,6 +701,7 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
   "inflammation_score": 5,
   "is_ultra_processed": false,
   "corrected_query": "Corrected food description or null if no typos",
+  "dish_description": "Friendly 1-2 sentence description of WHAT this dish/meal is and how it's typically made, <=160 chars, in the user's language (e.g. 'A creamy Italian rice dish simmered with parmesan and white wine.')",
   "encouragements": ["What's good about this meal"],
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",
@@ -735,6 +747,22 @@ Food: "{description}"
 
 Return ONLY JSON (no markdown):
 {response_format}
+
+PER-ITEM MACROS ARE MANDATORY (CRITICAL):
+- EVERY entry in food_items MUST carry protein_g, carbs_g AND fat_g alongside calories.
+  These are the numbers the user tracks — an item with calories but no macros is unusable.
+- Calories come from protein (4 kcal/g), carbs (4 kcal/g), fat (9 kcal/g) and ethanol (7 kcal/g).
+  Cross-check: 4*protein_g + 4*carbs_g + 9*fat_g + 7*alcohol_g should land within ~15% of that
+  item's calories.
+- A single macro being 0 IS valid (egg white ≈ 0g fat, oil ≈ 0g protein/carbs, sugar ≈ 0g protein/fat).
+- All three macros being 0 is valid in exactly two cases:
+  (a) the item is genuinely 0 calories (water, black coffee, diet soda), or
+  (b) the item's calories come from ALCOHOL — distilled spirits (vodka, gin, rum, whiskey,
+      tequila, brandy and so on) are genuinely 0g protein / 0g carbs / 0g fat. In that case you
+      MUST set that item's alcohol_g to the grams of pure ethanol in the serving
+      (grams ≈ millilitres × ABV% / 100 × 0.79) so the calories are explained.
+  Otherwise, never leave all three at 0 — estimate them from the dish's composition.
+- Never omit a macro key and never write null for one.
 
 FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
 - Preserve EVERY qualifier word the user wrote (ingredient, protein, cuisine, brand, modifier).
@@ -1135,6 +1163,11 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                     logger.warning(f"Nutrition DB enhancement failed, using AI estimates: {e}", exc_info=True)
                     # Continue with original AI estimates if enhancement fails
 
+                # Macro-integrity chokepoint — runs even when the enhancement
+                # above raised, so an item Gemini priced in calories but never
+                # gave macros for can never be cached/served as 0/0/0.
+                enforce_macro_integrity(result, "parse_food_description")
+
                 # Meal-level inflammation fallback: when Gemini omitted the
                 # meal-level field but returned per-item scores, compute the
                 # weighted average so the UI pill renders.
@@ -1194,6 +1227,9 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                         result['fiber_g'] = round(sum(item.get('fiber_g', 0) or 0 for item in enhanced_items), 1)
                     except Exception as e:
                         logger.warning(f"Nutrition DB enhancement failed in fallback: {e}", exc_info=True)
+
+                    # Macro-integrity chokepoint (see structured path above).
+                    enforce_macro_integrity(result, "parse_food_description_fallback")
 
                     # Meal-level inflammation fallback — same logic as structured path
                     self._apply_meal_inflammation_fallback(result, description)
@@ -1326,21 +1362,27 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                                 "name": name_match.group(1),
                                 "amount": amount_match.group(1) if amount_match else "1 serving",
                                 "calories": float(calories_match.group(1)),
-                                "protein_g": float(protein_match.group(1)) if protein_match else 0,
-                                "carbs_g": float(carbs_match.group(1)) if carbs_match else 0,
-                                "fat_g": float(fat_match.group(1)) if fat_match else 0,
-                                "fiber_g": float(fiber_match.group(1)) if fiber_match else 0,
+                                # None (not 0) when the truncated JSON never
+                                # contained the macro — a regex miss means we do
+                                # not know it, and enforce_macro_integrity below
+                                # turns "all three unknown" into an explicit
+                                # macros_unknown item instead of a phantom 0/0/0.
+                                "protein_g": float(protein_match.group(1)) if protein_match else None,
+                                "carbs_g": float(carbs_match.group(1)) if carbs_match else None,
+                                "fat_g": float(fat_match.group(1)) if fat_match else None,
+                                "fiber_g": float(fiber_match.group(1)) if fiber_match else None,
                             }
                             food_objects.append(recovered_obj)
                             logger.info(f"[Gemini] Recovered truncated item: {recovered_obj['name']}")
 
                 if food_objects:
-                    # Calculate totals from individual items
-                    total_calories = sum(item.get('calories', 0) for item in food_objects)
-                    total_protein = sum(item.get('protein_g', 0) for item in food_objects)
-                    total_carbs = sum(item.get('carbs_g', 0) for item in food_objects)
-                    total_fat = sum(item.get('fat_g', 0) for item in food_objects)
-                    total_fiber = sum(item.get('fiber_g', 0) for item in food_objects)
+                    # Calculate totals from individual items (None-safe: a
+                    # recovered item may legitimately carry unknown macros).
+                    total_calories = sum(item.get('calories') or 0 for item in food_objects)
+                    total_protein = sum(item.get('protein_g') or 0 for item in food_objects)
+                    total_carbs = sum(item.get('carbs_g') or 0 for item in food_objects)
+                    total_fat = sum(item.get('fat_g') or 0 for item in food_objects)
+                    total_fiber = sum(item.get('fiber_g') or 0 for item in food_objects)
 
                     recovered_result = {
                         "food_items": food_objects,
@@ -1350,8 +1392,19 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                         "fat_g": total_fat,
                         "fiber_g": total_fiber,
                         "health_score": 5,  # Default neutral score
-                        "ai_suggestion": f"Logged {len(food_objects)} item(s): ~{total_calories} cal, {total_protein}g protein. Values are estimates - adjust if needed."
                     }
+                    # Macro-integrity chokepoint — nulls the totals when any
+                    # recovered item's macros are genuinely unknown.
+                    enforce_macro_integrity(recovered_result, "regex_recovery")
+                    _protein_txt = (
+                        "macros unknown — please confirm"
+                        if recovered_result.get("protein_g") is None
+                        else f"{recovered_result['protein_g']}g protein"
+                    )
+                    recovered_result["ai_suggestion"] = (
+                        f"Logged {len(food_objects)} item(s): ~{total_calories} cal, "
+                        f"{_protein_txt}. Values are estimates - adjust if needed."
+                    )
                     logger.info(f"[Gemini] Recovered {len(food_objects)} food items via regex extraction")
                     return recovered_result
         except Exception as e:

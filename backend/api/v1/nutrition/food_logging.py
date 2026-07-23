@@ -193,6 +193,7 @@ async def _await_and_persist_text_hydration(
         return None
 
 
+from services.gemini.parsers import derive_meal_totals, enforce_macro_integrity
 from services.gemini_service import GeminiService
 from services.nutrition_rag_service import get_nutrition_rag_service
 from services.food_analysis_cache_service import get_food_analysis_cache_service
@@ -1317,6 +1318,35 @@ async def log_food_direct(
             body.total_protein = int(round(override_totals["protein_g"]))
             body.total_carbs = int(round(override_totals["carbs_g"]))
             body.total_fat = int(round(override_totals["fat_g"]))
+
+        # DERIVE meal totals from the items before persisting — never trust the
+        # client's meal-level numbers. Gemini (and any client that echoed its 0
+        # totals) can post "N kcal · 0P/0C/0F" while every item carries real
+        # macros; the menu-scan path in particular sends totals the client
+        # computed from possibly-zero fields. Sum the items, then run the
+        # integrity gate so a genuinely-unknown-macro item is nulled + labelled,
+        # not written as a confident 0.
+        _persist_payload = enforce_macro_integrity(
+            derive_meal_totals(
+                {
+                    "food_items": body.food_items,
+                    "total_calories": body.total_calories,
+                    "total_protein": body.total_protein,
+                    "total_carbs": body.total_carbs,
+                    "total_fat": body.total_fat,
+                    "total_fiber": body.total_fiber,
+                },
+                "log-direct",
+            ),
+            "log-direct",
+        )
+        body.food_items = _persist_payload["food_items"]
+        if _persist_payload.get("total_calories") is not None:
+            body.total_calories = _persist_payload["total_calories"]
+        body.total_protein = _persist_payload.get("total_protein")
+        body.total_carbs = _persist_payload.get("total_carbs")
+        body.total_fat = _persist_payload.get("total_fat")
+        body.total_fiber = _persist_payload.get("total_fiber")
 
         # Create food log directly. The idempotency_key (when the client sent
         # one) makes this insert dedupe against migration 2245's unique index —

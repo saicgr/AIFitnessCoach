@@ -527,6 +527,7 @@ class FoodAnalysisResponse(BaseModel):
     ai_suggestion: Optional[str] = Field(default=None, description="Actionable tip starting with 'Next time:'")
     recommended_swap: Optional[str] = Field(default=None, description="Concrete healthier swap with benefit, e.g. 'Swap white rice for brown rice: +3g fiber'")
     plate_description: Optional[str] = Field(default=None, description="Brief visual description of the plate/scene for image analysis, max 100 chars. e.g. 'A South Indian breakfast with steamed idlis, sambar, and chutneys'")
+    dish_description: Optional[str] = Field(default=None, description="A friendly 1-2 sentence description of WHAT this dish/meal is — what it contains and how it's typically prepared — for ANY analysis mode (text, photo, or menu), max 160 chars. e.g. 'A creamy Italian rice dish simmered with parmesan and white wine.' Written for the eater, not a nutrition label.")
     inflammation_score: Optional[int] = Field(default=None, description="Meal-level inflammation score 1-10, calorie-weighted average of items")
     is_ultra_processed: Optional[bool] = Field(default=None, description="True if meal contains predominantly NOVA Group 4 ultra-processed foods")
     # Meal-level roll-ups (mirror the per-item fields above).

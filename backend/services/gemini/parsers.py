@@ -364,6 +364,556 @@ def finalize_food_items(items: List[dict], db_rows: Optional[Dict[str, dict]] = 
     return items
 
 
+# ---------------------------------------------------------------------------
+# Macro-integrity guards
+# ---------------------------------------------------------------------------
+# A food that carries real calories CANNOT have 0g protein AND 0g carbs AND 0g
+# fat — calories come from exactly those three (plus alcohol). When all three
+# are missing/zero on something with calories, the macro data is UNKNOWN, not
+# zero. Writing 0/0/0 into the food log is a fabricated number that lands in the
+# user's daily macro totals and their coach's context.
+#
+# Two producers of that shape feed this module:
+#   1. A nutrition-DB "hit" on a row that was imported calories-only (the
+#      Phase-1 backfill gap). `food_database_lookup_service_helpers.py:549`
+#      coerces those NULL macro columns to 0.0, and the DB branch below then
+#      OVERWRITES the AI's real per-item macros with those zeros.
+#   2. Gemini omitting the macro keys for an item it still priced in calories.
+#
+# `services/food_analysis/cache_service_phase2.py:_row_macros_complete` already
+# applies rule (1) on the vision cache-stack path; these helpers apply the same
+# rule on the text / USDA-enhance path so the policy is identical everywhere.
+_AI_MACRO_KEYS = ("protein_g", "carbs_g", "fat_g")
+_DB_MACRO_KEYS = ("protein_per_100g", "carbs_per_100g", "fat_per_100g")
+
+
+def _positive(value) -> bool:
+    """True when `value` is a number greater than zero (None/'' → False)."""
+    if value is None:
+        return False
+    try:
+        return float(value) > 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _as_float(value) -> Optional[float]:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Alcohol-explained energy
+# ---------------------------------------------------------------------------
+# The "calories > 0 with 0g protein AND 0g carbs AND 0g fat is physically
+# impossible" rule has exactly ONE legitimate exception: ETHANOL. Ethanol is a
+# fourth energy-bearing macronutrient (~6.93 kcal/g) that carries none of the
+# other three, so distilled spirits are genuinely 0P/0C/0F with real calories
+# (e.g. the production `food_nutrition_overrides` row
+# display_name='Vodka (80 Proof)', food_category='alcohol', source='usda',
+# 231 kcal/100g, 0/0/0 — a CORRECT row, not a data gap).
+#
+# Detection is DATA-DRIVEN, never a hardcoded list of liquor names:
+#   1. an explicit ethanol mass field on the record (`alcohol_g`,
+#      `alcohol_per_100g`, `alcohol_ethyl_g`, `ethanol_g`), or
+#   2. an alcohol TAXONOMY label in a classification column
+#      (`food_category` / `category` / `food_group` / `categories`) — the real
+#      production values are 'alcohol', 'alcoholic_beverage',
+#      'beverage_alcoholic', 'beverage_alcohol', 'spirit', 'spirits', plus
+#      OpenFoodFacts' 'alcoholic-beverages'; the explicitly non-alcoholic label
+#      'non_alcoholic_beverage' is excluded, or
+#   3. a DECLARED alcohol STRENGTH parsed out of the record's own text
+#      ("40% alcohol by volume", "63% ABV", "151-proof") — a structured
+#      attribute, not a food-name match.
+#
+# The evidence alone is not enough: the energy must also be PHYSICALLY
+# reachable by that much ethanol. A 4%-ABV beer cannot get 43 kcal/100g from
+# ethanol (4% ABV ≈ 3.2 g ethanol ≈ 22 kcal), so a 0/0/0 beer row is still
+# flagged as a data gap — which is correct, beer's calories are carbohydrate.
+_ETHANOL_KCAL_PER_G = 6.93
+_ETHANOL_DENSITY_G_PER_ML = 0.789
+# Generosity factor on the ceiling: source rows mix per-100g and per-100mL
+# bases and round ABV, so the check only rejects order-of-magnitude misfits.
+_ETHANOL_CEILING_TOLERANCE = 1.6
+
+_ALCOHOL_TAXONOMY_TOKENS = frozenset({
+    "alcohol", "alcohols", "alcoholic", "alcoholics",
+    "spirit", "spirits", "liquor", "liquors", "liqueur", "liqueurs",
+    "distilled",
+})
+
+# Substrings that positively declare the ABSENCE of alcohol. Checked first so
+# 'non_alcoholic_beverage' / 'alcohol-free' never read as alcoholic.
+_NON_ALCOHOLIC_MARKERS = (
+    "non alcoholic", "nonalcoholic", "no alcohol", "alcohol free",
+    "alcoholfree", "zero proof", "0 proof", "de alcoholized", "dealcoholized",
+    "mocktail", "virgin ",
+)
+
+_ALCOHOL_CLASSIFICATION_FIELDS = (
+    "food_category", "category", "food_group", "categories",
+)
+
+# Fields carrying an explicit ethanol MASS. Split by basis so a per-100g column
+# is scaled to the portion and an absolute per-serving field is not.
+_ALCOHOL_MASS_FIELDS_ABSOLUTE = ("alcohol_g", "alcohol_ethyl_g", "ethanol_g")
+_ALCOHOL_MASS_FIELDS_PER_100G = ("alcohol_per_100g", "alcohol_g_per_100g")
+
+# Free-text fields that may carry a declared strength.
+_ALCOHOL_TEXT_FIELDS = (
+    "display_name", "name", "notes", "description", "ingredients_text",
+    "amount", "serving_label", "variant_text",
+) + _ALCOHOL_CLASSIFICATION_FIELDS
+
+_ABV_PATTERNS = (
+    regex_module.compile(
+        r"(\d{1,3}(?:\.\d+)?)\s*%\s*(?:abv|alc\.?|alcohol)", regex_module.IGNORECASE
+    ),
+    regex_module.compile(
+        r"(?:abv|alcohol\s+by\s+volume)\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)\s*%",
+        regex_module.IGNORECASE,
+    ),
+)
+_PROOF_PATTERN = regex_module.compile(
+    r"(\d{1,3}(?:\.\d+)?)[\s\-]*proof\b", regex_module.IGNORECASE
+)
+
+
+def _record_text(record: Dict) -> str:
+    """Concatenate the record's own free-text fields for strength parsing."""
+    parts: List[str] = []
+    for key in _ALCOHOL_TEXT_FIELDS:
+        raw = record.get(key)
+        if isinstance(raw, str):
+            parts.append(raw)
+        elif isinstance(raw, (list, tuple)):
+            parts.extend(str(v) for v in raw if isinstance(v, str))
+    return " | ".join(parts)
+
+
+def _declares_no_alcohol(text: str) -> bool:
+    flat = text.lower().replace("_", " ").replace("-", " ")
+    return any(marker in flat for marker in _NON_ALCOHOLIC_MARKERS)
+
+
+def _alcohol_classification(record: Dict) -> Optional[str]:
+    """An alcohol taxonomy label from a CLASSIFICATION column, or None."""
+    for key in _ALCOHOL_CLASSIFICATION_FIELDS:
+        raw = record.get(key)
+        values = raw if isinstance(raw, (list, tuple)) else [raw]
+        for value in values:
+            if not isinstance(value, str) or not value.strip():
+                continue
+            flat = value.lower().replace("_", " ").replace("-", " ")
+            if _declares_no_alcohol(flat):
+                continue
+            tokens = set(regex_module.findall(r"[a-z]+", flat))
+            if tokens & _ALCOHOL_TAXONOMY_TOKENS:
+                return f"{key}={value!r}"
+    return None
+
+
+def _declared_alcohol_percent(record: Dict) -> Optional[float]:
+    """Highest alcohol strength (% ABV) DECLARED anywhere in the record's own
+    text. `NN proof` is converted with the US convention (proof = 2 × ABV)."""
+    text = _record_text(record)
+    if not text or _declares_no_alcohol(text):
+        return None
+    best: Optional[float] = None
+    for pattern in _ABV_PATTERNS:
+        for match in pattern.finditer(text):
+            value = _as_float(match.group(1))
+            if value is not None and 0 < value <= 100:
+                best = value if best is None else max(best, value)
+    for match in _PROOF_PATTERN.finditer(text):
+        value = _as_float(match.group(1))
+        if value is not None and 0 < value <= 200:
+            abv = value / 2.0
+            best = abv if best is None else max(best, abv)
+    return best
+
+
+def alcohol_accounts_for_calories(
+    record: Optional[Dict],
+    calories: Optional[float],
+    basis_grams: Optional[float],
+) -> Optional[str]:
+    """Evidence string when the record's OWN DATA says its calories come from
+    ethanol rather than from protein/carbs/fat; None otherwise.
+
+    `calories` and `basis_grams` must share a basis: per-100g DB rows pass
+    (calories_per_100g, 100.0); per-portion items pass (calories, weight_g).
+    `basis_grams=None` means the portion mass is unknown — the physical ceiling
+    is then unverifiable and a taxonomy/mass declaration alone decides.
+    """
+    if not record or not isinstance(record, dict):
+        return None
+    kcal = _as_float(calories)
+    if kcal is None or kcal <= 0:
+        return None
+
+    evidence: List[str] = []
+    ethanol_grams: Optional[float] = None
+
+    for key in _ALCOHOL_MASS_FIELDS_ABSOLUTE:
+        grams = _as_float(record.get(key))
+        if grams is not None and grams > 0:
+            ethanol_grams = grams if ethanol_grams is None else max(ethanol_grams, grams)
+            evidence.append(f"{key}={grams:g}")
+    if basis_grams and basis_grams > 0:
+        for key in _ALCOHOL_MASS_FIELDS_PER_100G:
+            per100 = _as_float(record.get(key))
+            if per100 is not None and per100 > 0:
+                grams = per100 * basis_grams / 100.0
+                ethanol_grams = grams if ethanol_grams is None else max(ethanol_grams, grams)
+                evidence.append(f"{key}={per100:g}")
+
+    classification = _alcohol_classification(record)
+    if classification:
+        evidence.append(classification)
+
+    abv = _declared_alcohol_percent(record)
+    if abv is not None:
+        evidence.append(f"declared {abv:g}% ABV")
+
+    if not evidence:
+        return None
+
+    # Physical ceiling — how much energy could ethanol plausibly contribute?
+    if basis_grams and basis_grams > 0:
+        # Absolute upper bound: the whole portion is ethanol.
+        max_grams = float(basis_grams)
+        if ethanol_grams is not None:
+            max_grams = min(max_grams, ethanol_grams * 1.25)
+        elif abv is not None:
+            # Beverage approximation: 1 g ≈ 1 mL for the volume basis.
+            max_grams = min(
+                max_grams,
+                (abv / 100.0) * _ETHANOL_DENSITY_G_PER_ML * basis_grams
+                * _ETHANOL_CEILING_TOLERANCE,
+            )
+        if kcal > max_grams * _ETHANOL_KCAL_PER_G:
+            return None
+    elif ethanol_grams is not None and kcal > (
+        ethanol_grams * 1.25 * _ETHANOL_KCAL_PER_G
+    ):
+        return None
+
+    return "; ".join(evidence)
+
+
+def db_row_macros_unusable(nutrition_data: Optional[Dict]) -> bool:
+    """True when a nutrition-DB row carries calories but NO macro data at all.
+
+    A SINGLE zero macro is legitimate (butter ≈ 0g protein, egg white ≈ 0g fat,
+    sugar ≈ 0g protein/fat), so this only fires when all three are NULL/0 while
+    calories_per_100g > 0. Zero-calorie rows are handled separately by the
+    `is_legit_zero_cal` path and are not flagged here.
+
+    Rows whose energy the data itself attributes to ETHANOL (distilled spirits)
+    are exempt — see `alcohol_accounts_for_calories`. 0P/0C/0F is the CORRECT
+    macro profile for a spirit, not a backfill gap.
+    """
+    if not nutrition_data:
+        return False
+    if not _positive(nutrition_data.get('calories_per_100g')):
+        return False
+    if any(_positive(nutrition_data.get(k)) for k in _DB_MACRO_KEYS):
+        return False
+    evidence = alcohol_accounts_for_calories(
+        nutrition_data, nutrition_data.get('calories_per_100g'), 100.0
+    )
+    if evidence:
+        try:
+            logger.info(
+                f"[MacroIntegrity] ALCOHOL row kept as-is: "
+                f"'{nutrition_data.get('display_name')}' "
+                f"{nutrition_data.get('calories_per_100g')} kcal/100g with 0P/0C/0F — "
+                f"energy is ethanol ({evidence})"
+            )
+        except Exception:
+            pass
+        return False
+    return True
+
+
+def ai_item_macros_unknown(item: Optional[Dict]) -> bool:
+    """True when a food item has calories but no macro data at all.
+
+    Applies to ANY producer (Gemini estimate, cache-stack row, override) — the
+    invariant is a property of the numbers, not of who produced them. Items
+    whose own data attributes the energy to ethanol are exempt.
+    """
+    if not item:
+        return False
+    if not _positive(item.get('calories')):
+        return False
+    if any(_positive(item.get(k)) for k in _AI_MACRO_KEYS):
+        return False
+    basis = _as_float(item.get('weight_g'))
+    # The item itself, plus the DB row it was resolved from — a matched
+    # `food_nutrition_overrides` row carries the food_category taxonomy that
+    # the flattened item does not.
+    for record in (item, item.get('usda_data'), item.get('nutrition_data')):
+        if isinstance(record, dict) and alcohol_accounts_for_calories(
+            record, item.get('calories'), basis
+        ):
+            return False
+    return True
+
+
+def flag_unknown_macros(item: Dict, source_label: str) -> None:
+    """Mark an item whose macros we genuinely do not know AND erase the
+    fabricated zeros so nothing downstream can sum them.
+
+    We do NOT invent a macro split — there is no honest way to derive grams of
+    protein/carbs/fat from a calorie count alone. The macro keys are set to
+    None (an explicit "unknown", which the nullable `food_logs.protein_g` /
+    `carbs_g` / `fat_g` columns can store) and the item is flagged so the
+    confirm sheet asks the user, exactly like the L3 tripwires do for
+    implausible portions.
+
+    Leaving the keys absent (the pre-2026-07 behaviour) was NOT enough: every
+    caller re-sums with `item.get('protein_g', 0) or 0`, so a missing key still
+    became a confident 0.0 in the meal totals and in the persisted row.
+    """
+    item['macros_unknown'] = True
+    item['requires_user_confirmation'] = True
+    item['confidence'] = 'low'
+    # Erase the zeros. None ≠ 0: None is storable as SQL NULL and re-sums to
+    # "unknown" via `recompute_macro_totals`, a bare 0 does not.
+    for key in _AI_MACRO_KEYS:
+        item[key] = None
+    if not _positive(item.get('fiber_g')):
+        item['fiber_g'] = None
+    # A per-gram factor built from those same zeros would let the client
+    # re-multiply them into the daily totals — strip the macro factors, keep
+    # the calorie factor (calories ARE known).
+    per_gram = item.get('ai_per_gram')
+    if isinstance(per_gram, dict):
+        for key in ('protein', 'carbs', 'fat', 'fiber'):
+            per_gram.pop(key, None)
+    reason = (
+        f"{item.get('calories')} kcal with no protein/carbs/fat data — "
+        "macros unknown, not zero"
+    )
+    reasons = list(item.get('_tripwire_reasons') or [])
+    if reason not in reasons:
+        reasons.append(reason)
+    item['_tripwire_reasons'] = reasons
+    try:
+        logger.warning(
+            f"[{source_label}] MACROS UNKNOWN for '{item.get('name')}': "
+            f"calories={item.get('calories')} but protein/carbs/fat all "
+            f"missing-or-zero — macros nulled + flagged for user confirmation "
+            f"(NOT persisted as a confident 0)"
+        )
+    except Exception:
+        pass
+
+
+# Meal-total key families in use across the codebase. `enforce_macro_integrity`
+# rewrites whichever family the payload actually carries.
+_TOTAL_KEY_FAMILIES = (
+    {'protein_g': 'protein_g', 'carbs_g': 'carbs_g',
+     'fat_g': 'fat_g', 'fiber_g': 'fiber_g'},
+    {'protein_g': 'total_protein_g', 'carbs_g': 'total_carbs_g',
+     'fat_g': 'total_fat_g', 'fiber_g': 'total_fiber_g'},
+    {'protein_g': 'total_protein', 'carbs_g': 'total_carbs',
+     'fat_g': 'total_fat', 'fiber_g': 'total_fiber'},
+)
+
+
+_CAL_TOTAL_KEYS = ("total_calories", "calories")
+
+
+def derive_meal_totals(
+    result: Optional[Dict], source_label: str = "analysis"
+) -> Optional[Dict]:
+    """Recompute meal-level totals from `food_items` — the numbers a meal
+    reports MUST be the sum of the items it contains, never a separate figure
+    the model returned alongside them.
+
+    Gemini routinely populates every `food_item` with real macros while leaving
+    the meal-level `protein_g` / `total_protein_g` at 0 (or omitting it). Four
+    analysis endpoints historically trusted that meal-level number, so a 4-item
+    714 kcal plate shipped and PERSISTED as "0g protein / 0g carbs / 0g fat"
+    while the items clearly carried macros. This function is the single fix:
+    always sum the items.
+
+    Semantics, per macro key:
+      - An item macro of `None` means UNKNOWN (set by `flag_unknown_macros`).
+        If ANY contributing item is unknown for that macro, the meal total for
+        that macro is unknown too → left for `enforce_macro_integrity` to null
+        and label (`macros_known_subtotal`). We do NOT null it here; we simply
+        do not fabricate a number from a partial sum.
+      - An item macro of `0` (or absent-but-not-flagged) contributes 0.
+    Calories are always known (an item priced in calories has calories), so the
+    calorie total is always the plain sum.
+
+    Writes back into whichever total-key family the payload already uses (so a
+    phase-2 `total_protein_g` payload and a legacy `protein_g` payload both get
+    corrected in place). Idempotent — safe to call before `enforce_macro_integrity`
+    and safe to call more than once.
+    """
+    if not isinstance(result, dict):
+        return result
+    items = result.get('food_items')
+    if not isinstance(items, list) or not items:
+        return result
+
+    # Calorie total — always the plain sum of item calories.
+    cal_sum = 0.0
+    for it in items:
+        if isinstance(it, dict):
+            cal_sum += _as_float(it.get('calories')) or 0.0
+    for dest in _CAL_TOTAL_KEYS:
+        if dest in result:
+            result[dest] = int(round(cal_sum))
+
+    # Macro totals — sum, but treat a flagged-unknown contribution as making the
+    # whole meal total unknown for that macro. A meal is unknown for a macro if
+    # any item is `macros_unknown` OR has an explicit None for that macro while
+    # carrying calories.
+    for macro in ('protein_g', 'carbs_g', 'fat_g', 'fiber_g'):
+        total = 0.0
+        unknown = False
+        for it in items:
+            if not isinstance(it, dict):
+                continue
+            if it.get('macros_unknown') and _positive(it.get('calories')):
+                unknown = True
+                break
+            raw = it.get(macro, 0)
+            if raw is None and _positive(it.get('calories')):
+                unknown = True
+                break
+            total += _as_float(raw) or 0.0
+        if unknown:
+            # Leave the model/existing value in place; enforce_macro_integrity
+            # runs next and will null + label it via macros_known_subtotal.
+            continue
+        for family in _TOTAL_KEY_FAMILIES:
+            dest = family.get(macro)
+            if dest and dest in result:
+                result[dest] = round(total, 1)
+
+    return result
+
+
+def enforce_macro_integrity(
+    result: Optional[Dict], source_label: str = "analysis"
+) -> Optional[Dict]:
+    """THE single chokepoint every food-analysis payload passes through before
+    it is streamed to the client or written to `food_logs`.
+
+    1. Every item with calories but no protein/carbs/fat (and no ethanol
+       explanation) has its zeros erased and is flagged `macros_unknown`.
+    2. The MEAL totals are then recomputed honestly: a total that includes an
+       unknown-macro item is itself unknown (`None`), never a silent
+       under-count. `macros_known_subtotal` carries the sum over the items we
+       DO know, explicitly labelled as a partial figure.
+
+    Mutates and returns `result`. Safe to call more than once (idempotent).
+    """
+    if not isinstance(result, dict):
+        return result
+    items = result.get('food_items')
+    if not isinstance(items, list) or not items:
+        return result
+
+    unknown_names: List[str] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        if item.get('macros_unknown'):
+            unknown_names.append(str(item.get('name') or 'unnamed item'))
+            continue
+        if ai_item_macros_unknown(item):
+            flag_unknown_macros(item, source_label)
+            unknown_names.append(str(item.get('name') or 'unnamed item'))
+
+    if not unknown_names:
+        return result
+
+    known_subtotal = {
+        key: round(
+            sum(
+                _as_float(it.get(key)) or 0.0
+                for it in items
+                if isinstance(it, dict) and not it.get('macros_unknown')
+            ),
+            1,
+        )
+        for key in ('protein_g', 'carbs_g', 'fat_g', 'fiber_g')
+    }
+
+    rewrote = False
+    for family in _TOTAL_KEY_FAMILIES:
+        if not any(dest in result for dest in family.values()):
+            continue
+        for dest in family.values():
+            if dest in result:
+                result[dest] = None
+        rewrote = True
+
+    result['macros_unknown'] = True
+    result['macros_unknown_items'] = unknown_names
+    result['macros_known_subtotal'] = known_subtotal
+    result['requires_user_confirmation'] = True
+    try:
+        logger.warning(
+            f"[{source_label}] MEAL MACROS UNKNOWN — {len(unknown_names)} item(s) "
+            f"({', '.join(unknown_names)}) have calories but no macro data. "
+            f"Meal protein/carbs/fat totals set to NULL "
+            f"(rewrote_totals={rewrote}); known subtotal={known_subtotal}"
+        )
+    except Exception:
+        pass
+    return result
+
+
+def build_ai_per_gram(original_item: Dict, weight_g: float) -> Optional[Dict]:
+    """Per-gram scaling factors derived from the AI's OWN estimate.
+
+    A macro key is emitted only when the AI actually returned that macro.
+
+    IMPORTANT — omission is NOT self-describing. Both consumers coerce a
+    missing key to a hard `0.0` (`backend/models/saved_food.py` declares the
+    fields as non-Optional `float = 0.0`; `nutrition.g.dart`'s generated
+    `fromJson` does `(json['protein'] as num?)?.toDouble() ?? 0`). So omitting
+    a key does NOT communicate "no data" on its own — it silently reads as
+    zero grams per gram.
+
+    What actually protects the user is `enforce_macro_integrity`: an item whose
+    macros are unknown is flagged `macros_unknown`, its item-level macros are
+    set to None, its per-gram macro factors are stripped by
+    `flag_unknown_macros`, and the MEAL totals become None. This function's
+    omission is the mechanism; the flag is the contract.
+    """
+    if not weight_g or weight_g <= 0:
+        return None
+    per_gram: Dict[str, float] = {
+        'calories': round((original_item.get('calories') or 0) / weight_g, 3),
+    }
+    for src_key, dst_key in (
+        ('protein_g', 'protein'), ('carbs_g', 'carbs'),
+        ('fat_g', 'fat'), ('fiber_g', 'fiber'),
+    ):
+        raw = original_item.get(src_key)
+        if raw is None:
+            continue
+        try:
+            per_gram[dst_key] = round(float(raw) / weight_g, 4)
+        except (TypeError, ValueError):
+            continue
+    return per_gram
+
+
 def _looks_foreign(name: str) -> bool:
     """True when `name` is either non-ASCII OR contains a token from
     `_FOREIGN_INDICATORS`. Used to gate the sanitizer so composite-meal
@@ -818,6 +1368,11 @@ class ParsersMixin:
 
         # Process results (same logic for both flows)
         enhanced_items = []
+        # B3 fix — the EFFECTIVE row actually used for each item. A row that the
+        # packaging-variant gate or the partial-row guard rejected below is
+        # recorded here as None, so the reconcile_with_db lookup at the bottom
+        # can never rewrite weight_g from a row we just declared unusable.
+        effective_rows: List[Optional[dict]] = []
         source_label = "USDA" if use_usda else "FoodDB"
         for i, (item, nutrition_data) in enumerate(zip(parsed_items, nutrition_results)):
             weight_g = item['weight_g']
@@ -847,6 +1402,26 @@ class ParsersMixin:
                     item['requires_user_confirmation'] = True
                     if not item.get('confidence'):
                         item['confidence'] = 'medium'
+
+            # B3 — partial-row guard. A DB row with real calories but ALL THREE
+            # macro columns NULL/0 is the calories-only import gap; the lookup
+            # service coerces those NULLs to 0.0, so serving it here would
+            # OVERWRITE the AI's real per-item macros with zeros and persist
+            # "385 kcal · 0P/0C/0F" as if it were verified data. Treat it as a
+            # miss and defer to the AI estimate — the same policy
+            # `_row_macros_complete` applies on the vision cache-stack path.
+            if db_row_macros_unusable(nutrition_data):
+                logger.warning(
+                    f"[{source_label}] PARTIAL ROW for '{food_names[i]}': "
+                    f"calories_per_100g={nutrition_data.get('calories_per_100g')} but "
+                    f"protein/carbs/fat all NULL-or-0 "
+                    f"('{nutrition_data.get('display_name')}') — "
+                    "keeping the AI estimate instead of zeroing macros"
+                )
+                nutrition_data = None
+                item['requires_user_confirmation'] = True
+                if not item.get('confidence'):
+                    item['confidence'] = 'medium'
 
             if nutrition_data:
                 # Check if data has valid calories (non-zero, or legitimately zero-cal)
@@ -911,36 +1486,30 @@ class ParsersMixin:
                     original_item = food_items[i]
                     ai_cal = original_item.get('calories', 0)
                     if weight_g > 0 and ai_cal > 0:
-                        item['ai_per_gram'] = {
-                            'calories': round(ai_cal / weight_g, 3),
-                            'protein': round(original_item.get('protein_g', 0) / weight_g, 4),
-                            'carbs': round(original_item.get('carbs_g', 0) / weight_g, 4),
-                            'fat': round(original_item.get('fat_g', 0) / weight_g, 4),
-                            'fiber': round(original_item.get('fiber_g', 0) / weight_g, 4) if original_item.get('fiber_g') else 0,
-                        }
+                        item['ai_per_gram'] = build_ai_per_gram(original_item, weight_g)
                     else:
                         item['ai_per_gram'] = None
             else:
                 # Fallback: Calculate per-gram from AI estimate
                 item['usda_data'] = None
                 original_item = food_items[i]
-                ai_calories = original_item.get('calories', 0)
-                ai_protein = original_item.get('protein_g', 0)
-                ai_carbs = original_item.get('carbs_g', 0)
-                ai_fat = original_item.get('fat_g', 0)
-                ai_fiber = original_item.get('fiber_g', 0)
 
                 if weight_g > 0:
-                    item['ai_per_gram'] = {
-                        'calories': round(ai_calories / weight_g, 3),
-                        'protein': round(ai_protein / weight_g, 4),
-                        'carbs': round(ai_carbs / weight_g, 4),
-                        'fat': round(ai_fat / weight_g, 4),
-                        'fiber': round(ai_fiber / weight_g, 4) if ai_fiber else 0,
-                    }
+                    item['ai_per_gram'] = build_ai_per_gram(original_item, weight_g)
                     logger.warning(f"[{source_label}] No match for '{food_names[i]}', using AI per-gram estimate")
                 else:
                     item['ai_per_gram'] = None
+
+            # Macro-integrity check. If the item has calories but no macro data
+            # at all — and its own data does not attribute that energy to
+            # ethanol — the macros are UNKNOWN. `flag_unknown_macros` erases
+            # the zeros (macros → None) and flags for confirmation so nothing
+            # downstream can re-sum a fabricated 0/0/0 into the user's daily
+            # totals or the persisted row.
+            if ai_item_macros_unknown(item):
+                flag_unknown_macros(item, source_label)
+
+            effective_rows.append(nutrition_data if isinstance(nutrition_data, dict) else None)
 
             # Safety net: if Gemini parroted back a foreign canonical/trademark name
             # despite the prompt rule (e.g. "Fromage La Vache Qui Rit" for a user
@@ -961,9 +1530,12 @@ class ParsersMixin:
         # _apply_portion_sanity_caps after the blueberries 99×148g incident).
         # Build a {name: db_row} lookup from the per-item nutrition_data so
         # reconcile_with_db can detect oz-as-piece + small-piece anti-patterns.
+        # NOTE: zips `effective_rows`, NOT the raw `nutrition_results` — a row
+        # rejected by the packaging-variant gate or the B3 partial-row guard is
+        # None here, so reconcile_with_db cannot resurrect its portion data.
         try:
             db_rows: Dict[str, dict] = {}
-            for it, nd in zip(enhanced_items, nutrition_results):
+            for it, nd in zip(enhanced_items, effective_rows):
                 if isinstance(nd, dict):
                     nm = it.get("name") or ""
                     db_rows[nm] = {
