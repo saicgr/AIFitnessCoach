@@ -1061,7 +1061,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
         // gym existed — and nothing re-fetches it on its own. Clear its poisoned
         // empty cache and invalidate so it refetches; otherwise the Session
         // Details "Active Gym" row reads "No gym selected" until an app restart.
-        GymProfilesNotifier.clearCache();
+        GymProfilesNotifier.clearCache(userId: userId);
         ref.invalidate(gymProfilesProvider);
 
         // Also set in SharedPreferences so local notification scheduling works

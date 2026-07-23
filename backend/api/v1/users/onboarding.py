@@ -701,9 +701,18 @@ async def create_gym_profiles_from_onboarding(
     from datetime import datetime
     supabase = get_supabase()
 
-    # Default values
-    gym_name = gym_name or "My Gym"
+    # Default values. When the client didn't send a gym_name (today it never
+    # does — no writer of 'gym_name' exists in the app), derive a sensible
+    # label from the workout environment instead of the generic "My Gym", so
+    # the workout-tab chip reads "Home Gym" / "Commercial Gym" / "My Gym".
     workout_environment = workout_environment or "commercial_gym"
+    if not gym_name:
+        gym_name = {
+            "home_gym": "Home Gym",
+            "commercial_gym": "Commercial Gym",
+            "both": "My Gym",
+            "other": "My Gym",
+        }.get(workout_environment, "My Gym")
 
     # Resolve coach color (fall back to orange — the default accent — if no coach matched)
     resolved_coach_id = coach_id or preferences.get("coach_id")

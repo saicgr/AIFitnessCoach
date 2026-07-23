@@ -167,10 +167,29 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
   bool _isFetchInFlight = false;
 
-  /// Clear in-memory cache (called on logout)
-  static void clearCache() {
+  /// Clear ALL gym-profile cache — in-memory, the "checked" verdict, AND the
+  /// persisted blob. Called on logout and (critically) right after onboarding
+  /// creates the user's first gym server-side.
+  ///
+  /// Nulling only the in-memory cache was NOT enough: the onboarding flow had
+  /// already seeded a persisted `{'profiles': []}` blob and flipped
+  /// `_gymProfilesCacheChecked = true` BEFORE the gym existed. So the
+  /// post-onboarding `ref.invalidate` rebuilt the notifier, `_loadFromCache`
+  /// re-read that persisted `[]` with `cacheChecked == true`, and the header
+  /// painted "⊕ Add gym" for a user who had just set their gym. Resetting the
+  /// flag (→ shimmer, not the empty CTA) and purging the persisted `[]`
+  /// (→ a real network fetch, not the stale empty list) is what actually
+  /// clears it. [userId] scopes the persisted purge; pass the current user's
+  /// id from the caller.
+  static void clearCache({String? userId}) {
     _gymProfilesInMemoryCache = null;
-    debugPrint('🧹 [GymProfileProvider] In-memory cache cleared');
+    _gymProfilesCacheChecked = false;
+    // Fire-and-forget: purge the persisted (possibly-empty) blob so the next
+    // load is a cache MISS → real fetch, not a re-serve of `[]`.
+    // ignore: discarded_futures
+    DataCacheService.instance
+        .invalidate(DataCacheService.gymProfilesKey, userId: userId);
+    debugPrint('🧹 [GymProfileProvider] Gym cache cleared (mem + checked flag + persisted)');
   }
 
   /// Load profiles with cache-first pattern.
