@@ -511,13 +511,14 @@ async def auto_populate_schedule(user_id: str, request: AutoPopulateRequest, cur
 
         # --- Include Workouts ---
         if request.include_workouts:
-            workouts = db.client.table("workouts").select(
-                "id, name, scheduled_date, duration_minutes"
-            ).eq("user_id", user_id).eq(
-                "scheduled_date", target_date
-            ).execute()
+            # workouts.scheduled_date is a timestamptz stored at NOON of the day;
+            # an .eq() on the bare 'YYYY-MM-DD' (00:00Z) never matches a noon row,
+            # so this used to import zero workouts. Use the noon-safe day-window
+            # helper. (schedule_items.scheduled_date below is a real DATE column,
+            # so writing the bare target_date there is correct.)
+            workout_rows = db.get_workouts_by_date_range(user_id, target_date, target_date)
 
-            for w in workouts.data or []:
+            for w in workout_rows:
                 item_data = {
                     "user_id": user_id,
                     "title": w.get("name", "Workout"),

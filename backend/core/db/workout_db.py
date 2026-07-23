@@ -429,18 +429,30 @@ class WorkoutDB(BaseDB):
 
         Args:
             user_id: User's UUID
-            start_date: Start date (inclusive)
-            end_date: End date (inclusive)
+            start_date: Start date (inclusive), 'YYYY-MM-DD' or full ISO timestamp
+            end_date: End date (inclusive), 'YYYY-MM-DD' or full ISO timestamp
 
         Returns:
             List of workout records
         """
+        # scheduled_date is a timestamptz stored at NOON of the workout's day
+        # (canonical: target_date_to_utc_iso — noon-local, or noon-UTC when a
+        # writer had no tz). A bare-date .lte(end_date) coerces to end_date
+        # 00:00Z and MISSES every noon row on the end day (e.g. a swap target at
+        # 17:00Z), so the date-swap existence check silently created duplicates.
+        # Expand a bare date to a full-day UTC window so noon rows are captured.
+        effective_from = (
+            start_date + "T00:00:00+00:00" if len(start_date) == 10 else start_date
+        )
+        effective_to = (
+            end_date + "T23:59:59.999999+00:00" if len(end_date) == 10 else end_date
+        )
         result = (
             self.client.table("workouts")
             .select("*")
             .eq("user_id", user_id)
-            .gte("scheduled_date", start_date)
-            .lte("scheduled_date", end_date)
+            .gte("scheduled_date", effective_from)
+            .lte("scheduled_date", effective_to)
             .execute()
         )
         return result.data or []

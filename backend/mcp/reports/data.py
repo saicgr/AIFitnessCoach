@@ -157,8 +157,11 @@ def _collect_workouts(
         lambda: client.table("workouts")
         .select("id, scheduled_date, is_completed, completed_at, duration_minutes, exercises:exercises_json, name")
         .eq("user_id", user_id)
-        .gte("scheduled_date", _iso(start))
-        .lte("scheduled_date", _iso(end))
+        # scheduled_date is a timestamptz stored at NOON; a bare-date .lte(end)
+        # coerces to end 00:00Z and drops every noon row on the end day. Expand
+        # to a full-day UTC window (noon-safe for all realistic offsets).
+        .gte("scheduled_date", _iso(start) + "T00:00:00+00:00")
+        .lte("scheduled_date", _iso(end) + "T23:59:59.999999+00:00")
         .execute(),
         default=[],
     )

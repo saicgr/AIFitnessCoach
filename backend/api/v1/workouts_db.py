@@ -327,6 +327,7 @@ async def complete_workout(workout_id: str, background_tasks: BackgroundTasks,
 
 @router.post("/swap")
 async def swap_workout_date(body: SwapWorkoutsRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Move a workout to a new date, swapping if another workout exists there."""
@@ -341,6 +342,14 @@ async def swap_workout_date(body: SwapWorkoutsRequest,
         old_date = workout.get("scheduled_date")
         user_id = workout.get("user_id")
 
+        # scheduled_date is canonically stored at NOON of the local day
+        # (target_date_to_utc_iso). body.new_date is a bare 'YYYY-MM-DD'; writing
+        # it raw lands at midnight-UTC, which mis-days the workout for any user
+        # west of UTC and is invisible to noon-anchored day-window reads. old_date
+        # is already a canonical noon timestamp, so it moves back as-is.
+        _user_tz = resolve_timezone(request, db, user_id)
+        new_date_ts = target_date_to_utc_iso(body.new_date, _user_tz)
+
         existing_workouts = db.get_workouts_by_date_range(user_id, body.new_date, body.new_date)
 
         if existing_workouts:
@@ -348,10 +357,10 @@ async def swap_workout_date(body: SwapWorkoutsRequest,
             db.update_workout(existing["id"], {"scheduled_date": old_date, "last_modified_method": "date_swap"})
             log_workout_change(existing["id"], user_id, "date_swap", "scheduled_date", body.new_date, old_date)
 
-        db.update_workout(body.workout_id, {"scheduled_date": body.new_date, "last_modified_method": "date_swap"})
-        log_workout_change(body.workout_id, user_id, "date_swap", "scheduled_date", old_date, body.new_date)
+        db.update_workout(body.workout_id, {"scheduled_date": new_date_ts, "last_modified_method": "date_swap"})
+        log_workout_change(body.workout_id, user_id, "date_swap", "scheduled_date", old_date, new_date_ts)
 
-        return {"success": True, "old_date": old_date, "new_date": body.new_date}
+        return {"success": True, "old_date": old_date, "new_date": new_date_ts}
 
     except HTTPException:
         raise

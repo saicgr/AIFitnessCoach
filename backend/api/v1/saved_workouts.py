@@ -269,6 +269,13 @@ async def save_ai_workout(
     try:
         exercises = _extracted_to_workout_exercises(request.exercises)
         scheduled = request.scheduled_date or datetime.now(timezone.utc).date()
+        # workouts.scheduled_date is canonically NOON of the local day, not
+        # midnight — scheduled.isoformat() ('YYYY-MM-DD') would land at 00:00Z
+        # and mis-day the import for any user west of UTC. No FastAPI Request
+        # here, so resolve tz from users.timezone.
+        from core.timezone_utils import resolve_timezone, target_date_to_utc_iso
+        _tz = resolve_timezone(None, db, request.user_id)
+        scheduled_ts = target_date_to_utc_iso(scheduled.isoformat(), _tz)
 
         # Reuse the difficulty normaliser the Workout schema validator uses so a
         # stray 'beginner'/'advanced' never 500s the insert.
@@ -283,7 +290,7 @@ async def save_ai_workout(
             "name": request.name[:200],
             "type": (request.workout_type or "strength")[:50],
             "difficulty": difficulty,
-            "scheduled_date": scheduled.isoformat(),
+            "scheduled_date": scheduled_ts,
             "exercises_json": exercises,
             "duration_minutes": request.estimated_duration_minutes,
             "generation_method": "ai_import",
@@ -700,10 +707,16 @@ def _coerce_sets(val) -> int:
 
 
 def _workout_ex_to_template(ex: dict) -> dict:
-    """Lossless map of a workout exercise -> ExerciseTemplate fields. Extra
-    keys are dropped by pydantic; structure (timed/superset/set_targets/media)
-    is preserved so the saved copy renders and runs like the original."""
-    return {
+    """Map a workout exercise -> a normalized, ExerciseTemplate-VALID dict.
+
+    Extra keys are dropped by pydantic; structure (timed/superset/set_targets/
+    media) is preserved so the saved copy renders and runs like the original.
+    The result is routed through ExerciseTemplate so real-world scalar shapes
+    (reps "8-12" range strings, equipment lists) are coerced to the canonical
+    scalars BEFORE the dict is written to JSONB — guaranteeing the stored row
+    round-trips back through SavedWorkout(**row) with no ValidationError. This
+    is the single normalization chokepoint every save path shares."""
+    mapped = {
         "name": ex.get("name", ""),
         "sets": _coerce_sets(ex.get("sets")),
         "reps": ex.get("reps"),
@@ -728,6 +741,7 @@ def _workout_ex_to_template(ex: dict) -> dict:
         "image_url": ex.get("image_url"),
         "library_id": ex.get("library_id") or ex.get("exercise_id"),
     }
+    return ExerciseTemplate.model_validate(mapped).model_dump(mode="json")
 
 
 @router.post("/from-workout", response_model=SavedWorkout)
