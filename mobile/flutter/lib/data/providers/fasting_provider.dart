@@ -101,6 +101,20 @@ class FastingState {
   final String? error;
   final bool onboardingCompleted;
 
+  /// True once [FastingNotifier.initialize] has completed a SUCCESSFUL server
+  /// round-trip for this user — i.e. every field above reflects the server's
+  /// answer, including the answers that are legitimately "nothing here".
+  ///
+  /// This exists because no other field can express "resolved". `preferences`
+  /// is null both before the first load AND, permanently, for any user who has
+  /// never opened Fasting (`FastingRepository.getPreferences` returns null on
+  /// 404/empty and `copyWith` null-coalesces, so it can never go back to
+  /// non-null-by-default). Listeners that used `preferences == null` as an
+  /// "unresolved" gate therefore never fired at all for those users. Gate on
+  /// this instead. Stays false when initialize throws — an error is not a
+  /// resolution.
+  final bool hasLoadedFromServer;
+
   const FastingState({
     this.activeFast,
     this.preferences,
@@ -113,6 +127,7 @@ class FastingState {
     this.isLoading = false,
     this.error,
     this.onboardingCompleted = false,
+    this.hasLoadedFromServer = false,
   });
 
   FastingState copyWith({
@@ -127,6 +142,7 @@ class FastingState {
     bool? isLoading,
     String? error,
     bool? onboardingCompleted,
+    bool? hasLoadedFromServer,
     bool clearActiveFast = false,
     bool clearError = false,
   }) {
@@ -142,6 +158,7 @@ class FastingState {
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      hasLoadedFromServer: hasLoadedFromServer ?? this.hasLoadedFromServer,
     );
   }
 
@@ -285,6 +302,10 @@ class FastingNotifier extends StateNotifier<FastingState> {
         history: history,
         isLoading: false,
         onboardingCompleted: preferences?.fastingOnboardingCompleted ?? false,
+        // The server has now answered for every field above — including
+        // "this user has no preferences row", which is a real answer, not a
+        // pending state. Listeners gate on this, never on `preferences`.
+        hasLoadedFromServer: true,
       );
       // Update in-memory cache for instant access on provider recreation
       _fastingInMemoryCache = state;

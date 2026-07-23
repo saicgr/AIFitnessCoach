@@ -66,8 +66,17 @@ class CoachRefreshCoordinator {
   DateTime? _lastTextRefreshAt;
   bool _textInFlight = false;
 
-  // Last-seen signals. `null` = not seen yet → the first emission of each
-  // source is the initial load, NOT a log, so it never triggers a refresh.
+  // Last-seen signals. `null` = the source has not RESOLVED yet.
+  //
+  // Critically, a baseline is recorded only from an emission that carries real
+  // resolved data — never from the loading / empty placeholder every one of
+  // these providers emits first. Recording the placeholder was the bug behind
+  // `?refresh=true&fresh=true` firing on routine app opens: the coordinator
+  // latched `calories=0` / `sleep=0 min` / `workout not completed` from the
+  // pre-network state, then read the very next emission (the initial load
+  // landing: last night's sleep, an already-completed workout, the day's first
+  // meal logged hours ago) as a live "the user just did this" transition and
+  // spent a 3-4s Gemini regenerate on it. Painting Home is not an event.
   int? _lastCalories;
   bool? _lastWorkoutCompleted;
   bool? _lastFastActive;
@@ -78,7 +87,10 @@ class CoachRefreshCoordinator {
     // FIRST meal of the day (0 → >0) is a completion-class event → regenerate
     // text so the body can acknowledge the day has started.
     _ref.listen(dailyNutritionProvider(todayNutritionKey()), (prev, next) {
-      final cal = next.summary?.totalCalories ?? 0;
+      // Unresolved: no summary yet (cold start / in-flight first load).
+      final summary = next.summary;
+      if (summary == null) return;
+      final cal = summary.totalCalories;
       final prevCal = _lastCalories;
       _lastCalories = cal;
       if (prevCal == null || cal == prevCal) return;
@@ -92,6 +104,9 @@ class CoachRefreshCoordinator {
     // Workout — completion (a completedWorkout appears) regenerates text; any
     // other change (e.g. today's plan swapped) just refreshes numbers.
     _ref.listen(todayWorkoutProvider, (prev, next) {
+      // Unresolved: still loading, or errored. `hasValue` stays true across a
+      // later background reload, so a genuine completion still lands.
+      if (!next.hasValue) return;
       final completed = next.valueOrNull?.completedWorkout != null;
       final prevCompleted = _lastWorkoutCompleted;
       _lastWorkoutCompleted = completed;
@@ -106,6 +121,16 @@ class CoachRefreshCoordinator {
     // Fasting — a fast ending (active → inactive) regenerates text; starting a
     // fast refreshes numbers (the fasting context shifts).
     _ref.listen(fastingProvider, (prev, next) {
+      // Unresolved: gate on the explicit resolution flag, which flips only
+      // when `initialize()` completes a successful server round-trip.
+      //
+      // The previous `next.preferences == null` gate was NOT a resolution
+      // signal: `FastingRepository.getPreferences` returns null for a user
+      // with no fasting-preferences row (404 / empty body), and
+      // `FastingState.copyWith` null-coalesces `preferences`, so for those
+      // users the field is null forever — this listener could never fire, and
+      // a fast they started and ended never refreshed the coach card.
+      if (!next.hasLoadedFromServer) return;
       final active = next.activeFast != null;
       final prevActive = _lastFastActive;
       _lastFastActive = active;
@@ -121,6 +146,8 @@ class CoachRefreshCoordinator {
     // completion-class signal → regenerate text (and the fresh fetch pulls the
     // updated sleep graph too).
     _ref.listen(sleepProvider, (prev, next) {
+      // Unresolved: still loading, or errored.
+      if (!next.hasValue) return;
       final mins = next.valueOrNull?.totalMinutes ?? 0;
       final prevMins = _lastSleepMinutes;
       _lastSleepMinutes = mins;

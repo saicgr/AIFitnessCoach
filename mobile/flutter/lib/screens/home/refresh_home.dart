@@ -37,8 +37,29 @@ import '../../data/services/home_prewarmer.dart';
 ///   • `BootstrapPrefetchService.refresh` does not exist; the equivalent
 ///     hard-refresh path is `HomePrewarmer.invalidateAndRefresh(ref)` plus
 ///     `BootstrapPrefetchService.prefetch(ref)` (fire-and-forget, deduped).
+/// Marks the start of an explicit, user-initiated refresh.
+///
+/// Call this FIRST — before any other network work in a pull-to-refresh
+/// handler — so nothing in the refresh (including calls made before
+/// [refreshAllHome], e.g. `refreshUser()`) can be answered by a GET that was
+/// already on the wire when the user pulled. [refreshAllHome] calls it too, so
+/// callers that only use that helper are covered automatically; calling it
+/// twice is harmless (the epoch is an opaque token, not a count).
+void beginUserRefresh(WidgetRef ref) {
+  ref.read(apiClientProvider).beginUserInitiatedRefresh();
+}
+
 Future<void> refreshAllHome(WidgetRef ref) async {
   debugPrint('🔄 [refreshAllHome] invalidating Home-tier providers');
+
+  // A pull-to-refresh is an explicit "give me current data" — it must never be
+  // answered by a GET that was already on the wire when the user pulled.
+  // `ApiClient.get` coalesces identical in-flight GETs, so without this barrier
+  // a refetch triggered below could ride a request issued seconds earlier and
+  // hand back the same payload the user just rejected. Bumping the mutation
+  // epoch makes every GET from here on open its own request; the refetches
+  // fired inside this refresh still coalesce with each other.
+  beginUserRefresh(ref);
 
   // Synchronous invalidations — cheap, no awaits needed.
   ref.invalidate(todayWorkoutProvider);

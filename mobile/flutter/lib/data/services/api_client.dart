@@ -189,6 +189,32 @@ class _ResilientSecureStorage extends FlutterSecureStorage {
   }
 }
 
+/// One in-flight GET, together with the mutation epoch it was opened under.
+/// See `ApiClient._inFlightGets`. Holds `Response<dynamic>` because the map is
+/// heterogeneous; the coalesce key carries the concrete response type, so the
+/// cast back in `ApiClient.get` is exact.
+class _InFlightGet {
+  _InFlightGet(this.epoch, this.future);
+
+  final int epoch;
+  final Future<Response<dynamic>> future;
+
+  /// Flipped to `true` the instant a SECOND caller attaches to [future].
+  ///
+  /// It is what lets the ORIGINATING caller decide, at completion time,
+  /// whether it may keep the raw [Response] (it was alone → nobody else can
+  /// see it) or must take a copy like everyone else (it was joined → the raw
+  /// response must stay unreachable from application code). See
+  /// `ApiClient.get`'s ownership contract.
+  ///
+  /// Safe to read from the originator's completion callback: a follower can
+  /// only attach while this entry is still in `ApiClient._inFlightGets`, the
+  /// entry is removed by that very callback, and that callback is the FIRST
+  /// listener on [future] — so no application code can run between [future]
+  /// completing and the flag being read.
+  bool shared = false;
+}
+
 /// API client provider
 final apiClientProvider = Provider<ApiClient>((ref) {
   final storage = ref.watch(secureStorageProvider);
@@ -276,6 +302,132 @@ class ApiClient with WidgetsBindingObserver {
   /// in-flight request that returns the same 401 short-circuits instead of
   /// re-triggering signOut() / route navigation. Reset on next signedIn event.
   bool _userDeletedSignOutInFlight = false;
+
+  /// ── In-flight GET coalescing ────────────────────────────────────────────
+  ///
+  /// Two independent widgets/providers asking for the SAME resource in the
+  /// same frame is structurally normal in this app (Home's
+  /// `_initializeNutritionAndHydration` and `HeroNutritionCard._loadData`
+  /// both refresh hydration; a screen's initial load and its
+  /// change-listener both refresh micronutrients). Each one used to open its
+  /// own socket, so production logs showed identical GETs completing in the
+  /// same millisecond — double the backend work and double the connection
+  /// pool pressure for one answer.
+  ///
+  /// This is the single chokepoint that removes the whole class: while a GET
+  /// is genuinely in flight, a second GET for the same key rides the SAME
+  /// future instead of opening a second request. It is NOT a response cache —
+  /// nothing is retained past completion, so cache-first painting and
+  /// stale-while-revalidate semantics are untouched (a follow-up refresh
+  /// still hits the network; it just can't race itself).
+  ///
+  /// Key includes the response type `T` because callers cast the shared
+  /// `Response` back to `Response<T>`.
+  final Map<String, _InFlightGet> _inFlightGets = {};
+
+  /// Opaque monotonic token bumped at BOTH mutation boundaries — when a
+  /// mutating request (POST/PUT/PATCH/DELETE) STARTS and again when it
+  /// COMPLETES (success OR failure) — plus on identity switches
+  /// ([clearAuth]) and explicit user-initiated refreshes
+  /// ([beginUserInitiatedRefresh]). Never a count; only "did it change".
+  ///
+  /// The guarantee it buys, stated precisely:
+  ///
+  ///   **A GET issued after a write has COMPLETED is never answered by a GET
+  ///   that started before that write completed.**
+  ///
+  /// Bumping only at write-START was NOT enough, and the earlier version of
+  /// this comment overclaimed. Counter-example it allowed:
+  ///
+  ///   1. write W starts            → epoch 0 → 1
+  ///   2. GET A starts              → recorded under epoch 1
+  ///   3. W completes (row written)
+  ///   4. GET B issued              → still epoch 1 → rides A
+  ///
+  /// A was already on the wire before W's row existed, so B — issued strictly
+  /// after the write landed — could be handed the pre-write payload. Bumping
+  /// on completion too makes step 3 move the epoch, so A (epoch 1) is
+  /// ineligible for B (epoch 2) and B opens its own request.
+  ///
+  /// Bumped synchronously in the public helpers below AND from the request /
+  /// response / error interceptor, so the barrier holds both for a caller that
+  /// fires a write and a read back-to-back without awaiting, and for code that
+  /// reaches past those helpers to `_dio`/`dio` directly. Double-bumping is
+  /// harmless.
+  ///
+  /// NOT guaranteed (by design): a GET that is *in flight* while a write
+  /// completes is not retroactively re-issued — callers already holding that
+  /// future asked for data before the write landed. Only requests made after
+  /// the write completed get the barrier.
+  int _mutationEpoch = 0;
+
+  /// Marks an explicit, user-initiated refresh boundary (pull-to-refresh).
+  ///
+  /// Without this, a pull-to-refresh could be answered entirely by GETs that
+  /// were already on the wire when the user pulled — the user asked for fresh
+  /// data and would silently get the in-flight (pre-pull) answer. Bumping the
+  /// epoch makes every GET issued from here on open its own request; GETs
+  /// issued *within* the refresh still coalesce with each other.
+  void beginUserInitiatedRefresh() {
+    _mutationEpoch++;
+  }
+
+  /// Hands a caller of a SHARED GET its own [Response] wrapper with a private
+  /// deep copy of the decoded JSON body. See the ownership contract on [get].
+  ///
+  /// Correctness here does NOT rest on when this runs relative to other
+  /// callers. It rests on the invariant that once a GET is shared, the raw
+  /// [Response] is handed to nobody — every caller, originator included, goes
+  /// through this function. Nothing reachable from application code aliases
+  /// `r`, so `r` is still exactly what came off the wire no matter how many
+  /// other callers have already resumed.
+  ///
+  /// (The earlier version copied only for followers and justified itself with
+  /// ordering — "runs before the originating caller's `await` resumes". That
+  /// was false: `_propagateToListeners` walks a completed future's listeners
+  /// depth-first, so the originator's continuation runs, and can mutate the
+  /// shared body, before a later listener's copy is taken.)
+  static Response<T> _isolateCoalescedResponse<T>(Response<dynamic> r) {
+    return Response<T>(
+      data: _deepCopyJson(r.data) as T?,
+      requestOptions: r.requestOptions,
+      statusCode: r.statusCode,
+      statusMessage: r.statusMessage,
+      isRedirect: r.isRedirect,
+      redirects: r.redirects,
+      extra: Map<String, dynamic>.from(r.extra),
+      headers: r.headers,
+    );
+  }
+
+  /// Structural copy of a decoded JSON tree. Maps and lists are rebuilt;
+  /// scalars (and any non-JSON leaf) are returned as-is because they are
+  /// immutable or not ours to clone.
+  static dynamic _deepCopyJson(dynamic value) {
+    if (value is Map) {
+      final out = <String, dynamic>{};
+      value.forEach((k, v) => out['$k'] = _deepCopyJson(v));
+      return out;
+    }
+    if (value is List) {
+      return List<dynamic>.generate(
+        value.length,
+        (i) => _deepCopyJson(value[i]),
+        growable: true,
+      );
+    }
+    return value;
+  }
+
+  String _getCoalesceKey<T>(String path, Map<String, dynamic>? query) {
+    if (query == null || query.isEmpty) return '$T|$path';
+    final keys = query.keys.toList()..sort();
+    final buf = StringBuffer('$T|$path|');
+    for (final k in keys) {
+      buf.write('$k=${query[k]}&');
+    }
+    return buf.toString();
+  }
 
   /// Detect the backend's stable "JWT user is gone, sign out now" signal.
   /// Backend emits both an `X-Auth-Error: JWT_USER_DELETED` header and the
@@ -480,6 +632,40 @@ class ApiClient with WidgetsBindingObserver {
     };
 
     // Certificate pinning: disabled for Render's rotating certificates. TLS is enforced by network_security_config.xml.
+
+    // Mutation barrier for GET coalescing (see [_mutationEpoch]). Registered
+    // FIRST so it runs before anything else can short-circuit the chain, and
+    // installed as an interceptor rather than in [post]/[put]/[delete] so it
+    // also covers the direct `_dio.post(...)` helpers on this class and any
+    // caller that reaches through the public `dio` getter.
+    //
+    // The epoch moves on BOTH edges of a mutation: onRequest (start) and
+    // onResponse/onError (completion). The completion edge is what makes the
+    // read-after-write barrier real — a GET opened while the write was in
+    // flight must not serve a read issued after the write landed. Both
+    // completion callbacks run before the mutation's own future resolves, so
+    // a caller doing `await post(...); await get(...)` always crosses the
+    // boundary. Retries (401 refresh, 307 redirect) simply bump again.
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.method.toUpperCase() != 'GET') _mutationEpoch++;
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          if (response.requestOptions.method.toUpperCase() != 'GET') {
+            _mutationEpoch++;
+          }
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          if (error.requestOptions.method.toUpperCase() != 'GET') {
+            _mutationEpoch++;
+          }
+          handler.next(error);
+        },
+      ),
+    );
 
     // 307/308 redirect interceptor for POST/PUT/DELETE
     // Dio 5.x only follows redirects for GET/HEAD, so we manually handle
@@ -1203,6 +1389,11 @@ class ApiClient with WidgetsBindingObserver {
   Future<void> clearAuth() async {
     _cachedUserId = null;
     _userIdReadInFlight = null;
+    // A GET opened under the OLD identity must never be handed to a request
+    // made after the switch. Entries drop themselves on completion; this just
+    // makes them ineligible for reuse immediately.
+    _inFlightGets.clear();
+    _mutationEpoch++;
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userIdKey);
   }
@@ -1217,19 +1408,93 @@ class ApiClient with WidgetsBindingObserver {
   // HTTP Methods
   // ─────────────────────────────────────────────────────────────────
 
-  /// GET request
+  /// GET request.
+  ///
+  /// Coalesced: an identical GET (same path + query + response type) that is
+  /// already in flight is shared rather than re-issued. See [_inFlightGets].
+  /// Requests carrying a [cancelToken] or custom [options] opt out — the
+  /// former because one caller cancelling must not abort another's request,
+  /// the latter because per-call headers/`responseType` change what "the same
+  /// request" means.
+  ///
+  /// OWNERSHIP CONTRACT — stated as an invariant, not as an ordering claim:
+  ///
+  ///   **A decoded JSON body is never reachable from two callers at once.**
+  ///
+  /// Exactly one of two things is true when this future completes:
+  ///   • *Nobody joined.* The single caller receives the original [Response]
+  ///     and owns its `data` outright — there is no second owner to corrupt,
+  ///     and no copy is taken (the common case pays nothing).
+  ///   • *Somebody joined.* EVERY caller — the one that opened the request
+  ///     included — receives its own [Response] wrapper over a deep copy
+  ///     ([_deepCopyJson]). The raw response is retained only by this method's
+  ///     internals, so no caller can mutate the tree the other copies are cut
+  ///     from, in any completion order.
+  ///
+  /// The previous version copied only for *followers* and let the originator
+  /// keep the raw response. That is not equivalent: Dart propagates a
+  /// completed future's listeners depth-first, so the originator's `await`
+  /// resumes — and can mutate the shared body in place — before a follower's
+  /// copy is taken. The follower then "isolated" an already-corrupted tree.
+  /// Pinned by `test/services/api_client_get_coalescing_test.dart` →
+  /// "the ORIGINATING caller cannot corrupt a coalesced follower".
+  ///
+  /// Non-JSON payloads that reach this path are passed through by reference;
+  /// JSON is the only shape the default transformer produces here, and
+  /// byte/stream responses require [options], which opts out of coalescing
+  /// entirely.
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
-  }) async {
-    return _dio.get<T>(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
+  }) {
+    if (options != null || cancelToken != null) {
+      return _dio.get<T>(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+        cancelToken: cancelToken,
+      );
+    }
+
+    final key = _getCoalesceKey<T>(path, queryParameters);
+    final existing = _inFlightGets[key];
+    if (existing != null && existing.epoch == _mutationEpoch) {
+      // Tell the originator it is no longer alone BEFORE its completion
+      // callback can run, so it copies instead of keeping the raw response.
+      existing.shared = true;
+      return existing.future.then(_isolateCoalescedResponse<T>);
+    }
+
+    final future = _dio.get<T>(path, queryParameters: queryParameters);
+    final entry = _InFlightGet(_mutationEpoch, future);
+    _inFlightGets[key] = entry;
+    // This is the FIRST listener registered on [future] — followers attach
+    // after it — so it observes `entry.shared` in its final state and drops
+    // the map entry before any other caller's code can run.
+    return future.then(
+      (response) {
+        _releaseInFlightGet(key, entry);
+        return entry.shared
+            ? _isolateCoalescedResponse<T>(response)
+            : response;
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        // `whenComplete` used to do this; `then` does not run onValue on the
+        // error path, so release explicitly and rethrow with the original
+        // stack trace (callers surface DioException details).
+        _releaseInFlightGet(key, entry);
+        Error.throwWithStackTrace(error, stackTrace);
+      },
     );
+  }
+
+  /// Removes [entry] from [_inFlightGets] — but only if it is still the live
+  /// entry for [key]. A [clearAuth] (or a later GET after an epoch bump) can
+  /// have replaced it already; that newer entry must survive.
+  void _releaseInFlightGet(String key, _InFlightGet entry) {
+    if (identical(_inFlightGets[key], entry)) _inFlightGets.remove(key);
   }
 
   /// POST request
@@ -1240,13 +1505,22 @@ class ApiClient with WidgetsBindingObserver {
     Options? options,
     void Function(int, int)? onSendProgress,
   }) async {
-    return _dio.post<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-      onSendProgress: onSendProgress,
-    );
+    // Both edges: start (below) and completion (`finally`). See
+    // [_mutationEpoch] — the completion edge is what makes a read issued
+    // after this write returns unable to ride a GET opened while it was in
+    // flight.
+    _mutationEpoch++;
+    try {
+      return await _dio.post<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+        onSendProgress: onSendProgress,
+      );
+    } finally {
+      _mutationEpoch++;
+    }
   }
 
   /// PUT request
@@ -1256,12 +1530,17 @@ class ApiClient with WidgetsBindingObserver {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return _dio.put<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    _mutationEpoch++;
+    try {
+      return await _dio.put<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } finally {
+      _mutationEpoch++;
+    }
   }
 
   /// PATCH request
@@ -1271,12 +1550,17 @@ class ApiClient with WidgetsBindingObserver {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return _dio.patch<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    _mutationEpoch++;
+    try {
+      return await _dio.patch<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } finally {
+      _mutationEpoch++;
+    }
   }
 
   /// DELETE request
@@ -1286,12 +1570,17 @@ class ApiClient with WidgetsBindingObserver {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return _dio.delete<T>(
-      path,
-      data: data,
-      queryParameters: queryParameters,
-      options: options,
-    );
+    _mutationEpoch++;
+    try {
+      return await _dio.delete<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+    } finally {
+      _mutationEpoch++;
+    }
   }
 
   /// Swap a workout to a lighter / moderate / bodyweight variant.

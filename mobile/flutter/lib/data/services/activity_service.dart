@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,13 +17,66 @@ final activityServiceProvider = Provider<ActivityService>((ref) {
 class ActivityService {
   final ApiClient _apiClient;
 
-  // Cached "consent denied" flag — once the backend rejects sync with 403
-  // (no health-data consent), stop hammering the endpoint. Persisted to
-  // SharedPreferences so it survives app restarts (without persistence the
-  // gate reset on every launch and we kept re-spamming production).
-  // Cleared by Settings → Privacy when the user toggles consent back on.
+  // Cached "consent denied" flag — once the backend PROVES the user has not
+  // granted health-data consent (403 tagged `health_data_consent_required`),
+  // stop hammering the endpoint. Persisted to SharedPreferences so it survives
+  // app restarts (without persistence the gate reset on every launch and we
+  // kept re-spamming production). Cleared by Settings → Privacy when the user
+  // toggles consent back on.
+  // NOTHING ELSE may set this — see [_classifySyncResponse]. A refusal we
+  // cannot attribute to consent (ownership 403, unverifiable-consent 503) is
+  // retried, because latching it would silently disable a consenting user's
+  // health sync until they happened to find the Settings toggle.
   static const _kConsentDeniedKey = 'activity_health_consent_denied';
   bool _consentDenied = false;
+
+  // ── Refusal reason codes ───────────────────────────────────────────────────
+  // `/activity/sync` and `/activity/sync-batch` can refuse for reasons that all
+  // used to look identical on the wire (a bare 403 + a prose `detail`). The
+  // backend now names the cause in a header — see
+  // `backend/api/v1/activity.py` (`_ERR_CODE_HEADER` / `_require_health_consent`):
+  //
+  //   403 health_data_consent_required      — the flag was READ and is false.
+  //                                           Permanent until the user opts in
+  //                                           → latch the gate.
+  //   403 user_id_mismatch                  — the payload claims someone else's
+  //                                           user_id (a client bug). Nothing to
+  //                                           do with consent → never latch.
+  //   503 health_data_consent_unverifiable  — the consent lookup itself failed
+  //                                           (Supabase blip) or disagreed with
+  //                                           the gate. Consent is UNKNOWN, not
+  //                                           withheld → transient, never latch.
+  //
+  // Matching `'403'`/`'Forbidden'` inside a stringified exception (the previous
+  // behaviour) could not tell these apart, so an ownership bug or a database
+  // blip permanently disabled health sync for a consenting user.
+  static const _kErrCodeHeader = 'X-Zealova-Error-Code';
+  static const _kErrConsentRequired = 'health_data_consent_required';
+  static const _kErrConsentUnverifiable = 'health_data_consent_unverifiable';
+  static const _kErrUserMismatch = 'user_id_mismatch';
+
+  /// Treat 403 as an ordinary response instead of a `DioException`, so the
+  /// reason header survives to [_classifySyncResponse].
+  ///
+  /// Why 403 specifically: `ApiClient`'s error interceptor rewrites ANY 403 on
+  /// `/activity/sync*` into a synthetic `200 {skipped: true, reason:
+  /// 'no_health_consent'}`. That synthetic response carries no headers, so the
+  /// server's reason code is destroyed before this service can read it — and
+  /// its hardcoded `reason` asserts a consent denial for refusals that aren't
+  /// one. Accepting the 403 here means the error chain never runs and
+  /// `response.headers` still holds the real code.
+  ///
+  /// Everything else still throws exactly as before, deliberately:
+  ///   * 401 — `ApiClient`'s auth interceptor needs the error path to refresh
+  ///     the session and retry.
+  ///   * 503 (`health_data_consent_unverifiable`) — sentry_dio only captures
+  ///     failed requests from `onError`, so swallowing it here would hide a
+  ///     Supabase-side outage from the error tracker. It reaches the `catch`
+  ///     below with its response (and header) attached and is classified there.
+  static final _syncOptions = Options(
+    validateStatus: (status) =>
+        status != null && ((status >= 200 && status < 300) || status == 403),
+  );
 
   // Serializes the FIRST sync attempt after cold start so syncActivity +
   // syncActivityBatch don't both fire 403s before the consent gate has had
@@ -49,6 +103,64 @@ class ActivityService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_kConsentDeniedKey, true);
     } catch (_) {}
+  }
+
+  /// Classify a `/activity/sync*` response and return its payload on success.
+  ///
+  /// The consent gate is latched for exactly ONE outcome: a 403 that the server
+  /// tagged `health_data_consent_required`, i.e. it read the flag and it is
+  /// false. Every other refusal (ownership 403, unverifiable-consent 503, any
+  /// other status) leaves the gate open so the next sync retries — a transient
+  /// failure must never permanently disable a user's health sync.
+  Map<String, dynamic>? _classifySyncResponse(
+    Response<dynamic> response,
+    String label,
+  ) {
+    final status = response.statusCode;
+    if (status != null && status >= 200 && status < 300) {
+      debugPrint('✅ [Activity] $label succeeded');
+      return response.data as Map<String, dynamic>?;
+    }
+
+    final code = response.headers.value(_kErrCodeHeader);
+
+    if (status == 403 && code == _kErrConsentRequired) {
+      _consentDenied = true;
+      unawaited(_persistConsentDenied());
+      debugPrint(
+        '🚫 [Activity] Health-data consent not granted — $label gated until '
+        'the user enables it in Settings → Privacy & Data',
+      );
+      return null;
+    }
+
+    if (code == _kErrConsentUnverifiable) {
+      debugPrint(
+        '⏳ [Activity] $label deferred — the server could not verify the '
+        'health-data consent flag (transient). Gate left open; will retry.',
+      );
+      return null;
+    }
+
+    if (status == 403) {
+      // Any 403 that is NOT a proven consent denial. Latching on one would
+      // disable health sync for a user who DID grant consent, over a cause that
+      // has nothing to do with consent.
+      debugPrint(
+        code == _kErrUserMismatch
+            ? '❌ [Activity] $label refused — the payload\'s user_id is not the '
+                'signed-in user (client bug). NOT a consent denial; gate left open'
+            : '❌ [Activity] $label refused with an unrecognised 403 '
+                '(code=${code ?? 'absent'}). NOT a proven consent denial; '
+                'gate left open',
+      );
+      return null;
+    }
+
+    debugPrint(
+      '❌ [Activity] $label failed: $status${code == null ? '' : ' ($code)'}',
+    );
+    return null;
   }
 
   /// Call from Settings when the user re-enables health-data consent so the
@@ -133,25 +245,20 @@ class ActivityService {
             'body_temperature': activity.bodyTemperature,
           'source': Platform.isAndroid ? 'health_connect' : 'apple_health',
         },
+        options: _syncOptions,
       );
 
-      if (response.statusCode == 200) {
-        debugPrint('✅ [Activity] Synced activity successfully');
-        return response.data as Map<String, dynamic>?;
-      } else {
-        debugPrint('❌ [Activity] Sync failed: ${response.statusCode}');
-        return null;
-      }
+      return _classifySyncResponse(response, 'Sync');
     } catch (e) {
-      // Surface 403 (consent missing) once and disable retries for this session.
-      final msg = e.toString();
-      if (msg.contains('403') || msg.contains('Forbidden')) {
-        _consentDenied = true;
-        unawaited(_persistConsentDenied());
-        debugPrint('🚫 [Activity] Health consent missing — sync gated until user re-enables');
-      } else {
-        debugPrint('❌ [Activity] Error syncing activity: $e');
+      // Reached by the consent-unverifiable 503 and every other error status.
+      // Classify from the RESPONSE (status + reason header), never from the
+      // exception's text — `'403'` can appear in a URL or a message body, and a
+      // coincidence must not disable someone's health sync.
+      final response = e is DioException ? e.response : null;
+      if (response != null) {
+        return _classifySyncResponse(response, 'Sync');
       }
+      debugPrint('❌ [Activity] Error syncing activity: $e');
       return null;
     } finally {
       attemptCompleter?.complete();
@@ -344,22 +451,18 @@ class ActivityService {
       final response = await _apiClient.post(
         '/activity/sync-batch',
         data: data,
+        options: _syncOptions,
       );
 
-      if (response.statusCode == 200) {
-        debugPrint('✅ [Activity] Batch sync completed');
-        return response.data as Map<String, dynamic>?;
-      }
-      return null;
+      return _classifySyncResponse(response, 'Batch sync');
     } catch (e) {
-      final msg = e.toString();
-      if (msg.contains('403') || msg.contains('Forbidden')) {
-        _consentDenied = true;
-        unawaited(_persistConsentDenied());
-        debugPrint('🚫 [Activity] Health consent missing — batch sync gated until user re-enables');
-      } else {
-        debugPrint('❌ [Activity] Error batch syncing: $e');
+      // Same rule as [syncActivity]: only a response the server tagged
+      // `health_data_consent_required` may latch the gate.
+      final response = e is DioException ? e.response : null;
+      if (response != null) {
+        return _classifySyncResponse(response, 'Batch sync');
       }
+      debugPrint('❌ [Activity] Error batch syncing: $e');
       return null;
     } finally {
       attemptCompleter?.complete();

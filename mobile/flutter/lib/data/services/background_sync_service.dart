@@ -506,16 +506,25 @@ Future<bool> _processDailyActivitySync() async {
         '✅ [DailyActivitySync] Synced (steps=$steps, status=${resp.statusCode})');
     return true;
   } catch (e) {
-    final msg = e.toString();
-    if (msg.contains('403') || msg.contains('Forbidden')) {
-      // Mirror ActivityService: persist the consent-denied gate so we stop
-      // hammering the endpoint until the user re-enables consent.
+    // Latch the consent gate for EXACTLY ONE cause: a 403 the server tagged
+    // `health_data_consent_required` (it read the flag and it is false).
+    // A bare string match on '403'/'Forbidden' also caught ownership 403s and
+    // the transient 503 the server returns when it CANNOT read the consent flag
+    // (consent_guard fails closed on a DB blip) — permanently disabling health
+    // sync over a transient Supabase error. Read the error code off the wire,
+    // exactly like ActivityService._classifySyncResponse.
+    final code = e is DioException
+        ? e.response?.headers.value('X-Zealova-Error-Code')
+        : null;
+    if (code == 'health_data_consent_required') {
       try {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool(_kActivityConsentDeniedKey, true);
       } catch (_) {}
-      debugPrint('🚫 [DailyActivitySync] Health consent missing — gating');
+      debugPrint('🚫 [DailyActivitySync] Health consent not granted — gating');
     } else {
+      // Everything else (transient 403/503, network) leaves the gate open so
+      // the next scheduled sync retries.
       debugPrint('❌ [DailyActivitySync] $e');
     }
     return true; // never thrash retries on a transient error
