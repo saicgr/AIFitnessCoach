@@ -52,13 +52,8 @@ logger = get_logger(__name__)
 # without this, POST /travel-mode/activate would resolve as {profile_id}="travel-mode".
 router.include_router(_travel_router)
 
-_COACH_COLORS = {
-    "coach_mike": "#FF9800",    # Orange
-    "dr_sarah": "#2196F3",      # Blue
-    "sergeant_max": "#F44336",  # Red
-    "zen_maya": "#4CAF50",      # Green
-    "hype_danny": "#9C27B0",    # Purple
-}
+# Coach→profile-colour map lives with the one gym-profile builder
+# (api.v1.users.onboarding._COACH_COLORS); this file no longer builds profiles.
 
 
 # =============================================================================
@@ -126,6 +121,15 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
     created during onboarding.
 
     Returns the created profile or None if profiles already exist or user is new.
+
+    This path used to build its OWN hardcoded "My Gym"/commercial_gym row with a
+    plain `.insert()`. The app fires it (via GET /gym-profiles/active) at the same
+    moment onboarding-completion runs `create_gym_profiles_from_onboarding()`, so the
+    two inserted two DIFFERENT active profiles for one user and whichever lost the
+    race died on `idx_gym_profiles_active_per_user` — taking the user's real
+    onboarding answers with it (Sentry PYTHON-FASTAPI-6V, 2026-07-23). It now
+    delegates to that same builder, whose writes are upserts keyed on
+    (user_id, name), so either ordering converges on one correct profile.
     """
     try:
         supabase = get_supabase()
@@ -176,52 +180,37 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
                 logger.debug(f"Failed to parse user equipment JSON: {e}")
                 user_equipment = []
 
-        # Get workout environment
-        workout_environment = preferences.get("workout_environment", "commercial_gym")
+        user_equipment_details = user.get("equipment_details") or []
+        if isinstance(user_equipment_details, str):
+            try:
+                user_equipment_details = json.loads(user_equipment_details)
+            except Exception as e:
+                logger.debug(f"Failed to parse user equipment_details JSON: {e}")
+                user_equipment_details = []
 
-        # Auto-populate equipment based on environment if empty
-        if not user_equipment:
-            user_equipment = get_default_equipment_for_environment(workout_environment)
-            logger.info(f"🏋️ [GymProfile] Auto-populated equipment for {workout_environment}: {user_equipment}")
+        # Delegate to the ONE onboarding gym-profile builder (upserts on
+        # (user_id, name)), so this path and the onboarding-completion path can no
+        # longer produce two competing active profiles for the same user.
+        from api.v1.users.onboarding import create_gym_profiles_from_onboarding
 
-        # Create default profile from user's settings
-        now = datetime.utcnow().isoformat()
-        coach_id = preferences.get("coach_id")
-        profile_color = _COACH_COLORS.get(coach_id, "#FF9800")
-        profile_data = {
-            "user_id": user_id,
-            "name": "My Gym",
-            "icon": "fitness_center",
-            "color": profile_color,
-            "equipment": user_equipment,
-            "equipment_details": user.get("equipment_details") or [],
-            "workout_environment": workout_environment,
-            "training_split": preferences.get("training_split"),
-            "workout_days": preferences.get("workout_days") or [],
-            "duration_minutes": preferences.get("workout_duration", 45),
-            "goals": [],
-            "focus_areas": [],
-            "display_order": 0,
-            "is_active": True,
-            "created_at": now,
-            "updated_at": now,
-        }
+        created = await create_gym_profiles_from_onboarding(
+            user_id=user_id,
+            gym_name=preferences.get("gym_name"),
+            workout_environment=preferences.get("workout_environment"),
+            equipment=user_equipment,
+            equipment_details=user_equipment_details,
+            preferences=preferences,
+            coach_id=preferences.get("coach_id"),
+        )
 
-        result = supabase.client.table("gym_profiles") \
-            .insert(profile_data) \
-            .execute()
-
-        if not result.data:
+        if not created:
             logger.error(f"Failed to create default profile for user {user_id}")
             return None
 
-        profile = row_to_gym_profile(result.data[0])
-
-        # Update user's active_gym_profile_id
-        supabase.client.table("users") \
-            .update({"active_gym_profile_id": profile.id}) \
-            .eq("id", user_id) \
-            .execute()
+        # The builder marks exactly one profile active (and points
+        # users.active_gym_profile_id at it) — return that one.
+        active_row = next((row for row in created if row.get("is_active")), created[0])
+        profile = row_to_gym_profile(active_row)
 
         # Link existing workouts to this profile
         supabase.client.table("workouts") \
@@ -473,8 +462,19 @@ async def create_gym_profile(
         max_order = order_result.data[0]["display_order"] if order_result.data else -1
         new_order = max_order + 1
 
-        # Check if this is the first profile (should be active)
-        is_first_profile = max_order == -1
+        # Auto-activate when the user has no LIVE active profile — not merely when
+        # this is their first-ever row. `max_order` counts archived profiles too, so
+        # the old `max_order == -1` test left a user whose gyms were all archived
+        # with a brand-new profile and NOTHING active.
+        active_result = supabase.client.table("gym_profiles") \
+            .select("id") \
+            .eq("user_id", user_id) \
+            .eq("is_active", True) \
+            .is_("archived_at", "null") \
+            .limit(1) \
+            .execute()
+
+        is_first_profile = not active_result.data
 
         now = datetime.utcnow().isoformat()
         profile_data = {

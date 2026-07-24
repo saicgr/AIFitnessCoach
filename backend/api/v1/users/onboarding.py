@@ -685,6 +685,14 @@ async def create_gym_profiles_from_onboarding(
     """
     Create gym profile(s) from onboarding data.
 
+    THE SINGLE BUILDER for a user's onboarding-derived gym profile(s). Both callers
+    go through here — the onboarding-completed hook in `users/profile.py` and the
+    legacy/self-heal path `gym_profiles.create_default_profile_if_needed()` — so the
+    two can no longer mint DIFFERENT profiles for the same user and collide on
+    `idx_gym_profiles_active_per_user` (Sentry PYTHON-FASTAPI-6V, 2026-07-23).
+    Every write is an upsert keyed on (user_id, name): running it twice for the same
+    user converges on one row instead of racing.
+
     Handles three scenarios:
     1. Single profile (home_gym, commercial_gym, other)
     2. Both home and gym - creates 2 profiles
@@ -747,6 +755,11 @@ async def create_gym_profiles_from_onboarding(
             "focus_areas": [],
             "display_order": display_order,
             "is_active": is_active,
+            # The upsert below is keyed on (user_id, name), so it can land on an
+            # ARCHIVED row of the same name. Onboarding is (re)creating this gym —
+            # bring it back to live, otherwise it would be updated into a hidden
+            # profile that no picker can reach.
+            "archived_at": None,
             "created_at": now,
             "updated_at": now,
         }

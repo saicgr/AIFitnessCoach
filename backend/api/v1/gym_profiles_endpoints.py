@@ -542,6 +542,15 @@ async def activate_gym_profile(
         profile = profile_result.data
         user_id = profile["user_id"]
 
+        # An archived gym can never be the active one — the partial unique index
+        # (and the trg_gym_profiles_single_active trigger) exclude it, so honouring
+        # this would deactivate the user's real gym and leave them with none.
+        if profile.get("archived_at"):
+            raise HTTPException(
+                status_code=400,
+                detail="This gym is archived. Restore it before switching to it.",
+            )
+
         # Get current active profile for logging
         old_active_result = supabase.client.table("gym_profiles") \
             .select("id, name") \
