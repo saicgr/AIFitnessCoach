@@ -418,13 +418,25 @@ Rules:
     final_id = workout_id
     try:
         if is_new_workout:
-            today_utc = datetime.now(timezone.utc).date().isoformat()
+            # NOON-anchored in the USER'S timezone — see workout_builder
+            # .persist_built_workout for the full rationale. A bare UTC date
+            # lands at 00:00Z, which is the PREVIOUS local day for any
+            # negative-offset user, making the workout invisible to
+            # /workouts/today's local-day window.
+            from core.timezone_utils import (
+                resolve_timezone,
+                target_date_to_utc_iso,
+                get_user_today,
+            )
+
+            _tz = resolve_timezone(None, db, user_id)
+            scheduled_at_noon = target_date_to_utc_iso(get_user_today(_tz), _tz)
             created = db.create_workout({
                 "user_id": user_id,
                 "name": name,
                 "type": (focus or "custom").replace("_", " "),
                 "difficulty": intensity_key,
-                "scheduled_date": today_utc,
+                "scheduled_date": scheduled_at_noon,
                 "exercises_json": exercises,
                 "duration_minutes": min(max(duration_minutes, 5), 90),
                 "is_completed": False,

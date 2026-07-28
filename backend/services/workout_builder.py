@@ -621,13 +621,28 @@ def persist_built_workout(
         db.update_workout(existing_workout_id, update)
         return existing_workout_id
 
-    today_utc = datetime.now(timezone.utc).date().isoformat()
+    # NOON-ANCHORED, in the USER'S timezone — not a bare UTC date.
+    #
+    # `workouts.scheduled_date` is a timestamptz and the repo convention is to
+    # store it at NOON of the local day, because /workouts/today reads with a
+    # LOCAL-day window. A bare "YYYY-MM-DD" lands at 00:00Z, which for any
+    # negative-UTC-offset user is the PREVIOUS local day — so the workout falls
+    # outside today's window and is invisible to the app.
+    #
+    # Observed live: a coach-created workout stored at 2026-07-28 00:00:00+00
+    # was 2026-07-27 19:00 for a US-Central user. /today found nothing, reported
+    # needs_generation, and the Workout tab sat on "Generating your workout…"
+    # forever for a workout that already existed.
+    from core.timezone_utils import resolve_timezone, target_date_to_utc_iso, get_user_today
+
+    _tz = resolve_timezone(None, db, user_id)  # header-less: falls back to users.timezone
+    scheduled_at_noon = target_date_to_utc_iso(get_user_today(_tz), _tz)
     row = {
         "user_id": user_id,
         "name": built.name,
         "type": built.type,
         "difficulty": built.difficulty,
-        "scheduled_date": today_utc,
+        "scheduled_date": scheduled_at_noon,
         "exercises_json": built.exercises,
         "duration_minutes": min(built.duration_minutes, 120),
         "is_completed": False,
