@@ -436,11 +436,49 @@ def _generation_prompt(display_name: str, restaurant_name: Optional[str]) -> str
     )
 
 
+def _image_location() -> str:
+    """Vertex region for Imagen.
+
+    Imagen is NOT served from the `global` endpoint — only regional ones. The
+    shared client uses settings.gcp_location, which is "global" (correct for
+    Gemini text), so every dish-image generation failed with:
+        404 NOT_FOUND ... Publisher model
+        `projects/<p>/locations/global/publishers/google/models/
+         imagen-4.0-fast-generate-001` was not found
+    and surfaced to the client as a 502. Pin image generation to a region.
+    """
+    return os.getenv("DISH_IMAGE_LOCATION", "us-central1")
+
+
+def _image_genai_client():
+    """Vertex client pinned to a REGIONAL endpoint for Imagen.
+
+    Mirrors core.gemini_client.get_genai_client's Vertex/ZDR setup (same
+    project, same credentials) but overrides the location, so image traffic
+    stays on the zero-data-retention Vertex path.
+    """
+    from google import genai
+    from core.config import get_settings
+    from core.gemini_client import _setup_credentials
+
+    settings = get_settings()
+    if not settings.gcp_project_id:
+        # No Vertex config → fall back to the shared client so local/dev
+        # behaviour is unchanged (it will raise its own clear error).
+        from core.gemini_client import get_genai_client
+        return get_genai_client()
+
+    _setup_credentials()
+    return genai.Client(
+        vertexai=True,
+        project=settings.gcp_project_id,
+        location=_image_location(),
+    )
+
+
 def _generate_image_bytes(prompt: str) -> bytes:
     """One Imagen 4 Fast call. Raises rather than returning a placeholder."""
-    from core.gemini_client import get_genai_client
-
-    client = get_genai_client()
+    client = _image_genai_client()
     try:
         resp = client.models.generate_images(
             model=image_model(),
