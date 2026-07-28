@@ -7,6 +7,7 @@ library;
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -254,18 +255,30 @@ Future<List<MenuPageArtifact>> pickMenuPages({
 
 /// Bake EXIF orientation and re-encode at full resolution.
 ///
-/// `minWidth`/`minHeight` of 1 mean "never scale down" in
-/// flutter_image_compress — the call is here purely for
-/// `autoCorrectionAngle`, which rotates the pixels and drops the EXIF tag so
-/// no downstream consumer has to interpret it. On failure we hand back the
-/// original file rather than dropping the page.
+/// `minWidth`/`minHeight` are the TARGET BOX, **not** a floor. Both native
+/// implementations downscale by `max(1, min(w/minWidth, h/minHeight))`
+/// (Android `BitmapCompressExt.kt`) / `fminf(1, minWidth/actualWidth)`
+/// (iOS `UIImage+scale.m`). Passing 1 therefore does NOT mean "never scale
+/// down" — it scales a 3024x4032 phone photo to literally **1x1 pixel**.
+///
+/// That is what shipped from 2026-07-22 (f1cb7333) until this fix: every menu
+/// and bill page, camera and gallery, iOS and Android, was uploaded as a
+/// single averaged pixel. The `bytes.isEmpty` guard below never caught it
+/// because a 1x1 JPEG is still ~600-900 valid bytes, so the blank page sailed
+/// through upload, S3 archival and into the sheet's photo strip (the blank
+/// white thumbnail), and Gemini was asked to read a blank pixel.
+///
+/// 4096 leaves every realistic phone photo untouched and only trims genuinely
+/// enormous scans. The call is still here for `autoCorrectionAngle`, which
+/// rotates the pixels and drops the EXIF tag so no downstream consumer has to
+/// interpret it. On failure we hand back the original rather than drop the page.
 Future<MenuPageArtifact> _normalizeMenuPage(XFile xf) async {
   final original = File(xf.path);
   try {
     final bytes = await FlutterImageCompress.compressWithFile(
       xf.path,
-      minWidth: 1,
-      minHeight: 1,
+      minWidth: 4096,
+      minHeight: 4096,
       quality: 95,
       format: CompressFormat.jpeg,
       autoCorrectionAngle: true,
@@ -275,6 +288,30 @@ Future<MenuPageArtifact> _normalizeMenuPage(XFile xf) async {
       final size = await original.length();
       debugPrint('[menu-scan] normalize returned null — using original');
       return MenuPageArtifact(file: original, sizeBytes: size);
+    }
+
+    // Belt-and-braces: never hand the model a page it cannot possibly read.
+    // A future scaling regression must fail loudly here rather than silently
+    // shipping a blank page that the model answers from its own prompt example.
+    try {
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final w = frame.image.width;
+      final h = frame.image.height;
+      frame.image.dispose();
+      codec.dispose();
+      if (w < 640 || h < 640) {
+        debugPrint(
+          '[menu-scan] normalize produced ${w}x$h — too small to read, '
+          'using original',
+        );
+        return MenuPageArtifact(
+          file: original,
+          sizeBytes: await original.length(),
+        );
+      }
+    } catch (e) {
+      debugPrint('[menu-scan] could not verify normalized dimensions: $e');
     }
     final dir = original.parent;
     final normalized = File(

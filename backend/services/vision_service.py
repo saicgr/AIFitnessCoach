@@ -1795,9 +1795,24 @@ REQUIRED per dish (NEVER omit any field below):
 - coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
 
 RESTAURANT NAME: If the restaurant's name is visible anywhere on the menu image (header, logo, footer), extract it into a top-level "restaurant_name" string. Set "restaurant_name" to null if no name is visible.
+
+CONTENT CHECK — DO THIS FIRST, BEFORE ANYTHING ELSE:
+Look at the image. If it is blank, a solid colour, a single pixel, too
+low-resolution to read, out of focus beyond legibility, or is simply not a
+food menu, then return EXACTLY:
+{{"analysis_type": "menu", "restaurant_name": null, "sections": [], "unreadable": true, "unreadable_reason": "<≤10 words: what you actually saw>"}}
+Return that and STOP. Do not continue to the schema below.
+
+NEVER invent, guess, or infer a dish that you cannot actually READ in the
+image. NEVER copy any dish name, price, calorie figure or description from the
+example below — it is a FORMAT ILLUSTRATION ONLY, using placeholder tokens.
+Every value you emit must come from the image in front of you. Returning zero
+dishes is correct and expected when the image is unreadable; inventing one is
+a serious error.
 {nutrition_ctx_str}{user_ctx_str}
 
-Return ONLY this JSON, no other keys:
+Return ONLY this JSON shape, no other keys (values below are PLACEHOLDERS
+showing the format — never echo them):
 {{
     "analysis_type": "menu",
     "restaurant_name": "Tandoor House",
