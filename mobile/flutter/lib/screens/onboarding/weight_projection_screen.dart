@@ -250,7 +250,15 @@ class _WeightProjectionScreenState
     final workoutDays = quizData.daysPerWeek ?? 4;
     final useMetric = quizData.useMetricUnits;
     final weightDirection = quizData.weightDirection;
-    final weightChangeRate = quizData.weightChangeRate;
+    // The pace selector renders `weightChangeRate ?? 'moderate'` as the chosen
+    // chip, so the SAME effective value must feed the projection maths. It did
+    // not: the raw null fell through to calculateWeeklyRate's no-rate branch
+    // (0.5 + days/14 ≈ 0.79 kg/wk for 4 days) while the UI showed "Moderate ·
+    // 1 lb/wk" (0.5 kg/wk) as selected. The curve therefore ran ~60% hot and
+    // the goal date landed weeks early — and disagreed with every later screen
+    // that read the persisted rate. Default here, once, so the label, the
+    // curve, the summary row and the downstream screens all agree.
+    final weightChangeRate = quizData.weightChangeRate ?? 'moderate';
 
     // Check if user selected "maintain" - show alternate view
     final isMaintaining = weightDirection == 'maintain' ||

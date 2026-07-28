@@ -127,6 +127,14 @@ class UserPreferencesRequest(BaseModel):
     """Request body for updating user preferences from pre-auth quiz."""
     # Goals & Fitness
     goals: Optional[List[str]] = None
+    # The quiz's dedicated "primary training focus" answer (hypertrophy /
+    # strength / balanced / endurance) and the muscle-focus point allocation.
+    # Both are sent by AIProfilePayloadBuilder and both have real columns on
+    # `users`; they were absent from this model, so Pydantic silently dropped
+    # them and the first generated plan ignored the goal the whole onboarding
+    # funnel promised to build around.
+    primary_goal: Optional[str] = None
+    muscle_focus_points: Optional[Dict[str, int]] = None
     fitness_level: Optional[str] = None
     training_experience: Optional[str] = None
     activity_level: Optional[str] = None

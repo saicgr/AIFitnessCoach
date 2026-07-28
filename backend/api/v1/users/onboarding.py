@@ -117,6 +117,14 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
         if request.goals is not None:
             # goals column is VARCHAR, needs JSON string
             update_data["goals"] = json.dumps(request.goals) if isinstance(request.goals, list) else request.goals
+        # users.primary_goal is TEXT, users.muscle_focus_points is JSONB
+        # (migration 166). These drive the generated plan's rep scheme and
+        # muscle prioritisation — dropping them silently made the first plan
+        # ignore the user's stated focus.
+        if request.primary_goal is not None:
+            update_data["primary_goal"] = request.primary_goal
+        if request.muscle_focus_points is not None:
+            update_data["muscle_focus_points"] = request.muscle_focus_points
         equipment_changed = False
         if request.equipment is not None:
             # Dual-write: legacy `equipment` VARCHAR-of-JSON + new

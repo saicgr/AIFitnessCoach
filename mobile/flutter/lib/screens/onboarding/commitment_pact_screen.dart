@@ -14,6 +14,10 @@ import '../../widgets/exercise_image.dart';
 import '../demo/preview_exercise_catalog.dart' show previewAssetForId, previewIdForName;
 
 import '../../l10n/generated/app_localizations.dart';
+// Single source of truth for the weekly-rate table, shared with the
+// weight-projection screen so both surfaces quote the same timeline.
+// (WeightProjectionCalculator lives in a `part` of this library.)
+import 'weight_projection_screen.dart' show WeightProjectionCalculator;
 
 /// Commitment Pact Screen — Onboarding v5
 ///
@@ -684,17 +688,31 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
 
   /// Feasibility framing (Calorii-audit P6.1) — an *estimated* timeline at a
   /// healthy pace rather than an unsafe "completely achievable in X months"
-  /// claim. The quiz stores no weekly-rate/target-date, so we estimate from a
-  /// safe default rate (0.75 kg/wk loss · 0.25 kg/wk gain). Returns null when
-  /// there's no meaningful delta (maintenance is covered by the outcome line).
+  /// claim. Returns null when there's no meaningful delta (maintenance is
+  /// covered by the outcome line).
+  ///
+  /// Uses the SAME rate table as the weight-projection screen
+  /// ([WeightProjectionCalculator.calculateWeeklyRate]). The old code
+  /// hardcoded 0.75 kg/wk regardless of what the user picked, which is why
+  /// this line said "about 8 weeks" while the projection chart and the
+  /// sign-in screen — reading the user's actual 'moderate' (0.5 kg/wk) —
+  /// said ~12 weeks. Same plan, three different answers.
   String? _feasibilityLine(PreAuthQuizData quiz) {
     final cur = quiz.weightKg;
     final goal = quiz.goalWeightKg;
     if (cur == null || goal == null || cur <= 0 || goal <= 0) return null;
     final deltaKg = (goal - cur).abs();
     if (deltaKg < 0.5) return null;
-    final losing = goal < cur;
-    final rateKgPerWeek = losing ? 0.75 : 0.25;
+
+    final rateKgPerWeek = WeightProjectionCalculator.calculateWeeklyRate(
+      currentWeight: cur,
+      goalWeight: goal,
+      workoutDaysPerWeek: quiz.daysPerWeek ?? 4,
+      // Mirrors the projection screen's default-selected chip.
+      weightChangeRate: quiz.weightChangeRate ?? 'moderate',
+    );
+    if (rateKgPerWeek <= 0) return null;
+
     final weeks = (deltaKg / rateKgPerWeek).ceil();
     if (weeks <= 0) return null;
     return 'Achievable in about $weeks weeks at a healthy pace.';

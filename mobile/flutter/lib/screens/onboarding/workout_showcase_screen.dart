@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1273,6 +1275,49 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
   // 0 = "Set 1 ready", 1 = "Set 2 ready", 2 = "Set 3 ready", 3 = all done.
   // Tapping "✓ Log set" advances the counter; reaching 3 fires onAdvance.
   int _setsLogged = 0;
+
+  /// Running volume (in lb) of the sets the user has actually logged in this
+  /// showcase, and the seconds they've spent on it.
+  ///
+  /// The stats strip used to be three hardcoded strings ('46s', '6 kcal',
+  /// '0 lb'). Because the showcase is INTERACTIVE — the user really taps
+  /// "Log set" three times and watches the weight climb — a frozen
+  /// "Volume 0 lb" after logging 70lb×9 + 80lb×7 + 90lb×5 contradicts the
+  /// very progression the screen is demonstrating. Track it for real.
+  double _volumeLb = 0;
+  int _elapsedSeconds = 0;
+  Timer? _showcaseTimer;
+
+  /// ~0.5 kcal per 100 lb of volume moved — a rough, deliberately modest
+  /// stand-in so the number climbs with real work instead of sitting still.
+  int get _caloriesFromVolume => (_volumeLb * 0.005).round();
+
+  String get _elapsedLabel {
+    if (_elapsedSeconds < 60) return '${_elapsedSeconds}s';
+    final m = _elapsedSeconds ~/ 60;
+    final s = _elapsedSeconds % 60;
+    return '${m}m ${s}s';
+  }
+
+  String get _volumeLabel {
+    if (_useKg) return '${(_volumeLb / 2.20462).round()} kg';
+    return '${_volumeLb.round()} lb';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _showcaseTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _elapsedSeconds++);
+    });
+  }
+
+  @override
+  void dispose() {
+    _showcaseTimer?.cancel();
+    super.dispose();
+  }
   // Live values shown in the steppers — pre-filled with the active
   // progression's target for the current working set in the user's
   // chosen unit. ± steppers and unit toggle mutate this directly.
@@ -1352,9 +1397,14 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _stat(l10n.workoutShowcaseDuration, '46s', textPrimary, textSecondary),
-                _stat(l10n.workoutShowcaseCalories, '6 kcal', textPrimary, textSecondary),
-                _stat(l10n.workoutShowcaseVolume, '0 lb', textPrimary, textSecondary),
+                // Live — driven by the sets the user actually logs here, not
+                // frozen placeholders. See _volumeLb / _elapsedSeconds.
+                _stat(l10n.workoutShowcaseDuration, _elapsedLabel, textPrimary,
+                    textSecondary),
+                _stat(l10n.workoutShowcaseCalories, '$_caloriesFromVolume kcal',
+                    textPrimary, textSecondary),
+                _stat(l10n.workoutShowcaseVolume, _volumeLabel, textPrimary,
+                    textSecondary),
               ],
             );
           }).animate(delay: 100.ms).fadeIn(),
@@ -1585,7 +1635,14 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
             onTap: () {
               HapticFeedback.mediumImpact();
               final unit = _useKg ? 'kg' : 'lb';
-              setState(() => _setsLogged++);
+              // Bank the set the user just logged so the stats strip reflects
+              // their real work. Steppers are in the CURRENT unit; volume is
+              // kept in lb and converted for display.
+              final loggedLb = _useKg ? _weight * 2.20462 : _weight;
+              setState(() {
+                _setsLogged++;
+                _volumeLb += loggedLb * _reps;
+              });
               if (_setsLogged >= 3) {
                 _toast('All 3 sets logged. Nice work!');
                 Future.delayed(const Duration(milliseconds: 400),

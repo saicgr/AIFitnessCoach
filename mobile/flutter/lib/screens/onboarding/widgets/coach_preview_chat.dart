@@ -228,18 +228,38 @@ class _CoachPreviewChatState extends ConsumerState<CoachPreviewChat> {
     }
   }
 
-  /// Visible degradation: labeled note + a curated answer, then the live
-  /// input retires for THIS coach only. Chips keep working.
+  /// Visible degradation, then the live input retires for THIS coach only.
+  /// Chips keep working.
+  ///
+  /// [serverReply] non-empty → the SERVER authored a fallback for the question
+  /// the user actually asked, so it is shown under the coach's fallback label.
+  ///
+  /// [serverReply] null → the live call failed and we have NO answer to this
+  /// question. Previously this substituted `_chips[1].answer` — a fixed,
+  /// unrelated curated answer — under the label "here's how he answers that",
+  /// so asking "what should I eat before a morning workout?" returned the
+  /// first-workout-nerves pep talk presented as the coach's reply. Say plainly
+  /// that live chat is unavailable and point at the chips, which DO have real
+  /// answers. Never pass off an unrelated canned answer as a response.
   void _handleFallback(String? serverReply) {
-    final curated = serverReply ?? _chips[1].answer;
+    final hasRelevantReply = serverReply != null && serverReply.trim().isNotEmpty;
     setState(() {
       _s.retired = true;
       _s.typing = false;
-      _s.messages.add(PreviewMsg(
-        curated,
-        isUser: false,
-        noteAbove: _content.fallbackLabel,
-      ));
+      _s.messages.add(
+        hasRelevantReply
+            ? PreviewMsg(
+                serverReply.trim(),
+                isUser: false,
+                noteAbove: _content.fallbackLabel,
+              )
+            : PreviewMsg(
+                "I can't reach live chat right now — that one's on us, not you. "
+                'Tap any question below and I\'ll answer it straight away, or '
+                'ask me again once you\'re inside the app.',
+                isUser: false,
+              ),
+      );
     });
     ref.read(posthogServiceProvider).capture(
       eventName: 'coach_preview_fallback',
