@@ -79,6 +79,13 @@ logger = get_logger(__name__)
 # limits, carries an explicit daily reset_period, and is what the client
 # already displays. Changing this name without updating _PREMIUM_FEATURE_KEYS
 # re-opens the same bug.
+#
+# This is a BUG FIX, not a loosening of the free tier. The legacy 'ai_chat' row
+# has `reset_period = NULL`, and _get_current_usage treats NULL as "sum all
+# time usage" (core/premium_gate.py) — so the shipped behaviour was 10 coach
+# messages for the LIFETIME of a free account, not 10 per day. Nobody ever
+# received a daily allowance on that key. Migration 2330 also repairs the
+# stale row's NULL reset_period so it can never re-impose a lifetime cap.
 CHAT_FEATURE_KEY = "ai_chat_messages"
 
 # Service instances (will be initialized on startup)
