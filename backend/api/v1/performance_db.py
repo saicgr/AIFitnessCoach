@@ -470,10 +470,26 @@ async def create_workout_log(log: WorkoutLogCreate,
             db, log.workout_id, log.user_id
         )
 
+        # Explicit status — NEVER rely on the column default here.
+        #
+        # `workout_logs.status` DEFAULTs to 'completed', and migration 2256
+        # installs trg_sync_workout_completion on this table, which flips
+        # `workouts.is_completed = true`. The Easy tier creates the parent log
+        # on the user's FIRST set with an empty sets array, so omitting status
+        # marked the entire workout finished after one set — with
+        # sets_json '[]'. Abandoning the session then left a permanently
+        # "completed" workout the user never did, and because /today skips
+        # completed workouts the day had no workout left, which in turn pinned
+        # the client on an endless "Generating your workout…" spinner.
+        #
+        # An empty set list is by definition not a finished session.
+        derived_status = "completed" if sets_data else "in_progress"
+
         log_data = {
             "workout_id": log.workout_id,
             "user_id": log.user_id,
             "sets_json": sets_data,  # Pass as dict, not string
+            "status": derived_status,
             "total_time_seconds": log.total_time_seconds,
             "duration_minutes": derived_minutes,
             "gym_profile_id": derived_gym_profile_id,
@@ -516,6 +532,11 @@ class WorkoutLogPatch(BaseModel):
     sets_json: Optional[str] = None
     total_time_seconds: Optional[int] = None
     metadata: Optional[dict] = None
+    # Optional explicit status. The row is now created as 'in_progress' when it
+    # has no sets (see create_workout_log), so the finalize call must be able to
+    # move it to 'completed'; otherwise a genuinely finished Easy-tier session
+    # would stay 'in_progress' forever.
+    status: Optional[str] = None
 
 
 @router.patch("/workout-logs/{log_id}", response_model=WorkoutLog)
@@ -548,6 +569,19 @@ async def update_workout_log(
             update_data["duration_minutes"] = max(1, round(patch.total_time_seconds / 60)) if patch.total_time_seconds > 0 else None
         if patch.metadata is not None:
             update_data["metadata"] = patch.metadata
+        if patch.status is not None:
+            _allowed = {"completed", "in_progress", "abandoned", "paused"}
+            if patch.status not in _allowed:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Invalid status '{patch.status}'. Allowed: {sorted(_allowed)}",
+                )
+            update_data["status"] = patch.status
+        elif update_data.get("sets_json"):
+            # Backfilling real sets IS the finalize step for the Easy tier, and
+            # it is what should flip trg_sync_workout_completion — not the
+            # empty-set row created on the user's first set.
+            update_data["status"] = "completed"
 
         if not update_data:
             raise HTTPException(status_code=400, detail="No updatable fields provided")

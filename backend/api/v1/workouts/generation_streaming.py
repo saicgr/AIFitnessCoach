@@ -247,7 +247,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         # Duplicate check: if a current, non-cancelled workout already exists for
         # this user+date, return it — regardless of gym_profile_id (see comment above).
         # Day-range match (TIMESTAMPTZ), NOT `.eq` on a bare date string.
-        existing_workout = await asyncio.to_thread(db.client.table("workouts").select("id,name,status").eq(
+        existing_workout = await asyncio.to_thread(db.client.table("workouts").select("id,name,status,is_completed").eq(
             "user_id", body.user_id
         ).gte(
             "scheduled_date", _sd_lo
@@ -261,8 +261,27 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             "status", "cancelled"
         ).limit(1).execute)
 
-        if existing_workout.data:
-            workout_id = existing_workout.data[0]["id"]
+        # A COMPLETED workout must not block generation.
+        #
+        # `/workouts/today` excludes completed workouts when it computes
+        # `next_workout`, so once the day's only workout is done it reports
+        # `needs_generation = true`. This short-circuit, however, used to treat
+        # that same completed row as a blocking duplicate and returned it
+        # without generating anything. The client then sat on
+        # "Generating your workout…" forever, re-POSTing /generate-stream every
+        # few seconds while the server answered "[Duplicate] Workout already
+        # exists" every time — a deadlock between two endpoints disagreeing
+        # about whether a finished workout counts.
+        #
+        # Filtering in Python rather than the query avoids PostgREST's
+        # three-valued logic on a NULL `is_completed`.
+        _existing_rows = [
+            r for r in (existing_workout.data or [])
+            if not r.get("is_completed")
+        ]
+
+        if _existing_rows:
+            workout_id = _existing_rows[0]["id"]
             logger.info(f"[Duplicate] Workout already exists for {body.user_id} on {scheduled_date}: {workout_id}")
             try:
                 full_workout = await asyncio.to_thread(db.client.table("workouts").select("*").eq("id", workout_id).single().execute)
