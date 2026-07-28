@@ -1356,7 +1356,7 @@ Future<List<TrendPoint>> _fetchReadinessSeries(
               s.energyLevel == null ? null : (8 - s.energyLevel!).toDouble();
           break;
         case 'readiness':
-          value = s.readinessScore.toDouble();
+          value = s.readinessScore?.toDouble();
           break;
         default:
           value = null;

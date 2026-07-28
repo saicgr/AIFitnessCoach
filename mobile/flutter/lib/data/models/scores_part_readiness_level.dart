@@ -149,22 +149,22 @@ class ReadinessScore {
   @JsonKey(name: 'score_date')
   final String scoreDate;
   @JsonKey(name: 'sleep_quality')
-  final int sleepQuality;
+  final int? sleepQuality;
   @JsonKey(name: 'fatigue_level')
-  final int fatigueLevel;
+  final int? fatigueLevel;
   @JsonKey(name: 'stress_level')
-  final int stressLevel;
+  final int? stressLevel;
   @JsonKey(name: 'muscle_soreness')
-  final int muscleSoreness;
+  final int? muscleSoreness;
   final int? mood;
   @JsonKey(name: 'energy_level')
   final int? energyLevel;
   @JsonKey(name: 'hooper_index')
-  final int hooperIndex;
+  final int? hooperIndex;
   @JsonKey(name: 'readiness_score')
-  final int readinessScore;
+  final int? readinessScore;
   @JsonKey(name: 'readiness_level')
-  final String readinessLevel;
+  final String? readinessLevel;
   @JsonKey(name: 'ai_workout_recommendation')
   final String? aiWorkoutRecommendation;
   @JsonKey(name: 'recommended_intensity')
@@ -172,28 +172,28 @@ class ReadinessScore {
   @JsonKey(name: 'ai_insight')
   final String? aiInsight;
   @JsonKey(name: 'submitted_at')
-  final String submittedAt;
+  final String? submittedAt;
   @JsonKey(name: 'created_at')
-  final String createdAt;
+  final String? createdAt;
 
   const ReadinessScore({
     required this.id,
     required this.userId,
     required this.scoreDate,
-    required this.sleepQuality,
-    required this.fatigueLevel,
-    required this.stressLevel,
-    required this.muscleSoreness,
+    this.sleepQuality,
+    this.fatigueLevel,
+    this.stressLevel,
+    this.muscleSoreness,
     this.mood,
     this.energyLevel,
-    required this.hooperIndex,
-    required this.readinessScore,
-    required this.readinessLevel,
+    this.hooperIndex,
+    this.readinessScore,
+    this.readinessLevel,
     this.aiWorkoutRecommendation,
     this.recommendedIntensity,
     this.aiInsight,
-    required this.submittedAt,
-    required this.createdAt,
+    this.submittedAt,
+    this.createdAt,
   });
 
   factory ReadinessScore.fromJson(Map<String, dynamic> json) =>
@@ -202,7 +202,7 @@ class ReadinessScore {
 
   /// Get the ReadinessLevel enum from string
   ReadinessLevel get level {
-    switch (readinessLevel.toLowerCase()) {
+    switch ((readinessLevel ?? '').toLowerCase()) {
       case 'optimal':
         return ReadinessLevel.optimal;
       case 'good':
@@ -250,7 +250,7 @@ class ReadinessHistory {
   @JsonKey(name: 'readiness_scores')
   final List<ReadinessScore> readinessScores;
   @JsonKey(name: 'average_score')
-  final double averageScore;
+  final double? averageScore;
   final String trend;
   @JsonKey(name: 'days_above_60')
   final int daysAbove60;
@@ -259,7 +259,7 @@ class ReadinessHistory {
 
   const ReadinessHistory({
     required this.readinessScores,
-    required this.averageScore,
+    this.averageScore,
     required this.trend,
     required this.daysAbove60,
     required this.totalDays,

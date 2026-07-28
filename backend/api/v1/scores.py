@@ -303,9 +303,21 @@ class ReadinessResponse(BaseModel):
 
 
 class ReadinessHistoryResponse(BaseModel):
-    """Response model for readiness history."""
+    """Response model for readiness history.
+
+    `average_score` is Optional because a user can legitimately have readiness
+    ROWS with no readiness SCORES — the mid-workout check-in records the sliders
+    it collected without computing a score. `calculate_readiness_trend` returns
+    average = None for that case rather than inventing a 0, which would render
+    as a real "0 readiness" reading and drag any trend line down.
+
+    This is the third and last layer of one chain: the row model required
+    non-null fields (fixed b271a901), the trend helper compared None to an int
+    (fixed 13a0be3a), and this envelope still demanded a float. Each fix moved
+    the 500 one layer deeper. Clients must render "—" when it is null.
+    """
     readiness_scores: List[ReadinessResponse]
-    average_score: float
+    average_score: Optional[float] = None
     trend: str
     days_above_60: int
     total_days: int

@@ -182,7 +182,7 @@ MuscleStatus determineMuscleStatus({
   final landmarks = baseLandmarks.scaled(_levelMultiplier(muscleData.level));
 
   var effectiveMrv = landmarks.mrv.toDouble();
-  if (readiness != null && readiness.readinessScore < 40) {
+  if (readiness != null && (readiness.readinessScore ?? 100) < 40) {
     effectiveMrv *= 0.8;
   }
 
@@ -191,7 +191,7 @@ MuscleStatus determineMuscleStatus({
   if (sets > effectiveMrv && declining) return MuscleStatus.overtrained;
   if (sets >= effectiveMrv) return MuscleStatus.needsRest;
   if (readiness != null &&
-      readiness.readinessScore < 40 &&
+      (readiness.readinessScore ?? 100) < 40 &&
       sets > landmarks.mavHigh) {
     return MuscleStatus.needsRest;
   }

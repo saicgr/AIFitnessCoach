@@ -21,32 +21,43 @@ class ReadinessCheckInRequest(BaseModel):
 
 
 class ReadinessResponse(BaseModel):
-    """Response model for readiness data."""
+    """Response model for readiness data.
+
+    Every one of these is NULLABLE in `readiness_scores` — partial rows are
+    normal because the mid-workout check-in writes only the sliders it
+    collected. Declaring them required made a SINGLE partial row 500 the whole
+    list endpoint. Kept in lockstep with the copy in api/v1/scores.py; this one
+    is what api/v1/scores_endpoints.py imports.
+    """
     id: str
     user_id: str
     score_date: date
-    sleep_quality: int
-    fatigue_level: int
-    stress_level: int
-    muscle_soreness: int
+    sleep_quality: Optional[int] = None
+    fatigue_level: Optional[int] = None
+    stress_level: Optional[int] = None
+    muscle_soreness: Optional[int] = None
     mood: Optional[int] = None
     energy_level: Optional[int] = None
-    hooper_index: int
-    readiness_score: int
-    readiness_level: str
+    hooper_index: Optional[int] = None
+    readiness_score: Optional[int] = None
+    readiness_level: Optional[str] = None
     ai_workout_recommendation: Optional[str] = None
     recommended_intensity: Optional[str] = None
     ai_insight: Optional[str] = None
     mood_emoji: Optional[str] = None
     notes: Optional[str] = None
-    submitted_at: datetime
-    created_at: datetime
+    submitted_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
 
 
 class ReadinessHistoryResponse(BaseModel):
-    """Response model for readiness history."""
+    """Response model for readiness history.
+
+    average_score is Optional: a user can have readiness ROWS with no readiness
+    SCORES, and inventing a 0 would render as a real "0 readiness" reading.
+    """
     readiness_scores: List[ReadinessResponse]
-    average_score: float
+    average_score: Optional[float] = None
     trend: str
     days_above_60: int
     total_days: int

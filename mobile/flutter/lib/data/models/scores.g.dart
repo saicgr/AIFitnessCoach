@@ -37,20 +37,20 @@ ReadinessScore _$ReadinessScoreFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       userId: json['user_id'] as String,
       scoreDate: json['score_date'] as String,
-      sleepQuality: (json['sleep_quality'] as num).toInt(),
-      fatigueLevel: (json['fatigue_level'] as num).toInt(),
-      stressLevel: (json['stress_level'] as num).toInt(),
-      muscleSoreness: (json['muscle_soreness'] as num).toInt(),
+      sleepQuality: (json['sleep_quality'] as num?)?.toInt(),
+      fatigueLevel: (json['fatigue_level'] as num?)?.toInt(),
+      stressLevel: (json['stress_level'] as num?)?.toInt(),
+      muscleSoreness: (json['muscle_soreness'] as num?)?.toInt(),
       mood: (json['mood'] as num?)?.toInt(),
       energyLevel: (json['energy_level'] as num?)?.toInt(),
-      hooperIndex: (json['hooper_index'] as num).toInt(),
-      readinessScore: (json['readiness_score'] as num).toInt(),
-      readinessLevel: json['readiness_level'] as String,
+      hooperIndex: (json['hooper_index'] as num?)?.toInt(),
+      readinessScore: (json['readiness_score'] as num?)?.toInt(),
+      readinessLevel: json['readiness_level'] as String?,
       aiWorkoutRecommendation: json['ai_workout_recommendation'] as String?,
       recommendedIntensity: json['recommended_intensity'] as String?,
       aiInsight: json['ai_insight'] as String?,
-      submittedAt: json['submitted_at'] as String,
-      createdAt: json['created_at'] as String,
+      submittedAt: json['submitted_at'] as String?,
+      createdAt: json['created_at'] as String?,
     );
 
 Map<String, dynamic> _$ReadinessScoreToJson(ReadinessScore instance) =>
@@ -79,7 +79,7 @@ ReadinessHistory _$ReadinessHistoryFromJson(Map<String, dynamic> json) =>
       readinessScores: (json['readiness_scores'] as List<dynamic>)
           .map((e) => ReadinessScore.fromJson(e as Map<String, dynamic>))
           .toList(),
-      averageScore: (json['average_score'] as num).toDouble(),
+      averageScore: (json['average_score'] as num?)?.toDouble(),
       trend: json['trend'] as String,
       daysAbove60: (json['days_above_60'] as num).toInt(),
       totalDays: (json['total_days'] as num).toInt(),

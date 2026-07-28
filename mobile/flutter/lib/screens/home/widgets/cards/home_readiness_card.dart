@@ -143,7 +143,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            readiness.readinessLevel.toUpperCase(),
+                            (readiness.readinessLevel ?? '—').toUpperCase(),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

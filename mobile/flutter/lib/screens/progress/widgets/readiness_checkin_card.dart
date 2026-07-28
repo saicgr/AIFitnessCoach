@@ -112,7 +112,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    readiness.readinessLevel.toUpperCase(),
+                    (readiness.readinessLevel ?? '—').toUpperCase(),
                     style: ZType.lbl(15,
                         color: levelColor,
                         weight: FontWeight.w800,
@@ -363,14 +363,14 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
           ),
         ),
         title: Text(
-          AppLocalizations.of(context)!.readinessCheckinCardReadiness(result.readinessScore),
+          AppLocalizations.of(context)!.readinessCheckinCardReadiness(result.readinessScore ?? 0),
           style: TextStyle(color: levelColor),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              result.readinessLevel.toUpperCase(),
+              (result.readinessLevel ?? '—').toUpperCase(),
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,

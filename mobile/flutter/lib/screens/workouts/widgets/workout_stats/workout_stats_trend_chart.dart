@@ -478,7 +478,12 @@ class _BarsWithReadiness extends ConsumerWidget {
     final tail =
         sorted.length > count ? sorted.sublist(sorted.length - count) : sorted;
     if (tail.length < 2) return null;
-    return tail.map((s) => s.readinessScore.toDouble()).toList(growable: false);
+    final vals = tail
+        .map((s) => s.readinessScore)
+        .whereType<int>()
+        .map((v) => v.toDouble())
+        .toList(growable: false);
+    return vals.length < 2 ? null : vals;
   }
 }
 
