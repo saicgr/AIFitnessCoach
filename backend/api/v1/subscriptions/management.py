@@ -13,6 +13,7 @@ from core.auth import get_current_user
 from core.db_utils import safe_maybe_single
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
+from services.lifetime_entitlement import link_web_lifetime_if_any
 
 from api.v1.subscriptions.models import (
     SubscriptionTier,
@@ -49,14 +50,28 @@ async def get_subscription(user_id: str, current_user: dict = Depends(get_curren
     try:
         supabase = get_supabase()
 
-        # Get subscription from database
-        result = supabase.client.table("user_subscriptions")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .single()\
-            .execute()
+        def _read_subscription():
+            # maybe_single (not single): a user with no row yet — a fresh
+            # install, or a Founding-500 buyer opening the app for the first
+            # time — must read as free tier, not raise. Guard the RESULT
+            # OBJECT: maybe_single returns None itself on 0 rows.
+            res = supabase.client.table("user_subscriptions")\
+                .select("*")\
+                .eq("user_id", user_id)\
+                .maybe_single()\
+                .execute()
+            return res.data if res else None
 
-        if not result.data:
+        sub = _read_subscription()
+
+        # A web Founding-500 seat bought before this account existed has no way
+        # in except here — the Stripe webhook could only link buyers who already
+        # had an account. Cheap no-op for everyone who isn't a founder.
+        if (sub or {}).get("tier") != "lifetime":
+            if link_web_lifetime_if_any(supabase, user_id, current_user.get("email")):
+                sub = _read_subscription() or sub
+
+        if not sub:
             # No subscription record - return free tier
             return SubscriptionResponse(
                 user_id=user_id,
@@ -65,8 +80,6 @@ async def get_subscription(user_id: str, current_user: dict = Depends(get_curren
                 is_trial=False,
                 features={}
             )
-
-        sub = result.data
 
         return SubscriptionResponse(
             user_id=user_id,
@@ -403,7 +416,13 @@ async def get_usage_stats(user_id: str, http_request: Request, feature_key: Opti
 
 # ==================== BULK FEATURE LIMITS ====================
 
-# The 5 AI feature keys we expose in the bulk endpoint
+# The AI feature keys we expose in the bulk endpoint.
+#
+# "ai_chat_messages" MUST stay in lockstep with `CHAT_FEATURE_KEY` in
+# api/v1/chat.py — that module enforces and meters the chat quota, this list
+# is what the in-app "messages left today" strip reads. When they diverged
+# (enforcement on 'ai_chat', UI on 'ai_chat_messages') the counter never moved
+# and free users hit an invisible wall.
 _PREMIUM_FEATURE_KEYS = [
     "ai_workout_generation",
     "food_scanning",

@@ -527,6 +527,24 @@ class ChatRepository {
         throw Exception('Validation error: $validationMsg');
       }
       debugPrint('❌ [Chat] Error sending message: $e');
+      if (e.response?.statusCode == 402) {
+        // Daily free-tier chat quota reached. The backend sends a structured
+        // detail ({feature, limit, used, upgrade_required}); surfacing the
+        // generic "Something went wrong" here is what made the cap feel like
+        // an invisible wall with a Retry button that could never succeed.
+        final detail = e.response?.data;
+        final inner = (detail is Map && detail['detail'] is Map)
+            ? detail['detail'] as Map
+            : (detail is Map ? detail : const {});
+        final limit = inner['limit'];
+        throw Exception(
+          limit != null
+              ? "You've used all $limit free coach messages for today. "
+                  'They reset tomorrow — or upgrade for unlimited.'
+              : "You've reached today's free coach message limit. "
+                  'It resets tomorrow — or upgrade for unlimited.',
+        );
+      }
       if (e.response?.statusCode == 503) {
         throw Exception('The AI coach is temporarily unavailable. Please try again in a moment.');
       } else if (e.response?.statusCode == 429) {
@@ -726,11 +744,25 @@ class ChatRepository {
   }
 
   /// Delete a chat message (#15)
+  /// Delete a chat turn.
+  ///
+  /// A `chat_history` row holds BOTH sides of a turn (user_message +
+  /// ai_response), so the client synthesizes a distinct id for the user bubble
+  /// by suffixing the row PK — `<uuid>_u` in [getSessionMessages], `<uuid>_user`
+  /// in the `/chat/history` payload. Those composites are not valid uuids;
+  /// sending one straight through made PostgREST reject the DELETE, so the
+  /// bubble vanished locally and came back on the next history reload despite
+  /// a dialog promising "this action cannot be undone".
+  ///
+  /// Strip the suffix so the real row is targeted.
+  static final RegExp _syntheticUserIdSuffix = RegExp(r'_(u|user)$');
+
   Future<void> deleteMessage(String messageId) async {
     try {
-      debugPrint('🗑️ [Chat] Deleting message: $messageId');
+      final rowId = messageId.replaceFirst(_syntheticUserIdSuffix, '');
+      debugPrint('🗑️ [Chat] Deleting message: $messageId (row: $rowId)');
       final response = await _apiClient.delete(
-        '${ApiConstants.chat}/messages/$messageId',
+        '${ApiConstants.chat}/messages/$rowId',
       );
       if (response.statusCode == 200 || response.statusCode == 204) {
         debugPrint('✅ [Chat] Message deleted successfully');
@@ -932,9 +964,48 @@ class ChatRepository {
           final mediaType = row['media_type'] as String?;
           final sourceSurface = row['source_surface'] as String?;
           final insightId = row['insight_id'] as String?;
-          final contextJson = row['context_json'];
-          final actionData = contextJson is Map
-              ? contextJson.cast<String, dynamic>()
+          // `GET /coach/sessions/{id}/messages` returns RAW chat_history rows;
+          // unlike `GET /chat/history/{user_id}` it does NOT flatten the
+          // context bag, so we do it here.
+          //
+          // Two stacked defects lived in this block:
+          //  1. `_save_chat_to_db` writes `json.dumps(context_dict)` into the
+          //     jsonb column, so the value comes back as a JSON *string*, not a
+          //     Map — `contextJson is Map` was false and everything was
+          //     dropped.
+          //  2. Even when it was a Map, the WHOLE bag (intent, agent_type, …)
+          //     was assigned to actionData instead of the inner `action_data`.
+          // Net effect: reopening a saved conversation stripped every action
+          // card, chart block and agent identity, leaving plain text.
+          final rawContext = row['context_json'];
+          Map<String, dynamic>? contextBag;
+          if (rawContext is Map) {
+            contextBag = rawContext.cast<String, dynamic>();
+          } else if (rawContext is String && rawContext.trim().isNotEmpty) {
+            try {
+              final decoded = jsonDecode(rawContext);
+              if (decoded is Map) contextBag = decoded.cast<String, dynamic>();
+            } catch (e) {
+              debugPrint('⚠️ [Chat] context_json parse failed: $e');
+            }
+          }
+
+          final actionData = contextBag?['action_data'] is Map
+              ? (contextBag!['action_data'] as Map).cast<String, dynamic>()
+              : null;
+          // Wire name → enum. Matches _$AgentTypeEnumMap in
+          // chat_message.g.dart (build_runner is forbidden in this repo, so
+          // the map is hand-maintained there and mirrored here).
+          final agentTypeName = contextBag?['agent_type']?.toString();
+          final agentType = AgentType.values
+              .where((t) => t.name == agentTypeName)
+              .firstOrNull;
+          final coachPersonaId = contextBag?['coach_persona_id']?.toString();
+          final blocks = contextBag?['blocks'] is List
+              ? (contextBag!['blocks'] as List)
+                  .whereType<Map>()
+                  .map((b) => b.cast<String, dynamic>())
+                  .toList()
               : null;
 
           if (userMsg.isNotEmpty) {
@@ -960,6 +1031,9 @@ class ChatRepository {
               content: aiMsg,
               createdAt: ts,
               actionData: actionData,
+              agentType: agentType,
+              blocks: blocks,
+              coachPersonaId: coachPersonaId,
               isPinned: isPinned,
               sourceSurface: sourceSurface,
               insightId: insightId,

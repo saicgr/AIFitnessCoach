@@ -1356,7 +1356,13 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
   }
 
-  /// Delete a message from state and server (#15)
+  /// Delete a message from state and server (#15).
+  ///
+  /// Optimistic, but REVERTED when the server rejects the delete. Previously
+  /// the failure was logged and dropped while the optimistic removal (and the
+  /// cache write) stood, so a failed delete looked successful until the next
+  /// history reload silently resurrected the message — after a dialog that
+  /// said "this action cannot be undone".
   Future<void> deleteMessage(String messageId) async {
     // Remove from local state immediately
     final messages = state.valueOrNull;
@@ -1369,9 +1375,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       await _repository.deleteMessage(messageId);
     } catch (e) {
       debugPrint('❌ [Chat] Failed to delete message from server: $e');
+      // Put it back — the row still exists server-side.
+      state = AsyncValue.data(messages);
+      return;
     }
 
-    // Update cache
+    // Update cache (only after the server confirmed the delete)
     final userId = await _apiClient.getUserId();
     if (userId != null) {
       await _saveToCache(userId, updated);

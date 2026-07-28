@@ -64,6 +64,23 @@ from core.db import get_supabase_db as _get_supabase_db_for_locale
 router = APIRouter()
 logger = get_logger(__name__)
 
+# The ONE feature_gates key for coach-chat quota. Enforcement (check/track,
+# here) and the quota UI (`_PREMIUM_FEATURE_KEYS` in
+# api/v1/subscriptions/management.py, which powers
+# `GET /subscriptions/{id}/feature-limits`) MUST read the same key.
+#
+# They did not: this module gated on 'ai_chat' (migration 022, free_limit 10)
+# while the app's "messages left today" strip counted 'ai_chat_messages'
+# (migration 1864/1868, free_limit 20, reset_period 'daily'). Both rows exist,
+# so a free user's counter never decremented and they hit an invisible wall at
+# message 11 with a generic "Something went wrong".
+#
+# 'ai_chat_messages' is canonical: it was added specifically for daily message
+# limits, carries an explicit daily reset_period, and is what the client
+# already displays. Changing this name without updating _PREMIUM_FEATURE_KEYS
+# re-opens the same bug.
+CHAT_FEATURE_KEY = "ai_chat_messages"
+
 # Service instances (will be initialized on startup)
 gemini_service: Optional[GeminiService] = None
 rag_service: Optional[RAGService] = None
@@ -508,7 +525,7 @@ async def send_message(
 
     # Per-user daily AI chat budget (free: 10/day, premium: unlimited)
     from core.premium_gate import check_premium_gate, track_premium_usage
-    await check_premium_gate(chat_request.user_id, "ai_chat", _chat_tz)
+    await check_premium_gate(chat_request.user_id, CHAT_FEATURE_KEY, _chat_tz)
 
     # Premium gate checks for food scanning and text-to-calories
     # Only check gates when the request actually involves these features
@@ -589,7 +606,7 @@ async def send_message(
                 )
 
         # Track premium gate usage after successful processing
-        background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _chat_tz)
+        background_tasks.add_task(track_premium_usage, chat_request.user_id, CHAT_FEATURE_KEY, _chat_tz)
         if _chat_gate_feature:
             background_tasks.add_task(track_premium_usage, chat_request.user_id, _chat_gate_feature, _chat_tz)
 
@@ -1044,7 +1061,7 @@ async def send_message_stream(
     # Mirror /send: also gate food-scanning / text-to-calories so a user
     # can't dodge the limit by switching to the streaming endpoint.
     from core.premium_gate import check_premium_gate, track_premium_usage
-    await check_premium_gate(chat_request.user_id, "ai_chat", _stream_tz)
+    await check_premium_gate(chat_request.user_id, CHAT_FEATURE_KEY, _stream_tz)
 
     _stream_gate_feature = None
     _has_image_media = bool(
@@ -1168,7 +1185,7 @@ async def send_message_stream(
             yield f"data: {json.dumps(done_evt)}\n\n"
 
             # ── Background work — usage tracking, locale persist, push, persistence ─
-            background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
+            background_tasks.add_task(track_premium_usage, chat_request.user_id, CHAT_FEATURE_KEY, _stream_tz)
             if _stream_gate_feature:
                 background_tasks.add_task(track_premium_usage, chat_request.user_id, _stream_gate_feature, _stream_tz)
 

@@ -20,6 +20,9 @@ _is_production = os.getenv("RENDER", "false").lower() == "true" or os.getenv("EN
 
 # Feature keys that this module manages
 PREMIUM_FEATURE_KEYS = [
+    # Keep in sync with CHAT_FEATURE_KEY in api/v1/chat.py. Legacy "ai_chat"
+    # stays listed so any caller still passing it keeps its fallback limit.
+    "ai_chat_messages",
     "ai_chat",
     "ai_workout_generation",
     "food_scanning",
@@ -130,6 +133,8 @@ async def check_premium_gate(user_id: str, feature_key: str, timezone_str: str) 
 def _get_fallback_gate(feature_key: str) -> dict:
     """Hardcoded fallback limits when the feature_gates table is missing rows."""
     fallbacks = {
+        # Mirrors migration 1864/1868 (free_limit 20, daily reset).
+        "ai_chat_messages": {"free_limit": 20, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
         "ai_chat": {"free_limit": 10, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
         "ai_workout_generation": {"free_limit": 2, "reset_period": "monthly", "minimum_tier": "free", "is_enabled": True},
         "food_scanning": {"free_limit": 1, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
