@@ -426,30 +426,44 @@ class ReadinessService:
 
     def calculate_readiness_trend(
         self,
-        current_score: int,
-        historical_scores: List[int],
+        current_score: Optional[int],
+        historical_scores: List[Optional[int]],
         days: int = 7,
     ) -> Dict[str, any]:
         """
         Analyze readiness trends over time.
 
+        `readiness_score` is NULLABLE in `readiness_scores` and partial rows are
+        normal — the mid-workout check-in writes the sliders it collected without
+        a computed score. Both arguments must therefore tolerate None:
+        `current_score > 60` on a None raised
+        `TypeError: '>' not supported between instances of 'NoneType' and 'int'`
+        and 500'd GET /scores/readiness/history for the whole user.
+
+        A scoreless day is excluded from the average and the trend rather than
+        coerced to 0, which would drag the average down and invent a "declining"
+        trend out of missing data.
+
         Args:
-            current_score: Today's readiness score
-            historical_scores: Previous readiness scores (oldest first)
+            current_score: Today's readiness score, or None if not computed yet
+            historical_scores: Previous scores (oldest first); may contain None
             days: Number of days to analyze
 
         Returns:
             Dict with trend information
         """
-        if not historical_scores:
+        scored_history = [s for s in (historical_scores or []) if s is not None]
+
+        if not scored_history:
             return {
                 "average": current_score,
                 "trend": "stable",
                 "trend_score": 0,
-                "days_above_60": 1 if current_score > 60 else 0,
+                # None is not "above 60" — and it is not below it either.
+                "days_above_60": 1 if (current_score or 0) > 60 else 0,
             }
 
-        recent = historical_scores[-days:] if len(historical_scores) >= days else historical_scores
+        recent = scored_history[-days:] if len(scored_history) >= days else scored_history
         average = sum(recent) / len(recent)
 
         # Calculate trend (linear regression slope simplified)
