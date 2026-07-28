@@ -155,6 +155,8 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(restLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: ZType.lbl(11,
                               color: isDark
                                   ? Colors.white70
@@ -166,7 +168,23 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                                   color: isDark ? Colors.white : Colors.black,
                                   letterSpacing: 0)
                               .copyWith(height: 1.0)),
-                      const Spacer(),
+                      // The trailing controls are intrinsically sized and the
+                      // SKIP label is LOCALIZED, so their combined width is not
+                      // knowable at build time. A bare Spacer collapsed to 0 and
+                      // the row overflowed ("RIGHT OVERFLOWED BY 5.3 PIXELS" on
+                      // an iPhone 17 Pro, worse in longer locales), clipping the
+                      // last control. Expanded+FittedBox gives the cluster all
+                      // the slack there is and scales it down only when there
+                      // genuinely isn't enough — never overflows, any width,
+                      // any language.
+                      Expanded(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
                       if (widget.onPause != null) ...[
                         _RestCtl(
                             label: _paused ? '▶' : '⏸',
@@ -232,6 +250,10 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                           ),
                         ),
                       ],
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),

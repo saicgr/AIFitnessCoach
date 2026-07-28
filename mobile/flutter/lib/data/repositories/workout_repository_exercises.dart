@@ -165,8 +165,12 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     String section,
     List<Map<String, dynamic>> exercises,
   ) async {
+    // NOTE the `/exercises` suffix. `PUT /{id}/warmup` and `PUT /{id}/stretches`
+    // do not exist — those paths only accept GET/POST, so FastAPI answered the
+    // reorder with 405 every time. The persist routes are
+    // `PUT /{id}/warmup/exercises` and `PUT /{id}/stretches/exercises`.
     await apiClient.put(
-      '${ApiConstants.workouts}/$workoutId/$section',
+      '${ApiConstants.workouts}/$workoutId/$section/exercises',
       data: {'exercises': exercises},
     );
     // A reorder changes the persisted list — drop the cache so the next read

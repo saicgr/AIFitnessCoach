@@ -872,18 +872,49 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     }
   }
 
-  /// Cancel any active polling
+  /// Cancel any active polling.
+  ///
+  /// Also clears the empty-state backoff: every call site is either a
+  /// successful load or an explicit teardown, and in both cases the next empty
+  /// response deserves a fresh ladder rather than a latched, exhausted one.
   void _cancelPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = null;
+    _resetEmptyStateRefreshBackoff();
   }
 
-  /// Schedule refresh for empty state
+  /// Schedule refresh for empty state.
+  ///
+  /// BOUNDED, with exponential backoff. This used to re-arm a flat 3s timer
+  /// with no attempt counter and no ceiling: a terminal-empty response
+  /// re-scheduled itself forever at 20 req/min per client, for as long as the
+  /// app was open. Because a failed fetch also lands in the empty branch, an
+  /// outage made every affected client hammer the very backend that was
+  /// already struggling.
+  ///
+  /// Backoff: 3s, 6s, 12s, 24s, 48s, then stop. A genuine empty state (rest
+  /// day) resolves on the next manual refresh / app resume, which is what the
+  /// other refresh paths already do.
+  static const int _maxEmptyStateRefreshes = 5;
+  int _emptyStateRefreshCount = 0;
+
+  void _resetEmptyStateRefreshBackoff() => _emptyStateRefreshCount = 0;
+
   void _scheduleEmptyStateRefresh() {
     if (_disposed) return;
 
+    if (_emptyStateRefreshCount >= _maxEmptyStateRefreshes) {
+      debugPrint(
+          '[TodayWorkout] Empty-state refresh ceiling reached '
+          '($_maxEmptyStateRefreshes) — standing down until next refresh.');
+      return;
+    }
+
+    final delaySeconds = 3 * (1 << _emptyStateRefreshCount); // 3,6,12,24,48
+    _emptyStateRefreshCount++;
+
     _pollingTimer?.cancel();
-    _pollingTimer = Timer(const Duration(seconds: 3), () {
+    _pollingTimer = Timer(Duration(seconds: delaySeconds), () {
       if (!_disposed) {
         _fetchFromApi();
       }
@@ -991,6 +1022,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       _circuitOpen = false;
       _consecutiveTimeoutFailures = 0;
     }
+    // A user-initiated refresh also re-arms the bounded empty-state ladder,
+    // so pull-to-refresh recovers a client that had backed all the way off.
+    _resetEmptyStateRefreshBackoff();
     await _fetchFromApi(showLoading: false);
   }
 

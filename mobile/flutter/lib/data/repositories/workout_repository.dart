@@ -378,30 +378,41 @@ class WorkoutRepository {
   ///
   /// Returns today's scheduled workout if available, or the next upcoming
   /// workout if today is a rest day.
+  /// THROWS on transport/server failure — it does not return null.
+  ///
+  /// `null` means exactly one thing: there is no signed-in user. Every other
+  /// failure (5xx, 404, timeout, parse error) propagates so the caller can
+  /// tell "the request failed" apart from "you have no workout today".
+  ///
+  /// This used to swallow everything into `null`. `TodayWorkoutNotifier`
+  /// interprets a null/empty response as "rest day", so ANY backend outage,
+  /// cold start, or missing user row rendered a confident
+  /// "Rest day · No workout scheduled" on Home — while the notifier's own
+  /// error hero, retry button and timeout circuit-breaker sat unreachable
+  /// because its catch block could never fire.
   Future<TodayWorkoutResponse?> getTodayWorkout() async {
-    try {
-      debugPrint('🔍 [Workout] Fetching today\'s workout for quick start');
-      final userId = await _apiClient.getUserId();
-      if (userId == null) {
-        debugPrint('❌ [Workout] User not logged in');
-        return null;
-      }
-
-      final response = await _apiClient.get(
-        '${ApiConstants.workouts}/today',
-        queryParameters: {'user_id': userId},
-      );
-
-      if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
-        debugPrint('✅ [Workout] Today\'s workout fetched: has_workout=${data['has_workout_today']}');
-        return TodayWorkoutResponse.fromJson(data);
-      }
-      return null;
-    } catch (e) {
-      debugPrint('❌ [Workout] Error fetching today\'s workout: $e');
+    debugPrint('🔍 [Workout] Fetching today\'s workout for quick start');
+    final userId = await _apiClient.getUserId();
+    if (userId == null) {
+      debugPrint('❌ [Workout] User not logged in');
       return null;
     }
+
+    final response = await _apiClient.get(
+      '${ApiConstants.workouts}/today',
+      queryParameters: {'user_id': userId},
+    );
+
+    if (response.statusCode == 200) {
+      final data = response.data as Map<String, dynamic>;
+      debugPrint('✅ [Workout] Today\'s workout fetched: has_workout=${data['has_workout_today']}');
+      return TodayWorkoutResponse.fromJson(data);
+    }
+
+    // Non-200 is a failure, not an empty day.
+    throw Exception(
+      'GET /workouts/today failed with status ${response.statusCode}',
+    );
   }
 
   /// Log quick start button tap for analytics
@@ -430,12 +441,21 @@ class WorkoutRepository {
     }
   }
 
-  /// Reschedule a workout
+  /// Reschedule a workout.
+  ///
+  /// Posts to `POST /scheduling/reschedule` — the ONE reschedule route the
+  /// backend actually exposes. This previously issued
+  /// `PATCH /workouts/{id}/reschedule`, which has never existed, so every
+  /// caller (schedule drag-and-drop, workout detail, actions sheet) 404'd and
+  /// surfaced "Failed to reschedule".
   Future<bool> rescheduleWorkout(String workoutId, String newDate) async {
     try {
-      final response = await _apiClient.patch(
-        '${ApiConstants.workouts}/$workoutId/reschedule',
-        queryParameters: {'new_date': newDate},
+      final response = await _apiClient.post(
+        '${ApiConstants.scheduling}/reschedule',
+        data: {
+          'workout_id': workoutId,
+          'new_date': newDate,
+        },
       );
       return response.statusCode == 200;
     } catch (e) {
