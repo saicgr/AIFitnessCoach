@@ -18,7 +18,10 @@ class NutritionAdapter {
     required Map<String, dynamic> json,
   }) {
     final calories = (json['calories_consumed'] as num?)?.toInt() ?? 0;
-    final target = (json['calorie_target'] as num?)?.toInt() ?? 2000;
+    // Null when the user has no configured calorie goal. This card is
+    // PUBLICLY SHAREABLE — printing "1,450 / 2000" against an invented goal
+    // publishes a number the user never set.
+    final target = (json['calorie_target'] as num?)?.toInt();
     final macros = (json['macros'] as Map?) ?? const {};
     final protein = (macros['protein_g'] as num?)?.toDouble() ?? 0;
     final carbs = (macros['carbs_g'] as num?)?.toDouble() ?? 0;
@@ -46,7 +49,7 @@ class NutritionAdapter {
       highlights: [
         ShareableMetric(
           label: 'CALORIES',
-          value: '$calories / $target',
+          value: target != null ? '$calories / $target' : '$calories',
           icon: Icons.local_fire_department_rounded,
           accent: const Color(0xFFFF6B35),
         ),

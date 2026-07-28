@@ -80,7 +80,9 @@ struct FoodLogWidgetMediumView: View {
                         Text("\(entry.data.calories)")
                             .font(.title.weight(.bold))
                             .foregroundColor(.widgetText)
-                        Text("of \(entry.data.calorieGoal) cal")
+                        Text(entry.data.calorieGoal > 0
+                             ? "of \(entry.data.calorieGoal) cal"
+                             : "cal logged")
                             .font(.caption)
                             .foregroundColor(.widgetText.opacity(0.7))
                     }
@@ -135,7 +137,10 @@ struct FoodLogWidgetLargeView: View {
                     // Calorie ring
                     ZStack {
                         CircularProgressView(
-                            progress: Double(entry.data.calories) / Double(entry.data.calorieGoal),
+                            // Guard divide-by-zero: goal 0 = none configured.
+                            progress: entry.data.calorieGoal > 0
+                                ? Double(entry.data.calories) / Double(entry.data.calorieGoal)
+                                : 0,
                             lineWidth: 10,
                             gradient: WidgetGradients.food
                         )

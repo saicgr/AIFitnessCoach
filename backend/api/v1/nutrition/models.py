@@ -659,12 +659,30 @@ class NutritionPreferencesUpdate(BaseModel):
 
 
 class DynamicTargetsResponse(BaseModel):
-    """Dynamic nutrition targets response model."""
-    target_calories: int = 2000
-    target_protein_g: int = 150
-    target_carbs_g: int = 200
-    target_fat_g: int = 65
-    target_fiber_g: int = 25
+    """Dynamic nutrition targets response model.
+
+    The four macro targets are **Optional and default to None** on purpose.
+    A user who has never configured nutrition targets has NO target — not a
+    2000/150/200/65 one. Emitting a fabricated default here is what let a
+    phantom target masquerade as a real plan: the client stores whatever
+    arrives as `dynamicTargets`, and `NutritionPreferencesState
+    .hasConfiguredTargets` (which every presenting surface gates on) flips
+    true the moment `target_calories` is non-null. One fabricated default
+    therefore defeats the gate on EVERY surface at once — home coach card,
+    nutrition tab rings, per-meal splits, share cards.
+
+    Consumers must branch on [has_configured_targets] (or a null
+    `target_calories`) and render a "Set a target" CTA, never a number.
+    """
+    target_calories: Optional[int] = None
+    target_protein_g: Optional[int] = None
+    target_carbs_g: Optional[int] = None
+    target_fat_g: Optional[int] = None
+    target_fiber_g: Optional[int] = None
+
+    # False when the user has no configured base calorie target. The macro
+    # fields above are all None in that case.
+    has_configured_targets: bool = False
     is_training_day: bool = False
     is_fasting_day: bool = False
     is_rest_day: bool = True

@@ -34,7 +34,10 @@ logger = get_logger(__name__)
 class DailyNutritionReport(BaseModel):
     date: str
     calories_consumed: int
-    calorie_target: int
+    # None when the user has never configured a calorie target. Presenting
+    # surfaces (incl. the shareable daily card) must omit the "/ target" half
+    # rather than print an invented goal.
+    calorie_target: Optional[int] = None
     macros: dict = Field(default_factory=dict)
     inflammation_score: Optional[float] = None
     inflammation_top_contributors: List[str] = Field(default_factory=list)
@@ -149,10 +152,15 @@ async def daily_nutrition_report(
 
         # AI summary + tomorrow suggestions. Falls back to a deterministic
         # message if Gemini is unavailable so the report still delivers.
+        # Real target or None — never an invented 2000. `get_daily_nutrition_
+        # summary` now returns this key; it previously did not, so the old
+        # `.get("calorie_target", 2000)` default fired on every single request.
+        calorie_target = summary.get("calorie_target")
+
         ai_summary, tomorrow = _ai_daily_narrative(
             first_name=first_name,
             calories=summary.get("total_calories", 0),
-            target=summary.get("calorie_target", 2000),
+            target=calorie_target,
             protein=summary.get("total_protein_g", 0),
             inflammation=infl_score,
             contributors=contributors,
@@ -161,7 +169,7 @@ async def daily_nutrition_report(
         return DailyNutritionReport(
             date=target_date,
             calories_consumed=int(summary.get("total_calories", 0)),
-            calorie_target=int(summary.get("calorie_target", 2000)),
+            calorie_target=int(calorie_target) if calorie_target is not None else None,
             macros={
                 "protein_g": summary.get("total_protein_g", 0),
                 "carbs_g": summary.get("total_carbs_g", 0),
@@ -292,21 +300,33 @@ async def weekly_nutrition_report(
 def _ai_daily_narrative(
     first_name: Optional[str],
     calories: int,
-    target: int,
+    target: Optional[int],
     protein: float,
     inflammation: Optional[float],
     contributors: List[str],
 ) -> tuple[str, List[str]]:
-    """Generate AI summary + 1-3 tomorrow tips. Falls back deterministically."""
+    """Generate AI summary + 1-3 tomorrow tips. Falls back deterministically.
+
+    `target` is None when the user has never configured one. In that case the
+    narrative must describe intake only — reasoning about being "over" or
+    "under" an invented goal is how a fabricated 2000 kcal target leaked into
+    user-facing (and shareable) copy.
+    """
     name = first_name or "you"
-    diff = calories - target
-    diff_pct = abs(diff) / max(target, 1) * 100
-    if diff_pct <= 10:
-        cal_msg = f"{name.title()}, you nailed your calorie target today."
-    elif diff > 0:
-        cal_msg = f"{name.title()}, you went over by {diff} kcal today."
+    if target is None:
+        cal_msg = (
+            f"{name.title()}, you logged {calories} kcal today. "
+            "Set a calorie goal to see how that tracks."
+        )
     else:
-        cal_msg = f"{name.title()}, you came in {abs(diff)} kcal under target."
+        diff = calories - target
+        diff_pct = abs(diff) / max(target, 1) * 100
+        if diff_pct <= 10:
+            cal_msg = f"{name.title()}, you nailed your calorie target today."
+        elif diff > 0:
+            cal_msg = f"{name.title()}, you went over by {diff} kcal today."
+        else:
+            cal_msg = f"{name.title()}, you came in {abs(diff)} kcal under target."
 
     tips: List[str] = []
     if protein < 100:
@@ -320,8 +340,13 @@ def _ai_daily_narrative(
 
     try:
         gemini = GeminiService()
+        calorie_clause = (
+            f"Calories {calories} (no goal set — do not invent or imply one)"
+            if target is None
+            else f"Calories {calories}/{target}"
+        )
         prompt = (
-            f"Daily nutrition recap for {name}. Calories {calories}/{target}, "
+            f"Daily nutrition recap for {name}. {calorie_clause}, "
             f"protein {protein}g, inflammation {inflammation}, "
             f"top contributors {contributors[:3]}. "
             "Write a single warm 2-sentence summary, then list 2-3 concrete "

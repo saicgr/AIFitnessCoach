@@ -1139,9 +1139,12 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
             _ref.read(nutritionMetaProvider.notifier).flushMealQueue(userId));
         // Home food widget + XP only ever track TODAY.
         final t = _ref.read(nutritionMetaProvider).targets;
+        // 0 means "no goal configured" — the widgets render consumed-only.
+        // Never send a fabricated 2000: the widget presents it as the user's
+        // real goal on their home screen.
         unawaited(WidgetService.updateFoodWidget(
           caloriesConsumed: summary.totalCalories,
-          calorieGoal: t?.dailyCalorieTarget ?? 2000,
+          calorieGoal: t?.dailyCalorieTarget?.round() ?? 0,
           proteinGrams: summary.totalProteinG.round(),
           carbsGrams: summary.totalCarbsG.round(),
           fatGrams: summary.totalFatG.round(),
@@ -1166,8 +1169,15 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     final targets = _ref.read(nutritionMetaProvider).targets;
     if (targets == null) return;
 
-    final proteinConsumed = summary.totalProteinG ?? 0;
-    final proteinTarget = targets.dailyProteinTargetG ?? 150;
+    final proteinConsumed = summary.totalProteinG;
+    // No configured protein goal → there is no goal to "hit". Awarding XP
+    // against a fabricated 150g is a phantom reward: the user is credited for
+    // clearing a bar they never set.
+    final proteinTarget = targets.dailyProteinTargetG;
+    if (proteinTarget == null || proteinTarget <= 0) {
+      _checkCalorieGoal(summary);
+      return;
+    }
 
     if (proteinConsumed >= proteinTarget) {
       debugPrint('🎯 [Nutrition] Protein goal hit! ${proteinConsumed.toInt()}g / ${proteinTarget.toInt()}g');

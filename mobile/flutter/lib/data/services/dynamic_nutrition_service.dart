@@ -70,7 +70,15 @@ class DynamicNutritionService {
   /// - Whether there's a workout today (and its intensity)
   /// - Fasting protocol and whether today is a fasting day
   /// - User preferences for training/rest day adjustments
-  DynamicTargetsResult calculateTodaysTargets({
+  /// Returns `null` when the user has NOT configured a base calorie target.
+  ///
+  /// Every adjustment below (training bump, fasting cut, rest-day trim) is a
+  /// MODIFIER on a base the user chose — with no base there is nothing to
+  /// modify. Returning a fabricated 2000/150/200/65 here is not harmless: the
+  /// result is stored as `dynamicTargets`, and `hasConfiguredTargets` flips
+  /// true the moment `targetCalories` is non-null, which silently defeats the
+  /// "never render a fabricated target" gate on every presenting surface.
+  DynamicTargetsResult? calculateTodaysTargets({
     required NutritionPreferences preferences,
     Workout? todaysWorkout,
     bool workoutCompleted = false,
@@ -80,11 +88,20 @@ class DynamicNutritionService {
   }) {
     debugPrint('🎯 [DynamicNutrition] Calculating targets');
 
-    // Start with base targets
-    int baseCalories = preferences.targetCalories ?? 2000;
-    int baseProtein = preferences.targetProteinG ?? 150;
-    int baseCarbs = preferences.targetCarbsG ?? 200;
-    int baseFat = preferences.targetFatG ?? 65;
+    final int? configuredCalories = preferences.targetCalories;
+    if (configuredCalories == null) {
+      debugPrint(
+          '🎯 [DynamicNutrition] No configured calorie target — returning null');
+      return null;
+    }
+
+    // Start with base targets. Any macro the user left unset is derived from
+    // THEIR calorie target (a split of a real number), never a magic constant.
+    int baseCalories = configuredCalories;
+    int baseProtein =
+        preferences.targetProteinG ?? (baseCalories * 0.30 / 4).round();
+    int baseCarbs = preferences.targetCarbsG ?? (baseCalories * 0.40 / 4).round();
+    int baseFat = preferences.targetFatG ?? (baseCalories * 0.30 / 9).round();
     int baseFiber = preferences.targetFiberG;
 
     // Determine day type
@@ -203,8 +220,10 @@ class DynamicNutritionService {
     );
   }
 
-  /// Calculate targets for a specific future date (for meal planning)
-  DynamicTargetsResult calculateTargetsForDate({
+  /// Calculate targets for a specific future date (for meal planning).
+  /// Null when the user has no configured base target — see
+  /// [calculateTodaysTargets].
+  DynamicTargetsResult? calculateTargetsForDate({
     required NutritionPreferences preferences,
     required DateTime date,
     List<Workout>? weeklyWorkouts,
@@ -323,10 +342,15 @@ class DynamicNutritionService {
   ) {
     if (fastingPrefs == null) return null;
 
+    // No configured base → no weekly context. A fabricated 2000 here would
+    // surface as a real "weekly average" number in the fasting UI.
+    final int? configuredCalories = preferences.targetCalories;
+    if (configuredCalories == null) return null;
+
     final protocol = FastingProtocol.fromString(fastingPrefs.defaultProtocol);
 
     if (protocol == FastingProtocol.fiveTwo) {
-      final normalDayCalories = preferences.targetCalories ?? 2000;
+      final normalDayCalories = configuredCalories;
       final fastingDayCalories = gender.toLowerCase() == 'female'
           ? _fiveTwoFemaleCalories
           : _fiveTwoMaleCalories;
@@ -345,7 +369,7 @@ class DynamicNutritionService {
     }
 
     if (protocol == FastingProtocol.adf) {
-      final normalDayCalories = preferences.targetCalories ?? 2000;
+      final normalDayCalories = configuredCalories;
       final fastingDayCalories = (normalDayCalories * 0.25).round();
 
       // 3.5 normal days, 3.5 fasting days per week

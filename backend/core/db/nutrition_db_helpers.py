@@ -824,6 +824,48 @@ class NutritionDB(NutritionDBPart2, BaseDB):
                 if len(inflammation_contributors) >= 3:
                     break
 
+        # The user's configured calorie target, or None when they have never
+        # set one. Returned here — at the chokepoint — because callers were
+        # reaching for `summary.get("calorie_target", 2000)` on a key this dict
+        # never produced, so the 2000 default fired 100% of the time and every
+        # daily report/share card published a fabricated goal. None means "no
+        # target set"; consumers must render "no goal" rather than a number.
+        calorie_target: Optional[int] = None
+        try:
+            prefs_res = (
+                self.client.table("nutrition_preferences")
+                .select("target_calories")
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            # maybe_single() returns None (not a response) on zero rows.
+            if prefs_res and prefs_res.data:
+                calorie_target = prefs_res.data.get("target_calories")
+        except Exception as e:
+            logger.warning(f"Calorie target lookup failed for {user_id}: {e}")
+            calorie_target = None
+
+        # Highest-calorie distinct foods for the day. Previously absent, so
+        # every `summary.get("top_foods", [])` consumer rendered an empty list.
+        top_foods: List[Dict[str, Any]] = []
+        _seen_foods: set = set()
+        for log in sorted(
+            logs, key=lambda l: (l.get("total_calories") or 0), reverse=True
+        ):
+            name = log.get("food_name")
+            if name and name not in _seen_foods:
+                _seen_foods.add(name)
+                top_foods.append(
+                    {
+                        "name": name,
+                        "calories": int(log.get("total_calories") or 0),
+                        "protein_g": float(log.get("protein_g") or 0),
+                    }
+                )
+            if len(top_foods) >= 5:
+                break
+
         return {
             "date": date,
             "total_calories": sum(log.get("total_calories") or 0 for log in logs),
@@ -833,6 +875,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "total_fiber_g": sum(float(log.get("fiber_g") or 0) for log in logs),
             "inflammation_score": daily_inflammation,
             "inflammation_contributors": inflammation_contributors,
+            "calorie_target": calorie_target,
+            "top_foods": top_foods,
             "meal_count": len(logs),
             "meals": logs,
         }

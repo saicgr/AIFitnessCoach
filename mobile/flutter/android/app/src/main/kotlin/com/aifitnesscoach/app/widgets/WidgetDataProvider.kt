@@ -100,7 +100,10 @@ class WidgetDataProvider(private val context: Context) {
             val json = JSONObject(jsonString)
             FoodWidgetData(
                 calories = json.optInt("calories", 0),
-                calorieGoal = json.optInt("calorieGoal", 2000),
+                // 0 = no goal configured; never a fabricated 2000 (the widget
+                // shows this as the user's real goal). `placeholder` below is
+                // the gallery preview and is legitimately synthetic.
+                calorieGoal = json.optInt("calorieGoal", 0),
                 protein = json.optInt("protein", 0),
                 carbs = json.optInt("carbs", 0),
                 fat = json.optInt("fat", 0)

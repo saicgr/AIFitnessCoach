@@ -579,11 +579,18 @@ async def get_dynamic_nutrition_targets(
 
         prefs = (prefs_result.data if prefs_result else None) or {}
 
-        base_calories = prefs.get("target_calories") or 2000
-        base_protein = prefs.get("target_protein_g") or 150
-        base_carbs = prefs.get("target_carbs_g") or 200
-        base_fat = prefs.get("target_fat_g") or 65
-        base_fiber = prefs.get("target_fiber_g") or 25
+        # A user with no nutrition_preferences row (or a row with no calorie
+        # target) has NOT configured targets. Do NOT invent 2000/150/200/65 —
+        # the client stores whatever we return as `dynamicTargets`, and that
+        # makes `hasConfiguredTargets` true, defeating the "never render a
+        # fabricated target" gate on every presenting surface at once.
+        has_configured_targets = prefs.get("target_calories") is not None
+
+        base_calories = prefs.get("target_calories")
+        base_protein = prefs.get("target_protein_g")
+        base_carbs = prefs.get("target_carbs_g")
+        base_fat = prefs.get("target_fat_g")
+        base_fiber = prefs.get("target_fiber_g")
         adjust_for_training = prefs.get("adjust_calories_for_training", True)
         adjust_for_rest = prefs.get("adjust_calories_for_rest", False)
 
@@ -633,6 +640,43 @@ async def get_dynamic_nutrition_targets(
             if protocol in ["5:2", "adf"]:
                 day_name = target_date.strftime("%A").lower()
                 is_fasting_day = day_name in [d.lower() for d in fasting_days]
+
+        # ── No configured targets → return nulls, not invented numbers ─────
+        # Every adjustment below (training bump, fasting cut, weekday override,
+        # cycle shift, per-meal split) is a MODIFIER on a base the user chose.
+        # With no base there is nothing to modify, so return the day flags —
+        # which are real and useful — with null targets. The client renders a
+        # "Set a target" CTA instead of a fabricated plan.
+        if not has_configured_targets:
+            logger.info(
+                f"User {user_id} has no configured calorie target — "
+                f"returning null dynamic targets for {target_date_str}"
+            )
+            return DynamicTargetsResponse(
+                target_calories=None,
+                target_protein_g=None,
+                target_carbs_g=None,
+                target_fat_g=None,
+                target_fiber_g=None,
+                has_configured_targets=False,
+                is_training_day=has_workout,
+                is_fasting_day=is_fasting_day,
+                is_rest_day=not has_workout and not is_fasting_day,
+                adjustment_reason=None,
+                calorie_adjustment=0,
+            )
+
+        # Past this point the user HAS a calorie target. Any individual macro
+        # gram that is missing is derived from THEIR calorie target (a split of
+        # a real number), never a magic constant.
+        if base_protein is None:
+            base_protein = int(base_calories * 0.30 / 4)
+        if base_carbs is None:
+            base_carbs = int(base_calories * 0.40 / 4)
+        if base_fat is None:
+            base_fat = int(base_calories * 0.30 / 9)
+        if base_fiber is None:
+            base_fiber = 25
 
         # ── Per-weekday (high/base day) override (migration 2276) ──────────
         # Resolved FIRST so it can REPLACE the automatic training/rest calorie
@@ -799,6 +843,7 @@ async def get_dynamic_nutrition_targets(
             target_carbs_g=target_carbs,
             target_fat_g=target_fat,
             target_fiber_g=base_fiber,
+            has_configured_targets=True,
             is_training_day=has_workout,
             is_fasting_day=is_fasting_day,
             is_rest_day=not has_workout and not is_fasting_day,

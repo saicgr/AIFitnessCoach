@@ -35,7 +35,7 @@ void main() {
           preferences: basePreferences,
           todaysWorkout: null,
           gender: 'male',
-        );
+        )!;
 
         // Rest day with adjustments enabled = -100 cal from 2500 baseline.
         // After reconciliation the headline equals the macro sum exactly
@@ -64,7 +64,7 @@ void main() {
           preferences: prefsNoAdjust,
           todaysWorkout: null,
           gender: 'male',
-        );
+        )!;
 
         // Baseline has its own P*4+C*4+F*9 rounding drift (2485 vs declared
         // 2500). Reconciliation now snaps the headline to the real macro
@@ -86,7 +86,7 @@ void main() {
           preferences: basePreferences,
           todaysWorkout: workout,
           gender: 'male',
-        );
+        )!;
 
         expect(result.targetCalories, greaterThan(2500)); // Should add 200 cal
         expect(result.isTrainingDay, true);
@@ -101,7 +101,7 @@ void main() {
           preferences: basePreferences,
           todaysWorkout: workout,
           gender: 'male',
-        );
+        )!;
 
         expect(result.targetCalories, greaterThan(2500)); // Should add 100 cal
         expect(result.targetCalories, lessThan(2700)); // But less than high intensity
@@ -114,7 +114,7 @@ void main() {
           preferences: basePreferences,
           todaysWorkout: workout,
           gender: 'male',
-        );
+        )!;
 
         // Low intensity adds 50 cal — reconciliation snaps to macro sum.
         expect(result.targetCalories, closeTo(2550, 5));
@@ -133,7 +133,7 @@ void main() {
           preferences: basePreferences,
           todaysWorkout: workout,
           gender: 'male',
-        );
+        )!;
 
         // High intensity multiplies carbs by 1.2
         expect(result.targetCarbsG, greaterThan(300));
@@ -152,7 +152,7 @@ void main() {
           todaysWorkout: null,
           fastingPreferences: fastingPrefs,
           gender: 'male',
-        );
+        )!;
 
         expect(result.targetCalories, lessThan(700)); // 600 cal for men on 5:2
         expect(result.isFastingDay, true);
@@ -171,7 +171,7 @@ void main() {
           todaysWorkout: null,
           fastingPreferences: fastingPrefs,
           gender: 'female',
-        );
+        )!;
 
         expect(result.targetCalories, 500);
       });
@@ -183,7 +183,7 @@ void main() {
           preferences: lowCalPrefs,
           todaysWorkout: null,
           gender: 'female',
-        );
+        )!;
 
         expect(result.targetCalories, greaterThanOrEqualTo(1200));
       });
@@ -195,7 +195,7 @@ void main() {
           preferences: lowCalPrefs,
           todaysWorkout: null,
           gender: 'male',
-        );
+        )!;
 
         expect(result.targetCalories, greaterThanOrEqualTo(1500));
       });
@@ -224,7 +224,7 @@ void main() {
             preferences: basePreferences,
             todaysWorkout: null,
             gender: 'male',
-          );
+          )!;
           assertNoMacroDrift(r, 'rest day');
         });
 
@@ -233,7 +233,7 @@ void main() {
             preferences: basePreferences,
             todaysWorkout: _createMockWorkout(difficulty: 'low'),
             gender: 'male',
-          );
+          )!;
           assertNoMacroDrift(r, 'training low');
         });
 
@@ -242,7 +242,7 @@ void main() {
             preferences: basePreferences,
             todaysWorkout: _createMockWorkout(difficulty: 'moderate'),
             gender: 'male',
-          );
+          )!;
           assertNoMacroDrift(r, 'training moderate');
         });
 
@@ -251,7 +251,7 @@ void main() {
             preferences: basePreferences,
             todaysWorkout: _createMockWorkout(difficulty: 'high'),
             gender: 'male',
-          );
+          )!;
           assertNoMacroDrift(r, 'training high');
         });
 
@@ -260,7 +260,7 @@ void main() {
             preferences: basePreferences,
             todaysWorkout: _createMockWorkout(difficulty: 'very_high'),
             gender: 'male',
-          );
+          )!;
           assertNoMacroDrift(r, 'training very_high');
         });
 
@@ -281,7 +281,7 @@ void main() {
             preferences: cutPrefs,
             todaysWorkout: _createMockWorkout(difficulty: 'high'),
             gender: 'male',
-          );
+          )!;
 
           // Headline reflects +200 high-intensity bump, ±a few cal for the
           // reconciliation top-up that absorbs multiplier rounding.
@@ -309,7 +309,7 @@ void main() {
             preferences: basePreferences,
             todaysWorkout: null,
             gender: 'male',
-          );
+          )!;
           expect(r.adjustmentReason, 'rest_day');
           // Negative drift not allowed.
           final macroSum =
@@ -606,6 +606,83 @@ void main() {
       expect(context.normalDayCalories, 2500);
       expect(context.fastingDayCalories, 600);
       expect(context.fastingDaysPerWeek, 2);
+    });
+  });
+
+  // ── Regression gate: no fabricated targets ────────────────────────────
+  //
+  // A user with no configured calorie target must get NO dynamic targets.
+  // Returning a 2000/150/200/65 stand-in here is not cosmetic: the result is
+  // stored as `dynamicTargets`, and NutritionPreferencesState
+  // .hasConfiguredTargets flips true as soon as targetCalories is non-null —
+  // which silently defeats the "never render a fabricated target" gate on
+  // EVERY presenting surface at once (home coach card, nutrition rings,
+  // per-meal splits, the public share card, and the home-screen widget).
+  group('unconfigured targets are never fabricated', () {
+    late DynamicNutritionService service;
+    late NutritionPreferences unconfigured;
+
+    setUp(() {
+      service = DynamicNutritionService();
+      unconfigured = NutritionPreferences(
+        userId: 'no-targets-user',
+        nutritionGoal: 'maintain',
+        dietType: 'balanced',
+        mealPattern: 'three_meals',
+        nutritionOnboardingCompleted: false,
+        adjustCaloriesForTraining: true,
+        adjustCaloriesForRest: true,
+      );
+    });
+
+    test('returns null when no calorie target is configured (rest day)', () {
+      expect(
+        service.calculateTodaysTargets(
+          preferences: unconfigured,
+          todaysWorkout: null,
+          gender: 'male',
+        ),
+        isNull,
+      );
+    });
+
+    test('returns null on a training day too — a bump needs a base', () {
+      expect(
+        service.calculateTodaysTargets(
+          preferences: unconfigured,
+          todaysWorkout: _createMockWorkout(),
+          gender: 'male',
+        ),
+        isNull,
+      );
+    });
+
+    test('never yields the 2000/150/200/65 placeholder set', () {
+      final result = service.calculateTodaysTargets(
+        preferences: unconfigured,
+        todaysWorkout: null,
+        gender: 'female',
+      );
+      // The specific magic numbers CLAUDE.md forbids.
+      expect(result?.targetCalories, isNot(2000));
+      expect(result?.targetProteinG, isNot(150));
+      expect(result?.targetCarbsG, isNot(200));
+      expect(result?.targetFatG, isNot(65));
+    });
+
+    test('a configured target still produces targets', () {
+      final configured = unconfigured.copyWith(targetCalories: 2200);
+      final result = service.calculateTodaysTargets(
+        preferences: configured,
+        todaysWorkout: null,
+        gender: 'male',
+      );
+      expect(result, isNotNull);
+      // Macros the user never set are derived from THEIR calorie target,
+      // not from magic constants.
+      expect(result!.targetProteinG, greaterThan(0));
+      expect(result.targetCarbsG, greaterThan(0));
+      expect(result.targetFatG, greaterThan(0));
     });
   });
 }

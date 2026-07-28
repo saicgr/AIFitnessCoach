@@ -571,8 +571,14 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
     final budget = widget.data['daily_budget_remaining'] as Map<String, dynamic>?;
     if (budget == null) return const SizedBox.shrink();
 
+    // No configured daily target → there is no "budget remaining" to draw.
+    // Rendering a bar against a fabricated 2000 tells the user they have
+    // headroom against a goal they never set.
+    final targetRaw = (budget['daily_target'] as num?)?.toDouble();
+    if (targetRaw == null || targetRaw <= 0) return const SizedBox.shrink();
+
     final remaining = max(0, (budget['calories_remaining'] as num?)?.toDouble() ?? 0);
-    final total = max(1, (budget['daily_target'] as num?)?.toDouble() ?? 2000);
+    final total = max(1, targetRaw);
     final consumed = max(0.0, total - remaining);
     final progress = (consumed / total).clamp(0.0, 1.0);
     final mealLabel = budget['for_meal'] as String? ?? 'remaining meals';

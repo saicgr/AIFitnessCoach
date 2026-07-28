@@ -103,7 +103,11 @@ class WidgetDataProvider {
 
         return FoodWidgetData(
             calories: json["calories"] as? Int ?? 0,
-            calorieGoal: json["calorieGoal"] as? Int ?? 2000,
+            // 0 = no goal configured. Never default to a fabricated 2000 —
+            // the widget presents this as the user's real goal on their
+            // home screen. (The `.placeholder` sample below is the widget
+            // gallery preview and is legitimately synthetic.)
+            calorieGoal: json["calorieGoal"] as? Int ?? 0,
             protein: json["protein"] as? Int ?? 0,
             carbs: json["carbs"] as? Int ?? 0,
             fat: json["fat"] as? Int ?? 0
