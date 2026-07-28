@@ -94,8 +94,18 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       setState(() {
         _userId = userId;
       });
-      // Only load overview tab data on init — other tabs load lazily
-      _loadTabData(0);
+      // Load the tab that is ACTUALLY on screen — which is the deep-linked
+      // tab when `initialTab` was supplied, not always Overview.
+      //
+      // This hardcoded `_loadTabData(0)` was one half of a deep-link dead end:
+      // initState sets `_tabController.index = initialTab` (notifying the
+      // listener) while `_userId` is still null, so the listener's
+      // `_loadTabData` hit its null guard and bailed; then this call loaded
+      // Overview instead. A `/stats?tab=3` link opened the Score tab with no
+      // Fitness Score card at all (FitnessScoreCard collapses to
+      // SizedBox.shrink on a null breakdown — no skeleton, no error) and
+      // "No personal records yet". Other tabs still load lazily on switch.
+      _loadTabData(_currentTabIndex);
 
       // If openPhotoSheet is requested, switch to Photos tab (now index 2 after
       // the Overload tab was inserted at index 1).

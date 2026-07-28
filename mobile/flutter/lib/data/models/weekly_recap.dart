@@ -48,10 +48,19 @@ class WeeklyRecap {
   /// dialog-gate provider uses this to suppress "empty recap" dialogs for
   /// users who weren't on the board last week — no point waking them up
   /// with "nothing happened last week".
+  ///
+  /// A bare `rankCurrent` is deliberately NOT sufficient. Leaderboards are
+  /// small enough that a brand-new account gets placed (e.g. #3) the instant
+  /// it exists, so gating on rank alone showed a day-0 user
+  /// "LAST WEEK · #3 · +0 XP earned last week" — a standing for a week they
+  /// were not around for. Require evidence they actually participated:
+  /// earned XP, unlocked something, or moved relative to peers.
   bool get hasMeaningfulContent {
-    if (rankCurrent != null) return true;
     if (xpEarnedThisWeek > 0) return true;
     if (awardsUnlocked.isNotEmpty) return true;
+    if (passes.isNotEmpty || overtakenBy.isNotEmpty) return true;
+    // A rank only counts once it's an actual change from a prior standing.
+    if (rankCurrent != null && rankPrevious != null) return true;
     return false;
   }
 

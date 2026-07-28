@@ -9,6 +9,24 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # `dart analyze` does NOT respect .gitignore, so it walks build output.
+  # After any iOS build, SwiftPM checks the whole FlutterFire monorepo out into
+  # build/ios/SourcePackages/, and analyzing its example/dartpad/test sources
+  # (which import packages this app doesn't depend on) produced ~10,700 errors
+  # — none of them ours. That buried real `lib/` errors and made the
+  # "run flutter analyze before committing" gate in CLAUDE.md unusable, and
+  # non-reproducible between machines (the noise only exists where an iOS
+  # build has run).
+  #
+  # Everything here is generated or vendored; none of it is ours to fix.
+  exclude:
+    - build/**
+    - ios/Pods/**
+    - ios/.symlinks/**
+    - macos/Pods/**
+    - .dart_tool/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
