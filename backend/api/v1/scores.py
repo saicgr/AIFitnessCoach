@@ -272,25 +272,34 @@ class ReadinessCheckInRequest(BaseModel):
 
 class ReadinessResponse(BaseModel):
     """Response model for readiness data."""
+    # EVERY one of these is NULLABLE in `readiness_scores` (verified against
+    # information_schema). Declaring them required made Pydantic reject any row
+    # carrying a null — and because the history endpoint validates the whole
+    # list, a SINGLE partial row 500'd the entire request:
+    #   GET /scores/readiness/history -> 7 validation errors for ReadinessResponse
+    # Partial rows are normal: the mid-workout check-in writes only the sliders
+    # it collected, so a row can legitimately have no hooper_index/readiness
+    # yet. The API model must mirror the schema, and callers render "—" for a
+    # missing component rather than the endpoint failing outright.
     id: str
     user_id: str
     score_date: date
-    sleep_quality: int
-    fatigue_level: int
-    stress_level: int
-    muscle_soreness: int
+    sleep_quality: Optional[int] = None
+    fatigue_level: Optional[int] = None
+    stress_level: Optional[int] = None
+    muscle_soreness: Optional[int] = None
     mood: Optional[int] = None
     energy_level: Optional[int] = None
-    hooper_index: int
-    readiness_score: int
-    readiness_level: str
+    hooper_index: Optional[int] = None
+    readiness_score: Optional[int] = None
+    readiness_level: Optional[str] = None
     ai_workout_recommendation: Optional[str] = None
     recommended_intensity: Optional[str] = None
     ai_insight: Optional[str] = None
     mood_emoji: Optional[str] = None
     notes: Optional[str] = None
-    submitted_at: datetime
-    created_at: datetime
+    submitted_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None
 
 
 class ReadinessHistoryResponse(BaseModel):
@@ -624,8 +633,15 @@ async def submit_readiness_checkin(
         ai_workout_recommendation=record.get("ai_workout_recommendation"),
         recommended_intensity=record.get("recommended_intensity"),
         ai_insight=record.get("ai_insight"),
-        submitted_at=datetime.fromisoformat(record["submitted_at"]),
-        created_at=datetime.fromisoformat(record["created_at"]),
+        # Null-safe (both columns are nullable in readiness_scores).
+        submitted_at=(
+            datetime.fromisoformat(record["submitted_at"])
+            if record.get("submitted_at") else None
+        ),
+        created_at=(
+            datetime.fromisoformat(record["created_at"])
+            if record.get("created_at") else None
+        ),
     )
 
 
@@ -675,8 +691,17 @@ async def get_readiness_history(
             ai_workout_recommendation=r.get("ai_workout_recommendation"),
             recommended_intensity=r.get("recommended_intensity"),
             ai_insight=r.get("ai_insight"),
-            submitted_at=datetime.fromisoformat(r["submitted_at"]),
-            created_at=datetime.fromisoformat(r["created_at"]),
+            # Null-safe: both columns are nullable, and fromisoformat(None)
+            # raises TypeError — which would 500 the whole history request
+            # for one partial row.
+            submitted_at=(
+                datetime.fromisoformat(r["submitted_at"])
+                if r.get("submitted_at") else None
+            ),
+            created_at=(
+                datetime.fromisoformat(r["created_at"])
+                if r.get("created_at") else None
+            ),
         )
         for r in records
     ]
@@ -735,8 +760,15 @@ async def get_readiness_for_date(
         ai_workout_recommendation=record.get("ai_workout_recommendation"),
         recommended_intensity=record.get("recommended_intensity"),
         ai_insight=record.get("ai_insight"),
-        submitted_at=datetime.fromisoformat(record["submitted_at"]),
-        created_at=datetime.fromisoformat(record["created_at"]),
+        # Null-safe (both columns are nullable in readiness_scores).
+        submitted_at=(
+            datetime.fromisoformat(record["submitted_at"])
+            if record.get("submitted_at") else None
+        ),
+        created_at=(
+            datetime.fromisoformat(record["created_at"])
+            if record.get("created_at") else None
+        ),
     )
 
 
