@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../data/providers/gym_profile_provider.dart' show gymAccentColorProvider;
+// NOTE: gymAccentColorProvider is intentionally NOT imported here any more —
+// the active gym's colour must not repaint the global accent (see
+// AccentColorScopeWrapper.build). Gym-identifying UI should import it directly
+// from data/providers/gym_profile_provider.dart.
 
 /// Available accent colors for the app
 enum AccentColor {
@@ -274,13 +277,31 @@ class AccentColorScopeWrapper extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final accent = ref.watch(accentColorProvider);
-    // Active gym profile color takes priority over the user's app-level
-    // accent. Wired here (not just into MaterialApp ColorScheme) because
-    // most widgets read accent through AccentColorScope, not Theme.of.
-    final gymOverride = ref.watch(gymAccentColorProvider);
+
+    // The active gym profile's colour deliberately does NOT repaint the whole
+    // app any more.
+    //
+    // It used to: `accentOverride: ref.watch(gymAccentColorProvider)`. That
+    // provider resolves `activeGymProfileProvider?.profileColor`, and the gym
+    // profile loads ASYNCHRONOUSLY (cache-first, then network). So every screen
+    // painted in the user's accent (orange) before the profile landed and the
+    // gym's colour (cyan) after it — the same screen, same account, rendering a
+    // different colour depending on load timing, and flipping mid-session as
+    // the fetch completed.
+    //
+    // Observed directly: Home rendered cyan, and after nothing but an app
+    // relaunch, orange. The active-workout screen and the meal-log sheet did
+    // the same across runs. Colour is the user's fastest signal for "this is
+    // the important thing"; when the primary action is orange one launch and
+    // cyan the next, the accent stops carrying meaning.
+    //
+    // The user's chosen accent is now the single source of truth for the app
+    // accent, so it is stable from first frame. `gymAccentColorProvider` is
+    // still exported and should be read directly by gym-identifying UI (the
+    // gym chip, the Switch Gym sheet) where a per-gym colour is meaningful and
+    // scoped.
     return AccentColorScope(
       accent: accent,
-      accentOverride: gymOverride,
       child: child,
     );
   }
