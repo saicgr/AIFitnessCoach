@@ -159,6 +159,59 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
   }
 
   /// Log a single set performance
+  /// Correct an ALREADY-LOGGED set in place.
+  ///
+  /// Addressed by natural key (workout_log_id, exercise_name, set_number)
+  /// because the Easy tier only retains the parent `workout_log_id`, never the
+  /// per-set `performance_logs.id`.
+  ///
+  /// Without this, tapping a completed set pill and changing weight/reps only
+  /// updated the UI — `performance_logs`, which History, PRs and volume read,
+  /// kept the original values permanently.
+  ///
+  /// Throws on failure so the caller can log it; corrections must not fail
+  /// silently.
+  Future<void> updateLoggedSet({
+    required String workoutLogId,
+    required String exerciseName,
+    required int setNumber,
+    int? repsCompleted,
+    double? weightKg,
+    int? setDurationSeconds,
+    double? distanceMeters,
+    List<String>? notes,
+  }) async {
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      throw Exception('Cannot correct set: no signed-in user');
+    }
+    debugPrint(
+      '✏️ [Workout] Correcting set $setNumber of $exerciseName '
+      '($repsCompleted reps @ ${weightKg}kg)',
+    );
+    final response = await apiClient.patch(
+      '/performance/logs/by-set',
+      data: {
+        'workout_log_id': workoutLogId,
+        'user_id': userId,
+        'exercise_name': exerciseName,
+        'set_number': setNumber,
+        if (repsCompleted != null) 'reps_completed': repsCompleted,
+        if (weightKg != null) 'weight_kg': weightKg,
+        if (setDurationSeconds != null)
+          'set_duration_seconds': setDurationSeconds,
+        if (distanceMeters != null) 'distance_meters': distanceMeters,
+        if (notes != null) 'notes': notes,
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception(
+        'Set correction failed with status ${response.statusCode}',
+      );
+    }
+    debugPrint('✅ [Workout] Set $setNumber corrected');
+  }
+
   Future<Map<String, dynamic>?> logSetPerformance({
     required String workoutLogId,
     required String userId,

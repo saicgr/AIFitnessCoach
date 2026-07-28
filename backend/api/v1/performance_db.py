@@ -24,11 +24,11 @@ from .performance_db_endpoints import router as _endpoints_router
 
 import json
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime, date, timedelta
 
 from core.logger import get_logger
@@ -255,6 +255,103 @@ async def create_performance_log(log: PerformanceLogCreate,
 
     except Exception as e:
         logger.error(f"Error creating performance log: {e}", exc_info=True)
+        raise safe_internal_error(e, "performance_db")
+
+
+class PerformanceLogSetPatch(BaseModel):
+    """Correction to an ALREADY-LOGGED set, addressed by its natural key.
+
+    The Easy tier POSTs each set as it happens and only keeps the parent
+    `workout_log_id`, never the per-set `performance_logs.id` — so a correction
+    cannot address the row by id. It can, however, always name
+    (workout_log_id, exercise_name, set_number), which is unique within a
+    session, so that is the key used here.
+    """
+    workout_log_id: str
+    exercise_name: str
+    set_number: int
+    user_id: str
+    reps_completed: Optional[int] = None
+    weight_kg: Optional[float] = None
+    set_duration_seconds: Optional[int] = None
+    distance_meters: Optional[float] = None
+    notes: Optional[List[str]] = None
+
+
+@router.patch("/logs/by-set", response_model=PerformanceLog)
+async def update_performance_log_by_set(
+    patch: PerformanceLogSetPatch,
+    current_user: dict = Depends(get_current_user),
+):
+    """Correct an already-logged set in place.
+
+    WHY THIS EXISTS
+    ---------------
+    Tapping a completed set pill mid-workout opens it for editing and the UI
+    updates immediately — the pill re-reads e.g. "1 5x12", and session volume
+    recomputes. None of that reached the database: the client's edit branch
+    returned early with "editing a past set is a correction, not a new rep ...
+    (Backend re-syncs via plan save)", but the Easy finish path only PATCHes
+    `workout_logs.sets_json` and never revisits the `performance_logs` rows it
+    already POSTed.
+
+    The result was a silent divergence: the app showed 5 kg x 12 while
+    `performance_logs` — the table History, PRs and volume analytics read —
+    still held the original 0 kg x 10, forever.
+
+    Scoped to the authenticated user, and only ever touches a row that already
+    exists (no upsert), so a stale client cannot invent history.
+    """
+    verify_user_ownership(current_user, patch.user_id)
+    try:
+        db = get_supabase_db()
+
+        update_data: Dict[str, Any] = {}
+        if patch.reps_completed is not None:
+            update_data["reps_completed"] = patch.reps_completed
+        if patch.weight_kg is not None:
+            update_data["weight_kg"] = patch.weight_kg
+        if patch.set_duration_seconds is not None:
+            update_data["set_duration_seconds"] = patch.set_duration_seconds
+        if patch.distance_meters is not None:
+            update_data["distance_meters"] = patch.distance_meters
+        if patch.notes is not None:
+            update_data["notes"] = patch.notes
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        result = (
+            db.client.table("performance_logs")
+            .update(update_data)
+            .eq("workout_log_id", patch.workout_log_id)
+            .eq("user_id", patch.user_id)
+            .eq("exercise_name", patch.exercise_name)
+            .eq("set_number", patch.set_number)
+            .execute()
+        )
+
+        rows = result.data or []
+        if not rows:
+            raise HTTPException(
+                status_code=404,
+                detail=(
+                    f"No logged set {patch.set_number} of "
+                    f"'{patch.exercise_name}' in workout_log "
+                    f"{patch.workout_log_id}"
+                ),
+            )
+
+        logger.info(
+            f"Corrected set {patch.set_number} of '{patch.exercise_name}' "
+            f"for user {patch.user_id}: {list(update_data.keys())}"
+        )
+        return row_to_performance_log(rows[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error correcting performance log: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
 
 

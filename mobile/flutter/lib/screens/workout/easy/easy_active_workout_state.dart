@@ -751,12 +751,51 @@ class EasyActiveWorkoutScreenState
         ref
             .read(activeWorkoutSessionProvider.notifier)
             .replaceSet(_currentIndex, idx, updated);
+
+        // PERSIST the correction.
+        //
+        // This used to return here with "Backend re-syncs via plan save" — it
+        // does not. Easy POSTs each set to /performance/logs as it happens, and
+        // the finish path only PATCHes workout_logs.sets_json; it never
+        // revisits the performance_logs rows it already wrote. So an edit
+        // updated the pill and the session volume while the database kept the
+        // ORIGINAL set forever — verified in production: the UI read "1 5x12"
+        // and recalculated volume 1,968 -> 1,536 kg while performance_logs
+        // still held reps_completed 10 / weight_kg 0.
+        //
+        // performance_logs is what History, PRs and volume analytics read, so
+        // the divergence is silent and permanent. Addressed by natural key
+        // (workout_log_id, exercise_name, set_number) because Easy only keeps
+        // the parent log id, never the per-set row id.
+        //
+        // Fire-and-forget with a logged failure: a correction must not block
+        // the user's next set, but it must not fail silently either.
+        final logId = _workoutLogId;
+        if (logId != null) {
+          unawaited(
+            ref
+                .read(workoutRepositoryProvider)
+                .updateLoggedSet(
+                  workoutLogId: logId,
+                  exerciseName: exercise.name,
+                  setNumber: idx + 1,
+                  repsCompleted: updated.reps,
+                  weightKg: updated.weight,
+                )
+                .catchError((Object e) {
+              debugPrint('❌ [EasySet] set-correction persist failed: $e');
+            }),
+          );
+        } else {
+          debugPrint(
+            '⚠️ [EasySet] no workout_log id yet — correction is local only',
+          );
+        }
       }
       await HapticService.instance.success();
       _returnToCurrentSet();
-      // We deliberately do NOT start a rest timer or persist here —
-      // editing a past set is a correction, not a new rep, so skip
-      // PR detection and rest. (Backend re-syncs via plan save.)
+      // No rest timer and no PR detection: editing a past set is a correction,
+      // not a new rep.
       return;
     }
 
