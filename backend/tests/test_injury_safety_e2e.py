@@ -33,8 +33,10 @@ from __future__ import annotations
 import asyncio
 import itertools
 import json
+import re
 import time
 import uuid
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -902,6 +904,52 @@ def test_user_safety_context_normalizes_all_8_injuries():
     )
     normalized = ctx.normalized_injuries()
     assert set(normalized) == set(ALL_8_INJURIES)
+
+
+def test_app_stored_injury_ids_survive_normalization():
+    """
+    REGRESSION GATE (E2E 2026-07-28, issue #83).
+
+    The Flutter app stores PLURAL canonical injury ids ('knees', 'shoulders', …)
+    while the safety-index columns are SINGULAR ('knee_safe'). The whitelist in
+    normalized_injuries() used to drop 6 of the 8 joints, so an injured user's
+    injuries normalised to [] and generate/regenerate/swap all reported
+    "violations=0" while shipping contraindicated exercises.
+
+    The previous unit test only fed the backend its OWN singular vocabulary, so
+    it passed throughout. This one reads the app's actual id list and asserts
+    every joint-bearing id maps onto a real `<joint>_safe` column — it fails if
+    either side of the contract drifts.
+    """
+    injury_options = (
+        Path(__file__).resolve().parents[2]
+        / "mobile/flutter/lib/core/constants/injury_options.dart"
+    )
+    assert injury_options.exists(), f"missing {injury_options}"
+    app_ids = set(re.findall(r"\('([a-z_]+)',\s*'", injury_options.read_text()))
+    assert "knees" in app_ids, "app id list changed shape — update this gate"
+
+    # The 8 body parts that have a safety-index column, named as the APP stores them.
+    joint_bearing = {
+        "knees", "shoulders", "elbows", "wrists",
+        "ankles", "hips", "neck", "lower_back",
+    }
+    missing = joint_bearing - app_ids
+    assert not missing, f"app no longer offers these injury ids: {sorted(missing)}"
+
+    for app_id in sorted(joint_bearing):
+        ctx = UserSafetyContext(
+            injuries=[app_id],
+            difficulty="beginner",
+            equipment=[],
+            user_id="unit-test",
+        )
+        normalized = ctx.normalized_injuries()
+        assert len(normalized) == 1, (
+            f"app injury id {app_id!r} normalized to {normalized!r} — it must map "
+            f"onto exactly one safety-index joint, or the user's injury is silently ignored"
+        )
+        assert normalized[0] in SUPPORTED_INJURY_JOINTS
 
 
 def test_user_safety_context_drops_unknown_injury():

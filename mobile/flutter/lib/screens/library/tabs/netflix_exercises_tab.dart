@@ -46,6 +46,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
 
   // Smart search state
   bool _useSmartSearch = false;
+  String _lastSearchText = '';
   bool _isSmartSearching = false;
   List<SmartSearchExerciseItem> _smartSearchResults = [];
   String? _searchCorrection;
@@ -63,6 +64,21 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Drive search off the controller, not TextField.onChanged: onChanged is not
+    // delivered for every text mutation (fast typing, paste, autocorrect,
+    // dictation), which left the results stuck on the first character while the
+    // field showed the full query.
+    _searchController.addListener(_onSearchControllerChanged);
+  }
+
+  /// Fires on every controller mutation regardless of source. The controller
+  /// also notifies on selection/cursor moves, so only react to real text edits.
+  void _onSearchControllerChanged() {
+    final text = _searchController.text;
+    if (text == _lastSearchText) return;
+    _lastSearchText = text;
+    if (!mounted) return;
+    _onSearchChanged(text);
   }
 
   void _onScroll() {
@@ -104,6 +120,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _searchController.removeListener(_onSearchControllerChanged);
     _searchController.dispose();
     _searchFocusNode.dispose();
     _debounceTimer?.cancel();
@@ -610,7 +627,8 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
             child: TextField(
               controller: _searchController,
               focusNode: _searchFocusNode,
-              onChanged: _onSearchChanged,
+              // No onChanged: the controller listener is the single chokepoint
+              // (see _onSearchControllerChanged).
               cursorColor: accentColor,
               style: TextStyle(
                 color: isDark ? Colors.white : Colors.black87,

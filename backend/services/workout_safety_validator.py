@@ -61,6 +61,28 @@ SUPPORTED_INJURY_JOINTS: Tuple[str, ...] = (
     "neck",
 )
 
+# The app stores PLURAL canonical injury ids (`knees`, `shoulders`, …; see
+# mobile/flutter/lib/core/constants/injury_options.dart) while the safety-index
+# columns — and therefore SUPPORTED_INJURY_JOINTS — are SINGULAR (`knee_safe`).
+# Without this map the whitelist below silently dropped 6 of the 8 joints, so a
+# knee-injured user's injuries normalised to [] and every caller reported
+# "violations=0" while shipping squats and lunges. The column names are not
+# negotiable (they are interpolated into SQL), so the mapping lives here — the
+# one chokepoint every generate/regenerate/swap path already goes through.
+_INJURY_JOINT_ALIASES: Dict[str, str] = {
+    "knees": "knee",
+    "shoulders": "shoulder",
+    "elbows": "elbow",
+    "wrists": "wrist",
+    "ankles": "ankle",
+    "hips": "hip",
+    "necks": "neck",
+    "back": "lower_back",
+    "lower back": "lower_back",
+    "low back": "lower_back",
+    "lowerback": "lower_back",
+}
+
 # Ordinal ranking for `safety_difficulty`. Used as a numeric ceiling filter so
 # a beginner user never gets advanced/elite exercises, even if Gemini invents
 # one. Keep in sync with yaml `safety_difficulty` enum.
@@ -160,11 +182,15 @@ class UserSafetyContext:
     user_id: str
 
     def normalized_injuries(self) -> List[str]:
-        """Lowercased, whitelisted-against-SUPPORTED_INJURY_JOINTS, deduped."""
+        """Lowercased, alias-mapped, whitelisted-against-SUPPORTED_INJURY_JOINTS, deduped."""
         seen: set = set()
         out: List[str] = []
         for inj in self.injuries or []:
-            key = (inj or "").strip().lower().replace(" ", "_")
+            raw = (inj or "").strip().lower()
+            # Alias BEFORE and AFTER underscoring so both "lower back" and
+            # "lower_back" (and plural app ids like "knees") resolve.
+            key = _INJURY_JOINT_ALIASES.get(raw, raw).replace(" ", "_")
+            key = _INJURY_JOINT_ALIASES.get(key, key)
             if key in SUPPORTED_INJURY_JOINTS and key not in seen:
                 seen.add(key)
                 out.append(key)
