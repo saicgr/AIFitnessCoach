@@ -14,7 +14,9 @@ Architecture (see migration 2042_web_lifetime_founders.sql):
 Critical guardrails:
 - Stripe Checkout only enabled when `settings.lifetime_checkout_enabled == True`.
 - The hard 500-seat cap is enforced atomically in Postgres
-  (`claim_founder_seat()` SQL function with row-level lock).
+  (`activate_founder_purchase()`, migration 2329: allocates the lowest free
+  seat AND stamps the purchase row in one transaction, serialized on the
+  counter row, so a refunded number can never be reissued to a live founder).
 - Webhook handler is idempotent — re-deliveries do NOT double-grant entitlements.
 - Lifetime entitlement is NEVER granted from the iOS/Android app — only from
   the Stripe webhook (server-side, after payment captured).
@@ -37,6 +39,7 @@ from pydantic import BaseModel, EmailStr, Field
 from core.config import get_settings
 from core.logger import get_logger
 from core.supabase_client import get_supabase
+from services.lifetime_entitlement import link_web_lifetime_if_any
 
 router = APIRouter(prefix="/lifetime-web", tags=["lifetime-web"])
 logger = get_logger(__name__)
@@ -486,8 +489,21 @@ async def _handle_checkout_completed(session: dict):
             "status": "pending",
         }).execute()
 
-    # Atomically claim a founder seat number (returns NULL if sold out)
-    seat_result = supabase.client.rpc("claim_founder_seat").execute()
+    # Allocate the seat AND activate the row in one serialized transaction
+    # (migration 2329). Doing this in two steps used to let a refunded number
+    # be reissued to a second buyer, whose UNIQUE-violating UPDATE then failed
+    # silently and stranded a captured payment at status='pending'.
+    # Returns NULL only when genuinely sold out; idempotent on re-delivery.
+    seat_result = supabase.client.rpc(
+        "activate_founder_purchase",
+        {
+            "p_session_id": session_id,
+            "p_payment_intent": session.get("payment_intent"),
+            "p_customer_id": session.get("customer"),
+            "p_amount_cents": session.get("amount_total"),
+            "p_currency": session.get("currency", "usd"),
+        },
+    ).execute()
     seat_number = seat_result.data if isinstance(seat_result.data, int) else None
 
     if seat_number is None:
@@ -517,18 +533,8 @@ async def _handle_checkout_completed(session: dict):
         }).eq("stripe_session_id", session_id).execute()
         return
 
-    # Happy path: flip status to 'active' and stamp the seat number
-    supabase.client.table("web_lifetime_purchases").update({
-        "status": "active",
-        "founder_seat_number": seat_number,
-        "stripe_payment_intent_id": session.get("payment_intent"),
-        "stripe_customer_id": session.get("customer"),
-        "amount_paid_cents": session.get("amount_total"),
-        "currency": session.get("currency", "usd"),
-        "activated_at": datetime.now(timezone.utc).isoformat(),
-        "last_webhook_event": "checkout.session.completed",
-        "last_webhook_at": datetime.now(timezone.utc).isoformat(),
-    }).eq("stripe_session_id", session_id).execute()
+    # activate_founder_purchase already flipped status to 'active' and stamped
+    # the seat + payment fields inside its transaction — nothing to update here.
 
     customer_email = (
         session.get("customer_details", {}).get("email")
@@ -542,8 +548,11 @@ async def _handle_checkout_completed(session: dict):
             "converted_session_id": session_id,
         }).eq("email_normalized", normalized).execute()
 
-        # If the user already has an app account, link the entitlement immediately.
-        # Otherwise this happens on first sign-in via /subscriptions/status.
+        # If the user already has an app account, link the entitlement now.
+        # If not, GET /subscriptions/{user_id} links it the first time they
+        # open the app (see services/lifetime_entitlement.py) — that read-time
+        # path is the one that covers buy-then-sign-up, which is the normal
+        # order for a web-first launch.
         user_lookup = (
             supabase.client.table("users")
             .select("id")
@@ -554,13 +563,13 @@ async def _handle_checkout_completed(session: dict):
         if user_lookup and user_lookup.data:
             user_id = user_lookup.data.get("id")
             if user_id:
-                supabase.client.rpc(
-                    "link_web_lifetime_to_user",
-                    {"p_user_id": user_id, "p_email": customer_email},
-                ).execute()
+                link_web_lifetime_if_any(supabase, user_id, customer_email)
                 logger.info(f"Founder seat #{seat_number} → user {user_id} (existing account)")
         else:
-            logger.info(f"Founder seat #{seat_number} → email {customer_email} (no app account yet)")
+            logger.info(
+                f"Founder seat #{seat_number} → email {customer_email} "
+                f"(no app account yet — links on first subscription read)"
+            )
 
         # Send the activation guide email (this is the user's permanent record
         # of their seat number + which email to use to sign in to the app).

@@ -5,6 +5,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Optional
 
+from core.config import get_settings
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
@@ -73,7 +74,14 @@ async def get_lifetime_status(user_id: str, current_user: dict = Depends(get_cur
 
         member_tier, tier_level = get_lifetime_member_tier(days_as_member)
 
-        original_price = sub.get("lifetime_original_price") or sub.get("price_paid") or 99.99
+        # Fall back to the CONFIGURED lifetime price, never a hardcoded one —
+        # a stale literal here silently misreports "value saved" and the
+        # multiplier for every founder whose row predates the price column.
+        original_price = (
+            sub.get("lifetime_original_price")
+            or sub.get("price_paid")
+            or (get_settings().lifetime_price_usd_cents / 100.0)
+        )
         estimated_value = calculate_lifetime_value(months_as_member)
         value_multiplier = round(estimated_value / original_price, 2) if original_price > 0 else 0
 
@@ -171,7 +179,9 @@ async def get_lifetime_benefits(user_id: str, current_user: dict = Depends(get_c
 
         perks = tier_perks.get(status.member_tier, [])
 
-        estimated_savings = status.estimated_value_received - (status.original_price or 99.99)
+        estimated_savings = status.estimated_value_received - (
+            status.original_price or (get_settings().lifetime_price_usd_cents / 100.0)
+        )
         estimated_savings = max(0, estimated_savings)
 
         messages = {
@@ -203,11 +213,17 @@ async def get_lifetime_benefits(user_id: str, current_user: dict = Depends(get_c
 async def convert_to_lifetime(
     user_id: str,
     product_id: str = "lifetime",
-    price_paid: float = 99.99,
+    price_paid: Optional[float] = None,
     promotion_code: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
-    """Convert a user's subscription to lifetime membership."""
+    """Convert a user's subscription to lifetime membership.
+
+    ``price_paid`` defaults to the CONFIGURED lifetime price rather than a
+    literal, so it can never record a founder at a price we no longer sell.
+    """
+    if price_paid is None:
+        price_paid = get_settings().lifetime_price_usd_cents / 100.0
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Converting user {user_id} to lifetime membership")
