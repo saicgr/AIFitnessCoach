@@ -39,20 +39,26 @@ interface WaitlistResponse {
   position: number | null;
 }
 
-const PRICE_USD = 149.99;
-const FOUNDER_BENEFITS = [
+// Display-only placeholder for the first paint, before GET /seats answers.
+// The REAL price is settings.lifetime_price_usd_cents on the backend, which is
+// also what the Stripe Price is created from — always prefer `seats.price_usd`
+// (see `priceUsd` below) so raising the price in config can never leave this
+// page advertising a number Stripe won't charge.
+const PRICE_FALLBACK_USD = 149.99;
+
+const FOUNDER_BENEFITS = (price: string) => [
   { icon: '🔓', title: 'Lifetime Premium access', body: 'All current and future Premium features, forever. No renewals, no surprises.' },
   { icon: '🥇', title: 'Founder badge in-app', body: 'Permanent gold badge on your profile + leaderboards. Only Founding 500 ever get it.' },
   { icon: '🎯', title: 'Founder-only AI coach perks', body: 'Priority queue on AI generation, exclusive coach personas, beta access to upcoming features.' },
   { icon: '👕', title: 'Free Founder merch drop', body: 'Founding 500 tee shipped to your door once we hit 500 (S–XXL, US/CA/UK/EU/AU shipping).' },
   { icon: '📞', title: 'Direct founder line', body: 'Email the actual builder. Feature requests jump the queue.' },
-  { icon: '💎', title: 'Locked at $149.99', body: `Lifetime price will be $${PRICE_USD} ONLY for the first 500. After that, it closes — possibly forever.` },
+  { icon: '💎', title: `Locked at $${price}`, body: `Lifetime price will be $${price} ONLY for the first 500. After that, it closes — possibly forever.` },
 ];
 
-const FAQS = [
+const FAQS = (price: string) => [
   {
     q: 'Is this really a one-time payment?',
-    a: 'Yes. $149.99 once, then never again. No annual renewal. No "upgrade to Premium Plus" trap. You own it forever.',
+    a: `Yes. $${price} once, then never again. No annual renewal. No "upgrade to Premium Plus" trap. You own it forever.`,
   },
   {
     q: 'When will checkout open?',
@@ -94,6 +100,11 @@ function availabilityCopy(label: AvailabilityLabel): { text: string; tone: strin
   }
 }
 
+const SEO_DESCRIPTION_FOR = (price: string) =>
+  `Founding 500 Lifetime: pay $${price} once for ${BRANDING.appName} Premium forever. ` +
+  `AI workouts, nutrition tracking, fasting and AI coaching — no renewals, no subscription. ` +
+  `Only 500 seats, web only.`;
+
 export default function Lifetime() {
   const [seats, setSeats] = useState<FounderSeats | null>(null);
   const [seatsError, setSeatsError] = useState<string | null>(null);
@@ -125,7 +136,7 @@ export default function Lifetime() {
             seats_remaining: 500,
             availability_label: 'available',
             checkout_enabled: false,
-            price_usd: PRICE_USD,
+            price_usd: PRICE_FALLBACK_USD,
           });
         }
       }
@@ -137,6 +148,50 @@ export default function Lifetime() {
       window.clearInterval(id);
     };
   }, []);
+
+  // Server-owned price. Never render PRICE_FALLBACK_USD once /seats has replied.
+  const priceUsd = seats?.price_usd ?? PRICE_FALLBACK_USD;
+  const priceLabel = priceUsd.toFixed(2);
+  const benefits = useMemo(() => FOUNDER_BENEFITS(priceLabel), [priceLabel]);
+  const faqs = useMemo(() => FAQS(priceLabel), [priceLabel]);
+
+  // Per-page title / description / OG / canonical. Without these the page
+  // inherits the homepage's tags, so every share of this link previews as the
+  // generic app listing instead of the Founding-500 offer.
+  useEffect(() => {
+    const canonical = `https://${BRANDING.marketingDomain}/lifetime`;
+    const title = `Founding 500 Lifetime — $${priceLabel} once | ${BRANDING.appName}`;
+    const description = SEO_DESCRIPTION_FOR(priceLabel);
+
+    document.title = title;
+
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta('description', description);
+    setMeta('og:title', title, true);
+    setMeta('og:description', description, true);
+    setMeta('og:url', canonical, true);
+    setMeta('og:type', 'product', true);
+    setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:title', title);
+    setMeta('twitter:description', description);
+
+    let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.rel = 'canonical';
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.href = canonical;
+  }, [priceLabel]);
 
   const progressPct = useMemo(() => {
     if (!seats || seats.seats_total === 0) return 0;
@@ -311,7 +366,7 @@ export default function Lifetime() {
           >
             <div className="text-center mb-6">
               <div className="text-5xl md:text-6xl font-bold tabular-nums">
-                ${PRICE_USD.toFixed(2)}
+                ${priceLabel}
               </div>
               <div className="text-sm text-white/45 mt-1">one-time, no renewals</div>
               <div className="text-xs text-white/45 mt-1">
@@ -383,7 +438,7 @@ export default function Lifetime() {
                     {submitting
                       ? 'Working…'
                       : seats?.checkout_enabled
-                        ? `Buy Founding Lifetime — $${PRICE_USD}`
+                        ? `Buy Founding Lifetime — $${priceLabel}`
                         : 'Reserve my spot on the waitlist'}
                   </button>
                   <p className="text-xs text-white/45 text-center">
@@ -409,7 +464,7 @@ export default function Lifetime() {
             <p className="text-white/65">Premium for life, plus six perks no future {BRANDING.appName} member can ever buy.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {FOUNDER_BENEFITS.map((b, i) => (
+            {benefits.map((b, i) => (
               <motion.div
                 key={b.title}
                 initial={{ opacity: 0, y: 16 }}
@@ -427,7 +482,7 @@ export default function Lifetime() {
         </div>
       </section>
 
-      {/* Math comparison — why $149.99 is a steal */}
+      {/* Math comparison — why one payment beats five years of renewals */}
       <section className="px-6 pb-16">
         <div className="max-w-[820px] mx-auto rounded-3xl border border-white/10 bg-[#0D0D0D] p-8 md:p-12">
           <h2 className="display-heading text-2xl md:text-4xl mb-6 text-center">The math (you might want to sit down)</h2>
@@ -454,7 +509,7 @@ export default function Lifetime() {
             </div>
             <div className="flex items-center justify-between pt-5">
               <span className="font-bold text-lg">Founding {BRANDING.appName} Lifetime</span>
-              <span className="font-bold text-lg text-amber-400 tabular-nums">${PRICE_USD.toFixed(2)} once</span>
+              <span className="font-bold text-lg text-amber-400 tabular-nums">${priceLabel} once</span>
             </div>
           </div>
         </div>
@@ -465,7 +520,7 @@ export default function Lifetime() {
         <div className="max-w-[820px] mx-auto">
           <h2 className="display-heading text-2xl md:text-4xl mb-8 text-center">Common questions</h2>
           <div className="space-y-2">
-            {FAQS.map((faq, i) => (
+            {faqs.map((faq, i) => (
               <div
                 key={faq.q}
                 className="rounded-xl border border-white/10 bg-[#0D0D0D] overflow-hidden"

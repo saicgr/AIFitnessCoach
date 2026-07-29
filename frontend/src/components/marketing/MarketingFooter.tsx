@@ -79,6 +79,10 @@ export default function MarketingFooter() {
             <ul className="space-y-3">
               <li><Link to="/features" className={linkClass}>Features</Link></li>
               <li><Link to="/pricing" className={linkClass}>Pricing</Link></li>
+              {/* Web-only Founding 500 offer. Safe here — this footer renders on
+                  the marketing site, never inside the iOS/Android app, so it
+                  does not breach Apple's anti-steering rule. */}
+              <li><Link to="/lifetime" className={linkClass}>Lifetime</Link></li>
               <li><Link to="/roadmap" className={linkClass}>Roadmap</Link></li>
               <li><Link to="/changelog" className={linkClass}>Changelog</Link></li>
               <li><Link to="/waitlist" className={linkClass}>Join Waitlist</Link></li>

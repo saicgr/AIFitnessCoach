@@ -90,6 +90,7 @@ async function buildRouteList() {
     '/changelog',
     '/roadmap',
     '/waitlist',
+    '/lifetime',
     '/vs/google-health',
     '/vs/bevel',
     '/blog/google-health-coach-hallucination',

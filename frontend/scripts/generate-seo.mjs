@@ -34,6 +34,7 @@ const STATIC_ROUTES = [
   { path: '/changelog', priority: '0.4', changefreq: 'monthly' },
   { path: '/architecture', priority: '0.4', changefreq: 'monthly' },
   { path: '/waitlist', priority: '0.6', changefreq: 'monthly' },
+  { path: '/lifetime', priority: '0.8', changefreq: 'weekly' },
   { path: '/privacy', priority: '0.3', changefreq: 'yearly' },
   { path: '/terms', priority: '0.3', changefreq: 'yearly' },
   { path: '/refunds', priority: '0.3', changefreq: 'yearly' },
