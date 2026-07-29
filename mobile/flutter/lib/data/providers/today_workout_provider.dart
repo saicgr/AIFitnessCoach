@@ -180,8 +180,13 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     _watchdog = Timer(const Duration(seconds: 5), () {
       if (_disposed || _isRefreshing) return;
       final v = state.valueOrNull;
+      // "Stuck" means the response carries NOTHING worth showing. Use the
+      // model's own predicate rather than re-deriving it: a finished day
+      // (completedToday) and a rest day (restDayMessage) both legitimately have
+      // todayWorkout == null && nextWorkout == null, and treating those as
+      // stuck put the provider in a permanent refresh loop.
       final stuck = state.isLoading ||
-          (v != null && v.todayWorkout == null && v.nextWorkout == null && !v.isGenerating);
+          (v != null && !v.hasDisplayableContent && !v.isGenerating);
       if (stuck && _currentUserId() != null) {
         debugPrint('🐶 [TodayWorkout] Watchdog fired — state stuck, forcing refresh');
         // §12 — surface stuck-state events as a Sentry breadcrumb so we can
@@ -339,12 +344,15 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     // data right now from this fetch" — keep the prior cached good data so
     // the user doesn't fall back to "No workout yet" while the next fetch
     // races to refill.
-    if (response.todayWorkout == null &&
-        response.nextWorkout == null &&
+    // Same predicate as the watchdog: only a response with NOTHING displayable
+    // is treated as "no data right now". A completed-today or rest-day response
+    // is real, settled content and must be allowed to replace the cache —
+    // otherwise the cache stays populated, the state never changes, and the
+    // watchdog re-fetches forever.
+    if (!response.hasDisplayableContent &&
         !response.isGenerating &&
         _inMemoryCache != null &&
-        (_inMemoryCache!.todayWorkout != null ||
-            _inMemoryCache!.nextWorkout != null)) {
+        _inMemoryCache!.hasDisplayableContent) {
       debugPrint('🛡️ [TodayWorkout] Refused to overwrite cached workout with empty response');
       return;
     }
