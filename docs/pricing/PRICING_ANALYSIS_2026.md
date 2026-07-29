@@ -565,6 +565,35 @@ Not planned for launch. `SubscriptionTier.lifetime` exists in code (`subscriptio
 - **Cap at 500 seats** ("Founding Member" scarcity) — never a permanent SKU.
 - **Exclude future tiers** from lifetime — covers today's Premium only, so Ultra/Plus upsell still works.
 
+### Net per seat — the full cost stack (2026-07-28)
+
+Gross price is **not** contribution. The `/lifetime` page promises a free
+Founding-500 tee shipped to US/CA/UK/EU/AU, which is a real per-seat COGS that
+had never been modelled:
+
+| Line | Per seat | × 500 seats |
+|---|---|---|
+| Gross price | $149.99 | $74,995 |
+| Stripe fee (2.9% + $0.30) | −$4.65 | −$2,325 |
+| Founder tee, printed + shipped intl. | −$25 to −$35 | −$12,500 to −$17,500 |
+| **Net cash** | **~$110–120** | **~$55,000–60,000** |
+| Gemini inference, 5 yrs @ $0.70–1.50/mo | −$42 to −$90 | −$21,000 to −$45,000 |
+
+So the honest framing is **~$110–120 of net cash per seat**, not $150, and the
+5-year contribution is positive but thinner than the headline suggests. Levers
+if that spread is too tight: drop the physical tee for a digital-only perk
+(recovers ~20% of net), or price at $199 (see below).
+
+**On $199 vs $149.99:** lifetime offers normally price at 3–5× annual. $149.99
+against a $59.99 annual is 2.5×; against the post-raise $9.99/mo era it is
+~1.5×, which underprices exactly the cohort worth most (multi-year annual
+renewers). $199 is the better anchor if the offer fires into a real launch
+spike; keep $149.99 only if the goal is speed-of-cash and a fast-filling
+counter. **The price lives in `settings.lifetime_price_usd_cents`** — the
+marketing page reads it from `GET /lifetime-web/seats`, so changing it in one
+place moves every rendered price. Do not reintroduce a hardcoded literal in
+`Lifetime.tsx`.
+
 ---
 
 ## Future Tier: Family Plan — Deferred (Do Not Launch Yet)
