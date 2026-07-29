@@ -233,6 +233,50 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     return fallback;
   }
 
+  /// The introductory price the STORE will actually charge for [productId]'s
+  /// first billing period, or null when no intro offer is live for this user.
+  ///
+  /// Read from the store, never from a constant or a bool. A hardcoded
+  /// "FIRST MONTH $1" ribbon advertises an offer the checkout may not honor —
+  /// which is Apple 3.1.2 / Play policy non-compliance, and is exactly what
+  /// shipped between 2026-06-22 and now. Deriving it means the ribbon appears
+  /// the moment the intro offer goes live in Play Console / App Store Connect
+  /// and disappears by itself if it is ever pulled or the user is ineligible
+  /// (the stores only attach the intro phase for eligible buyers).
+  ///
+  /// Android: the intro phase hangs off the base plan's default subscription
+  /// option. iOS: `introductoryPrice` on the product. Free trials are NOT
+  /// intro prices — those live on `freePhase` and are advertised separately.
+  String? _getIntroPriceString({
+    required Offerings? offerings,
+    required String productId,
+  }) {
+    if (offerings?.current == null) return null;
+    for (final pkg in offerings!.current!.availablePackages) {
+      if (pkg.storeProduct.identifier != productId) continue;
+      final product = pkg.storeProduct;
+
+      // Android (Play Billing 5+): a discounted/single-payment first phase.
+      final introPhase = product.defaultOption?.introPhase;
+      if (introPhase != null) return introPhase.price.formatted;
+
+      // iOS: StoreKit introductory offer.
+      final iosIntro = product.introductoryPrice;
+      if (iosIntro != null && iosIntro.price > 0) return iosIntro.priceString;
+
+      return null;
+    }
+    return null;
+  }
+
+  /// Whether the discounted-yearly SKU is actually purchasable right now.
+  /// The discount UI quotes a specific price, so it must not render on the
+  /// strength of a feature flag alone.
+  bool _hasDiscountedYearlySku(WidgetRef ref) => offeringHasProduct(
+        ref.read(subscriptionProvider).offerings,
+        kDiscountedYearlyProductId,
+      );
+
   /// Get the monthly equivalent price string for yearly plan
   String _getMonthlyEquivalent({required Offerings? offerings}) {
     if (offerings?.current == null) return '\$5.00';
@@ -1602,6 +1646,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       productId: SubscriptionNotifier.premiumMonthlyId,
       fallback: '\$7.99',
     );
+    // Null until a real intro offer is live on the monthly base plan.
+    final monthlyIntroPrice = _getIntroPriceString(
+      offerings: subscriptionState.offerings,
+      productId: SubscriptionNotifier.premiumMonthlyId,
+    );
     final yearlyMonthly = _getMonthlyEquivalent(
       offerings: subscriptionState.offerings,
     );
@@ -1742,17 +1791,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   ),
                   const SizedBox(height: 8),
                   // COMPLIANCE: the row's price stays the REAL renewal price
-                  // ($7.99/mo); the "$1 first month" intro is the small ribbon,
-                  // never the other way around. ⚠️ Ribbon defaults ON for pre-launch
-                  // VISUAL PREVIEW (flag `paywall_monthly_intro`, default TRUE —
-                  // see paywall_experiments.dart). The `onboarding_intro_monthly`
-                  // SKU does NOT exist yet, so checkout still charges $7.99 —
-                  // build + wire the SKU before selling to real users.
+                  // ($7.99/mo); the intro offer is the small ribbon, never the
+                  // other way around. The ribbon renders ONLY when the store
+                  // reports a live intro price for this user, and quotes that
+                  // exact amount — so it can never advertise an offer checkout
+                  // won't honor. `monthlyIntro` is now a kill-switch only: it
+                  // can hide a real offer, it can no longer invent one.
                   _MonthlyRowTile(
                     title: AppLocalizations.of(context).xpGoalsMonthly,
                     price: monthlyPrice,
-                    ribbon: _experiments.monthlyIntro
-                        ? 'FIRST MONTH \$1'
+                    ribbon: _experiments.monthlyIntro && monthlyIntroPrice != null
+                        ? 'FIRST MONTH $monthlyIntroPrice'
                         : null,
                     isSelected: _selectedBillingCycle == 'monthly',
                     onTap: () => _selectBillingCycle('monthly'),
@@ -1865,13 +1914,45 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           properties: {'has_shown_discount': _hasShownDiscount},
         );
 
+    // Server-side dismissal record. PostHog answers "how many skipped";
+    // this answers "has THIS user skipped before" — the question an
+    // exit-intent offer has to ask before it can decide whether to fire.
+    // Fire-and-forget so the skip stays instant.
+    //
+    // Same "recent gate" rule as the lapsed-user event below: a gate marked
+    // within the last hour means the router sent them here as a lapsed user,
+    // anything older belongs to a different session.
+    final lapsedGateMs = ref.read(lapsedPaywallGateProvider);
+    final isLapsedRoute = lapsedGateMs != null &&
+        DateTime.now().millisecondsSinceEpoch - lapsedGateMs <
+            const Duration(hours: 1).inMilliseconds;
+    unawaited(
+      ref.read(subscriptionProvider.notifier).trackPaywallImpression(
+            // Vocabulary per PaywallImpressionRequest: screen is one of
+            // features|timeline|pricing, action one of
+            // viewed|dismissed|continued|purchased|restored.
+            screen: 'pricing',
+            action: 'dismissed',
+            source: isLapsedRoute ? 'lapsed_user_router' : 'onboarding',
+            selectedProduct: _selectedPlan,
+            variant: _experiments.monthlyIntro ? 'monthly_intro' : 'control',
+          ),
+    );
+
     // 25% retention discount popup (soft-paywall exit intent). Gated on
     // the `premium_yearly_25off` SKU existing in Play Console + RevenueCat
     // — without it the discount path crashes with "Product not found".
     // PaywallExperiments.softPaywallExitOffer defaults to false for exactly
     // this reason; flip the PostHog flag `paywall_soft_exit_offer` on once
     // the SKU is live and this path activates with no code change.
-    final retentionDiscountEnabled = _experiments.softPaywallExitOffer;
+    // The flag alone is NOT enough to show this. The popup quotes a discounted
+    // yearly price in its copy, so it may only render when that discounted SKU
+    // actually exists in the current offering — otherwise flipping the PostHog
+    // flag would advertise a price checkout can't honor (the purchase-time
+    // fallback below silently charges full yearly instead). Same rule as the
+    // monthly intro ribbon: a flag can hide a real offer, never invent one.
+    final retentionDiscountEnabled =
+        _experiments.softPaywallExitOffer && _hasDiscountedYearlySku(ref);
     if (retentionDiscountEnabled && !_hasShownDiscount) {
       _hasShownDiscount = true;
       ref
@@ -1893,14 +1974,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         // RevenueCat offering (it must be created in Play Console first),
         // fall back to the standard yearly product instead of crashing
         // with "Product not found".
-        final offerings = ref.read(subscriptionProvider).offerings;
-        final discountSkuAvailable =
-            offerings?.current?.availablePackages.any(
-              (p) => p.storeProduct.identifier == 'premium_yearly_25off',
-            ) ??
-            false;
+        final discountSkuAvailable = _hasDiscountedYearlySku(ref);
         final discountSku = discountSkuAvailable
-            ? 'premium_yearly_25off'
+            ? kDiscountedYearlyProductId
             : SubscriptionNotifier.premiumYearlyId;
         if (!discountSkuAvailable) {
           debugPrint(

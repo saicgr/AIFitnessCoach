@@ -969,6 +969,50 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     }
   }
 
+  /// Record a paywall interaction server-side (`paywall_impressions`).
+  ///
+  /// PostHog already covers the ANALYTICS question ("how many people skipped").
+  /// This exists for the PRODUCT-LOGIC question — "has this user dismissed
+  /// before, and are they still eligible for an exit offer?" — which needs a
+  /// queryable server-side source of truth. Local state can't do that job: it
+  /// is wiped on reinstall, which turns any dismissal-gated discount into a
+  /// farmable one.
+  ///
+  /// Fire-and-forget: a skip must dismiss instantly, and analytics must never
+  /// block or fail the interaction (the endpoint likewise swallows its errors).
+  Future<void> trackPaywallImpression({
+    required String screen,
+    required String action,
+    String? source,
+    String? selectedProduct,
+    int? timeOnScreenMs,
+    String? experimentId,
+    String? variant,
+    ApiClient? apiClient,
+  }) async {
+    if (_userId == null) return;
+
+    final client = apiClient ?? _apiClient;
+    if (client == null) return;
+
+    try {
+      await client.dio.post(
+        '/subscriptions/$_userId/paywall-impression',
+        data: {
+          'screen': screen,
+          'action': action,
+          'source': source,
+          'selected_product': selectedProduct,
+          'time_on_screen_ms': timeOnScreenMs,
+          'experiment_id': experimentId,
+          'variant': variant,
+        },
+      );
+    } catch (e) {
+      debugPrint('Failed to track paywall impression: $e');
+    }
+  }
+
   /// Purchase a subscription via RevenueCat
   Future<bool> purchase(String productId) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -1273,6 +1317,22 @@ final subscriptionProvider = StateNotifierProvider<SubscriptionNotifier, Subscri
   notifier.setPosthog(ref.read(posthogServiceProvider));
   return notifier;
 });
+
+/// Store product ID for the discounted-yearly retention offer. Must exist in
+/// Play Console / App Store Connect AND the current RevenueCat offering before
+/// any UI may quote its price.
+const String kDiscountedYearlyProductId = 'premium_yearly_25off';
+
+/// Whether [productId] is actually purchasable in the current offering.
+///
+/// Price-quoting UI must gate on this, not on a feature flag alone. A flag
+/// that renders a price the store cannot charge is false advertising under
+/// Apple 3.1.2 and Play policy — the failure mode that shipped the hardcoded
+/// "FIRST MONTH $1" ribbon and still lurks in the "$37.49/year" discount copy.
+bool offeringHasProduct(Offerings? offerings, String productId) =>
+    offerings?.current?.availablePackages
+        .any((p) => p.storeProduct.identifier == productId) ??
+    false;
 
 /// Product pricing info (fallback when RevenueCat not available)
 class ProductPricing {

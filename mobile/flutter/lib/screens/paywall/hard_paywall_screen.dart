@@ -284,10 +284,24 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Secondary CTA — 25% discount. Flag-gated so its uplift
-                // can be measured. Safe to gate: the button only navigates
-                // to the pricing screen, it does not purchase directly.
-                if (_experiments.hardPaywallDiscount) ...[
+                // Secondary CTA — 25% discount.
+                //
+                // Requires BOTH the experiment flag AND the discounted SKU
+                // actually existing in the current offering. The label quotes
+                // "$37.49/year", which is 25% off a RETIRED $49.99 base price
+                // — today's $59.99 would be $44.99 — and that stale figure is
+                // baked into ~30 translated .arb files. On a flag flip alone
+                // this screen would advertise a price no product can honor, in
+                // every language at once. Store truth gates it; the flag can
+                // only hide a real offer, never invent one.
+                //
+                // Before enabling: create the SKU, then fix
+                // `hardPaywallGet25Off37` in app_en.arb AND every translation.
+                if (_experiments.hardPaywallDiscount &&
+                    offeringHasProduct(
+                      ref.read(subscriptionProvider).offerings,
+                      kDiscountedYearlyProductId,
+                    )) ...[
                   SizedBox(
                     width: double.infinity,
                     height: 52,

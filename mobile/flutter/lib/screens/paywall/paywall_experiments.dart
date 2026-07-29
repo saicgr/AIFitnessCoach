@@ -77,20 +77,31 @@ class PaywallExperiments {
   /// $1→$7.99/mo step is gentle (vs the $1→$59.99/yr cliff), with a day-30
   /// annual upsell migrating keepers into annual's ~3× LTV.
   ///
-  /// ⚠️ DEFAULTS TO TRUE for VISUAL PREVIEW (2026-06-22): the "FIRST MONTH $1"
-  /// ribbon now renders on the monthly tile so the offer is visible in the
-  /// paywall during pre-launch. This is COSMETIC ONLY — `monthlyIntro` drives
-  /// the ribbon text and nothing else; checkout still routes to the standard
-  /// $7.99/mo package (see [paywall_pricing_screen]).
+  /// This is a KILL-SWITCH, not the source of the offer. Since 2026-07-28 the
+  /// ribbon renders only when the STORE reports a live introductory price for
+  /// this user, and quotes that exact amount
+  /// (`_getIntroPriceString` in [paywall_pricing_screen]). So:
   ///
-  /// BEFORE selling to real users you MUST create the `onboarding_intro_monthly`
-  /// offering in App Store Connect / Play Console / RevenueCat AND wire the
-  /// purchase to it — otherwise the paywall advertises $1 but charges $7.99,
-  /// which is false-advertising / Apple 3.1.2 + Play policy non-compliant.
+  ///   * no intro offer configured  → no ribbon, whatever this flag says
+  ///   * intro offer live           → ribbon shows the real price, and
+  ///                                  checkout charges it (same base plan)
+  ///   * this flag false            → ribbon hidden even if an offer is live
+  ///
+  /// That ordering is deliberate. Between 2026-06-22 and 2026-07-28 this bool
+  /// alone drove a hardcoded "FIRST MONTH $1" ribbon while checkout charged
+  /// $7.99, because the SKU was never built — false advertising under Apple
+  /// 3.1.2 and Play policy. A flag can now hide a real offer; it can no longer
+  /// invent one.
+  ///
+  /// Configure the offer as an INTRO PHASE ON THE EXISTING `premium_monthly`
+  /// BASE PLAN (not a separate offering). Purchase routing then needs no
+  /// change — the same `$rc_monthly` package is bought — and the store handles
+  /// new-subscriber eligibility for you.
+  ///
   /// Note: today's monthly tile carries NO free trial (the 7-day free trial is
-  /// yearly-only); the $1 intro is the monthly plan's first incentive, it does
-  /// not replace a monthly trial. Flip this back to FALSE (or set the PostHog
-  /// flag [flagMonthlyIntro] to control) once you A/B the live offer.
+  /// yearly-only); the intro price is the monthly plan's first incentive, it
+  /// does not replace a monthly trial. Drive the A/B from the PostHog flag
+  /// [flagMonthlyIntro].
   final bool monthlyIntro;
 
   /// Bold "⚡ N× FASTER with your plan" comparison module on the pricing page.
@@ -132,7 +143,7 @@ class PaywallExperiments {
     hardPaywallDiscount: false,
     softPaywallExitOffer: false,
     hardGate: false,
-    monthlyIntro: true, // ⚠️ preview-only (cosmetic ribbon); build SKU before selling — see field doc
+    monthlyIntro: true, // kill-switch ON; ribbon still requires a live store intro offer — see field doc
     goalSpeedComparison: false,
   );
 
