@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../schedule_date_utils.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
@@ -371,13 +373,19 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   }
 
   Future<void> _handleReschedule(BuildContext context) async {
+    // E2E #31 (same class as the detail screen's own menu action): seeding the
+    // picker with `DateTime.tryParse(scheduledDate)` yields a UTC instant off
+    // a noon-anchored timestamptz and compares it against a LOCAL firstDate,
+    // so the picker opened on today rather than the workout's own day. Both
+    // bounds now come from the shared local-day resolver.
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year, now.month, now.day);
     final newDate = await showDatePicker(
       context: context,
       initialDate:
-          DateTime.tryParse(widget.workout.scheduledDate ?? '') ??
-          DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+          reschedulePickerSeed(widget.workout.scheduledDate, firstDate),
+      firstDate: firstDate,
+      lastDate: firstDate.add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -397,10 +405,13 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         _loadingAction = 'reschedule';
       });
 
+      final pickedDay = DateTime(newDate.year, newDate.month, newDate.day);
       final repo = ref.read(workoutRepositoryProvider);
       final success = await repo.rescheduleWorkout(
         widget.workout.id!,
-        newDate.toIso8601String().split('T')[0],
+        '${pickedDay.year.toString().padLeft(4, '0')}-'
+            '${pickedDay.month.toString().padLeft(2, '0')}-'
+            '${pickedDay.day.toString().padLeft(2, '0')}',
       );
 
       setState(() {
@@ -409,28 +420,37 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       });
 
       if (mounted) {
+        // Resolve the messenger BEFORE popping — `ScaffoldMessenger.of` on a
+        // context whose route is being torn down is how the "no confirmation"
+        // half of E2E #31 happened. Also name the day it moved to; a bare
+        // "Workout rescheduled" is indistinguishable from a no-op.
+        final messenger = ScaffoldMessenger.of(context);
+        final okMessage =
+            'Moved to ${DateFormat('EEEE, MMM d').format(pickedDay)}';
+        final failMessage = AppLocalizations.of(context)
+            .workoutActionsFailedToRescheduleWorkout;
         Navigator.pop(context);
         if (success) {
           widget.onRefresh?.call();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(context).workoutActionsWorkoutRescheduled,
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(okMessage),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
               ),
-              backgroundColor: AppColors.success,
-            ),
-          );
+            );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppLocalizations.of(
-                  context,
-                ).workoutActionsFailedToRescheduleWorkout,
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(failMessage),
+                backgroundColor: AppColors.error,
+                behavior: SnackBarBehavior.floating,
               ),
-              backgroundColor: AppColors.error,
-            ),
-          );
+            );
         }
       }
     }

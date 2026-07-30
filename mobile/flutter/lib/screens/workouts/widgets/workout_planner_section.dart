@@ -14,6 +14,7 @@ import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../../widgets/date_strip.dart';
 import '../../home/widgets/hero_workout_carousel.dart';
 import '../../home/widgets/hero_workout_card.dart' show GeneratingHeroCard;
+import '../../workout/schedule_date_utils.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// The workout date strip + carousel, moved out of the home screen onto the
@@ -43,6 +44,10 @@ class _WorkoutPlannerSectionState
     DateTime.now().day,
   );
   List<CarouselItem> _carouselItems = [];
+  // Order-independent "which day is the carousel focused on" resolver. The
+  // carousel's index and its item list arrive in EITHER order (and in the
+  // wrong one on first paint) — see CarouselDateFocus for the full story.
+  final CarouselDateFocus _focus = CarouselDateFocus();
 
   @override
   void initState() {
@@ -102,16 +107,34 @@ class _WorkoutPlannerSectionState
     return HeroWorkoutCarousel(
       externalPageController: _carouselPageController,
       onCarouselItemsChanged: (items) {
-        final changed = items.length != _carouselItems.length ||
-            (items.isNotEmpty &&
-                _carouselItems.isNotEmpty &&
-                items.first.date != _carouselItems.first.date);
-        if (mounted && changed) {
-          setState(() => _carouselItems = items);
-        }
+        if (!mounted) return;
+        final days = items.map((i) => i.date).toList();
+        // Compare the FULL ordered day sequence, not just length + first date.
+        // A placeholder turning into a real workout mid-week leaves both of
+        // those untouched, and the stale copy then mis-resolves every
+        // subsequent strip tap and page-change.
+        if (_focus.sameDays(days)) return;
+        _focus.onDaysChanged(days);
+        setState(() => _carouselItems = items);
+        // The carousel's initial auto-jump calls `onPageChanged` BEFORE it
+        // publishes its items (both are post-frame callbacks, registered in
+        // that order), so the index could not be resolved to a date then.
+        // Re-resolve now that the items are in hand — this is what keeps the
+        // date strip and the focused card asserting the SAME day.
+        _syncSelectedDateToFocusedCard();
       },
       onPageChanged: _onCarouselPageChanged,
     );
+  }
+
+  /// Single resolution point for "which local day is this section showing".
+  /// Reads the focused carousel card's date and moves the strip's selection
+  /// onto it. Safe to call from either callback, in either order.
+  void _syncSelectedDateToFocusedCard() {
+    final resolved = _focus.resolvedDay;
+    if (resolved == null || resolved == _selectedDate) return;
+    if (!mounted) return;
+    setState(() => _selectedDate = resolved);
   }
 
   /// Builds the nutrition-style [DateStrip] (date numbers + today pill +
@@ -207,6 +230,7 @@ class _WorkoutPlannerSectionState
     }
 
     if (exactIndex != null && _carouselPageController.hasClients) {
+      _focus.onPageChanged(exactIndex);
       _carouselPageController.animateToPage(
         exactIndex,
         duration: const Duration(milliseconds: 300),
@@ -234,6 +258,7 @@ class _WorkoutPlannerSectionState
 
     // Fallback — animate to the nearest card.
     if (_carouselItems.isNotEmpty && _carouselPageController.hasClients) {
+      _focus.onPageChanged(bestIndex);
       _carouselPageController.animateToPage(
         bestIndex,
         duration: const Duration(milliseconds: 300),
@@ -242,16 +267,19 @@ class _WorkoutPlannerSectionState
     }
   }
 
-  /// Carousel page changed — sync the strip highlight to the focused card's
-  /// date so the DateStrip pages/highlights to match.
+  /// Carousel page changed — record the focused index and sync the strip
+  /// highlight to that card's date so the DateStrip pages/highlights to match.
+  ///
+  /// The index is remembered even when the item list has not arrived yet: the
+  /// carousel fires this once on its initial auto-jump (which lands on the next
+  /// actionable session, NOT page 0) before it publishes its items. Dropping
+  /// that call was the whole of E2E #21 — the strip stayed pinned to today
+  /// ("Tuesday 28") while the card beneath it rendered the next scheduled day
+  /// ("Wednesday — No workout yet").
   void _onCarouselPageChanged(int pageIndex) {
-    if (pageIndex < 0 || pageIndex >= _carouselItems.length) return;
-    final itemDate = _carouselItems[pageIndex].date;
-    if (itemDate == null) return;
-    final normalized = DateTime(itemDate.year, itemDate.month, itemDate.day);
-    if (normalized != _selectedDate) {
-      setState(() => _selectedDate = normalized);
-    }
+    if (pageIndex < 0) return;
+    _focus.onPageChanged(pageIndex);
+    _syncSelectedDateToFocusedCard();
   }
 }
 

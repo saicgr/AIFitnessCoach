@@ -26,6 +26,16 @@ class EasyCompletedDots extends StatelessWidget {
   final int totalSets;
   final bool useKg;
 
+  /// True when the move carries NO external load by CLASSIFICATION (push-up,
+  /// air squat) — carried through from `EasyExerciseState.isBodyweight`, the
+  /// same flag the focal poster reads. The ledger used to infer it from
+  /// `weight <= 0` and print the jargon token "BW" ("BW×10"), which is the
+  /// exact copy row 45 flagged on the poster; fixing only the poster left the
+  /// abbreviation on screen two rows above it. A bodyweight pill now reads
+  /// "10 reps". A WEIGHTED move the user simply hasn't loaded is NOT
+  /// bodyweight and keeps its numeric token.
+  final bool isBodyweight;
+
   /// Live target weight (in DISPLAY units) + reps for the current set, shown
   /// inside the current pill so it reads "3 60×12" like the mockup.
   final double currentWeightDisplay;
@@ -54,6 +64,7 @@ class EasyCompletedDots extends StatelessWidget {
     required this.currentSetIndex,
     required this.totalSets,
     required this.useKg,
+    required this.isBodyweight,
     this.currentWeightDisplay = 0,
     this.currentReps = 0,
     this.editingSetIndex,
@@ -68,6 +79,14 @@ class EasyCompletedDots extends StatelessWidget {
     return displayWeight % 1 == 0
         ? displayWeight.toStringAsFixed(0)
         : displayWeight.toStringAsFixed(1);
+  }
+
+  /// The value shown inside a pill. For a classified bodyweight move with no
+  /// added load the reps ARE the whole prescription, so the pill says
+  /// "10 reps" rather than pairing an abbreviation with a phantom load.
+  String _valueLabel(double displayWeight, int reps) {
+    if (isBodyweight && displayWeight <= 0) return '$reps reps';
+    return '${_wTok(displayWeight)}×$reps';
   }
 
   @override
@@ -97,7 +116,7 @@ class EasyCompletedDots extends StatelessWidget {
         pills.add(_LedgerPill(
           state: isEditingThis ? _PillState.current : _PillState.done,
           number: i + 1,
-          valueLabel: '${_wTok(display)}×${s.reps}',
+          valueLabel: _valueLabel(display, s.reps),
           colors: colors,
           onTap: tapFor(onEditSet == null
               ? null
@@ -113,7 +132,7 @@ class EasyCompletedDots extends StatelessWidget {
         pills.add(_LedgerPill(
           state: _PillState.current,
           number: i + 1,
-          valueLabel: '${_wTok(currentWeightDisplay)}×$currentReps',
+          valueLabel: _valueLabel(currentWeightDisplay, currentReps),
           colors: colors,
           onTap: tapFor(returnable
               ? () {

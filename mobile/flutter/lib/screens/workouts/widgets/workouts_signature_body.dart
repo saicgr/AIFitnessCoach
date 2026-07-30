@@ -9,12 +9,14 @@ import '../../../data/models/workout.dart';
 import '../../../data/models/workout_screen_summary.dart';
 import '../../../data/providers/branded_program_provider.dart';
 import '../../../data/providers/program_assignments_provider.dart';
+import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../../home/widgets/edit_program_sheet.dart';
 import '../../workout/widgets/quick_workout_sheet.dart';
+import '../../workout/schedule_date_utils.dart';
 import 'exercise_preferences_card.dart';
 import 'my_program_sheet.dart';
 import 'workout_library_grid.dart';
@@ -123,60 +125,104 @@ class _QuickGenerateBlock extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tc = ThemeColors.of(context);
+
+    // E2E #103 — while today's plan is still being generated the row used to
+    // look and behave exactly like an enabled control but produce nothing: no
+    // spinner, no disabled styling, no explanation. Quick Generate writes into
+    // the same day the generator is still writing, so it genuinely has to wait
+    // — but that wait is now STATED on the row instead of being a silent
+    // no-op. It clears itself the moment generation finishes.
+    final todayState = ref.watch(todayWorkoutProvider);
+    final busy = todayState.valueOrNull?.isGenerating == true;
+    // Prefer the server's own progress line ("Balancing your volume…") so the
+    // row echoes the hero card above it rather than inventing a message.
+    final busyMessage =
+        todayState.valueOrNull?.generationMessage?.trim().isNotEmpty == true
+            ? todayState.valueOrNull!.generationMessage!.trim()
+            : 'Building today’s workout';
+
+    final Color titleColor = busy ? tc.textMuted : tc.textPrimary;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () async {
-          HapticService.medium();
-          final workout = await showQuickWorkoutSheet(context, ref);
-          if (workout != null && context.mounted) {
-            context.push('/workout/${workout.id}', extra: workout);
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-          decoration: BoxDecoration(
-            color: AppColors.surface2,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: tc.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
+        // A null onTap is a REAL disabled state — no ripple, no haptic, and
+        // the row reads as inert rather than unresponsive.
+        onTap: busy
+            ? null
+            : () async {
+                HapticService.medium();
+                final workout = await showQuickWorkoutSheet(context, ref);
+                if (workout != null && context.mounted) {
+                  context.push('/workout/${workout.id}', extra: workout);
+                }
+              },
+        child: Semantics(
+          button: true,
+          enabled: !busy,
+          label: busy
+              ? 'Quick generate, unavailable while your workout is generating'
+              : 'Quick generate',
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            decoration: BoxDecoration(
+              color: AppColors.surface2,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: tc.accent.withValues(alpha: busy ? 0.08 : 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: busy
+                      ? SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(tc.accent),
+                          ),
+                        )
+                      : Icon(Icons.bolt_rounded, size: 22, color: tc.accent),
                 ),
-                child: Icon(Icons.bolt_rounded, size: 22, color: tc.accent),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'QUICK GENERATE',
-                      style: ZType.lbl(13, color: tc.textPrimary,
-                          letterSpacing: 1.8),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      'A 5–30 min workout, built around your day',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ZType.lbl(11, color: tc.textMuted,
-                          letterSpacing: 0.3),
-                    ),
-                  ],
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'QUICK GENERATE',
+                        style: ZType.lbl(13,
+                            color: titleColor, letterSpacing: 1.8),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        busy
+                            ? '$busyMessage — available in a moment'
+                            : 'A 5–30 min workout, built around your day',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: ZType.lbl(11,
+                            color: busy ? tc.accent : tc.textMuted,
+                            letterSpacing: 0.3),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: tc.textMuted, size: 22),
-            ],
+                const SizedBox(width: 8),
+                if (!busy)
+                  Icon(Icons.chevron_right_rounded,
+                      color: tc.textMuted, size: 22),
+              ],
+            ),
           ),
         ),
       ),
@@ -590,11 +636,13 @@ class _HistoryBlock extends ConsumerWidget {
   }
 
   String _weekdayShort(String? iso) {
-    if (iso == null || iso.isEmpty) return '';
-    final dt = DateTime.tryParse(iso);
-    if (dt == null) return '';
+    // `scheduled_date` is a noon-anchored timestamptz — taking `.weekday` off
+    // the raw parsed (UTC) instant names the wrong day for a legacy
+    // midnight-UTC row in any negative-offset timezone (E2E #31 class).
+    final day = scheduledLocalDay(iso);
+    if (day == null) return '';
     const names = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
-    return names[(dt.weekday - 1).clamp(0, 6)];
+    return names[(day.weekday - 1).clamp(0, 6)];
   }
 }
 

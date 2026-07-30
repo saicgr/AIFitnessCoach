@@ -10,6 +10,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
@@ -59,6 +60,7 @@ import '../../core/providers/pending_workout_mutations_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import 'widgets/workout_detail_helpers.dart';
 import 'widgets/workout_detail_ai_insights.dart';
+import 'schedule_date_utils.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 part 'workout_detail_screen_ui.dart';
@@ -356,6 +358,42 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // SCHEDULED-DAY EYEBROW. E2E #31: this screen carried no
+                      // date at all, so a successful reschedule left it
+                      // pixel-identical and the user could not tell whether
+                      // anything had happened. The day the session is on is
+                      // now stated above its name, resolved through the single
+                      // local-day chokepoint (`scheduledLocalDay`) so it can
+                      // never disagree with the strip/carousel that sent the
+                      // user here.
+                      Builder(builder: (_) {
+                        final day = scheduledLocalDay(workout.scheduledDate);
+                        final label = scheduledDayLabel(day);
+                        if (label == null) return const SizedBox.shrink();
+                        final isToday = label == 'TODAY';
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.event_rounded,
+                                size: 13,
+                                color: isToday ? accentColor : textMuted,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                label,
+                                style: ZType.lbl(
+                                  11,
+                                  color: isToday ? accentColor : textMuted,
+                                  letterSpacing: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
                       Text(
                         (workout.name ??
                                 AppLocalizations.of(context).navWorkout)

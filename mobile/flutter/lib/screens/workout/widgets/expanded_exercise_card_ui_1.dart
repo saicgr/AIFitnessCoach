@@ -809,7 +809,11 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     if (_imageUrl != null) {
       return CachedNetworkImage(
         imageUrl: _imageUrl!,
-        fit: BoxFit.cover,
+        // Exercise illustrations are PORTRAIT figures on white; this frame is
+        // square, so `cover` zoom-cropped the head and legs off the anatomical
+        // figure. `contain` keeps the whole body visible — an exercise demo
+        // that hides the limbs is worse than one with a little margin.
+        fit: BoxFit.contain,
         placeholder: (_, __) => Center(
           child: CircularProgressIndicator(strokeWidth: 2, color: accentColor),
         ),

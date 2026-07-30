@@ -62,6 +62,10 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
   bool _isListening = false;
   bool _speechAvailable = false;
 
+  /// Guards the one-shot lazy [_ensureSpeechReady] init so a second Dictate
+  /// tap doesn't re-run `initialize()`.
+  bool _speechInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -90,16 +94,31 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
       }
     });
 
-    // Initialize speech-to-text
-    _initSpeech();
+    // NOTE: speech-to-text is initialized LAZILY on the first Dictate tap —
+    // see [_ensureSpeechReady]. Calling `SpeechToText.initialize()` is what
+    // fires the iOS Speech-Recognition + Microphone permission dialogs, and
+    // opening a NOTE must not ask for a microphone the user never invoked.
+    // (Same lazy contract as exercise_swap_sheet / ai_text_input_bar /
+    // voice_set_logging.)
   }
 
-  Future<void> _initSpeech() async {
-    _speechAvailable = await _speechToText.initialize(
-      onError: (error) => debugPrint('Speech error: $error'),
-      onStatus: (status) => debugPrint('Speech status: $status'),
-    );
+  /// Initializes speech recognition on demand. Returns whether dictation is
+  /// usable. The first call is what triggers the OS permission prompts, so it
+  /// must only ever run from a user tap on Dictate.
+  Future<bool> _ensureSpeechReady() async {
+    if (_speechInitialized) return _speechAvailable;
+    _speechInitialized = true;
+    try {
+      _speechAvailable = await _speechToText.initialize(
+        onError: (error) => debugPrint('Speech error: $error'),
+        onStatus: (status) => debugPrint('Speech status: $status'),
+      );
+    } catch (e) {
+      debugPrint('Speech init error: $e');
+      _speechAvailable = false;
+    }
     if (mounted) setState(() {});
+    return _speechAvailable;
   }
 
   @override
@@ -257,7 +276,9 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
   // ─────────────────────────────────────────────────────────────────
 
   Future<void> _toggleListening() async {
-    if (!_speechAvailable) {
+    // First tap initializes (and therefore asks for the OS permission) —
+    // never before.
+    if (!_isListening && !await _ensureSpeechReady()) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).logMealSheetSpeechRecognitionNotAvailab)),

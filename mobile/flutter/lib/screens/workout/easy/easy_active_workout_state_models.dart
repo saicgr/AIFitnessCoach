@@ -47,6 +47,14 @@ class EasyExerciseState {
   /// focal column to render a distance (meters) stepper instead of weight×reps.
   final bool isDistance;
 
+  /// True when the move carries NO external load by classification — a
+  /// bodyweight rep move (push-up, air squat, burpee). Seeded from the same
+  /// `TrackingMetric` decision that zeroes the target load, so the focal
+  /// column can say "bodyweight" in words instead of rendering the jargon
+  /// token "BW" beside a weight field showing 0 (which reads as broken).
+  /// A weighted move the user simply hasn't loaded yet is NOT bodyweight.
+  final bool isBodyweight;
+
   /// User-entered distance for the current set, in METERS. Only meaningful
   /// when [isDistance] is true. Persists into `SetLog.distanceMeters`.
   double distanceMeters;
@@ -74,6 +82,7 @@ class EasyExerciseState {
     this.durationSeconds = 30,
     this.isDistance = false,
     this.distanceMeters = 0,
+    this.isBodyweight = false,
     this.userEditedWeight = false,
     List<String>? extraMetricKeys,
     Map<String, num>? extraMetrics,

@@ -11,9 +11,12 @@
 // Gated once per workout per local day so re-entering doesn't re-prompt. This
 // is distinct from the older PreWorkoutCheckin mood-logging sheet — that logs
 // subjective feedback; this RESHAPES the session.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/active_workout_phase_provider.dart';
@@ -45,6 +48,45 @@ String _dayKey(String? workoutId) {
   return '${workoutId ?? 'w'}|$d';
 }
 
+/// SharedPreferences slot mirroring [preWorkoutReshapeDoneProvider].
+///
+/// The provider alone is RAM-only, so killing/relaunching the app re-armed the
+/// gate and the user got the same check-in again for the same workout on the
+/// same day — one more screen between them and their first set. Persisting the
+/// day-key makes "once per workout per day" actually true.
+const String _kReshapeDonePrefsKey = 'pre_workout_reshape_done_keys';
+
+/// Today's suffix, used to prune stale keys so the slot can't grow forever.
+String _todaySuffix() {
+  final now = DateTime.now();
+  return '|${now.year}${now.month.toString().padLeft(2, '0')}'
+      '${now.day.toString().padLeft(2, '0')}';
+}
+
+Future<Set<String>> _loadDoneKeys() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getStringList(_kReshapeDonePrefsKey) ?? const [];
+    // Only today's keys matter; anything older is dropped on read.
+    return stored.where((k) => k.endsWith(_todaySuffix())).toSet();
+  } catch (e) {
+    debugPrint('⚠️ [ReshapeGate] done-key load failed: $e');
+    return <String>{};
+  }
+}
+
+Future<void> _persistDoneKeys(Set<String> keys) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(
+      _kReshapeDonePrefsKey,
+      keys.where((k) => k.endsWith(_todaySuffix())).toList(),
+    );
+  } catch (e) {
+    debugPrint('⚠️ [ReshapeGate] done-key persist failed: $e');
+  }
+}
+
 /// Show the check-in once before the session starts and apply any reshape.
 /// Best-effort: any failure silently proceeds with the original workout.
 Future<void> maybeRunPreWorkoutReshape(
@@ -57,8 +99,18 @@ Future<void> maybeRunPreWorkoutReshape(
   final key = _dayKey(id);
   final done = ref.read(preWorkoutReshapeDoneProvider);
   if (done.contains(key)) return;
+  // Disk mirror: survives an app relaunch, so the gate is genuinely once per
+  // workout per day rather than once per process.
+  final persisted = await _loadDoneKeys();
+  if (persisted.contains(key)) {
+    ref.read(preWorkoutReshapeDoneProvider.notifier).state = {...done, key};
+    return;
+  }
+  if (!context.mounted) return;
   // Mark done up-front so a rebuild/re-entry can't double-prompt.
-  ref.read(preWorkoutReshapeDoneProvider.notifier).state = {...done, key};
+  final nextDone = {...done, key};
+  ref.read(preWorkoutReshapeDoneProvider.notifier).state = nextDone;
+  unawaited(_persistDoneKeys({...persisted, key}));
 
   // Gate the tier tour for the whole modal flow (sheet → reshape call → diff
   // dialog) so its spotlight never fires on top of this sheet, anchored to
@@ -186,7 +238,6 @@ class _ReshapeCheckInSheet extends StatefulWidget {
 }
 
 class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
-  int _step = 0;
   double _sleep = 7;
   double _readiness = 7;
   int? _minutes;
@@ -194,6 +245,27 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
   double _painLevel = 3;
 
   static const _minuteOptions = [20, 30, 45, 60];
+
+  /// Everything the user might want to tell us lives on ONE page now.
+  /// Previously this was a 2-step wizard (gauges → "anything to flag?"), which
+  /// put TWO sequential full-width gates between "Start workout" and the first
+  /// set. Same fields, same payload, one screen — and the optional half is
+  /// collapsed behind a disclosure so the default path is: glance, tap Start.
+  bool _flagsExpanded = false;
+
+  void _submit() {
+    HapticFeedback.selectionClick();
+    Navigator.pop(
+      context,
+      _CheckInInput(
+        sleep: _sleep.round(),
+        readiness: _readiness.round(),
+        availableMinutes: _minutes,
+        painPart: _painPart,
+        painLevel: _painPart != null ? _painLevel.round() : null,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,30 +283,94 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _step == 0 ? 'Quick check-in' : 'Anything to flag?',
+            'Quick check-in',
             style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.w800, color: text),
           ),
           const SizedBox(height: 4),
           Text(
-            _step == 0
-                ? "I'll tune today's session to how you actually feel."
-                : 'Tap a sore/painful area or set your time — or just continue.',
+            "I'll tune today's session to how you actually feel. "
+            'Skip if you just want to train.',
             style: TextStyle(fontSize: 13, color: muted),
           ),
           const SizedBox(height: 18),
-          if (_step == 0)
-            ..._buildGauges(text, muted)
-          else
-            ..._buildFlags(text, muted),
-          const SizedBox(height: 20),
+          // Scrolls internally so the two gauges + the expanded flags never
+          // overflow an SE-class screen (and the action row stays pinned).
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ..._buildGauges(text, muted),
+                  const SizedBox(height: 6),
+                  // Optional half: time budget + sore/painful area. Collapsed
+                  // by default — it used to be a mandatory second page.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _flagsExpanded = !_flagsExpanded);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Sore, short on time?',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: text),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            _flagsExpanded
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 20,
+                            color: muted,
+                          ),
+                          const Spacer(),
+                          if (!_flagsExpanded &&
+                              (_minutes != null || _painPart != null))
+                            Text(
+                              [
+                                if (_minutes != null) '$_minutes min',
+                                if (_painPart != null)
+                                  _bodyParts.entries
+                                      .firstWhere(
+                                          (e) => e.value == _painPart)
+                                      .key,
+                              ].join(' · '),
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.cyan),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_flagsExpanded) ..._buildFlags(text, muted),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
-              if (_step == 1)
-                TextButton(
-                  onPressed: () => setState(() => _step = 0),
-                  child: const Text('Back'),
-                ),
+              // Skip is a first-class, visible control — the sheet used to be
+              // dismissible only by swiping it away, which reads as a gate.
+              TextButton(
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.pop(context); // null → no check-in, no reshape
+                },
+                style: TextButton.styleFrom(foregroundColor: muted),
+                child: const Text('Skip'),
+              ),
               const Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -245,25 +381,8 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                 ),
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  if (_step == 0) {
-                    setState(() => _step = 1);
-                  } else {
-                    Navigator.pop(
-                      context,
-                      _CheckInInput(
-                        sleep: _sleep.round(),
-                        readiness: _readiness.round(),
-                        availableMinutes: _minutes,
-                        painPart: _painPart,
-                        painLevel:
-                            _painPart != null ? _painLevel.round() : null,
-                      ),
-                    );
-                  }
-                },
-                child: Text(_step == 0 ? 'Next' : 'Start workout'),
+                onPressed: _submit,
+                child: const Text('Start workout'),
               ),
             ],
           ),

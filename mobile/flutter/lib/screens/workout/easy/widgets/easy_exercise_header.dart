@@ -198,7 +198,14 @@ class EasyExerciseHeader extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Text(
-                  'SET $currentSet OF $totalSets',
+                  // `currentSet` is `completedCount + 1`, so the moment the
+                  // last set of the exercise is logged it points one PAST the
+                  // plan and the row read "SET 3 OF 2" for the whole rest
+                  // window before the screen advanced. Once every planned set
+                  // is done, say so instead of printing an impossible index.
+                  currentSet > totalSets
+                      ? 'ALL $totalSets ${totalSets == 1 ? 'SET' : 'SETS'} DONE'
+                      : 'SET $currentSet OF $totalSets',
                   style: ZType.lbl(
                     12,
                     color: muted,
@@ -344,7 +351,13 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
             children: [
               if (hasVideo)
                 FittedBox(
-                  fit: BoxFit.cover,
+                  // The demo clips are VERTICAL (S3 `VERTICAL VIDEOS ALL/`)
+                  // and this hero frame is landscape — `cover` zoom-cropped
+                  // the figure's head and feet clean off, which is exactly
+                  // what a form demo must not do. `contain` shows the whole
+                  // body; the frame's own background fills the sides. Matches
+                  // the illustration branch below.
+                  fit: BoxFit.contain,
                   clipBehavior: Clip.hardEdge,
                   child: SizedBox(
                     width: _controller!.value.size.width,

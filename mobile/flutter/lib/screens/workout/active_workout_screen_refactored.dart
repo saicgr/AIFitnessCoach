@@ -1367,6 +1367,24 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         '🔁 [ActiveWorkout] Restored ${session.completedSets.length} exercise sets from tier swap',
       );
     }
+    // Tier-swap ALSO has to carry the workout CLOCK. The sister tier feeds
+    // `elapsedSeconds` into the shared session on every timer tick, so the
+    // live in-memory value is exact to the second — read it here instead of
+    // waiting for `_restoreWorkoutCheckpoint()`, which reads the DISK
+    // checkpoint and bails entirely (`restored == null`) when no blob has
+    // been written yet. Without this, flipping Easy→Advanced mid-session
+    // restarted the clock at 0 (header dropped from "3m 24s / 23 kcal" to
+    // "9s / 1 kcal" — the calories column is derived purely from elapsed
+    // seconds, see WorkoutStatsStrip._computeCalories).
+    if (session.workoutId == widget.workout.id &&
+        session.elapsedSeconds > _timerController.workoutSeconds) {
+      _timerController.startWorkoutTimer(
+        initialSeconds: session.elapsedSeconds,
+      );
+      debugPrint(
+        '🔁 [ActiveWorkout] Resumed clock at ${session.elapsedSeconds}s from tier swap',
+      );
+    }
 
     // WF4 — crash-safe checkpoint restore. If the app was killed mid-workout
     // (or backgrounded + OS-reaped), a SharedPreferences checkpoint for THIS

@@ -220,7 +220,13 @@ class EasyActiveWorkoutScreenState
         if (mounted) setState(() {});
       }
       ..onRestComplete = _handleRestComplete
-      ..startWorkoutTimer();
+      // Tier-swap continuity: the sister tier (Advanced) pushes `elapsed
+      // Seconds` into the shared session every tick, so on an Advanced→Easy
+      // flip the live value is exact. Seed the clock from it instead of
+      // restarting at 0 (the disk-checkpoint restore above can't cover this —
+      // it returns null when no blob has been written yet). Falls back to 0
+      // for a genuinely fresh session.
+      ..startWorkoutTimer(initialSeconds: _liveSessionElapsedSeconds());
 
     _prService = ref.read(prDetectionServiceProvider)..startNewWorkout();
     unawaited(
@@ -247,6 +253,16 @@ class EasyActiveWorkoutScreenState
     // Resolve the warm-up phase after the first frame (so the checkpoint
     // restore above has had a chance to run).
     WidgetsBinding.instance.addPostFrameCallback((_) => _resolveWarmupPhase());
+  }
+
+  /// Elapsed workout seconds already accumulated for THIS workout by whichever
+  /// tier was on screen before us (the shared session is fed on every timer
+  /// tick). Returns 0 for a fresh session or a different workout — never a
+  /// fabricated value.
+  int _liveSessionElapsedSeconds() {
+    final live = ref.read(activeWorkoutSessionProvider);
+    if (live.workoutId != widget.workout.id) return 0;
+    return live.elapsedSeconds > 0 ? live.elapsedSeconds : 0;
   }
 
   /// Decide whether to show the guided warm-up before the working sets.
@@ -1048,7 +1064,13 @@ class EasyActiveWorkoutScreenState
           _exercises
             ..clear()
             ..addAll(updated.exercises);
-          final useKg = ref.read(useKgProvider);
+          // LIFTED-weight unit, not BODY-weight unit. This site read
+          // `useKgProvider` (body measurements) while initState — and every
+          // label on this screen — reads `useKgForWorkoutProvider`. For a user
+          // who weighs in kg but lifts in lb (the settings are deliberately
+          // separate) an exercise swap re-seeded EVERY exercise's target in kg
+          // while the stepper label still said LB.
+          final useKg = ref.read(useKgForWorkoutProvider);
           final reseeded = seedEasyExerciseStates(_exercises, useKg: useKg);
           for (final entry in reseeded.entries) {
             final old = oldPerExercise[entry.key];

@@ -25,12 +25,20 @@ class SetRow extends StatefulWidget {
   final VoidCallback? onDelete;
   final bool showPrevious;
 
+  /// The unit the caller's [setData] values are already expressed in — this
+  /// widget renders display units verbatim and never converts. REQUIRED (no
+  /// default): a hardcoded "kg" suffix on a lb-preference user's logger is
+  /// exactly the corruption this project's three separate unit settings exist
+  /// to prevent, so the caller must state which unit it handed us.
+  final bool useKg;
+
   const SetRow({
     super.key,
     required this.setData,
     required this.isCurrentSet,
     required this.onDataChanged,
     required this.onComplete,
+    required this.useKg,
     this.onDelete,
     this.showPrevious = true,
   });
@@ -40,6 +48,11 @@ class SetRow extends StatefulWidget {
 }
 
 class _SetRowState extends State<SetRow> {
+  /// Display unit label for every weight surface in this row. Single source
+  /// so the field suffix, the LOAD dial and the previous-set line can never
+  /// disagree with each other (or with the user's preference).
+  String get _unitLabel => widget.useKg ? 'kg' : 'lb';
+
   late TextEditingController _weightController;
   late TextEditingController _repsController;
   late FocusNode _weightFocus;
@@ -214,9 +227,10 @@ class _SetRowState extends State<SetRow> {
       previousSetTargetWeightDisplay: data.previousSetTargetWeight,
       previousSetTargetReps: data.previousSetTargetReps,
       previousSetTargetSeconds: data.previousSetTargetSeconds,
-      // SetRow assumes lb display (its data already arrives in display units);
-      // SetTrackingTable converts via WeightUtils and passes its actual unit.
-      unitLabel: 'lb',
+      // Data arrives in DISPLAY units (the caller converts); label it with the
+      // unit the caller declared. Was hardcoded 'lb' here while the weight
+      // field's suffix said 'kg' — the same widget contradicted itself.
+      unitLabel: _unitLabel,
     );
   }
 
@@ -444,8 +458,8 @@ class _SetRowState extends State<SetRow> {
                             horizontal: 8,
                             vertical: 8,
                           ),
-                          suffix: const Text(
-                            'kg',
+                          suffix: Text(
+                            _unitLabel,
                             style: TextStyle(
                               fontSize: 10,
                               color: AppColors.textMuted,
@@ -622,7 +636,7 @@ class _SetRowState extends State<SetRow> {
           if (showWeight)
             SetDial(
               label: 'LOAD',
-              unit: 'kg',
+              unit: _unitLabel,
               current: s.actualWeight,
               goal: s.targetWeight > 0 ? s.targetWeight : null,
               last: (s.previousWeight ?? 0) > 0 ? s.previousWeight : null,

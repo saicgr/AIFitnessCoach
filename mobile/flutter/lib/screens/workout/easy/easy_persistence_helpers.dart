@@ -529,6 +529,11 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
       durationSeconds: defaultDuration.clamp(5, 600),
       isDistance: isDistance,
       distanceMeters: targetDistanceM,
+      // Genuine bodyweight rep move: the classifier says "no external load"
+      // AND it isn't a timed/distance move. Drives the focal column's plain-
+      // language "bodyweight" render instead of the "BW" token + a 0 in a
+      // WEIGHT field.
+      isBodyweight: !isWeighted && !timed && !isDistance,
     );
   }
   return out;

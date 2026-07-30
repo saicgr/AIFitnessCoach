@@ -239,7 +239,11 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
               clipBehavior: Clip.antiAlias,
               child: CachedNetworkImage(
                 imageUrl: imageUrl,
-                fit: BoxFit.cover,
+                // Exercise illustrations are PORTRAIT figures; this frame is a
+                // 120×120 SQUARE, so `cover` scales to fill the width and
+                // slices the head and feet off — the same crop reported on the
+                // expanded-card thumbnail. `contain` keeps the whole body.
+                fit: BoxFit.contain,
                 placeholder: (context, url) => Container(
                   color: isDark
                       ? Colors.white.withOpacity(0.05)

@@ -282,7 +282,11 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
                 borderRadius: BorderRadius.circular(14),
                 child: CachedNetworkImage(
                   imageUrl: imageUrl,
-                  fit: BoxFit.cover,
+                  // "Next up" preview of a PORTRAIT exercise illustration in a
+                  // 100×100 SQUARE frame — `cover` cropped the figure's head
+                  // and feet. This is the one thing on the overlay the user is
+                  // meant to read, so show the whole body.
+                  fit: BoxFit.contain,
                   placeholder: (context, url) => Container(
                     color: isDark
                         ? Colors.white.withOpacity(0.1)

@@ -222,6 +222,9 @@ class EasyActiveWorkoutView extends StatelessWidget {
               currentSetIndex: state.completedCount,
               totalSets: state.totalSets,
               useKg: useKg,
+              // Same classification the focal poster reads — the ledger must
+              // not fall back to inferring "bodyweight" from a 0 weight.
+              isBodyweight: state.isBodyweight,
               currentWeightDisplay: state.displayWeight,
               currentReps: state.reps,
               editingSetIndex: editingSetIndex,

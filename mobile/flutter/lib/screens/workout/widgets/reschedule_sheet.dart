@@ -7,6 +7,7 @@ import '../../../data/repositories/scheduling_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../schedule_date_utils.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Shows the reschedule sheet for a missed workout
@@ -242,11 +243,15 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
         child: InkWell(
           onTap: () {
             HapticService.light();
+            final now = DateTime.now();
             setState(() {
               _selectedOption = suggestion.suggestionType;
-              _selectedDate = suggestion.recommendedDate != null
-                  ? DateTime.parse(suggestion.recommendedDate!)
-                  : DateTime.now();
+              // Resolve through the shared local-day chokepoint: a server
+              // recommendation can arrive as a bare date OR a UTC instant, and
+              // `DateTime.parse` on the latter yields a UTC day that renders
+              // one day off for negative-offset users.
+              _selectedDate = scheduledLocalDay(suggestion.recommendedDate) ??
+                  DateTime(now.year, now.month, now.day);
               _swapWorkoutId = suggestion.swapWorkoutId;
               _swapWorkoutName = suggestion.swapWorkoutName;
             });
@@ -362,11 +367,19 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
         onTap: () async {
           HapticService.light();
 
+          // Local calendar-day bounds. `DateTime.now()` as `firstDate` carries
+          // a time-of-day, which makes "today" behave inconsistently against a
+          // midnight `initialDate` (E2E #31, same class as the detail screen).
+          final now = DateTime.now();
+          final firstDate = DateTime(now.year, now.month, now.day);
           final pickedDate = await showDatePicker(
             context: context,
-            initialDate: DateTime.now().add(const Duration(days: 1)),
-            firstDate: DateTime.now(),
-            lastDate: DateTime.now().add(const Duration(days: 14)),
+            initialDate: _selectedDate != null && !_selectedDate!.isBefore(firstDate)
+                ? DateTime(_selectedDate!.year, _selectedDate!.month,
+                    _selectedDate!.day)
+                : firstDate.add(const Duration(days: 1)),
+            firstDate: firstDate,
+            lastDate: firstDate.add(const Duration(days: 14)),
             builder: (context, child) {
               return Theme(
                 data: Theme.of(context).copyWith(
@@ -489,17 +502,27 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
           // Also refresh workouts silently
           ref.read(workoutsProvider.notifier).silentRefresh();
 
+          // Resolve the messenger + copy BEFORE popping: `ScaffoldMessenger.of`
+          // on a context whose route is already being torn down is why the
+          // reschedule confirmation never appeared (E2E #31). And name the day
+          // it moved to — "Workout rescheduled" alone reads as a no-op.
+          final messenger = ScaffoldMessenger.of(context);
+          final moved = DateFormat('EEEE, MMM d').format(_selectedDate!);
+          final message = _swapWorkoutName != null
+              ? '${AppLocalizations.of(context).rescheduleWorkoutSwappedSuccessfully} — $moved'
+              : 'Moved to $moved';
+
           Navigator.pop(context, true);
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_swapWorkoutName != null
-                  ? AppLocalizations.of(context).rescheduleWorkoutSwappedSuccessfully
-                  : 'Workout rescheduled'),
-              backgroundColor: AppColors.success,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          messenger
+            ..clearSnackBars()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -127,6 +127,17 @@ class EasyFocalColumn extends StatelessWidget {
   bool get _isLoadedCarry =>
       (state.isDistance || state.isTimed) && state.displayWeight > 0;
 
+  /// A plain bodyweight rep move with nothing added on top — push-ups, air
+  /// squats, burpees. Classified (not inferred from "weight == 0"), so a
+  /// barbell move the user simply hasn't loaded yet still renders as a normal
+  /// weight × reps prescription. When the user DOES add load, the poster
+  /// switches back to the weighted composition automatically.
+  bool get _isBodyweightMove =>
+      state.isBodyweight && !state.isTimed && !state.isDistance;
+
+  bool get _isPlainBodyweight =>
+      _isBodyweightMove && state.displayWeight <= 0;
+
   /// "60 kg" / "132.5 lb" — the load token reused by the carry badge + CTA.
   String _loadToken(bool useKg) {
     final w = state.displayWeight;
@@ -153,7 +164,26 @@ class EasyFocalColumn extends StatelessWidget {
               : state.displayWeight.toStringAsFixed(1));
 
     // Distance poster: a single big meters numeral.
-    final List<Widget> posterChildren = state.isDistance
+    final List<Widget> posterChildren = _isPlainBodyweight
+        // Bodyweight poster: the REPS are the whole prescription, so they get
+        // the hero numeral (same shape as the distance "20 M" / timed "45 SEC"
+        // posters). The old "BW × 10" made a beginner decode an abbreviation
+        // and read the paired `0` in the weight field as a broken input.
+        ? [
+            Text(
+              '${state.reps}',
+              style: ZType.disp(posterSize,
+                  color: colors.textPrimary, letterSpacing: 0),
+            ),
+            const SizedBox(width: 6),
+            Padding(
+              padding: EdgeInsets.only(bottom: posterSize * 0.10),
+              child: Text('REPS',
+                  style: ZType.lbl(unitSize,
+                      color: colors.textMuted, letterSpacing: 1.0)),
+            ),
+          ]
+        : state.isDistance
         ? [
             Text(
               state.distanceMeters % 1 == 0
@@ -291,6 +321,12 @@ class EasyFocalColumn extends StatelessWidget {
       final t = state.durationSeconds;
       return t > 0 ? 'Hold the line. $t seconds.' : null;
     }
+    if (_isPlainBodyweight) {
+      // Say it in words. The poster shows the reps; this line explains WHY
+      // there's no number in the weight field — the exercise uses your own
+      // bodyweight, and adding load is optional, not required.
+      return 'Your bodyweight — no extra weight needed.';
+    }
     final targetDisplay = useKg
         ? state.targetWeightKg
         : state.targetWeightKg * 2.20462;
@@ -322,6 +358,9 @@ class EasyFocalColumn extends StatelessWidget {
     if (state.isTimed) {
       final base = 'LOG SET — ${state.durationSeconds}s';
       return '${_isLoadedCarry ? '$base · ${_loadToken(useKg)}' : base}$extras';
+    }
+    if (_isPlainBodyweight) {
+      return '✓  LOG SET — ${state.reps} REPS · BODYWEIGHT$extras';
     }
     final wTok = state.displayWeight <= 0
         ? 'BW'
@@ -462,7 +501,13 @@ class EasyFocalColumn extends StatelessWidget {
                       dense: true,
                       onChanged: onWeightChanged,
                     ),
-                    'WEIGHT (${useKg ? 'KG' : 'LB'})',
+                    // Bodyweight moves: the field is for load you ADD on top
+                    // (weight vest, dumbbell between the feet). Labelling it
+                    // "WEIGHT (KG)" made the mandatory-looking `0` read as a
+                    // broken input; "ADDED WEIGHT" makes 0 the honest answer.
+                    _isBodyweightMove
+                        ? 'ADDED WEIGHT (${useKg ? 'KG' : 'LB'})'
+                        : 'WEIGHT (${useKg ? 'KG' : 'LB'})',
                   ),
                 ),
                 SizedBox(width: gapBetweenSteppers + 8),

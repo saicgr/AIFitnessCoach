@@ -1087,27 +1087,50 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
   // the flattened menu acts directly without a nested sheet.
 
   /// Reschedule: pick a date, persist via the repo, refresh dependent views.
+  ///
+  /// E2E #31. Two defects lived here:
+  ///  * the picker seeded from `DateTime.tryParse(scheduledDate)` — a **UTC**
+  ///    instant off a noon-anchored `timestamptz` — and compared it against a
+  ///    *local* `firstDate`, so it opened on today instead of the workout's own
+  ///    day. Both bounds are now local calendar days resolved through
+  ///    `schedule_date_utils.dart`.
+  ///  * the confirmation said only "Workout rescheduled" while the screen
+  ///    showed no date at all, so the result was indistinguishable from a
+  ///    no-op. It now names the day it moved to, and the masthead eyebrow
+  ///    re-renders on that day after `_reloadAfterMutation`.
   Future<void> _menuReschedule(Workout workout) async {
     final wid = workout.id;
     if (wid == null || wid.isEmpty) return;
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year, now.month, now.day);
+    final seed = reschedulePickerSeed(workout.scheduledDate, firstDate);
     final picked = await showDatePicker(
       context: context,
-      initialDate:
-          DateTime.tryParse(workout.scheduledDate ?? '') ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: seed,
+      firstDate: firstDate,
+      lastDate: firstDate.add(const Duration(days: 365)),
     );
     if (picked == null || !mounted) return;
+    final pickedDay = DateTime(picked.year, picked.month, picked.day);
     try {
       final repo = ref.read(workoutRepositoryProvider);
       final ok = await repo.rescheduleWorkout(
         wid,
-        picked.toIso8601String().split('T')[0],
+        // Bare local calendar date on the wire — the backend anchors it to
+        // noon in the user's timezone (`target_date_to_utc_iso`). Built from
+        // the picked Y/M/D directly; `toIso8601String()` on a local DateTime
+        // would be fine here but the explicit form can never drift.
+        '${pickedDay.year.toString().padLeft(4, '0')}-'
+            '${pickedDay.month.toString().padLeft(2, '0')}-'
+            '${pickedDay.day.toString().padLeft(2, '0')}',
       );
       if (!mounted) return;
       if (ok) {
         await _reloadAfterMutation();
-        if (mounted) _showSnackBar('Workout rescheduled');
+        if (mounted) {
+          _showSnackBar(
+              'Moved to ${DateFormat('EEEE, MMM d').format(pickedDay)}');
+        }
       } else {
         _showSnackBar('Failed to reschedule workout', isError: true);
       }

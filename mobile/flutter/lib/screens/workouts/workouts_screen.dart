@@ -25,6 +25,7 @@ import 'widgets/workout_stats/workout_stats_section.dart';
 import 'widgets/workouts_signature_body.dart';
 import '../home/widgets/week_calendar_strip.dart';
 import '../home/widgets/gym_profile_switcher.dart';
+import '../workout/schedule_date_utils.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -133,15 +134,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             CustomScrollView(
               controller: _scrollController,
               slivers: [
-                // Top padding for the floating masthead. The masthead is now a
-                // compact 2-line block (gym-switcher row + date sub-line) since
-                // the big split-name title moved onto the carousel — so this
-                // reserve dropped from 118 to ~78 (2 top + ~40 gym/pill row +
-                // 2 + ~16 date + 10 bottom) to kill the dead gap that opened up
-                // above the date strip.
+                // Top padding for the floating masthead: a 2-line block —
+                // the "WORKOUTS" screen title + action pills (~40), then the
+                // equipment-profile pill + date line (~34). 2 top + 40 + 8 +
+                // 34 + 10 bottom = 94.
                 SliverToBoxAdapter(
                   child: SizedBox(
-                      height: MediaQuery.of(context).padding.top + 78),
+                      height: MediaQuery.of(context).padding.top + 94),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load
@@ -180,10 +179,17 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     );
   }
 
-  /// Signature masthead — flat (pureBlack) band, no gradient / no glass. An
-  /// Anton "WORKOUTS" title with the "Zealova" eyebrow + action cluster above
-  /// it, and the gym switcher restyled as a hairline pill below. Replaces the
-  /// old blurred gradient header + glassmorphic action circles.
+  /// Signature masthead — flat (pureBlack) band, no gradient / no glass.
+  ///
+  /// Line 1 names the SCREEN ("WORKOUTS") + the action cluster. Line 2 carries
+  /// the equipment-profile switcher (explicitly labelled) and today's date.
+  ///
+  /// E2E #32/#108: the gym name used to BE the title, rendered in the 30pt
+  /// Anton display face and ellipsised to "COMMERC…" — so the tab appeared to
+  /// be named after a location, and its chevron read as a screen switcher. The
+  /// gym is a *setting* that scopes the plan, not the name of the room, so it
+  /// now sits under the title as a labelled `GYM · [name] ⌄` pill with
+  /// enough width to render the identifying name in full.
   Widget _buildFloatingHeader(
     BuildContext context,
     bool isDark,
@@ -199,20 +205,18 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         isDark ? AppColors.background : AppColorsLight.background;
     final tc = ThemeColors.of(context);
 
-    // Contextual masthead (replaces the redundant static "WORKOUTS" wordmark —
-    // the nav tab already names this room). Mirrors Home's editorial date
-    // masthead: today's split name big, with the date below; on a rest/no-plan
-    // day it falls back to the date itself so the masthead is never empty.
-    const _mhWeekdays = [
-      'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
-    ];
-    const _mhMonths = [
-      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-      'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+    // Today's date, in the user's LOCAL calendar. Explicitly prefixed "TODAY"
+    // so it can never be misread as the day the carousel below is focused on
+    // (that day is asserted by the date strip + the card itself — see #21).
+    const mhMonths = [
+      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
     ];
     final mhNow = DateTime.now();
-    final mhWeekday = _mhWeekdays[mhNow.weekday - 1];
-    final mhMonthDay = '${_mhMonths[mhNow.month - 1]} ${mhNow.day}';
+    // Kept deliberately short (no weekday — the strip below spells the week
+    // out and highlights today) so the gym name beside it has room to render
+    // in full rather than ellipsising to "COMMERC…" (#32/#108).
+    final mhToday = 'TODAY  ·  ${mhMonths[mhNow.month - 1]} ${mhNow.day}';
 
     return PositionedDirectional(
       top: 0,
@@ -237,16 +241,18 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Masthead row: the GYM leads (big name + dropdown) with the
-              // action pills on the right. The big split-name title was removed
-              // here — the workout carousel below now carries today's split
-              // name, so leading the masthead with it too was a duplicate. The
-              // date drops to the muted sub-line below.
+              // Masthead row: the SCREEN name leads, action pills on the right.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const Expanded(
-                    child: GymProfileSwitcher(large: true),
+                  Expanded(
+                    child: Text(
+                      'WORKOUTS',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.disp(30,
+                          color: textPrimary, letterSpacing: 0.5),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   // Tour anchor: "Track your stats" step targets this pill.
@@ -287,11 +293,26 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 2),
-              // Sub-line — the date, always muted under the gym lead.
-              Text(
-                '$mhWeekday  ·  $mhMonthDay',
-                style: ZType.lbl(12.5, color: tc.textMuted, letterSpacing: 1.5),
+              const SizedBox(height: 8),
+              // Sub-line — the equipment-profile switcher (labelled, so the
+              // chevron reads as "change which gym this plan is built for",
+              // not "change screen") plus today's date.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Flexible(child: _EquipmentProfilePill()),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      mhToday,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: ZType.lbl(11.5,
+                          color: tc.textMuted, letterSpacing: 1.4),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -633,11 +654,13 @@ class _PreviousSessionCard extends StatelessWidget {
     String dateText = '';
     bool isToday = false;
     if (workout.scheduledDate != null) {
-      final date = DateTime.tryParse(workout.scheduledDate!);
-      if (date != null) {
+      // Local-day resolution (E2E #31 class): `scheduled_date` is a
+      // noon-anchored timestamptz, so taking .year/.month/.day off the raw
+      // parsed instant names the wrong day in half the world's timezones.
+      final workoutDate = scheduledLocalDay(workout.scheduledDate);
+      if (workoutDate != null) {
         final now = DateTime.now();
         final today = DateTime(now.year, now.month, now.day);
-        final workoutDate = DateTime(date.year, date.month, date.day);
         final difference = today.difference(workoutDate).inDays;
 
         if (difference == 0) {
@@ -648,7 +671,8 @@ class _PreviousSessionCard extends StatelessWidget {
         } else if (difference < 7) {
           dateText = '$difference days ago';
         } else {
-          dateText = '${date.day}/${date.month}/${date.year}';
+          dateText =
+              '${workoutDate.day}/${workoutDate.month}/${workoutDate.year}';
         }
       }
     }
@@ -1003,6 +1027,53 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
       'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'
     ];
     return '${months[dt.month - 1]} ${dt.day}';
+  }
+}
+
+/// The equipment-profile switcher, wrapped in a labelled hairline pill.
+///
+/// E2E #32/#108. Previously the active gym's name was the masthead title, so a
+/// tab about training was titled after a location and truncated to "COMMERC…".
+/// Here the control announces what it switches ("EQUIPMENT"), the gym name
+/// keeps its own weight, and the chevron sits inside the pill so it reads as
+/// one control rather than as page navigation.
+///
+/// [GymProfileSwitcher] still owns the tap → profile-picker sheet, the
+/// loading/error/empty states and the activation side effects; this only
+/// re-frames it. Its non-`large` mode renders the name at 15pt with a 20pt
+/// chevron, which is exactly the sub-line weight this pill wants.
+class _EquipmentProfilePill extends StatelessWidget {
+  const _EquipmentProfilePill();
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Container(
+      padding: const EdgeInsetsDirectional.only(
+          start: 10, end: 6, top: 5, bottom: 5),
+      decoration: BoxDecoration(
+        color: AppColors.surface2,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.fitness_center_rounded, size: 14, color: tc.textMuted),
+          const SizedBox(width: 6),
+          // Short label on purpose — every character here is width the gym
+          // name doesn't get, and "COMMERC…" was the original complaint.
+          Text(
+            'GYM',
+            style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.4),
+          ),
+          const SizedBox(width: 7),
+          // The gym name + chevron. Flexible so an unusually long profile name
+          // shrinks this pill instead of overflowing the masthead row.
+          const Flexible(child: GymProfileSwitcher()),
+        ],
+      ),
+    );
   }
 }
 
