@@ -18,11 +18,11 @@ ENDPOINTS:
 - GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
 """
 from typing import List, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 import logging
 logger = logging.getLogger(__name__)
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from models.schemas import (
@@ -128,7 +128,13 @@ def row_to_drink_intake(row: dict) -> DrinkIntake:
 async def create_drink_intake(data: DrinkIntakeCreate,
     current_user: dict = Depends(get_current_user),
 ):
-    """Log drink intake during workout."""
+    """Log drink intake during workout.
+
+    `workout_log_id` is the PARENT SESSION row (`workout_logs.id`) — the column
+    is `NOT NULL` with an FK to `workout_logs(id)`. A `workouts.id` is not
+    accepted and would violate that FK.
+    """
+    verify_user_ownership(current_user, data.user_id)
     try:
         db = get_supabase_db()
 
@@ -141,9 +147,16 @@ async def create_drink_intake(data: DrinkIntakeCreate,
         }
 
         created = db.create_drink_intake(intake_data)
+        if not created:
+            raise safe_internal_error(
+                ValueError("drink_intake_logs insert returned no row"),
+                "performance_db",
+            )
         logger.info(f"Drink intake created: id={created['id']}, user_id={data.user_id}, amount={data.amount_ml}ml")
         return row_to_drink_intake(created)
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating drink intake: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
@@ -179,18 +192,47 @@ class DrinkIntakeSummary(BaseModel):
 async def get_drink_intake_summary(workout_log_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Get drink intake summary for a workout."""
+    """Get drink intake summary for a workout.
+
+    Previously 500'd on EVERY call: it counted the events with
+    `list_drink_intakes(user_id="", ...)`, and `.eq("user_id", "")` against a
+    `uuid` column is `22P02 invalid input syntax for type uuid: ""`. The
+    session is identified by `workout_log_id` alone, so the rows are read by
+    that key — and ownership is now actually checked (the endpoint used to
+    return any user's hydration for any workout_log id it was handed).
+    """
     try:
         db = get_supabase_db()
-        total = db.get_workout_total_drink_intake(workout_log_id)
-        intakes = db.list_drink_intakes(user_id="", workout_log_id=workout_log_id, limit=500)
-        logger.info(f"Drink intake summary for workout {workout_log_id}: {total}ml")
+
+        owner = (
+            db.client.table("workout_logs")
+            .select("user_id")
+            .eq("id", workout_log_id)
+            .maybe_single()
+            .execute()
+        )
+        # `.maybe_single()` returns None (not a response with data=None) on 0 rows.
+        owner_data = (owner.data if owner else None) or {}
+        if not owner_data:
+            raise HTTPException(status_code=404, detail="Workout log not found")
+        verify_user_ownership(current_user, str(owner_data.get("user_id")))
+
+        rows = (
+            db.client.table("drink_intake_logs")
+            .select("amount_ml")
+            .eq("workout_log_id", workout_log_id)
+            .execute()
+        ).data or []
+        total = sum(int(r.get("amount_ml") or 0) for r in rows)
+        logger.info(f"Drink intake summary for workout_log {workout_log_id}: {total}ml over {len(rows)} events")
         return DrinkIntakeSummary(
             workout_log_id=workout_log_id,
             total_ml=total,
-            intake_count=len(intakes),
+            intake_count=len(rows),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error getting drink intake summary: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")

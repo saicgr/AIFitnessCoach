@@ -17,6 +17,14 @@ from decimal import Decimal
 import logging
 
 from services.strength_calculator_service import StrengthCalculatorService
+from services.workout_summary_metrics import (
+    aggregate_sets,
+    resolve_set_completed,
+    resolve_user_bodyweight_kg,
+    set_duration_seconds as _set_duration_seconds,
+    set_reps as _set_reps,
+    set_weight_kg as _set_weight_kg,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -356,22 +364,132 @@ class PerformanceComparisonService:
             user_id: ID of the user
             workout_id: ID of the workout template
             exercises_performance: List of exercise performance data
-            workout_stats: Overall workout statistics
+            workout_stats: Overall workout statistics. ``user_bodyweight_kg``
+                is honoured when the caller already resolved it; otherwise it
+                is looked up here (newest ``user_metrics`` → ``users``).
 
         Returns:
             Tuple of (workout_summary_dict, list_of_exercise_summary_dicts)
+
+        SINGLE SOURCE OF TRUTH (E2E register #72 / #73)
+        -----------------------------------------------
+        Both rows are derived from the SAME set rows through the SAME
+        ``services/workout_summary_metrics`` functions, and the workout row's
+        totals are summed from the exercise rows this call just built. Before
+        this, ``exercise_performance_summary`` used raw ``reps x weight`` while
+        the ``/complete`` caller passed a workout total computed WITH the
+        bodyweight proxy, so one bodyweight session stored 3 780 kg at the
+        workout level and 0 kg at the exercise level. The two can no longer
+        disagree: the workout total is, by construction, the sum of the parts.
         """
-        # Build workout summary
+        # Bodyweight for the unloaded-set proxy. `None` is a valid answer and
+        # means "no proxy load" — never a stand-in mass (see
+        # resolve_user_bodyweight_kg).
+        user_bodyweight_kg = workout_stats.get('user_bodyweight_kg')
+        if user_bodyweight_kg is None:
+            user_bodyweight_kg = resolve_user_bodyweight_kg(user_id)
+        if not user_bodyweight_kg:
+            logger.info(
+                "No bodyweight on file for user %s — unloaded sets contribute "
+                "0 volume to this session's summary (honest zero, not a default)",
+                user_id,
+            )
+
+        performed_at = workout_stats.get('completed_at', datetime.now().isoformat())
+
+        # Build exercise summaries first; the workout row is their sum.
+        exercise_summaries = []
+        for ex in exercises_performance:
+            sets = ex.get('sets', [])
+            exercise_name = ex.get('exercise_name', ex.get('name', ''))
+            # Aggregation needs the exercise name on every set row (the
+            # bodyweight proxy is keyed on the movement pattern), and the
+            # per-exercise buckets don't carry it per set.
+            named_sets = []
+            for s in sets:
+                if isinstance(s, dict) and not (s.get('exercise_name') or s.get('name')):
+                    s = {**s, 'exercise_name': exercise_name}
+                named_sets.append(s)
+            completed_sets = [s for s in named_sets if resolve_set_completed(s)]
+
+            metrics = aggregate_sets(completed_sets, user_bodyweight_kg)
+
+            # Calculate 1RM from best set
+            estimated_1rm = None
+            for s in completed_sets:
+                reps = _set_reps(s)
+                weight = _set_weight_kg(s)
+                if weight > 0 and 0 < reps < 37:
+                    set_1rm = self.strength_calculator.calculate_1rm_average(weight, reps)
+                    if estimated_1rm is None or set_1rm > estimated_1rm:
+                        estimated_1rm = set_1rm
+
+            # Time-based metrics. Read through the shared accessor so a set
+            # logged as `set_duration_seconds` (what every current client
+            # writes) is no longer invisible here — it used to look only at
+            # `duration_seconds`, so timed exercises reported no time at all.
+            times = [
+                _set_duration_seconds(s)
+                for s in completed_sets
+                if _set_duration_seconds(s) > 0
+            ]
+            total_time = sum(times) if times else None
+            best_time = max(times) if times else None
+            avg_time = sum(times) / len(times) if times else None
+
+            max_weight = metrics['max_weight_kg']
+
+            # Cast integer-typed columns explicitly. Reps/seconds can arrive
+            # as floats (e.g. 27.0) from the client when set rows roundtrip
+            # through JS — Postgres `integer` rejects those with code 22P02.
+            best_reps_raw = max((_set_reps(s) for s in completed_sets), default=None)
+            exercise_summaries.append({
+                'user_id': user_id,
+                'workout_log_id': workout_log_id,
+                'workout_id': workout_id,
+                'exercise_name': exercise_name,
+                'exercise_id': ex.get('exercise_id'),
+                'total_sets': metrics['total_sets'],
+                'total_reps': metrics['total_reps'],
+                'total_volume_kg': metrics['total_volume_kg'],
+                'max_weight_kg': max_weight,
+                'avg_weight_kg': metrics['avg_weight_kg'],
+                'best_set_reps': int(best_reps_raw) if best_reps_raw is not None else None,
+                'best_set_weight_kg': max_weight,
+                'estimated_1rm_kg': round(estimated_1rm, 2) if estimated_1rm else None,
+                'total_time_seconds': int(round(total_time)) if total_time is not None else None,
+                'best_time_seconds': int(round(best_time)) if best_time is not None else None,
+                'avg_time_seconds': int(round(avg_time)) if avg_time is not None else None,
+                'avg_rpe': metrics['avg_rpe'],
+                'avg_rir': metrics['avg_rir'],
+                'performed_at': performed_at,
+            })
+
+        # Workout row = the sum of the exercise rows. Never the caller's own
+        # independently-computed totals (that divergence IS register #73).
+        derived_sets = sum(e['total_sets'] for e in exercise_summaries)
+        derived_reps = sum(e['total_reps'] for e in exercise_summaries)
+        derived_volume = round(sum(e['total_volume_kg'] for e in exercise_summaries), 2)
+
+        caller_volume = workout_stats.get('total_volume_kg')
+        if caller_volume is not None and abs(float(caller_volume) - derived_volume) > 0.5:
+            logger.info(
+                "Session %s: caller volume %.2f kg replaced by derived %.2f kg "
+                "(sum of %d exercise summaries)",
+                workout_log_id, float(caller_volume), derived_volume,
+                len(exercise_summaries),
+            )
+
         workout_summary = {
             'user_id': user_id,
             'workout_log_id': workout_log_id,
             'workout_id': workout_id,
             'workout_name': workout_stats.get('workout_name'),
             'workout_type': workout_stats.get('workout_type'),
-            'total_exercises': len(exercises_performance),
-            'total_sets': workout_stats.get('total_sets', 0),
-            'total_reps': workout_stats.get('total_reps', 0),
-            'total_volume_kg': workout_stats.get('total_volume_kg', 0),
+            'total_exercises': len(exercise_summaries),
+            'total_sets': derived_sets,
+            'total_reps': derived_reps,
+            'total_volume_kg': derived_volume,
             'duration_seconds': workout_stats.get('duration_seconds', 0),
             'active_time_seconds': workout_stats.get('active_time_seconds'),
             'total_rest_seconds': workout_stats.get('total_rest_seconds'),
@@ -380,73 +498,8 @@ class PerformanceComparisonService:
             'avg_rir': workout_stats.get('avg_rir'),
             'estimated_calories': workout_stats.get('calories', 0),
             'new_prs_count': workout_stats.get('new_prs_count', 0),
-            'performed_at': workout_stats.get('completed_at', datetime.now().isoformat()),
+            'performed_at': performed_at,
         }
-
-        # Build exercise summaries
-        exercise_summaries = []
-        for ex in exercises_performance:
-            sets = ex.get('sets', [])
-            completed_sets = [s for s in sets if s.get('completed', True)]
-
-            total_reps = sum(s.get('reps', 0) or s.get('reps_completed', 0) for s in completed_sets)
-            weights = [s.get('weight_kg', 0) for s in completed_sets if s.get('weight_kg', 0) > 0]
-            max_weight = max(weights) if weights else None
-            avg_weight = sum(weights) / len(weights) if weights else None
-            total_volume = sum(
-                (s.get('reps', 0) or s.get('reps_completed', 0)) * s.get('weight_kg', 0)
-                for s in completed_sets
-            )
-
-            # Calculate 1RM from best set
-            estimated_1rm = None
-            if completed_sets:
-                for s in completed_sets:
-                    reps = s.get('reps', 0) or s.get('reps_completed', 0)
-                    weight = s.get('weight_kg', 0)
-                    if weight > 0 and 0 < reps < 37:
-                        set_1rm = self.strength_calculator.calculate_1rm_average(weight, reps)
-                        if estimated_1rm is None or set_1rm > estimated_1rm:
-                            estimated_1rm = set_1rm
-
-            # Time-based metrics
-            times = [s.get('duration_seconds', 0) for s in completed_sets if s.get('duration_seconds')]
-            total_time = sum(times) if times else None
-            best_time = max(times) if times else None
-            avg_time = sum(times) / len(times) if times else None
-
-            # RPE/RIR
-            rpes = [s.get('rpe') for s in completed_sets if s.get('rpe') is not None]
-            rirs = [s.get('rir') for s in completed_sets if s.get('rir') is not None]
-
-            # Cast integer-typed columns explicitly. Reps/seconds can arrive
-            # as floats (e.g. 27.0) from the client when set rows roundtrip
-            # through JS — Postgres `integer` rejects those with code 22P02.
-            best_reps_raw = max(
-                (s.get('reps', 0) or s.get('reps_completed', 0) for s in completed_sets),
-                default=None,
-            )
-            exercise_summaries.append({
-                'user_id': user_id,
-                'workout_log_id': workout_log_id,
-                'workout_id': workout_id,
-                'exercise_name': ex.get('exercise_name', ex.get('name', '')),
-                'exercise_id': ex.get('exercise_id'),
-                'total_sets': len(completed_sets),
-                'total_reps': int(total_reps) if total_reps is not None else 0,
-                'total_volume_kg': round(total_volume, 2),
-                'max_weight_kg': round(max_weight, 2) if max_weight else None,
-                'avg_weight_kg': round(avg_weight, 2) if avg_weight else None,
-                'best_set_reps': int(best_reps_raw) if best_reps_raw is not None else None,
-                'best_set_weight_kg': round(max_weight, 2) if max_weight is not None else None,
-                'estimated_1rm_kg': round(estimated_1rm, 2) if estimated_1rm else None,
-                'total_time_seconds': int(round(total_time)) if total_time is not None else None,
-                'best_time_seconds': int(round(best_time)) if best_time is not None else None,
-                'avg_time_seconds': int(round(avg_time)) if avg_time is not None else None,
-                'avg_rpe': round(sum(rpes) / len(rpes), 1) if rpes else None,
-                'avg_rir': round(sum(rirs) / len(rirs), 1) if rirs else None,
-                'performed_at': workout_stats.get('completed_at', datetime.now().isoformat()),
-            })
 
         return workout_summary, exercise_summaries
 

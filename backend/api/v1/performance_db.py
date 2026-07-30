@@ -42,6 +42,11 @@ from models.schemas import (
     RestIntervalCreate, RestInterval,
 )
 from services.metric_registry import build_metrics_bag, mirror_first_class_to_columns
+from services.workout_summary_metrics import (
+    SET_NATURAL_KEY_ON_CONFLICT,
+    dedupe_sets_by_natural_key,
+    resolve_set_completed,
+)
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -205,7 +210,18 @@ def row_to_weekly_volume(row: dict) -> WeeklyVolume:
 async def create_performance_log(log: PerformanceLogCreate,
     current_user: dict = Depends(get_current_user),
 ):
-    """Create a performance log entry."""
+    """Create — or, on a re-log of the same set, overwrite — one performance log.
+
+    IDEMPOTENT ON (workout_log_id, exercise_name, set_number).
+
+    Re-running a workout reuses the same `workout_logs` row (the client's
+    idempotency_key is derived from the workout id), but every set used to be
+    re-INSERTed: a 15-set session came back with 20 `performance_logs` rows,
+    inflating volume and set counts and able to mint phantom PRs (E2E register
+    #71). The natural key is the same one `PATCH /logs/by-set` addresses rows
+    by and the one migration 2342 enforces with a unique index, so the latest
+    attempt at a set replaces the earlier one instead of stacking on it.
+    """
     try:
         db = get_supabase_db()
 
@@ -249,10 +265,31 @@ async def create_performance_log(log: PerformanceLogCreate,
         log_data["metrics"] = _bag
         mirror_first_class_to_columns(_bag, log_data)
 
-        created = db.create_performance_log(log_data)
-        logger.info(f"Performance log created: id={created['id']}, user_id={log.user_id}")
+        # A set carrying recorded work IS completed. Both clients classify a
+        # placeholder as "no reps AND no load AND no distance AND no metrics",
+        # forgetting hold time — so every time-based set (plank, wall sit, dead
+        # hang) arrived flagged is_completed=false and was then dropped from the
+        # summary's set/rep/volume totals (E2E register #75). Resolved at the
+        # write chokepoint so every writer gets it, not just the tier that was
+        # patched. Never downgrades a client `true`.
+        log_data["is_completed"] = resolve_set_completed(log_data, log.is_completed)
+
+        result = (
+            db.client.table("performance_logs")
+            .upsert(log_data, on_conflict=SET_NATURAL_KEY_ON_CONFLICT)
+            .execute()
+        )
+        created = (result.data or [None])[0]
+        if not created:
+            raise safe_internal_error(
+                ValueError("performance_logs upsert returned no row"),
+                "performance_db",
+            )
+        logger.info(f"Performance log stored: id={created['id']}, user_id={log.user_id}")
         return row_to_performance_log(created)
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error creating performance log: {e}", exc_info=True)
         raise safe_internal_error(e, "performance_db")
@@ -361,10 +398,16 @@ async def create_performance_logs_bulk(
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Bulk-insert performance logs in a single round trip.
+    Bulk-store performance logs in a single round trip.
 
     Used by the end-of-workout save flow to avoid N sequential POSTs
     (one per set) — a typical 20-set workout spent 3–5 seconds here.
+
+    IDEMPOTENT ON (workout_log_id, exercise_name, set_number), same as
+    `POST /logs` — see that endpoint for why (E2E register #71). The payload is
+    collapsed on that key first: Postgres rejects an entire
+    `INSERT ... ON CONFLICT DO UPDATE` batch that names the same key twice
+    ("command cannot affect row a second time").
     """
     if not logs:
         return {"inserted": 0}
@@ -416,13 +459,25 @@ async def create_performance_logs_bulk(
             _bag = build_metrics_bag(log)
             rec["metrics"] = _bag
             mirror_first_class_to_columns(_bag, rec)
+            # Recorded work ⇒ completed (register #75). See POST /logs.
+            rec["is_completed"] = resolve_set_completed(rec, log.is_completed)
             return rec
 
-        records = [_record_for(log) for log in logs]
-        result = db.client.table("performance_logs").insert(records).execute()
-        inserted = len(result.data or [])
-        logger.info(f"Performance logs bulk-inserted: count={inserted}, user_id={logs[0].user_id}")
-        return {"inserted": inserted}
+        records = dedupe_sets_by_natural_key([_record_for(log) for log in logs])
+        collapsed = len(logs) - len(records)
+        if collapsed:
+            logger.info(
+                f"Bulk performance-log payload collapsed {collapsed} repeated "
+                f"set key(s) for user {logs[0].user_id}"
+            )
+        result = (
+            db.client.table("performance_logs")
+            .upsert(records, on_conflict=SET_NATURAL_KEY_ON_CONFLICT)
+            .execute()
+        )
+        stored = len(result.data or [])
+        logger.info(f"Performance logs bulk-stored: count={stored}, user_id={logs[0].user_id}")
+        return {"inserted": stored}
 
     except Exception as e:
         logger.error(f"Error bulk-creating performance logs: {e}", exc_info=True)
