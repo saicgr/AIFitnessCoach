@@ -176,6 +176,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             try:
                 sched = body.scheduled_date
                 end_of_day = sched + "T23:59:59.999999+00:00" if len(sched) == 10 else sched
+                # A COMPLETED workout must NOT block generation (issue #4).
+                # /workouts/today excludes completed workouts when it decides
+                # `needs_generation`, so treating a finished row as a blocking
+                # duplicate here makes the two endpoints disagree forever and
+                # pins the client on "Generating your workout…". Predicate is in
+                # the QUERY (never a post-`.limit()` Python filter), with the
+                # NULL arm spelled out because `is_completed` is nullable.
                 existing = db.client.table("workouts").select("*").eq(
                     "user_id", body.user_id
                 ).gte(
@@ -184,7 +191,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     "scheduled_date", end_of_day
                 ).eq(
                     "is_current", True
-                ).neq("status", "cancelled").limit(1).execute()
+                ).neq("status", "cancelled").or_(
+                    "is_completed.is.null,is_completed.eq.false"
+                ).order("created_at", desc=True).limit(1).execute()
                 if existing.data:
                     logger.info(f"✅ [Dedup] Workout already exists for {body.user_id} on {body.scheduled_date} (existing profile={existing.data[0].get('gym_profile_id')}, requested profile={dedup_gym_profile_id}), returning existing")
                     return row_to_workout(existing.data[0])

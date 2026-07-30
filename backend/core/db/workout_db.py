@@ -17,6 +17,48 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 
+# ---------------------------------------------------------------------------
+# User-initiated workouts (the ONE enumeration)
+# ---------------------------------------------------------------------------
+# A workout scheduled for a day is either the day's CANONICAL plan (the
+# generated/library/program session, is_current=TRUE, governed by the partial
+# unique index `workouts_one_current_per_user_day`) or a USER-INITIATED EXTRA
+# the person asked for on top of it — a manual entry, a Quick workout, a
+# workout the coach built in chat, a Studio build.
+#
+# Extras are is_current=FALSE with valid_to IS NULL: they are NOT superseded,
+# they simply do not own the day's canonical slot. Migration 2049 relaxed the
+# unique index for the first four sources for exactly this reason.
+#
+# `chat`/`studio` were NOT on either list, so a coach-created workout was
+# written is_current=TRUE and fought the day's planned session for the one
+# canonical slot: whichever insert lost raised 23505 (Postgres unique
+# violation), and when the chat workout won it silently displaced the
+# scheduled one. They belong here — with the read-side filter in
+# `list_workouts` widened to match so an extra stays VISIBLE rather than
+# disappearing the way the three legacy is_current=FALSE `chat` rows in
+# production did.
+USER_INITIATED_WORKOUT_SOURCES = (
+    "manual",
+    "user_created",
+    "quick_workout",
+    "manual_create",
+    "chat",
+    "studio",
+)
+
+# The subset the partial unique index `workouts_one_current_per_user_day`
+# already excludes (migration 2049). Sources OUTSIDE this set cannot be written
+# is_current=TRUE on a day that already has a canonical row without raising
+# 23505, which is why `create_workout` forces them to FALSE.
+_INDEX_EXEMPT_WORKOUT_SOURCES = (
+    "manual",
+    "user_created",
+    "quick_workout",
+    "manual_create",
+)
+
+
 class WorkoutDB(BaseDB):
     """
     Database operations for workout management.
@@ -108,7 +150,7 @@ class WorkoutDB(BaseDB):
         query = query.or_(
             "is_current.eq.true,"
             "and(is_current.eq.false,valid_to.is.null,"
-            "generation_source.in.(manual,user_created,quick_workout,manual_create)),"
+            f"generation_source.in.({','.join(USER_INITIATED_WORKOUT_SOURCES)})),"
             "and(is_current.eq.false,valid_to.is.null,assignment_id.not.is.null)"
         )
 
@@ -271,7 +313,7 @@ class WorkoutDB(BaseDB):
         # legitimately build a 1-move session. Wrapped so it can NEVER block.
         try:
             _gsrc = (data.get("generation_source") or "").lower()
-            _exempt = _gsrc in ("manual", "user_created", "quick_workout", "manual_create")
+            _exempt = _gsrc in USER_INITIATED_WORKOUT_SOURCES
             if not _exempt and not data.get("is_degraded"):
                 _exs = data.get("exercises_json")
                 if isinstance(_exs, str):
@@ -311,6 +353,31 @@ class WorkoutDB(BaseDB):
                             pass
         except Exception:
             pass  # fail open — the tripwire must never block an insert
+
+        # is_current semantics for USER-INITIATED EXTRAS (issue #61).
+        #
+        # `workouts.is_current` DEFAULTs to TRUE, so a coach-created ("chat") or
+        # Studio-built workout claimed the day's ONE canonical slot. Those two
+        # sources are not exempt from `workouts_one_current_per_user_day`, so
+        # against a day that already holds the planned session the insert raised
+        # 23505 (the user saw "I built your workout but couldn't save it"), and
+        # on an empty day it took the slot and made the later scheduled
+        # generation collide instead — i.e. the chat workout silently displaced
+        # the scheduled one.
+        #
+        # An extra the user asked for ADDS to the day; it does not replace the
+        # plan. Write it is_current=FALSE / valid_to=NULL — the shape
+        # `list_workouts` (widened above) surfaces as a same-day extra — unless
+        # the caller has explicitly asked for a specific is_current, which the
+        # SCD2 supersede path does.
+        _src = (data.get("generation_source") or "").lower()
+        if (
+            "is_current" not in data
+            and _src in USER_INITIATED_WORKOUT_SOURCES
+            and _src not in _INDEX_EXEMPT_WORKOUT_SOURCES
+        ):
+            data["is_current"] = False
+            data.setdefault("valid_to", None)
 
         try:
             result = self.client.table("workouts").insert(data).execute()
@@ -557,8 +624,11 @@ class WorkoutDB(BaseDB):
 
         This method:
         1. Gets the old workout and its version info
-        2. Marks the old workout as not current (is_current=False, valid_to=now)
+        2. RETIRES the old workout first (is_current=False, valid_to=now) —
+           see the ordering note below; the partial unique index makes this
+           order mandatory
         3. Creates a new workout with incremented version and parent reference
+           (restoring the old row if that insert fails)
         4. Updates the old workout's superseded_by to point to the new one
 
         Args:
@@ -581,16 +651,60 @@ class WorkoutDB(BaseDB):
         old_version = old_workout.get("version_number", 1)
 
         new_workout_data["version_number"] = old_version + 1
-        new_workout_data["is_current"] = True
+        # Inherit the old row's slot role. Superseding a USER-INITIATED EXTRA
+        # (is_current=FALSE, valid_to IS NULL — a chat/Studio/quick workout that
+        # sits alongside the day's plan) must produce another extra; forcing
+        # is_current=TRUE would make the new version fight the day's canonical
+        # session for the one slot `workouts_one_current_per_user_day` allows.
+        _old_was_extra = (
+            old_workout.get("is_current") is False
+            and old_workout.get("valid_to") is None
+        )
+        new_workout_data["is_current"] = not _old_was_extra
         new_workout_data["valid_from"] = now
         new_workout_data["valid_to"] = None
         new_workout_data["parent_workout_id"] = parent_id
         new_workout_data["superseded_by"] = None
 
-        new_workout = self.create_workout(new_workout_data)
+        # ORDER IS LOAD-BEARING — retire the old row BEFORE inserting the new
+        # one. `workouts_one_current_per_user_day` (migration 2048, applied
+        # 2026-05-03) is a PARTIAL UNIQUE index on
+        # (user_id, scheduled_date::date) WHERE is_current = true. Inserting the
+        # new is_current=true version while the old one is still is_current=true
+        # puts two current rows on the same day inside the same statement window
+        # and the INSERT raises 23505 — which is precisely why single-day
+        # regenerate (POST /workouts/regenerate-commit -> supersede_workout) has
+        # been broken at the DB level since that date.
+        #
+        # Retiring first leaves a sub-second window with NO current row for the
+        # day; that is strictly safer than the alternative (an exception that
+        # loses the regenerate entirely), and if the insert then fails we
+        # restore the old row rather than leaving the user with nothing.
+        self.client.table("workouts").update(
+            {"is_current": False, "valid_to": now}
+        ).eq("id", old_workout_id).execute()
+
+        try:
+            new_workout = self.create_workout(new_workout_data)
+        except Exception:
+            # Roll the old version back to current so a failed supersede does
+            # not silently delete the user's scheduled workout for that day.
+            self.client.table("workouts").update(
+                {"is_current": True, "valid_to": None}
+            ).eq("id", old_workout_id).execute()
+            raise
+
+        if not new_workout:
+            self.client.table("workouts").update(
+                {"is_current": True, "valid_to": None}
+            ).eq("id", old_workout_id).execute()
+            raise ValueError(
+                f"supersede_workout: insert of the new version of "
+                f"{old_workout_id} returned no row"
+            )
 
         self.client.table("workouts").update(
-            {"is_current": False, "valid_to": now, "superseded_by": new_workout["id"]}
+            {"superseded_by": new_workout["id"]}
         ).eq("id", old_workout_id).execute()
 
         return new_workout

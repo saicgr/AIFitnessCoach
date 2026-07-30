@@ -399,12 +399,42 @@ async def _complete_workout(db, user_id: str, completion: WorkoutCompletionReque
             .eq("idempotency_key", f"watch-{completion.session_id}") \
             .limit(1).execute()
         if parent.data:
-            db.table("workout_logs").update({
+            # Rebuild the session's sets_json from performance_logs — the watch
+            # streams every set straight into performance_logs and the parent
+            # row was created with sets_json='[]', so closing it as-is shipped a
+            # 'completed' session with an EMPTY set list (the same defect class
+            # as the Easy tier's lost finalize PATCH; see workout_log_finalize).
+            # Every sets_json reader — workout summaries, volume, PR detection —
+            # saw nothing for a watch workout.
+            _watch_sets = []
+            try:
+                from api.v1.workouts.workout_log_finalize import (
+                    build_sets_json_from_performance_logs,
+                )
+
+                # `db` here is the raw Supabase client; the helper accepts
+                # either that or the DB facade.
+                _watch_sets = build_sets_json_from_performance_logs(
+                    db, parent.data[0]["id"]
+                )
+            except Exception as rebuild_err:
+                logger.error(
+                    f"[LogFinalize] watch sets_json rebuild failed for session "
+                    f"{completion.session_id}: {rebuild_err}",
+                    exc_info=True,
+                )
+
+            _log_update = {
                 "status": "completed",
                 "completed_at": ended_at.isoformat(),
                 "duration_minutes": duration_minutes,
                 "total_time_seconds": int((ended_at - started_at).total_seconds()),
-            }).eq("id", parent.data[0]["id"]).execute()
+            }
+            if _watch_sets:
+                _log_update["sets_json"] = _watch_sets
+            db.table("workout_logs").update(_log_update).eq(
+                "id", parent.data[0]["id"]
+            ).execute()
             if not completion.workout_id and parent.data[0].get("workout_id"):
                 db.table("workouts").update({
                     "is_completed": True,

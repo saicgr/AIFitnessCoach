@@ -33,12 +33,21 @@ from models.schemas import (
     UpdateStretchExercisesRequest,
 )
 from services.regen_preview_cache import get_preview_cache
-from services.exercise_library_service import get_exercise_library_service
+from services.exercise_rag.injury_guard import (
+    InjuryUnsafeExerciseError,
+    resolve_user_chosen_exercise,
+)
 
 from .utils import (
     row_to_workout,
     log_workout_change,
     index_workout_to_rag,
+)
+from .workout_operations import (
+    assert_edit_introduces_no_unsafe_exercise,
+    injury_block_response,
+    parse_exercises_json,
+    resolve_active_injuries,
 )
 
 router = APIRouter()
@@ -65,6 +74,15 @@ async def update_workout_exercises(workout_id: str, request: UpdateWorkoutExerci
 
         # Convert exercises to dict list
         exercises_list = [ex.model_dump() for ex in request.exercises]
+
+        # Row 88 (class-wide): a whole-list replace is another way a user-picked
+        # exercise reaches exercises_json. Only NEW names are screened, so a plain
+        # reorder or removal is untouched.
+        await assert_edit_introduces_no_unsafe_exercise(
+            existing.get("user_id"),
+            parse_exercises_json(existing.get("exercises_json")),
+            exercises_list,
+        )
 
         # Update workout
         update_data = {
@@ -195,11 +213,14 @@ async def update_stretch_exercises(workout_id: str, request: UpdateStretchExerci
 # and /workouts/add-exercise when `preview_id` is present.
 #
 # Design choices:
-# - We duplicate the library-lookup logic from workout_operations.py rather
-#   than importing, to keep the preview path self-contained and to avoid
-#   dragging in transitively-owned endpoints (rate limiters, background
-#   tasks, etc.). The preview operations are pure in-memory dict mutations
-#   and don't need rate limiting, background tasks, or analytics hooks.
+# - The library lookup is NOT duplicated here any more. It used to be a copy of
+#   workout_operations.py's, "to keep the preview path self-contained" — and the
+#   copy is exactly why register row 88 shipped: the injury screen was wired into
+#   one lookup and not the other. Both now go through the single screened
+#   resolver (`services.exercise_rag.injury_guard.resolve_user_chosen_exercise`),
+#   which cannot be called without the user's injuries. The preview operations
+#   are still pure in-memory dict mutations otherwise — no rate limiting,
+#   background tasks or analytics hooks.
 # - Derived fields (duration, exercise count) are recomputed on every mutation
 #   so the review sheet stays consistent.
 # - Mutations are atomic via preview_cache.update() — the mutator runs under
@@ -247,38 +268,26 @@ def _sum_duration_seconds(exercises: List[Dict[str, Any]]) -> Optional[int]:
     return int(total)
 
 
-def _lookup_exercise(exercise_name: str, exercise_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Look up an exercise by id or name across both library stores."""
-    lib = get_exercise_library_service()
-    if exercise_id:
-        found = lib.get_exercise_by_id(exercise_id)
-        if found:
-            return found
-    results = lib.search_exercises(exercise_name, limit=1)
-    if results:
-        return results[0]
+async def _lookup_exercise_screened(
+    exercise_name: str,
+    exercise_id: Optional[str],
+    *,
+    user_id: str,
+) -> Optional[Dict[str, Any]]:
+    """Resolve a user-picked exercise for a preview, screened for injuries.
 
-    # Fallback: exercise_library_cleaned (same pattern as workout_operations.py)
-    try:
-        db = get_supabase_db()
-        cleaned = db.client.table("exercise_library_cleaned") \
-            .select("id, name, target_muscle, body_part, equipment, gif_url, video_url, secondary_muscles, instructions") \
-            .ilike("name", exercise_name) \
-            .limit(1) \
-            .execute()
-        if cleaned.data:
-            row = cleaned.data[0]
-            return {
-                **row,
-                "name": row.get("name", exercise_name),
-                "muscle_group": row.get("target_muscle") or row.get("body_part", ""),
-            }
-    except Exception as e:
-        logger.warning(
-            f"Fallback exercise_library_cleaned lookup failed for '{exercise_name}': {e}",
-            exc_info=True,
-        )
-    return None
+    Register row 88. The preview surfaces let the user name the exercise, and the
+    preview is what the "save" flow persists — so the raw library lookup that used
+    to live here (a duplicate of workout_operations.py's) is gone. The single
+    screened resolver in `services.exercise_rag.injury_guard` takes its place and
+    cannot be called without the caller's injuries.
+
+    Raises `InjuryUnsafeExerciseError`; the endpoints translate it to a 409.
+    """
+    injuries = await resolve_active_injuries(user_id)
+    return await resolve_user_chosen_exercise(
+        exercise_name, exercise_id, injuries=injuries
+    )
 
 
 class PreviewSwapExerciseRequest(BaseModel):
@@ -393,7 +402,12 @@ async def preview_swap_exercise(
         )
 
     # Look up the new exercise (library lookup runs outside the cache lock).
-    new_ex_info = _lookup_exercise(body.new_exercise_name, body.new_exercise_id)
+    try:
+        new_ex_info = await _lookup_exercise_screened(
+            body.new_exercise_name, body.new_exercise_id, user_id=user_id
+        )
+    except InjuryUnsafeExerciseError as unsafe:
+        raise injury_block_response(unsafe)
 
     def _mutate(payload: Dict[str, Any]) -> Dict[str, Any]:
         exercises = payload.get("exercises_json") or []
@@ -512,7 +526,12 @@ async def preview_add_exercise(
             "The preview has expired. Please regenerate and try again.",
         )
 
-    ex_info = _lookup_exercise(body.exercise_name, body.exercise_id)
+    try:
+        ex_info = await _lookup_exercise_screened(
+            body.exercise_name, body.exercise_id, user_id=user_id
+        )
+    except InjuryUnsafeExerciseError as unsafe:
+        raise injury_block_response(unsafe)
 
     def _mutate(payload: Dict[str, Any]) -> Dict[str, Any]:
         exercises = payload.get("exercises_json") or []

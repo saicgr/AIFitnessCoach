@@ -12,7 +12,7 @@ import json
 import re
 import uuid
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
@@ -25,7 +25,7 @@ from models.schemas import (
     AddExerciseRequest, ExtendWorkoutRequest, EditWorkoutExercisesRequest,
 )
 from services.gemini_service import GeminiService
-from services.exercise_library_service import get_exercise_library_service
+from services.workout_summary_metrics import SET_NATURAL_KEY_ON_CONFLICT
 
 from .utils import (
     row_to_workout,
@@ -44,10 +44,110 @@ from .focus_validation_utils import (
 from .generation_helpers import normalize_exercise_numeric_fields
 from .substitutions import upsert_substitution
 from .scheduled_date_anchor import anchor_scheduled_date
+from .readiness_utils import get_active_injuries_with_muscles
 from core.timezone_utils import resolve_timezone
+from services.exercise_rag.injury_guard import (
+    InjuryUnsafeExerciseError,
+    resolve_user_chosen_exercise,
+)
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Injury screening for USER-CHOSEN exercises (register row 88)
+# ---------------------------------------------------------------------------
+# /swap-exercise and /add-exercise let the user name the exercise, so there is no
+# candidate list for the terminal `enforce_injury_safety` gate to filter — the
+# name goes straight from the picker into `exercises_json`. Both now resolve the
+# exercise through `resolve_user_chosen_exercise`, which screens it and cannot be
+# called without the user's injuries.
+
+
+async def resolve_active_injuries(user_id: Optional[str]) -> List[str]:
+    """The user's active injuries from BOTH stores (`user_injuries` + profile)."""
+    if not user_id:
+        return []
+    resolved = await get_active_injuries_with_muscles(str(user_id))
+    return [i for i in (resolved.get("injuries") or []) if i]
+
+
+def _humanize_injuries(injuries: List[str]) -> str:
+    labels = [str(i).replace("_", " ").strip() for i in injuries if i]
+    if not labels:
+        return "injury"
+    if len(labels) == 1:
+        return labels[0]
+    return ", ".join(labels[:-1]) + " and " + labels[-1]
+
+
+def injury_block_response(exc: InjuryUnsafeExerciseError) -> HTTPException:
+    """409 — the user asked for something their injuries rule out.
+
+    Explicit refusal, not a silent substitution: the user picked this exercise,
+    so they get told why it can't be used rather than quietly receiving a
+    different one.
+    """
+    return HTTPException(
+        status_code=409,
+        detail={
+            "error": "EXERCISE_UNSAFE_FOR_INJURY",
+            "message": (
+                f"{exc.exercise_name} isn't safe to program around your "
+                f"{_humanize_injuries(exc.injuries)} right now. Pick a different "
+                f"exercise, or mark that injury healed first."
+            ),
+            "exercise": exc.exercise_name,
+            "reason": exc.reason,
+            "injuries": exc.injuries,
+        },
+    )
+
+
+def parse_exercises_json(value) -> List[Dict[str, Any]]:
+    """`exercises_json` is stored as jsonb but read back as a list OR a string."""
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except (ValueError, TypeError):
+            return []
+    return [e for e in value if isinstance(e, dict)] if isinstance(value, list) else []
+
+
+async def assert_edit_introduces_no_unsafe_exercise(
+    user_id: Optional[str],
+    existing_exercises: List[Dict[str, Any]],
+    new_exercises: List[Dict[str, Any]],
+) -> None:
+    """Screen only the exercises an edit INTRODUCES (register row 88, class-wide).
+
+    The whole-list edit endpoints (`PATCH /{id}/exercises`,
+    `PUT /{id}/exercises`) accept a client-supplied exercise list, so they are
+    another way for a user-picked exercise to reach `exercises_json` without
+    passing the swap/add screen. Screening the WHOLE list would refuse a plain
+    reorder or removal of something the generator already put there, so only
+    names that are not already in the workout are screened — exactly the
+    "the user just picked this" case.
+    """
+    injuries = await resolve_active_injuries(user_id)
+    if not injuries:
+        return
+    from services.exercise_rag.injury_guard import screen_exercise_for_injury
+
+    already = {
+        (e.get("name") or e.get("exercise_name") or "").strip().lower()
+        for e in existing_exercises
+    }
+    for ex in new_exercises:
+        name = (ex.get("name") or ex.get("exercise_name") or "").strip()
+        if not name or name.lower() in already:
+            continue
+        reason = await screen_exercise_for_injury(ex, injuries)
+        if reason:
+            raise injury_block_response(
+                InjuryUnsafeExerciseError(name, reason, injuries)
+            )
 
 
 @router.post("/swap")
@@ -132,35 +232,28 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
         except Exception as e:
             logger.warning(f"Non-critical: Failed to get muscle profiles for swap comparison: {e}", exc_info=True)
 
+        # Row 88: the replacement is screened against the OWNER's active injuries
+        # before anything is written. `resolve_user_chosen_exercise` is the only
+        # lookup here — there is no unscreened path to a replacement row.
+        _injuries = await resolve_active_injuries(workout.get("user_id"))
+        try:
+            new_ex = await resolve_user_chosen_exercise(
+                payload.new_exercise_name,
+                # SwapExerciseRequest carries no id today; read it defensively so
+                # adding one to the schema wires it up without another edit here.
+                getattr(payload, "new_exercise_id", None),
+                injuries=_injuries,
+            )
+        except InjuryUnsafeExerciseError as unsafe:
+            raise injury_block_response(unsafe)
+
         exercise_found = False
         i = 0
         for i, exercise in enumerate(exercises):
             if exercise.get("name", "").lower() == payload.old_exercise_name.lower():
                 exercise_found = True
 
-                exercise_lib = get_exercise_library_service()
-                new_exercise_data = exercise_lib.search_exercises(payload.new_exercise_name, limit=1)
-
-                if not new_exercise_data:
-                    try:
-                        cleaned_result = db.client.table("exercise_library_cleaned") \
-                            .select("id, name, target_muscle, body_part, equipment, gif_url, video_url, secondary_muscles, instructions") \
-                            .ilike("name", payload.new_exercise_name) \
-                            .limit(1) \
-                            .execute()
-                        if cleaned_result.data:
-                            row = cleaned_result.data[0]
-                            new_exercise_data = [{
-                                **row,
-                                "name": row.get("name", payload.new_exercise_name),
-                                "muscle_group": row.get("target_muscle") or row.get("body_part", ""),
-                            }]
-                            logger.info(f"Found exercise in exercise_library_cleaned: {row.get('name')}")
-                    except Exception as e:
-                        logger.warning(f"Fallback exercise_library_cleaned lookup failed: {e}", exc_info=True)
-
-                if new_exercise_data:
-                    new_ex = new_exercise_data[0]
+                if new_ex:
                     exercises[i] = {
                         **exercise,
                         "name": new_ex.get("name", payload.new_exercise_name),
@@ -320,6 +413,12 @@ async def edit_workout_exercises(request: Request, workout_id: str, payload: Edi
         if str(workout.get("user_id")) != str(current_user["id"]):
             raise HTTPException(status_code=403, detail="Not your workout")
 
+        await assert_edit_introduces_no_unsafe_exercise(
+            workout.get("user_id"),
+            parse_exercises_json(workout.get("exercises_json")),
+            [e for e in (payload.exercises or []) if isinstance(e, dict)],
+        )
+
         now = datetime.now().isoformat()
         updated = db.update_workout(workout_id, {
             "exercises_json": json.dumps(payload.exercises),
@@ -393,12 +492,18 @@ async def add_exercise_to_workout(request: Request, payload: AddExerciseRequest,
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
 
-        exercise_lib = get_exercise_library_service()
-        if payload.exercise_id:
-            ex_by_id = exercise_lib.get_exercise_by_id(payload.exercise_id)
-            exercise_data = [ex_by_id] if ex_by_id else exercise_lib.search_exercises(payload.exercise_name, limit=1)
-        else:
-            exercise_data = exercise_lib.search_exercises(payload.exercise_name, limit=1)
+        # Row 88 (same class as the swap): a user-added exercise is written
+        # straight into exercises_json, so it is screened before it is resolved.
+        _injuries = await resolve_active_injuries(workout.get("user_id"))
+        try:
+            _resolved = await resolve_user_chosen_exercise(
+                payload.exercise_name,
+                payload.exercise_id,
+                injuries=_injuries,
+            )
+        except InjuryUnsafeExerciseError as unsafe:
+            raise injury_block_response(unsafe)
+        exercise_data = [_resolved] if _resolved else []
 
         exercise_name = payload.exercise_name
         muscle_group = None
@@ -838,17 +943,98 @@ async def log_set_endpoint(
         if not target:
             raise HTTPException(status_code=404, detail="Exercise not in workout")
 
-        weight_kg = None
-        if weight is not None:
-            w = float(weight)
-            weight_kg = w * LBS_TO_KG if weight_unit in ("lb", "lbs") else w
+        # `performance_logs.reps_completed` and `.weight_kg` are NOT NULL.
+        # Reps carry the actual work, so an omitted `reps` is a client bug, not
+        # something to invent a number for — reject it explicitly.
+        if reps is None:
+            raise HTTPException(
+                status_code=400,
+                detail="reps is required to log a set",
+            )
+        reps = int(reps)
 
-        # Override-check: if a log exists for this slot and override=False → 409.
+        # weight_kg is NOT NULL and 0.0 is the schema's own encoding for an
+        # unloaded (bodyweight) set — the same value the Easy/Advanced tiers
+        # write for stretches and bodyweight moves. It is a real measurement,
+        # not a placeholder default.
+        w = float(weight) if weight is not None else 0.0
+        weight_kg = w * LBS_TO_KG if weight_unit in ("lb", "lbs") else w
+
+        user_id = workout.get("user_id")
+
+        # `performance_logs.workout_log_id` is NOT NULL — every set needs its
+        # parent SESSION row. This endpoint never resolved one, so the insert
+        # below could only ever raise 23502 and POST /workouts/{id}/log-set
+        # could NEVER succeed. Find-or-create the session row for this workout,
+        # exactly the way the watch path does, keyed by an idempotency_key so
+        # concurrent set logs share one session instead of stacking sessions.
+        #
+        # The row is created 'in_progress' with an empty set list: an empty set
+        # list is not a finished session, and `trg_sync_workout_completion`
+        # must not flip `workouts.is_completed` off the first logged set
+        # (register row #1).
+        idem_key = f"logset-{workout_id}"
+        workout_log_id = None
+        existing_log = (
+            db.client.table("workout_logs")
+            .select("id")
+            .eq("workout_id", workout_id)
+            .eq("user_id", user_id)
+            .order("completed_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if existing_log.data:
+            workout_log_id = existing_log.data[0]["id"]
+        else:
+            try:
+                created_log = (
+                    db.client.table("workout_logs")
+                    .insert({
+                        "workout_id": workout_id,
+                        "user_id": user_id,
+                        "status": "in_progress",
+                        "sets_json": [],
+                        "total_time_seconds": 0,
+                        "idempotency_key": idem_key,
+                        "gym_profile_id": workout.get("gym_profile_id"),
+                    })
+                    .execute()
+                )
+                workout_log_id = (created_log.data or [{}])[0].get("id")
+            except Exception:
+                # A concurrent set logged the same session first — re-read.
+                retry = (
+                    db.client.table("workout_logs")
+                    .select("id")
+                    .eq("idempotency_key", idem_key)
+                    .limit(1)
+                    .execute()
+                )
+                if retry.data:
+                    workout_log_id = retry.data[0]["id"]
+                else:
+                    raise
+        if not workout_log_id:
+            raise safe_internal_error(
+                ValueError(f"could not resolve workout_log for workout {workout_id}"),
+                "workout_operations",
+            )
+
+        # Override-check, scoped to THIS SESSION.
+        #
+        # It used to match on (user_id, exercise_name, set_number) with no
+        # session scope at all, so any user who had ever logged set 1 of e.g.
+        # "Barbell Curl" got a permanent 409 — and override=true DELETED every
+        # set 1 of that exercise from their entire history. The natural key is
+        # (workout_log_id, exercise_name, set_number) — the one migration 2342
+        # enforces with a unique index — so an override is an UPSERT on that
+        # key, never a cross-session delete.
         if not override:
             existing = (
                 db.client.table("performance_logs")
                 .select("id")
-                .eq("user_id", workout.get("user_id"))
+                .eq("workout_log_id", workout_log_id)
                 .eq("exercise_name", target.get("name"))
                 .eq("set_number", set_index)
                 .limit(1)
@@ -859,24 +1045,55 @@ async def log_set_endpoint(
                     status_code=409,
                     detail=f"Set {set_index} already logged. Pass override=true to replace.",
                 )
-        else:
-            db.client.table("performance_logs").delete().eq(
-                "user_id", workout.get("user_id")
-            ).eq("exercise_name", target.get("name")).eq("set_number", set_index).execute()
+
+        # `set_type` has a CHECK constraint
+        # (working|warmup|drop_set|failure|amrap) — 'side_L'/'side_R' violated
+        # it with 23514, the second reason this endpoint could never succeed.
+        # Unilateral side is not a set TYPE; it lives in the generic metric bag.
+        metrics = {"side": side} if side in ("L", "R") else None
 
         row = {
-            "user_id": workout.get("user_id"),
+            "workout_log_id": workout_log_id,
+            "user_id": user_id,
             "exercise_name": target.get("name"),
-            "exercise_id": target.get("library_id") or exercise_id,
+            # NOT NULL varchar — fall back through the ids the workout carries.
+            "exercise_id": (
+                target.get("library_id")
+                or target.get("exercise_id")
+                or exercise_id
+                or target.get("name")
+            ),
             "set_number": set_index,
             "reps_completed": reps,
             "weight_kg": weight_kg,
             "rir": rir,
-            "set_type": "side_L" if side == "L" else ("side_R" if side == "R" else "working"),
-            "recorded_at": datetime.now().isoformat(),
+            "set_type": "working",
+            "is_completed": True,
+            "gym_profile_id": workout.get("gym_profile_id"),
+            # UTC — `recorded_at` is timestamptz and datetime.now() is a naive
+            # SERVER-local wall clock, which shifted every logged set by the
+            # host's offset.
+            "recorded_at": datetime.now(timezone.utc).isoformat(),
         }
-        result = db.client.table("performance_logs").insert(row).execute()
-        return {"success": True, "log_id": (result.data or [{}])[0].get("id")}
+        if metrics:
+            row["metrics"] = metrics
+
+        result = (
+            db.client.table("performance_logs")
+            .upsert(row, on_conflict=SET_NATURAL_KEY_ON_CONFLICT)
+            .execute()
+        )
+        created = (result.data or [{}])[0]
+        if not created.get("id"):
+            raise safe_internal_error(
+                ValueError("performance_logs upsert returned no row"),
+                "workout_operations",
+            )
+        return {
+            "success": True,
+            "log_id": created.get("id"),
+            "workout_log_id": workout_log_id,
+        }
 
     except HTTPException:
         raise

@@ -84,7 +84,12 @@ async def bulk_sync(
             item.entity_type == "workout_log"
             and item.operation_type in ("create", "insert")
         ):
-            payload = {**item.payload, "user_id": user_id}
+            # Same server-side status derivation as the per-item fallback
+            # handler below — this batched path is the one the offline queue
+            # actually drains, so it must not be the hole in the wall.
+            payload = _apply_derived_workout_log_status(
+                {**item.payload, "user_id": user_id}
+            )
             workout_log_upserts.append(payload)
             workout_log_upsert_ids.append(item.entity_id)
         elif item.entity_type == "workout_completion":
@@ -210,10 +215,51 @@ async def import_sync_data(
 # ---------------------------------------------------------------------------
 
 
+def _sets_json_is_empty(value) -> bool:
+    """True when a synced workout_log payload carries no logged sets."""
+    if value is None:
+        return True
+    if isinstance(value, list):
+        return len(value) == 0
+    if isinstance(value, str):
+        return value.strip() in ("", "[]", "null")
+    if isinstance(value, dict):
+        return len(value) == 0
+    return False
+
+
+def _apply_derived_workout_log_status(payload: dict) -> dict:
+    """Derive `workout_logs.status` server-side — NEVER trust the client's.
+
+    `workout_logs.status` used to DEFAULT to 'completed', and
+    `trg_sync_workout_completion` (migration 2256) flips
+    `workouts.is_completed = true` off that status. Because this handler
+    upserts the offline client's payload VERBATIM, a queued row that simply
+    omitted `status` — which is exactly what the Easy tier's first-set row
+    looks like: `sets_json = '[]'` — inserted as 'completed' and marked the
+    whole workout finished after one set. Migration 2390 flips the column
+    default to 'in_progress' and adds an empty-sets guard to the trigger; this
+    makes the SYNC WRITER agree with `POST /performance/workout-logs`
+    (performance_db.py, `derived_status`) rather than depend on either.
+
+    An empty set list is by definition not a finished session, so it can never
+    sync as 'completed' regardless of what the queued payload claims.
+    """
+    if "sets_json" not in payload:
+        # A partial update that does not touch the set list must not have a
+        # status invented for it — leave whatever the row already holds.
+        return payload
+    payload["status"] = (
+        "in_progress" if _sets_json_is_empty(payload.get("sets_json")) else "completed"
+    )
+    return payload
+
+
 async def _process_workout_log(supabase, user_id: str, item: SyncBulkItem):
     """Process a workout_log sync item."""
     payload = item.payload
     payload["user_id"] = user_id
+    _apply_derived_workout_log_status(payload)
 
     if item.operation_type in ("create", "insert"):
         supabase.client.table("workout_logs").upsert(

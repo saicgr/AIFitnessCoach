@@ -86,6 +86,9 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
             try:
                 sched = body.scheduled_date
                 end_of_day = sched + "T23:59:59.999999+00:00" if len(sched) == 10 else sched
+                # A COMPLETED workout must NOT block generation (issue #4) —
+                # same predicate as /generate-stream and /workouts/generate.
+                # In the QUERY, not a Python filter applied after `.limit()`.
                 existing = db.client.table("workouts").select("*").eq(
                     "user_id", body.user_id
                 ).gte(
@@ -94,7 +97,9 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                     "scheduled_date", end_of_day
                 ).eq(
                     "is_current", True
-                ).neq("status", "cancelled").limit(1).execute()
+                ).neq("status", "cancelled").or_(
+                    "is_completed.is.null,is_completed.eq.false"
+                ).order("created_at", desc=True).limit(1).execute()
                 if existing.data:
                     logger.info(f"✅ [Dedup] Workout already exists for {body.user_id} on {body.scheduled_date}, returning existing")
                     return row_to_workout(existing.data[0])

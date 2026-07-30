@@ -157,11 +157,16 @@ async def generate_next_day_background(user_id: str, target_date: str):
         try:
             db = get_supabase_db()
 
-            # Check if workout already exists for target date
+            # Check if workout already exists for target date.
+            # is_completed=False (issue #4): /workouts/today ignores completed
+            # workouts when it decides whether the day still needs one, so a
+            # pre-cache that counts a finished workout as "already exists"
+            # leaves the next day permanently ungenerated.
             existing = db.list_workouts(
                 user_id=user_id,
                 from_date=target_date,
                 to_date=target_date,
+                is_completed=False,
                 limit=1,
             )
             if existing:
@@ -225,8 +230,12 @@ async def generate_next_day_background(user_id: str, target_date: str):
                                     f"workout day was suggested; skipping pre-cache")
                         return
                     # Don't regenerate if the next workout day is already cached.
+                    # is_completed=False for the same reason as the primary
+                    # check above — a finished workout on the suggested day
+                    # must not veto the pre-cache (issue #4).
                     existing_suggested = db.list_workouts(
-                        user_id=user_id, from_date=suggested, to_date=suggested, limit=1,
+                        user_id=user_id, from_date=suggested, to_date=suggested,
+                        is_completed=False, limit=1,
                     )
                     if existing_suggested:
                         logger.info(f"[NEXT-DAY] {target_date} is a rest day for {user_id}; workout already "

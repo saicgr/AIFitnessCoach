@@ -146,6 +146,39 @@ async def complete_workout(
 
         logger.info(f"Workout completed: id={workout_id}")
 
+        # Close any still-open workout_logs session row for this workout.
+        #
+        # The Easy tier creates the session row on the user's FIRST set with
+        # sets_json='[]' / status='in_progress' and only backfills the real set
+        # list via a fire-and-forget PATCH at Finish — a PATCH that is NOT in
+        # the offline queue and whose client wrapper swallows every error. When
+        # it is lost, the session is stranded at 'in_progress' with an empty
+        # set list forever and disappears from every `.eq("status","completed")`
+        # reader (progress, scores, PBs, milestones, streak emails), even
+        # though the user's sets are sitting safely in performance_logs.
+        #
+        # /complete is the user's explicit "I finished" — so the SERVER closes
+        # the log here and rebuilds sets_json from performance_logs, the durable
+        # per-set store. Nothing is fabricated: a session with no logged sets
+        # keeps its empty list (and therefore does not satisfy the empty-sets
+        # guard on trg_sync_workout_completion, migration 2390).
+        try:
+            from api.v1.workouts.workout_log_finalize import (
+                finalize_open_logs_for_workout,
+            )
+
+            finalize_open_logs_for_workout(
+                db, workout_id, user_id, completed_at=now.isoformat()
+            )
+        except Exception as finalize_err:
+            # The workout itself is already marked complete — a log-close
+            # failure must be loud (greppable) but must not fail the request.
+            logger.error(
+                f"[LogFinalize] FAILED to close open workout_logs for "
+                f"workout_id={workout_id} user_id={user_id}: {finalize_err}",
+                exc_info=True,
+            )
+
         log_workout_change(
             workout_id=workout_id,
             user_id=workout.user_id,

@@ -6,6 +6,7 @@ Provides:
 - POST /generate-stream - SSE streaming workout generation
 """
 from core.db import get_supabase_db
+from core.db.workout_db import USER_INITIATED_WORKOUT_SOURCES
 from api.v1.workouts.generation_endpoints import _parse_workout_day_overrides
 import json
 import asyncio
@@ -247,6 +248,17 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         # Duplicate check: if a current, non-cancelled workout already exists for
         # this user+date, return it — regardless of gym_profile_id (see comment above).
         # Day-range match (TIMESTAMPTZ), NOT `.eq` on a bare date string.
+        # The is_completed predicate is IN THE QUERY, not applied to the rows
+        # afterwards. A day can legitimately hold more than one is_current row
+        # (workouts_one_current_per_user_day excludes generation_source
+        # manual/user_created/quick_workout/manual_create), so a Python filter
+        # running AFTER `.limit(1)` could see only the completed row, conclude
+        # "no live workout", generate, and then have the supersede UPDATE below
+        # demote EVERY is_current row for that date — silently replacing the
+        # user's live quick workout. `is_completed` is nullable, so the NULL
+        # arm is spelled out rather than relying on PostgREST's three-valued
+        # logic. Deterministic order + a real limit so "which row" is never
+        # left to the planner.
         existing_workout = await asyncio.to_thread(db.client.table("workouts").select("id,name,status,is_completed").eq(
             "user_id", body.user_id
         ).gte(
@@ -259,7 +271,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             "status", "generating"
         ).neq(
             "status", "cancelled"
-        ).limit(1).execute)
+        ).or_(
+            "is_completed.is.null,is_completed.eq.false"
+        ).order("created_at", desc=True).limit(5).execute)
 
         # A COMPLETED workout must not block generation.
         #
@@ -273,8 +287,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         # exists" every time — a deadlock between two endpoints disagreeing
         # about whether a finished workout counts.
         #
-        # Filtering in Python rather than the query avoids PostgREST's
-        # three-valued logic on a NULL `is_completed`.
+        # The query above already excludes completed rows; this re-filter is a
+        # cheap belt-and-suspenders so a future edit to the query cannot
+        # reintroduce the deadlock silently.
         _existing_rows = [
             r for r in (existing_workout.data or [])
             if not r.get("is_completed")
@@ -1438,6 +1453,16 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             if sd_str:
                 try:
                     now_iso = datetime.utcnow().isoformat()
+                    # Supersede ONLY the day's CANONICAL row. This used to demote
+                    # every is_current row for the date, which silently destroyed
+                    # the user's own same-day extras: a manual/quick/chat workout
+                    # is index-exempt so it can legitimately be is_current=true,
+                    # and demoting it also stamps valid_to — which drops it out of
+                    # `list_workouts`' extras branch (valid_to IS NULL) and makes
+                    # it vanish from /today, /schedule and the workout tab. 5 such
+                    # rows exist in production today. Generating a plan replaces
+                    # the plan, never the workout the user built themselves.
+                    _extra_sources = ",".join(USER_INITIATED_WORKOUT_SOURCES)
                     await asyncio.to_thread(db.client.table("workouts").update({
                         "is_current": False,
                         "valid_to": now_iso,
@@ -1445,7 +1470,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         "scheduled_date", f"{sd_str}T00:00:00+00:00"
                     ).lte(
                         "scheduled_date", f"{sd_str}T23:59:59+00:00"
-                    ).eq("is_current", True).neq("status", "cancelled").execute)
+                    ).eq("is_current", True).neq("status", "cancelled").or_(
+                        f"generation_source.is.null,"
+                        f"generation_source.not.in.({_extra_sources})"
+                    ).execute)
                 except Exception as supersede_err:
                     logger.warning(
                         f"[Streaming] supersede prior canonical failed for user "

@@ -762,10 +762,17 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         # deletes the AI workout and inserts a quick replacement; profile-scoped
         # dedup let auto-gen sneak past and re-create the AI row.
         tz_from, tz_to = local_date_to_utc_range(target_date.isoformat(), user_tz)
+        # is_completed=False (issue #4): /today's OWN reads exclude completed
+        # workouts (see the today_rows/future_rows gather), and needs_generation
+        # is computed on that basis. This double-check has to use the SAME
+        # predicate or it answers "already exists" against the finished workout
+        # /today just skipped — the exact endpoint-disagreement deadlock that
+        # pinned the client on an endless "Generating your workout…" spinner.
         existing = db.list_workouts(
             user_id=user_id,
             from_date=tz_from,
             to_date=tz_to,
+            is_completed=False,
             limit=1,
         )
         if existing:
