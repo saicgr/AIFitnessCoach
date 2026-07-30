@@ -30,7 +30,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.program_template_expander import (  # noqa: E402
     plan_assignment_reschedule,
+    plan_is_per_week_authored,
+    plan_template_regenerate,
     plan_variant_schedule,
+    template_days_by_index,
 )
 
 FAILURES: list = []
@@ -154,6 +157,70 @@ def main() -> int:
     past = [r for r in rows if r["scheduled_date"][:10] < today.isoformat()]
     check("weeks 1..4 (already elapsed) are never candidates",
           sorted({r["template_week"] for r in past}) == [1, 2, 3, 4])
+
+    # --- 5. The SECOND edit path: POST /{template_id}/regenerate-future -----
+    # Same rule, different endpoint: re-deriving content from the template's
+    # sample week must never flatten a per-week-authored program, and an
+    # ambiguous days blob must never be interpreted (it used to collapse to a
+    # single dict entry and DELETE every other future row).
+    print("\nregenerate-future (the sibling edit path):")
+
+    # 5a. days blob with NO day_index -> positions, not one collapsed entry.
+    flat_days = [
+        {"day_name": "A", "exercises": [{"name": "Squat"}]},
+        {"day_name": "B", "exercises": [{"name": "Bench"}]},
+        {"day_name": "C", "exercises": [{"name": "Row"}]},
+    ]
+    idx = template_days_by_index(flat_days)
+    check("days blob without day_index keeps every day (positional)",
+          sorted(idx) == [0, 1, 2], str(sorted(idx)))
+
+    # 5b. and therefore nothing is deleted.
+    flat_rows = [
+        {"id": f"w{w}-s{s}", "template_week": w, "template_day_index": s,
+         "name": flat_days[s]["day_name"],
+         "exercises_json": flat_days[s]["exercises"]}
+        for w in range(1, 5) for s in range(3)
+    ]
+    decisions = plan_template_regenerate(
+        flat_rows, days_by_index=idx, deload_every=None
+    )
+    check("no future row is deleted for a well-formed flat template",
+          not [d for d in decisions if d["action"] == "delete"],
+          str([d["id"] for d in decisions if d["action"] == "delete"]))
+
+    # 5c. duplicate day_index is ambiguous -> refuse, never guess.
+    dup = [{"day_index": 0, "day_name": "A"}, {"day_index": 0, "day_name": "B"}]
+    try:
+        template_days_by_index(dup)
+        check("duplicate day_index is refused, not silently collapsed", False,
+              "no ValueError raised")
+    except ValueError:
+        check("duplicate day_index is refused, not silently collapsed", True)
+
+    # 5d. a per-week-authored plan is detected from its own rows.
+    per_week_rows = [
+        {"id": f"w{w}-s{s}", "template_week": w, "template_day_index": s,
+         "name": f"W{w}S{s}",
+         "exercises_json": [{"name": f"ex-w{w}-s{s}"}]}
+        for w in range(1, 9) for s in range(4)
+    ]
+    check("per-week-authored program is detected (weeks 2..N not flattenable)",
+          plan_is_per_week_authored(per_week_rows))
+    check("a flat template is NOT mistaken for per-week-authored",
+          not plan_is_per_week_authored(flat_rows))
+
+    # 5e. a genuinely removed day still deletes ITS rows only.
+    two_days = template_days_by_index([
+        {"day_index": 0, "day_name": "A", "exercises": []},
+        {"day_index": 2, "day_name": "C", "exercises": []},
+    ])
+    d2 = plan_template_regenerate(
+        flat_rows, days_by_index=two_days, deload_every=None
+    )
+    deleted_idx = {d["day_index"] for d in d2 if d["action"] == "delete"}
+    check("removing day 1 deletes only day-1 rows",
+          deleted_idx == {1}, str(deleted_idx))
 
     print()
     if FAILURES:

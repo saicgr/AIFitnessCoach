@@ -1199,6 +1199,113 @@ def reschedule_assignment_days(
     }
 
 
+# ---------------------------------------------------------------------------
+# Template-edit regeneration — the SECOND half of "an edit is a targeted
+# update, never a destructive rewrite" (#53).
+#
+# `regenerate_future` re-derives a future workout's content from the template's
+# `days` blob. That is only correct when `days` IS the authored plan — i.e. a
+# FLAT template, where every calendar week repeats the same sample week. A
+# curated/library program authors each week SEPARATELY in
+# program_variant_weeks, and `user_program_templates.days` holds only week 1;
+# applying it to weeks 2..N overwrites every later week with week-1 content.
+# And a `days` blob whose entries omit (or repeat) `day_index` used to collapse
+# into a SINGLE dict entry, so every future row whose day index was not the
+# surviving key was DELETED — the literal "each remaining week collapses to one
+# workout" symptom. Both are prevented below: an ambiguous blob is never
+# interpreted, and a per-week-authored plan is never flattened.
+# ---------------------------------------------------------------------------
+def template_days_by_index(days: Optional[List[Dict[str, Any]]]) -> Dict[int, Dict[str, Any]]:
+    """Map `day_index` → day for a template `days` blob.
+
+    A day that omits `day_index` takes its LIST POSITION (the order the builder
+    shows and the order the expander writes). Two days claiming the same index
+    is ambiguous, and misreading the blob DELETES the user's future workouts —
+    so it raises instead of silently keeping the last writer.
+    """
+    out: Dict[int, Dict[str, Any]] = {}
+    for pos, d in enumerate(days or []):
+        if not isinstance(d, dict):
+            continue
+        raw = d.get("day_index")
+        try:
+            idx = int(raw) if raw is not None else pos
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"Program day {pos + 1} has a non-numeric day_index "
+                f"({raw!r}); the program was not changed."
+            )
+        if idx in out:
+            raise ValueError(
+                f"Two program days claim day_index {idx}; the program was "
+                "not changed. Re-save the program to renumber its days."
+            )
+        out[idx] = d
+    return out
+
+
+def _row_content_fingerprint(row: Dict[str, Any]) -> tuple:
+    """(name, exercise names) — what makes a session's content distinct."""
+    exercises = row.get("exercises_json") or []
+    if not isinstance(exercises, list):
+        exercises = []
+    names = tuple(
+        str(ex.get("name") or ex.get("exercise_name") or "")
+        for ex in exercises
+        if isinstance(ex, dict)
+    )
+    return (str(row.get("name") or ""), names)
+
+
+def plan_is_per_week_authored(rows: List[Dict[str, Any]]) -> bool:
+    """True when this template's expanded workouts carry DIFFERENT content per
+    calendar week for the same session ordinal.
+
+    Derived from the rows themselves (name + exercise list), not from a source
+    flag, so it is right even for a template whose `source` column is wrong.
+    A flat template repeats its sample week, so every week's session k is
+    identical and this returns False.
+    """
+    by_ordinal: Dict[int, set] = {}
+    for r in rows:
+        di = r.get("template_day_index")
+        di = int(di) if di is not None else 0
+        by_ordinal.setdefault(di, set()).add(_row_content_fingerprint(r))
+    return any(len(v) > 1 for v in by_ordinal.values())
+
+
+def plan_template_regenerate(
+    rows: List[Dict[str, Any]],
+    *,
+    days_by_index: Dict[int, Dict[str, Any]],
+    deload_every: Optional[int],
+) -> List[Dict[str, Any]]:
+    """Pure planner: what `regenerate_future` would do to each candidate row.
+    NO DB access. Returns [{id, action: 'update'|'delete', week, day_index,
+    is_deload, day}] in input order — 'delete' only for a day the edit really
+    removed (or turned into a rest day) from an UNAMBIGUOUS blob.
+    """
+    out: List[Dict[str, Any]] = []
+    for w in rows:
+        week = w.get("template_week") or 1
+        day_idx = w.get("template_day_index")
+        day = days_by_index.get(day_idx)
+        if day is None or day.get("is_rest"):
+            out.append({
+                "id": w["id"], "action": "delete", "week": week,
+                "day_index": day_idx, "is_deload": False, "day": None,
+            })
+            continue
+        is_deload = bool(
+            deload_every and deload_every > 0 and int(week) % deload_every == 0
+        )
+        out.append({
+            "id": w["id"], "action": "update", "week": week,
+            "day_index": day_idx, "is_deload": is_deload, "day": day,
+        })
+    return out
+
+
 def regenerate_future(
     template: Dict[str, Any],
     user_id: str,
@@ -1211,14 +1318,35 @@ def regenerate_future(
     the (now edited) template day, preserving the existing scheduled_date and
     week/day-index. Rows flagged detached_from_template are skipped (#60).
     Wrapped in a transaction.
+
+    Raises ValueError (→ 409 at the endpoint) when the edit cannot be applied
+    as a targeted update: an ambiguous `days` blob, or a program whose weeks
+    are individually authored. Refusing loudly is the point — the previous
+    behaviour silently destroyed weeks 2..N (#53).
     """
     template_id = template["id"]
-    days_by_index = {
-        int(d.get("day_index", 0)): d
-        for d in (template.get("days") or [])
-    }
+    # Raises on an ambiguous blob rather than collapsing it (#53).
+    days_by_index = template_days_by_index(template.get("days"))
     deload_every = template.get("deload_every_n_weeks")
     db = get_supabase()
+
+    # Per-week authorship is judged over EVERY row this template produced, not
+    # just the future ones — weeks 1..k may already be in the past.
+    all_rows = (
+        db.client.table("workouts")
+        .select("id, template_week, template_day_index, name, exercises_json")
+        .eq("template_id", template_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if plan_is_per_week_authored(all_rows.data or []):
+        raise ValueError(
+            "This program authors each week separately, so the sample week "
+            "cannot be applied to weeks 2..N without discarding them. "
+            "Nothing was changed. To move the program to different days use "
+            "the program's schedule (PATCH /program-templates/assignments/"
+            "{id}); to change its content, start it again from the library."
+        )
 
     now_iso = datetime.now().isoformat()
     resp = (
@@ -1250,6 +1378,13 @@ def regenerate_future(
                 seed_names.append(n)
     seed_weights = _seed_target_weights(user_id, seed_names)
 
+    # One pure decision per row, computed BEFORE the transaction (#53) so the
+    # delete/update split is testable without a database.
+    plan = plan_template_regenerate(
+        targets, days_by_index=days_by_index, deload_every=deload_every
+    )
+    plan_by_id = {p["id"]: p for p in plan}
+
     updated = 0
     removed = 0
     conn = psycopg2.connect(_psycopg_dsn())
@@ -1270,10 +1405,11 @@ def regenerate_future(
                 if is_completed or status not in ("scheduled", None):
                     continue  # #55 - in-progress / completed untouched
 
-                week = w.get("template_week") or 1
-                day_idx = w.get("template_day_index")
-                day = days_by_index.get(day_idx)
-                if day is None or day.get("is_rest"):
+                decision = plan_by_id.get(w["id"])
+                if decision is None:
+                    continue
+                day_idx = decision["day_index"]
+                if decision["action"] == "delete":
                     # Day removed from template or now a rest day -> delete
                     # the future row (#57 for whole-day removal).
                     cur.execute(
@@ -1282,10 +1418,8 @@ def regenerate_future(
                     removed += 1
                     continue
 
-                is_deload = bool(
-                    deload_every and deload_every > 0
-                    and week % deload_every == 0
-                )
+                day = decision["day"]
+                is_deload = decision["is_deload"]
                 exercises_json = _day_to_exercises_json(
                     day, seed_weights, is_deload
                 )

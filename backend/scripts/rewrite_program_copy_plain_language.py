@@ -49,7 +49,15 @@ EXERCISE_PROSE_FIELDS = (
     "weight_guidance", "form_cue", "setup", "breathing_cue", "notes",
     "coaching_cue",
 )
-SESSION_PROSE_FIELDS = ("focus", "notes", "description")
+SESSION_PROSE_FIELDS = (
+    "focus", "notes", "description", "coach_notes", "workout_description",
+    "rounds_note",
+)
+# `workout_name` is a TITLE — the Schedule-tab day heading and, once the program
+# is started, `workouts.name` on the Today card. It gets the same translation
+# but title-cased, so "Back & Shoulders Hypertrophy" becomes "Back & Shoulders
+# Muscle Growth" rather than "Back & Shoulders Muscle growth".
+SESSION_TITLE_FIELDS = ("workout_name",)
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +68,12 @@ _RPE = re.compile(
     # group, so "RPE 5 — easy" keeps its em dash instead of swallowing it.
     r"\bRPE\s*(\d+(?:\.\d+)?)(?:\s*[-–—]\s*(\d+(?:\.\d+)?))?", re.IGNORECASE
 )
+
+
+# Bare "RPE" used as a noun — "Push the RPE on your main compounds". No digit,
+# so the numbered rule never touched it and the jargon survived every pass.
+# \b keeps it off "burpee" / "sharpen" (both have a word char before the r).
+_RPE_BARE = re.compile(r"\bRPE\b", re.IGNORECASE)
 
 
 def _rpe(m: re.Match) -> str:
@@ -113,6 +127,20 @@ _PHRASES = [
      "time the muscle spends working"),
     (re.compile(r"\bneural drive\b", re.I), "power and speed"),
     (re.compile(r"\bneural\b", re.I), "brain-to-muscle"),
+    # Plurals used as nouns ("controlled eccentrics") — the singular rules
+    # below have a word boundary after the "c" and never matched these.
+    (re.compile(r"\beccentrics\b", re.I), "lowering reps"),
+    (re.compile(r"\bconcentrics\b", re.I), "lifting reps"),
+    (re.compile(r"\bmetabolic stress\b", re.I), "muscle burn"),
+    (re.compile(r"\bmetabolic demand\b", re.I), "how hard your body works"),
+    (re.compile(r"\bmetabolic efficiency\b", re.I),
+     "how efficiently your body uses fuel"),
+    (re.compile(r"\bmetabolic conditioning\b", re.I),
+     "breathless conditioning work"),
+    # Noun phrase, so it has to stay a noun phrase — "push your metabolic
+    # limits" must not become "push your how much work your body can handle".
+    (re.compile(r"\bmetabolic limits\b", re.I), "physical limits"),
+    (re.compile(r"\bmetabolic\b", re.I), "energy-burning"),
     (re.compile(r"\bslow eccentric,\s*fast concentric\b", re.I),
      "slow lowering, fast lift"),
     (re.compile(r"\beccentric (?:descent|phase)\b", re.I), "lowering"),
@@ -143,6 +171,12 @@ _PHRASES = [
 # ---------------------------------------------------------------------------
 # Atom 4 — cryptic numeric shorthand.
 # ---------------------------------------------------------------------------
+# "Strength 5s" / "Volume 8s" is a REP scheme, not a duration — expanding it as
+# "5 seconds" would state the opposite of what the block prescribes, so it is
+# translated first and the seconds rule never sees it.
+_SET_REP_SHORTHAND = re.compile(
+    r"\b(Volume|Strength|Intensity|Power|Speed)\s+(\d+)s\b", re.IGNORECASE
+)
 _SECONDS = re.compile(r"\b(\d+)s\b")
 _BW = re.compile(r"%\s*BW\b")
 _PER_BW = re.compile(r"\bBW\b(?!\s*[)\]])")
@@ -155,23 +189,57 @@ def _preserve_case(original: str, replacement: str) -> str:
     return replacement
 
 
-def rewrite(text: str) -> str:
-    """Plain-language rewrite of one prose string. Idempotent."""
+def _title_phrase(replacement: str) -> str:
+    """Title-case a replacement noun phrase for use inside a heading."""
+    return " ".join(
+        w if w.isupper() else w[:1].upper() + w[1:] for w in replacement.split(" ")
+    )
+
+
+def rewrite(text: str, *, title: bool = False) -> str:
+    """Plain-language rewrite of one prose string. Idempotent.
+
+    `title=True` renders the substituted noun phrases in Title Case, for the
+    fields that are headings rather than sentences (`workout_name`).
+    """
     if not text or not isinstance(text, str):
         return text
+
+    def _starts_a_sentence(m: re.Match) -> bool:
+        """An ACRONYM (RPE, CNS, 1RM) is capitalized wherever it appears, so
+        copying its capitalization onto the replacement produced 'Push the
+        Effort level on...' mid-sentence. Capitalize only where a sentence
+        actually starts."""
+        before = m.string[: m.start()].rstrip()
+        return not before or before[-1] in ".!?:;—-–("
+
+    def _shape(m: re.Match, replacement: str) -> str:
+        original = m.group(0)
+        # "1RM Test Day" starts with a digit, so isupper() alone would leave
+        # "Back Squat heaviest single Test Day" mid-sentence-cased in a heading.
+        if title and (original[:1].isupper() or original[:1].isdigit()):
+            return _title_phrase(replacement)
+        if not _starts_a_sentence(m):
+            return replacement
+        return _preserve_case(original, replacement)
+
     out = _RPE.sub(_rpe, text)
+    out = _RPE_BARE.sub(lambda m: _shape(m, "effort level"), out)
     out = _RM_PCT_LIFT.sub(_rm_pct_lift, out)
     out = _RM_PCT.sub(_rm_pct, out)
-    out = _RM_PLAIN.sub(lambda m: _rm_noun(m.group(1)), out)
-    out = _RM_BARE.sub("heaviest lift", out)
+    out = _RM_PLAIN.sub(lambda m: _shape(m, _rm_noun(m.group(1))), out)
+    out = _RM_BARE.sub(lambda m: _shape(m, "heaviest lift"), out)
     for pat, repl in _PHRASES:
         def _sub(m, _r=repl):
             expanded = m.expand(_r) if "\\" in _r else _r
-            return _preserve_case(m.group(0), expanded)
+            return _shape(m, expanded)
         out = pat.sub(_sub, out)
     # "60s on 20s off" — only when the string LEADS with the shorthand or uses
     # the a/b form; a trailing "x10" or "30s" inside prose reads fine expanded
     # either way, so expand every bare Ns token.
+    out = _SET_REP_SHORTHAND.sub(
+        lambda m: f"{m.group(1)} sets of {m.group(2)}", out
+    )
     if re.search(r"(^\s*\d+s\b|\b\d+s\s*/\s*\d+s\b|\b\d+s\b)", out):
         out = _SECONDS.sub(lambda m: f"{m.group(1)} seconds", out)
     out = _BW.sub("% of your body weight", out)
@@ -198,6 +266,13 @@ def rewrite_workouts(workouts):
             v = sess.get(f)
             if isinstance(v, str) and v.strip():
                 nv = rewrite(v)
+                if nv != v:
+                    sess[f] = nv
+                    changed += 1
+        for f in SESSION_TITLE_FIELDS:
+            v = sess.get(f)
+            if isinstance(v, str) and v.strip():
+                nv = rewrite(v, title=True)
                 if nv != v:
                     sess[f] = nv
                     changed += 1

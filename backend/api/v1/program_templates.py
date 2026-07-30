@@ -4849,6 +4849,13 @@ async def regenerate_future_workouts(
 
     Only future, uncompleted, non-detached rows are touched; completed /
     in-progress / chat-detached workouts are left intact.
+
+    Row 53: this re-derives content from the template's sample week, so it is
+    REFUSED (409, nothing written) for a program whose weeks are individually
+    authored, or whose `days` blob has ambiguous day indices — either would
+    have silently overwritten weeks 2..N or deleted all but one workout per
+    week. Day/date changes on a running program go through
+    `PATCH /program-templates/assignments/{id}`, which re-dates rows in place.
     """
     try:
         db = get_supabase()
@@ -4862,6 +4869,11 @@ async def regenerate_future_workouts(
         }
     except HTTPException:
         raise
+    except ValueError as ve:
+        # Refused, not failed: the edit could not be applied as a targeted
+        # update and NOTHING was written (#53). Surfaced so the client can say
+        # why instead of the user believing an edit landed.
+        raise HTTPException(status_code=409, detail=str(ve))
     except Exception as e:  # noqa: BLE001
         logger.error(
             "Failed to regenerate future for %s: %s", template_id, e,

@@ -25,6 +25,13 @@ import sys
 
 import psycopg2
 
+# Both stores. A beginner program's plan exists TWICE: per-week in
+# program_variant_weeks (what Start expands) and as the base blob in
+# programs.workouts (what the library detail / first-week preview renders, and
+# the ONLY copy for the 3 published beginner programs that have no variant
+# library at all). Linting only the first left 20 advanced/elite pairs on
+# screen, "Gentle Start" included — so the gate walks both. The base blob keys
+# an exercise name as `exercise_name`; variant weeks use `name`.
 SQL = """
 WITH beg AS (
   SELECT p.id AS program_id, p.program_name, v.id AS variant_id,
@@ -33,7 +40,7 @@ WITH beg AS (
   JOIN program_variants v ON v.base_program_id = p.variant_base_id
   WHERE p.is_published AND lower(p.difficulty_level) = 'beginner'
 ), ex AS (
-  SELECT b.program_name, b.is_default, w.week_number,
+  SELECT b.program_name, b.is_default, 'program_variant_weeks'::text AS store,
          e->>'name' AS raw_name,
          lower(regexp_replace(e->>'name', '[^a-zA-Z0-9]', '', 'g')) AS norm
   FROM beg b
@@ -44,10 +51,25 @@ WITH beg AS (
       || COALESCE(s->'warmup', '[]'::jsonb)
       || COALESCE(s->'cooldown', '[]'::jsonb)
   ) e
+  UNION ALL
+  SELECT p.program_name, false, 'programs.workouts'::text,
+         coalesce(e->>'name', e->>'exercise_name'),
+         lower(regexp_replace(coalesce(e->>'name', e->>'exercise_name'),
+                              '[^a-zA-Z0-9]', '', 'g'))
+  FROM programs p,
+  LATERAL jsonb_array_elements(
+      COALESCE(p.workouts->'workouts', '[]'::jsonb)) s,
+  LATERAL jsonb_array_elements(
+      COALESCE(s->'exercises', '[]'::jsonb)
+      || COALESCE(s->'warmup', '[]'::jsonb)
+      || COALESCE(s->'cooldown', '[]'::jsonb)
+  ) e
+  WHERE p.is_published AND lower(p.difficulty_level) = 'beginner'
 )
 SELECT ex.program_name, ex.raw_name, si.name, si.safety_difficulty,
        count(*) AS occurrences,
-       count(*) FILTER (WHERE ex.is_default) AS in_default_variant
+       count(*) FILTER (WHERE ex.is_default) AS in_default_variant,
+       string_agg(DISTINCT ex.store, ', ') AS stores
 FROM ex
 JOIN exercise_safety_index si ON si.name_normalized = ex.norm
 WHERE si.safety_difficulty IN ('advanced', 'elite')
@@ -90,7 +112,7 @@ def main() -> int:
           f"{len(programs)} beginner-badged programs:")
     for r in rows:
         print(f"  {r[0]:<44} {r[1]:<38} -> {r[2]} [{r[3]}] "
-              f"x{r[4]} ({r[5]} in default variant)")
+              f"x{r[4]} ({r[5]} in default variant) [{r[6]}]")
     return 1
 
 

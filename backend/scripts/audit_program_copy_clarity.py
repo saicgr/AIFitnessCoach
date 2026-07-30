@@ -27,11 +27,16 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from core.supabase_client import get_supabase  # noqa: E402
 
-# Word-boundary matters: plain "RPE" also matches inside "sharpen"/"burpee".
+# Word-boundary matters: plain "RPE" also matches inside "sharpen"/"burpee" —
+# but only WITHOUT \b, since both have a word character before the "r". With the
+# boundary, bare `RPE` used as a noun ("Push the RPE on your main compounds") is
+# caught too; requiring a digit let that form through every pass.
 JARGON = re.compile(
-    r"\b(supercompensation|CNS|neural|RPE\s*\d|\d*\s*RM\b|mechanical tension|motor unit"
+    r"\b(supercompensation|CNS|neural|RPE|\d*\s*RM\b|mechanical tension|motor unit"
     r"|anaerobic|unilateral|eccentric|concentric|time under tension"
-    r"|metabolic (?:demand|efficiency|stress)|hypertrophy|propriocept\w*"
+    # Bare `metabolic` — "metabolic conditioning" / "metabolic limits" slipped
+    # past the three-noun enumeration this used to be.
+    r"|metabolic|hypertrophy|propriocept\w*"
     r"|glycolytic|lactate|myofibrillar|sarcoplasmic|autoregulat\w*"
     r"|supramaximal|potentiation|contractile|osteogenic|periodization)\b",
     re.IGNORECASE,
@@ -52,16 +57,35 @@ def fetch_weeks(db, since):
     """(program_name, focus, phase) rows, paginated with a stable order."""
     prog_names = {}
     if since:
-        progs = db.client.table("programs").select(
-            "variant_base_id, editorial_name, created_at"
-        ).gte("created_at", since).execute().data or []
+        progs, p_off = [], 0
+        while True:
+            p_batch = db.client.table("programs").select(
+                "variant_base_id, editorial_name, created_at"
+            ).gte("created_at", since).order("id").range(
+                p_off, p_off + 999
+            ).execute().data or []
+            progs.extend(p_batch)
+            if len(p_batch) < 1000:
+                break
+            p_off += 1000
         base_ids = {p["variant_base_id"] for p in progs if p.get("variant_base_id")}
         if not base_ids:
             return []
-        variants = db.client.table("program_variants").select(
-            "id, base_program_id"
-        ).in_("base_program_id", list(base_ids)).execute().data or []
-        vids = [v["id"] for v in variants]
+        # PostgREST caps an unpaginated .execute() at 1000 rows, so the
+        # `--since` set was silently truncated — the exact invocation CLAUDE.md
+        # prescribes after a generation run could miss whole variants.
+        vids = []
+        v_off = 0
+        while True:
+            v_batch = db.client.table("program_variants").select(
+                "id, base_program_id"
+            ).in_("base_program_id", list(base_ids)).order("id").range(
+                v_off, v_off + 999
+            ).execute().data or []
+            vids.extend(v["id"] for v in v_batch)
+            if len(v_batch) < 1000:
+                break
+            v_off += 1000
     else:
         vids = None
 
@@ -134,7 +158,22 @@ EXERCISE_PROSE_FIELDS = (
     "notes",
     "coaching_cue",
 )
-SESSION_PROSE_FIELDS = ("focus", "notes", "description")
+# `workout_name` IS user-facing free text, not controlled vocabulary: it is the
+# day title on the Schedule tab (program_templates.py `day_name`) and becomes
+# `workouts.name` — the Today card / workout-detail title — once the program is
+# started (program_template_expander `day["day_name"]`). Gemini authors it from
+# the same prompt as `focus` (generate_programs.py), and it carried 322 distinct
+# jargon titles ("Hypertrophy Upper", "Back Squat 1RM Test Day") while this gate
+# reported clean. `coach_notes` is the same: 1,028 distinct free-text notes.
+SESSION_PROSE_FIELDS = (
+    "focus", "notes", "description", "workout_name", "coach_notes",
+    "workout_description", "rounds_note",
+)
+# The warmup / cooldown arrays hold exercise dicts with the SAME prose keys as
+# `exercises` (37,058 sessions carry each) and were never walked — 111 distinct
+# RPE-bearing strings ("Bodyweight (RPE 2)", "Moderate stretch (RPE 6-7)") sat
+# permanently outside the gate.
+EXERCISE_BLOCKS = ("exercises", "warmup", "cooldown")
 
 
 def iter_workout_copy(workouts):
@@ -149,13 +188,17 @@ def iter_workout_copy(workouts):
             v = sess.get(f)
             if isinstance(v, str) and v.strip():
                 yield f"session.{f}", v
-        for ex in sess.get("exercises") or []:
-            if not isinstance(ex, dict):
-                continue
-            for f in EXERCISE_PROSE_FIELDS:
-                v = ex.get(f)
-                if isinstance(v, str) and v.strip():
-                    yield f"exercise.{f}", v
+        for block in EXERCISE_BLOCKS:
+            for ex in sess.get(block) or []:
+                if not isinstance(ex, dict):
+                    continue
+                for f in EXERCISE_PROSE_FIELDS:
+                    v = ex.get(f)
+                    if isinstance(v, str) and v.strip():
+                        label = (
+                            "exercise" if block == "exercises" else block
+                        )
+                        yield f"{label}.{f}", v
 
 
 def lint(text):

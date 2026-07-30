@@ -415,8 +415,13 @@ schedule tab; NEVER write coach shorthand):
 - OR specific weight when known: "20kg/44lb", "Men: 24kg, Women: 16kg"
 - OR relative terms: "Bodyweight", "Light", "Moderate", "Heavy"
 
-BANNED VOCABULARY (in weight_guidance, form_cue, setup, breathing_cue, notes,
-and the week/session focus lines). Write the plain phrase instead:
+BANNED VOCABULARY — in EVERY free-text field you write. That means
+weight_guidance, form_cue, setup, breathing_cue, notes, the week/session focus
+lines, AND workout_name and coach_notes (the day TITLE on the schedule tab and
+the note under it are read by the same beginner: write "Upper Body Muscle
+Growth", never "Hypertrophy Upper"; "Back Squat Max Test Day", never "Back
+Squat 1RM Test Day"). Warmup and cooldown entries count too.
+Write the plain phrase instead:
   RPE n            -> effort n out of 10
   RIR n            -> leave n reps in reserve
   n% 1RM           -> n% of your heaviest single
@@ -438,7 +443,7 @@ EXERCISE STRUCTURE (REQUIRED FIELDS - sets and reps MUST be positive integers, N
   "sets": integer (REQUIRED, minimum 1, typically 2-5),
   "reps": integer (REQUIRED, minimum 1, typically 5-20. For timed exercises use duration_seconds instead but still set reps to 1),
   "rest_seconds": integer (REQUIRED, typically 30-180),
-  "weight_guidance": "string (REQUIRED - e.g., 'RPE 7', '70% 1RM', 'Bodyweight', 'Moderate')",
+  "weight_guidance": "string (REQUIRED - e.g., 'effort 7 out of 10', '70% of your heaviest single', 'Bodyweight', 'Moderate')",
   "equipment": "string",
   "body_part": "string",
   "primary_muscle": "string",
@@ -549,14 +554,17 @@ Return JSON with this exact structure:
   "workouts": [
     {{
       "day": 1,
-      "workout_name": "string",
+      "workout_name": "string (the day TITLE users read — plain language, no
+                       banned vocabulary: 'Upper Body Muscle Growth', never
+                       'Hypertrophy Upper' or 'Back Squat 1RM Test Day')",
       "type": "Strength|Cardio|Hybrid|Recovery",
       "duration_minutes": number,
       "intensity": "Low|Moderate|Hard",
       "warmup": [...],
       "exercises": [...],
       "cooldown": [...],
-      "coach_notes": "string"
+      "coach_notes": "string (plain language, same banned vocabulary — write
+                      'controlled lowering', never 'controlled eccentric')"
     }}
   ]
 }}

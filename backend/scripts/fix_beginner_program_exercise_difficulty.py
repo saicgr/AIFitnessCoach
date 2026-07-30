@@ -126,11 +126,49 @@ SELECT DISTINCT
 FROM beg b
 JOIN program_variant_weeks w ON w.variant_id = b.variant_id,
 LATERAL jsonb_array_elements(w.workouts) s,
-LATERAL jsonb_array_elements(COALESCE(s->'exercises', '[]'::jsonb)) e
+LATERAL jsonb_array_elements(
+    COALESCE(s->'exercises', '[]'::jsonb)
+    || COALESCE(s->'warmup', '[]'::jsonb)
+    || COALESCE(s->'cooldown', '[]'::jsonb)
+) e
 WHERE lower(regexp_replace(e->>'name', '[^a-zA-Z0-9]', '', 'g')) IN (
   SELECT name_normalized FROM exercise_safety_index
   WHERE safety_difficulty IN ('advanced', 'elite')
 )
+"""
+
+# The SECOND store. `programs.workouts` is the base blob the library detail /
+# first-week preview renders for programs with no variant library (3 published
+# beginner programs have none at all) and it is a completely separate copy of
+# the plan — rewriting only program_variant_weeks left 20 advanced/elite
+# (program, exercise) pairs on screen, "Gentle Start" included. Its exercise
+# dicts key the name as `exercise_name`, not `name`.
+BASE_BLOB_OFFENDER_SQL = """
+SELECT DISTINCT
+       lower(regexp_replace(coalesce(e->>'name', e->>'exercise_name'),
+                            '[^a-zA-Z0-9]', '', 'g'))       AS norm_name,
+       coalesce(e->>'name', e->>'exercise_name')            AS raw_name,
+       e->>'equipment'                                      AS raw_equipment
+FROM programs p,
+LATERAL jsonb_array_elements(COALESCE(p.workouts->'workouts', '[]'::jsonb)) s,
+LATERAL jsonb_array_elements(
+    COALESCE(s->'exercises', '[]'::jsonb)
+    || COALESCE(s->'warmup', '[]'::jsonb)
+    || COALESCE(s->'cooldown', '[]'::jsonb)
+) e
+WHERE p.is_published AND lower(p.difficulty_level) = 'beginner'
+  AND lower(regexp_replace(coalesce(e->>'name', e->>'exercise_name'),
+                           '[^a-zA-Z0-9]', '', 'g')) IN (
+    SELECT name_normalized FROM exercise_safety_index
+    WHERE safety_difficulty IN ('advanced', 'elite')
+  )
+"""
+
+BASE_BLOB_SQL = """
+SELECT p.id, p.program_name, p.workouts
+FROM programs p
+WHERE p.is_published AND lower(p.difficulty_level) = 'beginner'
+  AND jsonb_typeof(p.workouts->'workouts') = 'array'
 """
 
 WEEK_SQL = """
@@ -283,7 +321,9 @@ def main() -> int:
     media_cache: dict = {}
 
     cur.execute(OFFENDER_SQL)
-    offender_rows = cur.fetchall()
+    offender_rows = list(cur.fetchall())
+    cur.execute(BASE_BLOB_OFFENDER_SQL)
+    offender_rows += list(cur.fetchall())
     offenders = {}
     for r in offender_rows:
         si = safety.get(r["norm_name"])
@@ -313,21 +353,58 @@ def main() -> int:
               f"for: {unmapped}")
 
     if not mapping:
-        print("nothing to do")
-        return 1 if unmapped else 0
+        # Not "nothing to do": the prose pass below is independent of the
+        # exercise mapping and still has to clear notes that name an advanced
+        # movement a previous run already swapped out.
+        print("no exercise swaps needed — running the prose pass only")
+
+    # A swap must also deal with the PROSE that names the removed movement —
+    # "Focus on maximal tension in the eccentric phase of the Archer Push-ups"
+    # still tells a beginner to do the exercise we just took away, and
+    # "Bulgarian split squats are advanced" is exactly the promise this row is
+    # about. Substituting the replacement's name in would produce false copy
+    # ("Air Squats are advanced"), so the SENTENCE that names the removed
+    # movement is dropped and the rest of the note is kept verbatim. A note
+    # that was only about that movement becomes null.
+    # Every advanced/elite name in the index, not just the ones still
+    # prescribed: an earlier swap already removed the exercise but left the
+    # note behind ("...the eccentric phase of the Archer Push-ups"), and that
+    # note is the same broken promise with nothing left to swap. Names shorter
+    # than 6 characters are skipped — they are the ones that collide with
+    # ordinary prose.
+    _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+    prose_pats = [
+        re.compile(r"\b" + re.escape(si["name"]) + r"(s|es)?\b", re.I)
+        for si in safety.values()
+        if si.get("safety_difficulty") in BAD_DIFFICULTY
+        and len(si.get("name") or "") >= 6
+    ]
+
+    def fix_prose(text: Any) -> Any:
+        if not isinstance(text, str) or not text:
+            return text
+        parts = _SENTENCE_SPLIT.split(text)
+        kept = [p for p in parts
+                if not any(pat.search(p) for pat in prose_pats)]
+        if len(kept) == len(parts):
+            return text
+        return " ".join(p.strip() for p in kept).strip() or None
 
     # ---- rewrite ---------------------------------------------------------
     cur.execute(WEEK_SQL)
     weeks = cur.fetchall()
     swaps = 0
     touched_weeks = 0
+    prose_fixes = 0
     backup_rows: List[tuple] = []
     updates: List[tuple] = []
 
+    week_blob_backup: List[tuple] = []
     for w in weeks:
         workouts = w["workouts"]
         if not isinstance(workouts, list):
             continue
+        original_blob = json.dumps(workouts)
         changed = False
         for si_idx, session in enumerate(workouts):
             if not isinstance(session, dict):
@@ -363,12 +440,91 @@ def main() -> int:
                         ex["substitution"] = None
                     changed = True
                     swaps += 1
+            # Prose that still names the removed movement is the same broken
+            # promise, one field over.
+            for prose_key in ("coach_notes", "notes", "description",
+                              "rounds_note"):
+                before = session.get(prose_key)
+                after = fix_prose(before)
+                if after != before:
+                    session[prose_key] = after
+                    changed = True
+                    prose_fixes += 1
         if changed:
             touched_weeks += 1
             updates.append((json.dumps(workouts), w["id"]))
+            # Whole-row backup as well as the per-exercise one: the prose pass
+            # edits fields the exercise-level backup cannot restore.
+            week_blob_backup.append((
+                w["id"], w["variant_id"], w["week_number"], original_blob,
+            ))
+
+    # ---- the SECOND store: programs.workouts (the base blob) --------------
+    cur.execute(BASE_BLOB_SQL)
+    base_rows = cur.fetchall()
+    base_swaps = 0
+    base_backup: List[tuple] = []
+    base_blob_backup: List[tuple] = []
+    base_updates: List[tuple] = []
+    for p in base_rows:
+        blob = p["workouts"]
+        sessions = (blob or {}).get("workouts")
+        if not isinstance(sessions, list):
+            continue
+        original_blob = json.dumps(blob)
+        changed = False
+        for si_idx, session in enumerate(sessions):
+            if not isinstance(session, dict):
+                continue
+            for key in ("exercises", "warmup", "cooldown"):
+                block = session.get(key)
+                if not isinstance(block, list):
+                    continue
+                for ex_idx, ex in enumerate(block):
+                    if not isinstance(ex, dict):
+                        continue
+                    name_key = "name" if ex.get("name") else "exercise_name"
+                    nn = norm(ex.get(name_key) or "")
+                    rep = mapping.get(nn)
+                    if not rep:
+                        continue
+                    base_backup.append((
+                        p["id"], p["program_name"], si_idx, key, ex_idx,
+                        ex.get(name_key), json.dumps(ex), rep["name"],
+                    ))
+                    ex[name_key] = rep["name"]
+                    if rep.get("equipment"):
+                        ex["equipment"] = rep["equipment"]
+                    ex["difficulty"] = "beginner"
+                    if rep.get("body_part"):
+                        ex["body_part"] = rep["body_part"]
+                    sub = ex.get("substitution")
+                    if sub and norm(sub) in mapping:
+                        ex["substitution"] = mapping[norm(sub)]["name"]
+                    if sub and norm(sub) == norm(rep["name"]):
+                        ex["substitution"] = None
+                    changed = True
+                    base_swaps += 1
+            for prose_key in ("coach_notes", "notes", "description",
+                              "rounds_note"):
+                before = session.get(prose_key)
+                after = fix_prose(before)
+                if after != before:
+                    session[prose_key] = after
+                    changed = True
+                    prose_fixes += 1
+        if changed:
+            base_updates.append((json.dumps(blob), p["id"]))
+            base_blob_backup.append(
+                (p["id"], p["program_name"], original_blob)
+            )
 
     print(f"\nexercise entries to swap: {swaps} across {touched_weeks} "
           f"program_variant_weeks rows")
+    print(f"base-blob (programs.workouts) entries to swap: {base_swaps} "
+          f"across {len(base_updates)} programs")
+    print(f"prose references to the removed movement to rewrite: "
+          f"{prose_fixes}")
     if not args.apply:
         print("dry run — pass --apply to write")
         conn.rollback()
@@ -398,14 +554,81 @@ def main() -> int:
         "VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s)",
         backup_rows, page_size=500,
     )
+    # Whole-row backups too — the prose pass edits session fields the
+    # per-exercise backup cannot restore (logged-data durability).
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS program_variant_weeks_blob_backup (
+            id                bigserial PRIMARY KEY,
+            week_row_id       uuid NOT NULL,
+            variant_id        uuid,
+            week_number       integer,
+            original_workouts jsonb NOT NULL,
+            reason            text DEFAULT 'row90_beginner_difficulty_swap',
+            backed_up_at      timestamptz NOT NULL DEFAULT now()
+        )
+    """)
+    psycopg2.extras.execute_batch(
+        cur,
+        "INSERT INTO program_variant_weeks_blob_backup "
+        "(week_row_id, variant_id, week_number, original_workouts) "
+        "VALUES (%s,%s,%s,%s::jsonb)",
+        week_blob_backup, page_size=200,
+    )
     psycopg2.extras.execute_batch(
         cur,
         "UPDATE program_variant_weeks SET workouts = %s::jsonb WHERE id = %s",
         updates, page_size=200,
     )
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS programs_workouts_blob_backup (
+            id                bigserial PRIMARY KEY,
+            program_id        uuid NOT NULL,
+            program_name      text,
+            original_workouts jsonb NOT NULL,
+            reason            text DEFAULT 'row90_beginner_difficulty_swap',
+            backed_up_at      timestamptz NOT NULL DEFAULT now()
+        )
+    """)
+    psycopg2.extras.execute_batch(
+        cur,
+        "INSERT INTO programs_workouts_blob_backup "
+        "(program_id, program_name, original_workouts) VALUES (%s,%s,%s::jsonb)",
+        base_blob_backup, page_size=100,
+    )
+
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS programs_workouts_exercise_backup (
+            id                bigserial PRIMARY KEY,
+            program_id        uuid NOT NULL,
+            program_name      text,
+            session_index     integer,
+            block             text,
+            exercise_index    integer,
+            original_name     text,
+            original_exercise jsonb NOT NULL,
+            replacement_name  text,
+            reason            text DEFAULT 'row90_beginner_difficulty_swap',
+            backed_up_at      timestamptz NOT NULL DEFAULT now()
+        )
+    """)
+    psycopg2.extras.execute_batch(
+        cur,
+        "INSERT INTO programs_workouts_exercise_backup "
+        "(program_id, program_name, session_index, block, exercise_index, "
+        " original_name, original_exercise, replacement_name) "
+        "VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb,%s)",
+        base_backup, page_size=500,
+    )
+    psycopg2.extras.execute_batch(
+        cur,
+        "UPDATE programs SET workouts = %s::jsonb WHERE id = %s",
+        base_updates, page_size=100,
+    )
     conn.commit()
-    print(f"backed up {len(backup_rows)} exercise objects; "
-          f"updated {len(updates)} week rows")
+    print(f"backed up {len(backup_rows)} variant-week exercise objects and "
+          f"{len(base_backup)} base-blob exercise objects; "
+          f"updated {len(updates)} week rows and {len(base_updates)} programs")
     return 1 if unmapped else 0
 
 
