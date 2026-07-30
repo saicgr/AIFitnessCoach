@@ -44,10 +44,25 @@ class _FilterSectionState extends State<FilterSection> {
     super.initState();
     _isExpanded =
         widget.initiallyExpanded || widget.selectedValues.isNotEmpty;
+    // Drive filtering off the controller, not TextField.onChanged: onChanged is
+    // not delivered for every text mutation (paste, autocorrect, dictation,
+    // programmatic .text assignment), which can leave the list filtered on a
+    // stale query while the field shows the full text. See E2E register #70/#89.
+    _searchController.addListener(_onSearchControllerChanged);
+  }
+
+  /// Fires on every controller mutation regardless of source. The controller
+  /// also notifies on selection/cursor moves, so only react to real text edits.
+  void _onSearchControllerChanged() {
+    final text = _searchController.text;
+    if (text == _searchQuery) return;
+    if (!mounted) return;
+    setState(() => _searchQuery = text);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchControllerChanged);
     _searchController.dispose();
     super.dispose();
   }
@@ -248,8 +263,8 @@ class _FilterSectionState extends State<FilterSection> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (value) =>
-                            setState(() => _searchQuery = value),
+                        // No onChanged: the controller listener is the single
+                        // chokepoint (see _onSearchControllerChanged).
                         style: TextStyle(
                           fontSize: 14,
                           color: isDark
@@ -267,10 +282,9 @@ class _FilterSectionState extends State<FilterSection> {
                               Icon(Icons.search, size: 20, color: textMuted),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? GestureDetector(
-                                  onTap: () {
-                                    _searchController.clear();
-                                    setState(() => _searchQuery = '');
-                                  },
+                                  // clear() mutates the controller, which the
+                                  // listener picks up and setStates on.
+                                  onTap: _searchController.clear,
                                   child: Icon(Icons.close,
                                       size: 18, color: textMuted),
                                 )

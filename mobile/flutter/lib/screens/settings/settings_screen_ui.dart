@@ -47,13 +47,20 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
 
 
   // --- Social media icon row ---
-  Widget _buildSocialRow(bool isDark) {
+  //
+  // The tiles are deliberately MONOCHROME on the app accent rather than each
+  // network's own brand colour. Five foreign palettes (Discord blurple, Reddit
+  // orange-red, X near-black, Instagram magenta, TikTok black) inside an
+  // accent-on-black system made colour stop meaning anything — see E2E register
+  // #44/#15. The glyph shape already identifies the network; colour is reserved
+  // for the app's own hierarchy.
+  Widget _buildSocialRow(BuildContext context, bool isDark) {
     const allSocials = [
-      _SocialIcon(FontAwesomeIcons.discord, Color(0xFF5865F2), 'discord'),
-      _SocialIcon(FontAwesomeIcons.reddit, Color(0xFFFF4500), 'reddit'),
-      _SocialIcon(FontAwesomeIcons.xTwitter, Color(0xFF14171A), 'twitter'),
-      _SocialIcon(FontAwesomeIcons.instagram, Color(0xFFE4405F), 'instagram'),
-      _SocialIcon(FontAwesomeIcons.tiktok, Color(0xFF010101), 'tiktok'),
+      _SocialIcon(FontAwesomeIcons.discord, 'discord'),
+      _SocialIcon(FontAwesomeIcons.reddit, 'reddit'),
+      _SocialIcon(FontAwesomeIcons.xTwitter, 'twitter'),
+      _SocialIcon(FontAwesomeIcons.instagram, 'instagram'),
+      _SocialIcon(FontAwesomeIcons.tiktok, 'tiktok'),
     ];
 
     // Map label keys to AppLinks URLs
@@ -73,12 +80,12 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
 
     if (socials.isEmpty) return const SizedBox.shrink();
 
+    // One accent, resolved from the same source every other surface reads.
+    final accent = ThemeColors.of(context).accent;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: socials.map((s) {
-        final iconColor = isDark && s.color.computeLuminance() < 0.1
-            ? Colors.white
-            : s.color;
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: GestureDetector(
@@ -90,11 +97,14 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.15),
+                color: accent.withValues(alpha: isDark ? 0.14 : 0.10),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: accent.withValues(alpha: 0.22),
+                ),
               ),
               child: Center(
-                child: FaIcon(s.icon, color: iconColor, size: 20),
+                child: FaIcon(s.icon, color: accent, size: 20),
               ),
             ),
           ),

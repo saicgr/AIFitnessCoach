@@ -23,10 +23,32 @@ class ExerciseSearchBar extends ConsumerStatefulWidget {
 class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
   Timer? _debounceTimer;
   final _controller = TextEditingController();
+  String _lastSearchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Drive search off the controller, not TextField.onChanged: onChanged is not
+    // delivered for every text mutation (paste, autocorrect, dictation,
+    // programmatic .text assignment), which leaves results filtered on a stale
+    // query while the field shows the full text. See E2E register #70/#89.
+    _controller.addListener(_onSearchControllerChanged);
+  }
+
+  /// Fires on every controller mutation regardless of source. The controller
+  /// also notifies on selection/cursor moves, so only react to real text edits.
+  void _onSearchControllerChanged() {
+    final text = _controller.text;
+    if (text == _lastSearchText) return;
+    _lastSearchText = text;
+    if (!mounted) return;
+    _onSearchChanged(text);
+  }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _controller.removeListener(_onSearchControllerChanged);
     _controller.dispose();
     super.dispose();
   }
@@ -110,7 +132,8 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
       children: [
         TextField(
           controller: _controller,
-          onChanged: _onSearchChanged,
+          // No onChanged: the controller listener is the single chokepoint
+          // (see _onSearchControllerChanged).
           textInputAction: TextInputAction.search,
           onSubmitted: (_) {
             // Submit-key shortcut: if the typed text matches an equipment,
@@ -191,10 +214,31 @@ class ProgramSearchBar extends ConsumerStatefulWidget {
 
 class _ProgramSearchBarState extends ConsumerState<ProgramSearchBar> {
   Timer? _debounceTimer;
+  final _controller = TextEditingController();
+  String _lastSearchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Same contract as the exercise field above: the controller — not
+    // TextField.onChanged — is the single source of search-input truth, so
+    // paste / autocorrect / dictation all reach the filter.
+    _controller.addListener(_onSearchControllerChanged);
+  }
+
+  void _onSearchControllerChanged() {
+    final text = _controller.text;
+    if (text == _lastSearchText) return;
+    _lastSearchText = text;
+    if (!mounted) return;
+    _onSearchChanged(text);
+  }
 
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _controller.removeListener(_onSearchControllerChanged);
+    _controller.dispose();
     super.dispose();
   }
 
@@ -222,7 +266,8 @@ class _ProgramSearchBarState extends ConsumerState<ProgramSearchBar> {
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return TextField(
-      onChanged: _onSearchChanged,
+      controller: _controller,
+      // No onChanged: the controller listener is the single chokepoint.
       decoration: InputDecoration(
         hintText: AppLocalizations.of(context).programsSearchPrograms,
         prefixIcon: Icon(Icons.search, color: textMuted),

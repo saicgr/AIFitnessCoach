@@ -41,6 +41,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  /// The header search field's controller. The field is controller-driven, NOT
+  /// `onChanged`-driven: `onChanged` is not delivered for programmatic
+  /// mutations (and is the weaker hook for paste / autocorrect / dictation),
+  /// while `exerciseSearchProvider` — which the Exercises tab filters on — is
+  /// also written by the "Did you mean?" suggestion banner
+  /// (`exercises_tab.dart`) and by `clearSearchAndFilters()`. With only
+  /// `onChanged`, those writes changed the filtered list while the visible
+  /// field kept the old text. See E2E register #70/#89.
+  final TextEditingController _searchController = TextEditingController();
+
+  /// Last text the listener acted on — the controller also notifies on
+  /// selection/cursor moves, so only real text edits should re-filter.
+  String _lastSearchText = '';
+
   static const _tabLabels = ['Discover', 'Exercises', 'Workouts', 'Custom', 'You'];
 
   @override
@@ -63,6 +77,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
         setState(() {});
       }
     });
+
+    // Seed from the provider so re-entering the tab with a live query shows it
+    // in the field instead of an empty box over a filtered list. `ref.listen`
+    // only fires on CHANGE, so the initial value has to be read here.
+    final existingQuery = ref.read(exerciseSearchProvider);
+    if (existingQuery.isNotEmpty) {
+      _lastSearchText = existingQuery;
+      _searchController.text = existingQuery;
+    }
+    _searchController.addListener(_onSearchControllerChanged);
 
     // Apply a category tile's pre-filter on first frame (deep-link from the
     // Plan-tab library grid). Done post-frame so the TabController + filter
@@ -123,8 +147,39 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     }
   }
 
+  /// Fires on every controller mutation regardless of source (typing, paste,
+  /// dictation, autocorrect, `.text =`, `.clear()`).
+  void _onSearchControllerChanged() {
+    final value = _searchController.text;
+    if (value == _lastSearchText) return;
+    _lastSearchText = value;
+    if (!mounted) return;
+    ref.read(exerciseSearchProvider.notifier).state = value;
+    if (value.isNotEmpty && _tabController.index != 1) {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'library_search_initiated',
+      );
+      _tabController.animateTo(1);
+    }
+  }
+
+  /// Pull the field back in line when something else writes the query (the
+  /// "Did you mean?" banner, `clearSearchAndFilters`). Without this the list
+  /// filters on the new query while the field still shows the old text — the
+  /// same divergence, in the other direction.
+  void _syncFieldFromProvider(String? previous, String next) {
+    if (next == _searchController.text) return;
+    _lastSearchText = next;
+    _searchController.value = TextEditingValue(
+      text: next,
+      selection: TextSelection.collapsed(offset: next.length),
+    );
+  }
+
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchControllerChanged);
+    _searchController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -177,6 +232,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Keep the header field and the query the Exercises tab filters on from
+    // ever disagreeing (see _syncFieldFromProvider).
+    ref.listen<String>(exerciseSearchProvider, _syncFieldFromProvider);
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tc = ThemeColors.of(context);
     final backgroundColor = tc.background;
@@ -246,15 +305,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         const SizedBox(width: 10),
                         Expanded(
                           child: TextField(
-                            onChanged: (value) {
-                              ref.read(exerciseSearchProvider.notifier).state = value;
-                              if (value.isNotEmpty && _tabController.index != 1) {
-                                ref.read(posthogServiceProvider).capture(
-                                  eventName: 'library_search_initiated',
-                                );
-                                _tabController.animateTo(1);
-                              }
-                            },
+                            controller: _searchController,
+                            // No onChanged: `_onSearchControllerChanged` is the
+                            // single chokepoint (see initState).
                             style: TextStyle(
                               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                               fontSize: 14,

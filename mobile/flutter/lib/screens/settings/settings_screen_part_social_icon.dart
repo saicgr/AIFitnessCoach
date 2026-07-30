@@ -19,14 +19,17 @@ const _kSettingsLocaleNames = <String?, String>{
   'sw': 'Kiswahili', 'ha': 'Hausa',
 };
 
-/// A single row in the settings screen
+/// One social-network link in the settings footer.
+///
+/// Deliberately carries NO colour: the row paints every tile in the app accent
+/// (see `_buildSocialRow`), because five per-network brand palettes inside an
+/// accent-on-black system made colour stop signalling anything — E2E #44/#15.
 class _SocialIcon {
   // font_awesome_flutter 11 returns FaIconData (not an IconData subtype, since
   // IconData became a final class) — these rows are FA-only, rendered via FaIcon.
   final FaIconData icon;
-  final Color color;
   final String label;
-  const _SocialIcon(this.icon, this.color, this.label);
+  const _SocialIcon(this.icon, this.label);
 }
 
 

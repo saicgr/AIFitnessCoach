@@ -452,7 +452,24 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
   bool _showCustomForm = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Drive filtering off the controller, not TextField.onChanged: onChanged is
+    // not delivered for every text mutation (paste, autocorrect, dictation,
+    // programmatic .text assignment). See E2E register #70/#89.
+    _searchController.addListener(_onSearchControllerChanged);
+  }
+
+  void _onSearchControllerChanged() {
+    final text = _searchController.text;
+    if (text == _searchQuery) return;
+    if (!mounted) return;
+    setState(() => _searchQuery = text);
+  }
+
+  @override
   void dispose() {
+    _searchController.removeListener(_onSearchControllerChanged);
     _searchController.dispose();
     _customNameController.dispose();
     super.dispose();
@@ -574,7 +591,8 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (value) => setState(() => _searchQuery = value),
+                  // No onChanged: the controller listener is the single
+                  // chokepoint (see _onSearchControllerChanged).
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context).settingsCardPartSearchEquipment,
                     prefixIcon: Icon(Icons.search, color: textMuted),

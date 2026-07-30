@@ -41,16 +41,33 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
 
   bool get _hasActiveFilters => _activeFilterCount > 0;
 
+  /// Last text the search listener acted on — the controller also notifies on
+  /// selection/cursor moves, so only real text edits should re-search.
+  String _lastSearchText = '';
+
   @override
   void initState() {
     super.initState();
     _loadFilterOptions();
     // Ensure custom exercises are loaded for search merging
     ref.read(customExercisesProvider.notifier).initialize();
+    // Drive search off the controller, not TextField.onChanged: onChanged is not
+    // delivered for every text mutation (paste, autocorrect, dictation,
+    // programmatic .text assignment). See E2E register #70/#89.
+    _searchController.addListener(_onSearchControllerChanged);
+  }
+
+  void _onSearchControllerChanged() {
+    final text = _searchController.text;
+    if (text == _lastSearchText) return;
+    _lastSearchText = text;
+    if (!mounted) return;
+    _onSearchChanged(text);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchControllerChanged);
     _searchController.dispose();
     _searchFocusNode.dispose();
     _debounceTimer?.cancel();
@@ -811,10 +828,9 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
                             icon: Icon(Icons.clear, color: textMuted, size: 20),
-                            onPressed: () {
-                              _searchController.clear();
-                              _onSearchChanged('');
-                            },
+                            // clear() mutates the controller, which the
+                            // listener picks up and re-searches on.
+                            onPressed: _searchController.clear,
                           )
                         : null,
                     filled: true,
@@ -829,7 +845,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                       borderSide: BorderSide(color: _accentColor),
                     ),
                   ),
-                  onChanged: _onSearchChanged,
+                  // No onChanged: the controller listener is the single
+                  // chokepoint (see _onSearchControllerChanged).
                 ),
               ),
               const SizedBox(width: 8),

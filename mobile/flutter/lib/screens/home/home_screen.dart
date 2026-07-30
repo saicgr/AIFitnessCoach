@@ -178,6 +178,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// Ensures the Health Connect popup auto-shows at most once per app session.
   static bool _healthPopupShownThisSession = false;
 
+  /// SharedPreferences key [AppTourController.dismiss] writes once the Home
+  /// coach-mark tour has been completed (`has_seen_<tourId>`).
+  static const String _navTourSeenKey = 'has_seen_nav_tour';
+
+  /// True once the Home coach-mark tour has actually been put on screen in
+  /// THIS app session. Used to keep the first-run onboarding surfaces from
+  /// piling onto one another (register #28) — see
+  /// [_maybeShowHealthConnectPopup].
+  static bool _navTourRanThisSession = false;
+
   /// Ensures the "What's New" spotlight is checked at most once per app session
   /// (the persistent seen-once flag lives in AppTourController).
   static bool _whatsNewCheckedThisSession = false;
@@ -209,18 +219,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         title: l10n.homeScreenTourQuicklogTitle,
         description: l10n.homeScreenTourQuicklogDesc,
         position: TooltipPosition.above,
-        // Animated full-spectrum sweep ring so the small "+" FAB is unmistakably
-        // the highlighted target — a multi-hue rainbow reads as "special" where
-        // the old three-warm-hue ring just looked like a solid orange glow.
-        highlightColors: const [
-          Color(0xFFFF3B30), // red
-          Color(0xFFFF9500), // orange
-          Color(0xFFFFCC00), // yellow
-          Color(0xFF34C759), // green
-          Color(0xFF00C7BE), // teal
-          Color(0xFF007AFF), // blue
-          Color(0xFFAF52DE), // violet
-        ],
+        // No `highlightColors` override. AppTourOverlay paints its spotlight
+        // ring from `accentColorProvider` — ONE accent for every coach mark in
+        // the app. This step used to override it with a 7-colour rainbow
+        // sweep, which made a single 5-step tour carry two colour languages
+        // and put a third palette next to the Nutrition and Workout tours
+        // (register #28: "make the tours share one accent"). The "+" FAB is
+        // already the only thing outside the scrim; it does not need a
+        // bespoke palette to be findable.
       ),
       AppTourStep(
         id: 'nav_step_workout',
@@ -244,9 +250,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         position: TooltipPosition.above,
       ),
     ];
-    ref
+    // `checkAndShow` is async (prefs + Supabase metadata lookups) and reports
+    // nothing, so record whether it actually put the tour on screen. The
+    // first-run modal sequencing below keys off this.
+    unawaited(ref
         .read(appTourControllerProvider.notifier)
-        .checkAndShow('nav_tour', steps);
+        .checkAndShow('nav_tour', steps)
+        .then((_) {
+      if (!mounted) return;
+      if (ref.read(appTourControllerProvider).tourId == 'nav_tour') {
+        _navTourRanThisSession = true;
+      }
+    }));
   }
 
   @override
@@ -480,25 +495,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
-    // Wait for the onboarding tour to finish if it's currently showing —
-    // otherwise the modal-bottom-sheet barrier scrims the tooltip and the
-    // two overlays collide visually (light-mode tooltip becomes unreadable).
-    if (ref.read(appTourControllerProvider).isVisible) {
-      final completer = Completer<void>();
-      final sub = ref.listenManual(appTourControllerProvider, (prev, next) {
-        if (!next.isVisible && !completer.isCompleted) completer.complete();
-      });
-      await completer.future;
-      sub.close();
-      if (!mounted) return;
-      // Brief breathing room after the tour closes before opening the sheet.
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (!mounted) return;
-    }
-
     // Check SharedPreferences directly to avoid race condition with
     // HealthSyncNotifier's async _loadSyncState() not completing yet
     final prefs = await SharedPreferences.getInstance();
+
+    // ── First-run sequencing (register #28) ─────────────────────────────
+    // The old behaviour was to WAIT for the Home coach-mark tour and then open
+    // this sheet ~400ms later. On a brand-new account that stacks a 5-step
+    // spotlight tour, a permission modal, a Daily Crate banner and the
+    // "Coach is learning you" banner into the same two minutes — and the user
+    // still has two more tours (Nutrition, Workout) waiting on the other tabs.
+    //
+    // So the Connect Health prompt now DEFERS rather than queues: on any
+    // launch where the Home tour is still unseen (it is about to run, or is
+    // running), or where it ran in this session, we return WITHOUT writing any
+    // suppression flag. `isHealthConnectPopupSuppressed()` is untouched and
+    // `_healthPopupShownThisSession` stays false, so the prompt simply comes
+    // back on the next launch, with the tour already out of the way. Nothing
+    // is deleted — it is scheduled.
+    final navTourSeen = prefs.getBool(_navTourSeenKey) ?? false;
+    if (!navTourSeen ||
+        _navTourRanThisSession ||
+        ref.read(appTourControllerProvider).isVisible) {
+      debugPrint(
+          '🔍 [Home] Connect Health deferred — Home tour owns this session');
+      return;
+    }
     final storedConnected = prefs.getBool('health_connected') ?? false;
     if (storedConnected) return;
 

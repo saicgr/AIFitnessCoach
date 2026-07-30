@@ -37,9 +37,31 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
   String? _editingId;
   final _editController = TextEditingController();
 
+  /// Last text the search listener acted on — the controller also notifies on
+  /// selection/cursor moves, so only real text edits should re-query.
+  String _lastSearchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Drive search off the controller, not TextField.onChanged: onChanged is not
+    // delivered for every text mutation (paste, autocorrect, dictation,
+    // programmatic .text assignment). See E2E register #70/#89.
+    _searchController.addListener(_onSearchControllerChanged);
+  }
+
+  void _onSearchControllerChanged() {
+    final text = _searchController.text;
+    if (text == _lastSearchText) return;
+    _lastSearchText = text;
+    if (!mounted) return;
+    _onSearchChanged(text);
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
+    _searchController.removeListener(_onSearchControllerChanged);
     _searchController.dispose();
     _editController.dispose();
     super.dispose();
@@ -312,7 +334,6 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
               controller: _searchController,
               isDark: isDark,
               accent: accent,
-              onChanged: _onSearchChanged,
             ),
             const SizedBox(height: 12),
 
@@ -672,13 +693,11 @@ class _SearchField extends StatelessWidget {
   final TextEditingController controller;
   final bool isDark;
   final Color accent;
-  final ValueChanged<String> onChanged;
 
   const _SearchField({
     required this.controller,
     required this.isDark,
     required this.accent,
-    required this.onChanged,
   });
 
   @override
@@ -688,7 +707,8 @@ class _SearchField extends StatelessWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     return TextField(
       controller: controller,
-      onChanged: onChanged,
+      // No onChanged: the owning state listens to `controller` directly, so
+      // every mutation (paste, dictation, clear) reaches the query.
       style: TextStyle(color: textPrimary, fontSize: 14.5),
       decoration: InputDecoration(
         hintText: 'Search what Coach remembers',

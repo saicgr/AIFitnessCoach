@@ -356,13 +356,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'settings_viewed');
     });
+    // Drive search off the controller, not TextField.onChanged: onChanged is not
+    // delivered for every text mutation (paste, autocorrect, dictation,
+    // programmatic .text assignment). See E2E register #70/#89.
+    _searchController.addListener(_onSearchControllerChanged);
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchControllerChanged);
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Raw text the search listener last acted on. The controller also notifies
+  /// on selection/cursor moves, so only real text edits should re-filter.
+  String _lastSearchText = '';
+
+  void _onSearchControllerChanged() {
+    final text = _searchController.text;
+    if (text == _lastSearchText) return;
+    _lastSearchText = text;
+    if (!mounted) return;
+    _onSearchChanged(text);
   }
 
   void _onSearchChanged(String value) {
@@ -1018,7 +1035,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   // Social Media Icons
                   if (_searchQuery.isEmpty) ...[
-                    _buildSocialRow(isDark),
+                    _buildSocialRow(context, isDark),
                     const SizedBox(height: 24),
                   ],
 
@@ -1149,7 +1166,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       key: const ValueKey('settings_pill_search'),
                       controller: _searchController,
                       focusNode: _searchFocusNode,
-                      onChanged: _onSearchChanged,
+                      // The controller listener is the single chokepoint; this
+                      // callback only re-enters it, and the `_lastSearchText`
+                      // dedupe makes whichever of the two arrives second a
+                      // no-op. (PillSearchBar still requires onChanged — see
+                      // the cross-domain note to make it controller-driven.)
+                      onChanged: (_) => _onSearchControllerChanged(),
                       hintText: AppLocalizations.of(context).settingsSearchSettings,
                       autofocus: true,
                       onClear: () {

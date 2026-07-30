@@ -119,7 +119,8 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                 child: TextField(
                   controller: _searchController,
                   focusNode: _searchFocusNode,
-                  onChanged: _onSearchChanged,
+                  // No onChanged: _SettingsScreenState listens to
+                  // _searchController directly (single chokepoint).
                   style: TextStyle(
                     color: textPrimary,
                     fontSize: 15,
@@ -138,8 +139,9 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
               GestureDetector(
                 onTap: () {
                   HapticFeedback.lightImpact();
+                  // clear() mutates the controller, which the state's listener
+                  // picks up and re-filters on.
                   _searchController.clear();
-                  _onSearchChanged('');
                   _searchFocusNode.unfocus();
                   setState(() {
                     _isSearchExpanded = false;
