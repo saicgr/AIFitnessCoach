@@ -155,7 +155,22 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
             "user_id": user_id,
             "user_message": message,
             "ai_response": response_message,
-            "context_json": json.dumps(context_dict) if response_intent else None,
+            # `chat_history.context_json` is JSONB. Pass the DICT — PostgREST
+            # serialises it into a jsonb OBJECT. `json.dumps(...)` here made
+            # every row a jsonb *string* (a double-encoded scalar), which
+            # (a) broke `contextJson is Map` on the client so reopening a saved
+            # conversation lost every action card / chart / agent identity, and
+            # (b) makes every jsonb operator silently miss — e.g.
+            # `.eq("context_json->>proactive", "true")` in
+            # api/v1/home/bootstrap.py and api/v1/admin/observability.py can
+            # never match a row written here. The other writer
+            # (api/v1/push_nudge_cron.py `_mirror_proactive_to_chat`) already
+            # passes a dict; this is now the same shape. The 37 legacy string
+            # rows were re-parsed in place by migration
+            # 2389_repair_chat_history_double_encoded_context_json.sql
+            # (APPLIED 2026-07-30 — chat_history is now 51/51 jsonb objects).
+            # Gate: scripts/audit_jsonb_double_encoding.py --check
+            "context_json": context_dict if response_intent else None,
         }
         if assistant_message_id:
             # Stable PK shared with the SSE stream so client-side dedup works.
@@ -851,10 +866,17 @@ async def get_chat_history(
                     media_type=media_type,
                 ))
 
-            # Add assistant response
+            # Add assistant response.
+            # The assistant bubble carries the BARE row PK — the id the client
+            # must be able to hand back to DELETE/PATCH .../pin. It used to be
+            # synthesised as `<uuid>_assistant`, which is not a uuid, so every
+            # delete and every regenerate on a message loaded through this
+            # endpoint was rejected by PostgREST. This also makes /chat/history
+            # agree with GET /coach/sessions/{id}/messages, which already
+            # returns the bare row id for the assistant side.
             if row.get("ai_response"):
                 messages.append(ChatHistoryItem(
-                    id=f"{row_id}_assistant",  # Unique ID for assistant message
+                    id=row_id,
                     role="assistant",
                     content=row.get("ai_response", ""),
                     timestamp=timestamp,
@@ -871,6 +893,47 @@ async def get_chat_history(
         raise safe_internal_error(e, "get_chat_history")
 
 
+# One `chat_history` row holds BOTH halves of a turn (user_message +
+# ai_response), so the surfaces that expand a row into two bubbles have to give
+# the two bubbles distinct ids. Historically they minted composites — `<uuid>_u`
+# (GET /coach/sessions/{id}/messages, expanded client-side), `<uuid>_user` and
+# `<uuid>_assistant` (GET /chat/history, POST /chat/search). None of those are
+# valid uuids, so any of them sent back to DELETE /chat/messages/{id} or
+# PATCH /chat/messages/{id}/pin was rejected by PostgREST (22P02) and the
+# mutation never landed — the bubble came back on the next reload despite a
+# "this cannot be undone" dialog, and regenerate left the stale reply on screen.
+#
+# The assistant side no longer gets a suffix (see get_chat_history / search_chat
+# above). This normaliser is the server-side chokepoint that keeps already
+# installed app binaries — which still hold `_u` / `_user` / `_assistant` ids in
+# memory and in their local cache — working against the new backend. Both
+# mutating endpoints route their path param through it; nothing else may parse
+# a message id by hand.
+_MESSAGE_ID_ROLE_SUFFIXES = ("_assistant", "_user", "_u")
+
+
+def _resolve_chat_row_id(message_id: str) -> str:
+    """Map a chat bubble id onto the `chat_history` row PK it belongs to.
+
+    Strips a trailing role discriminator when present and validates the result
+    is a real uuid, so a malformed id fails loudly as a 400 instead of
+    surfacing as an opaque 500 from PostgREST.
+    """
+    row_id = (message_id or "").strip()
+    for suffix in _MESSAGE_ID_ROLE_SUFFIXES:
+        if row_id.endswith(suffix):
+            row_id = row_id[: -len(suffix)]
+            break
+    try:
+        uuid.UUID(row_id)
+    except (ValueError, AttributeError, TypeError):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Malformed chat message id: {message_id!r}",
+        )
+    return row_id
+
+
 @router.delete("/messages/{message_id}")
 @limiter.limit("10/minute")
 async def delete_message(
@@ -878,12 +941,19 @@ async def delete_message(
     message_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Delete a single chat message by ID. Only the owning user can delete."""
+    """Delete a single chat turn by message ID. Only the owning user can delete.
+
+    Accepts either the bare row uuid or any of the role-suffixed bubble ids the
+    history/search/session surfaces hand out. A turn is one row, so deleting
+    either bubble removes the turn — which is what the client already does
+    today for the user bubble.
+    """
+    row_id = _resolve_chat_row_id(message_id)
     db = get_supabase_db()
-    deleted = db.delete_chat_message(message_id, current_user["id"])
+    deleted = db.delete_chat_message(row_id, current_user["id"])
     if not deleted:
         raise HTTPException(status_code=404, detail="Message not found")
-    return {"status": "deleted"}
+    return {"status": "deleted", "message_id": row_id}
 
 
 class PinToggleRequest(BaseModel):
@@ -899,15 +969,24 @@ async def toggle_message_pin(
     body: PinToggleRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """Toggle pin status on a chat message."""
+    """Toggle pin status on a chat message.
+
+    Same id contract as DELETE /messages/{id}: role-suffixed bubble ids are
+    normalised onto the row PK. A pin that matched no row used to return
+    `{"status": "ok"}` anyway, so pinning a user bubble reported success and
+    silently never persisted — it now 404s.
+    """
     user_id = str(current_user["id"])
+    row_id = _resolve_chat_row_id(message_id)
     try:
         db = get_supabase_db()
-        db.toggle_chat_message_pin(message_id, user_id, body.is_pinned)
-        return {"status": "ok", "message_id": message_id, "is_pinned": body.is_pinned}
+        updated = db.toggle_chat_message_pin(row_id, user_id, body.is_pinned)
     except Exception as e:
-        logger.error(f"Failed to toggle pin for message {message_id}: {e}", exc_info=True)
+        logger.error(f"Failed to toggle pin for message {row_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "toggle_pin")
+    if not updated:
+        raise HTTPException(status_code=404, detail="Message not found")
+    return {"status": "ok", "message_id": row_id, "is_pinned": body.is_pinned}
 
 
 @router.delete("/history/{user_id}")
@@ -1006,7 +1085,10 @@ async def search_chat(
 
             if row.get("ai_response"):
                 messages.append(ChatHistoryItem(
-                    id=f"{row_id}_assistant",
+                    # Bare row PK — see the note in get_chat_history. A
+                    # `<uuid>_assistant` composite is not a valid uuid and
+                    # cannot be sent back to DELETE / PATCH .../pin.
+                    id=row_id,
                     role="assistant",
                     content=row.get("ai_response", ""),
                     timestamp=timestamp,

@@ -1,0 +1,723 @@
+{
+ "_bak_2325_user_achievements": [
+  "trigger_details"
+ ],
+ "_bak_2326_food_logs": [
+  "food_items",
+  "inflammation_signals"
+ ],
+ "active_fasts": [
+  "zones_reached"
+ ],
+ "active_saved_foods": [
+  "food_items",
+  "micronutrients"
+ ],
+ "activity_feed": [
+  "activity_data"
+ ],
+ "admin_pending_merch_claims": [
+  "shipping_address"
+ ],
+ "ai_workout_suggestions": [
+  "suggested_value",
+  "user_modified_value"
+ ],
+ "app_errors": [
+  "extra_data"
+ ],
+ "app_tour_sessions": [
+  "deep_links_clicked",
+  "device_info"
+ ],
+ "app_tour_step_events": [
+  "interaction_data"
+ ],
+ "billing_notifications": [
+  "metadata"
+ ],
+ "body_analyzer_snapshots": [
+  "improvement_tips",
+  "input_measurements",
+  "posture_findings"
+ ],
+ "body_types": [
+  "recommended_macro_ratios"
+ ],
+ "branded_programs": [
+  "program_metadata"
+ ],
+ "buddy_workout_sessions": [
+  "exercises_snapshot"
+ ],
+ "calibration_workouts": [
+  "ai_analysis",
+  "exercises_json",
+  "results_json",
+  "suggested_adjustments"
+ ],
+ "cancellation_requests": [
+  "metadata"
+ ],
+ "carb_entries": [
+  "food_items"
+ ],
+ "cardio_logs": [
+  "indoor_metadata",
+  "paused_segments",
+  "splits_json",
+  "weather_json"
+ ],
+ "cardio_metric_snapshots": [
+  "meta"
+ ],
+ "cardio_sessions": [
+  "indoor_metadata",
+  "paused_segments",
+  "weather_json"
+ ],
+ "chat_history": [
+  "context_json"
+ ],
+ "chat_history_context_json_backup_2389": [
+  "context_json"
+ ],
+ "chat_interaction_analytics": [
+  "tools_called"
+ ],
+ "chat_pending_proposals": [
+  "tool_args"
+ ],
+ "coach_daily_insights": [
+  "chips",
+  "cta_primary",
+  "cta_secondary"
+ ],
+ "coach_reviews": [
+  "micronutrient_gaps",
+  "swap_suggestions"
+ ],
+ "common_foods": [
+  "micronutrients"
+ ],
+ "conversion_triggers": [
+  "trigger_details"
+ ],
+ "current_week_plan_view": [
+  "daily_entries",
+  "workout_days"
+ ],
+ "custom_goals": [
+  "exercise_categories",
+  "muscle_groups",
+  "search_keywords",
+  "target_metrics"
+ ],
+ "daily_plan_entries": [
+  "coordination_notes",
+  "meal_suggestions"
+ ],
+ "demo_conversion_funnel": [
+  "conversion_triggers"
+ ],
+ "demo_interactions": [
+  "metadata"
+ ],
+ "demo_sessions": [
+  "device_info",
+  "quiz_data"
+ ],
+ "diabetes_medications": [
+  "times_of_day"
+ ],
+ "email_send_log": [
+  "metadata"
+ ],
+ "equipment_inventory": [
+  "dumbbell_inventory",
+  "plate_inventory"
+ ],
+ "equipment_types_i18n": [
+  "aliases"
+ ],
+ "equipment_usage_analytics": [
+  "equipment_combination"
+ ],
+ "exercise_library": [
+  "raw_data",
+  "tissue_stress"
+ ],
+ "exercise_library_i18n": [
+  "secondary_muscles_localized"
+ ],
+ "exercise_library_manual": [
+  "raw_data"
+ ],
+ "exercise_progression_steps": [
+  "unlock_criteria"
+ ],
+ "exercise_search_cache": [
+  "filters_json",
+  "results"
+ ],
+ "exercises": [
+  "component_exercises",
+  "contraindicated_injuries",
+  "equipment_required",
+  "secondary_muscles",
+  "tags",
+  "tips"
+ ],
+ "fasting_impact_analysis": [
+  "recommendations"
+ ],
+ "fasting_preferences": [
+  "safety_responses",
+  "weekly_schedule"
+ ],
+ "fasting_records": [
+  "zones_reached"
+ ],
+ "feature_usage": [
+  "metadata"
+ ],
+ "fitness_wrapped": [
+  "ai_personality",
+  "stats"
+ ],
+ "flexibility_stretch_plans": [
+  "stretches"
+ ],
+ "flexibility_tests": [
+  "common_mistakes",
+  "instructions",
+  "tips"
+ ],
+ "food_analysis_cache": [
+  "analysis_result"
+ ],
+ "food_companion_suggestions_cache": [
+  "suggestions"
+ ],
+ "food_database": [
+  "validation_flags"
+ ],
+ "food_inflammation_analyses": [
+  "ingredient_analyses"
+ ],
+ "food_logs": [
+  "food_items",
+  "inflammation_signals"
+ ],
+ "food_nutrition_overrides_i18n": [
+  "common_servings_localized"
+ ],
+ "food_reports": [
+  "all_food_items",
+  "analysis_response"
+ ],
+ "food_search_cache": [
+  "results"
+ ],
+ "fraud_flags": [
+  "metadata"
+ ],
+ "free_tools_email_signup": [
+  "result_summary"
+ ],
+ "funnel_events": [
+  "properties"
+ ],
+ "generated_workouts": [
+  "workout_data"
+ ],
+ "goal_friends_cache": [
+  "friend_previews"
+ ],
+ "goal_suggestions": [
+  "source_data"
+ ],
+ "gym_equipment_reports": [
+  "equipment_details"
+ ],
+ "gym_profiles": [
+  "day_focus_override",
+  "equipment",
+  "equipment_details",
+  "focus_areas",
+  "goals",
+  "workout_days"
+ ],
+ "heart_health_daily": [
+  "components"
+ ],
+ "home_layout_templates": [
+  "tiles"
+ ],
+ "home_layouts": [
+  "tiles"
+ ],
+ "injury_history": [
+  "exercises_removed",
+  "rehab_exercises_added"
+ ],
+ "latest_calibration_workout": [
+  "ai_analysis",
+  "exercises_json",
+  "suggested_adjustments"
+ ],
+ "level_up_events": [
+  "rewards_snapshot"
+ ],
+ "live_chat_presence": [
+  "device_info"
+ ],
+ "mastery_definitions": [
+  "level_thresholds"
+ ],
+ "mcp_audit_log": [
+  "request_summary"
+ ],
+ "mcp_confirmation_tokens": [
+  "payload"
+ ],
+ "meal_plan_items": [
+  "food_items"
+ ],
+ "meal_plan_swap_suggestions": [
+  "suggestions"
+ ],
+ "meal_plan_templates": [
+  "meals"
+ ],
+ "meal_plans": [
+  "target_snapshot"
+ ],
+ "meal_templates": [
+  "food_items"
+ ],
+ "media_analysis_jobs": [
+  "params",
+  "result"
+ ],
+ "menu_analyses": [
+  "food_items",
+  "sections"
+ ],
+ "menu_scan_cache": [
+  "dishes"
+ ],
+ "merch_claims": [
+  "shipping_address",
+  "sizes"
+ ],
+ "mesocycle_state": [
+  "last_trigger"
+ ],
+ "mood_checkins": [
+  "context"
+ ],
+ "notification_queue": [
+  "data"
+ ],
+ "nutrition_ai_recommendations": [
+  "payload"
+ ],
+ "nutrition_import_jobs": [
+  "parsed_rows",
+  "parsed_weight",
+  "preview",
+  "result"
+ ],
+ "nutrition_preferences": [
+  "food_logging_rules",
+  "per_meal_macro_targets",
+  "per_weekday_targets"
+ ],
+ "oauth_sync_webhook_events": [
+  "payload"
+ ],
+ "onboarding_analytics": [
+  "options_selected"
+ ],
+ "payment_transactions": [
+  "metadata"
+ ],
+ "pending_challenges_with_users": [
+  "challenged_stats",
+  "challenger_stats",
+  "partial_stats",
+  "workout_data"
+ ],
+ "performance_logs": [
+  "metrics"
+ ],
+ "performance_logs_dedup_backup_2342": [
+  "metrics"
+ ],
+ "photo_comparisons": [
+  "photos_json",
+  "settings_json"
+ ],
+ "plan_previews": [
+  "device_info",
+  "generated_plan",
+  "quiz_data"
+ ],
+ "popular_community_recipes": [
+  "micronutrients_per_serving"
+ ],
+ "popular_equipment_combinations": [
+  "equipment_combination"
+ ],
+ "popular_shared_workouts": [
+  "activity_data"
+ ],
+ "preference_impact_log": [
+  "queued_excluded_reasons"
+ ],
+ "program_exercises_flat": [
+  "exercise"
+ ],
+ "program_exercises_with_fallback": [
+  "exercise"
+ ],
+ "program_exercises_with_media": [
+  "exercise"
+ ],
+ "program_exercises_with_media_fallback": [
+  "exercise"
+ ],
+ "program_history": [
+  "preferences"
+ ],
+ "program_retune_proposals": [
+  "proposal_json"
+ ],
+ "program_variant_weeks": [
+  "workouts"
+ ],
+ "program_variant_weeks_bak_prerename": [
+  "workouts"
+ ],
+ "program_variant_weeks_copy": [
+  "workouts"
+ ],
+ "program_variant_weeks_copy_backup": [
+  "workouts"
+ ],
+ "program_variant_weeks_exercise_backup": [
+  "original_exercise"
+ ],
+ "program_variants": [
+  "workouts"
+ ],
+ "programs": [
+  "phases",
+  "workouts"
+ ],
+ "programs_workouts_bak_prerename": [
+  "workouts"
+ ],
+ "progression_history": [
+  "context"
+ ],
+ "public_plans_v": [
+  "snapshot"
+ ],
+ "public_workouts_v": [
+  "exercises"
+ ],
+ "push_nudge_log": [
+  "metadata"
+ ],
+ "rag_context_cache": [
+  "context_result"
+ ],
+ "recent_errors": [
+  "metadata"
+ ],
+ "recipe_ingredients": [
+  "micronutrients"
+ ],
+ "recipe_suggestion_sessions": [
+  "suggestions_generated",
+  "user_context"
+ ],
+ "recipe_suggestions": [
+  "generation_context",
+  "ingredients"
+ ],
+ "recipe_versions": [
+  "recipe_snapshot"
+ ],
+ "recipes_i18n": [
+  "instructions_localized"
+ ],
+ "recipes_with_stats": [
+  "micronutrients_per_serving"
+ ],
+ "saved_foods": [
+  "food_items",
+  "micronutrients"
+ ],
+ "saved_foods_with_stats": [
+  "food_items",
+  "micronutrients"
+ ],
+ "saved_tips": [
+  "tags"
+ ],
+ "saved_workouts": [
+  "exercises"
+ ],
+ "saved_workouts_with_source": [
+  "exercises"
+ ],
+ "scheduled_recipe_logs": [
+  "batch_slots"
+ ],
+ "scheduled_workouts": [
+  "exercises"
+ ],
+ "screen_views": [
+  "extra_params"
+ ],
+ "senior_workout_log": [
+  "modifications_applied"
+ ],
+ "set_adjustments": [
+  "metadata"
+ ],
+ "share_links": [
+  "payload"
+ ],
+ "shared_items": [
+  "extracted_payload",
+  "tags"
+ ],
+ "shared_plans": [
+  "snapshot"
+ ],
+ "slideshow_jobs": [
+  "params"
+ ],
+ "social_notifications": [
+  "data"
+ ],
+ "stats_gallery": [
+  "achievements_data",
+  "prs_data",
+  "stats_snapshot"
+ ],
+ "stretches": [
+  "exercises_json",
+  "target_muscles"
+ ],
+ "subscription_history": [
+  "metadata"
+ ],
+ "subscription_pause_history": [
+  "metadata"
+ ],
+ "subscription_transparency_events": [
+  "event_data"
+ ],
+ "superset_analytics": [
+  "preference_summary"
+ ],
+ "try_workout_sessions": [
+  "workout_data"
+ ],
+ "upcoming_scheduled_workouts": [
+  "exercises"
+ ],
+ "user_achievements": [
+  "trigger_details"
+ ],
+ "user_activity_log": [
+  "metadata"
+ ],
+ "user_ai_settings": [
+  "enabled_agents",
+  "focus_areas"
+ ],
+ "user_context_logs": [
+  "avoided_exercises",
+  "avoided_muscles",
+  "context",
+  "event_data"
+ ],
+ "user_daily_crates": [
+  "reward"
+ ],
+ "user_events": [
+  "properties"
+ ],
+ "user_insights": [
+  "context_data"
+ ],
+ "user_meal_templates_by_usage": [
+  "food_items"
+ ],
+ "user_milestones": [
+  "trigger_context"
+ ],
+ "user_penalties": [
+  "details"
+ ],
+ "user_program_schedules": [
+  "day_times"
+ ],
+ "user_program_templates": [
+  "days"
+ ],
+ "user_recipes": [
+  "micronutrients_per_serving"
+ ],
+ "user_rewards": [
+  "delivery_details",
+  "reward_details"
+ ],
+ "user_settings": [
+  "beast_mode_config"
+ ],
+ "user_subscriptions": [
+  "features"
+ ],
+ "user_trial_status": [
+  "features_used"
+ ],
+ "users": [
+  "active_custom_goal_ids",
+  "active_injuries",
+  "equipment_details",
+  "muscle_focus_points",
+  "notification_preferences",
+  "onboarding_conversation",
+  "preferences",
+  "prior_apps_tried",
+  "stats_data",
+  "ui_onboarding_state"
+ ],
+ "v_completed_workouts": [
+  "ai_interactions",
+  "drink_events",
+  "exercises",
+  "heart_rate_readings",
+  "increment_settings",
+  "rest_intervals_detail",
+  "skipped_exercise_indices",
+  "stretch_exercises",
+  "warmup_exercises"
+ ],
+ "v_recent_missed_workouts": [
+  "exercises_json"
+ ],
+ "v_stretches_with_muscles": [
+  "exercises_json",
+  "target_muscles"
+ ],
+ "v_user_rep_accuracy_summary": [
+  "exercises_needing_easier_targets"
+ ],
+ "v_user_set_adjustment_patterns": [
+  "top_adjusted_exercises"
+ ],
+ "v_warmups_with_muscles": [
+  "exercises_json",
+  "target_muscles"
+ ],
+ "warmup_exercise_logs": [
+  "intervals_json"
+ ],
+ "warmup_exercises_with_type": [
+  "component_exercises",
+  "contraindicated_injuries",
+  "equipment_required",
+  "secondary_muscles",
+  "tags",
+  "tips"
+ ],
+ "warmup_stretch_preferences": [
+  "avoided_stretches",
+  "avoided_warmups",
+  "post_exercise_routine",
+  "pre_workout_routine",
+  "preferred_stretches",
+  "preferred_warmups"
+ ],
+ "warmups": [
+  "exercises_json",
+  "target_muscles"
+ ],
+ "weekly_plans": [
+  "workout_days"
+ ],
+ "weekly_program_progress": [
+  "workout_types_completed"
+ ],
+ "weekly_summaries": [
+  "ai_highlights",
+  "ai_next_week_tips",
+  "pr_details"
+ ],
+ "window_mode_logs": [
+  "device_info"
+ ],
+ "workout_ai_recaps": [
+  "payload"
+ ],
+ "workout_challenges": [
+  "challenged_stats",
+  "challenger_stats",
+  "partial_stats",
+  "workout_data"
+ ],
+ "workout_changes": [
+  "details"
+ ],
+ "workout_exercise_ai_summaries": [
+  "payload"
+ ],
+ "workout_gallery_images": [
+  "achievements_data",
+  "prs_data"
+ ],
+ "workout_logs": [
+  "exercises_performance",
+  "metadata",
+  "performance_data",
+  "sets_json"
+ ],
+ "workout_logs_sets_json_repair_2343": [
+  "old_sets_json"
+ ],
+ "workout_presets": [
+  "params"
+ ],
+ "workout_program_templates": [
+  "one_rm_inputs",
+  "raw_prescription"
+ ],
+ "workout_regenerations": [
+  "selected_equipment",
+  "selected_focus_areas",
+  "selected_injuries"
+ ],
+ "workouts": [
+  "display_title_localized",
+  "equipment",
+  "exercises_json",
+  "generation_metadata",
+  "modification_history",
+  "stretch_json",
+  "warmup_json"
+ ],
+ "x_pending_drafts": [
+  "tweets"
+ ],
+ "xp_audit_log": [
+  "metadata"
+ ]
+}
