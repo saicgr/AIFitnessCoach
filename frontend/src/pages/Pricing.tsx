@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
+import {
+  EXERCISE_COUNT_LABEL,
+  EXERCISE_LIBRARY_CLAIM,
+  EXERCISE_VIDEO_COUNT_LABEL,
+} from '../components/marketing/catalogStats';
 
 interface PricingPlan {
   name: string;
@@ -19,7 +24,7 @@ interface PricingPlan {
 }
 
 const sharedFeatures = [
-  '1,722 exercises with video demos',
+  EXERCISE_LIBRARY_CLAIM,
   'Unlimited AI coach chat',
   'AI workout generation (monthly/weekly/quick)',
   'AI photo food logging (Vision)',
@@ -64,7 +69,12 @@ const plans: PricingPlan[] = [
 ];
 
 const premiumFeaturesList = [
-  { feature: 'Exercise Library', detail: '1,722 with video demos' },
+  {
+    feature: 'Exercise Library',
+    // Catalog size and video-backed subset are separate claims — the video
+    // count is the smaller one (see catalogStats.ts).
+    detail: `${EXERCISE_COUNT_LABEL} exercises, ${EXERCISE_VIDEO_COUNT_LABEL} with video demos`,
+  },
   { feature: 'Workout Logging', detail: 'Unlimited' },
   { feature: 'AI Chat Messages', detail: 'Unlimited' },
   { feature: 'AI Workout Generation', detail: 'Monthly / Weekly / Quick' },
@@ -144,7 +154,7 @@ const costBreakdown = [
   {
     icon: '💪',
     title: 'Exercise Library',
-    desc: '1,722 exercises with video demos, instructions, and AI-powered alternatives',
+    desc: `${EXERCISE_LIBRARY_CLAIM}, instructions, and AI-powered alternatives`,
   },
 ];
 
@@ -161,11 +171,11 @@ const afterItems = [
   'AI generates plans around your goals, equipment, and injuries',
   '5 specialist AI agents for coaching, nutrition, and recovery',
   'Track every rep and see clear progress analytics',
-  '1,722 exercises with video demos and smart alternatives',
+  `${EXERCISE_LIBRARY_CLAIM} and smart alternatives`,
 ];
 
 const stats = [
-  { value: '1,722+', label: 'Exercises' },
+  { value: EXERCISE_COUNT_LABEL, label: 'Exercises' },
   { value: '5', label: 'AI Agents' },
   { value: '1,000+', label: 'Features' },
 ];

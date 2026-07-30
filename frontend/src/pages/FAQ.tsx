@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
+import { EXERCISE_LIBRARY_CLAIM } from '../components/marketing/catalogStats';
 
 interface FAQItem {
   question: string;
@@ -110,7 +111,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'What\'s included in my subscription?',
         answer:
-          'Everything: unlimited AI-generated workouts, unlimited AI coach chat, photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, 1,722 exercises with video demos, skill progressions, injury tracking, coach personas, and more. There are no feature tiers, you get it all.',
+          `Everything: unlimited AI-generated workouts, unlimited AI coach chat, photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, ${EXERCISE_LIBRARY_CLAIM}, skill progressions, injury tracking, coach personas, and more. There are no feature tiers, you get it all.`,
       },
       {
         question: 'Can I cancel whenever I want?',
