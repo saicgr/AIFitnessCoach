@@ -2,8 +2,10 @@
 Shared premium feature gate checking and usage tracking.
 
 Provides `check_premium_gate()` for backend endpoints to enforce
-free-tier limits on AI features. Premium/premium_plus users
-get unlimited access.
+free-tier limits on AI features. Every PAYING tier — premium, premium_plus,
+its legacy name ultra, and lifetime — gets unlimited access; the tier
+hierarchy itself lives in core/feature_gate_policy.py (the single source
+shared with the subscription handlers), never as a list in this file.
 """
 import os
 from datetime import date, datetime
@@ -13,6 +15,12 @@ from fastapi import HTTPException
 from core.supabase_client import get_supabase
 from core.logger import get_logger
 from core.timezone_utils import get_user_today
+from core.feature_gate_policy import (
+    DEFAULT_RESET_PERIOD,
+    is_paid_tier,
+    meets_minimum_tier,
+    normalize_reset_period,
+)
 
 logger = get_logger(__name__)
 
@@ -58,8 +66,10 @@ async def check_premium_gate(user_id: str, feature_key: str, timezone_str: str) 
     except Exception:
         user_tier = "free"
 
-    # Premium/premium_plus users get unlimited access
-    if user_tier in ("premium", "premium_plus"):
+    # Every paying tier gets unlimited access — premium, premium_plus, the legacy
+    # `ultra`, and `lifetime`. Ranked from core/feature_gate_policy.TIER_RANK so a
+    # tier added to the subscription_tier enum can never be metered as free again.
+    if is_paid_tier(user_tier):
         return True, None
 
     # Get the feature gate config
@@ -94,8 +104,7 @@ async def check_premium_gate(user_id: str, feature_key: str, timezone_str: str) 
         )
 
     # Tier check - if minimum_tier is 'premium', free users can't access at all
-    tier_levels = {"free": 0, "premium": 1, "premium_plus": 2}
-    if tier_levels.get(user_tier, 0) < tier_levels.get(gate["minimum_tier"], 0):
+    if not meets_minimum_tier(user_tier, gate.get("minimum_tier")):
         raise HTTPException(
             status_code=402,
             detail={
@@ -138,10 +147,13 @@ def _get_fallback_gate(feature_key: str) -> dict:
         "ai_chat": {"free_limit": 10, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
         "ai_workout_generation": {"free_limit": 2, "reset_period": "monthly", "minimum_tier": "free", "is_enabled": True},
         "food_scanning": {"free_limit": 1, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
-        "form_video_analysis": {"free_limit": 0, "reset_period": None, "minimum_tier": "premium", "is_enabled": True},
+        # free_limit 0 + minimum_tier premium: tier-gated, never metered. The period
+        # is still a valid one — a NULL here is what made the free chat cap a
+        # LIFETIME cap (see core/feature_gate_policy, migrations 2330/2380).
+        "form_video_analysis": {"free_limit": 0, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "premium", "is_enabled": True},
         "text_to_calories": {"free_limit": 3, "reset_period": "daily", "minimum_tier": "free", "is_enabled": True},
     }
-    return fallbacks.get(feature_key, {"free_limit": None, "reset_period": None, "minimum_tier": "free", "is_enabled": True})
+    return fallbacks.get(feature_key, {"free_limit": None, "reset_period": DEFAULT_RESET_PERIOD, "minimum_tier": "free", "is_enabled": True})
 
 
 async def track_premium_usage(user_id: str, feature_key: str, timezone_str: str):
@@ -189,8 +201,17 @@ async def track_premium_usage(user_id: str, feature_key: str, timezone_str: str)
 
 
 def _get_current_usage(supabase, user_id: str, feature_key: str, reset_period: Optional[str], timezone_str: str) -> int:
-    """Get current usage count respecting the reset period."""
+    """
+    Get current usage count respecting the reset period.
+
+    There is deliberately no "no reset period" branch: a NULL/invalid period used
+    to fall through to summing ALL-TIME usage, which silently turned a daily free
+    cap into a permanent one. Migration 2380 makes NULL impossible in the schema;
+    normalize_reset_period() is the belt-and-braces read-time chokepoint and logs
+    loudly if a row ever escapes the constraint.
+    """
     today = date.fromisoformat(get_user_today(timezone_str))
+    reset_period = normalize_reset_period(reset_period, feature_key)
 
     try:
         if reset_period == "daily":
@@ -202,24 +223,15 @@ def _get_current_usage(supabase, user_id: str, feature_key: str, reset_period: O
                 .execute()
             return sum(row["usage_count"] for row in (result.data or []))
 
-        elif reset_period == "monthly":
-            first_of_month = today.replace(day=1).isoformat()
-            result = supabase.client.table("feature_usage")\
-                .select("usage_count")\
-                .eq("user_id", user_id)\
-                .eq("feature_key", feature_key)\
-                .gte("usage_date", first_of_month)\
-                .execute()
-            return sum(row["usage_count"] for row in (result.data or []))
-
-        else:
-            # No reset period (null) - sum all time usage
-            result = supabase.client.table("feature_usage")\
-                .select("usage_count")\
-                .eq("user_id", user_id)\
-                .eq("feature_key", feature_key)\
-                .execute()
-            return sum(row["usage_count"] for row in (result.data or []))
+        # "monthly" — normalize_reset_period() guarantees one of VALID_RESET_PERIODS
+        first_of_month = today.replace(day=1).isoformat()
+        result = supabase.client.table("feature_usage")\
+            .select("usage_count")\
+            .eq("user_id", user_id)\
+            .eq("feature_key", feature_key)\
+            .gte("usage_date", first_of_month)\
+            .execute()
+        return sum(row["usage_count"] for row in (result.data or []))
 
     except Exception as e:
         logger.warning(f"Failed to get usage for {feature_key}: {e}", exc_info=True)
