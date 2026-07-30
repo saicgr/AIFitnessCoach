@@ -160,11 +160,21 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Action row: 5 LABELED capture chips (Photo / Barcode / Menu /
-          // Scan / Coach). Laid out as a single Row of equal-width Expanded
-          // columns — icon stacked over a label — so all five always fit on
-          // one line, from iPhone SE up to iPad. Photo and Scan open a small
-          // chooser; Barcode, Menu and Coach act in one tap.
+          // Action row — E2E rows 26 + 107 ("thirteen affordances to log one
+          // meal"). This used to carry FIVE chips (Photo / Barcode / Menu /
+          // Scan / Coach) directly under a FOUR-tab mode selector, and several
+          // of them landed in the same place: "Snap" (a mode tab) and "Photo"
+          // both open the camera, and "Scan" reads as a third camera route.
+          //
+          // The duplicate routes are now merged into ONE chip each and the
+          // rest sit behind a single labelled "More" affordance:
+          //   • Photo   — camera or library (absorbs the old Snap tab).
+          //   • Barcode — the fastest, most-used scan; stays one tap.
+          //   • Menu    — the signature menu scan; stays one tap.
+          //   • More    — nutrition label, app screenshot, describe-in-detail,
+          //               voice and the coach, in one glass menu.
+          // Nothing was removed: every capability is still reachable, at most
+          // one extra tap away, and no two chips now promise the same result.
           //
           // Analyze stays the clear primary CTA: a filled accent pill on its
           // own full-width row below the lighter capture chips.
@@ -207,29 +217,15 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
               ),
               const SizedBox(width: 6),
 
-              // Scan — opens a 2-option chooser (nutrition label / app
-              // screenshot).
+              // More — the single secondary affordance holding every remaining
+              // route (label / screenshot / describe / voice / coach).
               Expanded(
                 child: _CaptureChip(
-                  icon: Icons.document_scanner_outlined,
-                  label: AppLocalizations.of(context).quickLogFabScan,
+                  icon: Icons.more_horiz_rounded,
+                  label: 'More',
                   color: const Color(0xFF8B5CF6), // violet
                   isDark: isDark,
-                  onTap: _openScanChooser,
-                ),
-              ),
-              const SizedBox(width: 6),
-
-              // Coach — context-aware AI meal-suggestion popup. Fixed rose so
-              // it never collides with the (orange-ish) accent / amber Menu
-              // chip.
-              Expanded(
-                child: _CaptureChip(
-                  icon: Icons.auto_awesome_outlined,
-                  label: AppLocalizations.of(context).quickActionsRowCoach,
-                  color: const Color(0xFFEC4899), // rose
-                  isDark: isDark,
-                  onTap: _openAiCoachSheet,
+                  onTap: _openMoreWaysToLog,
                 ),
               ),
             ],
@@ -307,9 +303,116 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     await _pickImages(source);
   }
 
+  /// "More" chip → the ONE secondary affordance for every logging route that
+  /// is not Photo / Barcode / Menu (E2E rows 26 + 107).
+  ///
+  /// It holds exactly the routes that used to compete for space in the sheet's
+  /// chrome: the old Scan chip's two OCR paths, plus the three mode tabs
+  /// (Describe / Voice) that duplicated the search field and its mic, plus the
+  /// coach. Every one of them still works identically — this only changes
+  /// where they are reached from, so no capability is lost.
+  Future<void> _openMoreWaysToLog() async {
+    const violet = Color(0xFF8B5CF6);
+    final choice = await showGlassSheet<String>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _chooserHeader(colors, violet, Icons.more_horiz_rounded,
+                        'More ways to log'),
+                    _GlassMenuOption(
+                      icon: Icons.notes_rounded,
+                      label: 'Describe in detail',
+                      subtitle: 'Add photos and notes, then analyse',
+                      color: violet,
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(ctx, 'describe'),
+                    ),
+                    const SizedBox(height: 10),
+                    _GlassMenuOption(
+                      icon: Icons.mic_rounded,
+                      label: 'Voice',
+                      subtitle: 'Hands-free — speak it, then confirm',
+                      color: violet,
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(ctx, 'voice'),
+                    ),
+                    const SizedBox(height: 10),
+                    _GlassMenuOption(
+                      icon: Icons.qr_code_2_outlined,
+                      label: AppLocalizations.of(context).logMealSheetNutritionLabel,
+                      subtitle: AppLocalizations.of(context).logMealSheetReadMacrosOffA,
+                      color: violet,
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(ctx, 'label'),
+                    ),
+                    const SizedBox(height: 10),
+                    _GlassMenuOption(
+                      icon: Icons.screenshot_outlined,
+                      label: AppLocalizations.of(context).logMealSheetScreenshot,
+                      subtitle: AppLocalizations.of(context).logMealSheetImportALogFrom,
+                      color: violet,
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(ctx, 'screenshot'),
+                    ),
+                    const SizedBox(height: 10),
+                    _GlassMenuOption(
+                      icon: Icons.auto_awesome_outlined,
+                      label: AppLocalizations.of(context).quickActionsRowCoach,
+                      subtitle: 'Ask the coach what to eat',
+                      color: violet,
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(ctx, 'coach'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case 'describe':
+        setState(() => _aiMode = _AiLogMode.describe);
+        break;
+      case 'voice':
+        setState(() => _aiMode = _AiLogMode.voice);
+        break;
+      case 'label':
+        await _scanNutritionLabel();
+        break;
+      case 'screenshot':
+        await _scanAppScreenshot();
+        break;
+      case 'coach':
+        _openAiCoachSheet();
+        break;
+    }
+  }
+
   /// Scan chip → 2-option chooser: nutrition label or app screenshot. Both
   /// route through the existing label/screenshot OCR flows. Barcode is now a
   /// dedicated top-level chip and no longer appears here.
+  ///
+  /// DEAD CODE as of the rows 26/107 consolidation — it has NO callers left
+  /// (the deep links `autoOpenCamera` / `autoOpenBarcode` / `autoOpenMenuScan`
+  /// / `autoOpenMultiImage` each route to their own handler, not here, and the
+  /// in-sheet route is now [_openMoreWaysToLog], which re-implements both of
+  /// these options). Delete it — or re-point a caller at it — rather than
+  /// letting the `ignore` keep it alive silently.
+  // ignore: unused_element
   Future<void> _openScanChooser() async {
     const violet = Color(0xFF8B5CF6);
     final choice = await showGlassSheet<String>(

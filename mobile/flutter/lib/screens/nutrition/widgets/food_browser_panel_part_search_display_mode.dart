@@ -79,20 +79,23 @@ class _BrowseFilterTabs extends StatelessWidget {
       );
     }
 
-    // 4 pills can get tight on a narrow phone — let the row scroll
-    // horizontally so it never overflows.
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    // E2E row 26 — these four pills used to sit in a horizontal
+    // SingleChildScrollView, so on a narrow phone the LAST one ("Quick log",
+    // which is also the DEFAULT tab) was cut off at the right edge with no
+    // scrollbar, fade or any other hint that it was there. A Wrap can never
+    // clip: the pills flow onto a second line instead. "Quick log" also leads
+    // now, because it is the tab the sheet opens on — the selected tab must
+    // never be the one that needs scrolling into view.
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Row(
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          tab(FoodBrowserFilter.recent, 'Recent', Icons.schedule),
-          const SizedBox(width: 8),
-          tab(FoodBrowserFilter.saved, 'Saved', Icons.bookmark_outline),
-          const SizedBox(width: 8),
-          tab(FoodBrowserFilter.foodDb, 'Food DB', Icons.storage_outlined),
-          const SizedBox(width: 8),
           tab(FoodBrowserFilter.quickLog, 'Quick log', Icons.bolt_rounded),
+          tab(FoodBrowserFilter.recent, 'Recent', Icons.schedule),
+          tab(FoodBrowserFilter.saved, 'Saved', Icons.bookmark_outline),
+          tab(FoodBrowserFilter.foodDb, 'Food DB', Icons.storage_outlined),
         ],
       ),
     );

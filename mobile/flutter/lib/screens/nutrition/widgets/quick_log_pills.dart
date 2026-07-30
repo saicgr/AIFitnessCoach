@@ -15,7 +15,12 @@ part of '../log_meal_sheet.dart';
 //                           filtered to the current slot. EXACT macros.
 //   ⭐ Your usual [slot]    — usualMealProvider (GET /nutrition/usual-meal),
 //                           server-computed from 30-day frequency.
-//   🔁 Recent / frequent    — reuses _deriveFrequentMeals() (logged ≥2×).
+//   🔁 Frequent            — reuses _deriveFrequentMeals() (logged ≥2×).
+//   ↺ Log it again        — ANY recent log, incl. one filed minutes ago.
+//                           This is the source that keeps the tab's own
+//                           empty-state promise on day one (E2E row 101);
+//                           every other source needs history the user
+//                           doesn't have yet.
 //
 // Ranking is a deterministic local algo (<100ms, no LLM/RAG per
 // feedback_prefer_local_algo_over_rag): expiring leftovers first; breakfast
@@ -34,7 +39,7 @@ part of '../log_meal_sheet.dart';
 
 /// The kind of source a smart pill came from — drives icon, copy, and the
 /// tap behaviour (exact-macro one-tap log vs. fuzzy re-analyse).
-enum _SmartPillKind { leftover, yesterday, usual, frequent }
+enum _SmartPillKind { leftover, yesterday, usual, frequent, recent }
 
 /// One ranked pill in the smart quick-log row.
 class _SmartPill {
@@ -187,7 +192,7 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
         subtitle: _exactMacroSubtitle(log.totalCalories),
         glyph: '↻',
         score: base,
-        dedupeKey: _logDedupeKey(slot, log.foodItems.map((i) => i.name)),
+        dedupeKey: _logDedupeKey(slot, _logNames(log)),
         exactLog: log,
       ));
     }
@@ -215,6 +220,7 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
           timesLogged: 0,
           calories: usual.totalCalories,
           analysisText: analysisText,
+          itemNames: usual.itemNames,
         ),
       ));
     }
@@ -238,13 +244,66 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
             : 'Logged ${m.timesLogged}×',
         glyph: '🔁',
         score: base,
-        dedupeKey: _logDedupeKey(m.mealType, [m.label]),
+        // Key on the NAME SET, never the joined display label: every other
+        // source keys on the set, so `[m.label]` ("whole egg, toast, banana")
+        // could never collapse against a "banana|toast|whole egg" key and the
+        // same meal rendered twice — once here and once as a ↺ recent pill.
+        dedupeKey: _logDedupeKey(m.mealType, m.itemNames),
         fuzzyMeal: m,
       ));
     }
 
-    pills.sort((a, b) => b.score.compareTo(a.score));
-    return pills.take(5).toList();
+    // 5) Recent — ANY log the user has filed recently, including one logged
+    //    minutes ago. Exact macros (they are the user's own numbers), so this
+    //    is a one-tap re-log. This is the source that makes the tab's own
+    //    empty-state copy true from the FIRST meal (E2E row 101): leftovers
+    //    need a cook event, "yesterday" needs a log from yesterday, "usual"
+    //    needs 30 days of history and "frequent" needs the same meal ≥2×, so
+    //    a day-one user with three logs used to match none of them.
+    //    Ranked below every intentional source, ahead of nothing at all;
+    //    this slot's logs outrank other slots'.
+    final recentForSlot = <FoodLog>[];
+    final recentOther = <FoodLog>[];
+    for (final l in _recentLogs) {
+      if (l.foodItems.isEmpty && l.totalCalories <= 0) continue;
+      if (MealType.fromValue(l.mealType) == slot) {
+        recentForSlot.add(l);
+      } else {
+        recentOther.add(l);
+      }
+    }
+    for (final log in [...recentForSlot, ...recentOther]) {
+      final logSlot = MealType.fromValue(log.mealType);
+      final sameSlot = logSlot == slot;
+      add(_SmartPill(
+        kind: _SmartPillKind.recent,
+        title: _recentTitle(log),
+        subtitle: _exactMacroSubtitle(log.totalCalories),
+        glyph: '↺',
+        score: sameSlot ? 34 : 26,
+        // Key on the log's OWN slot (not the selected one) so it shares a key
+        // space with the frequent/yesterday pills, which key on the meal's own
+        // slot — otherwise a frequent breakfast surfaced while the dinner slot
+        // is selected would duplicate as a recent pill.
+        dedupeKey: _logDedupeKey(logSlot, _logNames(log)),
+        exactLog: log,
+      ));
+    }
+
+    // Deterministic order. `List.sort` is explicitly NOT stable in Dart, and
+    // the recent source can contribute dozens of pills that all carry the same
+    // score — so a plain score sort reordered them arbitrarily and the meal the
+    // user logged sixty seconds ago could fall out of the top 5 entirely
+    // (measured: with 60 equal-score pills the newest landed 20th). Insertion
+    // order is meaningful — sources are appended best-first and `_recentLogs`
+    // arrives newest-first — so ties break on it.
+    final ordered = <MapEntry<int, _SmartPill>>[
+      for (int i = 0; i < pills.length; i++) MapEntry(i, pills[i]),
+    ]..sort((a, b) {
+        final byScore = b.value.score.compareTo(a.value.score);
+        return byScore != 0 ? byScore : a.key.compareTo(b.key);
+      });
+    return [for (final e in ordered.take(5)) e.value];
   }
 
   /// De-dupe signature shared across sources: slot + sorted lower-cased
@@ -294,6 +353,31 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
       "Yesterday's ${slot.label.toLowerCase()}",
       'Repeat ${slot.label.toLowerCase()}',
     ]);
+  }
+
+  /// The food names that identify a log — its itemised foods, or the user's
+  /// own query when the log carries no items (a bare calorie entry still has
+  /// an identity, and without one every such log would share an empty dedupe
+  /// key and stack up as duplicate pills).
+  List<String> _logNames(FoodLog log) {
+    final names = log.foodItems
+        .map((i) => i.name.trim())
+        .where((n) => n.isNotEmpty)
+        .toList();
+    if (names.isNotEmpty) return names;
+    final q = (log.userQuery ?? '').trim();
+    return q.isEmpty ? const [] : [q];
+  }
+
+  /// Title for a "log it again" pill. Names the actual food when it is a tidy
+  /// one/two-item meal; otherwise the slot it was logged under + how long ago,
+  /// which is what makes two same-day logs distinguishable in the list.
+  String _recentTitle(FoodLog log) {
+    final names = _logNames(log);
+    if (names.length == 1) return names.first;
+    if (names.length == 2) return '${names[0]} + ${names[1]}';
+    if (names.length > 2) return '${names[0]} + ${names.length - 1} more';
+    return MealType.fromValue(log.mealType).label;
   }
 
   String _usualTitle(MealType slot) => _pick([
@@ -458,6 +542,10 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
       }
       notifier.load(userId, forceRefresh: true);
       notifier.refreshNutritionStats(userId);
+      // E2E row 101 — the sheet stays open after a one-tap log, so re-read the
+      // recent-logs window; without this the meal just logged is missing from
+      // the Quick-log list until the sheet is closed and reopened.
+      unawaited(_loadFrequentMeals());
       if (mounted) {
         _showSmartPillLoggedSnack(
           pill.title,

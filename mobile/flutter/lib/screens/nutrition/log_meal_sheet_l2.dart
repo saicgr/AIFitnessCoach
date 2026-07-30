@@ -37,6 +37,16 @@ class _FrequentMeal {
   /// from the food names so the AI re-estimates a fresh, editable
   /// portion rather than copying stale macros.
   final String analysisText;
+  /// The individual food names this meal was grouped on (or the user's query
+  /// when the log carried no itemised foods).
+  ///
+  /// This is what the smart-pill de-dupe key is built from. [label] is a
+  /// display string ("Whole Egg, Toast, Banana") — keying on it produced a
+  /// signature ("…::whole egg, toast, banana") that could never match the
+  /// name-set signature every other pill source uses
+  /// ("…::banana|toast|whole egg"), so the same meal rendered twice: once as a
+  /// 🔁 frequent pill and once as a ↺ "log it again" pill.
+  final List<String> itemNames;
 
   const _FrequentMeal({
     required this.label,
@@ -44,6 +54,7 @@ class _FrequentMeal {
     required this.timesLogged,
     required this.calories,
     required this.analysisText,
+    required this.itemNames,
   });
 }
 
@@ -60,6 +71,12 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
   /// C8 — a brand-new user with no logs resolves to an empty list and
   /// the strip renders a friendly empty state, never a spinner forever.
   Future<void> _loadFrequentMeals() async {
+    // Mounted-guard at the CHOKEPOINT, not at each caller: this is now also
+    // fired after a one-tap pill log and after a food is added from the
+    // browser panel, both of which sit AFTER an `await` on the network. If the
+    // user closed the sheet while that request was in flight, the very first
+    // `setState` below would throw "setState() called after dispose()".
+    if (!mounted) return;
     if (_frequentMealsLoading) return;
     setState(() => _frequentMealsLoading = true);
     try {
@@ -77,10 +94,13 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
       setState(() {
         _frequentMeals = frequent;
         _yesterdayLogs = yesterday;
+        // E2E row 101 — keep the raw newest-first window so a SINGLE recent
+        // log (the common case on day one) can fill the Quick-log tab.
+        _recentLogs = logs;
         _frequentMealsLoading = false;
         _frequentMealsLoaded = true;
       });
-      debugPrint('🍽️ [L2] Frequent meals loaded | count=${frequent.length} | yesterday=${yesterday.length}');
+      debugPrint('🍽️ [L2] Frequent meals loaded | count=${frequent.length} | yesterday=${yesterday.length} | recent=${logs.length}');
       // WS6 — kick the leftover (cook-events) fetch for the smart-pill row.
       // Runs after frequent meals so the row paints its other sources first.
       unawaited(_loadSmartPillSources());
@@ -92,6 +112,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
       // skeleton; a re-open re-attempts the fetch.
       setState(() {
         _frequentMeals = const [];
+        _recentLogs = const [];
         _frequentMealsLoading = false;
         _frequentMealsLoaded = true;
       });
@@ -159,6 +180,11 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
         timesLogged: acc.count,
         calories: rep.totalCalories,
         analysisText: analysisText,
+        // Same names the signature above was built from — the pill de-dupe
+        // key needs the SET, not the joined display label.
+        itemNames: names.isNotEmpty
+            ? names
+            : (query.isEmpty ? const <String>[] : <String>[query]),
       ));
     }
     // Most-logged first; ties broken by calories desc for stable order.

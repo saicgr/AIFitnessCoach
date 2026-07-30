@@ -1431,12 +1431,44 @@ class _NutritionHeadline extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              // E2E row 46 — the bare numeral ("648") next to a "… 2,000 KCAL"
+              // chip read ambiguously as eaten / remaining / a score. It now
+              // carries its unit inline and a label underneath, so the number
+              // states what it is without the user inferring it.
               Flexible(
-                child: Text(
-                  _formatThousands(eatenCal),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: ZType.disp(44, color: tc.textPrimary, height: 0.95),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            _formatThousands(eatenCal),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ZType.disp(44,
+                                color: tc.textPrimary, height: 0.95),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'kcal',
+                          style: ZType.lbl(12,
+                              color: tc.textSecondary, letterSpacing: 0.8),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isViewingToday ? 'EATEN TODAY' : 'EATEN',
+                      style: ZType.lbl(9.5,
+                          color: tc.textMuted, letterSpacing: 1.6),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),

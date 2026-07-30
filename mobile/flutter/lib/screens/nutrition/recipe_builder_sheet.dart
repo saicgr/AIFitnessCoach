@@ -492,7 +492,10 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
                       ),
                       const Spacer(),
                       Text(
-                        '${_ingredients.length} items',
+                        // Pluralise (E2E row 96 class) — a one-ingredient
+                        // recipe printed the ungrammatical "1 items".
+                        '${_ingredients.length} '
+                        '${_ingredients.length == 1 ? 'item' : 'items'}',
                         style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.3),
                       ),
                     ],

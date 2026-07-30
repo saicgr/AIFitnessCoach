@@ -34,11 +34,21 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
             ),
           ),
 
-        // Snap | Describe | Search segmented control
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: _buildAiModeSelector(isDark),
-        ),
+        // E2E rows 26 + 107 — the SEARCH | SNAP | DESCRIBE | VOICE segmented
+        // control used to sit here permanently, four more choices on top of
+        // the five capture chips and four source chips below it, and three of
+        // its four tabs duplicated something else on the same screen: SNAP is
+        // the Photo chip's camera option, VOICE is the mic inside the search
+        // field, DESCRIBE is the search field itself with photos attached.
+        //
+        // Search IS the sheet now, so it needs no tab. The other modes are
+        // reached from the bottom bar's "More" menu and, once active, carry
+        // this compact header so the way back is always one obvious tap.
+        if (_aiMode != _AiLogMode.search)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: _buildAiModeHeader(isDark),
+          ),
 
         // Mode-specific body
         Expanded(
@@ -53,8 +63,58 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
     );
   }
 
-  // ─── Mode selector ────────────────────────────────────────────
+  // ─── Mode header (non-Search modes only) ──────────────────────
 
+  /// Compact header shown while Snap / Describe / Voice is active: the mode's
+  /// name plus an explicit way back to Search. Replaces the always-on 4-tab
+  /// segmented control (E2E rows 26 + 107) — the modes are still all here,
+  /// they just no longer cost four permanent choices on the default screen.
+  Widget _buildAiModeHeader(bool isDark) {
+    final tc = ThemeColors.of(context);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final (IconData icon, String label) = switch (_aiMode) {
+      _AiLogMode.snap => (Icons.bolt_rounded, 'Snap'),
+      _AiLogMode.describe => (Icons.notes_rounded, 'Describe'),
+      _AiLogMode.voice => (Icons.mic_rounded, 'Voice'),
+      _AiLogMode.search => (Icons.search_rounded, 'Search'),
+    };
+    final busy = _isAnalyzing || _isLoading || _describeAnalyzing;
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: tc.accent),
+        const SizedBox(width: 6),
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(12.5, color: tc.textPrimary, letterSpacing: 1.2),
+        ),
+        const Spacer(),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: busy
+              ? null
+              : () => setState(() => _aiMode = _AiLogMode.search),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.arrow_back_rounded, size: 15, color: textMuted),
+                const SizedBox(width: 5),
+                Text(
+                  'SEARCH INSTEAD',
+                  style: ZType.lbl(11, color: textMuted, letterSpacing: 1.2),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── Mode selector (retired — see _buildAiModeHeader) ─────────
+
+  // ignore: unused_element
   Widget _buildAiModeSelector(bool isDark) {
     final tc = ThemeColors.of(context);
     final accent = tc.accent;
@@ -727,6 +787,11 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                     ref
                         .read(dailyNutritionProvider(todayNutritionKey()).notifier)
                         .load(widget.userId);
+                    // E2E row 101 — the sheet stays open, so re-read the
+                    // recent-logs window that feeds the Quick-log tab.
+                    // Otherwise a food added from the browser is absent from
+                    // Quick log until the sheet is reopened.
+                    unawaited(_loadFrequentMeals());
                   });
                 },
                 selectedDate: widget.selectedDate,

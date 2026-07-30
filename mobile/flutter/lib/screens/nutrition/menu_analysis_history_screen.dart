@@ -558,7 +558,10 @@ class _Card extends StatelessWidget {
                         color: Colors.black54,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Text('${foodItems.length} items · $type',
+                      child: Text(
+                          // Pluralise (E2E row 96 class) — "1 items" was wrong.
+                          '${foodItems.length} '
+                          '${foodItems.length == 1 ? 'item' : 'items'} · $type',
                           style: const TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w700)),
                     ),
                   ),

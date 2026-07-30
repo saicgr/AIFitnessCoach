@@ -333,6 +333,28 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   GlobalKey get _recommendedKey => TooltipAnchors.menuAnalysisRecommended;
   GlobalKey get _selectFooterKey => TooltipAnchors.menuAnalysisSelectFooter;
 
+  /// Measured height of the floating action stack (selection-totals chip +
+  /// "What goes best here?" chip + the Add-food / Log-N pill row + the home
+  /// indicator inset).
+  ///
+  /// E2E row 43: the list reserved a hardcoded `SizedBox(height: 150)` for a
+  /// stack whose real height changes with state — the totals chip only exists
+  /// with a selection, the "What goes best here?" chip only on non-bill scans,
+  /// and the bottom inset differs per device. Whenever the stack grew past 150
+  /// it sat on top of the last card's controls. The clearance is now measured
+  /// from the stack itself, so the two can't collide in any state.
+  final GlobalKey _floatingBarKey = GlobalKey();
+  double _floatingBarHeight = 0;
+
+  void _measureFloatingBar() {
+    final box =
+        _floatingBarKey.currentContext?.findRenderObject() as RenderBox?;
+    final h = box?.hasSize == true ? box!.size.height : 0.0;
+    if (h > 0 && (h - _floatingBarHeight).abs() > 0.5) {
+      setState(() => _floatingBarHeight = h);
+    }
+  }
+
   // Persisted per-user sort preference. Reload on open so the user doesn't
   // have to redo "Protein high → Carbs low" every time they scan a menu.
   static const _sortPrefsKey = 'menu_analysis_sort_v1';
@@ -906,6 +928,21 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       if (grouped.containsKey(key)) sorted[key] = grouped[key]!;
     }
     return sorted;
+  }
+
+  /// True only when the "Recommended for you" block is genuinely a SHORTLIST —
+  /// i.e. it leaves at least one visible dish out.
+  ///
+  /// E2E row 43: on a one-dish menu the block re-rendered the single dish that
+  /// was already sitting in its own section, so the same card appeared twice on
+  /// one screen. A shortlist that lists everything isn't a shortlist; it's
+  /// duplication. This scales on its own — at 17 dishes / 3 picks it stays on,
+  /// at 1 dish / 1 pick it disappears and the dish renders exactly once, in its
+  /// section, with nothing hidden from the user.
+  bool get _recommendationIsShortlist {
+    final rec = _recommendation;
+    if (rec == null || rec.picks.isEmpty) return false;
+    return _filteredItems.length > rec.picks.length;
   }
 
   /// Switch to a single flat "Results" list whenever the user is narrowing
@@ -1764,6 +1801,12 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
+    // Re-measure the floating action stack after every build — its height
+    // changes with the selection chip / suggestion chip / safe-area inset, and
+    // the list's bottom clearance is derived from it (E2E row 43).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _measureFloatingBar();
+    });
     return GlassSheet(
       // Match the food log sheet proportions — leaves room for the Dynamic
       // Island / notch on top while keeping a tall working surface. The
@@ -1788,9 +1831,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     _countsLine(colors),
                     _searchAndControls(colors),
                     if (_filter.hasAnyFilter) _activeFilterChips(),
-                    if (_recommendation != null &&
-                        _recommendation!.picks.isNotEmpty &&
-                        !_showFlatList)
+                    if (_recommendationIsShortlist && !_showFlatList)
                       _recommendedSection(colors),
                     const SizedBox(height: 6),
                     if (_showFlatList)
@@ -1800,7 +1841,11 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                           (e) => _sectionBlock(e.key, e.value, colors)),
                     // Clearance for the floating action pills so the last
                     // card's controls are never stuck underneath them.
-                    const SizedBox(height: 150),
+                    // Measured, not guessed (E2E row 43) — the stack's height
+                    // changes with the selection chip / suggestion chip / the
+                    // device's home-indicator inset. `+ 12` is the visual gap
+                    // between the last card and the first pill.
+                    SizedBox(height: _floatingBarHeight + 12),
                   ],
                 ),
               ),
@@ -1812,7 +1857,10 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             left: 0,
             right: 0,
             bottom: 0,
-            child: _bottomBar(colors),
+            child: KeyedSubtree(
+              key: _floatingBarKey,
+              child: _bottomBar(colors),
+            ),
           ),
           // First-run spotlight tour. Anchors + copy live in
           // `widgets/tooltips/tours/menu_analysis_tour.dart`.

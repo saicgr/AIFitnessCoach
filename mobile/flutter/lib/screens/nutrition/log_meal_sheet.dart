@@ -341,6 +341,17 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   /// [slot] as yesterday" pill — its macros are exact, so its pill is a
   /// one-tap optimistic log. Empty when the user logged nothing yesterday.
   List<FoodLog> _yesterdayLogs = const [];
+  /// The user's most recent logs (newest-first), captured from the SAME
+  /// recent-logs fetch. Source for the "Log it again" quick-log pills.
+  ///
+  /// E2E row 101 — before this existed, the Quick-log tab could only be filled
+  /// by leftovers, a log from *yesterday*, a server-computed 30-day "usual", or
+  /// a meal logged **≥2 times**. A user who had just logged three DIFFERENT
+  /// meals today therefore hit all four sources empty and read "No quick meals
+  /// yet — log a meal and it'll show up here" moments after logging three
+  /// meals. A single recent log is now a first-class source, so the tab's own
+  /// promise holds from the first meal.
+  List<FoodLog> _recentLogs = const [];
   /// The active cook-events (leftovers) for the smart-pill row. Fetched in
   /// the background alongside [_frequentMeals] so the leftover pill is ready
   /// without blocking sheet open. Empty when there are no leftovers.

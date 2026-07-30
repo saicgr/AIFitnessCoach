@@ -1056,7 +1056,9 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
               Icon(Icons.auto_awesome, size: 15, color: teal),
               const SizedBox(width: 6),
               Text(
-                '$totalItems items',
+                // Pluralise (E2E row 96 class) — a one-food result printed
+                // the ungrammatical "1 items".
+                '$totalItems ${totalItems == 1 ? 'item' : 'items'}',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: teal),
               ),
               const Spacer(),

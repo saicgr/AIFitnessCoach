@@ -21,6 +21,28 @@ import 'inflammation_chip.dart';
 import 'score_explain_sheet.dart';
 import 'health_reason_builder.dart';
 
+/// ── The ONE definition of "how many items is this?" (E2E row 96) ──────────
+///
+/// The meal-type section header used to count `food_logs` ROWS while the meal
+/// card beneath it counted entries in `food_items`, so one dinner log holding
+/// Whole Egg + Toast + Banana rendered "1 ITEM" in the row and "3 ITEMS · 503
+/// CAL" in the card — two contradictory numbers, one screen. Every surface now
+/// routes through these two functions, so they cannot drift again.
+///
+/// An item is a food the user ate. A log with no itemised `food_items` (a bare
+/// calorie entry) still represents exactly one thing eaten, so it counts as 1 —
+/// counting it as 0 would make a section with meals in it read "0 items".
+int loggedItemCount(FoodLog meal) =>
+    meal.foodItems.isEmpty ? 1 : meal.foodItems.length;
+
+/// Total items across a group of logs (a meal-type section, a day, …).
+int loggedItemCountAcross(Iterable<FoodLog> meals) =>
+    meals.fold<int>(0, (sum, m) => sum + loggedItemCount(m));
+
+/// "1 item" / "3 items" — pluralised from the same count so no caller has to
+/// re-derive it (the old inline `'${n} items'` printed "1 items").
+String loggedItemCountLabel(int count) => '$count ${count == 1 ? 'item' : 'items'}';
+
 class LoggedMealsSection extends StatelessWidget {
   final List<FoodLog> meals;
   final void Function(String) onDeleteMeal;
@@ -633,10 +655,9 @@ class LoggedMealsSection extends StatelessWidget {
       if (parts.isNotEmpty) return parts.join(' · ');
       return '1 serving';
     }
-    final n = meal.foodItems.length;
     final totalW = meal.foodItems
         .fold<double>(0, (s, i) => s + (i.weightG ?? 0));
-    final base = '$n ${n == 1 ? 'item' : 'items'}';
+    final base = loggedItemCountLabel(loggedItemCount(meal));
     return totalW > 0 ? '$base · ${totalW.round()} g' : base;
   }
 
@@ -4226,13 +4247,17 @@ class _MealSectionState extends State<_MealSection> {
 
     // Count line ("1 item" / "menu scan · 3 items"). A menu-scan log inside
     // the section earns the "menu scan ·" prefix per the Signature reference.
-    final itemCount = widget.typeMeals.length;
+    //
+    // E2E row 96 — this counted `typeMeals.length` (food_logs ROWS) while the
+    // card directly beneath counted `foodItems`, so a single 3-item dinner log
+    // rendered "1 ITEM" here and "3 ITEMS · 503 CAL" there. Both now count
+    // ITEMS via the shared [loggedItemCountAcross] chokepoint.
+    final itemCount = loggedItemCountAcross(widget.typeMeals);
     final hasMenuScan =
         widget.typeMeals.any((m) => m.sourceType == 'menu');
-    final countLabel = itemCount == 0
+    final countLabel = widget.typeMeals.isEmpty
         ? null
-        : '${hasMenuScan ? 'menu scan · ' : ''}$itemCount '
-            '${itemCount == 1 ? 'item' : 'items'}';
+        : '${hasMenuScan ? 'menu scan · ' : ''}${loggedItemCountLabel(itemCount)}';
 
     // Per-meal target for THIS meal (Request 5 compact card). When present we
     // render a calorie ring (eaten / meal-target kcal) plus three macro chips
@@ -4299,7 +4324,7 @@ class _MealSectionState extends State<_MealSection> {
                               Text(
                                 // "222 / 514 cal · 2 items"
                                 '$totalCal / ${mealTarget.calories} cal'
-                                '${countLabel != null ? ' · $itemCount ${itemCount == 1 ? 'item' : 'items'}' : ''}',
+                                '${countLabel != null ? ' · ${loggedItemCountLabel(itemCount)}' : ''}',
                                 style: ZType.data(11, color: textMuted),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -4544,14 +4569,16 @@ class _FoodGroup extends StatelessWidget {
       final first = firstSentenceEnd > 0 ? fb.substring(0, firstSentenceEnd) : fb;
       return truncate(first);
     }
-    return '${meal.foodItems.length} items';
+    return loggedItemCountLabel(loggedItemCount(meal));
   }
 
   @override
   Widget build(BuildContext context) {
     final title = _groupTitle();
     // Single-meal summary → "—" protein when unknown, never "0g".
-    final summary = '${meal.foodItems.length} items · ${meal.totalCalories} cal · ${macroGrams(meal.proteinG)} protein';
+    // Shared chokepoint (E2E row 96) — the same counter the section
+    // header above uses, so the two lines can never disagree again.
+    final summary = '${loggedItemCountLabel(loggedItemCount(meal))} · ${meal.totalCalories} cal · ${macroGrams(meal.proteinG)} protein';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -42,14 +42,21 @@ Future<void> showPostMealReviewSheet(
     if (!context.mounted) return;
     showGlassSheet<void>(
       context: context,
-      // Stickier: explicit Skip / Don't-show-again actions only — no tap-outside
-      // or swipe-down dismissals. This keeps the sheet on screen long enough for
-      // users to actually fill it in (live data showed 1/78 recent logs had mood
-      // filled — mostly because the sheet was getting dismissed too easily).
-      isDismissible: false,
-      enableDrag: false,
+      // E2E row 30 — the sheet calls itself "optional" but used to trap the
+      // user (`isDismissible: false, enableDrag: false`), so the only
+      // permanent exits were Skip and "Don't show again". A screen that
+      // blocks while claiming to be optional reads as bait-and-switch, and
+      // it pushed people to switch the check-in OFF forever rather than skip
+      // one. It is now genuinely dismissible: tap-outside and swipe-down both
+      // close it, and the body opens COMPACT (one question) with the full
+      // detail behind an expander — the answer to low completion is less to
+      // answer, not a locked door.
+      isDismissible: true,
+      enableDrag: true,
       builder: (context) => GlassSheet(
-        showHandle: false,
+        // The drag handle is the affordance that TELLS the user this sheet
+        // can be swiped away — it has to be there now that it genuinely can.
+        showHandle: true,
         child: _PostMealReviewSheet(
           foodNames: foodNames,
           totalCalories: totalCalories,
@@ -130,6 +137,12 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
   final Set<String> _selectedSymptoms = {};
   // Appetite is single-pick within its row; null = skipped.
   String? _appetite;
+  /// E2E row 30 — the sheet opens on ONE question ("how do you feel now?").
+  /// Before-mood, energy, body-feel and appetite (the other ~17 chips) live
+  /// behind this expander, so the default state is a single glance instead of
+  /// a full-screen questionnaire. Nothing is removed; everything is one tap
+  /// away (feedback_expandable_over_truncation).
+  bool _showMoreDetail = false;
 
   @override
   Widget build(BuildContext context) {
@@ -171,7 +184,18 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: textPrimary),
                     ),
                     Text(
-                      AppLocalizations.of(context)!.postMealReviewSheetKcal(foodSummary, extraCount, widget.totalCalories),
+                      // ⚠️ ARGUMENT ORDER: gen_l10n emits parameters in
+                      // ALPHABETICAL placeholder order (extraCount,
+                      // foodSummary, totalCalories) — NOT the order the
+                      // placeholders appear in the ARB text
+                      // ("{foodSummary}{extraCount} · {totalCalories} kcal").
+                      // Passing them in text order rendered
+                      // "+1 moregrilled salmon steak…" (E2E row 100).
+                      AppLocalizations.of(context).postMealReviewSheetKcal(
+                        extraCount,
+                        foodSummary,
+                        widget.totalCalories,
+                      ),
                       style: TextStyle(fontSize: 12, color: textMuted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -244,27 +268,10 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
               ),
               const SizedBox(height: 14),
 
-              // Before eating mood
-              Text(
-                AppLocalizations.of(context).postMealReviewHowDidYouFeel,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _buildMoodChip(FoodMood.hungry, isDark),
-                  _buildMoodChip(FoodMood.tired, isDark),
-                  _buildMoodChip(FoodMood.stressed, isDark),
-                  _buildMoodChip(FoodMood.neutral, isDark),
-                  _buildMoodChip(FoodMood.good, isDark),
-                  _buildMoodChip(FoodMood.great, isDark),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // After eating mood
+              // ── The ONE question the sheet opens on (E2E row 30) ──
+              // After-eating mood. Everything else moved behind the
+              // "Add more detail" expander below, so a user who came here to
+              // log eggs sees five chips, not twenty.
               Text(
                 AppLocalizations.of(context).postMealReviewHowDoYouFeel,
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
@@ -281,95 +288,154 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                   _buildMoodChip(FoodMood.tired, isDark, isAfter: true),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-              // Energy level
-              Row(
-                children: [
-                  Text(
-                    AppLocalizations.of(context).preWorkoutCheckinEnergyLevel,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
-                  ),
-                  const Spacer(),
-                  Text(
-                    _energyLabel(_energyLevel),
-                    style: TextStyle(fontSize: 12, color: accent, fontWeight: FontWeight.w500),
-                  ),
-                ],
+              // ── "Add more detail" expander ──
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _showMoreDetail = !_showMoreDetail),
+                child: Row(
+                  children: [
+                    Icon(
+                      _showMoreDetail
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      size: 18,
+                      color: teal,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _showMoreDetail
+                          ? AppLocalizations.of(context).workoutSheetsMixinHide
+                          : 'Add more detail',
+                      style: TextStyle(fontSize: 12, color: teal, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.battery_1_bar, size: 16, color: textMuted),
-                  Expanded(
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 4,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+
+              AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                alignment: Alignment.topCenter,
+                child: !_showMoreDetail
+                    ? const SizedBox(width: double.infinity, height: 4)
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 14),
+
+                          // Before eating mood
+                          Text(
+                            AppLocalizations.of(context).postMealReviewHowDidYouFeel,
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _buildMoodChip(FoodMood.hungry, isDark),
+                              _buildMoodChip(FoodMood.tired, isDark),
+                              _buildMoodChip(FoodMood.stressed, isDark),
+                              _buildMoodChip(FoodMood.neutral, isDark),
+                              _buildMoodChip(FoodMood.good, isDark),
+                              _buildMoodChip(FoodMood.great, isDark),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Energy level
+                          Row(
+                            children: [
+                              Text(
+                                AppLocalizations.of(context).preWorkoutCheckinEnergyLevel,
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
+                              ),
+                              const Spacer(),
+                              Text(
+                                _energyLabel(_energyLevel),
+                                style: TextStyle(fontSize: 12, color: accent, fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.battery_1_bar, size: 16, color: textMuted),
+                              Expanded(
+                                child: SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    trackHeight: 4,
+                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                                  ),
+                                  child: Slider(
+                                    value: _energyLevel.toDouble(),
+                                    min: 1,
+                                    max: 5,
+                                    divisions: 4,
+                                    activeColor: accent,
+                                    inactiveColor: accent.withValues(alpha: 0.15),
+                                    onChanged: (v) => setState(() => _energyLevel = v.round()),
+                                  ),
+                                ),
+                              ),
+                              Icon(Icons.battery_full, size: 16, color: accent),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // How your body feels (optional symptom multi-select).
+                          // Signature ZealovaChip, Material icons only — no
+                          // emoji. Skippable; an empty selection simply
+                          // persists no symptoms.
+                          Text(
+                            'HOW YOUR BODY FEELS',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (final s in _kSymptomOptions)
+                                ZealovaChip(
+                                  label: s.label,
+                                  icon: s.icon,
+                                  selected: _selectedSymptoms.contains(s.value),
+                                  onTap: () => setState(() {
+                                    if (!_selectedSymptoms.remove(s.value)) {
+                                      _selectedSymptoms.add(s.value);
+                                    }
+                                  }),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Appetite indicator — single-pick row.
+                          Text(
+                            'APPETITE',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (final a in _kAppetiteOptions)
+                                ZealovaChip(
+                                  label: a.label,
+                                  icon: a.icon,
+                                  selected: _appetite == a.value,
+                                  onTap: () => setState(() {
+                                    _appetite = _appetite == a.value ? null : a.value;
+                                  }),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
-                      child: Slider(
-                        value: _energyLevel.toDouble(),
-                        min: 1,
-                        max: 5,
-                        divisions: 4,
-                        activeColor: accent,
-                        inactiveColor: accent.withValues(alpha: 0.15),
-                        onChanged: (v) => setState(() => _energyLevel = v.round()),
-                      ),
-                    ),
-                  ),
-                  Icon(Icons.battery_full, size: 16, color: accent),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // How your body feels (optional symptom multi-select). Signature
-              // ZealovaChip, Material icons only — no emoji. Skippable; an
-              // empty selection simply persists no symptoms.
-              Text(
-                'HOW YOUR BODY FEELS',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final s in _kSymptomOptions)
-                    ZealovaChip(
-                      label: s.label,
-                      icon: s.icon,
-                      selected: _selectedSymptoms.contains(s.value),
-                      onTap: () => setState(() {
-                        if (!_selectedSymptoms.remove(s.value)) {
-                          _selectedSymptoms.add(s.value);
-                        }
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 14),
-
-              // Appetite indicator — single-pick row.
-              Text(
-                'APPETITE',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final a in _kAppetiteOptions)
-                    ZealovaChip(
-                      label: a.label,
-                      icon: a.icon,
-                      selected: _appetite == a.value,
-                      onTap: () => setState(() {
-                        _appetite = _appetite == a.value ? null : a.value;
-                      }),
-                    ),
-                ],
               ),
               const SizedBox(height: 16),
 
