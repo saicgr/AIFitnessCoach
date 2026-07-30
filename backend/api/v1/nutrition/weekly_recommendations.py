@@ -21,6 +21,41 @@ from api.v1.nutrition.models import (
 router = APIRouter()
 logger = get_logger(__name__)
 
+
+def _row_to_recommendation(row: dict) -> WeeklyRecommendationResponse:
+    """`weekly_nutrition_recommendations` row → response, one shape for both
+    the GET and the POST.
+
+    Both handlers used to build the response inline with a datetime
+    `week_start` and `.get(..., 0)` defaults that do not match the model or
+    the Flutter `WeeklyRecommendation.fromJson` contract. Building it in one
+    place keeps the wire shape and the persisted shape from drifting apart
+    again.
+    """
+    return WeeklyRecommendationResponse(
+        id=str(row["id"]),
+        user_id=str(row["user_id"]),
+        # DATE column → 'YYYY-MM-DD'. Not a datetime: this is a calendar week
+        # boundary, and pydantic rejects a datetime for a str field anyway.
+        week_start=str(row["week_start"])[:10] if row.get("week_start") else None,
+        current_goal=row.get("current_goal") or "maintain",
+        target_rate_per_week=float(row.get("target_rate_per_week") or 0.0),
+        calculated_tdee=row.get("calculated_tdee"),
+        recommended_calories=row["recommended_calories"],
+        recommended_protein_g=row.get("recommended_protein_g"),
+        recommended_carbs_g=row.get("recommended_carbs_g"),
+        recommended_fat_g=row.get("recommended_fat_g"),
+        adjustment_reason=row.get("adjustment_reason"),
+        # NULL when the user has no configured target to diff against —
+        # never coerced to 0, which would read as "no change needed".
+        adjustment_amount=row.get("adjustment_amount"),
+        user_accepted=bool(row.get("user_accepted", False)),
+        user_modified=bool(row.get("user_modified", False)),
+        modified_calories=row.get("modified_calories"),
+        created_at=row.get("created_at"),
+    )
+
+
 @router.post("/recommendations/{recommendation_id}/respond")
 async def respond_to_recommendation(
     recommendation_id: str,
@@ -104,24 +139,7 @@ async def get_weekly_recommendation(user_id: str, current_user: dict = Depends(g
         if not result or not result.data or len(result.data) == 0:
             return None
 
-        data = result.data[0]
-        return WeeklyRecommendationResponse(
-            id=data["id"],
-            user_id=data["user_id"],
-            week_start=datetime.fromisoformat(str(data["week_start"]).replace("Z", "+00:00")),
-            current_goal=data.get("current_goal", "maintain"),
-            target_rate_per_week=float(data.get("target_rate_per_week", 0)),
-            calculated_tdee=data.get("calculated_tdee", 0),
-            recommended_calories=data.get("recommended_calories", 0),
-            recommended_protein_g=data.get("recommended_protein_g", 0),
-            recommended_carbs_g=data.get("recommended_carbs_g", 0),
-            recommended_fat_g=data.get("recommended_fat_g", 0),
-            adjustment_reason=data.get("adjustment_reason"),
-            adjustment_amount=data.get("adjustment_amount", 0),
-            user_accepted=data.get("user_accepted", False),
-            user_modified=data.get("user_modified", False),
-            modified_calories=data.get("modified_calories"),
-        )
+        return _row_to_recommendation(result.data[0])
 
     except Exception as e:
         logger.error(f"Failed to get weekly recommendation: {e}", exc_info=True)
@@ -253,20 +271,24 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
             .execute()
 
         prefs = (prefs_result.data if prefs_result else None) or {}
-        current_goal = prefs.get("nutrition_goal", "maintain")
-        current_calories = prefs.get("target_calories", 2000)
-        current_protein = prefs.get("target_protein_g", 150)
-        current_carbs = prefs.get("target_carbs_g", 200)
-        current_fat = prefs.get("target_fat_g", 70)
+        current_goal = prefs.get("nutrition_goal") or "maintain"
+        # NO 2000/150/200/70 fallback. A user who never configured targets has
+        # none; inventing a baseline here makes `adjustment_amount` a diff
+        # against a plan they never chose, and the accept path
+        # (`respond_to_recommendation`) would then WRITE that invented plan
+        # into nutrition_preferences. None means "no baseline".
+        current_calories = prefs.get("target_calories")
 
         # Determine adjustment
         adjustment_reason = None
-        adjustment_amount = 0
+        adjustment_amount: Optional[int] = None
         calculated_tdee = 0
         target_rate = 0.0
 
-        if adaptive_result.data:
-            adaptive = adaptive_result.data
+        # maybe_single() returns None (not a response) on zero rows.
+        adaptive_row = (adaptive_result.data if adaptive_result else None)
+        if adaptive_row:
+            adaptive = adaptive_row
             calculated_tdee = adaptive.get("calculated_tdee", 0)
             quality = adaptive.get("data_quality_score", 0)
 
@@ -276,23 +298,37 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
                 if current_goal == "lose_fat":
                     target_rate = -0.5  # 0.5 kg/week loss
                     recommended_calories = calculated_tdee - 500
-                    adjustment_amount = recommended_calories - current_calories
-                    if adjustment_amount != 0:
-                        adjustment_reason = f"Based on your actual TDEE of {calculated_tdee} cal, adjusting by {adjustment_amount:+d} cal for fat loss goal"
                 elif current_goal == "build_muscle":
                     target_rate = 0.25  # 0.25 kg/week gain
                     recommended_calories = calculated_tdee + 250
-                    adjustment_amount = recommended_calories - current_calories
-                    if adjustment_amount != 0:
-                        adjustment_reason = f"Based on your actual TDEE of {calculated_tdee} cal, adjusting by {adjustment_amount:+d} cal for muscle building"
                 else:  # maintain
                     target_rate = 0.0
                     recommended_calories = calculated_tdee
+
+                # The delta is only meaningful against a target the user
+                # actually set. With no baseline the recommendation stands on
+                # its own and `adjustment_amount` stays NULL — the client
+                # renders the recommended number, not a phantom "+340 cal".
+                if current_calories is not None:
                     adjustment_amount = recommended_calories - current_calories
-                    if abs(adjustment_amount) > 100:
-                        adjustment_reason = f"Based on your actual TDEE of {calculated_tdee} cal, adjusting by {adjustment_amount:+d} cal for maintenance"
-                    else:
+                    goal_label = {
+                        "lose_fat": "fat loss goal",
+                        "build_muscle": "muscle building",
+                    }.get(current_goal, "maintenance")
+                    # Maintenance ignores sub-100 cal noise; a smaller drift
+                    # than that is inside the TDEE estimate's own error bar.
+                    if current_goal not in ("lose_fat", "build_muscle") and abs(adjustment_amount) <= 100:
                         adjustment_amount = 0
+                    if adjustment_amount != 0:
+                        adjustment_reason = (
+                            f"Based on your actual TDEE of {calculated_tdee} cal, "
+                            f"adjusting by {adjustment_amount:+d} cal for {goal_label}"
+                        )
+                else:
+                    adjustment_reason = (
+                        f"Based on your actual TDEE of {calculated_tdee} cal. "
+                        "You haven't set a calorie target yet — accept this to make it yours."
+                    )
             else:
                 # Not enough data - keep current targets
                 recommended_calories = current_calories
@@ -300,6 +336,19 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
         else:
             recommended_calories = current_calories
             adjustment_reason = "No adaptive calculation available yet - continue tracking to get personalized recommendations"
+
+        if recommended_calories is None:
+            # No configured target AND no usable adaptive TDEE — there is
+            # nothing to recommend. Answer honestly instead of inventing a
+            # 2000 kcal baseline and persisting it as a "recommendation".
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "No calorie target configured and not enough tracking data for an "
+                    "adaptive recommendation yet. Set your targets in nutrition settings, "
+                    "or keep logging for a few more days."
+                ),
+            )
 
         # Calculate macros based on new calories
         # Use a balanced split: 30% protein, 40% carbs, 30% fat
@@ -334,25 +383,10 @@ async def generate_weekly_recommendation(request: Request, user_id: str, current
         if not result.data:
             raise safe_internal_error(ValueError("Failed to create weekly nutrition recommendation"), "nutrition")
 
-        data = result.data[0]
-        return WeeklyRecommendationResponse(
-            id=data["id"],
-            user_id=data["user_id"],
-            week_start=datetime.fromisoformat(str(data["week_start"]).replace("Z", "+00:00")),
-            current_goal=data.get("current_goal", "maintain"),
-            target_rate_per_week=float(data.get("target_rate_per_week", 0)),
-            calculated_tdee=data.get("calculated_tdee", 0),
-            recommended_calories=data.get("recommended_calories", 0),
-            recommended_protein_g=data.get("recommended_protein_g", 0),
-            recommended_carbs_g=data.get("recommended_carbs_g", 0),
-            recommended_fat_g=data.get("recommended_fat_g", 0),
-            adjustment_reason=data.get("adjustment_reason"),
-            adjustment_amount=data.get("adjustment_amount", 0),
-            user_accepted=data.get("user_accepted", False),
-            user_modified=data.get("user_modified", False),
-            modified_calories=data.get("modified_calories"),
-        )
+        return _row_to_recommendation(result.data[0])
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to generate weekly recommendation: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

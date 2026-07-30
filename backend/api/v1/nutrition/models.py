@@ -909,36 +909,58 @@ class CookingConversionsListResponse(BaseModel):
 # ── Weekly Recommendation Models ────────────────────────────────
 
 class WeeklyRecommendationResponse(BaseModel):
-    """Weekly recommendation response."""
+    """Weekly recommendation response.
+
+    Mirrors the `weekly_nutrition_recommendations` row and the Flutter
+    `WeeklyRecommendation.fromJson` contract exactly. It previously declared a
+    completely different field set (status/recommendation_type/calorie_change/
+    suggested_*), so every field the two handlers actually passed was dropped
+    by pydantic's extra-ignore — and `week_start` was handed a `datetime` for a
+    `str` field, which is a hard ValidationError, i.e. both endpoints 500'd for
+    any user who had a recommendation at all.
+
+    `adjustment_amount` is Optional on purpose: it is the delta against the
+    user's CONFIGURED calorie target, and a user who never set one has no
+    delta. 0 would read as "you're already on target".
+    """
     id: Optional[str] = None
     user_id: str
+    # Calendar week boundary as 'YYYY-MM-DD' (the column is a DATE).
     week_start: Optional[str] = None
-    status: str = "pending"
-    recommendation_type: Optional[str] = None
-    current_avg_calories: Optional[int] = None
-    recommended_calories: Optional[int] = None
-    calorie_change: Optional[int] = None
-    reasoning: Optional[str] = None
-    suggested_protein_g: Optional[int] = None
-    suggested_carbs_g: Optional[int] = None
-    suggested_fat_g: Optional[int] = None
-    weight_trend_direction: Optional[str] = None
-    weight_change_kg: Optional[float] = None
-    adherence_score: Optional[float] = None
+    current_goal: str = "maintain"
+    target_rate_per_week: float = 0.0
+    calculated_tdee: Optional[int] = None
+    # Required: a recommendation with no recommended calorie number is not a
+    # recommendation, and the client dereferences it non-null.
+    recommended_calories: int
+    recommended_protein_g: Optional[int] = None
+    recommended_carbs_g: Optional[int] = None
+    recommended_fat_g: Optional[int] = None
+    adjustment_reason: Optional[str] = None
+    adjustment_amount: Optional[int] = None
+    user_accepted: bool = False
+    user_modified: bool = False
+    modified_calories: Optional[int] = None
     created_at: Optional[datetime] = None
-    responded_at: Optional[datetime] = None
 
 
 class WeeklySummaryResponse(BaseModel):
-    """Weekly check-in summary response."""
+    """Weekly check-in summary response.
+
+    `calorie_target` is Optional and defaults to None — a user who has never
+    configured a target has none, and a 2000 default here would publish an
+    invented goal (and an "adherence" percentage measured against it). See
+    `DynamicTargetsResponse` for the same rule at the primary chokepoint.
+    """
     avg_daily_calories: int = 0
     avg_daily_protein_g: int = 0
     avg_daily_carbs_g: int = 0
     avg_daily_fat_g: int = 0
     days_logged: int = 0
     total_days: int = 7
-    adherence_percentage: int = 0
-    calorie_target: int = 2000
+    # None when there is no configured calorie target to measure against.
+    adherence_percentage: Optional[int] = None
+    calorie_target: Optional[int] = None
     weight_change_kg: Optional[float] = None
 
 

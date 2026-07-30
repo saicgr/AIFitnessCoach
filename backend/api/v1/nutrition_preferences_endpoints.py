@@ -592,7 +592,10 @@ async def search_foods(
         results = []
 
         # 1. Search user's saved foods
-        saved_result = db.client.table("saved_foods").select("*").eq("user_id", user_id).ilike("name", f"%{search_query}%").limit(limit // 2).execute()
+        # `max(1, ...)` because limit=1..3 made `limit // 2` / `limit // 4`
+        # evaluate to 0, and PostgREST's LIMIT 0 returns nothing — a whole tier
+        # silently disappeared for small page sizes.
+        saved_result = db.client.table("saved_foods").select("*").eq("user_id", user_id).ilike("name", f"%{search_query}%").limit(max(1, limit // 2)).execute()
 
         for food in saved_result.data or []:
             results.append(FoodSearchResult(
@@ -608,7 +611,7 @@ async def search_foods(
             ))
 
         # 2. Search meal templates
-        template_result = db.client.table("meal_templates").select("*").or_(f"user_id.eq.{user_id},is_system_template.eq.true").ilike("name", f"%{search_query}%").limit(limit // 4).execute()
+        template_result = db.client.table("meal_templates").select("*").or_(f"user_id.eq.{user_id},is_system_template.eq.true").ilike("name", f"%{search_query}%").limit(max(1, limit // 4)).execute()
 
         for template in template_result.data or []:
             results.append(FoodSearchResult(
@@ -623,27 +626,92 @@ async def search_foods(
                 is_user_food=template.get("user_id") == user_id,
             ))
 
-        # 3. Search food database (if table exists)
+        # 3. Search the food catalog.
+        #
+        # Matches on `name_normalized`, the only name column with an index a
+        # substring search can use (idx_food_name_trgm_primary — GIN trigram,
+        # partial on is_primary, hence the .eq("is_primary")). The old
+        # `.ilike("name", "%q%")` had NO usable index: measured 13.0 s seq scan
+        # over 718k rows / 1.8 GB, killed by the 8 s `authenticated`
+        # statement_timeout and swallowed by the except below — so this tier
+        # returned nothing on every uncached query, silently.
+        #
+        # pg_trgm cannot extract a trigram from a 1-2 character pattern, so a
+        # short query would fall straight back to a seq scan. Those use a
+        # prefix match instead, served by
+        # idx_food_database_name_normalized_prefix (btree text_pattern_ops;
+        # both name_normalized and search_query are already lowercase, so a
+        # case-sensitive LIKE is the correct operator).
         try:
-            food_db_result = db.client.table("food_database").select("*").ilike("name", f"%{search_query}%").limit(limit // 4).execute()
+            catalog_query = (
+                db.client.table("food_database")
+                .select(
+                    "id, name, brand, has_serving, serving_description, serving_weight_g, "
+                    "calories_per_serving, protein_per_serving, carbs_per_serving, fat_per_serving, "
+                    "calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g"
+                )
+                .eq("is_primary", True)
+            )
+            if len(search_query) >= 3:
+                catalog_query = catalog_query.ilike("name_normalized", f"%{search_query}%")
+            else:
+                catalog_query = catalog_query.like("name_normalized", f"{search_query}%")
+            food_db_result = catalog_query.limit(max(1, limit // 4)).execute()
 
             for food in food_db_result.data or []:
+                # food_database stores per-100g and (when the source had one) a
+                # per-serving block. It has NO `calories`/`protein_g`/
+                # `serving_size` columns — the old code read those phantom keys
+                # and rendered every catalog hit as 0 kcal.
+                per_serving = bool(food.get("has_serving")) and food.get("calories_per_serving") is not None
+                serving_weight = food.get("serving_weight_g")
+                if per_serving:
+                    calories = food.get("calories_per_serving")
+                    protein = food.get("protein_per_serving")
+                    carbs = food.get("carbs_per_serving")
+                    fat = food.get("fat_per_serving")
+                    # No fiber_per_serving column exists; scale from per-100g
+                    # only when the serving weight makes that arithmetic real.
+                    fiber = (
+                        round(float(food["fiber_per_100g"]) * float(serving_weight) / 100.0, 1)
+                        if food.get("fiber_per_100g") is not None and serving_weight
+                        else None
+                    )
+                    serving_size = food.get("serving_description")
+                else:
+                    calories = food.get("calories_per_100g")
+                    protein = food.get("protein_per_100g")
+                    carbs = food.get("carbs_per_100g")
+                    fat = food.get("fat_per_100g")
+                    fiber = food.get("fiber_per_100g")
+                    serving_size = "100 g"
+
+                if calories is None:
+                    # A catalog row with no energy value cannot be logged;
+                    # showing it as "0 kcal" would be a lie.
+                    continue
+
                 results.append(FoodSearchResult(
-                    id=food["id"],
+                    # bigint PK — FoodSearchResult.id is a str, and pydantic v2
+                    # rejects an int for it (that ValidationError was the second
+                    # reason this tier produced nothing).
+                    id=str(food["id"]),
                     name=food.get("name", "Unknown"),
                     source="database",
-                    total_calories=food.get("calories") or 0,
-                    protein_g=food.get("protein_g") or 0.0,
-                    carbs_g=food.get("carbs_g") or 0.0,
-                    fat_g=food.get("fat_g") or 0.0,
-                    fiber_g=food.get("fiber_g"),
-                    serving_size=food.get("serving_size"),
+                    total_calories=int(round(float(calories))),
+                    protein_g=float(protein or 0.0),
+                    carbs_g=float(carbs or 0.0),
+                    fat_g=float(fat or 0.0),
+                    fiber_g=float(fiber) if fiber is not None else None,
+                    serving_size=serving_size,
                     brand=food.get("brand"),
                     is_user_food=False,
                 ))
         except Exception as e:
-            # Food database table might not exist
-            logger.debug(f"Food database search skipped: {e}")
+            # Never silent: this tier failing is why food search looked empty
+            # for months. The other two tiers still answer, but the failure is
+            # logged loudly with a stack so it can't hide again.
+            logger.warning(f"Food database search failed: {e}", exc_info=True)
 
         # Limit results
         results = results[:limit]

@@ -257,34 +257,53 @@ def _lookup_user_photos(user_id: str, wanted: Dict[str, str]) -> Dict[str, Dict[
 # --------------------------------------------------------------------------- #
 # Free source 2 — the food catalog
 # --------------------------------------------------------------------------- #
+# One RPC round trip per this many dish keys. Not a cap on how many dishes are
+# looked up — every key is queried, just in batches, so a pathological payload
+# can't build one enormous array parameter.
+_FOOD_DB_KEYS_PER_CALL = 250
+
+
 def _lookup_food_database(wanted: Dict[str, str]) -> Dict[str, Dict[str, Any]]:
-    """Match against food_database rows that already carry an image_url."""
+    """Match against food_database rows that already carry an image_url.
+
+    Goes through `dish_image_food_lookup` (migration 2385) rather than a
+    PostgREST select, for two reasons the previous version got wrong:
+
+    * DEDUPLICATION. food_database is OpenFoodFacts-derived and duplicated on
+      name — 33k names carry more than one row with an image, 'spaghetti' alone
+      has 437. The old `.limit(200)` was a ROW budget over a set ordered by
+      name, so a couple of duplicate-heavy dishes ate the whole budget and the
+      alphabetical tail of the menu silently fell through to the paid path. The
+      RPC returns exactly one best row per dish key (`DISTINCT ON`), so the
+      result set is bounded by the number of DISHES, not rows, and no dish can
+      crowd out another.
+    * MATCHING. The old query compared the raw menu string to `name` with
+      case-sensitive equality, so 'Guacamole' matched but 'guacamole' or
+      'Guacamole, fresh' did not. Both sides now key on the same normalized
+      dish key (`dish_name_key` in SQL == `_normalize_dish_name` in Python;
+      verified identical on 3,000 live catalog names).
+    """
     if not wanted:
         return {}
     db = get_supabase_db()
     out: Dict[str, Dict[str, Any]] = {}
-    # ILIKE-any over the display names in one query rather than N round trips.
-    names = [wanted[k] for k in list(wanted)[:60]]
-    try:
-        res = (
-            db.client.table("food_database")
-            .select("name, image_url")
-            .in_("name", names)
-            .not_.is_("image_url", "null")
-            .limit(200)
-            .execute()
-        )
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"[DishImage] food_database lookup failed: {exc}")
-        return {}
-    for row in (res.data or []):
-        key = _normalize(row.get("name") or "")
-        if key in wanted and key not in out and row.get("image_url"):
-            out[key] = {
-                "source": "food_db",
-                "external_url": row["image_url"],
-                "attribution": None,
-            }
+    keys = list(wanted)
+    for start in range(0, len(keys), _FOOD_DB_KEYS_PER_CALL):
+        chunk = keys[start:start + _FOOD_DB_KEYS_PER_CALL]
+        try:
+            res = db.client.rpc("dish_image_food_lookup", {"p_keys": chunk}).execute()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(f"[DishImage] food_database lookup failed: {exc}")
+            return out
+        for row in (res.data or []):
+            key = row.get("dish_key")
+            image_url = row.get("food_image_url")
+            if key in wanted and key not in out and image_url:
+                out[key] = {
+                    "source": "food_db",
+                    "external_url": image_url,
+                    "attribution": None,
+                }
     return out
 
 

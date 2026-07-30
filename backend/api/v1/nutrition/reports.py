@@ -53,8 +53,13 @@ class WeeklyNutritionReport(BaseModel):
     daily_calories: List[int] = Field(default_factory=list)
     daily_macros: List[dict] = Field(default_factory=list)
     weekly_avg_calories: int = 0
-    days_hit_calorie_goal: int = 0
-    days_hit_protein_goal: int = 0
+    # None when the user has never configured a target. "Days hit goal" is
+    # undefined without a goal — presenting surfaces must omit the metric, not
+    # print 0/7 against an invented 2000 kcal plan.
+    calorie_target: Optional[int] = None
+    protein_target_g: Optional[int] = None
+    days_hit_calorie_goal: Optional[int] = None
+    days_hit_protein_goal: Optional[int] = None
     top_foods: List[dict] = Field(default_factory=list)
     inflammation_trend: List[float] = Field(default_factory=list)
     week_over_week_delta: dict = Field(default_factory=dict)
@@ -77,6 +82,29 @@ def _validated_date(value: Optional[str], field: str) -> Optional[str]:
         raise HTTPException(
             status_code=400, detail=f"Invalid {field} '{value}' — expected YYYY-MM-DD"
         )
+
+
+def _merge_top_foods(days: List[dict], limit: int = 5) -> List[dict]:
+    """Roll the per-day `top_foods` lists up into one week-level list.
+
+    The daily summaries each carry their own top-5; the week needs one list,
+    ranked by total calories contributed across the week.
+    """
+    merged: dict = {}
+    for day in days:
+        for food in (day.get("top_foods") or []):
+            name = food.get("name")
+            if not name:
+                continue
+            entry = merged.setdefault(
+                name, {"name": name, "calories": 0, "protein_g": 0.0, "times": 0}
+            )
+            entry["calories"] += int(food.get("calories") or 0)
+            entry["protein_g"] = round(
+                entry["protein_g"] + float(food.get("protein_g") or 0), 1
+            )
+            entry["times"] += 1
+    return sorted(merged.values(), key=lambda f: f["calories"], reverse=True)[:limit]
 
 
 def _resolve_first_name(db, user_id: str) -> Optional[str]:
@@ -216,19 +244,52 @@ async def weekly_nutrition_report(
             ws = today - timedelta(days=today.weekday())
         we = ws + timedelta(days=6)
 
-        weekly = db.get_weekly_nutrition_summary(
+        # `get_weekly_nutrition_summary` returns a LIST of 7 daily summaries
+        # (core/db/nutrition_db_helpers.py), not a dict — the old
+        # `weekly.get("daily_calories", [])` raised AttributeError, so this
+        # endpoint 500'd on every single call.
+        weekly_days = db.get_weekly_nutrition_summary(
             user_id, ws.isoformat(), timezone_str=user_tz
-        ) or {}
+        ) or []
 
-        daily_cals = weekly.get("daily_calories", []) or []
-        daily_macros = weekly.get("daily_macros", []) or []
-        weekly_avg = int(sum(daily_cals) / len(daily_cals)) if daily_cals else 0
-        target = weekly.get("calorie_target", 2000) or 2000
-        protein_target = weekly.get("protein_target_g", 130) or 130
-        days_cal = sum(1 for c in daily_cals if abs(c - target) / max(target, 1) <= 0.10)
-        days_protein = sum(
-            1 for m in daily_macros
-            if (m.get("protein_g", 0) or 0) >= protein_target * 0.9
+        daily_cals = [int(d.get("total_calories") or 0) for d in weekly_days]
+        daily_macros = [
+            {
+                "protein_g": round(float(d.get("total_protein_g") or 0), 1),
+                "carbs_g": round(float(d.get("total_carbs_g") or 0), 1),
+                "fat_g": round(float(d.get("total_fat_g") or 0), 1),
+                "fiber_g": round(float(d.get("total_fiber_g") or 0), 1),
+            }
+            for d in weekly_days
+        ]
+        # Average over days the user actually logged. Counting untracked days
+        # as 0 kcal reports an intake nobody ate.
+        logged_days = [
+            int(d.get("total_calories") or 0)
+            for d in weekly_days
+            if int(d.get("meal_count") or 0) > 0
+        ]
+        weekly_avg = int(sum(logged_days) / len(logged_days)) if logged_days else 0
+
+        # Real configured targets or None — never an invented 2000/130. The
+        # chokepoint returns both as nullable; "days hit goal" is undefined
+        # without a goal, so it stays None rather than counting 0/7 against a
+        # target the user never set.
+        targets = db.get_user_nutrition_targets(user_id) or {}
+        target = targets.get("daily_calorie_target")
+        protein_target = targets.get("daily_protein_target_g")
+        days_cal = (
+            sum(1 for c in daily_cals if abs(c - target) / max(target, 1) <= 0.10)
+            if target
+            else None
+        )
+        days_protein = (
+            sum(
+                1 for m in daily_macros
+                if (m.get("protein_g") or 0) >= float(protein_target) * 0.9
+            )
+            if protein_target
+            else None
         )
 
         # Inflammation 7-day trend (avg per day)
@@ -253,10 +314,14 @@ async def weekly_nutrition_report(
 
         # Week-over-week delta
         prev_start = ws - timedelta(days=7)
-        prev_weekly = db.get_weekly_nutrition_summary(
+        prev_days = db.get_weekly_nutrition_summary(
             user_id, prev_start.isoformat(), timezone_str=user_tz
-        ) or {}
-        prev_cals = prev_weekly.get("daily_calories", []) or []
+        ) or []
+        prev_cals = [
+            int(d.get("total_calories") or 0)
+            for d in prev_days
+            if int(d.get("meal_count") or 0) > 0
+        ]
         prev_avg = int(sum(prev_cals) / len(prev_cals)) if prev_cals else 0
         delta = {
             "calories_avg_delta": weekly_avg - prev_avg,
@@ -282,9 +347,11 @@ async def weekly_nutrition_report(
             daily_calories=daily_cals,
             daily_macros=daily_macros,
             weekly_avg_calories=weekly_avg,
+            calorie_target=target,
+            protein_target_g=int(protein_target) if protein_target else None,
             days_hit_calorie_goal=days_cal,
             days_hit_protein_goal=days_protein,
-            top_foods=weekly.get("top_foods", []),
+            top_foods=_merge_top_foods(weekly_days),
             inflammation_trend=infl_trend,
             week_over_week_delta=delta,
             ai_narrative=narrative,
@@ -365,23 +432,46 @@ def _ai_daily_narrative(
 def _ai_weekly_narrative(
     first_name: Optional[str],
     avg: int,
-    target: int,
-    days_cal: int,
-    days_protein: int,
+    target: Optional[int],
+    days_cal: Optional[int],
+    days_protein: Optional[int],
     delta: dict,
 ) -> str:
+    """Weekly narrative. `target` / `days_*` are None when the user has never
+    configured targets — the copy then describes intake only. Talking about
+    "hitting your goal" without a goal is how a fabricated 2000 kcal target
+    reached user-facing (and shareable) text."""
     name = first_name or "you"
     pct = delta.get("calories_avg_pct", 0)
     arrow = "↑" if pct > 0 else ("↓" if pct < 0 else "→")
-    base = (
-        f"{name.title()}, you averaged {avg} kcal/day this week ({arrow} {abs(pct)}% vs last). "
-        f"Hit calorie goal {days_cal}/7 days, protein goal {days_protein}/7."
-    )
+    base = f"{name.title()}, you averaged {avg} kcal/day this week ({arrow} {abs(pct)}% vs last)."
+    goal_clauses = []
+    if days_cal is not None:
+        goal_clauses.append(f"calorie goal {days_cal}/7 days")
+    if days_protein is not None:
+        goal_clauses.append(f"protein goal {days_protein}/7")
+    if goal_clauses:
+        base += " Hit " + ", ".join(goal_clauses) + "."
+    else:
+        base += " Set a calorie goal to see how that tracks."
     try:
         gemini = GeminiService()
+        target_clause = (
+            f"Avg {avg} kcal/day (no goal set — do not invent or imply one)"
+            if target is None
+            else f"Avg {avg}/{target} kcal"
+        )
+        goal_clause = (
+            ", ".join(
+                part for part in (
+                    f"days_hit_cal {days_cal}/7" if days_cal is not None else None,
+                    f"days_hit_protein {days_protein}/7" if days_protein is not None else None,
+                ) if part
+            )
+            or "no goals configured"
+        )
         prompt = (
-            f"Weekly nutrition recap for {name}. Avg {avg}/{target} kcal, "
-            f"days_hit_cal {days_cal}/7, days_hit_protein {days_protein}/7, "
+            f"Weekly nutrition recap for {name}. {target_clause}, {goal_clause}, "
             f"week-over-week delta {delta}. Write 3 short sentences. First name once."
         )
         text = gemini.generate_text_sync(prompt, temperature=0.6, max_output_tokens=160)

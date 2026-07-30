@@ -26,6 +26,8 @@ async def complete_nutrition_onboarding(request: NutritionOnboardingRequest, cur
 
     Calculates BMR, TDEE, and macro targets based on user profile and goals.
     """
+    verify_user_ownership(current_user, request.user_id)
+
     logger.info(f"Completing nutrition onboarding for user {request.user_id}")
 
     try:
@@ -247,26 +249,31 @@ async def skip_nutrition_onboarding(request: SkipOnboardingRequest, current_user
     """
     Skip nutrition onboarding permanently.
 
-    Sets nutrition_onboarding_completed to true with default targets (2000 cal).
-    User can always customize later in settings.
+    Records ONLY the fact that the user skipped — **no targets, no diet type,
+    no meal pattern**. Skipping means "I did not choose a plan"; persisting a
+    2000/150/200/67 kcal plan here turned that into "I chose this plan" and
+    defeated every read-side guard downstream. `DynamicTargetsResponse
+    .has_configured_targets` (api/v1/nutrition/preferences.py) is derived from
+    `target_calories is not None`, so a written default is indistinguishable
+    from a real plan — the client's `hasConfiguredTargets` flips true and the
+    home coach card, nutrition rings, per-meal splits and share cards all
+    publish a goal the user never set.
+
+    The user can configure targets any time in settings; until then every
+    surface must render a "set a target" CTA, not a number.
     """
+    verify_user_ownership(current_user, request.user_id)
+
     logger.info(f"Skipping nutrition onboarding for user {request.user_id}")
 
     try:
         db = get_supabase_db()
 
-        # Default targets for skipped users
-        default_prefs = {
-            "user_id": request.user_id,
+        # The ONLY facts a skip establishes. No macro targets: a skipped user
+        # has none, and NULL is how every consumer detects that.
+        skip_marker = {
             "nutrition_onboarding_completed": True,
             "onboarding_completed_at": datetime.utcnow().isoformat(),
-            "target_calories": 2000,
-            "target_protein_g": 150,
-            "target_carbs_g": 200,
-            "target_fat_g": 67,
-            "target_fiber_g": 25,
-            "diet_type": "balanced",
-            "meal_pattern": "3_meals",
         }
 
         # Check if preferences exist
@@ -277,18 +284,15 @@ async def skip_nutrition_onboarding(request: SkipOnboardingRequest, current_user
             .execute()
 
         if existing and existing.data:
-            # Update existing preferences
+            # Update existing preferences — never clears targets the user
+            # already configured, never invents ones they didn't.
             db.client.table("nutrition_preferences")\
-                .update({
-                    "nutrition_onboarding_completed": True,
-                    "onboarding_completed_at": datetime.utcnow().isoformat(),
-                })\
+                .update(skip_marker)\
                 .eq("user_id", request.user_id)\
                 .execute()
         else:
-            # Create new preferences with defaults
             db.client.table("nutrition_preferences")\
-                .insert(default_prefs)\
+                .insert({"user_id": request.user_id, **skip_marker})\
                 .execute()
 
         return {"success": True, "message": "Nutrition onboarding skipped"}
