@@ -79,17 +79,30 @@ def _call_name(node: ast.Call) -> Optional[str]:
 
 
 class _FunctionScan(ast.NodeVisitor):
-    """Collect (appender_lines, screen_lines) per enclosing function."""
+    """Collect (appender_calls, screen_lines) per enclosing function.
+
+    Also records, for each function DEFINITION, whether that definition itself
+    contains a screen — which is how we recognise a self-screening appender.
+    """
 
     def __init__(self) -> None:
-        # function qualname -> (lineno, appender_lines, screen_lines)
-        self.functions: Dict[str, Tuple[int, List[int], List[int]]] = {}
+        # function qualname -> (lineno, appender_calls, screen_lines)
+        # appender_calls entries are (lineno, name, call_node)
+        self.functions: Dict[str, Tuple[int, List[Tuple[int, str, ast.Call]], List[int]]] = {}
+        # bare function name -> does its own body call a SCREENS function?
+        self.self_screening: Dict[str, bool] = {}
         self._stack: List[str] = []
 
     def _visit_func(self, node) -> None:
         self._stack.append(node.name)
         qual = ".".join(self._stack)
         self.functions.setdefault(qual, (node.lineno, [], []))
+        if node.name in APPENDERS:
+            self.self_screening[node.name] = any(
+                _call_name(n) in SCREENS
+                for n in ast.walk(node)
+                if isinstance(n, ast.Call)
+            )
         self.generic_visit(node)
         self._stack.pop()
 
@@ -102,10 +115,36 @@ class _FunctionScan(ast.NodeVisitor):
             qual = ".".join(self._stack)
             entry = self.functions.setdefault(qual, (node.lineno, [], []))
             if name in APPENDERS:
-                entry[1].append(node.lineno)
+                entry[1].append((node.lineno, name, node))
             elif name in SCREENS:
                 entry[2].append(node.lineno)
         self.generic_visit(node)
+
+
+def _injuries_kwarg(call: ast.Call) -> Optional[ast.AST]:
+    for kw in call.keywords:
+        if kw.arg == "injuries":
+            return kw.value
+    return None
+
+
+def _is_empty_literal(node: Optional[ast.AST]) -> bool:
+    """True for `[]`, `None`, `set()`, `tuple()` — a screen that screens nothing.
+
+    This is the exact shape of the original row-84 defect: the call site passed
+    `avoid_names=set()`, which looked like a guard and filtered nothing.
+    """
+    if node is None:
+        return False
+    if isinstance(node, ast.Constant) and node.value is None:
+        return True
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)) and not node.elts:
+        return True
+    if isinstance(node, ast.Call):
+        fn = _call_name(node)
+        if fn in {"set", "list", "tuple"} and not node.args:
+            return True
+    return False
 
 
 def _iter_py_files(root: Path):
@@ -116,8 +155,23 @@ def _iter_py_files(root: Path):
 
 
 def audit(root: Path) -> List[str]:
-    """Return a list of human-readable violations."""
+    """Return a list of human-readable violations.
+
+    An appender is compliant one of two ways:
+
+    1. SELF-SCREENING (preferred) — the appender's own definition screens what
+       it appends, so no call site can bypass it. It must then take the injury
+       list as a REQUIRED keyword, and each call site must pass something other
+       than an empty literal.
+    2. CALL-SITE SCREENED — a screen call follows it in the same function.
+
+    Self-screening is preferred because call-site screening is only as good as
+    the next person who adds a call site, which is precisely how row 84 shipped.
+    """
     violations: List[str] = []
+    parsed = []
+    self_screening: Dict[str, bool] = {}
+
     for path in _iter_py_files(root):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
@@ -126,15 +180,37 @@ def audit(root: Path) -> List[str]:
             continue
         scanner = _FunctionScan()
         scanner.visit(tree)
-        for qual, (_def_line, appender_lines, screen_lines) in scanner.functions.items():
-            for a_line in appender_lines:
+        self_screening.update(scanner.self_screening)
+        parsed.append((path, scanner))
+
+    for path, scanner in parsed:
+        rel = path.relative_to(BACKEND_ROOT.parent)
+        for qual, (_def_line, appender_calls, screen_lines) in scanner.functions.items():
+            for a_line, name, call in appender_calls:
+                if qual == name:
+                    continue  # the definition itself, not a call site
+                if self_screening.get(name):
+                    kwarg = _injuries_kwarg(call)
+                    if kwarg is None:
+                        violations.append(
+                            f"{rel}:{a_line}  {qual}() calls {name}() without the "
+                            f"required `injuries=` keyword, so nothing is screened."
+                        )
+                    elif _is_empty_literal(kwarg):
+                        violations.append(
+                            f"{rel}:{a_line}  {qual}() calls {name}() with an EMPTY "
+                            f"`injuries=` literal — a screen that screens nothing, "
+                            f"the same shape as the original `avoid_names=set()` "
+                            f"defect. Pass the user's real injury list."
+                        )
+                    continue
                 if not any(s_line > a_line for s_line in screen_lines):
-                    rel = path.relative_to(BACKEND_ROOT.parent)
                     violations.append(
                         f"{rel}:{a_line}  {qual}() appends exercises "
-                        f"(an APPENDERS call) with no injury screen afterwards. "
-                        f"Follow it with filter_injury_unsafe(...) or re-run "
-                        f"enforce_injury_safety(...) so the guard stays terminal."
+                        f"(an APPENDERS call) with no injury screen afterwards, and "
+                        f"{name}() does not screen internally. Either make {name}() "
+                        f"self-screening or follow this call with "
+                        f"filter_injury_unsafe(...)."
                     )
     return violations
 

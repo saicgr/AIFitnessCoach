@@ -1392,7 +1392,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         ensure_requested_equipment_represented,
                     )
                     exercises, _fin_notes = await ensure_requested_equipment_represented(
-                        exercises, body.equipment, db, avoid_names=set(), max_finishers=2,
+                        exercises, body.equipment, db,
+                        injuries=active_injuries or [],
+                        avoid_names=set(), max_finishers=2,
                     )
                 except Exception as _fe:
                     logger.warning(f"[streaming] finisher injection skipped: {_fe}")

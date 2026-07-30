@@ -499,6 +499,7 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
             from core.db import get_supabase_db
             rag_exercises, _fin_notes = await ensure_requested_equipment_represented(
                 rag_exercises, params.equipment, get_supabase_db(),
+                injuries=injuries or [],
                 avoid_names=set(avoid_list), max_finishers=2,
             )
             if _fin_notes:

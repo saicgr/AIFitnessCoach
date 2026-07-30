@@ -193,6 +193,11 @@ def check_equipment_focus_compatibility(
 
 _FINISHER_BW_SKIP = {"bodyweight", "body weight", "body_weight", "none", ""}
 
+# How many candidates to walk per equipment before giving up on a finisher for
+# it (row 84). Not a cap on safety — an unsafe candidate is never appended at
+# any count; this only bounds how hard we look for a safe alternative.
+_FINISHER_SCREEN_ATTEMPTS = 4
+
 
 def _pretty_equipment(eq: str) -> str:
     parts = [w for w in re.split(r"[_\s]+", (eq or "").strip()) if w]
@@ -259,11 +264,26 @@ async def ensure_requested_equipment_represented(
     requested_equipment: Optional[List[str]],
     db,
     *,
+    injuries: List[str],
     avoid_names: Optional[set] = None,
     max_finishers: int = 2,
 ):
     """Append a labeled finisher for each EXPLICITLY-requested equipment that
-    ended up unused. Returns (exercises, notes). Fail-open → (exercises, [])."""
+    ended up unused. Returns (exercises, notes). Fail-open → (exercises, []).
+
+    Register row 84: this helper is the ONLY thing that runs after the terminal
+    injury guard, so it has to do its own screening or the guard is not terminal.
+    ``injuries`` is keyword-ONLY and REQUIRED — a caller that forgets it gets a
+    TypeError rather than an unscreened append. Pass ``[]`` when the user has
+    none; never omit it.
+
+    Screening cannot live at the call sites: ``_fetch_equipment_finisher`` sorts
+    the equipment-matched compound pool alphabetically and takes row 1, so for
+    ``leg press`` that is deterministically "Horizontal Leg Press"
+    (``knee_safe = FALSE``). Callers previously passed an avoid-set of JOINT
+    tokens ("knees") which was matched against exercise NAMES — structurally a
+    no-op.
+    """
     notes: List[str] = []
     try:
         if not requested_equipment or not exercises:
@@ -281,15 +301,36 @@ async def ensure_requested_equipment_represented(
         }
         existing = {(ex.get("name") or "").strip().lower() for ex in exercises}
         avoid = {(a or "").strip().lower() for a in (avoid_names or set())}
+        from services.exercise_rag.injury_guard import filter_injury_unsafe
+
         added = 0
         for eq in req:
             if added >= max_finishers:
                 break
             if _equipment_is_represented(eq, used):
                 continue
-            cand = await asyncio.to_thread(
-                _fetch_equipment_finisher, db, eq, existing | avoid
-            )
+            # Walk down the equipment's candidate list until one clears the
+            # injury screen. Bounded: the pool is ordered, so if the first few
+            # variants of a machine are all contraindicated the rest will be too
+            # (every leg-press variant is knee-unsafe), and we ship no finisher
+            # for that equipment rather than an unsafe one.
+            rejected: set = set()
+            cand = None
+            for _ in range(_FINISHER_SCREEN_ATTEMPTS):
+                candidate = await asyncio.to_thread(
+                    _fetch_equipment_finisher, db, eq, existing | avoid | rejected
+                )
+                if not candidate:
+                    break
+                kept, dropped = await filter_injury_unsafe([candidate], injuries)
+                if kept:
+                    cand = candidate
+                    break
+                rejected.add((candidate.get("name") or "").strip().lower())
+                logger.info(
+                    "[finisher] skipped '%s' for %s — contraindicated for injuries=%s",
+                    dropped[0] if dropped else "(unnamed)", eq, injuries,
+                )
             if not cand:
                 continue
             exercises.append(cand)

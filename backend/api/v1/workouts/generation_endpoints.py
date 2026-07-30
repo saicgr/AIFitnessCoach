@@ -1832,6 +1832,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 _avoid_fin = set(avoided_exercises or []) | set(injury_names or [])
                 exercises, _fin_notes = await ensure_requested_equipment_represented(
                     exercises, body.equipment, db,
+                    injuries=injury_names or [],
                     avoid_names=_avoid_fin, max_finishers=2,
                 )
                 if _fin_notes:
