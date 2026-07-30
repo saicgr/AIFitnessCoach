@@ -7,6 +7,7 @@ import { FREE_TOOL_COUNT } from '../../lib/toolStats';
 import { useOnScreen } from './useOnScreen';
 import { useMagnetic } from './useMagnetic';
 import PhoneDemo from './phone-demo/PhoneDemo';
+import { EXERCISE_COUNT_LABEL } from '../marketing/catalogStats';
 
 // Cursor-reactive 3D tilt for the phone demo: perspective container,
 // rAF-lerped rotateX/rotateY (transform-only — unlike the old hero this
@@ -222,7 +223,7 @@ export default function KineticHero() {
           <p className="vl-hero-sub mt-6 max-w-xl text-base leading-relaxed text-zinc-300 sm:text-lg">
             Zealova builds your training plan, coaches you mid-set, logs meals
             from a photo or a restaurant menu scan, and adapts every week to
-            how you actually train. 1,722 exercises. Real progression. No
+            how you actually train. {EXERCISE_COUNT_LABEL} exercises. Real progression. No
             generic plans.
           </p>
 

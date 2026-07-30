@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { isPrerender, prefersReducedMotion } from '../../lib/runtimeEnv';
+import { EXERCISE_COUNT_LABEL, EXERCISE_VIDEO_COUNT_LABEL } from '../marketing/catalogStats';
 
 interface Story {
   id: string;
@@ -35,9 +36,9 @@ const STORIES: Story[] = [
     heading: 'Plans built for your gym, not a template',
     paragraphs: [
       'Zealova generates your program from your goals, experience, schedule, and the equipment you actually have. Home, hotel, outdoors, or a packed commercial gym.',
-      'Every exercise comes with reasoning, video demos from a 1,722-exercise library, and progressive overload that reacts to what you log: RIR, pyramids, supersets, breathing cues.',
+      `Every exercise comes with reasoning, video demos from a ${EXERCISE_COUNT_LABEL}-exercise library, and progressive overload that reacts to what you log: RIR, pyramids, supersets, breathing cues.`,
     ],
-    bullets: ['1,722 exercises with video', 'Environment aware', '52+ skill progressions'],
+    bullets: [`${EXERCISE_VIDEO_COUNT_LABEL} exercises with video`, 'Environment aware', '52+ skill progressions'],
     link: { label: 'How generation works', to: '/features' },
   },
   {

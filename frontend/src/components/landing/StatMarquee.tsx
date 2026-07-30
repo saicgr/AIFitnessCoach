@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { motionAllowed } from '../../lib/runtimeEnv';
 import { FREE_TOOL_COUNT } from '../../lib/toolStats';
 import { useOnScreen } from './useOnScreen';
+import { EXERCISE_VIDEO_COUNT_LABEL } from '../marketing/catalogStats';
 
 const STATS = [
-  '1,722 exercises with video demos',
+  `${EXERCISE_VIDEO_COUNT_LABEL} exercises with video demos`,
   `${FREE_TOOL_COUNT} free fitness tools`,
   '52+ skill progressions',
   '5 AI coach personas',

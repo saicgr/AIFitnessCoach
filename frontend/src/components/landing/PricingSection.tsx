@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
+import { EXERCISE_VIDEO_COUNT_LABEL } from '../marketing/catalogStats';
 
 // Plan copy migrated verbatim from the previous homepage pricing section.
 const premiumFeatures = [
-  '1,722 exercises with video demos',
+  `${EXERCISE_VIDEO_COUNT_LABEL} exercises with video demos`,
   'Unlimited AI coach chat',
   'AI workout generation',
   'AI photo food logging',

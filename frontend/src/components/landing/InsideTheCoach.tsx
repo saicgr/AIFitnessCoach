@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { isPrerender, prefersReducedMotion } from '../../lib/runtimeEnv';
+import { EXERCISE_COUNT_LABEL } from '../marketing/catalogStats';
 
 // The teardown, reimagined for software: Zealova's product is the
 // interface itself, so the device explodes into six PIXEL-CRISP DOM layers
@@ -40,7 +41,7 @@ const CALLOUTS = [
   },
   {
     k: '05',
-    title: '1,722-exercise library',
+    title: `${EXERCISE_COUNT_LABEL}-exercise library`,
     body: 'Every movement with video, progressions, and the reasoning for why it is in your plan.',
     window: [0.7, 0.81] as const,
   },
@@ -276,7 +277,7 @@ function LibraryLayer() {
         </div>
       ))}
       <span className="vl-layer-cap condensed-kicker absolute bottom-6 left-1/2 -translate-x-1/2 text-[9px] text-white/40">
-        1,722 exercises
+        {EXERCISE_COUNT_LABEL} exercises
       </span>
     </div>
   );

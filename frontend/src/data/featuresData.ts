@@ -1,4 +1,5 @@
 import { BRANDING } from '../lib/branding';
+import { EXERCISE_COUNT_LABEL } from '../components/marketing/catalogStats';
 // Zealova Features Data - Extracted from FEATURES.md
 // Categories and features for the searchable/filterable Features page
 
@@ -397,7 +398,7 @@ export const features: Feature[] = [
   // ==========================================
   {
     id: 'exercise-library',
-    title: '1700+ Exercise Library',
+    title: `${EXERCISE_COUNT_LABEL} Exercise Library`,
     description: 'Comprehensive library with HD video demonstrations, muscle targeting, and difficulty ratings.',
     category: 'exercise-library',
     tier: 'free',
