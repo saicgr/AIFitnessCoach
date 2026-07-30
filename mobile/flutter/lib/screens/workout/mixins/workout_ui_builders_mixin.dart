@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';

@@ -53,6 +53,9 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   Map<int, SetProgressionPattern> get exerciseProgressionPattern;
   WorkoutTimerController get timerController;
   List<Map<String, dynamic>> get restIntervals;
+  /// E2E #56 — id of the workout_logs row the progressive per-set writer
+  /// already created for this session (null when no set reached the server).
+  String? get progressiveWorkoutLogId;
   int get totalDrinkIntakeMl;
   List<Map<String, dynamic>> get drinkEvents;
   bool get warmupSkipped;
@@ -285,6 +288,15 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
                   'reps': working[j].reps,
                   'weight_kg': working[j].weight,
                   'set_type': working[j].setType,
+                  // E2E #74: a plank / hold / carry logs no reps and no load,
+                  // so dropping duration + distance here is what made the
+                  // completion breakdown render "0×0" for a set whose
+                  // `set_duration_seconds` was 30. Carry the metric that the
+                  // set actually recorded.
+                  if (working[j].durationSeconds != null)
+                    'set_duration_seconds': working[j].durationSeconds,
+                  if (working[j].distanceMeters != null)
+                    'distance_m': working[j].distanceMeters,
                 },
             ],
           });
@@ -367,14 +379,29 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       // .completeWorkout), so the home/today UI is correct regardless of
       // when this network call resolves.
       String? workoutLogId;
-      final createLogFuture = workoutRepo.createWorkoutLog(
-        workoutId: workout.id!,
-        userId: userId,
-        setsJson: setsJson,
-        totalTimeSeconds: timerController.workoutSeconds,
-        metadata: jsonEncode(metadata),
-        gymProfileId: gymProfileId,
-      );
+      // E2E #56 — the Advanced tier now streams every set to the database as
+      // it happens (see advanced_progressive_persistence.dart), so by the time
+      // Finish runs the workout_log row usually ALREADY EXISTS. Re-calling
+      // createWorkoutLog would hit the `wklog_<workoutId>` idempotency guard
+      // and return that existing row WITHOUT writing sets_json/metadata,
+      // leaving the session permanently stored as `[]` / `in_progress`. PATCH
+      // it instead — same contract the Easy tier's finalize uses.
+      final existingLogId = progressiveWorkoutLogId;
+      final Future<Map<String, dynamic>?> createLogFuture = existingLogId != null
+          ? workoutRepo.updateWorkoutLog(
+              logId: existingLogId,
+              setsJson: setsJson,
+              totalTimeSeconds: timerController.workoutSeconds,
+              metadata: metadata,
+            ).then((patched) => patched ?? {'id': existingLogId})
+          : workoutRepo.createWorkoutLog(
+              workoutId: workout.id!,
+              userId: userId,
+              setsJson: setsJson,
+              totalTimeSeconds: timerController.workoutSeconds,
+              metadata: jsonEncode(metadata),
+              gymProfileId: gymProfileId,
+            );
 
       final ancillaryFutures = <Future>[];
       if (totalDrinkIntakeMl > 0) {

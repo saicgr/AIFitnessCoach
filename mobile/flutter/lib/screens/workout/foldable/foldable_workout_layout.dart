@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/workout_design.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/window_mode_provider.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../data/models/exercise.dart';
@@ -441,6 +442,8 @@ class _FoldableWorkoutLayoutState
                 Positioned.fill(
                   child: RepaintBoundary(
                     child: RestTimerOverlay(
+                      // E2E #18: lifted weights render in the user's chosen unit.
+                      useKg: ref.watch(useKgForWorkoutProvider),
                       restSecondsRemaining: widget.restSecondsRemaining,
                       initialRestDuration: widget.initialRestDuration,
                       restMessage: widget.currentRestMessage,

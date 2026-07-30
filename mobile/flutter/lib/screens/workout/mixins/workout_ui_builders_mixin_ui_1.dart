@@ -89,6 +89,8 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
               Positioned.fill(
                 child: RepaintBoundary(
                   child: RestTimerOverlay(
+                    // E2E #18: lifted weights render in the user's chosen unit.
+                    useKg: ref.watch(useKgForWorkoutProvider),
                     restSecondsRemaining: timerController.restSecondsRemaining,
                     initialRestDuration: timerController.initialRestDuration,
                     restMessage: currentRestMessage,

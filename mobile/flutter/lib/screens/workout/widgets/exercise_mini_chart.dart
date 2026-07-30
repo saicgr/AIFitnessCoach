@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/utils/weight_utils.dart';
 /// A compact sparkline chart showing exercise weight progression
 /// over the last few sessions. Designed to be embedded inline
 /// within exercise cards or list tiles (~70px tall).
@@ -30,6 +31,11 @@ class ExerciseMiniChart extends StatelessWidget {
   /// When true, shows a shimmer loading placeholder instead of the chart.
   final bool isLoading;
 
+  /// The user's LIFTED-weight unit. [weights] are already in this unit —
+  /// this only labels the tooltip. E2E #18: the tooltip said "kg" for every
+  /// user regardless of preference.
+  final bool useKg;
+
   const ExerciseMiniChart({
     super.key,
     required this.weights,
@@ -38,6 +44,7 @@ class ExerciseMiniChart extends StatelessWidget {
     required this.accentColor,
     this.onTap,
     this.isLoading = false,
+    required this.useKg,
   });
 
   @override
@@ -195,9 +202,12 @@ class ExerciseMiniChart extends StatelessWidget {
               getTooltipItems: (touchedSpots) {
                 return touchedSpots.map((spot) {
                   final index = spot.spotIndex;
-                  final weightStr = spot.y % 1 == 0
-                      ? '${spot.y.toInt()} kg'
-                      : '${spot.y.toStringAsFixed(1)} kg';
+                  // E2E #18: chart values arrive already converted to the
+                  // display unit by the caller, so label them with the user's
+                  // workout unit instead of a hardcoded "kg".
+                  final weightStr = WeightUtils.formatWeightValue(spot.y) +
+                      ' ' +
+                      WeightUtils.workoutUnitLabel(useKg);
 
                   String label = weightStr;
                   if (dates != null &&

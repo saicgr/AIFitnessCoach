@@ -24,7 +24,9 @@ import '../../../core/services/posthog_service.dart';
 import '../../../core/providers/sound_preferences_provider.dart';
 import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../data/repositories/workout_repository.dart';
 import '../models/workout_state.dart';
+import 'advanced_progressive_persistence.dart';
 import '../providers/active_workout_session_provider.dart';
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
 import '../widgets/intensity_prompt_sheet.dart';
@@ -79,6 +81,12 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   set currentSetStartTime(DateTime? value);
   Map<int, List<int>> get actualRestDurations;
 
+  /// E2E #56 — id of the `workout_logs` row this session is streaming its sets
+  /// into. Null until the first set is persisted; held by the host State so
+  /// every subsequent set (and the finalize PATCH) reuses the same row.
+  String? get progressiveWorkoutLogId;
+  set progressiveWorkoutLogId(String? value);
+
   // Cross-mixin method access
   void checkForPRs(SetLog setLog, WorkoutExercise exercise);
   void moveToNextExercise();
@@ -129,10 +137,28 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
             })())
         : null;
 
-    // Calculate set duration from start time (capped at 10 min for backgrounding edge case)
+    // E2E #76 — SET DURATION IS ONLY WRITTEN WHEN IT IS ACTUALLY MEASURED.
+    //
+    // `currentSetStartTime` marks when this set became the ACTIVE set — screen
+    // open for set 1, rest-complete for every set after it. It is NOT the
+    // moment the lifter started working, so the elapsed time to the log tap is
+    // idle time, not set time. One real session stored 388s / 55s / 2s for
+    // three sets of the same exercise (388s = the whole pre-set browse since
+    // the screen opened). The old `.clamp(0, 600)` only hid the worst of it.
+    //
+    // A rep-based set has no client-observable start event, so we no longer
+    // invent one: the duration is written ONLY for exercises whose set really
+    // is a measured interval — time-tracked moves (planks, holds, carries,
+    // conditioning), where the exercise's own prescribed/held duration is the
+    // set. Everything else stores null, and the summary renders reps × weight
+    // instead of a fabricated stopwatch reading.
+    //
+    // `startedAt` still carries the real "this set became active" timestamp, so
+    // no information is lost — it is simply no longer mislabelled as duration.
     int? setDuration;
-    if (currentSetStartTime != null) {
-      setDuration = DateTime.now().difference(currentSetStartTime!).inSeconds.clamp(0, 600);
+    if (profile.tracksTime) {
+      final held = exercise.holdSeconds ?? exercise.durationSeconds;
+      if (held != null && held > 0) setDuration = held;
     }
 
     // Look up rest duration that preceded this set
@@ -242,6 +268,19 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     final currentExercise = exercises[currentExerciseIndex];
     checkForPRs(finalSetLog, currentExercise);
+
+    // E2E #56 — write this set to the DATABASE now, not at Finish. Until this
+    // existed an Advanced session lived only in RAM + SharedPreferences until
+    // the user tapped Finish, so an OS kill mid-session lost the whole workout
+    // server-side. Fire-and-forget: the write is idempotent on
+    // (workout_log_id, exercise_name, set_number), so the finish-time bulk save
+    // overwrites these same rows rather than duplicating them, and a failure
+    // here changes nothing the user can see.
+    unawaited(_persistSetProgressively(
+      finalSetLog,
+      currentExercise,
+      completedSets[currentExerciseIndex]!.length,
+    ));
 
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
@@ -988,6 +1027,43 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     saveWeightUnitPreference(newUnit);
 
     ref.read(weightIncrementsProvider.notifier).setUnit(newUnit);
+  }
+
+  /// E2E #56 — stream ONE finalized set to `performance_logs` immediately.
+  ///
+  /// Creates the parent `workout_logs` row on the first set (server derives
+  /// `status = 'in_progress'` from the empty set list, so an abandoned session
+  /// is never marked complete) and reuses it for every set after that.
+  Future<void> _persistSetProgressively(
+    SetLog log,
+    WorkoutExercise exercise,
+    int setNumber,
+  ) async {
+    final workoutId = workoutWidget?.workout?.id as String?;
+    if (workoutId == null || workoutId.isEmpty) return;
+
+    final exIndex = currentExerciseIndex;
+    final setTarget = exercise.getTargetForSet(setNumber);
+    final pattern =
+        exerciseProgressionPattern[exIndex] ?? SetProgressionPattern.pyramidUp;
+    final String? gymProfileId =
+        (workoutWidget?.workout?.gymProfileId as String?) ??
+            ref.read(activeGymProfileIdProvider);
+
+    final logId = await persistAdvancedSet(
+      repo: ref.read(workoutRepositoryProvider),
+      workoutId: workoutId,
+      exercise: exercise,
+      log: log,
+      setNumber: setNumber,
+      totalTimeSeconds: 0,
+      progressionModel: pattern.storageKey,
+      targetWeightKg: setTarget?.targetWeightKg ?? exercise.weight?.toDouble(),
+      targetReps: setTarget?.targetReps ?? exercise.reps,
+      gymProfileId: gymProfileId,
+      cachedWorkoutLogId: progressiveWorkoutLogId,
+    );
+    if (logId != null && mounted) progressiveWorkoutLogId = logId;
   }
 
   /// Build comprehensive JSON string with all workout data

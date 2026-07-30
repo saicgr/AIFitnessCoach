@@ -25,6 +25,7 @@ import '../../shareables/adapters/workout_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import 'widgets/summary_session_totals.dart';
 part 'workout_summary_screen_ui.dart';
 
 
@@ -360,10 +361,15 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               onEdit: () => _handleEditExercise(index, exercise, exerciseSets, isDark, accentColor),
               miniChart: exerciseSets.isNotEmpty
                   ? ExerciseMiniChart(
+                      // E2E #18: raw kg used to be plotted under a hardcoded
+                      // "kg" tooltip regardless of the user's setting. Convert
+                      // to the user's lifted-weight unit and label it.
                       weights: exerciseSets
-                          .map((s) => s.weightKg)
+                          .map((s) => WeightUtils.fromKgSnapped(s.weightKg,
+                              displayInLbs: !ref.read(useKgForWorkoutProvider)))
                           .where((w) => w > 0)
                           .toList(),
+                      useKg: ref.read(useKgForWorkoutProvider),
                       isDark: isDark,
                       accentColor: accentColor,
                       onTap: () {
@@ -844,16 +850,45 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       child: OutlinedButton.icon(
         onPressed: workout != null
             ? () async {
+                // E2E #78 (legacy summary — same defect as v2): share the
+                // resolved session totals, not the planned duration + an empty
+                // set-log list, so the card carries the session's real numbers.
+                final meta = summary.workout['metadata'] is Map
+                    ? Map<String, dynamic>.from(
+                        summary.workout['metadata'] as Map)
+                    : null;
+                final totals = SummarySessionTotals.resolve(
+                  summary: summary,
+                  metadata: meta,
+                  exerciseCount: workout.exercises.length,
+                );
                 final shareable = WorkoutAdapter.fromCompletion(
                   ref: ref,
                   workoutName: workout.name ?? 'Workout',
-                  durationSeconds: (workout.durationMinutes ?? 0) * 60,
+                  durationSeconds: totals.durationSeconds > 0
+                      ? totals.durationSeconds
+                      : (workout.durationMinutes ?? 0) * 60,
                   plannedExercises: workout.exercises,
-                  loggedSets: summary.setLogs,
-                  setsJsonRaw: summary.workout['metadata'] is Map
-                      ? (summary.workout['metadata'] as Map)['sets_json']
-                      : null,
-                  calories: workout.estimatedCalories,
+                  // An EMPTY list is not the same as "no logs": WorkoutAdapter reads
+                  // `loggedSets?.length` before the caller totals, so handing it `[]`
+                  // pinned SETS/REPS at 0 and dropped them off the card entirely.
+                  loggedSets: summary.setLogs.isEmpty ? null : summary.setLogs,
+                  setsJsonRaw: meta?['sets_json'],
+                  calories: totals.caloriesKcal ?? workout.estimatedCalories,
+                  totalVolumeKgFromCaller:
+                      totals.volumeKg > 0 ? totals.volumeKg : null,
+                  totalSets: totals.sets > 0 ? totals.sets : null,
+                  totalReps: totals.reps > 0 ? totals.reps : null,
+                  newPRs: summary.personalRecords.isEmpty
+                      ? null
+                      : [
+                          for (final pr in summary.personalRecords)
+                            {
+                              'exercise_name': pr.exerciseName,
+                              'weight_kg': pr.weightKg,
+                              'pr_type': 'weight',
+                            },
+                        ],
                 );
                 if (!context.mounted) return;
                 if (shareable == null) {

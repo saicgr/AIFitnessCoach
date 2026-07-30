@@ -1258,14 +1258,19 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             ),
           ),
 
-          // Bottom padding for FAB and floating nav bar. In summary mode the
-          // Detail/Summary/Advanced pill floats over this list instead, so
-          // reserve at least its clearance.
+          // E2E #51 — the LET'S GO cluster is no longer a floating FAB painted
+          // OVER this list (which collided with whatever exercise row happened
+          // to be at the bottom of the viewport); it is docked in
+          // `bottomNavigationBar`, so the Scaffold already insets this scroll
+          // view by its full height and no row can ever sit under it.
+          // Only a small breathing gap is needed here now. Summary mode still
+          // floats its Detail/Summary/Advanced pill over the list, so it keeps
+          // reserving that pill's clearance.
           SliverToBoxAdapter(
             child: SizedBox(
               height: widget.isSummaryMode
                   ? max(140.0, SummaryFloatingPill.clearanceOf(context))
-                  : 140,
+                  : 16,
             ),
           ),
         ],
@@ -1444,9 +1449,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
       ],
       ),
 
-      // Custom floating buttons: AI + Play (hidden in summary mode)
-      floatingActionButton: widget.isSummaryMode ? null : _buildFloatingButtons(context, ref, workout),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      // E2E #51 — DOCKED, not floating. As a `floatingActionButton` this
+      // cluster painted on top of the scrolling exercise list and overlapped
+      // whichever row was under it. Docking it keeps the identical pill
+      // visuals (same avatar + accent LET'S GO pill, right-aligned) while
+      // making the Scaffold reserve real space for it, so content is scrolled
+      // ABOVE it instead of underneath. Hidden in summary mode, as before.
+      bottomNavigationBar: widget.isSummaryMode
+          ? null
+          : _buildStartBar(context, ref, workout),
     );
   }
 

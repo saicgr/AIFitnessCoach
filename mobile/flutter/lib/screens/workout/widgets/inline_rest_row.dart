@@ -191,78 +191,118 @@ class _InlineRestRowState extends State<InlineRestRow>
       child: Row(
         children: [
           // Timer display — Barlow "REST" kicker + Space Mono telemetry numeral.
-          AnimatedBuilder(
-            animation: _pulseController,
-            builder: (context, child) {
-              final scale = 1.0 + (_pulseController.value * 0.03);
-              return Transform.scale(
-                scale: _remainingSeconds <= 10 ? scale : 1.0,
-                child: Row(
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).workoutSummaryAdvancedRest
-                          .toUpperCase(),
-                      style: ZType.lbl(10.5, color: textMuted, letterSpacing: 2),
+          // Flexible + scaleDown: the REST kicker is LOCALIZED ("PUMZIKO",
+          // "DESCANSO", "ISTIRAHAT") so this cluster's width is not knowable at
+          // build time either. Without it the leading cluster claims its full
+          // intrinsic width first and starves the trailing controls.
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: AnimatedBuilder(
+                animation: _pulseController,
+                builder: (context, child) {
+                  final scale = 1.0 + (_pulseController.value * 0.03);
+                  return Transform.scale(
+                    scale: _remainingSeconds <= 10 ? scale : 1.0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)
+                              .workoutSummaryAdvancedRest
+                              .toUpperCase(),
+                          maxLines: 1,
+                          style: ZType.lbl(10.5,
+                              color: textMuted, letterSpacing: 2),
+                        ),
+                        const SizedBox(width: 9),
+                        Text(
+                          _formatTime(_remainingSeconds),
+                          maxLines: 1,
+                          style: ZType.data(
+                            20,
+                            color:
+                                _remainingSeconds <= 10 ? accent : textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 9),
-                    Text(
-                      _formatTime(_remainingSeconds),
-                      style: ZType.data(
-                        20,
-                        color: _remainingSeconds <= 10 ? accent : textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                  );
+                },
+              ),
+            ),
           ),
 
-          const Spacer(),
-
-          // -15s button
-          _buildTimeAdjustButton(
-            label: AppLocalizations.of(context).inlineRestRow15s,
-            onTap: () => _adjustTime(-15),
-            isDark: isDark,
-            textMuted: textMuted,
-          ),
-          const SizedBox(width: 6),
-
-          // +15s button
-          _buildTimeAdjustButton(
-            label: AppLocalizations.of(context).inlineRestRow15s2,
-            onTap: () => _adjustTime(15),
-            isDark: isDark,
-            textMuted: textMuted,
-          ),
           const SizedBox(width: 8),
 
-          // Skip control — Barlow uppercase, accent-tinted.
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              widget.onSkipRest();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: accent.withValues(alpha: 0.30)),
-              ),
+          // The trailing controls are intrinsically sized and BOTH the ±15s
+          // labels and the SKIP label are LOCALIZED, so their combined width is
+          // not knowable at build time. A bare Spacer collapsed to 0 and the row
+          // overflowed ("RIGHT OVERFLOWED BY n PIXELS"), clipping SKIP.
+          // Expanded+FittedBox hands the cluster every pixel of slack there is
+          // and scales it down only when there genuinely isn't enough — never
+          // overflows, any width, any language, any text scale.
+          // Mirrors easy_rest_overlay.dart's control cluster.
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    AppLocalizations.of(context).onboardingSkip.toUpperCase(),
-                    style: ZType.lbl(10.5, color: accent, letterSpacing: 1.2),
+                  // -15s button
+                  _buildTimeAdjustButton(
+                    label: AppLocalizations.of(context).inlineRestRow15s,
+                    onTap: () => _adjustTime(-15),
+                    isDark: isDark,
+                    textMuted: textMuted,
                   ),
-                  const SizedBox(width: 3),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 13,
-                    color: accent,
+                  const SizedBox(width: 6),
+
+                  // +15s button
+                  _buildTimeAdjustButton(
+                    label: AppLocalizations.of(context).inlineRestRow15s2,
+                    onTap: () => _adjustTime(15),
+                    isDark: isDark,
+                    textMuted: textMuted,
+                  ),
+                  const SizedBox(width: 8),
+
+                  // Skip control — Barlow uppercase, accent-tinted.
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      widget.onSkipRest();
+                    },
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: accent.withValues(alpha: 0.30)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)
+                                .onboardingSkip
+                                .toUpperCase(),
+                            maxLines: 1,
+                            style: ZType.lbl(10.5,
+                                color: accent, letterSpacing: 1.2),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 13,
+                            color: accent,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -447,9 +487,17 @@ class _InlineRestRowState extends State<InlineRestRow>
           // RPE is captured by the mandatory post-set intensity sheet, so the
           // inline "how did that feel?" stars were a duplicate ask and have
           // been removed. Only the "+ Note" affordance remains here.
+          // Same class as the timer row: a bare Spacer in front of an
+          // intrinsically-sized, LOCALIZED control ("NOTE" → "NOTIZ",
+          // "CATATAN") overflows once the label outgrows the strip.
+          // Expanded+FittedBox keeps the pill right-aligned and never clips.
           Row(
             children: [
-              const Spacer(),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child:
               // + Note button
               GestureDetector(
                 onTap: () {
@@ -475,10 +523,13 @@ class _InlineRestRowState extends State<InlineRestRow>
                       Text(
                         AppLocalizations.of(context).workoutUiBuildersNote
                             .toUpperCase(),
+                        maxLines: 1,
                         style: ZType.lbl(10, color: textMuted, letterSpacing: 1),
                       ),
                     ],
                   ),
+                ),
+              ),
                 ),
               ),
             ],

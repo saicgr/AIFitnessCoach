@@ -418,12 +418,9 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    final shortMuscles = muscles
-        .map(_shortenMuscleName)
-        .where((m) => m.isNotEmpty)
-        .toSet()
-        .take(6)
-        .toList();
+    // Shared chokepoint (E2E #48): the local .toSet() only deduped exact
+    // matches, so "Chest" and "chest" could both survive.
+    final shortMuscles = dedupeMuscleNames(muscles).take(6).toList();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -470,13 +467,6 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
     ).animate()
       .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
       .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate);
-  }
-
-  String _shortenMuscleName(String muscle) {
-    final match = RegExp(r'^([^(]+)').firstMatch(muscle);
-    if (match != null) return match.group(1)!.trim();
-    if (muscle.contains(',')) return muscle.split(',').first.trim();
-    return muscle.trim();
   }
 
   /// Build AI Reasoning section

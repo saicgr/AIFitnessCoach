@@ -13,6 +13,7 @@ import '../../../data/providers/exercise_strength_score_provider.dart';
 import '../../../widgets/glass_card.dart';
 import '../../../widgets/metric_grid.dart';
 import 'exercise_mini_chart.dart';
+import '../../../core/providers/user_provider.dart';
 
 /// Per-exercise strength score card (Gravl-parity, Surface 2 / Image #2).
 ///
@@ -86,7 +87,7 @@ class ExerciseStrengthScoreCard extends ConsumerWidget {
 
 /// The populated card — header (title + subtitle + hexagon badge), 2×2 metric
 /// grid, and an e1RM sparkline.
-class _StrengthScoreContent extends StatelessWidget {
+class _StrengthScoreContent extends ConsumerWidget {
   final ExerciseStrengthScore score;
   final Color accent;
   final bool isDark;
@@ -100,24 +101,33 @@ class _StrengthScoreContent extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final best = score.best!;
 
-    // kg → gym-standard lb (user works out in lb).
-    final weightLb = WeightUtils.kgToLbsGym(best.weightKg);
-    final oneRmLb = WeightUtils.kgToLbsGym(best.estimated1rmKg);
+    // E2E #18: these were hard-converted to lb with a hardcoded 'lb' unit
+    // label, so a kg user's best lift and 1RM were shown in pounds. Both now
+    // resolve through the user's LIFTED-weight preference.
+    final useKgForLifts = ref.watch(useKgForWorkoutProvider);
+    final unitLabel = WeightUtils.workoutUnitLabel(useKgForLifts);
+    final weightLb = useKgForLifts
+        ? best.weightKg
+        : WeightUtils.kgToLbsGym(best.weightKg);
+    final oneRmLb = useKgForLifts
+        ? best.estimated1rmKg
+        : WeightUtils.kgToLbsGym(best.estimated1rmKg);
 
     final dateText = best.achievedAt != null
         ? DateFormat('d MMM yyyy').format(best.achievedAt!)
         : '—';
 
-    // e1RM sparkline points (oldest first), converted to lb. The mini chart
-    // shows a sparkline when ≥2 points exist, else a tidy "not enough history".
+    // e1RM sparkline points (oldest first), in the user's LIFTED-weight unit.
+    // E2E #18: this used to hard-convert to lb and the chart tooltip labelled
+    // every point "kg", so a kg user saw lb numbers under a kg label.
     final e1rmLb = <double>[];
     final dateLabels = <String>[];
     for (final p in score.history) {
       if (p.e1rm <= 0) continue;
-      e1rmLb.add(WeightUtils.kgToLbsGym(p.e1rm));
+      e1rmLb.add(useKgForLifts ? p.e1rm : WeightUtils.kgToLbsGym(p.e1rm));
       dateLabels.add(p.date != null ? DateFormat('d MMM').format(p.date!) : '');
     }
 
@@ -209,7 +219,7 @@ class _StrengthScoreContent extends StatelessWidget {
               MetricCell(
                 label: 'Weight',
                 value: _trimNum(weightLb),
-                unit: 'lb',
+                unit: unitLabel,
                 accent: accent,
                 icon: Icons.fitness_center,
               ),
@@ -222,7 +232,7 @@ class _StrengthScoreContent extends StatelessWidget {
               MetricCell(
                 label: 'One-rep max',
                 value: _trimNum(oneRmLb),
-                unit: 'lb',
+                unit: unitLabel,
                 accent: accent,
                 icon: Icons.trending_up_rounded,
               ),
@@ -259,6 +269,7 @@ class _StrengthScoreContent extends StatelessWidget {
               dates: dateLabels,
               isDark: isDark,
               accentColor: accent,
+              useKg: useKgForLifts,
             ),
           ],
         ],

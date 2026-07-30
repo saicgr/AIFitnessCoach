@@ -285,17 +285,33 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        'SET ${widget.nextSetNumber}/${widget.totalSets}'
-                        ' · ${_fmtWeight(widget.nextTargetWeightKg)} $unit'
-                        ' × ${widget.nextTargetReps}',
-                        style: TextStyle(
-                          fontFamily: 'Space Mono',
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          color: (isDark ? Colors.white : Colors.black)
-                              .withValues(alpha: 0.66),
-                          fontFeatures: const [FontFeature.tabularFigures()],
+                      // The ledger tail is intrinsically sized and grows with
+                      // the weight/reps digits, the unit label AND the user's
+                      // font scale — at the app's own "Max" preset (1.5) it
+                      // overflowed the strip by 23px on a 320dp device even
+                      // though the control cluster above was already fixed.
+                      // FittedBox inside a Flexible: it keeps its natural size
+                      // whenever it fits and only shrinks when it genuinely
+                      // cannot, so the numbers stay readable and the row can
+                      // never throw a RenderFlex overflow.
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            'SET ${widget.nextSetNumber}/${widget.totalSets}'
+                            ' · ${_fmtWeight(widget.nextTargetWeightKg)} $unit'
+                            ' × ${widget.nextTargetReps}',
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontFamily: 'Space Mono',
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: (isDark ? Colors.white : Colors.black)
+                                  .withValues(alpha: 0.66),
+                              fontFeatures: const [FontFeature.tabularFigures()],
+                            ),
+                          ),
                         ),
                       ),
                     ],

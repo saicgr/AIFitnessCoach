@@ -10,6 +10,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/repositories/library_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/models/custom_exercise.dart';
+import '../../widgets/app_snackbar.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/lottie_animations.dart';
 import '../../widgets/glass_sheet.dart';
@@ -447,23 +448,18 @@ class _CustomWorkoutBuilderScreenState
   }
 
   Future<void> _createWorkout() async {
+    // E2E #77 class: an unmet PRECONDITION is not a failure. A red error
+    // snackbar reads as "something broke"; these are prompts telling the user
+    // what is still missing, so they use the neutral info surface.
     if (_selectedExercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).customWorkoutBuilderPleaseAddAtLeast),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      AppSnackBar.info(context,
+          AppLocalizations.of(context).customWorkoutBuilderPleaseAddAtLeast);
       return;
     }
 
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).customWorkoutBuilderPleaseEnterAWorkout),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      AppSnackBar.info(context,
+          AppLocalizations.of(context).customWorkoutBuilderPleaseEnterAWorkout);
       return;
     }
 
@@ -556,18 +552,15 @@ class _CustomWorkoutBuilderScreenState
   /// marks it favorite so it lands in "My Workouts", and opens the DETAIL
   /// screen (whose AI Insights section is the AI review) WITHOUT starting it.
   Future<void> _saveWorkout() async {
+    // Same non-error prompt class as _createWorkout above.
     if (_selectedExercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.of(context).customWorkoutBuilderPleaseAddAtLeast),
-        backgroundColor: AppColors.error,
-      ));
+      AppSnackBar.info(context,
+          AppLocalizations.of(context).customWorkoutBuilderPleaseAddAtLeast);
       return;
     }
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.of(context).customWorkoutBuilderPleaseEnterAWorkout),
-        backgroundColor: AppColors.error,
-      ));
+      AppSnackBar.info(context,
+          AppLocalizations.of(context).customWorkoutBuilderPleaseEnterAWorkout);
       return;
     }
     setState(() => _isCreating = true);

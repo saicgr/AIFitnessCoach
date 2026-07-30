@@ -705,21 +705,38 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                AppLocalizations.of(context)!.restRateLastSet,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
+              // Both labels are LOCALIZED and intrinsically sized; a bare
+              // Spacer between them collapses to 0 and the row overflows in
+              // any locale where the pair is longer than English (same class
+              // as the rest-strip controls — see inline_rest_row.dart).
+              // Expanded on the title (ellipsizes, it is the sacrificial half)
+              // + Flexible on the "(optional)" hint keeps the row bounded.
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.restRateLastSet,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
                 ),
               ),
-              const Spacer(),
-              Text(
-                AppLocalizations.of(context)!.restRateLastSetOptional,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: subtitleColor,
-                  fontStyle: FontStyle.italic,
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    AppLocalizations.of(context)!.restRateLastSetOptional,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: subtitleColor,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ),
               ),
             ],

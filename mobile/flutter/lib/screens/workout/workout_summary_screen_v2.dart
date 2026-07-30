@@ -22,6 +22,9 @@ import 'widgets/save_to_library_sheet.dart';
 import 'widgets/summary_floating_pill.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import 'widgets/summary_session_totals.dart';
+import '../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
+import '../../data/services/api_client.dart';
 /// Pill selector state for [WorkoutSummaryScreenV2]. Kept as an enum (rather
 /// than a raw int) so callers — including the `?tab=` query param on
 /// `/workout-summary/:id` — can deep-link to a specific pane without knowing
@@ -336,21 +339,78 @@ class _SummaryHeaderActionsState extends ConsumerState<_SummaryHeaderActions> {
       return;
     }
     HapticService.selection();
+    // E2E #78: this used to hand the adapter only the PLANNED duration
+    // (`workout.durationMinutes`, routinely null on a summary row) and
+    // `summary.setLogs` (routinely empty), so the card came out with nothing
+    // on it but the title, the date and the watermark. It now shares the SAME
+    // resolved totals the screen's hero ledger renders, so the image can never
+    // disagree with the screen behind it.
+    final totals = SummarySessionTotals.resolve(
+      summary: summary,
+      metadata: widget.metadata,
+      exerciseCount: workout.exercises.length,
+    );
     final shareable = WorkoutAdapter.fromCompletion(
       ref: ref,
       workoutName: workout.name ?? 'Workout',
-      durationSeconds: (workout.durationMinutes ?? 0) * 60,
+      durationSeconds: totals.durationSeconds > 0
+          ? totals.durationSeconds
+          : (workout.durationMinutes ?? 0) * 60,
       plannedExercises: workout.exercises,
-      loggedSets: summary.setLogs,
+      // An EMPTY list is not the same as "no logs": WorkoutAdapter reads
+      // `loggedSets?.length` before the caller totals, so handing it `[]`
+      // pinned SETS/REPS at 0 and dropped them off the card entirely.
+      loggedSets: summary.setLogs.isEmpty ? null : summary.setLogs,
       setsJsonRaw: widget.metadata?['sets_json'],
-      calories: workout.estimatedCalories,
+      calories: totals.caloriesKcal ?? workout.estimatedCalories,
+      totalVolumeKgFromCaller: totals.volumeKg > 0 ? totals.volumeKg : null,
+      totalSets: totals.sets > 0 ? totals.sets : null,
+      totalReps: totals.reps > 0 ? totals.reps : null,
+      newPRs: summary.personalRecords.isEmpty
+          ? null
+          : [
+              for (final pr in summary.personalRecords)
+                {
+                  'exercise_name': pr.exerciseName,
+                  'weight_kg': pr.weightKg,
+                  'pr_type': 'weight',
+                },
+            ],
     );
     if (!mounted) return;
     if (shareable == null) {
       _toast(AppLocalizations.of(context).workoutSummaryNoWorkoutDataTo);
       return;
     }
-    await ShareableSheet.show(context, data: shareable);
+    // E2E #79 — the Summary screen offered NO share-link path at all, so a
+    // completed session could only ever be exported as a local image. Wire the
+    // same minting flow the completion screen uses, keyed on the WORKOUTS row
+    // (`widget.workoutId`) that `POST /workouts/{id}/share-link` expects, and
+    // gated by the user's public-share-links privacy setting.
+    final allowPublicLinks = ref.read(publicShareLinksProvider);
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      onGenerateShareLink: !allowPublicLinks || widget.workoutId.isEmpty
+          ? null
+          : () => _generateShareLink(widget.workoutId),
+    );
+  }
+
+  /// Mint (or return) the public share token for this workout. [workoutId] is
+  /// a `workouts.id` — the endpoint selects `workouts` by it and stores the
+  /// token on that row.
+  Future<String?> _generateShareLink(String workoutId) async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post('/workouts/$workoutId/share-link');
+      final data = res.data;
+      if (data is Map && data['url'] is String) return data['url'] as String;
+      return null;
+    } catch (e) {
+      debugPrint('share link generation failed: $e');
+      return null;
+    }
   }
 
   Future<void> _toggleFavorite() async {

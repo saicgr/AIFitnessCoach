@@ -702,6 +702,15 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
   set currentSetStartTime(DateTime? value) => _currentSetStartTime = value;
   @override
   Map<int, List<int>> get actualRestDurations => _actualRestDurations;
+  // E2E #56 — the workout_logs row this session streams its sets into.
+  // Created on the first logged set, reused for every set after it, and
+  // PATCHed (not re-created) by the finalize path.
+  String? _progressiveWorkoutLogId;
+  @override
+  String? get progressiveWorkoutLogId => _progressiveWorkoutLogId;
+  @override
+  set progressiveWorkoutLogId(String? value) =>
+      _progressiveWorkoutLogId = value;
   @override
   set totalDrinkIntakeMl(int value) => _totalDrinkIntakeMl = value;
   @override

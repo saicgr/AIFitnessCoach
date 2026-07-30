@@ -1023,8 +1023,10 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   /// masthead collapses to just the name.
   String? _workoutMastheadSubtitle(Workout workout) {
     final parts = <String>[];
-    final muscles = workout.primaryMuscles
-        .where((m) => m.trim().isNotEmpty)
+    // E2E #48: `Workout.primaryMuscles` unions the anatomical name and the
+    // coarse group, so a raw `.take(2)` printed "Chest (pectoralis major) &
+    // Chest". Normalise + de-duplicate through the shared chokepoint first.
+    final muscles = dedupeMuscleNames(workout.primaryMuscles)
         .map((m) => m.capitalize())
         .take(2)
         .toList();

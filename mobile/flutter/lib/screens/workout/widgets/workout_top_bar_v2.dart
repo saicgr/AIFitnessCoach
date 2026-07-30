@@ -23,6 +23,7 @@ import '../../../widgets/app_tour/app_tour_controller.dart' show AppTourKeys;
 import '../controllers/workout_timer_controller.dart';
 import '../shared/unit_chip.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../shared/tier_toggle_persistence.dart';
 
 /// MacroFactor-style workout top bar
 class WorkoutTopBarV2 extends ConsumerWidget {
@@ -315,7 +316,6 @@ class _TierToggle extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
-    final notifier = ref.read(workoutUiModeProvider.notifier);
 
     return Container(
       height: 32,
@@ -346,7 +346,10 @@ class _TierToggle extends ConsumerWidget {
               onTap: () async {
                 if (mode == tier) return;
                 HapticFeedback.selectionClick();
-                await notifier.setMode(tier);
+                // E2E #13b: go through the shared helper so an explicit tap
+                // that does NOT reach `users.workout_ui_mode` is reported to
+                // the user instead of silently swallowed.
+                await applyExplicitTierChange(context, ref, tier);
               },
             ),
         ],

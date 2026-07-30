@@ -274,13 +274,26 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                           child: Row(
                             children: [
-                              Text(
-                                'Set ${(completedSets[viewingExerciseIndex]?.length ?? 0) + 1} of ${totalSetsPerExercise[viewingExerciseIndex] ?? 3}',
-                                style: WorkoutDesign.subtitleStyle.copyWith(
-                                  color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                              Flexible(
+                                child: Text(
+                                  'Set ${(completedSets[viewingExerciseIndex]?.length ?? 0) + 1} of ${totalSetsPerExercise[viewingExerciseIndex] ?? 3}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: WorkoutDesign.subtitleStyle.copyWith(
+                                    color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
+                                  ),
                                 ),
                               ),
-                              const Spacer(),
+                              const SizedBox(width: 8),
+                              // Expanded+FittedBox instead of a bare Spacer —
+                              // the Breathing chip's label is LOCALIZED, so its
+                              // width isn't knowable at build time and a bare
+                              // Spacer collapsed to 0 overflows the row.
+                              Expanded(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child:
                               // Breathing guide button
                               GestureDetector(
                                 onTap: () {
@@ -312,6 +325,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                       const SizedBox(width: 4),
                                       Text(
                                         AppLocalizations.of(context).workoutUiBuildersBreathing,
+                                        maxLines: 1,
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
@@ -320,6 +334,8 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                       ),
                                     ],
                                   ),
+                                ),
+                              ),
                                 ),
                               ),
                             ],
@@ -661,6 +677,8 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                 // duplicate GlobalKey with the inline row.
                 child: RepaintBoundary(
                   child: RestTimerOverlay(
+                    // E2E #18: lifted weights render in the user's chosen unit.
+                    useKg: ref.watch(useKgForWorkoutProvider),
                     restSecondsRemaining: timerController.restSecondsRemaining,
                     initialRestDuration: timerController.initialRestDuration,
                     restMessage: currentRestMessage,
@@ -876,6 +894,8 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
               Positioned.fill(
                 child: RepaintBoundary(
                   child: RestTimerOverlay(
+                    // E2E #18: lifted weights render in the user's chosen unit.
+                    useKg: ref.watch(useKgForWorkoutProvider),
                     restSecondsRemaining: timerController.restSecondsRemaining,
                     initialRestDuration: timerController.initialRestDuration,
                     restMessage: currentRestMessage,

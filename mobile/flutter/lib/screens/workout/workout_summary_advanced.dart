@@ -15,6 +15,8 @@ import '../../data/services/api_client.dart';
 import '../library/providers/library_providers.dart';
 import 'widgets/summary_floating_pill.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/utils/weight_utils.dart';
 
 // TODO(i18n): _buildKpiTiles() and _PyramidExerciseCardState._modelLabel are
 // top-level / getter contexts with no BuildContext — their labels ('VOLUME',
@@ -2110,7 +2112,7 @@ class _WorkoutExitStatsSection extends StatelessWidget {
 // A. Volume Breakdown (from setLogs)
 // ═══════════════════════════════════════════════════════════════════
 
-class _VolumeBreakdownSection extends StatelessWidget {
+class _VolumeBreakdownSection extends ConsumerWidget {
   final List<SetLogInfo> setLogs;
   final bool isDark;
 
@@ -2120,14 +2122,19 @@ class _VolumeBreakdownSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Group by exercise, calculate total volume (weight_kg * reps) in lbs
+  Widget build(BuildContext context, WidgetRef ref) {
+    // E2E #18: volume was hard-converted to lb with a hardcoded "lb" suffix,
+    // so a user who lifts in kg read pound numbers here. Group by exercise and
+    // total in the user's LIFTED-weight unit.
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    final unitLabel = WeightUtils.workoutUnitLabel(useKg);
     final volumes = <String, double>{};
     final setsByExercise = <String, int>{};
     for (final s in setLogs) {
       if (s.exerciseName.isEmpty) continue;
-      final volLb = s.weightKg * 2.20462 * s.repsCompleted;
-      volumes[s.exerciseName] = (volumes[s.exerciseName] ?? 0) + volLb;
+      final vol = (useKg ? s.weightKg : WeightUtils.kgToLbs(s.weightKg)) *
+          s.repsCompleted;
+      volumes[s.exerciseName] = (volumes[s.exerciseName] ?? 0) + vol;
       setsByExercise[s.exerciseName] = (setsByExercise[s.exerciseName] ?? 0) + 1;
     }
     if (volumes.isEmpty) return const SizedBox.shrink();
@@ -2166,7 +2173,7 @@ class _VolumeBreakdownSection extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${totalVol.toStringAsFixed(0)} lb',
+                  '${totalVol.toStringAsFixed(0)} $unitLabel',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
@@ -2199,7 +2206,7 @@ class _VolumeBreakdownSection extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${entry.value.toStringAsFixed(0)} lb  ($sets sets)',
+                        '${entry.value.toStringAsFixed(0)} $unitLabel  ($sets sets)',
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,

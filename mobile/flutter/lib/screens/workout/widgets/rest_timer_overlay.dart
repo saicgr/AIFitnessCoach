@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/rest_suggestion.dart';
@@ -102,6 +103,13 @@ class RestTimerOverlay extends StatelessWidget {
   /// Coach persona for personalized "Ask Coach" button
   final CoachPersona? coachPersona;
 
+  /// The user's LIFTED-weight unit (`useKgForWorkoutProvider`). E2E #18: this
+  /// overlay hardcoded "kg" on the current-set target, the next-exercise line,
+  /// the last-set recap and the AI weight suggestion, so a US user who chose
+  /// lb was shown kg mid-workout. Every weight in this widget now goes through
+  /// `WeightUtils.formatWorkoutWeight(..., useKg: useKg)`.
+  final bool useKg;
+
   const RestTimerOverlay({
     super.key,
     required this.restSecondsRemaining,
@@ -131,6 +139,7 @@ class RestTimerOverlay extends StatelessWidget {
     this.lastSetWeight,
     this.onAskAICoach,
     this.coachPersona,
+    required this.useKg,
   });
 
   /// Rest progress (1.0 = full, 0.0 = done)
@@ -454,7 +463,8 @@ class RestTimerOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${next.sets ?? 3} sets · ${next.reps ?? 10} reps${next.weight != null && next.weight! > 0 ? ' · ${next.weight}kg' : ''}',
+                  '${next.sets ?? 3} sets · ${next.reps ?? 10} reps'
+                  '${next.weight != null && next.weight! > 0 ? ' · ${WeightUtils.formatWorkoutWeight(next.weight!.toDouble(), useKg: useKg, space: false)}' : ''}',
                   style: TextStyle(
                     fontSize: 13,
                     color: subtitleColor,

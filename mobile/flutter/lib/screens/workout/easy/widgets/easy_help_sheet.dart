@@ -25,6 +25,7 @@ import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../shared/tier_toggle_persistence.dart';
 
 const String _tourSeenKey = 'tour_seen_easy';
 
@@ -199,10 +200,14 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
             alignment: Alignment.center,
             child: TextButton(
               onPressed: () async {
-                Navigator.of(context).pop();
-                await ref
-                    .read(workoutUiModeProvider.notifier)
-                    .setMode(WorkoutUiMode.advanced);
+                final nav = Navigator.of(context);
+                final host = nav.context;
+                nav.pop();
+                // E2E #13b: same verified path as the tier toggles — an
+                // explicit switch that doesn't reach the server is reported.
+                if (!host.mounted) return;
+                await applyExplicitTierChange(
+                    host, ref, WorkoutUiMode.advanced);
               },
               child: Text(
                 l.easyHelpSwitchToAdvanced,

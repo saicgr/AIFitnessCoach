@@ -311,12 +311,19 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
         children: [
           // Set type label - hide on very compact screens
           if (!isCompact) ...[
-            Text(
-              AppLocalizations.of(context).setTrackingOverlaySetType,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: textMuted,
+            // LOCALIZED and intrinsically sized — must yield before the fixed
+            // W/D/F tags and the trailing "+ SET" control, otherwise a longer
+            // translation eats the row's whole budget and overflows it.
+            Flexible(
+              child: Text(
+                AppLocalizations.of(context).setTrackingOverlaySetType,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: textMuted,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -350,45 +357,54 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
             ),
           ),
 
-          const Spacer(),
-
-          // + Set button (at the end)
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.mediumImpact();
-              widget.onAddSet();
-            },
-            child: Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isCompact ? 8 : 10,
-                vertical: isCompact ? 4 : 5,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.electricBlue.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppColors.electricBlue.withOpacity(0.4),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.add_rounded,
-                    size: isCompact ? 14 : 16,
-                    color: AppColors.electricBlue,
+          // Expanded+FittedBox instead of a bare Spacer: the "+ SET" label is
+          // LOCALIZED, so this control's width isn't knowable at build time.
+          // It gets every pixel of slack and only scales when there is none.
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child:
+                  // + Set button (at the end)
+                  GestureDetector(
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  widget.onAddSet();
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCompact ? 8 : 10,
+                    vertical: isCompact ? 4 : 5,
                   ),
-                  SizedBox(width: isCompact ? 2 : 4),
-                  Text(
-                    AppLocalizations.of(context).workoutSummaryAdvancedSet,
-                    style: TextStyle(
-                      fontSize: isCompact ? 11 : 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.electricBlue,
+                  decoration: BoxDecoration(
+                    color: AppColors.electricBlue.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: AppColors.electricBlue.withOpacity(0.4),
+                      width: 1.5,
                     ),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        size: isCompact ? 14 : 16,
+                        color: AppColors.electricBlue,
+                      ),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Text(
+                        AppLocalizations.of(context).workoutSummaryAdvancedSet,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: isCompact ? 11 : 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.electricBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

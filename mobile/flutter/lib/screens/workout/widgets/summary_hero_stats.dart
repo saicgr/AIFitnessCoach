@@ -6,17 +6,19 @@
 /// small chips. Nothing in this widget ever prints '--'.
 library;
 
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/stat_typography.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/workout.dart';
 import '../../../widgets/metric_grid.dart';
+import 'summary_session_totals.dart';
 
-class SummaryHeroStats extends StatelessWidget {
+class SummaryHeroStats extends ConsumerWidget {
   final WorkoutSummaryResponse summary;
   final Map<String, dynamic>? metadata;
   final List<Map<String, dynamic>> exercises;
@@ -28,58 +30,8 @@ class SummaryHeroStats extends StatelessWidget {
     this.exercises = const [],
   });
 
-  // ─── Aggregation (mirrors what the active client wrote) ─────────
-
-  /// Aggregate per-set logs into (volumeKg, sets, reps). Counts only sets
-  /// that were actually completed (or that recorded reps > 0 — older logs
-  /// don't carry the is_completed flag).
-  ({double volumeKg, int sets, int reps}) _aggregateSetLogs() {
-    double volume = 0;
-    int sets = 0;
-    int reps = 0;
-    for (final log in summary.setLogs) {
-      final isCompleted = log.isCompleted ?? (log.repsCompleted > 0);
-      if (!isCompleted) continue;
-      sets += 1;
-      reps += log.repsCompleted;
-      volume += log.weightKg * log.repsCompleted;
-    }
-    return (volumeKg: volume, sets: sets, reps: reps);
-  }
-
-  /// Aggregate metadata['sets_json'] (richest source — written by the
-  /// active-workout client). Survives even if performance_logs rows weren't
-  /// written.
-  ({double volumeKg, int sets, int reps})? _aggregateSetsJson() {
-    final raw = metadata?['sets_json'];
-    if (raw == null) return null;
-    List<dynamic>? list;
-    if (raw is String) {
-      try {
-        final decoded = jsonDecode(raw);
-        if (decoded is List) list = decoded;
-      } catch (_) {}
-    } else if (raw is List) {
-      list = raw;
-    }
-    if (list == null || list.isEmpty) return null;
-    double volume = 0;
-    int sets = 0;
-    int reps = 0;
-    for (final item in list) {
-      if (item is! Map) continue;
-      final completedRaw = item['is_completed'];
-      final repsCompleted = (item['reps_completed'] as num?)?.toInt() ?? 0;
-      final isCompleted =
-          completedRaw is bool ? completedRaw : repsCompleted > 0;
-      if (!isCompleted) continue;
-      final weightKg = (item['weight_kg'] as num?)?.toDouble() ?? 0;
-      sets += 1;
-      reps += repsCompleted;
-      volume += weightKg * repsCompleted;
-    }
-    return (volumeKg: volume, sets: sets, reps: reps);
-  }
+  // Aggregation now lives in ONE place — SummarySessionTotals — so the
+  // share card and this ledger can never disagree (E2E #78).
 
   /// Median rest (seconds) across metadata['rest_intervals']. Null when no
   /// positive rest samples were tracked — the chip is hidden, never '--'.
@@ -117,58 +69,41 @@ class SummaryHeroStats extends StatelessWidget {
     return '${seconds}s';
   }
 
-  String _formatVolumeLbs(double kg) {
-    final lbs = kg * 2.20462;
-    if (lbs >= 1000) {
-      return '${(lbs / 1000).toStringAsFixed(1)}k';
+  /// Volume in the user's LIFTED-weight unit, abbreviated past 1,000.
+  String _formatVolume(double kg, {required bool useKg}) {
+    final value = useKg ? kg : WeightUtils.kgToLbs(kg);
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
     }
-    return lbs.toStringAsFixed(0);
+    return value.toStringAsFixed(0);
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // E2E #18: the Volume cell hardcoded 'lb' — a kg user saw pounds under a
+    // kg-free label. Resolve through the LIFTED-weight preference.
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final c = ThemeColors.of(context);
     final accent = c.accent;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final wc = summary.performanceComparison?.workoutComparison;
-
-    // Backend aggregates can be 0 (or wc itself null) for older workouts
-    // whose workout_performance_summary row was never written. Fall back to
-    // per-set data so the stats always reflect what was actually logged.
-    final fallback =
-        _aggregateSetsJson() ?? (summary.setLogs.isNotEmpty ? _aggregateSetLogs() : null);
-
-    final volumeKg = (wc?.currentTotalVolumeKg ?? 0) > 0
-        ? wc!.currentTotalVolumeKg
-        : (fallback?.volumeKg ?? 0);
-    final sets = (wc?.currentTotalSets ?? 0) > 0
-        ? wc!.currentTotalSets
-        : (fallback?.sets ?? 0);
-    final reps = (wc?.currentTotalReps ?? 0) > 0
-        ? wc!.currentTotalReps
-        : (fallback?.reps ?? 0);
-
-    // Actual tracked time: prefer the new top-level field (read straight from
-    // workout_logs.total_time_seconds), then the comparison row, then the
-    // workout-log metadata. A 0 here means "not tracked" → cell hidden, the
-    // old "0m" lie is gone.
-    final durationSeconds = summary.durationSeconds > 0
-        ? summary.durationSeconds
-        : ((wc?.currentDurationSeconds ?? 0) > 0
-            ? wc!.currentDurationSeconds
-            : ((metadata?['total_time_seconds'] as num?)?.toInt() ?? 0));
-
-    final records = summary.personalRecords.length;
-
-    final caloriesKcal = summary.caloriesKcal ??
-        ((wc?.currentCalories ?? 0) > 0 ? wc!.currentCalories : null);
-    final caloriesEstimated = summary.caloriesSource == 'planned_estimate';
+    final totals = SummarySessionTotals.resolve(
+      summary: summary,
+      metadata: metadata,
+      exerciseCount: exercises.length,
+    );
+    final volumeKg = totals.volumeKg;
+    final sets = totals.sets;
+    final reps = totals.reps;
+    // A 0 duration means "not tracked" → the cell is hidden; the old "0m" lie
+    // is gone.
+    final durationSeconds = totals.durationSeconds;
+    final records = totals.records;
+    final caloriesKcal = totals.caloriesKcal;
+    final caloriesEstimated = totals.caloriesEstimated;
 
     final medianRest = _medianRestSeconds();
-    final exerciseCount = (wc?.currentExercises ?? 0) > 0
-        ? wc!.currentExercises
-        : exercises.length;
+    final exerciseCount = totals.exercises;
 
     // ── Primary cells — only stats this session actually has ──
     final cells = <MetricCell>[
@@ -182,8 +117,8 @@ class SummaryHeroStats extends StatelessWidget {
       if (volumeKg > 0)
         MetricCell(
           label: 'Volume',
-          value: _formatVolumeLbs(volumeKg),
-          unit: 'lb',
+          value: _formatVolume(volumeKg, useKg: useKg),
+          unit: WeightUtils.workoutUnitLabel(useKg),
           icon: Icons.show_chart,
           accent: accent,
         ),

@@ -15,6 +15,40 @@ extension WorkoutDetailStringExtension on String {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Muscle-name normalisation (E2E #48)
+// ─────────────────────────────────────────────────────────────────
+
+/// Strip a muscle label down to its display form: "Chest (pectoralis major)"
+/// → "Chest", "Quadriceps, hamstrings" → "Quadriceps".
+///
+/// `Workout.primaryMuscles` unions TWO different naming spaces — each
+/// exercise's anatomical `primaryMuscle` ("Chest (pectoralis major)") AND its
+/// coarse `muscleGroup` ("Chest") — into one Set. The Set only dedupes exact
+/// string matches, so the two spellings of the same muscle both survived and
+/// the workout masthead read "Chest (pectoralis major) & Chest".
+String shortenMuscleName(String muscle) {
+  final match = RegExp(r'^([^(]+)').firstMatch(muscle);
+  final head = match != null ? match.group(1)!.trim() : muscle.trim();
+  if (head.contains(',')) return head.split(',').first.trim();
+  return head;
+}
+
+/// Normalise + de-duplicate a raw muscle list, case-insensitively, preserving
+/// first-seen order. THE chokepoint for every muscle label the workout
+/// surfaces render — masthead subtitle, targeted-muscles chips, share cards.
+List<String> dedupeMuscleNames(Iterable<String> raw) {
+  final seen = <String>{};
+  final out = <String>[];
+  for (final m in raw) {
+    final short = shortenMuscleName(m);
+    if (short.isEmpty) continue;
+    if (!seen.add(short.toLowerCase())) continue;
+    out.add(short);
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Stat Card
 // ─────────────────────────────────────────────────────────────────
 

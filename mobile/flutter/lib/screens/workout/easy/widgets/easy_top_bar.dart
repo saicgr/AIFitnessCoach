@@ -17,6 +17,7 @@ import '../../../../data/models/exercise.dart';
 import '../../shared/tier_comparison_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../shared/tier_toggle_persistence.dart';
 /// Fixed 48 pt top bar for the Easy-tier active workout screen.
 class EasyTopBar extends ConsumerWidget {
   final int workoutSeconds;
@@ -207,7 +208,10 @@ class _TierPill extends ConsumerWidget {
             onTap: () async {
               if (selected) return;
               await HapticService.instance.tap();
-              await ref.read(workoutUiModeProvider.notifier).setMode(m);
+              // E2E #13b: verify the explicit choice reached the server and
+              // tell the user when it did not (see tier_toggle_persistence).
+              if (!context.mounted) return;
+              await applyExplicitTierChange(context, ref, m);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

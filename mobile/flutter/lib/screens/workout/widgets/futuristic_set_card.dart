@@ -14,6 +14,7 @@ import '../../../widgets/glow_button.dart';
 import '../../../widgets/number_stepper.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/utils/weight_utils.dart';
 /// Futuristic set tracking card for active workout
 class FuturisticSetCard extends StatefulWidget {
   /// Exercise name
@@ -653,7 +654,8 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                               _buildAiInfoChip(
                                 icon: Icons.fitness_center,
                                 label:
-                                    '1RM: ${suggestion.oneRmKg!.toStringAsFixed(1)}kg',
+                                    // E2E #18: 1RM is a lifted weight.
+                                    '1RM: ${WeightUtils.formatWorkoutWeight(suggestion.oneRmKg!, useKg: widget.useKg, space: false)}',
                                 color: badgeColor,
                                 isDark: isDark,
                               ),

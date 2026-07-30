@@ -1162,7 +1162,14 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
     final shareableWithPhoto = _capturedPhotoPath != null
         ? shareable.copyWith(customPhotoPath: _capturedPhotoPath)
         : shareable;
-    final workoutLogId = widget.workoutLogId;
+    // E2E #79 — `POST /workouts/{id}/share-link` is keyed on the WORKOUTS row
+    // (it selects `workouts` by that id and writes `workouts.share_token`).
+    // This used to hand it `widget.workoutLogId`, a `workout_logs.id`, which
+    // resolves to no workout at all — verified against production: 0 of 111
+    // `workout_logs.id` values exist in `workouts.id`. Every share-link tap
+    // therefore 404'd inside a catch-and-return-null and no token was ever
+    // minted. Pass the workout's own id.
+    final shareWorkoutId = widget.workout.id;
     final allowPublicLinks = ref.read(publicShareLinksProvider);
     await ShareableSheet.show(
       context,
@@ -1170,10 +1177,10 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       // Privacy gate: when the user has disabled public share links the
       // pill is hidden entirely so no URL ever gets generated.
       onGenerateShareLink: !allowPublicLinks ||
-              workoutLogId == null ||
-              workoutLogId.isEmpty
+              shareWorkoutId == null ||
+              shareWorkoutId.isEmpty
           ? null
-          : () => _generateShareLink(workoutLogId),
+          : () => _generateShareLink(shareWorkoutId),
     );
   }
 
@@ -1253,6 +1260,15 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
   /// returns the public URL so the share sheet can show it in the
   /// `ShareLinkPill`. Returns null on any failure — the pill will reflect
   /// that as "Get share link" still tappable.
+  /// Mint (or return) the public share token for THIS workout.
+  ///
+  /// [workoutId] must be a `workouts.id` — the endpoint selects `workouts` by
+  /// it, requires `is_completed`, and stores the token on that row. Passing a
+  /// `workout_logs.id` here silently yields no link (see #79).
+  ///
+  /// Note: the camera-roll "Save" action deliberately does NOT come through
+  /// here — exporting an image locally publishes nothing, so minting a public
+  /// token for it would create a shareable URL the user never asked for.
   Future<String?> _generateShareLink(String workoutId) async {
     try {
       final api = ref.read(apiClientProvider);
@@ -1339,13 +1355,18 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
   Future<void> _submitFeedback() async {
     debugPrint('📝 [Feedback] Starting feedback submission (async background)...');
 
+    // E2E #77: DONE used to be INERT without a star rating — it showed a RED
+    // ERROR toast ("Please rate your workout") and returned, so the summary
+    // could not be dismissed at all except via the separate SKIP RATING link,
+    // which gave DONE no hint it was blocked. A missing optional rating is not
+    // an error, and a screen the user has finished with must always be
+    // dismissable. DONE with no rating now routes through the SAME
+    // leave-without-a-rating path as SKIP RATING: it asks once (stating the
+    // reason inline — "Ratings help our AI…"), still persists the mood/energy
+    // check-in the user did fill in, and then goes home. No error toast, no
+    // dead button.
     if (_rating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.completePleaseRateWorkout),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      await _handleSkipRating();
       return;
     }
 

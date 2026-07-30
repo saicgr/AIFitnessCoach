@@ -1391,12 +1391,53 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
       ? WeightUtils.formatWorkoutWeight(kg, useKg: widget.useKg, space: false)
       : 'BW';
 
+  /// E2E #74 — a TIME-BASED set (plank, hold, carry, conditioning) logs no
+  /// reps and no load, so the "N×reps" summary and the "BW × 0" per-set chip
+  /// both rendered as literal zeros while `set_duration_seconds` on the very
+  /// same row said 30. Duration is the metric for these sets: read it from
+  /// the per-set payload (`set_duration_seconds`, the canonical writer key,
+  /// with the legacy `duration_seconds` alias) and render it instead.
+  int? _setDurationSeconds(Map<String, dynamic> s) {
+    final v = (s['set_duration_seconds'] as num?) ?? (s['duration_seconds'] as num?);
+    final secs = v?.toInt();
+    return (secs != null && secs > 0) ? secs : null;
+  }
+
+  /// Total measured hold time across this exercise's sets — null when none of
+  /// them carries a duration (i.e. it is an ordinary rep-based lift).
+  int? get _totalDurationSeconds {
+    var total = 0;
+    for (final s in widget.perSets) {
+      total += _setDurationSeconds(s) ?? 0;
+    }
+    return total > 0 ? total : null;
+  }
+
+  static String _fmtSeconds(int seconds) {
+    if (seconds < 60) return '${seconds}s';
+    final m = seconds ~/ 60;
+    final rem = seconds % 60;
+    return rem == 0 ? '${m}m' : '${m}m ${rem}s';
+  }
+
   @override
   Widget build(BuildContext context) {
     final avg = widget.avgWeightKg;
-    final summary = avg > 0
-        ? '${widget.sets}×${widget.reps} · ${_fmtWeightKg(avg)} avg'
-        : '${widget.sets}×${widget.reps}';
+    // E2E #74: never print "0×0". When the sets carry a measured duration the
+    // headline is "N sets · 1m 30s"; a loaded hold still shows its load.
+    final totalSeconds = _totalDurationSeconds;
+    final String summary;
+    if (widget.reps <= 0 && totalSeconds != null) {
+      final setsPart = '${widget.sets} '
+          '${widget.sets == 1 ? 'set' : 'sets'}';
+      summary = avg > 0
+          ? '$setsPart · ${_fmtSeconds(totalSeconds)} · ${_fmtWeightKg(avg)}'
+          : '$setsPart · ${_fmtSeconds(totalSeconds)}';
+    } else if (avg > 0) {
+      summary = '${widget.sets}×${widget.reps} · ${_fmtWeightKg(avg)} avg';
+    } else {
+      summary = '${widget.sets}×${widget.reps}';
+    }
     final prIdx = _prSetIndex;
 
     final header = Row(
@@ -1638,6 +1679,13 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
   String _setLabel(Map<String, dynamic> s) {
     final kg = (s['weight_kg'] as num?)?.toDouble() ?? 0;
     final reps = (s['reps'] as num?)?.toInt() ?? 0;
+    // E2E #74: a timed set has no reps — show the hold, not "BW × 0".
+    final secs = _setDurationSeconds(s);
+    if (reps <= 0 && secs != null) {
+      return kg > 0
+          ? '${_fmtWeightKg(kg)} · ${_fmtSeconds(secs)}'
+          : _fmtSeconds(secs);
+    }
     return '${_fmtWeightKg(kg)} × $reps';
   }
 }

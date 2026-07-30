@@ -815,13 +815,13 @@ class EasyActiveWorkoutScreenState
       return;
     }
 
-    int? setDuration;
-    if (_currentSetStartTime != null) {
-      setDuration = DateTime.now()
-          .difference(_currentSetStartTime!)
-          .inSeconds
-          .clamp(0, 600);
-    }
+    // E2E #76 (Easy mirror of set_logging_mixin): the elapsed time since this
+    // set became active is IDLE time, not set time — `_currentSetStartTime` is
+    // stamped on screen open / rest-complete, not when the lifter starts
+    // working. A rep set has no client-observable start, so no duration is
+    // invented for one. Timed sets below still write `state.durationSeconds`,
+    // which IS the measured hold.
+    const int? setDuration = null;
 
     // Timed exercises (planks, wall sits): the user-entered hold seconds
     // ARE the metric — write them into durationSeconds and zero out

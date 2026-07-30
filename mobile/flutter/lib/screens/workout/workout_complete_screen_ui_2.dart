@@ -170,7 +170,11 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
               Expanded(
                 child: _buildComparisonStat(
                   label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-                  current: '${workoutComp.currentTotalVolumeKg.toStringAsFixed(0)} kg',
+                  // E2E #18: volume is a LIFTED weight — render it in the
+                  // user's workout unit, not a hardcoded kg.
+                  current: WeightUtils.formatWorkoutWeight(
+                      workoutComp.currentTotalVolumeKg,
+                      useKg: ref.watch(useKgForWorkoutProvider)),
                   diff: workoutComp.formattedVolumeDiff,
                   diffPercent: workoutComp.volumeDiffPercent,
                   textPrimary: textPrimary,

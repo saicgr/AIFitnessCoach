@@ -3,6 +3,38 @@ part of 'workout_detail_screen.dart';
 /// UI builder methods extracted from _WorkoutDetailScreenState
 extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
 
+  /// E2E #51 — the docked start bar. Same two controls the old
+  /// `floatingActionButton` carried (coach avatar + accent LET'S GO pill),
+  /// right-aligned, but sitting in `bottomNavigationBar` so the list is inset
+  /// by its height and can never scroll underneath it. The surface-coloured
+  /// background is what turns "a pill overlapping an exercise row" into "a bar
+  /// the content stops above".
+  Widget _buildStartBar(BuildContext context, WidgetRef ref, Workout workout) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Same fill the Scaffold uses, so the bar reads as the page floor
+    // rather than a second surface.
+    final surface = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final divider = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    return Container(
+      decoration: BoxDecoration(
+        color: surface,
+        border: Border(
+          top: BorderSide(color: divider.withValues(alpha: 0.35)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [_buildFloatingButtons(context, ref, workout)],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFloatingButtons(BuildContext context, WidgetRef ref, Workout workout) {
     final aiSettings = ref.watch(aiSettingsProvider);
     final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;

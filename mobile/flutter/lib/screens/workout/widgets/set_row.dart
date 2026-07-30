@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../widgets/glass_card.dart';
@@ -393,7 +394,10 @@ class _SetRowState extends State<SetRow> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Prev: ${widget.setData.previousWeight?.toStringAsFixed(1)} kg',
+                          // E2E #18: the previous-session reference is a
+                          // LIFTED weight — render it in the user's chosen
+                          // workout unit, not a hardcoded kg.
+                          'Prev: ${WeightUtils.formatWorkoutWeight(widget.setData.previousWeight!, useKg: widget.useKg)}',
                           style: const TextStyle(
                             fontSize: 10,
                             color: AppColors.textMuted,
@@ -579,7 +583,10 @@ class _SetRowState extends State<SetRow> {
           if (!isCompleted)
             VoiceSetMicButton(
               onParsed: _applyVoice,
-              useKg: false,
+              // E2E #18: a hardcoded `false` made voice entry ("225 for 8")
+              // parse as lb for a kg user (and vice-versa). Honour the row's
+              // own resolved workout unit.
+              useKg: widget.useKg,
               size: 20,
             ),
 
