@@ -12,8 +12,10 @@ resolver spends nothing until it has to, in this order:
   3. web_cc     — a free-licence photo from Wikimedia Commons / Open Food Facts,
      downloaded once and re-hosted. Free, real food, attribution stored and
      rendered.
-  4. ai         — Imagen 4 Fast, ~$0.02. Only for dishes the user is actually
-     likely to look at: the Recommended picks and anything they tap.
+  4. ai         — a generated illustration, a few cents. Only for dishes the
+     user is actually likely to look at: the Recommended picks and anything
+     they tap. The model and its region are owned by
+     `services.image_generation_service`, never by this module.
 
 Every result is cached in `dish_image_cache` keyed on the NORMALIZED dish name
 with **no user_id**, so "caesar salad" is resolved once for the whole app and
@@ -53,6 +55,16 @@ class DishImageCapReached(DishImageError):
     pass
 
 
+class DishImageUnavailable(DishImageError):
+    """The image model could not produce a picture for this dish.
+
+    Model not enabled for the project, safety-blocked, or the platform refused.
+    Nothing the user did and nothing a retry fixes — a thumbnail is decoration,
+    so the endpoint answers "no image" with the reason attached instead of
+    failing the request. It is still logged loudly: honest, not silent.
+    """
+
+
 # --------------------------------------------------------------------------- #
 # Kill-switches + caps
 # --------------------------------------------------------------------------- #
@@ -86,8 +98,17 @@ def generation_daily_cap() -> int:
 
 
 def image_model() -> str:
-    """Imagen 4 Fast — the cheapest Google image SKU (~$0.02/image)."""
-    return os.getenv("DISH_IMAGE_MODEL", "imagen-4.0-fast-generate-001")
+    """Image model for dish thumbnails.
+
+    Defaults to whatever `services.image_generation_service` owns — currently
+    `gemini-2.5-flash-image`, the only image model this Vertex project actually
+    has (every `imagen-*` model 404s here in every region; see that module).
+    `DISH_IMAGE_MODEL` still overrides per-feature, and the chokepoint routes an
+    `imagen-*` override to a regional endpoint automatically.
+    """
+    from services.image_generation_service import default_image_model
+
+    return os.getenv("DISH_IMAGE_MODEL") or default_image_model()
 
 
 AI_DISCLOSURE = "AI-generated illustration"
@@ -410,6 +431,8 @@ def _increment_today(user_id: str) -> None:
 
 
 def generation_quota(user_id: str) -> Dict[str, Any]:
+    """BLOCKING — makes a sync Supabase call. Never call this from a coroutine;
+    use `generation_quota_async`."""
     cap = generation_daily_cap()
     used = _count_today(user_id)
     return {
@@ -418,6 +441,18 @@ def generation_quota(user_id: str) -> Dict[str, Any]:
         "remaining": max(0, cap - used),
         "enabled": generation_enabled(),
     }
+
+
+async def generation_quota_async(user_id: str) -> Dict[str, Any]:
+    """`generation_quota` off the event loop.
+
+    `_count_today` is a synchronous supabase-py `.execute()`; awaiting it inline
+    from an async endpoint stalls the whole worker for a DB round-trip. That
+    matters most on the *failure* path, which the image-model circuit breaker
+    makes near-instant — the quota read would otherwise become the slowest thing
+    in a menu scan and block every other request eight times over.
+    """
+    return await asyncio.to_thread(generation_quota, user_id)
 
 
 def _generation_prompt(display_name: str, restaurant_name: Optional[str]) -> str:
@@ -436,62 +471,64 @@ def _generation_prompt(display_name: str, restaurant_name: Optional[str]) -> str
     )
 
 
-def _image_location() -> str:
-    """Vertex region for Imagen.
+_LEGACY_LOCATION_WARNED = False
 
-    Imagen is NOT served from the `global` endpoint — only regional ones. The
-    shared client uses settings.gcp_location, which is "global" (correct for
-    Gemini text), so every dish-image generation failed with:
-        404 NOT_FOUND ... Publisher model
-        `projects/<p>/locations/global/publishers/google/models/
-         imagen-4.0-fast-generate-001` was not found
-    and surfaced to the client as a 502. Pin image generation to a region.
+
+def _warn_if_legacy_location_env() -> None:
+    """`DISH_IMAGE_LOCATION` no longer does anything — say so, once.
+
+    It was the whole of commit 09569597's fix, so it may still be set in the
+    Render dashboard. The Vertex region is now owned by the chokepoint
+    (`IMAGE_GEN_LOCATION`), and an env var that looks configured but is ignored
+    is exactly the kind of silent no-op that sent the last debugging round down
+    the wrong path.
     """
-    return os.getenv("DISH_IMAGE_LOCATION", "us-central1")
-
-
-def _image_genai_client():
-    """Vertex client pinned to a REGIONAL endpoint for Imagen.
-
-    Mirrors core.gemini_client.get_genai_client's Vertex/ZDR setup (same
-    project, same credentials) but overrides the location, so image traffic
-    stays on the zero-data-retention Vertex path.
-    """
-    from google import genai
-    from core.config import get_settings
-    from core.gemini_client import _setup_credentials
-
-    settings = get_settings()
-    if not settings.gcp_project_id:
-        # No Vertex config → fall back to the shared client so local/dev
-        # behaviour is unchanged (it will raise its own clear error).
-        from core.gemini_client import get_genai_client
-        return get_genai_client()
-
-    _setup_credentials()
-    return genai.Client(
-        vertexai=True,
-        project=settings.gcp_project_id,
-        location=_image_location(),
+    global _LEGACY_LOCATION_WARNED
+    if _LEGACY_LOCATION_WARNED:
+        return
+    legacy = os.getenv("DISH_IMAGE_LOCATION")
+    if not legacy:
+        return
+    _LEGACY_LOCATION_WARNED = True
+    logger.warning(
+        "[DishImage] DISH_IMAGE_LOCATION=%s is set but IGNORED — the Vertex "
+        "region is owned by services.image_generation_service "
+        "(IMAGE_GEN_LOCATION). Unset it, or move the value there.",
+        legacy,
     )
 
 
-def _generate_image_bytes(prompt: str) -> bytes:
-    """One Imagen 4 Fast call. Raises rather than returning a placeholder."""
-    client = _image_genai_client()
+def _generate_image(prompt: str):
+    """One image generation through the backend's single chokepoint.
+
+    Model *and* region are owned by `services.image_generation_service` — this
+    module must never construct an image client or pick a location, because
+    that is exactly how the same 404 shipped twice (global endpoint, then a
+    model the project does not have).
+
+    Raises `DishImageUnavailable` for "no picture is possible" and
+    `DishImageError` for a genuine server fault, so the endpoint can tell a
+    missing thumbnail apart from a broken service.
+    """
+    from services.image_generation_service import (
+        ImageGenerationBlocked,
+        ImageGenerationError,
+        ImageModelUnavailable,
+        generate_image,
+    )
+
+    _warn_if_legacy_location_env()
     try:
-        resp = client.models.generate_images(
-            model=image_model(),
+        return generate_image(
             prompt=prompt,
-            config={"number_of_images": 1, "aspect_ratio": "1:1"},
+            purpose="dish_image",
+            model=image_model(),
+            aspect_ratio="1:1",
         )
-    except Exception as exc:  # noqa: BLE001
-        raise DishImageError(f"Image generation failed: {exc}") from exc
-    if not resp.generated_images:
-        raise DishImageError(
-            "The image model returned nothing (possibly safety-blocked)."
-        )
-    return resp.generated_images[0].image.image_bytes
+    except (ImageModelUnavailable, ImageGenerationBlocked) as exc:
+        raise DishImageUnavailable(str(exc)) from exc
+    except ImageGenerationError as exc:
+        raise DishImageError(str(exc)) from exc
 
 
 # --------------------------------------------------------------------------- #
@@ -604,7 +641,12 @@ async def generate_dish_image(
         result = _row_to_result(cached[key])
         if result:
             _touch_cache(key)
-            return {**result, "cached": True, "quota": generation_quota(user_id)}
+            return {
+                **result,
+                "cached": True,
+                "available": True,
+                "quota": await generation_quota_async(user_id),
+            }
 
     cap = generation_daily_cap()
     used = await asyncio.to_thread(_count_today, user_id)
@@ -616,15 +658,17 @@ async def generate_dish_image(
     display = name.strip()
     model = image_model()
     logger.info(f"[DishImage] MISS → generating {display!r} model={model}")
-    data = await asyncio.to_thread(
-        _generate_image_bytes, _generation_prompt(display, restaurant_name)
+    image = await asyncio.to_thread(
+        _generate_image, _generation_prompt(display, restaurant_name)
     )
+    # Use the mime type the model actually returned — assuming PNG is how a
+    # JPEG ends up stored under a .png key and served with the wrong header.
     s3_key = await asyncio.to_thread(
         get_s3_service().upload_bytes,
-        data,
+        image.data,
         key_prefix="dish-images/ai",
-        filename=f"{key.replace(' ', '-')[:60]}.png",
-        content_type="image/png",
+        filename=f"{key.replace(' ', '-')[:60]}.{image.extension}",
+        content_type=image.mime_type,
     )
     await asyncio.to_thread(
         _store_cache,
@@ -632,7 +676,7 @@ async def generate_dish_image(
         display_name=display,
         source="ai",
         s3_key=s3_key,
-        model=model,
+        model=image.model,
     )
     await asyncio.to_thread(_increment_today, user_id)
 
@@ -643,6 +687,7 @@ async def generate_dish_image(
         "is_ai": True,
         "disclosure": AI_DISCLOSURE,
         "cached": False,
-        "model": model,
-        "quota": generation_quota(user_id),
+        "available": True,
+        "model": image.model,
+        "quota": await generation_quota_async(user_id),
     }

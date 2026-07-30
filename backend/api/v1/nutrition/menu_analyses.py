@@ -517,17 +517,25 @@ async def generate_dish_image_endpoint(
     payload: DishImageGenerateRequest,
     current_user: dict = Depends(get_current_user),
 ):
-    """Generate ONE dish image (Imagen 4 Fast, ~$0.02) — or re-serve a cached one.
+    """Generate ONE dish image (a few cents) — or re-serve a cached one.
 
     Cost gates live in the service: kill-switch, per-user daily cap, and a
     cross-user cache keyed on the normalized dish name so a given dish is only
-    ever generated once for the entire app.
+    ever generated once for the entire app. The model and its Vertex region are
+    owned by `services.image_generation_service`, never here.
+
+    Responses: 200 with a url on success; 200 with `available: false` + `reason`
+    and a null url when no picture is possible (the client keeps its
+    placeholder); 429 at the daily cap; 503 when the feature is switched off;
+    502 only for a genuine server fault.
     """
     from services.dish_image_service import (
         DishImageCapReached,
         DishImageDisabled,
         DishImageError,
+        DishImageUnavailable,
         generate_dish_image,
+        generation_quota_async,
     )
 
     user_id = current_user["id"]
@@ -541,7 +549,31 @@ async def generate_dish_image_endpoint(
         raise HTTPException(status_code=503, detail=str(exc))
     except DishImageCapReached as exc:
         raise HTTPException(status_code=429, detail=str(exc))
+    except DishImageUnavailable as exc:
+        # A thumbnail is decoration. When no picture is possible — the image
+        # model isn't enabled for this project, or the dish got safety-blocked —
+        # 502ing once per dish turns a cosmetic gap into 8 red requests per menu
+        # scan and tells the client nothing it can act on. Answer honestly
+        # instead: no url, `available: false`, and the reason. The client keeps
+        # its placeholder and can stop the auto-pass. Still logged at ERROR, so
+        # it is degraded, never hidden.
+        logger.error(
+            f"[DishImage] unavailable for {payload.name!r}: {exc}", exc_info=True
+        )
+        return {
+            "url": None,
+            "source": None,
+            "attribution": None,
+            "is_ai": False,
+            "disclosure": None,
+            "cached": False,
+            "available": False,
+            "reason": str(exc),
+            "quota": await generation_quota_async(user_id),
+        }
     except DishImageError as exc:
+        # A real server fault (S3 unconfigured, cache write failed) — that must
+        # stay a 5xx so it is not mistaken for "this dish has no picture".
         logger.error(f"[DishImage] generate failed for {payload.name!r}: {exc}", exc_info=True)
         raise HTTPException(status_code=502, detail=str(exc))
 
