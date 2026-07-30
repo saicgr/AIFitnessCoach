@@ -48,6 +48,43 @@ logger = logging.getLogger(__name__)
 _auth_user_cache = RedisCache(prefix="auth_user", ttl_seconds=300, max_size=2000)
 _AUTH_CACHE_MAX_TTL = 300  # seconds
 
+# Hard ceiling on ONE blocking network call made by an auth dependency
+# (E2E register #82).
+#
+# Nothing above this line was time-bounded. `SUPABASE_JWT_SECRET` is not set in
+# production, so `_verify_jwt_local` always returns None and EVERY auth-cache miss
+# takes the network path — and the only limits on it were httpx's own
+# `Timeout(10.0)` plus `HTTPTransport(retries=3)` on the auth client
+# (core/supabase_client.py), which compound: connection retries, then a 10s read
+# budget, then `_network_verify_token`'s own second attempt after a 0.5s sleep.
+# A slow-but-not-dead GoTrue could therefore hold a request — and a blocking-io
+# thread-pool slot — for ~20s+, with no upper bound the caller could rely on.
+#
+# That matters most in exactly the scenario #82 describes: the identity cache TTL is
+# 300s, so after any idle period EVERY request in the app's resume burst misses the
+# cache at once and goes to the network. If those hang, the client's Dio timeout
+# fires, and a timeout is indistinguishable from a dead session at the call site.
+#
+# Bounding it converts a hang into a fast, explicitly retryable 503 — never a 401,
+# which is the response that makes a client refresh and then sign out.
+_AUTH_NETWORK_TIMEOUT_SECONDS = 8.0
+
+
+async def _bounded(awaitable, what: str):
+    """Run one blocking-IO auth call under a hard timeout.
+
+    Raises asyncio.TimeoutError on expiry so each call site can fold it into the
+    transient-error branch it already has (retry once, then 503). The underlying
+    thread is not cancellable, but the request no longer waits on it.
+    """
+    try:
+        return await asyncio.wait_for(awaitable, timeout=_AUTH_NETWORK_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        logger.warning(
+            f"Auth {what} exceeded {_AUTH_NETWORK_TIMEOUT_SECONDS}s — treating as transient"
+        )
+        raise
+
 
 def _auth_cache_key(user_id: Any, token_hash: str) -> str:
     """Build the `{user_id}:{token_hash}` auth-cache key.
@@ -118,7 +155,7 @@ def _verify_jwt_local(token: str) -> Optional[dict]:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session expired — please log in again.",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers=_REFRESHABLE_401_HEADERS,
         )
     except _pyjwt.InvalidTokenError as e:
         logger.warning(f"Local JWT verify failed ({e}) — falling back to network verify")
@@ -144,8 +181,9 @@ async def _network_verify_token(token: str) -> dict:
     user_response = None
     for attempt in range(2):
         try:
-            user_response = await asyncio.to_thread(
-                supabase.auth_client.auth.get_user, token
+            user_response = await _bounded(
+                asyncio.to_thread(supabase.auth_client.auth.get_user, token),
+                "get_user",
             )
             break
         except AuthRetryableError:
@@ -154,10 +192,13 @@ async def _network_verify_token(token: str) -> dict:
                 await asyncio.sleep(0.5)
             else:
                 raise
-        except _TRANSIENT_HTTPX_ERRORS as transport_err:
+        except (asyncio.TimeoutError, *_TRANSIENT_HTTPX_ERRORS) as transport_err:
+            # A timeout is a transport problem, not an authentication verdict —
+            # it must take the same path as a dropped connection and end at 503,
+            # never at 401.
             if attempt == 0:
                 logger.warning(
-                    f"Transient httpx error in auth.get_user: {transport_err} — retrying in 0.5s"
+                    f"Transient error in auth.get_user: {transport_err!r} — retrying in 0.5s"
                 )
                 await asyncio.sleep(0.5)
             else:
@@ -169,7 +210,7 @@ async def _network_verify_token(token: str) -> dict:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers=_REFRESHABLE_401_HEADERS,
         )
     u = user_response.user
     return {
@@ -224,6 +265,25 @@ JWT_USER_DELETED_MARKERS: tuple[str, ...] = (
 # Stable error code returned in the response `detail` so the client can
 # branch on a string match instead of parsing free-form Supabase messages.
 JWT_USER_DELETED_CODE: str = "JWT_USER_DELETED"
+
+# The RECOVERABLE counterpart (E2E register #82). Until now only the terminal case
+# carried a machine-readable signal (`X-Auth-Error: JWT_USER_DELETED`); an ordinary
+# expired-but-refreshable session came back as a bare 401 whose only description was
+# the sentence "Session expired — please log in again." — prose that literally
+# instructs a sign-out for a state a token refresh fixes. Anything reading that
+# response (the Dio interceptor, logs, Sentry) had no positive way to tell
+# "refresh and retry" from "unknown 401".
+#
+# Emitting it as a header keeps the change additive: the existing client only tests
+# for JWT_USER_DELETED, so its behaviour is unchanged, while the refreshable case
+# becomes explicit for every future reader.
+JWT_EXPIRED_CODE: str = "JWT_EXPIRED"
+
+# Headers attached to every 401 that a token refresh CAN recover from.
+_REFRESHABLE_401_HEADERS = {
+    "WWW-Authenticate": "Bearer",
+    "X-Auth-Error": JWT_EXPIRED_CODE,
+}
 
 
 def is_jwt_user_deleted_error(err: BaseException) -> bool:
@@ -348,7 +408,7 @@ async def get_verified_auth_token(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session expired — please log in again.",
-                headers={"WWW-Authenticate": "Bearer"},
+                headers=_REFRESHABLE_401_HEADERS,
             )
         logger.error(f"Unexpected AuthApiError: {e}", exc_info=True)
         raise HTTPException(
@@ -356,7 +416,7 @@ async def get_verified_auth_token(
             detail="Failed to validate token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except _TRANSIENT_HTTPX_ERRORS as exc:
+    except (asyncio.TimeoutError, *_TRANSIENT_HTTPX_ERRORS) as exc:
         # Transport-layer blip — see get_current_user for full rationale.
         # NEVER 401 on a transient transport error; surface 503 so the client retries.
         logger.warning(f"Transient httpx error in auth: {exc}")
@@ -433,9 +493,12 @@ async def get_current_user(
         result = None
         for attempt in range(2):
             try:
-                result = await asyncio.to_thread(
-                    lambda: supabase.client.table("users")
-                    .select("id, email").eq("auth_id", supabase_auth_id).execute()
+                result = await _bounded(
+                    asyncio.to_thread(
+                        lambda: supabase.client.table("users")
+                        .select("id, email").eq("auth_id", supabase_auth_id).execute()
+                    ),
+                    "users lookup",
                 )
                 break
             except PostgrestAPIError as pg_err:
@@ -444,15 +507,15 @@ async def get_current_user(
                     await asyncio.sleep(0.5)
                 else:
                     raise
-            except _TRANSIENT_HTTPX_ERRORS as transport_err:
+            except (asyncio.TimeoutError, *_TRANSIENT_HTTPX_ERRORS) as transport_err:
                 if attempt == 0:
                     logger.warning(
-                        f"Transient httpx error in PostgREST users lookup: {transport_err} — retrying in 0.5s"
+                        f"Transient error in PostgREST users lookup: {transport_err!r} — retrying in 0.5s"
                     )
                     await asyncio.sleep(0.5)
                 else:
                     logger.warning(
-                        f"Transient httpx error in PostgREST users lookup persisted after retry: {transport_err}"
+                        f"Transient error in PostgREST users lookup persisted after retry: {transport_err!r}"
                     )
                     raise HTTPException(
                         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -544,7 +607,7 @@ async def get_current_user(
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Session expired — please log in again.",
-                headers={"WWW-Authenticate": "Bearer"},
+                headers=_REFRESHABLE_401_HEADERS,
             )
         # Anything else is an unexpected auth backend state — keep the
         # full stack trace in Sentry so we can diagnose.
@@ -569,7 +632,7 @@ async def get_current_user(
             detail="Failed to validate token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except _TRANSIENT_HTTPX_ERRORS as exc:
+    except (asyncio.TimeoutError, *_TRANSIENT_HTTPX_ERRORS) as exc:
         # Transport-layer blip (Supabase / PostgREST connection drop, DNS jitter,
         # read timeout). The token is still valid — DO NOT 401 the client (would
         # force a logout). Surface as 503 so the Dio retry interceptor backs off

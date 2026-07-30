@@ -561,13 +561,15 @@ async def activate_gym_profile(
 
         old_profile_name = old_active_result.data[0]["name"] if old_active_result.data else "None"
 
-        # Deactivate all profiles for this user
-        supabase.client.table("gym_profiles") \
-            .update({"is_active": False}) \
-            .eq("user_id", user_id) \
-            .execute()
-
-        # Activate the requested profile
+        # Activate the requested profile. ONE statement — the
+        # trg_gym_profiles_single_active trigger (migs 2327 + 2347) demotes the
+        # user's other live profiles inside the same statement.
+        #
+        # This used to be two round trips (deactivate-all, then activate-one), which
+        # left the user with ZERO active profiles for the whole gap between them.
+        # Anything reading the active profile in that window — /today's
+        # _get_active_gym_profile_id, the workout generator, the accent-colour
+        # provider — saw "no gym" and took its no-profile branch mid-switch.
         now = datetime.utcnow().isoformat()
         supabase.client.table("gym_profiles") \
             .update({"is_active": True, "updated_at": now}) \
@@ -1005,12 +1007,10 @@ async def activate_travel_mode(
             logger.info(f"✅ [GymProfile] Created travel profile {travel_id} for user {user_id}")
 
         # 3) Activate the travel profile — same side-effects as /{id}/activate.
-        # Deactivate all, activate travel, refresh days so a stale create doesn't
-        # leave empty days, point users.active_gym_profile_id at it.
-        supabase.client.table("gym_profiles") \
-            .update({"is_active": False}) \
-            .eq("user_id", user_id) \
-            .execute()
+        # ONE statement: the trg_gym_profiles_single_active trigger (migs 2327 + 2347)
+        # demotes the user's other live profiles atomically. The previous
+        # deactivate-all-then-activate pair left the user with zero active profiles
+        # between the two round trips (see /{id}/activate for the same fix).
         supabase.client.table("gym_profiles") \
             .update({"is_active": True, "workout_days": travel_days, "updated_at": now_iso}) \
             .eq("id", travel_id) \
