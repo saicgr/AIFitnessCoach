@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 /// Glassmorphic multi-select question widget for quiz screens.
 class QuizMultiSelect extends StatelessWidget {
@@ -28,35 +28,12 @@ class QuizMultiSelect extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = OnboardingTheme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showHeader) ...[
-            Text(
-              question,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: t.textPrimary,
-                height: 1.2,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 13,
-                color: t.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 14),
-          ],
+          if (showHeader) QuizStepHeader(title: question, subtitle: subtitle),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),

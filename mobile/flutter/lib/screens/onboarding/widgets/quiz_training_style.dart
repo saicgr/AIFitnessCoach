@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Training style selection widget (Screen 8: Phase 2 personalization).
@@ -162,31 +163,19 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
     final t = OnboardingTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: Stack(
         children: [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (widget.showHeader) ...[
-                Text(
-                  AppLocalizations.of(context).workoutTypeSelectorTrainingStyle,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: t.textPrimary,
-                  ),
-                ).animate().fadeIn(delay: 100.ms),
-                const SizedBox(height: 6),
-                Text(
-                  AppLocalizations.of(context).quizTrainingStyleChooseHowYouWant,
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: t.textSecondary,
-                  ),
-                ).animate().fadeIn(delay: 200.ms),
-                const SizedBox(height: 24),
-              ],
+              if (widget.showHeader)
+                QuizStepHeader(
+                  title: AppLocalizations.of(context)
+                      .workoutTypeSelectorTrainingStyle,
+                  subtitle: AppLocalizations.of(context)
+                      .quizTrainingStyleChooseHowYouWant,
+                ),
 
               Expanded(
                 child: ListView(

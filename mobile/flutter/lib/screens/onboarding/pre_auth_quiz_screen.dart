@@ -42,6 +42,7 @@ import 'widgets/quiz_nutrition_gate.dart';
 import 'widgets/did_you_know_chip.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/onboarding_theme.dart';
+import 'widgets/onboarding_scroll_edge.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../l10n/generated/app_localizations.dart';
 
@@ -876,8 +877,34 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             content: Column(
               children: [
                 Expanded(
+                  // Every quiz step scrolls its own options list inside this
+                  // box; a step taller than the box used to end in a hard cut
+                  // against the pinned chip + Continue bar. One wrapper here
+                  // gives ALL 11 steps the same "there's more below" fade.
+                  child: OnboardingScrollEdge(
+                  background: isDark
+                      ? AppColors.pureBlack
+                      : AppColorsLight.pureWhite,
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 300),
+                    // EXPLICIT top alignment. AnimatedSwitcher's default is
+                    // `Alignment.center`, and its default layoutBuilder stacks
+                    // the step loosely — so any step whose root shrink-wraps
+                    // (fitness level, days, primary goal: Padding →
+                    // SingleChildScrollView) was VERTICALLY CENTRED, which is
+                    // where the "~300px of dead space above the question" on
+                    // the fitness-level step came from, while list-based steps
+                    // (goals) filled and sat at the top. Pinning it to
+                    // topCenter is what makes the rhythm consistent; it must
+                    // not depend on an enclosing Stack happening to align
+                    // top-start.
+                    layoutBuilder: (currentChild, previousChildren) => Stack(
+                      alignment: Alignment.topCenter,
+                      children: <Widget>[
+                        ...previousChildren,
+                        if (currentChild != null) currentChild,
+                      ],
+                    ),
                     transitionBuilder: (child, animation) {
                       return FadeTransition(
                         opacity: animation,
@@ -895,29 +922,44 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                     },
                     child: _buildCurrentQuestion(showHeader: !isFoldableOpen),
                   ),
+                  ),
                 ),
                 // Onboarding conversion v6: once the step is answered,
                 // swap the static "Did you know?" hint for a selection-
                 // specific micro-acknowledgment (Noom reciprocity). Before
                 // an answer, the educational hint still shows.
-                Builder(builder: (_) {
+                // FIXED-height slot. The chip swaps hint → acknowledgment →
+                // nothing as the user answers, and each swap used to resize
+                // this row by up to ~50px, sliding the pinned CTA below it
+                // right as the user reached for it. The slot is now reserved
+                // at the chip's two-line maximum and the chip is bottom-
+                // aligned inside it, so the button never moves.
+                Builder(builder: (ctx) {
                   final ack = _canProceed
                       ? _getAcknowledgment(_currentQuestion)
                       : null;
+                  final hint = _getDidYouKnowHint(_currentQuestion);
+                  final Widget child;
                   if (ack != null) {
-                    return _AckChip(
+                    child = _AckChip(
                       key: ValueKey('ack_${_currentQuestion}_$ack'),
                       text: ack,
                     );
-                  }
-                  final hint = _getDidYouKnowHint(_currentQuestion);
-                  if (hint != null) {
-                    return DidYouKnowChip(
+                  } else if (hint != null) {
+                    child = DidYouKnowChip(
                       key: ValueKey('hint_$_currentQuestion'),
                       text: hint,
                     );
+                  } else {
+                    child = const SizedBox.shrink();
                   }
-                  return const SizedBox.shrink();
+                  return SizedBox(
+                    height: DidYouKnowChip.slotHeight(ctx),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: child,
+                    ),
+                  );
                 }),
               ],
             ),

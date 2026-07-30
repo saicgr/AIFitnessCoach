@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -161,9 +162,22 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
   // TextField uses — so `_isValid`, `_resolveHeightCm`, and `_proceed` are
   // untouched and logged values are byte-identical across input modes.
 
+  /// True once the user has actually entered a height (either unit).
+  bool get _hasHeight => _resolveHeightCm() != null;
+
+  /// True once the user has actually entered a current weight.
+  bool get _hasWeight => (double.tryParse(_weightCtrl.text) ?? 0) > 0;
+
+  /// True once the user has actually entered a goal weight.
+  bool get _hasGoalWeight => (double.tryParse(_goalWeightCtrl.text) ?? 0) > 0;
+
   /// Height ruler. Metric → cm ticks. Imperial → total-inch ticks, written back
   /// as feet (`_heightCtrl`) + leftover inches (`_heightInchesCtrl`).
   Widget _buildHeightRuler(OnboardingTheme t) {
+    // Resting position of the scale BEFORE the user has entered anything. It is
+    // a starting point for the drag, NOT a value: the readout stays blank and
+    // the strip renders in its muted "not set" state (`hasValue: false`) so the
+    // number and the ruler can never contradict each other.
     final double current = _heightInCm
         ? (double.tryParse(_heightCtrl.text) ?? 170)
         : (() {
@@ -191,6 +205,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       min: min,
       max: max,
       value: current.clamp(min, max),
+      hasValue: _hasHeight,
       // Live, per-tick: update the controller only (no setState) so the
       // displayed number is fluid without rebuilding the whole gate.
       onLiveChanged: writeHeight,
@@ -219,6 +234,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       min: min,
       max: max,
       value: current.clamp(min, max),
+      hasValue: _hasWeight,
       onLiveChanged: (v) => _weightCtrl.text = v.round().toString(),
       onChanged: (v) {
         _weightCtrl.text = v.round().toString();
@@ -238,6 +254,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
       min: min,
       max: max,
       value: current.clamp(min, max),
+      hasValue: _hasGoalWeight,
       onLiveChanged: (v) => _goalWeightCtrl.text = v.round().toString(),
       onChanged: (v) {
         _goalWeightCtrl.text = v.round().toString();
@@ -246,14 +263,29 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
     );
   }
 
-  bool get _isValid {
-    if (_gender == null) return false;
-    final heightCm = _resolveHeightCm();
-    final weight = double.tryParse(_weightCtrl.text);
-    final goal = double.tryParse(_goalWeightCtrl.text);
-    if (heightCm == null || weight == null || goal == null) return false;
-    if (weight <= 0 || goal <= 0) return false;
-    return true;
+  bool get _isValid => _missingFields().isEmpty;
+
+  /// The still-unanswered fields, in on-screen order. Drives BOTH the CTA's
+  /// enabled state and the reason line above it — a greyed button with no
+  /// stated reason is the single most common "is this app broken?" moment in
+  /// onboarding, so the two can never drift apart.
+  List<String> _missingFields() {
+    final missing = <String>[];
+    if (_gender == null) missing.add('gender');
+    if (!_hasHeight) missing.add('height');
+    if (!_hasWeight) missing.add('current weight');
+    if (!_hasGoalWeight) missing.add('goal weight');
+    return missing;
+  }
+
+  /// Human sentence for the reason line, or null when nothing is missing.
+  String? _missingReason() {
+    final missing = _missingFields();
+    if (missing.isEmpty) return null;
+    if (missing.length == 1) return 'Add your ${missing.first} to continue';
+    final last = missing.last;
+    final head = missing.sublist(0, missing.length - 1).join(', ');
+    return 'Add your $head and $last to continue';
   }
 
   /// Formats a kg value in whichever body-weight unit the user has selected.
@@ -431,7 +463,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
     final t = OnboardingTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -665,6 +697,44 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
           // OUTSIDE the scroll view so it's preserved at every scroll
           // position, including when content is too short to scroll.
           const SizedBox(height: 10),
+
+          // Reason line for the disabled CTA. The slot is a FIXED height so
+          // the button never moves under the user's thumb when the line
+          // appears or clears — and that height TRACKS THE TEXT SCALER, so a
+          // user on large accessibility text gets a taller slot instead of a
+          // RenderFlex overflow stripe on the last screen before sign-up.
+          SizedBox(
+            height: MediaQuery.textScalerOf(context).scale(12) * 1.3 + 3,
+            child: Builder(
+              builder: (context) {
+                final reason = _missingReason();
+                if (reason == null) return const SizedBox.shrink();
+                return Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 13,
+                      color: t.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        reason,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: t.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 6),
 
           // ── Primary CTA — exact copy of the "Generate My First Workout"
           // button from quiz step 6 (pre_auth_quiz_screen_ui.dart line 17).
@@ -991,7 +1061,9 @@ class _BigNumberInput extends StatelessWidget {
               disabledBorder: InputBorder.none,
               errorBorder: InputBorder.none,
               focusedErrorBorder: InputBorder.none,
-              hintText: '0',
+              // An empty field shows a DASH, never "0": a zero reads as a real
+              // (broken) measurement, and it contradicted the ruler underneath.
+              hintText: '—',
               hintStyle: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
@@ -1033,6 +1105,14 @@ class _RulerStrip extends StatefulWidget {
   final double max;
   final double value;
 
+  /// False while the field is still EMPTY. [value] is then only a resting
+  /// position for the scale, not the user's answer — so the strip renders
+  /// muted with a "drag or tap to set" cue instead of pointing a live accent
+  /// marker at a number the readout does not show. Without this the marker sat
+  /// on 170 cm / 70 kg while the readout showed a placeholder, and the two
+  /// contradicted each other.
+  final bool hasValue;
+
   /// Fired on EVERY integer tick crossed during an active drag. The parent
   /// writes the new value into the field's TextEditingController WITHOUT a
   /// setState — the bound TextField repaints itself, so the big number tracks
@@ -1059,6 +1139,7 @@ class _RulerStrip extends StatefulWidget {
     required this.value,
     required this.onLiveChanged,
     required this.onChanged,
+    this.hasValue = true,
     this.majorEvery = 5,
     this.labelEvery = 10,
     this.labelBuilder,
@@ -1071,6 +1152,9 @@ class _RulerStrip extends StatefulWidget {
 class _RulerStripState extends State<_RulerStrip> {
   // Pixel width of one tick slot.
   static const double _tickSpacing = 14.0;
+  // Tall enough to hold the "drag or tap to set" cue in the unset state
+  // WITHOUT changing height when the cue disappears — a height change here
+  // would move the CTA underneath it.
   static const double _height = 40.0;
 
   late ScrollController _controller;
@@ -1081,6 +1165,13 @@ class _RulerStripState extends State<_RulerStrip> {
   // The last integer value we emitted to the parent during this drag. Drives
   // haptics + onLiveChanged dedupe, and is the value we settle-snap onto.
   int? _lastEmitted;
+
+  // The parent only learns a value exists when the drag SETTLES (one setState
+  // per gesture, by design). Flip the strip out of its muted "not set" look on
+  // the first tick the finger crosses so the marker and the live big number
+  // agree the whole way through the drag.
+  bool _touched = false;
+  bool get _valued => widget.hasValue || _touched;
 
   int get _tickCount => (widget.max - widget.min).round() + 1;
 
@@ -1147,6 +1238,7 @@ class _RulerStripState extends State<_RulerStrip> {
       _lastEmitted = snappedInt;
       HapticFeedback.selectionClick();
       widget.onLiveChanged(snapped); // controller-only, no setState
+      if (!_touched) setState(() => _touched = true);
     }
   }
 
@@ -1170,6 +1262,7 @@ class _RulerStripState extends State<_RulerStrip> {
     // would re-commit on ScrollEnd). Commit once here instead.
     _suppress = true;
     _lastEmitted = null;
+    _touched = true;
     HapticFeedback.selectionClick();
     _controller
         .animateTo(
@@ -1218,12 +1311,15 @@ class _RulerStripState extends State<_RulerStrip> {
   @override
   Widget build(BuildContext context) {
     final t = widget.t;
+    // Dimmed while unset — the whole scale reads as "waiting for you", not as
+    // a live reading.
+    final dim = _valued ? 1.0 : 0.45;
     final tickColor = t.isDark
-        ? Colors.white.withValues(alpha: 0.26)
-        : Colors.black.withValues(alpha: 0.20);
+        ? Colors.white.withValues(alpha: 0.26 * dim)
+        : Colors.black.withValues(alpha: 0.20 * dim);
     final majorTickColor = t.isDark
-        ? Colors.white.withValues(alpha: 0.48)
-        : Colors.black.withValues(alpha: 0.38);
+        ? Colors.white.withValues(alpha: 0.48 * dim)
+        : Colors.black.withValues(alpha: 0.38 * dim);
 
     return SizedBox(
       height: _height,
@@ -1278,7 +1374,10 @@ class _RulerStripState extends State<_RulerStrip> {
                         final isLabeled = value % widget.labelEvery == 0;
                         return _RulerTick(
                           isMajor: isMajor,
-                          label: isLabeled
+                          // Scale numbers are suppressed while the field is
+                          // unset: they'd sit under the "drag to set" cue and
+                          // read as if one of them were already chosen.
+                          label: (isLabeled && _valued)
                               ? (widget.labelBuilder?.call(value) ??
                                     value.toString())
                               : null,
@@ -1291,17 +1390,40 @@ class _RulerStripState extends State<_RulerStrip> {
                   ),
                 ),
               ),
-              // Center indicator.
+              // Center indicator. Muted until the field actually holds a value,
+              // so an accent marker never asserts a number the readout is not
+              // showing.
               IgnorePointer(
                 child: Container(
                   width: 3,
                   height: _height * 0.5,
                   decoration: BoxDecoration(
-                    color: t.accent,
+                    color: _valued
+                        ? t.accent
+                        : t.textMuted.withValues(alpha: 0.45),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
+              // Unset cue — states the affordance that unlocks the CTA
+              // ("drag the scale, or tap the number to type it").
+              if (!_valued)
+                IgnorePointer(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Text(
+                      'Drag to set  ·  or tap the number',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                        color: t.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           );
         },

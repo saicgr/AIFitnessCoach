@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import 'onboarding_experiments.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
+import 'widgets/onboarding_scroll_edge.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Fitness Assessment Screen
@@ -84,13 +85,19 @@ class _FitnessAssessmentScreenState
     {'id': '30+min', 'label': '30+ minutes', 'description': 'Great cardio', 'score': 4},
   ];
 
-  bool get _canContinue =>
-      _pushupCapacity != null &&
-      _pullupCapacity != null &&
-      _plankCapacity != null &&
-      _squatCapacity != null &&
-      _cardioCapacity != null &&
-      _trainingExperience != null;
+  bool get _canContinue => _unansweredCount == 0;
+
+  /// How many of the six questions are still unanswered. Drives BOTH the CTA's
+  /// enabled state and the reason line above it, so a dimmed Continue can never
+  /// again sit there without saying what is missing.
+  int get _unansweredCount => [
+        _pushupCapacity,
+        _pullupCapacity,
+        _plankCapacity,
+        _squatCapacity,
+        _cardioCapacity,
+        _trainingExperience,
+      ].where((v) => v == null).length;
 
   int _getScore(String? id, List<Map<String, dynamic>> options) {
     if (id == null) return 1;
@@ -344,7 +351,14 @@ class _FitnessAssessmentScreenState
           headerSubtitle: 'Help us personalize your workouts (~2 min)',
           headerExtra: _buildAssessmentInfo(isDark, textPrimary, textSecondary, accentColor),
           headerOverlay: _buildHeaderOverlay(isDark),
-          content: SingleChildScrollView(
+          // The body is taller than the viewport by design (6 question cards).
+          // Wrapped in OnboardingScrollEdge so the card sitting on the bottom
+          // edge fades and shows a chevron instead of ending in a hard cut
+          // against the sticky Continue bar — which read as "the third card is
+          // clipped by the button".
+          content: OnboardingScrollEdge(
+            background: backgroundColor,
+            child: SingleChildScrollView(
             padding: EdgeInsets.symmetric(horizontal: hPad),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -464,8 +478,13 @@ class _FitnessAssessmentScreenState
                   compact: isFoldable,
                 ),
 
-                SizedBox(height: isFoldable ? 60 : 100), // Space for button
+                // Breathing room after the last card. The Continue bar is a
+                // sibling in the scaffold's Column (NOT an overlay), so this
+                // only needs to clear the scroll-edge fade — the old 100px was
+                // dead space left over from an overlaying CTA.
+                SizedBox(height: isFoldable ? 16 : 28),
               ],
+            ),
             ),
           ),
           button: _buildContinueButton(isDark, accentColor),
@@ -672,7 +691,35 @@ class _FitnessAssessmentScreenState
       ),
       child: SafeArea(
         top: false,
-        child: GestureDetector(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Reason line for the dimmed CTA, in a FIXED-height slot so the
+            // button never shifts as the user answers. The height TRACKS THE
+            // TEXT SCALER — a hard 18px would overflow at large accessibility
+            // text sizes.
+            SizedBox(
+              height: MediaQuery.textScalerOf(context).scale(12) * 1.3 + 3,
+              child: _unansweredCount == 0
+                  ? null
+                  : Text(
+                      _unansweredCount == 1
+                          ? '1 question left — answer it to continue'
+                          : '$_unansweredCount questions left — answer them all to continue',
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textSecondary
+                            : AppColorsLight.textSecondary,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 6),
+            GestureDetector(
           onTap: isEnabled ? _continue : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
@@ -730,6 +777,8 @@ class _FitnessAssessmentScreenState
             ),
           ),
         ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.1),
+          ],
+        ),
       ),
     );
   }

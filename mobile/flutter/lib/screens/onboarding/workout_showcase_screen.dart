@@ -145,6 +145,44 @@ class _WorkoutShowcaseScreenState
   // and Easy is the simpler, more apptaste-friendly first impression.
   // The user can still tap "Advanced" to see the full table.
   bool _advancedMode = false;
+
+  // ── Real session truth for the demo ────────────────────────────────
+  // Frame 3 ("Workout complete") used to credit a hardcoded 44:12 / 320 kcal /
+  // 12,450 volume / "3 PRs · 14-day streak" after ~90 seconds and three taps.
+  // Those numbers taught the user that Zealova's stats are decorative, right
+  // before a projection chart and a $59.99 ask. The demo now reports what the
+  // user ACTUALLY did: elapsed wall-clock since the first frame, the volume of
+  // the sets they logged, and the count of those sets.
+  DateTime? _sessionStart;
+  double _sessionVolumeLb = 0;
+  int _sessionSets = 0;
+
+  Duration get _sessionElapsed => _sessionStart == null
+      ? Duration.zero
+      : DateTime.now().difference(_sessionStart!);
+
+  /// Same deliberately-modest estimate the live frame uses: ~0.5 kcal per
+  /// 100 lb moved. Derived from real logged volume, never a stand-in.
+  int get _sessionCalories => (_sessionVolumeLb * 0.005).round();
+
+  void _recordSet(double volumeLb) {
+    _sessionStart ??= DateTime.now();
+    setState(() {
+      _sessionSets++;
+      _sessionVolumeLb += volumeLb;
+    });
+  }
+
+  /// Mirrors the kg/lb toggle the user can flip inside the Easy layout. Volume
+  /// is BANKED in lb (the demo's targets are lb) but must be DISPLAYED in the
+  /// unit the user chose — otherwise the live strip says "560 kg" and the
+  /// completion frame says "1,235" for the very same three sets, which is the
+  /// same "two surfaces, two numbers" defect the hardcoded 12,450 was.
+  bool _demoUseKg = false;
+  void _setDemoUseKg(bool useKg) {
+    if (useKg == _demoUseKg) return;
+    setState(() => _demoUseKg = useKg);
+  }
   // Per-row checkbox state for Advanced mode. Index 0 = warmup, 1-3 =
   // working sets. Tapping a checkbox toggles. When all 3 working sets
   // are checked, the demo auto-advances to Frame 2 (progression).
@@ -200,6 +238,19 @@ class _WorkoutShowcaseScreenState
         _completedRows.add(rowIndex);
       }
     });
+    // Bank / un-bank the row's real load so the completion frame reports the
+    // sets the user actually checked off (targets are stored in lb).
+    final w = _progression.targetWeights;
+    final r = _progression.targetReps;
+    if (rowIndex >= 0 && rowIndex < w.length && rowIndex < r.length) {
+      final rowVolume = w[rowIndex].toDouble() * r[rowIndex];
+      if (wasChecked) {
+        _sessionSets = (_sessionSets - 1).clamp(0, 1 << 30);
+        _sessionVolumeLb = (_sessionVolumeLb - rowVolume).clamp(0, double.infinity);
+      } else {
+        _recordSet(rowVolume);
+      }
+    }
     // Checking a working set whose successor ramps up → flash the next
     // row's target green so the auto-progression is visible (Easy-mode
     // parity for the "Zealova progresses you automatically" moment).
@@ -338,7 +389,12 @@ class _WorkoutShowcaseScreenState
                         subtitle: AppLocalizations.of(context)
                             .workoutShowcaseIntroSubtitle,
                         onDone: () {
-                          if (mounted) setState(() => _introSeen = true);
+                          if (mounted) {
+                            setState(() {
+                              _introSeen = true;
+                              _sessionStart ??= DateTime.now();
+                            });
+                          }
                         },
                       )
                     : _buildFrame(_frame, isDark),
@@ -401,6 +457,8 @@ class _WorkoutShowcaseScreenState
           onToggleRow: _toggleSetRow,
           advFlashRow: _advFlashRow,
           onAdvance: _next,
+          onSetLogged: _recordSet,
+          onUseKgChanged: _setDemoUseKg,
         );
       case 1:
         return _Frame2SetLogged(
@@ -409,7 +467,15 @@ class _WorkoutShowcaseScreenState
           progression: _progression,
         );
       case 2:
-        return _Frame3Complete(key: const ValueKey('f2'), isDark: isDark);
+        return _Frame3Complete(
+          key: const ValueKey('f2'),
+          isDark: isDark,
+          elapsed: _sessionElapsed,
+          volumeLb: _sessionVolumeLb,
+          calories: _sessionCalories,
+          setsLogged: _sessionSets,
+          useKg: _demoUseKg,
+        );
       case 3:
         // Pull the user's first name from the pre-auth quiz so cards
         // like Newspaper can personalize the headline ("SAI lifts ..."
@@ -585,6 +651,14 @@ class _Frame1ActiveWorkout extends StatelessWidget {
   final int? advFlashRow;
   final VoidCallback onAdvance;
 
+  /// Reports the real volume (lb) of each set the user logs, so the completion
+  /// frame can show their work instead of a fabricated highlight reel.
+  final ValueChanged<double> onSetLogged;
+
+  /// Reports the Easy layout's kg/lb toggle so the completion frame renders
+  /// the session volume in the unit the user actually picked.
+  final ValueChanged<bool> onUseKgChanged;
+
   const _Frame1ActiveWorkout({
     super.key,
     required this.isDark,
@@ -596,6 +670,8 @@ class _Frame1ActiveWorkout extends StatelessWidget {
     required this.onToggleRow,
     this.advFlashRow,
     required this.onAdvance,
+    required this.onSetLogged,
+    required this.onUseKgChanged,
   });
 
   @override
@@ -616,6 +692,8 @@ class _Frame1ActiveWorkout extends StatelessWidget {
             onToggleMode: onToggleMode,
             onAdvance: onAdvance,
             progression: progression,
+            onSetLogged: onSetLogged,
+            onUseKgChanged: onUseKgChanged,
           );
   }
 
@@ -1246,11 +1324,15 @@ class _EasyActiveLayout extends ConsumerStatefulWidget {
   final ValueChanged<bool> onToggleMode;
   final VoidCallback onAdvance;
   final _DemoProgression progression;
+  final ValueChanged<double> onSetLogged;
+  final ValueChanged<bool> onUseKgChanged;
   const _EasyActiveLayout({
     required this.isDark,
     required this.onToggleMode,
     required this.onAdvance,
     required this.progression,
+    required this.onSetLogged,
+    required this.onUseKgChanged,
   });
 
   @override
@@ -1643,6 +1725,8 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
                 _setsLogged++;
                 _volumeLb += loggedLb * _reps;
               });
+              // Same number, lifted to the screen so Frame 3 can report it.
+              widget.onSetLogged(loggedLb * _reps);
               if (_setsLogged >= 3) {
                 _toast('All 3 sets logged. Nice work!');
                 Future.delayed(const Duration(milliseconds: 400),
@@ -1900,6 +1984,9 @@ class _EasyActiveLayoutState extends ConsumerState<_EasyActiveLayout> {
             _useKg = false;
           }
         });
+        // Lift the choice to the screen so the completion frame reports the
+        // session volume in the same unit this strip is showing.
+        widget.onUseKgChanged(_useKg);
       },
       child: Container(
         // Vertical padding stays at 4: the Easy column is height-exact on
@@ -2668,7 +2755,28 @@ class _Frame2SetLogged extends StatelessWidget {
 // ── Frame 3: workout complete
 class _Frame3Complete extends StatefulWidget {
   final bool isDark;
-  const _Frame3Complete({super.key, required this.isDark});
+
+  /// The user's REAL demo session — wall-clock elapsed, the volume of the sets
+  /// they logged, the calorie estimate derived from that volume, and how many
+  /// sets they actually completed. Nothing on this frame is invented.
+  final Duration elapsed;
+  final double volumeLb;
+  final int calories;
+  final int setsLogged;
+
+  /// The unit the user picked on the live strip's kg/lb toggle. Volume is
+  /// banked in lb; this decides how it is DISPLAYED.
+  final bool useKg;
+
+  const _Frame3Complete({
+    super.key,
+    required this.isDark,
+    required this.elapsed,
+    required this.volumeLb,
+    required this.calories,
+    required this.setsLogged,
+    required this.useKg,
+  });
 
   @override
   State<_Frame3Complete> createState() => _Frame3CompleteState();
@@ -2677,6 +2785,33 @@ class _Frame3Complete extends StatefulWidget {
 class _Frame3CompleteState extends State<_Frame3Complete> {
   late final ConfettiController _confetti =
       ConfettiController(duration: const Duration(milliseconds: 1200));
+
+  /// mm:ss of real elapsed time in the demo (h:mm:ss past an hour).
+  String get _elapsedLabel {
+    final total = widget.elapsed.inSeconds;
+    final m = total ~/ 60;
+    final sec = (total % 60).toString().padLeft(2, '0');
+    if (m < 60) return '$m:$sec';
+    return '${m ~/ 60}:${(m % 60).toString().padLeft(2, '0')}:$sec';
+  }
+
+  /// Real logged volume, thousands-separated, in the unit the user chose on
+  /// the live strip (banked in lb — the demo's targets are lb, see
+  /// `_DemoProgression.targetWeights`). The unit is ALWAYS printed: an
+  /// unlabelled four-digit weight next to a "Volume" caption is exactly the
+  /// ambiguity the register flags elsewhere.
+  String get _volumeLabel {
+    final v = (widget.useKg ? widget.volumeLb / 2.20462 : widget.volumeLb)
+        .round();
+    final digits = v.toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < digits.length; i++) {
+      if (i > 0 && (digits.length - i) % 3 == 0) buf.write(',');
+      buf.write(digits[i]);
+    }
+    buf.write(widget.useKg ? ' kg' : ' lb');
+    return buf.toString();
+  }
 
   @override
   void initState() {
@@ -2735,7 +2870,7 @@ class _Frame3CompleteState extends State<_Frame3Complete> {
               children: [
                 _StatTile(
                   icon: Icons.timer_rounded,
-                  value: '44:12',
+                  value: _elapsedLabel,
                   label: l10n.workoutShowcaseTime,
                   color: AppColors.onboardingAccent,
                   bg: cardBg,
@@ -2744,7 +2879,7 @@ class _Frame3CompleteState extends State<_Frame3Complete> {
                 const SizedBox(width: 8),
                 _StatTile(
                   icon: Icons.local_fire_department_rounded,
-                  value: '320',
+                  value: '${widget.calories}',
                   label: l10n.workoutShowcaseCal,
                   color: const Color(0xFFE74C3C),
                   bg: cardBg,
@@ -2753,7 +2888,7 @@ class _Frame3CompleteState extends State<_Frame3Complete> {
                 const SizedBox(width: 8),
                 _StatTile(
                   icon: Icons.scale_rounded,
-                  value: '12,450',
+                  value: _volumeLabel,
                   label: l10n.workoutShowcaseVolume,
                   color: const Color(0xFF2ECC71),
                   bg: cardBg,
@@ -2772,11 +2907,16 @@ class _Frame3CompleteState extends State<_Frame3Complete> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.local_fire_department_rounded,
+                const Icon(Icons.check_circle_rounded,
                     color: Color(0xFFE67E22), size: 16),
                 const SizedBox(width: 6),
+                // Was "3 PRs · 14-day streak" — awards the user never earned,
+                // on an account that does not exist yet. Report the one thing
+                // that IS true: the sets they just logged in this demo.
                 Text(
-                  AppLocalizations.of(context)!.workoutShowcase3Prs14Day,
+                  widget.setsLogged == 1
+                      ? '1 set logged in this demo'
+                      : '${widget.setsLogged} sets logged in this demo',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -2929,9 +3069,37 @@ class _Frame4ShareableState extends State<_Frame4Shareable> {
             ),
           ).animate().fadeIn(),
           const SizedBox(height: 4),
-          Text(
-            AppLocalizations.of(context)!.workoutShowcaseViralFormatsTap,
-            style: TextStyle(fontSize: 13, color: textSecondary),
+          Row(
+            children: [
+              Flexible(
+                child: Text(
+                  AppLocalizations.of(context)!.workoutShowcaseViralFormatsTap,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // These cards carry placeholder numbers (they are format
+              // previews, not this user's workout). Say so, rather than let a
+              // pre-signup user read "3 PRs" as something they earned.
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: textSecondary.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  'SAMPLE DATA',
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ).animate(delay: 100.ms).fadeIn(),
           const SizedBox(height: 14),
           // ── Big preview (renders the currently selected format)

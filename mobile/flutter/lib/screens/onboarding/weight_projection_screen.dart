@@ -499,9 +499,13 @@ class _WeightProjectionScreenState
                   onRateChanged: (rate) {
                     final notifier = ref.read(preAuthQuizProvider.notifier);
                     notifier.setBodyMetrics(
-                      heightCm: quizData.heightCm ?? 170,
-                      weightKg: currentWeight,
-                      goalWeightKg: goalWeight,
+                      // Raw values only — never the screen's display
+                      // fallbacks. A null here leaves the cached field
+                      // untouched instead of writing a stand-in that would
+                      // later be PUT as the user's real height/goal.
+                      heightCm: quizData.heightCm,
+                      weightKg: quizData.weightKg,
+                      goalWeightKg: quizData.goalWeightKg,
                       useMetric: useMetric,
                       weightDirection: weightDirection,
                       weightChangeRate: rate,

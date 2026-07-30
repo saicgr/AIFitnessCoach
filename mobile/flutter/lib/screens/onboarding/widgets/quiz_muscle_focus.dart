@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_hint_banner.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Muscle focus points allocation widget for quiz screens.
@@ -37,33 +38,12 @@ class QuizMuscleFocus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = OnboardingTheme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showHeader) ...[
-            Text(
-              question,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: t.textPrimary,
-                height: 1.3,
-              ),
-            ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 14,
-                color: t.textSecondary,
-              ),
-            ).animate().fadeIn(delay: 200.ms),
-            const SizedBox(height: 16),
-          ],
+          if (showHeader) QuizStepHeader(title: question, subtitle: subtitle),
           // Focus points indicator
           _FocusPointsIndicator(
             usedPoints: totalPointsUsed,

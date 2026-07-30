@@ -11,6 +11,7 @@ import 'founder_note_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/hold_to_confirm_button.dart';
 import '../../widgets/exercise_image.dart';
+import 'widgets/onboarding_scroll_edge.dart';
 import '../demo/preview_exercise_catalog.dart' show previewAssetForId, previewIdForName;
 
 import '../../l10n/generated/app_localizations.dart';
@@ -303,17 +304,20 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     // screen without scrolling on common phone heights.
     final feasibility = _feasibilityLine(quiz);
 
-    // Non-scrollable, height-adaptive: this used to be a SingleChildScrollView
-    // that scrolled the whole body on 6–7-day plans / short screens. Per
-    // product decision, this screen must never require scrolling. Instead:
-    // (a) the "Other Workout Days" list is capped to 3 visible rows with a
-    // "+N more" summary so a 7-day plan can't blow the height budget, and
-    // (b) a LayoutBuilder scales the fixed gaps down when the measured
-    // height is tight, so the column compresses instead of overflowing.
-    // A NeverScrollableScrollPhysics SingleChildScrollView remains as a
-    // silent safety net (same pattern used in workout_showcase_screen.dart
-    // and the intro demo scenes) in case of any residual few-px overflow —
-    // it never surfaces a scroll gesture to the user.
+    // Height-adaptive, and scrollable ONLY when it has to be. The screen still
+    // aims to fit one page: (a) the "Other Workout Days" list is capped to 3
+    // visible rows with a "+N more" summary so a 7-day plan can't blow the
+    // height budget, and (b) a LayoutBuilder scales the fixed gaps down when
+    // the measured height is tight.
+    //
+    // The physics used to be NeverScrollableScrollPhysics as a "silent safety
+    // net". It was not silent: when the content DID exceed the box (long first
+    // names, 6–7-day plans, large text scale) the overflow was simply cut off —
+    // the first-session card was clipped mid-word right where the HOLD TO
+    // COMMIT button starts, seconds before the paywall, with no way to reach
+    // the rest. Clamping physics + the scroll-edge fade below means the residual
+    // overflow is now REACHABLE and visibly marked, and content still never
+    // scrolls when it fits.
     // Session map: per-day short labels (UPPER/LOWER/…) under the selected
     // dots, so the week reads as a plan rather than anonymous dots.
     final sessionShortByDay = <int, String>{
@@ -329,8 +333,10 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       final gapLg = tight ? 8.0 : 14.0;
       final gapMd = tight ? 8.0 : 12.0;
 
-      return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
+      return OnboardingScrollEdge(
+        background: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+        child: SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -494,6 +500,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           );
         }).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
         ],
+      ),
       ),
       );
     });

@@ -170,6 +170,16 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
 
     final l10n = AppLocalizations.of(context);
 
+    // DemoClock is a STATIC clock but `_scenes` is per-instance state. If the
+    // two ever disagree (a second IntroScreen mounted before its flags
+    // resolved, a hot reload, the legacy fallback) the render loop below asks
+    // for windows that no scene fills — every one of them clamps onto the LAST
+    // scene, so the same slide plays twice and the caption stops matching what
+    // is on screen. Re-assert the pairing here; it is idempotent.
+    if (DemoClock.sceneCount != _scenes.length) {
+      DemoClock.configure(_scenes.length);
+    }
+
     return AnimatedBuilder(
       animation: _clock,
       builder: (context, _) {
@@ -198,24 +208,30 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      for (var i = 0; i < DemoClock.sceneCount; i++)
-                        _scene(i, tMs),
+                      for (var i = 0; i < _scenes.length; i++) _scene(i, tMs),
                     ],
                   ),
                 ),
 
                 // ── Scrim ────────────────────────────────────────────
+                // Softer, and no longer the thing that has to make the overlay
+                // legible: it only darkens the lower half of the scene so the
+                // demo's own content stays readable. Legibility of the dots /
+                // hero / CTA is owned by the CONTENT-ANCHORED gradient on the
+                // bottom block below — screen-fraction stops could not know
+                // where that block starts, so on taller phones the dots landed
+                // in the semi-transparent zone and rendered over the photo.
                 IgnorePointer(
                   child: Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        stops: [0.42, 0.62, 0.78],
+                        stops: [0.30, 0.62, 1.0],
                         colors: [
                           Colors.transparent,
-                          Color(0xE0080502),
-                          Color(0xFF080502),
+                          Color(0x99080502),
+                          Color(0xF2080502),
                         ],
                       ),
                     ),
@@ -230,8 +246,26 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                 SafeArea(
                   child: Align(
                     alignment: Alignment.bottomCenter,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(26, 0, 26, 14),
+                    child: DecoratedBox(
+                      // Content-anchored scrim: sized to the overlay block
+                      // itself, so every element inside it (dots included) has
+                      // a legible base on ANY screen height. The dots used to
+                      // sit above the full-opacity stop of the screen-fraction
+                      // scrim and render straight over the demo photo.
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          stops: [0.0, 0.30, 0.55],
+                          colors: [
+                            Color(0x00080502),
+                            Color(0xD9080502),
+                            Color(0xFF080502),
+                          ],
+                        ),
+                      ),
+                      child: Padding(
+                      padding: const EdgeInsets.fromLTRB(26, 34, 26, 14),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -266,28 +300,18 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                           // ── Sub — small, rotating: narrates the live demo
                           // scene ("› builds your plan" → "counts your macros"…)
                           // so the four jobs in one app read while you watch.
-                          AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 320),
-                            layoutBuilder: (current, previous) => Stack(
-                              alignment: AlignmentDirectional.centerStart,
-                              children: [
-                                ...previous,
-                                if (current != null) current,
-                              ],
-                            ),
-                            transitionBuilder: (child, anim) => FadeTransition(
-                              opacity: anim,
-                              child: SlideTransition(
-                                position: Tween<Offset>(
-                                  begin: const Offset(0, 0.4),
-                                  end: Offset.zero,
-                                ).animate(anim),
-                                child: child,
-                              ),
-                            ),
+                          //
+                          // ONE caption widget, opacity driven by the same
+                          // clock as the scenes. It was an AnimatedSwitcher
+                          // whose layoutBuilder stacked the outgoing and
+                          // incoming children at the same origin — for 320 ms
+                          // at every boundary two captions were painted on top
+                          // of each other ("reads your menu" over "syncs your
+                          // data"). A single widget cannot ghost.
+                          Opacity(
+                            opacity: DemoClock.captionOpacity(tMs),
                             child: Text(
                               '›  ${_wordFor(scene, l10n).toLowerCase()}',
-                              key: ValueKey(scene),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -354,6 +378,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                           ),
                         ],
                       ),
+                      ),
                     ),
                   ),
                 ),
@@ -401,7 +426,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
 
   Widget _dots(int tMs, int scene) {
     return Row(
-      children: List.generate(DemoClock.sceneCount, (i) {
+      children: List.generate(_scenes.length, (i) {
         final active = i == scene;
         return GestureDetector(
           onTap: () {

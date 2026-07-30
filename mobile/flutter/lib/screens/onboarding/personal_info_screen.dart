@@ -223,7 +223,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     required String gender,
     required double heightCm,
     required double weightKg,
-    required double targetWeightKg,
+    required double? targetWeightKg,
   }) async {
     try {
       await apiClient.put(
@@ -234,7 +234,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           'gender': gender,
           'height_cm': heightCm,
           'weight_kg': weightKg,
-          'target_weight_kg': targetWeightKg,
+          // Omitted when the user never set a goal weight — the server treats
+          // an absent key as "leave alone", and sending current-weight-as-goal
+          // would silently record a maintenance goal nobody chose.
+          if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
         },
       );
       debugPrint('✅ [PersonalInfo] Saved name + DOB + body metrics (background)');
@@ -302,7 +305,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             gender: quizData.gender,
             heightCm: quizData.heightCm!,
             weightKg: quizData.weightKg!,
-            goalWeightKg: quizData.goalWeightKg ?? quizData.weightKg!,
+            // No `?? weightKg` fallback: goal == current weight is a REAL
+            // answer ("maintain"), so fabricating it when the user never
+            // picked one writes a goal they did not set.
+            goalWeightKg: quizData.goalWeightKg,
             useMetric: quizData.useMetricUnits,
           );
 
@@ -339,7 +345,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         gender: quizData.gender!,
         heightCm: quizData.heightCm!,
         weightKg: quizData.weightKg!,
-        targetWeightKg: quizData.goalWeightKg ?? quizData.weightKg!,
+        targetWeightKg: quizData.goalWeightKg,
       ));
 
       ref

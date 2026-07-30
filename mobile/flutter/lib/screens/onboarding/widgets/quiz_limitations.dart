@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../widgets/body_muscle_selector.dart';
 import 'onboarding_hint_banner.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Forward map: injury chip id → the backend muscle-group names that the
@@ -234,29 +235,17 @@ class _QuizLimitationsState extends State<QuizLimitations> {
     final t = OnboardingTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.showHeader) ...[
-            Text(
-              AppLocalizations.of(context).quizLimitationsAnyInjuriesOrLimitations,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: t.textPrimary,
-              ),
-            ).animate().fadeIn(delay: 100.ms),
-            const SizedBox(height: 6),
-            Text(
-              AppLocalizations.of(context).quizLimitationsWeLlAvoidExercises,
-              style: TextStyle(
-                fontSize: 15,
-                color: t.textSecondary,
-              ),
-            ).animate().fadeIn(delay: 200.ms),
-            const SizedBox(height: 24),
-          ],
+          if (widget.showHeader)
+            QuizStepHeader(
+              title: AppLocalizations.of(context)
+                  .quizLimitationsAnyInjuriesOrLimitations,
+              subtitle:
+                  AppLocalizations.of(context).quizLimitationsWeLlAvoidExercises,
+            ),
 
           Expanded(
             child: ListView(

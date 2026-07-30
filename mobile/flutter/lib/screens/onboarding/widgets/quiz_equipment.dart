@@ -12,6 +12,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/equipment_snap_flow.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// One-tap equipment preset that replaces the user's current selection.
@@ -547,18 +548,18 @@ class _QuizEquipmentState extends State<QuizEquipment> {
     // grid to ~1.5 rows. Scrolling everything together gives the grid its full
     // height; the Continue CTA stays pinned by the parent quiz scaffold.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (widget.showHeader) ...[
-              _buildTitle(context, t),
-              const SizedBox(height: 4),
-              _buildSubtitle(context, t),
-              const SizedBox(height: 10),
-            ],
+            if (widget.showHeader)
+              QuizStepHeader(
+                title: AppLocalizations.of(context)!.quizEquipmentWhatEquipmentDoYou,
+                subtitle: AppLocalizations.of(context)!
+                    .quizEquipmentSelectAllThatApply,
+              ),
             // Environment quick selection chips
             if (widget.onEnvironmentChanged != null) ...[
               _buildEnvironmentSection(context, t),

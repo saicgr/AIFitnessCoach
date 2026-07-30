@@ -13,6 +13,24 @@ class DidYouKnowChip extends StatelessWidget {
 
   const DidYouKnowChip({super.key, required this.text});
 
+  /// Height to RESERVE for the chip slot above a pinned CTA.
+  ///
+  /// The chip sits between the question and the Continue button and swaps
+  /// between hint / acknowledgment / nothing as the user answers. Rendered
+  /// inline, each swap resized the slot by up to ~50px and the CTA jumped —
+  /// a tap aimed at the freshly-enabled button landed where it used to be.
+  /// Callers wrap the slot in `SizedBox(height: DidYouKnowChip.slotHeight(ctx))`
+  /// so the button never moves.
+  ///
+  /// Derived from the chip's own metrics, not a magic number: outer padding
+  /// (4 + 6) + inner padding (7 × 2) + border (1 × 2) + two lines of 11pt text
+  /// at height 1.2, scaled by the platform text scaler.
+  static double slotHeight(BuildContext context) {
+    const chrome = 4 + 6 + 14 + 2.0;
+    final lineHeight = MediaQuery.textScalerOf(context).scale(11) * 1.25;
+    return chrome + lineHeight * 2;
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);

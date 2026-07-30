@@ -79,14 +79,20 @@ class CoachProfileCard extends StatelessWidget {
         ),
         child: chat != null
             // Interactive mode: header + full-height preview conversation.
-            // The header collapses when the card is squeezed (keyboard open
-            // on short screens) so the fixed rows can never stripe-overflow
-            // — the input is what matters while typing, not the header.
+            // When the card is squeezed (keyboard open on short screens) the
+            // FULL header would stripe-overflow, so it degrades to a compact
+            // identity strip — but it is NEVER dropped entirely. Dropping it
+            // left a card carrying only the coach's tinted gradient and a
+            // transcript squeezed to nothing: a large, anonymous coloured
+            // block with no avatar and no name, which reads as a failed image
+            // load rather than a coach.
             ? LayoutBuilder(
                 builder: (context, constraints) => Column(
                   children: [
                     if (constraints.maxHeight >= 260)
-                      _buildHeader(isDark, textPrimary, textSecondary),
+                      _buildHeader(isDark, textPrimary, textSecondary)
+                    else
+                      _buildCompactIdentity(),
                     Expanded(child: chat!),
                   ],
                 ),
@@ -119,6 +125,54 @@ class CoachProfileCard extends StatelessWidget {
                   ),
                 ],
               ),
+      ),
+    );
+  }
+
+  /// Minimum viable identity — a 22px avatar and the coach's name on the
+  /// gradient bar. ~34px tall, so it fits where the full header cannot, and
+  /// guarantees the card always says WHO it is.
+  Widget _buildCompactIdentity() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [
+            coach.primaryColor.withValues(alpha: 0.8),
+            coach.accentColor.withValues(alpha: 0.9),
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(23),
+          topRight: Radius.circular(23),
+        ),
+      ),
+      child: Row(
+        children: [
+          CoachAvatar(
+            coach: coach,
+            size: 22,
+            showBorder: false,
+            showShadow: false,
+            enableTapToView: false,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              coach.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 /// Glassmorphic combined fitness level, training experience, and activity level widget.
 class QuizFitnessLevel extends StatelessWidget {
@@ -71,34 +72,18 @@ class QuizFitnessLevel extends StatelessWidget {
     final t = OnboardingTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showHeader) ...[
-              Text(
-                AppLocalizations.of(context)!.quizFitnessLevelWhatSYourCurrent,
-                maxLines: 1,
-                overflow: TextOverflow.visible,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: t.textPrimary,
-                  height: 1.2,
-                  letterSpacing: -0.5,
-                ),
-              ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
-              const SizedBox(height: 6),
-              Text(
-                AppLocalizations.of(context)!.quizFitnessLevelBeHonestWeLl,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: t.textSecondary,
-                ),
-              ).animate().fadeIn(delay: 200.ms),
-              const SizedBox(height: 16),
-            ],
+            if (showHeader)
+              QuizStepHeader(
+                title: AppLocalizations.of(context)!
+                    .quizFitnessLevelWhatSYourCurrent,
+                subtitle:
+                    AppLocalizations.of(context)!.quizFitnessLevelBeHonestWeLl,
+              ),
             ..._buildLevelCards(context, t),
             if (selectedLevel != null) ...[
               const SizedBox(height: 20),

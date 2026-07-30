@@ -51,21 +51,61 @@ class DemoClock {
   /// Fraction (0..1) through the current scene — drives the dot countdown.
   static double sceneFraction(int tMs) => localMs(tMs) / sceneMs;
 
-  /// Opacity for [scene] at global [tMs]: 1 inside its window with short
-  /// ease in/out ramps at the edges, 0 elsewhere.
+  /// Opacity for [scene] at global [tMs] — a TRUE crossfade.
+  ///
+  /// The outgoing scene ramps 1→0 over the last [fadeMs] of its own window
+  /// while the incoming scene ramps 0→1 over that SAME interval (its pre-roll,
+  /// which lives at the tail of the previous window and wraps around the loop
+  /// seam for scene 0). Total opacity therefore stays ~1 across the boundary.
+  ///
+  /// The previous version faded the outgoing scene out over the last [fadeMs]
+  /// of its window and only started fading the incoming one in over the FIRST
+  /// [fadeMs] of the next window — so for ~240 ms at every boundary BOTH scenes
+  /// were at ~0 and the screen showed a blank slide. That blank frame, plus the
+  /// caption switching on the boundary while the old scene was still visible,
+  /// is what read as the carousel "ghosting".
   static double opacityFor(int scene, int tMs) {
     final start = scene * sceneMs;
     final end = start + sceneMs;
-    // The first scene must be fully visible at t=0 (instant first paint);
-    // it only fades OUT at its end and back IN at the loop seam.
-    if (tMs < start || tMs >= end) {
-      // Loop seam: scene 0 fades back in from the tail of scene 3's window.
-      return 0.0;
+
+    // Inside its own window: full opacity, ramping out at the tail.
+    if (tMs >= start && tMs < end) {
+      final remaining = end - tMs;
+      if (remaining < fadeMs) return remaining / fadeMs;
+      return 1.0;
     }
-    final local = tMs - start;
-    if (scene != 0 && local < fadeMs) return local / fadeMs;
-    if (end - tMs < fadeMs) return (end - tMs) / fadeMs;
-    return 1.0;
+
+    // Pre-roll: ramp IN during the outgoing scene's tail fade.
+    final rampStart = start - fadeMs;
+    if (rampStart >= 0) {
+      if (tMs >= rampStart && tMs < start) return (tMs - rampStart) / fadeMs;
+    } else {
+      // Scene 0's pre-roll wraps to the end of the loop.
+      final wrapped = loopMs + rampStart;
+      if (tMs >= wrapped) return (tMs - wrapped) / fadeMs;
+    }
+    return 0.0;
+  }
+
+  /// Opacity for the caption that narrates the current scene. A SINGLE caption
+  /// widget is ever mounted (see IntroScreen): it fades out over the boundary
+  /// and back in on the new scene, so two captions can never be legible at
+  /// once.
+  ///
+  /// There is deliberately NO `tMs < fadeMs → 1.0` special case. `tMs` is a
+  /// LOOPING clock, not a launch timestamp, so that shortcut fired on EVERY
+  /// pass of the loop (~every 10 s), snapping the caption 0.004 → 1.0 in one
+  /// frame at the seam while every other boundary crossfades over 240 ms.
+  /// Verified by simulating the loop ms-by-ms. The seam now ramps like every
+  /// other boundary; the only cost is a 240 ms fade-in of the caption at
+  /// launch, while the scene itself still paints instantly (opacityFor(0, 0)
+  /// is 1.0).
+  static double captionOpacity(int tMs) {
+    final local = localMs(tMs);
+    final out = (sceneMs - local) / fadeMs;
+    final inn = local / fadeMs;
+    final v = out < inn ? out : inn;
+    return v.clamp(0.0, 1.0);
   }
 
   /// Controller value that puts the loop at the start of [scene].

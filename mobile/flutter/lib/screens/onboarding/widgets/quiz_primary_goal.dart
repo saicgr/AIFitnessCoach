@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Glassmorphic primary goal selection widget for quiz screens.
@@ -143,46 +144,26 @@ class QuizPrimaryGoal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = OnboardingTheme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showHeader) ...[
+          // Same header rhythm as every other step; the info button rides
+          // alongside the shared block instead of forking its own type scale.
+          if (showHeader)
             Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Text(
-                    question,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: t.textPrimary,
-                      height: 1.2,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
+                  child: QuizStepHeader(title: question, subtitle: subtitle),
                 ),
                 const SizedBox(width: 8),
                 buildInfoButton(context),
               ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: t.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
           ...options.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;

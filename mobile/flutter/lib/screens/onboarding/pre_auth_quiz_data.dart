@@ -902,13 +902,18 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     state = state.copyWith(isTrainer: isTrainer);
   }
 
+  /// Persists the body-metric block. `heightCm` / `weightKg` / `goalWeightKg`
+  /// are NULLABLE and a null is a NO-OP for that field — callers must never
+  /// substitute a stand-in (the old `?? 170` / `?? 70` fallbacks wrote a
+  /// fabricated height/goal into the pre-auth cache, and that cache is what
+  /// /personal-info later PUTs into `users.target_weight_kg`).
   Future<void> setBodyMetrics({
     String? name,
     DateTime? dateOfBirth,
     String? gender,
-    required double heightCm,
-    required double weightKg,
-    required double goalWeightKg,
+    required double? heightCm,
+    required double? weightKg,
+    required double? goalWeightKg,
     required bool useMetric,
     String? weightDirection,
     double? weightChangeAmount,
@@ -918,9 +923,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     if (name != null) await prefs.setString('preAuth_name', name);
     if (dateOfBirth != null) await prefs.setString('preAuth_dateOfBirth', dateOfBirth.toIso8601String());
     if (gender != null) await prefs.setString('preAuth_gender', gender);
-    await prefs.setDouble('preAuth_heightCm', heightCm);
-    await prefs.setDouble('preAuth_weightKg', weightKg);
-    await prefs.setDouble('preAuth_goalWeightKg', goalWeightKg);
+    if (heightCm != null) await prefs.setDouble('preAuth_heightCm', heightCm);
+    if (weightKg != null) await prefs.setDouble('preAuth_weightKg', weightKg);
+    if (goalWeightKg != null) {
+      await prefs.setDouble('preAuth_goalWeightKg', goalWeightKg);
+    }
     await prefs.setBool('preAuth_useMetric', useMetric);
     if (weightDirection != null) await prefs.setString('preAuth_weightDirection', weightDirection);
     if (weightChangeAmount != null) await prefs.setDouble('preAuth_weightChangeAmount', weightChangeAmount);
@@ -929,9 +936,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       name: name ?? state.name,
       dateOfBirth: dateOfBirth ?? state.dateOfBirth,
       gender: gender ?? state.gender,
-      heightCm: heightCm,
-      weightKg: weightKg,
-      goalWeightKg: goalWeightKg,
+      heightCm: heightCm ?? state.heightCm,
+      weightKg: weightKg ?? state.weightKg,
+      goalWeightKg: goalWeightKg ?? state.goalWeightKg,
       useMetricUnits: useMetric,
       weightDirection: weightDirection ?? state.weightDirection,
       weightChangeAmount: weightChangeAmount ?? state.weightChangeAmount,

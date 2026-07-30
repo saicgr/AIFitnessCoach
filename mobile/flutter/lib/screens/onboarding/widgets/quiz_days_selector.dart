@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 /// Callback for duration range selection (min, max)
 typedef DurationRangeCallback = void Function(int min, int max);
@@ -60,17 +61,18 @@ class QuizDaysSelector extends StatelessWidget {
     final selectedCount = selectedWorkoutDays.length;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (showHeader) ...[
-              _buildTitle(context, t),
-              const SizedBox(height: 6),
-              _buildSubtitle(context, t),
-              const SizedBox(height: 16),
-            ],
+            if (showHeader)
+              QuizStepHeader(
+                title: AppLocalizations.of(context)!
+                    .quizDaysSelectorHowManyDaysPer,
+                subtitle: AppLocalizations.of(context)!
+                    .quizDaysSelectorConsistencyBeatsIntensity,
+              ),
             _buildDaysPerWeekSelector(context, t),
             const SizedBox(height: 20),
             if (selectedDays != null) ...[
@@ -296,27 +298,7 @@ class QuizDaysSelector extends StatelessWidget {
     }
   }
 
-  Widget _buildTitle(BuildContext context, OnboardingTheme t) {
-    return Text(
-      AppLocalizations.of(context)!.quizDaysSelectorHowManyDaysPer,
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-        color: t.textPrimary,
-        height: 1.3,
-      ),
-    ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05);
-  }
 
-  Widget _buildSubtitle(BuildContext context, OnboardingTheme t) {
-    return Text(
-      AppLocalizations.of(context)!.quizDaysSelectorConsistencyBeatsIntensity,
-      style: TextStyle(
-        fontSize: 14,
-        color: t.textSecondary,
-      ),
-    ).animate().fadeIn(delay: 200.ms);
-  }
 
   Widget _buildDaysPerWeekSelector(BuildContext context, OnboardingTheme t) {
     final l10n = AppLocalizations.of(context)!;
@@ -390,16 +372,63 @@ class QuizDaysSelector extends StatelessWidget {
                   ),
                 ),
               ),
-              if (isRecommended) ...[
-                const SizedBox(height: 4),
-                Icon(
-                  Icons.star_rounded,
-                  size: 12,
-                  color: t.textSecondary,
-                ),
-              ] else ...[
-                const SizedBox(height: 16),
-              ],
+              // Recommended marker. This used to be a bare star glyph with no
+              // legend, on the same screen as the duration chips' explained
+              // "★ BEST" badge — two star treatments, only one of them
+              // explained. Now it IS that badge, just sized for the 44px
+              // column, so one symbol means one thing across the screen.
+              // The slot keeps a constant 18px height either way so the row of
+              // day tiles never changes height.
+              //
+              // The label is the SAME localized string the duration chip's
+              // badge uses (`quizDaysSelectorBest`) at the same 8pt — a literal
+              // 'BEST' here would have shipped an English word next to a
+              // translated one on every non-English device, re-creating the
+              // exact "two treatments of one symbol" bug this is fixing. The
+              // badge is boxed to the 44px tile and scaled down by a FittedBox
+              // so a longer translation ("Meilleur", "Empfohlen") or a large
+              // accessibility text scale can never overflow the tile column.
+              const SizedBox(height: 4),
+              SizedBox(
+                width: 44,
+                height: 14,
+                child: isRecommended
+                    ? FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFB366), Color(0xFFF97316)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded,
+                                  size: 9, color: Colors.white),
+                              const SizedBox(width: 3),
+                              Text(
+                                l10n.quizDaysSelectorBest,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 8,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
             ],
           ),
         ).animate(delay: (100 + index * 30).ms).fadeIn().scale(begin: const Offset(0.9, 0.9));

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
+import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Progression pace selection widget (Phase 2 personalization).
@@ -32,32 +33,17 @@ class QuizProgressionConstraints extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = OnboardingTheme.of(context);
-
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: kQuizStepHPad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (showHeader) ...[
-            Text(
-              AppLocalizations.of(context).workoutSettingsProgressionPace,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: t.textPrimary,
-              ),
-            ).animate().fadeIn(delay: 100.ms),
-            const SizedBox(height: 6),
-            Text(
-              AppLocalizations.of(context).quizProgressionConstraintsHowFastDoYou,
-              style: TextStyle(
-                fontSize: 15,
-                color: t.textSecondary,
-              ),
-            ).animate().fadeIn(delay: 200.ms),
-            const SizedBox(height: 24),
-          ],
+          if (showHeader)
+            QuizStepHeader(
+              title: AppLocalizations.of(context).workoutSettingsProgressionPace,
+              subtitle: AppLocalizations.of(context)
+                  .quizProgressionConstraintsHowFastDoYou,
+            ),
 
           Expanded(
             child: ListView(
