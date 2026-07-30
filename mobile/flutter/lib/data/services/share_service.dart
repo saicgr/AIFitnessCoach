@@ -319,9 +319,19 @@ class ShareService {
       final file = File('${tempDir.path}/$fileName');
       await file.writeAsBytes(imageBytes);
 
-      // Use Gal to save to device gallery
-      // This works on both iOS (Camera Roll) and Android (Pictures/MediaStore)
-      await Gal.putImage(file.path, album: '${Branding.appName}');
+      // Use Gal to save to device gallery.
+      // Works on both iOS (Camera Roll) and Android (Pictures/MediaStore).
+      //
+      // Register row 81: do NOT pass `album:`. Creating/among an album needs
+      // FULL photo-library access, so iOS prompted with
+      // NSPhotoLibraryUsageDescription — "...pick food photos for AI nutrition
+      // analysis and progress photos for body tracking" — copy about PICKING
+      // photos, shown for an action that only SAVES one. Without `album:`,
+      // Gal uses the add-only scope and iOS shows
+      // NSPhotoLibraryAddUsageDescription, which already says the right thing
+      // ("save workout recap images to your photo library"). Add-only is also
+      // the least privilege this feature needs: we never read the library.
+      await Gal.putImage(file.path);
 
       debugPrint('✅ [Share] Saved to gallery: ${file.path}');
       return const ShareResult(

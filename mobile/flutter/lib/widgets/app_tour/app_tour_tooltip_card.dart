@@ -207,21 +207,41 @@ class _CardContent extends StatelessWidget {
               Semantics(
                 button: true,
                 label: AppLocalizations.of(context).appTourTooltipSkipTutorial,
+                // Register row 102: this X read as completely inert — three
+                // thumb taps in a row did nothing while Next worked fine. It
+                // was not mis-wired; a dead-centre tap always dismissed. The
+                // hit rect was just 28x28 (measured 26x26 effective), under
+                // both the Apple 44 and Material 48 minimums, and every miss
+                // was absorbed in silence by the card's own
+                // `GestureDetector(onTap: () {})` in app_tour_overlay.dart —
+                // no dismiss, no advance, no feedback. A too-small target
+                // whose misses are swallowed is indistinguishable from a dead
+                // control, and it strands the user: until Next is pressed
+                // once per step the card covers the screen and the back arrow.
+                //
+                // The PILL stays 28pt so the visual design is unchanged; only
+                // the touch target grows to the platform minimum.
                 child: GestureDetector(
                   onTap: onSkip,
                   behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: skipBg,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: skipBorder, width: 1),
-                    ),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 16,
-                      color: skipText,
+                  child: SizedBox(
+                    width: kMinInteractiveDimension,
+                    height: kMinInteractiveDimension,
+                    child: Center(
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: skipBg,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: skipBorder, width: 1),
+                        ),
+                        child: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: skipText,
+                        ),
+                      ),
                     ),
                   ),
                 ),

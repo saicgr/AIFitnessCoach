@@ -45,6 +45,7 @@ import 'tabs/overview_tab.dart';
 import 'tabs/stats_rewards_tab.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/quick_log_fab_chrome.dart';
 
 /// Bottom inset every You-hub sub-tab body must reserve so the floating
 /// main nav (+ 24 px breathing room) never clips the last row of content.
@@ -52,7 +53,7 @@ import '../../l10n/generated/app_localizations.dart';
 /// segmented control (chrome consolidation Variant A, 2026-06) — so the
 /// inset shrank by the old pill height + gap. Callers add this on top of
 /// `MediaQuery.viewPadding.bottom`.
-const double kYouHubBodyBottomInset = kMainNavClearance + 24;
+const double kYouHubBodyBottomInset = kQuickLogFabClearance + 24;
 
 class YouHubScreen extends ConsumerStatefulWidget {
   /// Initial tab index (0 = Overview, 1 = Profile, 2 = Stats & Rewards).

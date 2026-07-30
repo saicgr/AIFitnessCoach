@@ -29,6 +29,7 @@ import '../workout/schedule_date_utils.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/quick_log_fab_chrome.dart';
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
 class WorkoutsScreen extends ConsumerStatefulWidget {
@@ -388,7 +389,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         _buildJitInfoSection(isDark, textSecondary),
 
         // Bottom padding — clears MainShell's bottom nav bar.
-        const SizedBox(height: 140),
+        SizedBox(height: MediaQuery.viewPaddingOf(context).bottom + kQuickLogFabClearance),
     ];
 
     return SliverList(

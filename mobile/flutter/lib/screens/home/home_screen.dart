@@ -1303,11 +1303,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // chrome_constants.dart so the nav and its consumers can't
               // drift apart.
               SliverToBoxAdapter(
+                // Register row 16: derive from the quick-log button, which is
+                // taller than the nav bar, so "Log water" can always be
+                // scrolled clear of it. viewPaddingOf is dropped because the
+                // SafeArea above already consumed the inset — counting it here
+                // made the clearance inset-dependent (2px short on a 34px
+                // device, 36px short at inset 0).
                 child: SizedBox(
-                  height:
-                      MediaQuery.viewPaddingOf(context).bottom +
-                      kMainNavBarHeight +
-                      kHomeBottomBreathingRoom,
+                  height: kQuickLogFabClearance + kHomeBottomBreathingRoom,
                 ),
               ),
             ],

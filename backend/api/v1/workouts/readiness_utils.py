@@ -86,6 +86,59 @@ INJURY_TO_AVOIDED_MUSCLES = {
 #   - synonyms the library prefers: "abs" -> "abdominals"+"core",
 #     "lats" -> "latissimus dorsi"(+"lats"), "traps" -> "trapezius"(+"traps")
 # Tokens are lowercase; downstream lowercases both sides before matching.
+# The 11 MUSCLE-area chips from injury_options.dart, mapped to that muscle and
+# ONLY that muscle (plus the library's alternate spellings for the SAME muscle —
+# never a neighbouring one).
+#
+# Register row 86. These chips previously resolved through
+# INJURY_TO_AVOIDED_MUSCLES, whose semantics are REGIONAL — correct for a joint
+# ("shoulder" implicates chest and triceps because pressing loads the joint),
+# wrong for a muscle the user pointed at. Measured against the live 2,450-row
+# library, regional semantics made the `Chest` chip drop 823 exercises — every
+# pushing movement, including all shoulder and triceps work — and `Groin` drop
+# every leg exercise, because its token list included the catch-all `legs`. Safe,
+# but it produced workouts with no pushing at all from a single chip tap, which
+# reads as broken.
+#
+# The user's call (2026-07-30): a muscle chip is SURGICAL. Tap `Chest`, lose
+# chest work; shoulders and triceps stay. A compound press that loads the chest
+# incidentally can still appear unless it names the muscle — that is the
+# accepted trade, and it is why the JOINT chips are deliberately NOT in this map.
+#
+# The 8 JOINT chips (neck, shoulders, elbows, wrists, lower_back, hips, knees,
+# ankles) keep REGIONAL semantics and their `*_safe` index gate — they are the
+# ones with a real contraindication surface. Do not move them here.
+# The 8 JOINT chips, plural id -> the singular key INJURY_TO_AVOIDED_MUSCLES is
+# built on. Same plural/singular split row 83 fixed in the safety whitelist; kept
+# local and explicit rather than imported so this module stays dependency-free.
+_JOINT_CHIP_SINGULAR = {
+    "shoulders": "shoulder",
+    "elbows": "elbow",
+    "wrists": "wrist",
+    "hips": "hip",
+    "knees": "knee",
+    "ankles": "ankle",
+    # neck and lower_back already spell the same in both.
+}
+
+MUSCLE_CHIP_SURGICAL_MUSCLES = {
+    # traps/rhomboids ARE the upper back — synonyms for the region the chip
+    # names, so they belong here. `lats` deliberately do NOT: latissimus dorsi
+    # is a distinct muscle the body map keys separately, and pulling it in is
+    # what made this chip drop all lat work as well.
+    "upper_back": ["upper back", "traps", "trapezius", "rhomboids"],
+    "chest": ["chest", "pectorals"],
+    "biceps": ["biceps"],
+    "triceps": ["triceps"],
+    "forearms": ["forearms"],
+    "abs": ["abdominals", "abs", "core"],
+    "glutes": ["glutes"],
+    "groin": ["adductors"],
+    "quads": ["quadriceps", "quads"],
+    "hamstrings": ["hamstrings"],
+    "calves": ["calves", "soleus", "gastrocnemius"],
+}
+
 BODY_MAP_MUSCLE_NORMALIZATION = {
     "chest": ["chest"],
     "shoulders": ["shoulders"],
@@ -217,11 +270,30 @@ def get_muscles_to_avoid_from_injuries(injuries: List[str]) -> List[str]:
         if injury_lower in IGNORED_TOKENS:
             continue
 
-        # 1. Injury chip id -> implicated muscles (exact). Checked FIRST so the
-        #    existing injury-avoidance behavior is unchanged.
-        if injury_lower in INJURY_TO_AVOIDED_MUSCLES:
-            muscles_to_avoid.update(INJURY_TO_AVOIDED_MUSCLES[injury_lower])
-            logger.info(f"🔍 [Injury Mapping] {injury} -> avoiding: {INJURY_TO_AVOIDED_MUSCLES[injury_lower]}")
+        # 0. MUSCLE-AREA chip -> that muscle ONLY (register row 86).
+        #    Checked before the regional map, and only for the 11 muscle chips.
+        #    See MUSCLE_CHIP_SURGICAL_MUSCLES for why.
+        if injury_lower in MUSCLE_CHIP_SURGICAL_MUSCLES:
+            tokens = MUSCLE_CHIP_SURGICAL_MUSCLES[injury_lower]
+            muscles_to_avoid.update(tokens)
+            logger.info(f"🔍 [Muscle Chip] {injury} -> avoiding (surgical): {tokens}")
+            continue
+
+        # 1. Injury chip id -> implicated muscles. Exact match first, then the
+        #    canonical SINGULAR form: this map is keyed singular ("shoulder")
+        #    while the app stores plural chip ids ("shoulders"), which is the
+        #    same singular/plural split row 83 fixed in the safety whitelist.
+        #    Without the second lookup, `shoulders` fell through to the body-map
+        #    branch below and silently got SURGICAL treatment — wrong for a
+        #    joint, where pressing loads the joint through chest and triceps too.
+        regional_key = injury_lower
+        if regional_key not in INJURY_TO_AVOIDED_MUSCLES:
+            singular = _JOINT_CHIP_SINGULAR.get(injury_lower)
+            if singular and singular in INJURY_TO_AVOIDED_MUSCLES:
+                regional_key = singular
+        if regional_key in INJURY_TO_AVOIDED_MUSCLES:
+            muscles_to_avoid.update(INJURY_TO_AVOIDED_MUSCLES[regional_key])
+            logger.info(f"🔍 [Injury Mapping] {injury} -> avoiding: {INJURY_TO_AVOIDED_MUSCLES[regional_key]}")
             continue
 
         # 2. Raw body-map muscle name -> normalized library tokens (avoid that

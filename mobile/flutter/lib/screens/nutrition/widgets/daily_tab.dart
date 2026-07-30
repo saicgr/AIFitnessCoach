@@ -39,6 +39,7 @@ import 'nutrition_stats_section.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../common/app_refresh_indicator.dart';
+import '../../../widgets/quick_log_fab_chrome.dart';
 class DailyTab extends ConsumerStatefulWidget {
   final String userId;
   final DailyNutritionSummary? summary;
@@ -756,11 +757,14 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 // Recipes / Patterns selector moved to a top segmented
                 // control (chrome consolidation Variant A, 2026-06), so the
                 // old 76px sub-tab-bar clearance is gone.
-                SizedBox(
-                  height: MediaQuery.of(context).viewPadding.bottom +
-                      kMainNavClearance +
-                      16,
-                ),
+                // Register row 16: clear the quick-log button, not just the
+                // nav bar — its top edge sits kQuickLogFabClearance (124) above
+                // the safe-area inset, and this spacer reserved less, so the
+                // LUNCH header sat underneath it. The viewPadding.bottom term
+                // is deliberately dropped: nutrition_screen.dart already wraps
+                // this subtree in a SafeArea, so the inset was being counted
+                // twice on inset devices and not at all on inset-0 ones.
+                SizedBox(height: kQuickLogFabClearance + 16),
               ],
             ),
           ),

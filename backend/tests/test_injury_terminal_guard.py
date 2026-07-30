@@ -467,8 +467,17 @@ def test_muscle_token_does_not_match_a_different_muscles_anatomy():
 
 
 def test_muscle_token_still_matches_a_named_anatomy_in_full():
-    """Precision must not cost recall: an Upper Back limitation still drops lat
-    work spelled `Middle Back (Latissimus Dorsi, Teres Major)`."""
+    """Precision must not cost recall WITHIN the named muscle: an Upper Back
+    limitation still drops trap work however the library spells it.
+
+    Register row 86, product decision 2026-07-30: the 11 muscle chips are
+    SURGICAL — they drop the muscle the user pointed at, not the region around
+    it. So `Lat Pulldown`, tagged `Middle Back (Latissimus Dorsi, Teres Major)`,
+    is deliberately KEPT: latissimus dorsi is a distinct muscle with its own
+    body-map key, not the upper back. This assertion was inverted from the
+    original regional behaviour on purpose — see MUSCLE_CHIP_SURGICAL_MUSCLES.
+    Traps and rhomboids ARE upper back and are still dropped.
+    """
     from services.exercise_rag.injury_guard import _targets_avoided_muscle
 
     tokens = resolve_avoided_muscle_tokens(["upper_back"])
@@ -479,7 +488,7 @@ def test_muscle_token_still_matches_a_named_anatomy_in_full():
     }
     shrug = {"name": "Barbell Shrug", "target_muscle": "Upper Back (Trapezius)",
              "body_part": "back"}
-    assert _targets_avoided_muscle(pulldown, tokens) is True
+    assert _targets_avoided_muscle(pulldown, tokens) is False
     assert _targets_avoided_muscle(shrug, tokens) is True
     # ... but a shoulder raise whose SECONDARY head is the lower trapezius is a
     # shoulder exercise, not upper-back work.

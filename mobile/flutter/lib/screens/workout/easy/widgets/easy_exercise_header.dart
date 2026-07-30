@@ -109,9 +109,16 @@ class EasyExerciseHeader extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
+                // Register row 108: this clipped "Calve Stretch From Wall To
+                // Floor" to "Calve Stretch From Wall…" while the Advanced
+                // screen renders the identical string in full
+                // (active_workout_body_v2.dart uses maxLines: 2) — so one
+                // exercise was named two different ways in a single session.
+                // Matched to Advanced's cap; if either changes, change both,
+                // or the mismatch just moves to longer names.
                 child: Text(
                   exercise.name,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: ZType.disp(
                     compact ? 21 : 24,

@@ -179,13 +179,35 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
               // The fade now runs under the pinned More button, which is the
               // real affordance: it never scrolls away, so there is always a
               // visible "there is more here" control at the end of the strip.
+              // Register row 108: the fade was a FIXED FRACTION of the
+              // viewport (stops 0.82 → 1.0), so it dissolved the right-hand
+              // 18% of the strip — roughly 70px on a phone — and whichever
+              // pill parked there was faded mid-word. "Nutrition Tips" read as
+              // "Nutrition T…", which looks like a truncation bug rather than
+              // a scroll hint. There is no TextOverflow to find here; the
+              // glyphs are being eaten by this mask.
+              //
+              // Now a fixed narrow edge instead: the fade is the last 12
+              // logical px, which is gutter, not text. It still signals "more
+              // to the right" without destroying a word, and the pinned More
+              // button remains the real affordance.
               child: ShaderMask(
-                shaderCallback: (rect) => const LinearGradient(
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                  colors: [Colors.white, Colors.white, Colors.transparent],
-                  stops: [0.0, 0.82, 1.0],
-                ).createShader(rect),
+                shaderCallback: (rect) {
+                  const fadeWidth = 12.0;
+                  final solidStop = rect.width <= fadeWidth
+                      ? 0.0
+                      : (rect.width - fadeWidth) / rect.width;
+                  return LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: const [
+                      Colors.white,
+                      Colors.white,
+                      Colors.transparent,
+                    ],
+                    stops: [0.0, solidStop, 1.0],
+                  ).createShader(rect);
+                },
                 blendMode: BlendMode.dstIn,
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
