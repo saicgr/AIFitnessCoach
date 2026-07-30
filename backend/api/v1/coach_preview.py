@@ -8,9 +8,21 @@ not be able to corrupt anything real. The client enforces a 2-live-turn cap
 per coach; this endpoint adds a server-side rate limit behind it.
 
 Failure contract: this endpoint NEVER 500s for model problems. Any Gemini
-error, timeout, or safety block returns a persona-appropriate canned reply
-with fallback=true so the client can visibly degrade to its curated answers
-(and retire the input) instead of stranding the user mid-purchase-decision.
+error, timeout, or safety block returns `reply=""` with `fallback=true` and a
+machine-readable `reason`, so the client visibly degrades (honest "can't reach
+live chat right now" bubble + curated chips) instead of stranding the user
+mid-purchase-decision.
+
+It used to return a persona-voiced canned paragraph on that path
+(`_FALLBACK_REPLIES`: "Great question — and the honest answer is the plan adapts
+to everything you log…"). That paragraph does not answer the question that was
+asked, and the client renders any NON-EMPTY reply under
+"<Coach>'s mid-set — here's how he answers that:" — so asking "what should I eat
+before a morning workout?" produced a confident-looking non-answer attributed to
+the coach (E2E register row 19). A degraded path must either answer the actual
+question or say plainly that it cannot. There is no deterministic way to author
+the former per question, so this endpoint does the latter: it returns NO reply
+text at all and lets the client say so in its own words.
 """
 
 import asyncio
@@ -66,36 +78,20 @@ class CoachPreviewRequest(BaseModel):
 
 
 class CoachPreviewResponse(BaseModel):
+    """The preview turn's result.
+
+    `reply` is ONLY ever the model's answer to the question that was asked.
+    On the degraded path it is the empty string and `fallback` is true — the
+    client owns the "live chat is unavailable" copy, because a non-empty reply
+    is rendered under a label that claims the coach answered THIS question.
+    """
+
     reply: str
     fallback: bool = False
-
-
-# Persona-voiced canned replies for the failure path. The client shows these
-# under a visible "coach is busy" label — never as a fake live answer.
-_FALLBACK_REPLIES = {
-    "motivational": (
-        "Great question — and the honest answer is the plan adapts to "
-        "everything you log, every session. Pick me and I'll show you in "
-        "your first week!"
-    ),
-    "scientist": (
-        "Good question. The short, evidence-based answer: the plan "
-        "recalibrates from every set you log. Start your first week and "
-        "I'll show you the data."
-    ),
-    "drill-sergeant": (
-        "Good question, recruit. Answer's simple: you log the work, the "
-        "plan adapts. Hit the button and see for yourself."
-    ),
-    "zen-master": (
-        "A thoughtful question. The plan bends around your life — every "
-        "session adapts to you. Begin your first week and feel it."
-    ),
-    "hype-beast": (
-        "GREAT question — short version: the plan levels up with you every "
-        "single session. Smash that button and let's find out together!"
-    ),
-}
+    # Why the live turn degraded. Additive/diagnostic — the client ignores it;
+    # it exists so a spike in one reason is visible in logs/analytics instead of
+    # every failure mode collapsing into one indistinguishable canned string.
+    reason: Optional[str] = None
 
 
 def _build_system_prompt(body: CoachPreviewRequest) -> str:
@@ -155,11 +151,16 @@ def _build_system_prompt(body: CoachPreviewRequest) -> str:
     return " ".join(parts)
 
 
-def _fallback(body: CoachPreviewRequest) -> CoachPreviewResponse:
-    reply = _FALLBACK_REPLIES.get(
-        body.coaching_style, _FALLBACK_REPLIES["motivational"]
-    )
-    return CoachPreviewResponse(reply=reply, fallback=True)
+def _fallback(reason: str) -> CoachPreviewResponse:
+    """The live turn produced no answer to THIS question.
+
+    No reply text: the only honest thing the server can say is "I don't have an
+    answer for you", and the client already says exactly that (and points at the
+    curated chips, which DO answer their own questions). Never put words in the
+    coach's mouth here — a canned paragraph rendered under "here's how he
+    answers that" is a confident answer to a question nobody asked.
+    """
+    return CoachPreviewResponse(reply="", fallback=True, reason=reason)
 
 
 @router.post("/coach-preview", response_model=CoachPreviewResponse)
@@ -181,21 +182,29 @@ async def coach_preview(
             # typing beat and gives up at 12s — replies slower than that land
             # after the client already fell back. Wider margin than before
             # (was 7s server / 8s client, ~1s of network headroom) so real
-            # live replies land more often instead of silently degrading to
-            # the canned _FALLBACK_REPLIES.
+            # live replies land more often instead of degrading to a
+            # no-answer bubble.
             timeout=6.5,
         )
-        reply = (response or "").strip().strip('"').strip("'")
-        if not reply:
-            # Safety-filtered / empty → visible fallback, never a blank bubble.
-            return _fallback(body)
-        if len(reply) > 400:
-            cut = reply[:400]
-            period = cut.rfind(".")
-            reply = cut[: period + 1] if period > 200 else cut[:397] + "..."
-        return CoachPreviewResponse(reply=reply, fallback=False)
+    except asyncio.TimeoutError:
+        logger.warning(
+            "coach-preview timed out after 6.5s (coach=%s)", body.coach_id
+        )
+        return _fallback("timeout")
     except Exception as exc:  # noqa: BLE001 — model errors degrade, never 500
         logger.warning(
-            "coach-preview fell back (coach=%s): %s", body.coach_id, exc
+            "coach-preview model error (coach=%s): %s", body.coach_id, exc
         )
-        return _fallback(body)
+        return _fallback("model_error")
+
+    reply = (response or "").strip().strip('"').strip("'")
+    if not reply:
+        # Safety-filtered / empty completion. There is no answer to hand back,
+        # so say nothing rather than something unrelated.
+        logger.warning("coach-preview empty completion (coach=%s)", body.coach_id)
+        return _fallback("empty_completion")
+    if len(reply) > 400:
+        cut = reply[:400]
+        period = cut.rfind(".")
+        reply = cut[: period + 1] if period > 200 else cut[:397] + "..."
+    return CoachPreviewResponse(reply=reply, fallback=False)

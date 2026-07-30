@@ -133,14 +133,30 @@ def test_replacement_clones_structure_swaps_identity():
     cand = {"name": "Machine Chest Press", "equipment": "machine",
             "target_muscle": "chest", "exercise_id": "abc-123",
             "movement_pattern": "horizontal_push"}
-    repl = _build_replacement(template, cand)
+    repl = _build_replacement([template], cand)
     assert repl["name"] == "Machine Chest Press"
     assert repl["sets"] == 4 and repl["reps"] == 8 and repl["rest_seconds"] == 90
     assert repl["library_id"] == "abc-123"
     assert repl["muscle_group"] == "chest"
 
 
-def test_replacement_defaults_when_template_sparse():
-    repl = _build_replacement({}, {"name": "Safe Move"})
-    assert repl["sets"] == 3 and repl["reps"] == 10 and repl["rest_seconds"] == 60
+def test_replacement_never_invents_a_dose_when_no_donor_carries_one():
+    """A safety path must not fabricate sets/reps/rest.
+
+    The old behaviour setdefault'd 3x10 / 60s rest onto every replacement. In a
+    duration-only session (intervals, circuits, mobility) that invents a set
+    scheme that never existed, and in a strength session it silently
+    re-prescribes the user's dose. The shape is INHERITED from the workout's own
+    exercises instead, and when nothing carries it the replacement carries it
+    either — downstream normalization handles it exactly as it already handles
+    the originals."""
+    repl = _build_replacement([{}], {"name": "Safe Move"})
     assert repl["name"] == "Safe Move"
+    assert "sets" not in repl and "reps" not in repl and "rest_seconds" not in repl
+
+    # ... and a donor that DOES carry a shape is inherited verbatim.
+    inherited = _build_replacement(
+        [{"name": "No numbers"}, {"name": "Donor", "sets": 4, "reps": 6, "rest_seconds": 120}],
+        {"name": "Safe Move"},
+    )
+    assert (inherited["sets"], inherited["reps"], inherited["rest_seconds"]) == (4, 6, 120)

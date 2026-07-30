@@ -21,6 +21,22 @@ from fastapi.testclient import TestClient
 MOCK_AUTH_USER_ID = "user-test-001"
 
 
+@pytest.fixture(autouse=True)
+def _no_injury_lookup():
+    """These tests exercise section routing, not injury safety.
+
+    /add-exercise now resolves the user's active injuries before it resolves the
+    exercise (register row 88); stub that out so the suite stays DB-free. The
+    injury behaviour itself is covered by tests/test_injury_terminal_guard.py.
+    """
+    with patch(
+        "api.v1.workouts.workout_operations.resolve_active_injuries",
+        new_callable=AsyncMock, return_value=[],
+    ):
+        yield
+
+
+
 @pytest.fixture
 def client():
     """Authenticated TestClient for the /workouts/add-exercise endpoint.
@@ -308,16 +324,14 @@ class TestAddExerciseMainSection:
 
     @patch("api.v1.workouts.workout_operations.index_workout_to_rag", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.log_workout_change")
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_main_default(self, mock_get_db, mock_get_lib, mock_log, mock_rag, client):
         """Adding exercise without section defaults to main."""
         mock_db = make_mock_db(workout_row=MOCK_WORKOUT_ROW)
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -335,16 +349,14 @@ class TestAddExerciseMainSection:
 
     @patch("api.v1.workouts.workout_operations.index_workout_to_rag", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.log_workout_change")
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_main_explicit(self, mock_get_db, mock_get_lib, mock_log, mock_rag, client):
         """Explicitly passing section='main' works the same as default."""
         mock_db = make_mock_db(workout_row=MOCK_WORKOUT_ROW)
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -365,7 +377,7 @@ class TestAddExerciseMainSection:
 
     @patch("api.v1.workouts.workout_operations.index_workout_to_rag", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.log_workout_change")
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_main_not_in_library(self, mock_get_db, mock_get_lib, mock_log, mock_rag, client):
         """Exercise not found in library still gets added with the caller's sets/reps.
@@ -382,9 +394,7 @@ class TestAddExerciseMainSection:
         mock_db = make_mock_db(workout_row=MOCK_WORKOUT_ROW)
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = []  # Not found
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = None  # Not found
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -406,7 +416,7 @@ class TestAddExerciseMainSection:
         assert exercises[-1]["reps"] == 15
         assert exercises[-1]["rest_seconds"] == 30
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_exercise_workout_not_found(self, mock_get_db, mock_get_lib, client):
         """Returns 404 when workout doesn't exist."""
@@ -435,7 +445,7 @@ class TestAddExerciseMainSection:
 class TestAddExerciseWarmupSection:
     """Tests for adding exercise to warmup section."""
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_to_existing_warmup(self, mock_get_db, mock_get_lib, client):
         """Exercise appended to existing warmup exercises."""
@@ -445,9 +455,7 @@ class TestAddExerciseWarmupSection:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -475,7 +483,7 @@ class TestAddExerciseWarmupSection:
         assert warmup_exercises[-1]["duration_seconds"] == 30
         assert warmup_exercises[-1]["rest_seconds"] == 10
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_create_new_warmup_when_none_exists(self, mock_get_db, mock_get_lib, client):
         """Creates a new warmup when none exists for the workout."""
@@ -485,9 +493,7 @@ class TestAddExerciseWarmupSection:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -512,7 +518,7 @@ class TestAddExerciseWarmupSection:
         assert warmup_exercises[0]["name"] == "Dumbbell Lateral Raise"
         assert warmup_exercises[0]["muscle_group"] == "shoulders"
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_exercise_format(self, mock_get_db, mock_get_lib, client):
         """Warmup exercise has correct WarmupExercise format.
@@ -532,9 +538,7 @@ class TestAddExerciseWarmupSection:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -569,7 +573,7 @@ class TestAddExerciseWarmupSection:
 class TestAddExerciseStretchesSection:
     """Tests for adding exercise to stretches section."""
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_add_to_existing_stretches(self, mock_get_db, mock_get_lib, client):
         """Exercise appended to existing stretch exercises."""
@@ -579,9 +583,7 @@ class TestAddExerciseStretchesSection:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -610,7 +612,7 @@ class TestAddExerciseStretchesSection:
         assert stretch_exercises[-1]["duration_seconds"] == 30
         assert stretch_exercises[-1]["rest_seconds"] == 0  # Stretches have 0 rest
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_create_new_stretch_when_none_exists(self, mock_get_db, mock_get_lib, client):
         """Creates a new stretch when none exists for the workout."""
@@ -620,9 +622,7 @@ class TestAddExerciseStretchesSection:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -646,7 +646,7 @@ class TestAddExerciseStretchesSection:
         assert len(stretch_exercises) == 1
         assert stretch_exercises[0]["name"] == "Dumbbell Lateral Raise"
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretch_exercise_format(self, mock_get_db, mock_get_lib, client):
         """Stretch exercise has correct StretchExercise format.
@@ -664,9 +664,7 @@ class TestAddExerciseStretchesSection:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -693,7 +691,7 @@ class TestAddExerciseStretchesSection:
         assert ex["equipment"] == "dumbbell"  # inherited from the library match
         assert ex["muscle_group"] == "shoulders"
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretch_vs_warmup_rest_seconds(self, mock_get_db, mock_get_lib, client):
         """Warmup has rest_seconds=10, stretches have rest_seconds=0."""
@@ -718,7 +716,7 @@ class TestAddExerciseStretchesSection:
 class TestAddExerciseEdgeCases:
     """Edge case tests for the add-exercise endpoint."""
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_with_no_library_match(self, mock_get_db, mock_get_lib, client):
         """Warmup exercise uses 'general' muscle_group when not found in library."""
@@ -728,9 +726,7 @@ class TestAddExerciseEdgeCases:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = []  # Not in library
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = None  # Not in library
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -750,7 +746,7 @@ class TestAddExerciseEdgeCases:
         assert warmup_exercises[0]["name"] == "Custom Warm Up Move"
         assert warmup_exercises[0]["equipment"] == "none"  # fallback when no library match
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretch_with_no_library_match(self, mock_get_db, mock_get_lib, client):
         """Stretch exercise uses 'general' muscle_group when not found in library."""
@@ -760,9 +756,7 @@ class TestAddExerciseEdgeCases:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = []
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = None
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -781,7 +775,7 @@ class TestAddExerciseEdgeCases:
         assert stretch_exercises[0]["muscle_group"] == "general"
         assert stretch_exercises[0]["equipment"] == "none"  # fallback when no library match
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_workout_not_found(self, mock_get_db, mock_get_lib, client):
         """Returns 404 for warmup section when workout doesn't exist."""
@@ -802,7 +796,7 @@ class TestAddExerciseEdgeCases:
 
         assert response.status_code == 404
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_returns_main_workout_unchanged(self, mock_get_db, mock_get_lib, client):
         """Warmup section returns the main workout without modifying its exercises."""
@@ -812,9 +806,7 @@ class TestAddExerciseEdgeCases:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -836,7 +828,7 @@ class TestAddExerciseEdgeCases:
         # update_workout should NOT have been called for warmup section
         mock_db.update_workout.assert_not_called()
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_stretches_returns_main_workout_unchanged(self, mock_get_db, mock_get_lib, client):
         """Stretches section returns the main workout without modifying its exercises."""
@@ -846,9 +838,7 @@ class TestAddExerciseEdgeCases:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
@@ -894,7 +884,7 @@ class TestAddExerciseEdgeCases:
 class TestExistingExercisesParsing:
     """Tests for parsing existing exercises_json in warmup/stretch tables."""
 
-    @patch("api.v1.workouts.workout_operations.get_exercise_library_service")
+    @patch("api.v1.workouts.workout_operations.resolve_user_chosen_exercise", new_callable=AsyncMock)
     @patch("api.v1.workouts.workout_operations.get_supabase_db")
     def test_warmup_exercises_json_as_list(self, mock_get_db, mock_get_lib, client):
         """Handles warmup exercises_json stored as a list (not string)."""
@@ -910,9 +900,7 @@ class TestExistingExercisesParsing:
         )
         mock_get_db.return_value = mock_db
 
-        mock_lib = MagicMock()
-        mock_lib.search_exercises.return_value = MOCK_EXERCISE_LIBRARY_RESULT
-        mock_get_lib.return_value = mock_lib
+        mock_get_lib.return_value = MOCK_EXERCISE_LIBRARY_RESULT[0]
 
         response = client.post(
             "/api/v1/workouts/add-exercise",
