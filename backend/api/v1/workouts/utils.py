@@ -21,7 +21,7 @@ from typing import List, Optional, Dict, Any
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
-from core.timezone_utils import get_user_today
+from core.timezone_utils import get_user_today, local_day_bounds
 from models.schemas import Workout
 from services.gemini_service import GeminiService
 from services.rag_service import WorkoutRAGService
@@ -45,6 +45,26 @@ def get_workout_rag_service() -> WorkoutRAGService:
     return _workout_rag_service
 
 
+def _today_window(timezone_str: Optional[str]) -> tuple:
+    """``(today_str, day_start, day_end)`` for the user's local today.
+
+    ``workouts.scheduled_date`` is a NOON-anchored timestamptz (CLAUDE.md), so
+    every "is this row today?" predicate MUST be a half-open local-day window.
+    The register's row #87 is what happens without it: the invalidation helpers
+    used ``.eq("scheduled_date", "2026-07-29")``, which compares against
+    ``2026-07-29 00:00:00+00`` and therefore matches **zero rows, always**
+    (production holds no 00:00Z rows at all) — so adding an injury never
+    cleared today's now-unsafe workout.
+
+    Returns the half-open ``[day_start, day_end)`` pair — use
+    ``.gte(day_start).lt(day_end)``, never ``.lte(day_end)``.
+    """
+    tz = timezone_str or "UTC"
+    today_str = get_user_today(tz)
+    day_start, day_end = local_day_bounds(today_str, tz)
+    return today_str, day_start, day_end
+
+
 def invalidate_upcoming_workouts(
     user_id: str,
     reason: str,
@@ -59,18 +79,20 @@ def invalidate_upcoming_workouts(
     """
     try:
         db = get_supabase_db()
-        if timezone_str:
-            today_str = get_user_today(timezone_str)
-        else:
-            # Last-resort fallback — callers should always supply timezone_str
-            today_str = get_user_today("UTC")
+        # "Upcoming" starts at the END of the user's local today. The old
+        # `.gt("scheduled_date", "2026-07-29")` compared against 00:00Z, so
+        # TODAY's own noon-anchored row (17:00Z for a CDT user) sorted as
+        # "upcoming" and got swept — including a workout the user was mid-set
+        # on, inverting the "leave in-progress alone" policy the today-branch
+        # exists to enforce (register #87).
+        _today_str, _day_start, tomorrow_start = _today_window(timezone_str)
 
         query = db.client.table("workouts").select(
             "id, scheduled_date, status, is_user_modified"
         ).eq(
             "user_id", user_id
-        ).gt(
-            "scheduled_date", today_str
+        ).gte(
+            "scheduled_date", tomorrow_start
         ).eq(
             "is_completed", False
         )
@@ -131,18 +153,18 @@ def invalidate_workouts_after_equipment_change(
 
     try:
         db = get_supabase_db()
-        if timezone_str:
-            today_str = get_user_today(timezone_str)
-        else:
-            today_str = get_user_today("UTC")
+        _today_str, _day_start, _day_end = _today_window(timezone_str)
 
         # Today: delete only if not started and not completed.
         # `is_completed=False` matches the same column the upcoming helper
         # uses. `status != 'in_progress'` ensures we don't yank a workout
         # mid-set. `status != 'generating'` mirrors upcoming-helper logic.
+        # Half-open local-day window — a bare-date `.eq` matches 0 rows (#87).
         today_rows = db.client.table("workouts").select(
             "id, status, is_completed"
-        ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", _day_start
+        ).lt("scheduled_date", _day_end).execute()
 
         ids_to_delete = [
             r["id"] for r in (today_rows.data or [])
@@ -194,19 +216,16 @@ def invalidate_workouts_after_program_change(
     upcoming_deleted = 0
 
     try:
-        from core.timezone_utils import local_date_to_utc_range
         db = get_supabase_db()
-        _tz = timezone_str or "UTC"
-        today_str = get_user_today(_tz)
         # scheduled_date is TIMESTAMPTZ (e.g. "2026-06-23 17:00:00+00"), so an
         # `.eq("scheduled_date", "2026-06-23")` date match NEVER matches (time
-        # component differs). Use the day's UTC range instead.
-        _start, _end = local_date_to_utc_range(today_str, _tz)
+        # component differs). Use the half-open local-day window.
+        today_str, _start, _end = _today_window(timezone_str)
         today_rows = db.client.table("workouts").select(
             "id, status, is_completed, is_user_modified"
         ).eq("user_id", user_id).gte(
             "scheduled_date", _start
-        ).lte("scheduled_date", _end).execute()
+        ).lt("scheduled_date", _end).execute()
         ids_to_delete = [
             r["id"] for r in (today_rows.data or [])
             if not r.get("is_completed")
@@ -266,19 +285,19 @@ def invalidate_workouts_after_schedule_change(
 
     try:
         db = get_supabase_db()
-        if timezone_str:
-            today_str = get_user_today(timezone_str)
-        else:
-            today_str = get_user_today("UTC")
+        today_str, _day_start, _day_end = _today_window(timezone_str)
 
         today_dt = date.fromisoformat(today_str)
 
         # Today: delete only if today's weekday was removed AND row is not
         # in-progress / completed / generating.
+        # Half-open local-day window — a bare-date `.eq` matches 0 rows (#87).
         if today_dt.weekday() not in new_days_set:
             today_rows = db.client.table("workouts").select(
                 "id, status, is_completed"
-            ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+            ).eq("user_id", user_id).gte(
+                "scheduled_date", _day_start
+            ).lt("scheduled_date", _day_end).execute()
 
             ids_to_delete = [
                 r["id"] for r in (today_rows.data or [])
@@ -308,13 +327,18 @@ def invalidate_workouts_after_schedule_change(
         # users with months/years of pre-scheduled rows tripped the Dio 25s
         # client timeout. Anything further out gets caught by the daily-cleanup
         # cron / the next schedule-change.
-        upper_bound = (today_dt + timedelta(days=180)).isoformat()
+        # Half-open [tomorrow 00:00 local, +180d 24:00 local). Bare dates here
+        # sat at 00:00Z, so `.gt(today)` swept TODAY's noon row and
+        # `.lte(upper_bound)` dropped the final day's noon row (#87 class).
+        _horizon_end = local_day_bounds(
+            (today_dt + timedelta(days=180)).isoformat(), timezone_str or "UTC"
+        )[1]
         rows = db.client.table("workouts").select(
             "id, scheduled_date, status"
-        ).eq("user_id", user_id).gt(
-            "scheduled_date", today_str
-        ).lte(
-            "scheduled_date", upper_bound
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", _day_end
+        ).lt(
+            "scheduled_date", _horizon_end
         ).eq("is_completed", False).limit(500).execute()
 
         ids_to_delete = []
@@ -384,11 +408,16 @@ def invalidate_workouts_after_injury_change(
 
     try:
         db = get_supabase_db()
-        today_str = get_user_today(timezone_str) if timezone_str else get_user_today("UTC")
+        # Register #87: this used `.eq("scheduled_date", today_str)`, a bare
+        # date against a NOON-anchored timestamptz — 0 rows, always. Adding an
+        # injury therefore never invalidated the day's now-unsafe workout.
+        today_str, _day_start, _day_end = _today_window(timezone_str)
 
         today_rows = db.client.table("workouts").select(
             "id, status, is_completed"
-        ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", _day_start
+        ).lt("scheduled_date", _day_end).execute()
 
         ids_to_delete = [
             r["id"] for r in (today_rows.data or [])

@@ -353,7 +353,9 @@ class TestGenerateQuickWorkoutTool:
             }
 
             # Mock no existing workout
-            db_mock.client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.gte.return_value.lte.return_value.order.return_value.limit.return_value.execute.return_value.data = []
+            # Local-day window is now half-open (`.gte(start).lt(end)`), per the
+            # CLAUDE.md timestamptz rule — the old chain ended in `.lte(...)`.
+            db_mock.client.table.return_value.select.return_value.eq.return_value.eq.return_value.eq.return_value.gte.return_value.lt.return_value.order.return_value.limit.return_value.execute.return_value.data = []
 
             # Mock workout creation
             new_workout_id = str(uuid.uuid4())
@@ -404,9 +406,12 @@ class TestGenerateQuickWorkoutTool:
             mock_db.return_value = db_mock
 
             # Mock existing workout
+            # `workouts` has no `exercises` column — the real one is
+            # `exercises_json` (E2E row 55). The old fixture key made the tool
+            # read an empty list, which is exactly the bug this asserts against.
             db_mock.get_workout.return_value = {
                 "id": existing_workout_id,
-                "exercises": [{"name": "Old Exercise", "sets": 3, "reps": 10}],
+                "exercises_json": [{"name": "Old Exercise", "sets": 3, "reps": 10}],
             }
 
             db_mock.get_user.return_value = {

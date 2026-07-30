@@ -12,7 +12,8 @@ from typing import Optional
 from datetime import datetime, timedelta, date
 import json
 import logging
-from core.timezone_utils import get_user_today
+from core.timezone_utils import get_user_today, local_day_bounds
+from .scheduled_date_anchor import anchor_scheduled_date
 logger = logging.getLogger(__name__)
 
 
@@ -374,6 +375,7 @@ async def _create_staple_workout_for_date(
     target_date: date,
     staples_for_day: list[dict],
     context: dict,
+    timezone_str: str = "UTC",
 ) -> Optional[dict]:
     """
     Create a lightweight staple-only workout on a non-workout day.
@@ -389,12 +391,20 @@ async def _create_staple_workout_for_date(
      inject_staple_into_workout, _fetch_preference_context,
      _get_upcoming_workouts, DAY_NAMES) = _engine_parent()
     date_str = target_date.isoformat()
+    # `workouts.scheduled_date` is a NOON-anchored timestamptz (#24 class), so a
+    # bare-date `.eq` matches ZERO rows always (production holds no 00:00Z rows)
+    # and this duplicate guard silently passed for every date — while the insert
+    # below wrote a bare date back, i.e. midnight UTC.
+    _sched_ts = anchor_scheduled_date(target_date, timezone_str)
+    _day_lo, _day_hi = local_day_bounds(date_str, timezone_str)
 
     # Check if a workout already exists for this date
     try:
         existing = db.client.table("workouts").select("id").eq(
             "user_id", user_id
-        ).eq("scheduled_date", date_str).neq("status", "cancelled").limit(1).execute()
+        ).gte("scheduled_date", _day_lo).lt(
+            "scheduled_date", _day_hi
+        ).neq("status", "cancelled").limit(1).execute()
         if existing.data:
             return None  # Workout already exists — don't create duplicate
     except Exception:
@@ -437,7 +447,7 @@ async def _create_staple_workout_for_date(
         workout_data = {
             "id": str(uuid.uuid4()),
             "user_id": user_id,
-            "scheduled_date": date_str,
+            "scheduled_date": _sched_ts,
             "exercises_json": exercises,
             "status": "ready",
             "is_completed": False,
@@ -542,6 +552,7 @@ async def apply_staple_to_workouts(db, user_id: str, staple: dict, timezone_str:
                 if staples_for_day:
                     result = await _create_staple_workout_for_date(
                         db, user_id, target_date, staples_for_day, context,
+                        timezone_str=timezone_str or "UTC",
                     )
                     if result:
                         created_workouts += 1

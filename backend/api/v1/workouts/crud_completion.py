@@ -1727,7 +1727,10 @@ async def update_exercise_sets(
         exercises[request.exercise_index]["sets"] = new_sets
         exercises[request.exercise_index]["sets_count"] = len(new_sets)
 
-        update_data = {"exercises": exercises, "last_modified_at": datetime.now().isoformat(), "last_modified_method": "post_completion_edit"}
+        # `workouts` has NO `exercises` column (the real one is
+        # `exercises_json`); a phantom key 42703s the WHOLE update, so this
+        # post-completion set edit persisted nothing at all.
+        update_data = {"exercises_json": exercises, "last_modified_at": datetime.now().isoformat(), "last_modified_method": "post_completion_edit"}
         db.update_workout(workout_id, update_data)
 
         workout_log_response = supabase.table("workout_logs").select("id").eq("workout_id", workout_id).order("completed_at", desc=True).limit(1).execute()

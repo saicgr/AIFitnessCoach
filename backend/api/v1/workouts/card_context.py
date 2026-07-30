@@ -41,7 +41,7 @@ from zoneinfo import ZoneInfo
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
-from core.timezone_utils import resolve_timezone, user_today_date
+from core.timezone_utils import local_day_bounds, resolve_timezone, user_today_date
 
 logger = logging.getLogger("workout_card_context")
 router = APIRouter()
@@ -81,13 +81,20 @@ _WORKOUT_SELECT = (
 )
 
 
-def _workout_for_date(sb, user_id: str, local_iso: str) -> Optional[Dict[str, Any]]:
+def _workout_for_date(
+    sb, user_id: str, local_iso: str, timezone_str: str = "UTC"
+) -> Optional[Dict[str, Any]]:
+    # Half-open LOCAL-day window. The old form concatenated a local date with a
+    # UTC offset (`f"{local_iso}T00:00:00+00:00"` … `T23:59:59+00:00`) — the
+    # exact anti-pattern CLAUDE.md names: it is not the user's day in any zone
+    # but UTC, so a noon-anchored row for a UTC+13/+14 user (22:00Z the previous
+    # UTC day) fell outside its own date and the card showed "no workout".
+    # `.lte` on the upper bound also let two adjacent days claim the same row.
     try:
-        start = f"{local_iso}T00:00:00+00:00"
-        end = f"{local_iso}T23:59:59+00:00"
+        start, end = local_day_bounds(local_iso, timezone_str)
         wr = sb.client.table("workouts").select(_WORKOUT_SELECT).eq(
             "user_id", user_id
-        ).gte("scheduled_date", start).lte(
+        ).gte("scheduled_date", start).lt(
             "scheduled_date", end
         ).limit(1).execute()
         if wr and wr.data:
@@ -97,12 +104,17 @@ def _workout_for_date(sb, user_id: str, local_iso: str) -> Optional[Dict[str, An
     return None
 
 
-def _next_future_workout(sb, user_id: str, today_iso: str) -> Optional[Dict[str, Any]]:
+def _next_future_workout(
+    sb, user_id: str, today_iso: str, timezone_str: str = "UTC"
+) -> Optional[Dict[str, Any]]:
+    # "After today" = the END of the user's local today, not 23:59:59Z — which
+    # is AFTER tomorrow's noon row for a UTC+13 user, so their next workout was
+    # skipped entirely.
     try:
-        start = f"{today_iso}T23:59:59+00:00"
+        _, start = local_day_bounds(today_iso, timezone_str)
         wr = sb.client.table("workouts").select(_WORKOUT_SELECT).eq(
             "user_id", user_id
-        ).gt("scheduled_date", start).order(
+        ).gte("scheduled_date", start).order(
             "scheduled_date"
         ).limit(1).execute()
         if wr and wr.data:
@@ -309,15 +321,20 @@ def _rationale(mode: str, *, sleep_minutes: Optional[int] = None,
 # streak? Crude rule: yes when the user already has at least one completed
 # workout within the previous 2 days. Avoids fabrication.
 # ---------------------------------------------------------------------------
-def _streak_extends_if_complete(sb, user_id: str, today_iso: str) -> bool:
+def _streak_extends_if_complete(
+    sb, user_id: str, today_iso: str, timezone_str: str = "UTC"
+) -> bool:
+    # [start of local day-2, start of local today) — same reason as above: the
+    # local-date + "+00:00" concatenation is a UTC window wearing a local date.
     try:
-        start = (date.fromisoformat(today_iso) - timedelta(days=2)).isoformat()
-        end = today_iso
+        start_day = (date.fromisoformat(today_iso) - timedelta(days=2)).isoformat()
+        window_start, _ = local_day_bounds(start_day, timezone_str)
+        window_end, _ = local_day_bounds(today_iso, timezone_str)
         wr = sb.client.table("workouts").select(
             "id, completed_at"
         ).eq("user_id", user_id).gte(
-            "scheduled_date", f"{start}T00:00:00+00:00"
-        ).lt("scheduled_date", f"{end}T00:00:00+00:00").execute()
+            "scheduled_date", window_start
+        ).lt("scheduled_date", window_end).execute()
         for r in (wr.data or []):
             if r.get("completed_at"):
                 return True
@@ -410,10 +427,10 @@ async def workout_card_context(
                 return CardContextResponse(**payload)
 
         # ---- Pull rows (each best-effort) ---------------------------------
-        today_row = _workout_for_date(sb, user_id, today_iso)
-        yesterday_row = _workout_for_date(sb, user_id, yesterday_iso)
-        tomorrow_row = _workout_for_date(sb, user_id, tomorrow_iso)
-        next_row = tomorrow_row or _next_future_workout(sb, user_id, today_iso)
+        today_row = _workout_for_date(sb, user_id, today_iso, tz_resolved)
+        yesterday_row = _workout_for_date(sb, user_id, yesterday_iso, tz_resolved)
+        tomorrow_row = _workout_for_date(sb, user_id, tomorrow_iso, tz_resolved)
+        next_row = tomorrow_row or _next_future_workout(sb, user_id, today_iso, tz_resolved)
 
         yesterday_missed = bool(
             yesterday_row and not (
@@ -540,7 +557,7 @@ async def workout_card_context(
             "equipment_match": equipment,
             "recovery_bucket": recovery,
             "rationale": rationale,
-            "streak_extends_if_complete": _streak_extends_if_complete(sb, user_id, today_iso),
+            "streak_extends_if_complete": _streak_extends_if_complete(sb, user_id, today_iso, tz_resolved),
             "pr_opportunity_today": pr_opp,
             "cached": False,
             "generated_at": datetime.now(timezone.utc).isoformat(),

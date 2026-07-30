@@ -516,3 +516,111 @@ def build_favorite_workouts_context(favorites: list) -> str:
 
     lines.append("When generating for the same muscle group/type, prefer similar exercise combinations and structures.")
     return "\n".join(lines)
+
+
+# ===========================================================================
+# Library candidate-pool focus vocabulary (E2E register row #60)
+# ===========================================================================
+# `ExerciseLibraryService.get_exercises_for_workout` understands a SHORT
+# vocabulary of focus keys (chest / back / shoulders / arms / biceps / triceps
+# / legs / glutes / core / abs / full_body) and silently falls back to
+# ``['chest', 'back', 'upper legs']`` for anything else.
+#
+# The generation paths speak a DIFFERENT vocabulary — `lower`, `upper`, `push`,
+# `pull`, `lower_body`, `cardio`, … — so a `focus='lower'` request pre-fetched a
+# pool that was two-thirds UPPER body, handed it to Gemini as the ONLY allowed
+# exercises, and then the focus validator (correctly) found barely any leg work:
+#
+#   [Focus Validation] CRITICAL: Workout 'X' has only 2 valid exercises for
+#   'lower' focus (minimum required: 3). Keeping all N exercises to meet minimum.
+#
+# i.e. the "candidate pool collapsed to 2" because the pool was fetched for the
+# wrong body parts, not because the library is thin. This maps the generation
+# vocabulary onto the library's, and returns the FULL set of library keys a
+# compound focus needs so the pool is a union rather than one lossy key.
+_LIBRARY_FOCUS_TERMS = {
+    "legs": ["legs", "glutes"],
+    "leg": ["legs", "glutes"],
+    "lower": ["legs", "glutes"],
+    "lower_body": ["legs", "glutes"],
+    "lower body": ["legs", "glutes"],
+    "quads": ["legs"],
+    "hamstrings": ["legs"],
+    "calves": ["legs"],
+    "glutes": ["glutes", "legs"],
+    "upper": ["chest", "back", "shoulders", "arms"],
+    "upper_body": ["chest", "back", "shoulders", "arms"],
+    "upper body": ["chest", "back", "shoulders", "arms"],
+    "push": ["chest", "shoulders", "triceps"],
+    "pull": ["back", "biceps"],
+    "chest": ["chest"],
+    "back": ["back"],
+    "shoulders": ["shoulders"],
+    "arms": ["arms"],
+    "biceps": ["biceps"],
+    "triceps": ["triceps"],
+    "core": ["core"],
+    "abs": ["abs"],
+}
+
+
+def library_focus_terms(focus_area: Optional[str]) -> List[str]:
+    """Library-service focus keys covering ``focus_area``.
+
+    Unknown / non-anatomical focuses (cardio, hiit, mobility, strength…) resolve
+    to ``full_body`` — a deliberate, balanced pool — instead of the library
+    service's silent ``chest/back/upper legs`` default, which is an UPPER-BODY
+    bias no caller ever asked for.
+    """
+    key = (focus_area or "").lower().strip().replace("-", "_")
+    if not key:
+        return ["full_body"]
+    if key in ("full_body", "fullbody", "full body"):
+        return ["full_body"]
+    return _LIBRARY_FOCUS_TERMS.get(key, ["full_body"])
+
+
+def build_library_pool(
+    lib_svc,
+    focus_area: Optional[str],
+    equipment: List[str],
+    count: int,
+    fitness_level: str,
+) -> List[Dict[str, Any]]:
+    """Fetch a focus-correct library candidate pool, deduped by name.
+
+    Splits ``count`` across every library key the focus needs so a `lower` day
+    draws legs+glutes and an `upper` day draws chest/back/shoulders/arms,
+    instead of one lossy key (or the service's upper-body fallback).
+    """
+    terms = library_focus_terms(focus_area)
+    # 2× the per-term share: sibling terms overlap heavily in the library
+    # (legs and glutes both resolve to body_part 'upper legs'), so an exact
+    # split dedups down to roughly half the requested pool.
+    per_term = max(8, 2 * -(-count // max(1, len(terms))))  # ceil division
+    pool: List[Dict[str, Any]] = []
+    seen = set()
+    for term in terms:
+        try:
+            chunk = lib_svc.get_exercises_for_workout(
+                focus_area=term,
+                equipment=equipment,
+                count=per_term,
+                fitness_level=fitness_level,
+            ) or []
+        except Exception as e:  # noqa: BLE001
+            logger.warning(
+                f"[LibraryPool] fetch failed for focus term '{term}': {e}"
+            )
+            continue
+        for ex in chunk:
+            name = (ex.get("name") or "").strip().lower()
+            if not name or name in seen:
+                continue
+            seen.add(name)
+            pool.append(ex)
+    logger.info(
+        f"[LibraryPool] focus='{focus_area}' → terms={terms}, "
+        f"{len(pool)} unique candidates"
+    )
+    return pool

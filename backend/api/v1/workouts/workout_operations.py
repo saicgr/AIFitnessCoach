@@ -43,6 +43,8 @@ from .focus_validation_utils import (
 )
 from .generation_helpers import normalize_exercise_numeric_fields
 from .substitutions import upsert_substitution
+from .scheduled_date_anchor import anchor_scheduled_date
+from core.timezone_utils import resolve_timezone
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -65,6 +67,14 @@ async def swap_workout_date(request: Request, payload: SwapWorkoutsRequest,
         old_date = workout.get("scheduled_date")
         user_id = workout.get("user_id")
 
+        # `payload.new_date` is a bare local "YYYY-MM-DD"; writing it raw stored
+        # midnight UTC, which is the PREVIOUS local day for every user west of
+        # UTC (#24 class) — the swapped workout then disappeared off the day the
+        # user dropped it on. `old_date` comes back off the row already anchored,
+        # so it is carried forward untouched.
+        _swap_tz = resolve_timezone(request, db, user_id)
+        _new_date_anchored = anchor_scheduled_date(payload.new_date, _swap_tz)
+
         existing_workouts = db.get_workouts_by_date_range(user_id, payload.new_date, payload.new_date)
 
         if existing_workouts:
@@ -72,7 +82,7 @@ async def swap_workout_date(request: Request, payload: SwapWorkoutsRequest,
             db.update_workout(existing["id"], {"scheduled_date": old_date, "last_modified_method": "date_swap"})
             log_workout_change(existing["id"], user_id, "date_swap", "scheduled_date", payload.new_date, old_date)
 
-        db.update_workout(payload.workout_id, {"scheduled_date": payload.new_date, "last_modified_method": "date_swap"})
+        db.update_workout(payload.workout_id, {"scheduled_date": _new_date_anchored, "last_modified_method": "date_swap"})
         log_workout_change(payload.workout_id, user_id, "date_swap", "scheduled_date", old_date, payload.new_date)
 
         return {"success": True, "old_date": old_date, "new_date": payload.new_date}

@@ -669,6 +669,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 # library-backed names. Eliminates exercise hallucination —
                 # every output gets an exercise_id, video_url, image_s3_path.
                 # Falls back to AI-first if library returns nothing (rare).
+                # Initialised OUTSIDE the try so the focus-validation stage far
+                # below can always reference it as a repair pool (#60).
+                _library_pool: list = []
                 try:
                     from services.exercise_library_service import get_exercise_library_service
                     _lib_svc = get_exercise_library_service()
@@ -682,7 +685,15 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     # Fetch a generous pool (3× the workout's exercise count)
                     # so Gemini has selection room within the focus/equipment
                     # constraints. Cap at 50 in the prompt block.
-                    _library_pool = _lib_svc.get_exercises_for_workout(
+                    # #60 — build the pool through the focus-vocabulary
+                    # bridge. Calling the library service with the generation
+                    # vocabulary directly ('lower', 'upper', 'push', 'pull')
+                    # hit its silent chest/back/upper-legs fallback, so a
+                    # `lower` day was handed a mostly-upper-body pool and then
+                    # failed its own focus validation.
+                    from .focus_validation_utils import build_library_pool
+                    _library_pool = build_library_pool(
+                        _lib_svc,
                         focus_area=_focus_for_lib,
                         equipment=_eq_for_lib,
                         count=max(15, exercise_count * 3),
@@ -1210,10 +1221,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
                 if focus_areas and len(focus_areas) > 0 and exercises:
                     primary_focus = focus_areas[0]
+                    # #60 — pass the RAG candidate pool so mismatched exercises
+                    # are REPLACED with focus-matching library moves instead of
+                    # leaving this stage with a choice between "ship 2
+                    # exercises" and "ship the mismatched ones". The library
+                    # path (generation_endpoints) has always passed the pool;
+                    # streaming passed None, which is why only this path ever
+                    # logged "only N valid exercises for '<focus>' focus …
+                    # Keeping all N exercises".
                     focus_validation = await validate_and_filter_focus_mismatches(
                         exercises=exercises,
                         focus_area=primary_focus,
                         workout_name=workout_name,
+                        candidate_pool=_library_pool or None,
                     )
 
                     missing_groups = focus_validation.get("missing_muscle_groups", [])

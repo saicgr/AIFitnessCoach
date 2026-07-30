@@ -22,12 +22,11 @@ from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, BackgroundTasks, Request
 from core.auth import get_current_user, verify_user_ownership, verify_resource_ownership
 from core.exceptions import safe_internal_error
-from core.timezone_utils import user_today_date
+from core.timezone_utils import resolve_timezone, user_today_date
 
 from core.db import get_supabase_db
 from core.logger import get_logger
 from models.schemas import Workout, WorkoutCreate, WorkoutUpdate
-from ._gym_profile_helpers import get_active_gym_profile_id
 
 from .utils import (
     row_to_workout,
@@ -37,6 +36,7 @@ from .utils import (
     apply_program_meta_to_row,
 )
 from .today import invalidate_today_workout_cache
+from .scheduled_date_anchor import anchor_scheduled_date
 
 # Re-export models for backward compatibility
 from .crud_models import (
@@ -62,6 +62,7 @@ router.include_router(completion_router)
 
 @router.post("/", response_model=Workout)
 async def create_workout(
+    request: Request,
     workout: WorkoutCreate,
     background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
@@ -90,7 +91,14 @@ async def create_workout(
             "name": workout.name,
             "type": workout.type,
             "difficulty": workout.difficulty,
-            "scheduled_date": str(workout.scheduled_date),
+            # NOON-anchor (#24 class). `WorkoutCreate.scheduled_date` is typed
+            # `datetime`, so a client's bare "2026-07-29" arrives as naive
+            # midnight and `str()` wrote midnight UTC — the previous local
+            # evening for every user west of UTC.
+            "scheduled_date": anchor_scheduled_date(
+                workout.scheduled_date,
+                resolve_timezone(request, db, workout.user_id),
+            ),
             "exercises_json": exercises,
             "duration_minutes": workout.duration_minutes,
             "generation_method": workout.generation_method,
@@ -141,11 +149,15 @@ async def list_workouts(
     try:
         db = get_supabase_db()
 
+        # Day-ownership rule (#104): a scheduled workout belongs to the DAY, not
+        # to the gym profile that was active when it was built. This read is
+        # scoped ONLY when the CALLER explicitly names a profile; it must never
+        # silently fall back to the active one. The silent fallback here was the
+        # same defect as /today's — after a gym-profile switch the whole list
+        # (home carousel, workout tab, schedule) went blank while healthy rows
+        # sat one profile away, and the client then queued generation for days
+        # that were already covered.
         profile_filter = gym_profile_id
-        if not profile_filter:
-            profile_filter = get_active_gym_profile_id(db, user_id)
-            if profile_filter:
-                logger.info(f"[GYM PROFILE] Using active profile {profile_filter} for workout list")
 
         rows = db.list_workouts(
             user_id=user_id,
@@ -202,6 +214,7 @@ async def get_workout(
 
 @router.put("/{workout_id}", response_model=Workout)
 async def update_workout(
+    request: Request,
     workout: WorkoutUpdate,
     background_tasks: BackgroundTasks,
     workout_id: str = Path(..., pattern=_UUID_REGEX, description="Workout UUID"),
@@ -223,12 +236,21 @@ async def update_workout(
         if workout.difficulty is not None:
             update_data["difficulty"] = workout.difficulty
         if workout.scheduled_date is not None:
-            update_data["scheduled_date"] = str(workout.scheduled_date)
+            # NOON-anchor (#24 class) — same reasoning as create_workout.
+            update_data["scheduled_date"] = anchor_scheduled_date(
+                workout.scheduled_date,
+                resolve_timezone(request, db, (existing or {}).get("user_id")),
+            )
         if workout.is_completed is not None:
             update_data["is_completed"] = workout.is_completed
         if workout.exercises_json is not None:
             exercises = json.loads(workout.exercises_json) if isinstance(workout.exercises_json, str) else workout.exercises_json
-            update_data["exercises"] = exercises
+            # `workouts` has NO `exercises` column — the real column is
+            # `exercises_json`. PostgREST rejects the ENTIRE update with 42703
+            # when one key is phantom, so every PUT /workouts/{id} that touched
+            # exercises silently discarded name/type/difficulty/scheduled_date
+            # too. Caught by scripts/audit_supabase_column_drift.py --check.
+            update_data["exercises_json"] = exercises
         if workout.last_modified_method is not None:
             update_data["last_modified_method"] = workout.last_modified_method
         if workout.generation_metadata is not None:

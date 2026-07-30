@@ -18,18 +18,35 @@ list on both paths, right before persist:
     (sets / reps / rest / set_targets) of a surviving exercise, so it inherits a
     valid, already-targeted shape and flows through downstream persist unchanged.
 
-Muscle-area chips (chest/biceps/abs/…) have no `*_safe` column; they are handled
-upstream by ``avoided_muscles`` (``get_muscles_to_avoid_from_injuries``) and are a
-no-op here. Fail-OPEN: any error keeps the input list (we never block generation).
+Muscle-area chips (chest/biceps/abs/upper_back/…) have no `*_safe` column. They
+used to be a NO-OP here — `/generate-stream` computed `injury_context
+["avoided_muscles"]` and then discarded it, so an `Abs` or `Quads` limitation
+only ever reached the Gemini prompt (E2E register row 86). They are now enforced
+deterministically in this same pass: any exercise whose PRIMARY target matches an
+avoided-muscle token derived (via the app's own `INJURY_TO_AVOIDED_MUSCLES` /
+`BODY_MAP_MUSCLE_NORMALIZATION` maps — no new enumeration, no LLM) from a
+NON-joint limitation is dropped and backfilled like any other violation.
+
+Public surface — every workout-producing path funnels through one of these:
+  - ``enforce_injury_safety``    — whole-list terminal gate (generate / regenerate
+                                   / quick / variant-swap).
+  - ``filter_injury_unsafe``     — same rules over a CANDIDATE list, for anything
+                                   appended after the list gate (equipment
+                                   finishers) so the gate stays genuinely terminal.
+  - ``screen_exercise_for_injury`` — single-exercise verdict, for swap surfaces
+                                   where the user picks the replacement.
+
+Fail-OPEN: any error keeps the input list (we never block generation).
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from sqlalchemy import text
 
 from core.logger import get_logger
 from core.supabase_client import get_supabase
+from services.workout_safety_validator import canonicalize_injury_tokens
 from .service import _resolve_injury_columns, fetch_safe_candidates
 
 logger = get_logger(__name__)
@@ -72,6 +89,134 @@ _INJURY_TARGET_MUSCLE_KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "lower_back": ("lower back", "erector spinae", "erector", "spinae", "lumbar"),
     "neck":       ("neck", "sternocleidomastoid", "cervical"),
 }
+
+
+def resolve_avoided_muscle_tokens(injuries: Sequence[Any]) -> List[str]:
+    """Muscle-name tokens to hard-avoid, derived ONLY from non-joint limitations.
+
+    Row 86. The 11 muscle-area chips (Abs, Chest, Biceps, Triceps, Forearms,
+    Upper Back, Glutes, Groin, Quads, Hamstrings, Calves) have no ``*_safe``
+    column, so the index gate above can never see them. Their meaning is already
+    defined deterministically by the app's own maps
+    (``INJURY_TO_AVOIDED_MUSCLES`` / ``BODY_MAP_MUSCLE_NORMALIZATION`` in
+    ``api.v1.workouts.readiness_utils``) — reused verbatim here so there is ONE
+    table, not a second copy that can drift.
+
+    JOINT entries are deliberately EXCLUDED: a knee injury maps to
+    quads/hams/calves/glutes, and hard-dropping all of those would delete every
+    leg exercise instead of the contraindicated ones. Joints are governed by the
+    vetted ``<joint>_safe`` columns; only the muscle-area chips fall through to
+    muscle matching.
+    """
+    tokens: List[str] = []
+    seen: set = set()
+    try:
+        # Lazy import: the maps live with the injury/limitation reader. Imported
+        # here (not at module scope) to keep the services→api edge off the
+        # import graph at startup.
+        from api.v1.workouts.readiness_utils import get_muscles_to_avoid_from_injuries
+    except Exception as exc:  # noqa: BLE001 — fail-open, joints still enforced
+        logger.error("❌ [InjuryGuard] muscle-map import failed: %s", exc)
+        return []
+
+    for key in canonicalize_injury_tokens(injuries):
+        if _resolve_injury_columns([key]):
+            continue  # a real joint — handled by the <joint>_safe index gate
+        for muscle in get_muscles_to_avoid_from_injuries([key]) or []:
+            tok = str(muscle or "").strip().lower()
+            if tok and tok not in seen:
+                seen.add(tok)
+                tokens.append(tok)
+    return tokens
+
+
+def _muscle_terms(value: Any) -> Tuple[List[str], List[str]]:
+    """Split ONE primary-target field into (group terms, anatomical terms).
+
+    The library writes `target_muscle` as ``Group (Anatomy, Anatomy), Group2
+    (Anatomy)`` — e.g. ``"Hamstrings (Biceps Femoris, Semitendinosus,
+    Semimembranosus), Glutes (Gluteus Maximus)"``. The GROUP is the muscle the
+    exercise actually trains; the parenthesised names are the individual heads
+    that make it up. `body_part` / `muscle_group` carry a bare group
+    (``"upper legs"``, ``"quadriceps"``), which parses as a group term with no
+    anatomy.
+
+    Commas inside parentheses do NOT separate groups, so the top-level split is
+    depth-aware.
+    """
+    raw = str(value or "").strip().lower()
+    if not raw:
+        return [], []
+    groups: List[str] = []
+    anatomy: List[str] = []
+    buf: List[str] = []
+    depth = 0
+    chunks: List[str] = []
+    for ch in raw:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth = max(0, depth - 1)
+        if ch == "," and depth == 0:
+            chunks.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    chunks.append("".join(buf))
+    for chunk in chunks:
+        chunk = chunk.strip()
+        if not chunk:
+            continue
+        head, sep, tail = chunk.partition("(")
+        head = head.strip()
+        if head:
+            groups.append(head)
+        if sep:
+            for part in tail.rstrip(") ").split(","):
+                part = part.strip().strip(")").strip()
+                if part:
+                    anatomy.append(part)
+    return groups, anatomy
+
+
+def _targets_avoided_muscle(item: Dict[str, Any], muscle_tokens: Sequence[str]) -> bool:
+    """True if the exercise's PRIMARY target matches an avoided-muscle token.
+
+    Primary fields only (same rationale as `_targets_injured_region`): secondary
+    involvement is normal in compound work and is handled by down-ranking
+    upstream — matching it here would over-drop nearly every loaded lift.
+
+    Matching is STRUCTURE-AWARE, not a substring scan of the whole field. A flat
+    ``tok in blob`` test made the `biceps` chip drop every hamstring movement,
+    because the hamstring group is spelled ``"Hamstrings (Biceps Femoris, …)"``
+    and *biceps femoris* is a hamstring head, not the biceps brachii — 214 of the
+    413 library rows containing "biceps" are hamstring rows. So:
+
+      * a token matches a GROUP term by substring (``"legs"`` ⊂ ``"upper legs"``,
+        ``"biceps"`` ⊂ ``"biceps"``), because group names are the coarse label
+        the avoided-muscle vocabulary is written in; and
+      * a token matches an ANATOMY term only when it is that term in FULL
+        (``"latissimus dorsi"`` == ``"latissimus dorsi"`` drops lat work for an
+        upper-back limitation, while ``"biceps"`` != ``"biceps femoris"`` leaves
+        hamstring work alone).
+    """
+    if not muscle_tokens:
+        return False
+    groups: List[str] = []
+    anatomy: List[str] = []
+    for key in ("target_muscle", "muscle_group", "body_part"):
+        g, a = _muscle_terms(item.get(key))
+        groups.extend(g)
+        anatomy.extend(a)
+    if not groups and not anatomy:
+        return False
+    anatomy_set = set(anatomy)
+    for tok in muscle_tokens:
+        if tok in anatomy_set:
+            return True
+        if any(tok in grp for grp in groups):
+            return True
+    return False
 
 
 def _looks_like_stretch(cand: Dict[str, Any]) -> bool:
@@ -194,6 +339,104 @@ async def _unsafe_name_set(
     return unsafe
 
 
+def _violation_reason(
+    item: Dict[str, Any],
+    name_lc: str,
+    unsafe_names: set,
+    injuries: Sequence[Any],
+    muscle_tokens: Sequence[str],
+) -> Optional[str]:
+    """The ONE rule set. Returns a short reason string, or None when the
+    exercise is acceptable for this user's injuries/limitations."""
+    if name_lc and name_lc in unsafe_names:
+        return "safety_index"
+    if name_lc and _name_keyword_banned(name_lc, list(injuries)):
+        return "contraindicated_movement"
+    if _targets_injured_region(item, list(injuries)):
+        return "primary_target_is_injured_region"
+    if _targets_avoided_muscle(item, muscle_tokens):
+        return "primary_target_is_avoided_muscle"
+    return None
+
+
+async def screen_exercise_for_injury(
+    exercise: Dict[str, Any],
+    injuries: List[str],
+) -> Optional[str]:
+    """Single-exercise verdict for the SWAP surfaces (register row 88).
+
+    ``/workouts/swap-exercise`` and ``/workouts/preview/swap-exercise`` let the
+    user name the replacement, so there is no candidate list to filter — but a
+    knee-injured user must still not be handed a Barbell Front Squat
+    (``knee_safe = FALSE``). Returns a reason string when the exercise is
+    contraindicated, else ``None``. Fail-OPEN (returns None) on any error.
+    """
+    try:
+        if not exercise or not injuries:
+            return None
+        cols = _resolve_injury_columns(injuries)
+        muscle_tokens = resolve_avoided_muscle_tokens(injuries)
+        if not cols and not muscle_tokens:
+            return None
+        name = (exercise.get("name") or exercise.get("exercise_name") or "").strip()
+        name_lc = name.lower()
+        unsafe = await _unsafe_name_set([name], cols) if (name and cols) else set()
+        return _violation_reason(exercise, name_lc, unsafe, injuries, muscle_tokens)
+    except Exception as exc:  # noqa: BLE001 — never block a swap
+        logger.error(
+            "❌ [InjuryGuard] screen_exercise_for_injury failed (fail-open): %s",
+            exc, exc_info=True,
+        )
+        return None
+
+
+async def filter_injury_unsafe(
+    candidates: List[Dict[str, Any]],
+    injuries: List[str],
+) -> Tuple[List[Dict[str, Any]], List[str]]:
+    """Drop contraindicated entries from a candidate/appended list.
+
+    Register row 84: the equipment "finisher" is appended AFTER the terminal
+    guard has already run, with an avoid-set of JOINT names matched against
+    exercise NAMES (a no-op) — so a knee-injured user who asks for the leg-press
+    machine gets "Horizontal Leg Press" (``knee_safe = FALSE``) bolted onto an
+    otherwise-clean workout. Anything appended after the list gate MUST come
+    through here so the gate stays genuinely terminal.
+
+    Returns ``(kept, dropped_names)``. Fail-OPEN: returns the input on error.
+    """
+    try:
+        if not candidates or not injuries:
+            return candidates, []
+        cols = _resolve_injury_columns(injuries)
+        muscle_tokens = resolve_avoided_muscle_tokens(injuries)
+        if not cols and not muscle_tokens:
+            return candidates, []
+        names = _exercise_names(candidates)
+        unsafe = await _unsafe_name_set(names, cols) if cols else set()
+        kept: List[Dict[str, Any]] = []
+        dropped: List[str] = []
+        for item, nm in zip(candidates, names):
+            reason = _violation_reason(
+                item, nm.lower() if nm else "", unsafe, injuries, muscle_tokens
+            )
+            if reason:
+                dropped.append(nm or "(unnamed)")
+                logger.warning(
+                    "🛡️  [InjuryGuard] blocked appended '%s' (%s) for injuries=%s",
+                    nm, reason, injuries,
+                )
+            else:
+                kept.append(item)
+        return kept, dropped
+    except Exception as exc:  # noqa: BLE001 — never block generation
+        logger.error(
+            "❌ [InjuryGuard] filter_injury_unsafe failed (fail-open): %s",
+            exc, exc_info=True,
+        )
+        return candidates, []
+
+
 async def enforce_injury_safety(
     exercises: List[Dict[str, Any]],
     injuries: List[str],
@@ -210,27 +453,31 @@ async def enforce_injury_safety(
     """
     try:
         cols = _resolve_injury_columns(injuries or [])
-        if not cols or not exercises:
+        # Row 86: muscle-area limitations have no `*_safe` column but ARE
+        # enforceable deterministically — resolve them here so the guard no
+        # longer returns early (and silently) for an Abs/Quads-only selection.
+        muscle_tokens = resolve_avoided_muscle_tokens(injuries or [])
+        if (not cols and not muscle_tokens) or not exercises:
             return exercises, [], []
 
         names = _exercise_names(exercises)
-        unsafe = await _unsafe_name_set(names, cols)
+        unsafe = await _unsafe_name_set(names, cols) if cols else set()
 
         safe: List[Dict[str, Any]] = []
         dropped: List[str] = []
         dropped_by_muscle: List[str] = []
         for ex, nm in zip(exercises, names):
-            nm_lc = nm.lower() if nm else ""
-            # Drop if the index confirms it unsafe OR a canonical-movement keyword
-            # matches (backstop for index name-variant misses).
-            if nm and (nm_lc in unsafe or _name_keyword_banned(nm_lc, injuries)):
-                dropped.append(nm)
-            # Backstop: PRIMARY target IS the injured region (e.g. erector-spinae
-            # work for a lower_back user) even though the index/name gates passed.
-            elif _targets_injured_region(ex, injuries):
+            reason = _violation_reason(
+                ex, nm.lower() if nm else "", unsafe, injuries or [], muscle_tokens
+            )
+            if reason:
                 label = nm or "(unnamed)"
                 dropped.append(label)
-                dropped_by_muscle.append(label)
+                if reason in (
+                    "primary_target_is_injured_region",
+                    "primary_target_is_avoided_muscle",
+                ):
+                    dropped_by_muscle.append(f"{label}[{reason}]")
             else:
                 safe.append(ex)
 
@@ -262,6 +509,8 @@ async def enforce_injury_safety(
                     continue  # never backfill a canonically-contraindicated movement
                 if _targets_injured_region(cand, injuries):
                     continue  # never backfill a movement that loads the injured region
+                if _targets_avoided_muscle(cand, muscle_tokens):
+                    continue  # never backfill into an avoided muscle area (row 86)
                 is_stretch = _looks_like_stretch(cand)
                 if is_stretch and not stretch_pass:
                     continue  # defer stretches to the fallback pass

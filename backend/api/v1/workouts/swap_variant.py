@@ -106,6 +106,51 @@ def _fetch_variant_row(sb, variant_id: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+async def _injury_guard_exercises(
+    user_id: str,
+    exercises: Any,
+    source: Dict[str, Any],
+) -> Any:
+    """Route a variant's exercise list through the terminal injury chokepoint.
+
+    Register row 88 (swap class). `generate_variant` transforms + RAG-swaps
+    exercises with NO injury awareness, so a knee-injured user asking for a
+    "moderate" variant can be handed a squat the RAG swap picked. This is the
+    ONE place that screening happens for this endpoint, so BOTH the fresh
+    branch and the CACHE-HIT branch call it — a variant generated before the
+    user logged the injury (or before this guard existed) is just as unsafe as
+    a freshly generated one, and the cache row is what the client opens.
+
+    Returns the (possibly corrected) list. Fail-open: the input list is kept on
+    any error, exactly like `enforce_injury_safety` itself.
+    """
+    if not isinstance(exercises, list) or not exercises:
+        return exercises
+    from api.v1.workouts.readiness_utils import get_active_injuries_with_muscles
+    from services.workout_safety_validator import canonicalize_injury_tokens
+    from services.exercise_rag.injury_guard import enforce_injury_safety
+
+    inj_ctx = await get_active_injuries_with_muscles(user_id)
+    injuries = canonicalize_injury_tokens((inj_ctx or {}).get("injuries") or [])
+    if not injuries:
+        return exercises
+    equipment = source.get("equipment")
+    safe, dropped, added = await enforce_injury_safety(
+        exercises,
+        injuries,
+        equipment=equipment if isinstance(equipment, list) else [],
+        focus_areas=[],
+        difficulty_ceiling=(source.get("difficulty") or "beginner"),
+        user_id=str(user_id),
+    )
+    if dropped:
+        logger.info(
+            "[swap_variant] injury guard dropped %d unsafe → added %d safe for %s",
+            len(dropped), len(added), injuries,
+        )
+    return safe
+
+
 def _summarise(variant_id: str, source_id: str, target_intensity: str,
                name: Optional[str], duration_minutes: Optional[int],
                exercises: Any, cached: bool) -> SwapVariantResponse:
@@ -158,13 +203,36 @@ async def swap_workout_variant(
         # ---- Cache lookup ----------------------------------------------
         cached = get_cached_variant(sb, workout_id, target_intensity)
         if cached and cached.get("id"):
+            # The cache row was written by an EARLIER request — possibly before
+            # the user logged this injury, or before the guard existed. Screen
+            # it with the same chokepoint and REWRITE the stored row when it is
+            # unsafe, so the workout the client opens by id is the safe one.
+            cached_exercises = cached.get("exercises") or []
+            guarded = await _injury_guard_exercises(user_id, cached_exercises, source)
+            if guarded is not cached_exercises and guarded != cached_exercises:
+                try:
+                    sb.client.table("workouts").update(
+                        {"exercises_json": guarded}
+                    ).eq("id", cached["id"]).execute()
+                except Exception as upd_err:
+                    # NO silent fallback: if we cannot repair the stored row we
+                    # must not hand the client a "cached variant is ready"
+                    # response pointing at exercises we just judged unsafe.
+                    logger.error(
+                        "[swap_variant] failed to repair unsafe cached variant "
+                        "%s: %s", cached["id"], upd_err, exc_info=True,
+                    )
+                    raise HTTPException(
+                        status_code=500,
+                        detail="Couldn't rebuild a safe variant of this workout. Please try again.",
+                    )
             return _summarise(
                 variant_id=cached["id"],
                 source_id=workout_id,
                 target_intensity=target_intensity,
                 name=None,  # cached payload omits name; re-fetch for it
                 duration_minutes=cached.get("duration_minutes"),
-                exercises=cached.get("exercises") or [],
+                exercises=guarded,
                 cached=True,
             ).copy(update=_optional_name(sb, cached["id"]))
 
@@ -186,6 +254,15 @@ async def swap_workout_variant(
                 status_code=500,
                 detail="Couldn't build a variant of this workout. Please try again.",
             )
+
+        # ── TERMINAL INJURY-SAFETY GUARD (register row 88, swap class) ────────
+        # Route the variant through the SAME chokepoint as
+        # generate/regenerate/quick, before it is persisted — nothing may be
+        # written after this. Same helper the cache-hit branch above uses, so
+        # the two branches can never diverge.
+        variant["exercises"] = await _injury_guard_exercises(
+            user_id, variant.get("exercises"), source
+        )
 
         persisted = persist_variant_cache_row(sb, source, variant)
         if not persisted:

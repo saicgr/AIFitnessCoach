@@ -20,7 +20,6 @@ from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 
-from ._gym_profile_helpers import get_active_gym_profile_id
 from .utils import row_to_workout
 
 router = APIRouter()
@@ -82,13 +81,14 @@ async def get_workouts_screen_summary(
     verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
-        profile_filter = get_active_gym_profile_id(db, user_id)
 
+        # Day-ownership rule (#104): a scheduled workout belongs to the DAY, not
+        # to the gym profile that was active when it was built. Scoping this read
+        # by the active profile blanked the whole summary after a profile switch.
         rows = db.list_workouts(
             user_id=user_id,
             limit=200,
             offset=0,
-            gym_profile_id=profile_filter,
         )
         workouts = [row_to_workout(r) for r in rows]
 

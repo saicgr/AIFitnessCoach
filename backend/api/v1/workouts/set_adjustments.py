@@ -306,8 +306,10 @@ async def edit_set(workout_id: str, set_number: int, request: EditSetRequest,
                 sets[set_number - 1]["edited_at"] = now.isoformat()
 
                 # Update the workout
+                # `exercises_json` is the real column — a phantom `exercises`
+                # key makes PostgREST reject the entire update (42703).
                 db.update_workout(workout_id, {
-                    "exercises": exercises,
+                    "exercises_json": exercises,
                     "last_modified_at": now.isoformat(),
                     "last_modified_method": "set_edited",
                 })
@@ -433,8 +435,9 @@ async def delete_set(
         del sets[set_number - 1]
 
         # Update the workout
+        # `exercises_json` is the real column — see the set_edited path above.
         db.update_workout(workout_id, {
-            "exercises": exercises,
+            "exercises_json": exercises,
             "last_modified_at": now.isoformat(),
             "last_modified_method": "set_deleted",
         })

@@ -44,6 +44,26 @@ from .progression_utils import (
     get_user_rep_preferences,
 )
 from .user_preference_utils import get_user_progression_pace
+# Injury safety (E2E register row 85). Quick Workout used to have NO
+# deterministic gate — `body.injuries` reached the Gemini PROMPT only, and the
+# client's chips never pre-filled from the profile (Title-Case singular labels
+# compared against the stored plural/underscored ids), so a knee-injured user
+# could ask for a quick workout and get squats. The server now reads the unified
+# active-injury list itself (so a broken chip can no longer disable safety) and
+# runs the SAME terminal `enforce_injury_safety` chokepoint as
+# /generate-stream and /regenerate, through the SAME canonicalizer row 83 added.
+from .readiness_utils import get_active_injuries_with_muscles
+from services.workout_safety_validator import canonicalize_injury_tokens
+# `workouts.scheduled_date` is a NOON-anchored timestamptz (CLAUDE.md). Quick
+# Generate used to write `datetime.now().isoformat()` — the server CLOCK (UTC on
+# Render) rather than the user's DAY — so a quick workout created before ~05:00
+# UTC landed on the PREVIOUS local day for every user west of UTC (E2E row #24).
+from .scheduled_date_anchor import (
+    anchor_scheduled_date,
+    anchor_today,
+    scheduled_local_date,
+)
+from core.timezone_utils import get_user_today, local_day_bounds, resolve_timezone
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -365,16 +385,38 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
         # so a missing signal degrades the prompt instead of blocking the
         # request. None of these block — gather() runs them concurrently.
         try:
-            progression_pace, rep_preferences, progression_context = await asyncio.gather(
+            (
+                progression_pace,
+                rep_preferences,
+                progression_context,
+                injury_context,
+            ) = await asyncio.gather(
                 get_user_progression_pace(body.user_id),
                 get_user_rep_preferences(body.user_id),
                 get_user_progression_context(body.user_id, days=30),
+                get_active_injuries_with_muscles(body.user_id),
             )
         except Exception as _e:
             logger.warning(f"[Quick Workout] progression fetch partially failed: {_e}")
             progression_pace = "medium"
             rep_preferences = {"training_focus": "balanced", "min_reps": 8, "max_reps": 12}
             progression_context = {"mastery_context": ""}
+            # Injury context is NEVER defaulted away — safety must not silently
+            # degrade because a progression signal failed. Re-read it directly
+            # (the reader owns its own error handling).
+            injury_context = await get_active_injuries_with_muscles(body.user_id)
+
+        # Union of the request's chips and the PROFILE's stored limitations,
+        # canonicalized through the one shared normaliser so 'Knee'/'knees' and
+        # 'Lower Back'/'lower_back' collapse onto the same token the safety
+        # columns + muscle-area maps are keyed by.
+        active_injuries = canonicalize_injury_tokens(
+            list(body.injuries or []) + list((injury_context or {}).get("injuries") or [])
+        )
+        if active_injuries:
+            logger.info(
+                f"🩹 [Quick Workout] active limitations for {body.user_id}: {active_injuries}"
+            )
 
         progression_philosophy = build_progression_philosophy_prompt(
             rep_preferences=rep_preferences,
@@ -392,7 +434,12 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 equipment if (isinstance(equipment, list) and equipment)
                 else ["body weight"]
             )
-            _library_pool = _lib_svc.get_exercises_for_workout(
+            # #60 — same focus-vocabulary bridge as /generate-stream: a
+            # quick "lower body" request must not be served an upper-body pool
+            # by the library service's silent default.
+            from .focus_validation_utils import build_library_pool
+            _library_pool = build_library_pool(
+                _lib_svc,
                 focus_area=_focus_for_lib,
                 equipment=_eq_for_lib,
                 count=20,  # quick workouts cap at ~6 exercises, give 20 to choose
@@ -413,7 +460,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             equipment=equipment if isinstance(equipment, list) else [],
             avoided_exercises=avoided_exercises,
             avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
-            injuries=body.injuries,
+            injuries=active_injuries or None,
             progression_philosophy=progression_philosophy,
             progression_pace=progression_pace,
             library_exercises=_library_pool if _library_pool else None,
@@ -535,6 +582,29 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                     workout_type=body.focus,
                 )
 
+            # ── TERMINAL INJURY-SAFETY GUARD (register row 85) ────────────────
+            # MUST stay the last mutation of `exercises` before persist — the
+            # same invariant /generate-stream and /generate carry. Drops any
+            # index-confirmed-unsafe movement for an active joint injury (and
+            # anything whose primary target is an avoided muscle area) and
+            # backfills a vetted-safe replacement, so the user still gets a full
+            # workout. Fail-open (keeps the list) on any error.
+            if exercises and active_injuries:
+                from services.exercise_rag.injury_guard import enforce_injury_safety
+                exercises, _inj_dropped, _inj_added = await enforce_injury_safety(
+                    exercises,
+                    active_injuries,
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    focus_areas=[body.focus] if body.focus else [],
+                    difficulty_ceiling=(fitness_level or "beginner"),
+                    user_id=str(body.user_id),
+                )
+                if _inj_dropped:
+                    logger.info(
+                        f"🩹 [Quick InjuryGuard] dropped {len(_inj_dropped)} unsafe "
+                        f"→ added {len(_inj_added)} safe for {active_injuries}"
+                    )
+
             if not exercises:
                 raise safe_internal_error(ValueError("No valid exercises generated"), "workouts")
 
@@ -555,7 +625,10 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             "name": workout_name,
             "type": workout_type,
             "difficulty": difficulty,
-            "scheduled_date": datetime.now().isoformat(),
+            # NOON-anchored to the user's CURRENT LOCAL DAY (#24). Never the
+            # server clock — that put the workout on yesterday for anyone west
+            # of UTC whenever generation ran before local ~19:00.
+            "scheduled_date": anchor_today(resolve_timezone(request, db, body.user_id)),
             "exercises_json": exercises,
             "duration_minutes": body.duration,
             "generation_method": "ai",
@@ -564,7 +637,12 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 "focus": body.focus,
                 "difficulty": body.difficulty,
                 "equipment": body.equipment,
+                # Record what the GUARD actually enforced, not just the chips the
+                # client sent — the client chip list is frequently empty while the
+                # profile carries the real limitations, and a metadata row reading
+                # `injuries: []` next to a guarded workout is unauditable.
                 "injuries": body.injuries,
+                "enforced_injuries": active_injuries,
                 "duration": body.duration,
                 "quick_workout": True,
                 "source": body.source,
@@ -651,12 +729,20 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
     synced to the backend and available across devices.
     """
     try:
-        # Extract user_id from JWT auth middleware, fallback to workout payload
-        user_id = getattr(request.state, "user_id", None)
-        if not user_id:
-            user_id = body.workout.get("user_id")
+        # Identity comes from the VERIFIED token, never the payload.
+        # `request.state.user_id` is never assigned anywhere in this codebase
+        # (grep: only ever read), so the old fallback chain resolved to
+        # `body.workout["user_id"]` on every request — a client-supplied id.
+        # That is what the injury guard below queries the limitations of, so a
+        # blank or foreign id silently disabled the endpoint's ONLY safety pass
+        # (and wrote the workout into someone else's account). Same 403 contract
+        # as POST /workouts/quick.
+        user_id = current_user.get("id") or current_user.get("sub")
         if not user_id:
             raise HTTPException(status_code=400, detail="Missing user_id")
+        _payload_user_id = body.workout.get("user_id")
+        if _payload_user_id and str(_payload_user_id) != str(user_id):
+            raise HTTPException(status_code=403, detail="Access denied")
 
         workout_data = body.workout
 
@@ -670,6 +756,39 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
 
         # Build the DB row
         exercises_json = workout_data.get("exercises_json", [])
+        if isinstance(exercises_json, str):
+            try:
+                exercises_json = json.loads(exercises_json)
+            except (json.JSONDecodeError, ValueError):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Workout data field exercises_json is not valid JSON",
+                )
+
+        # ── TERMINAL INJURY-SAFETY GUARD (register row 85, same class) ────────
+        # Locally/client-generated quick workouts land here fully formed — they
+        # never touched the server generator, so this is their ONLY safety pass.
+        # Same chokepoint, same canonicalizer.
+        if isinstance(exercises_json, list) and exercises_json:
+            _inj_ctx = await get_active_injuries_with_muscles(user_id)
+            _save_injuries = canonicalize_injury_tokens((_inj_ctx or {}).get("injuries") or [])
+            if _save_injuries:
+                from services.exercise_rag.injury_guard import enforce_injury_safety
+                _user_row = db.get_user(user_id) or {}
+                exercises_json, _sv_dropped, _sv_added = await enforce_injury_safety(
+                    exercises_json,
+                    _save_injuries,
+                    equipment=_user_row.get("equipment") if isinstance(_user_row.get("equipment"), list) else [],
+                    focus_areas=[],
+                    difficulty_ceiling=(_user_row.get("fitness_level") or "beginner"),
+                    user_id=str(user_id),
+                )
+                if _sv_dropped:
+                    logger.info(
+                        f"🩹 [Quick Save InjuryGuard] dropped {len(_sv_dropped)} unsafe "
+                        f"→ added {len(_sv_added)} safe for {_save_injuries}"
+                    )
+
         if isinstance(exercises_json, list):
             exercises_json = json.dumps(exercises_json)
 
@@ -679,7 +798,14 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
             "name": workout_data.get("name", "Quick Workout"),
             "type": workout_data.get("type", "quick"),
             "difficulty": workout_data.get("difficulty", "medium"),
-            "scheduled_date": workout_data.get("scheduled_date") or datetime.now().isoformat(),
+            # The client sends a bare local "YYYY-MM-DD" here — cast straight to
+            # timestamptz that is MIDNIGHT UTC, i.e. the previous local evening
+            # for every western user (#24). Anchor it to noon of the local day
+            # it names; fall back to the user's today when absent.
+            "scheduled_date": anchor_scheduled_date(
+                workout_data.get("scheduled_date"),
+                resolve_timezone(request, db, user_id),
+            ),
             "exercises_json": exercises_json,
             "duration_minutes": workout_data.get("duration_minutes", 15),
             "estimated_duration_minutes": workout_data.get("estimated_duration_minutes"),
@@ -960,25 +1086,42 @@ async def quick_day_change(
 
     # Reschedule future scheduled-but-not-completed workouts onto the nearest
     # new day. Past workouts and completed workouts are untouched.
-    from datetime import date, timedelta
-    today = date.today()
+    #
+    # scheduled_date is a NOON-anchored timestamptz, so BOTH halves of this loop
+    # were broken (#24 class): `date.fromisoformat("2026-07-29T17:00:00+00:00")`
+    # raises on every real row (it rejects a full timestamp on 3.9-3.12), so the
+    # except swallowed it and the loop rescheduled NOTHING; and the write put a
+    # bare date back, i.e. midnight UTC. Both now go through the anchor helpers.
+    from datetime import date as _date_cls, timedelta
+    _tz = resolve_timezone(None, db, request.user_id)
+    today = _date_cls.fromisoformat(get_user_today(_tz))
+    # The READ side needs the same local-day treatment as the write: a bare
+    # "YYYY-MM-DD" lower bound sits at 00:00Z, which is AFTER today's own
+    # noon-local row for any zone east of UTC+12 (Pacific/Kiritimati, Apia,
+    # Auckland in DST) — those users' current day silently dropped out of the
+    # reschedule set. local_day_bounds is the tz-exact start of the local day.
+    _today_start, _ = local_day_bounds(today.isoformat(), _tz)
     future = (
         db.client.table("workouts")
         .select("id, scheduled_date, is_completed")
         .eq("user_id", request.user_id)
-        .gte("scheduled_date", today.isoformat())
+        .gte("scheduled_date", _today_start)
         .eq("is_completed", False)
         .execute()
     )
     rescheduled = 0
     unchanged = 0
     for w in (future.data or []):
-        sched = w.get("scheduled_date")
-        if not sched:
+        local_day = scheduled_local_date(w.get("scheduled_date"), _tz)
+        if not local_day:
             continue
         try:
-            d = date.fromisoformat(sched)
-        except Exception:
+            d = _date_cls.fromisoformat(local_day)
+        except ValueError:
+            logger.warning(
+                f"[quick-day-change] unparseable scheduled_date on workout "
+                f"{w.get('id')}: {w.get('scheduled_date')!r}"
+            )
             continue
         if d.weekday() in new_days:
             unchanged += 1
@@ -993,7 +1136,9 @@ async def quick_day_change(
         if target is None:
             continue
         try:
-            db.client.table("workouts").update({"scheduled_date": target.isoformat()}).eq("id", w["id"]).execute()
+            db.client.table("workouts").update(
+                {"scheduled_date": anchor_scheduled_date(target, _tz)}
+            ).eq("id", w["id"]).execute()
             rescheduled += 1
         except Exception as upd_err:
             logger.warning(f"[quick-day-change] failed to reschedule workout {w.get('id')}: {upd_err}")

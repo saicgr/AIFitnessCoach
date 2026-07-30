@@ -276,6 +276,11 @@ class TodayWorkoutSummary(BaseModel):
     program_week: Optional[int] = None      # 1-based week within the program
     program_slot: Optional[str] = None      # 'primary' | 'addon'
     assignment_id: Optional[str] = None     # user_program_assignments.id
+    # Equipment provenance: the gym profile this workout was BUILT for (may be
+    # null for quick / legacy workouts). A workout belongs to the DAY, not to a
+    # profile, so /today never filters on this — the client compares it against
+    # the response-level `gym_profile_id` to offer "adapt to this gym".
+    gym_profile_id: Optional[str] = None
 
 
 class TodayWorkoutResponse(BaseModel):
@@ -507,6 +512,9 @@ def _row_to_summary(
         program_week=_program_week,
         program_slot=_program_slot,
         assignment_id=str(_assignment_id) if _assignment_id else None,
+        gym_profile_id=(
+            str(row["gym_profile_id"]) if row.get("gym_profile_id") else None
+        ),
     )
 
 
@@ -624,13 +632,16 @@ def _get_upcoming_dates_needing_generation(
     range_start, _ = local_date_to_utc_range(today_date.isoformat(), user_tz)
     _, range_end = local_date_to_utc_range(end_date.isoformat(), user_tz)
 
-    # Single query for ALL workouts in the next 14 days (timezone-aware)
+    # Single query for ALL workouts in the next 14 days (timezone-aware).
+    # NO gym_profile_id filter — day-ownership rule (#104). A day that already
+    # holds a workout is covered no matter which profile built it; scoping here
+    # made every upcoming day look "missing" right after a profile switch and
+    # queued 14 days of redundant generation.
     existing_workouts = db.list_workouts(
         user_id=user_id,
         from_date=range_start,
         to_date=range_end,
         limit=30,
-        gym_profile_id=active_profile_id,
     )
 
     # Build set of dates that already have workouts.
@@ -1283,13 +1294,25 @@ async def get_today_workout(
         # refresh), we return a degraded response instead of holding the
         # request open for 25s+ which produces the iOS app-hang loop in
         # Sentry FITWIZ-FLUTTER-97.
+        # DAY-OWNERSHIP RULE (issue #104): a workout scheduled for a date belongs
+        # to the DAY, not to the equipment profile that happened to be active when
+        # it was generated. These reads therefore pass NO gym_profile_id.
+        # Filtering here used to make an existing, healthy workout invisible the
+        # moment the user switched gym profiles: /today returned
+        # has_workout_today=False, the client auto-generated, the generator's own
+        # dedup check (which correctly does NOT scope by profile — see
+        # auto_generate_workout) found the existing row and reported "completed"
+        # without creating anything, /today still returned False … forever.
+        # The active profile still drives GENERATION (equipment) and is returned
+        # as `gym_profile_id` so the client can offer "adapt to this gym" when a
+        # workout's own `gym_profile_id` differs.
         try:
             today_rows, future_rows, completed_today_rows = await asyncio.wait_for(
                 asyncio.gather(
                     _run_with_timeout(
                         loop.run_in_executor(_db_executor, lambda: db.list_workouts(
                             user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
-                            is_completed=False, limit=5, gym_profile_id=active_profile_id,
+                            is_completed=False, limit=5,
                             allow_multiple_per_date=True,
                         )),
                         label="today_rows",
@@ -1297,14 +1320,14 @@ async def get_today_workout(
                     _run_with_timeout(
                         loop.run_in_executor(_db_executor, lambda: db.list_workouts(
                             user_id=user_id, from_date=tomorrow_utc_start, to_date=future_utc_end,
-                            is_completed=False, limit=1, order_asc=True, gym_profile_id=active_profile_id,
+                            is_completed=False, limit=1, order_asc=True,
                         )),
                         label="future_rows",
                     ),
                     _run_with_timeout(
                         loop.run_in_executor(_db_executor, lambda: db.list_workouts(
                             user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
-                            is_completed=True, limit=1, gym_profile_id=active_profile_id,
+                            is_completed=True, limit=1,
                         )),
                         label="completed_today_rows",
                     ),
@@ -1341,10 +1364,9 @@ async def get_today_workout(
             ).lte(
                 "scheduled_date", _gen_end
             ).eq("status", "generating")
-            if active_profile_id:
-                gen_check = gen_check.or_(
-                    f"gym_profile_id.eq.{active_profile_id},gym_profile_id.is.null"
-                )
+            # No gym_profile_id scoping — day-ownership rule (#104). A
+            # placeholder under ANY profile claims today's slot, exactly as
+            # auto_generate_workout's own dedup check already assumes.
             # supabase-py .execute() is a blocking HTTP call — run it off the
             # event loop so it can't freeze the worker on a slow round-trip.
             gen_result = await asyncio.to_thread(gen_check.execute)

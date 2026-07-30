@@ -80,6 +80,8 @@ final todayWorkoutProvider =
     TodayWorkoutNotifier._hasTriggeredGeneration = false;
     TodayWorkoutNotifier._generationTimedOut = false;
     TodayWorkoutNotifier._lastGenerationFailure = null;
+    TodayWorkoutNotifier._awaitingWorkoutAfterSuccess = false;
+    TodayWorkoutNotifier._futileGenerationCount = 0;
   }
   return TodayWorkoutNotifier(ref);
 });
@@ -109,6 +111,29 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// STATIC: Tracks if generation timed out — prevents auto-re-trigger loop
   /// When true, the "Generate Workout" button is shown instead of auto-triggering
   static bool _generationTimedOut = false;
+
+  /// #104 — FUTILE-GENERATION CIRCUIT BREAKER.
+  ///
+  /// The infinite-regenerate loop that shipped in 2026-07 had this shape:
+  /// `/today` could not SEE an existing workout (it was scoped to the gym
+  /// profile that was active when the workout was built), so it answered
+  /// `needs_generation=true`; the client fired generation; the backend's own
+  /// dedup — correctly NOT profile-scoped — found the row, created nothing and
+  /// streamed back `completed`; the completion handler cleared
+  /// `_hasTriggeredGeneration`; the next `/today` said "still nothing" and the
+  /// whole thing went round again, forever, behind a spinner that never
+  /// resolved.
+  ///
+  /// The server-side scoping bug is fixed, but "generation succeeded and the
+  /// workout is still not visible" must never again be an unbounded loop. A
+  /// generation run that reports COMPLETED and leaves `/today` with nothing to
+  /// show is FUTILE: re-running it cannot help, because the previous run
+  /// already decided there was nothing to do. After
+  /// [_maxFutileGenerations] of those we stop and surface an honest error
+  /// instead of spinning.
+  static bool _awaitingWorkoutAfterSuccess = false;
+  static int _futileGenerationCount = 0;
+  static const int _maxFutileGenerations = 2;
 
   /// A4: timestamp of the last explicit program-regenerate (Apply now). While
   /// this window is open the provider must NOT fire its OWN param-less
@@ -530,6 +555,13 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       if (response != null &&
           (response.todayWorkout != null || response.nextWorkout != null)) {
         _generationStartedAt = null;
+        // #104 — real content settles the futile-generation circuit breaker.
+        // This must run OUTSIDE the needsGeneration branch below: when the
+        // last run genuinely worked, `needs_generation` is false and that
+        // branch never executes, so a stale `_awaitingWorkoutAfterSuccess`
+        // would otherwise be scored against some unrelated later cycle.
+        _awaitingWorkoutAfterSuccess = false;
+        _futileGenerationCount = 0;
       }
 
       // Handle generation polling (skip if background gen poll is already active to avoid dual timers)
@@ -561,6 +593,22 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       } else if (response?.needsGeneration == true &&
           response?.nextWorkoutDate != null) {
         final hasAnyWorkout = response!.todayWorkout != null || response.nextWorkout != null;
+
+        // #104 — score the previous generation run. A run that reported
+        // COMPLETED and left us with nothing to display did no work; counting
+        // those is what makes this loop finite. A run that produced content
+        // clears the counter.
+        if (_awaitingWorkoutAfterSuccess) {
+          _awaitingWorkoutAfterSuccess = false;
+          if (hasAnyWorkout) {
+            _futileGenerationCount = 0;
+          } else {
+            _futileGenerationCount++;
+            debugPrint('⚠️ [Auto-Gen] Generation reported success but /today still '
+                'has no workout (futile run #$_futileGenerationCount/'
+                '$_maxFutileGenerations)');
+          }
+        }
 
         // Cooldown gate: if we recently failed (especially on 429), don't
         // hammer the backend on every /today poll. Without this gate, the
@@ -598,6 +646,36 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             needsGeneration: false,
             nextWorkoutDate: response.nextWorkoutDate,
             gymProfileId: response.gymProfileId,
+          );
+        } else if (!hasAnyWorkout &&
+            _futileGenerationCount >= _maxFutileGenerations) {
+          // #104 — circuit breaker. Generation has now reported success
+          // $_maxFutileGenerations times without producing anything /today can
+          // show, so the workout is being hidden rather than missing and
+          // another round would only re-run the same no-op. Stop, drop the
+          // spinner, and say so — never a silent forever-spinner.
+          debugPrint('🛑 [Auto-Gen] $_futileGenerationCount generations completed '
+              'with nothing visible — stopping and surfacing a retry CTA');
+          _stopBackgroundGenerationPolling();
+          _cancelPolling();
+          _generationTimedOut = true;
+          _hasTriggeredGeneration = false;
+          response = TodayWorkoutResponse(
+            hasWorkoutToday: response.hasWorkoutToday,
+            todayWorkout: response.todayWorkout,
+            nextWorkout: response.nextWorkout,
+            daysUntilNext: response.daysUntilNext,
+            restDayMessage: response.restDayMessage,
+            completedToday: response.completedToday,
+            completedWorkout: response.completedWorkout,
+            extraTodayWorkouts: response.extraTodayWorkouts,
+            isGenerating: false,
+            generationMessage: null,
+            needsGeneration: true,
+            nextWorkoutDate: response.nextWorkoutDate,
+            gymProfileId: response.gymProfileId,
+            lastGenerationError:
+                "Your workout was built but we couldn't load it. Tap to retry.",
           );
         } else if (!hasAnyWorkout && !_hasTriggeredGeneration && !_generationTimedOut && !inCooldown) {
           // No workouts at all - show generating UI and trigger streaming gen
@@ -965,6 +1043,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             _stopBackgroundGenerationPolling();
             _hasTriggeredGeneration = false;
             _generationTimedOut = false;
+            // #104 — a real workout arrived, so the last generation run was
+            // productive. Clear the futile-run circuit breaker.
+            _awaitingWorkoutAfterSuccess = false;
+            _futileGenerationCount = 0;
             // Normalize before caching (clears stale isGenerating flag)
             final normalized = _normalizeResponse(response);
             _safeSetState(AsyncValue.data(normalized));
@@ -1113,6 +1195,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     _lastGenerationFailure = null;
     _generationTimedOut = false;
     _inMemoryCache = null;
+    // #104 — an explicit user action (profile switch / retry / regenerate) is
+    // a genuinely fresh cycle, so the futile-run breaker starts over.
+    _awaitingWorkoutAfterSuccess = false;
+    _futileGenerationCount = 0;
     // §8a — stamp the retry-fired time so a double-tap of the retry CTA
     // within the next 3s short-circuits before launching a second job.
     _lastRetryFiredAt = DateTime.now();
@@ -1161,6 +1247,8 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     _hasTriggeredGeneration = false;
     _isAutoGenerating = false;
     _generationTimedOut = false;
+    _awaitingWorkoutAfterSuccess = false;
+    _futileGenerationCount = 0;
     debugPrint('🧹 [TodayWorkout] In-memory cache cleared');
   }
 
@@ -1258,6 +1346,9 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
             _lastGenerationFailure = null;
             _hasTriggeredGeneration = false;
             _generationTimedOut = false;
+            // #104 — the NEXT /today decides whether this success was real.
+            // If it still shows nothing, the run counts as futile.
+            _awaitingWorkoutAfterSuccess = true;
             _stopBackgroundGenerationPolling();
             if (!_disposed) refresh();
             break;

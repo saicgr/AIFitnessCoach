@@ -112,7 +112,9 @@ def report_injury(
                 continue
 
             workout_id = workout.get("id")
-            exercises_data = workout.get("exercises")
+            # `workouts` stores exercises in `exercises_json`; reading "exercises"
+            # returned None so this loop saw every workout as empty (E2E row 55 class).
+            exercises_data = workout.get("exercises_json")
 
             if isinstance(exercises_data, str):
                 try:
@@ -129,10 +131,16 @@ def report_injury(
                 exercises_removed_total.extend([ex.get("name", "Unknown") for ex in removed])
                 updated_exercises = injury_service.add_rehab_exercises_to_workout(safe_exercises, [injury])
 
-                db.update_workout(workout_id, {
-                    "exercises": updated_exercises,
+                injury_update = db.update_workout(workout_id, {
+                    "exercises_json": updated_exercises,   # real column
                     "last_modified_method": "injury_modification"
                 })
+                if not injury_update:
+                    logger.error(
+                        f"[injury] update_workout wrote no row for {workout_id} — "
+                        f"injury filtering NOT applied"
+                    )
+                    continue
 
                 workouts_modified += 1
 

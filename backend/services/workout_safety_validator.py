@@ -33,7 +33,7 @@ import math
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from sqlalchemy import text
 
@@ -82,6 +82,53 @@ _INJURY_JOINT_ALIASES: Dict[str, str] = {
     "low back": "lower_back",
     "lowerback": "lower_back",
 }
+
+
+def canonicalize_injury_token(raw: Any) -> str:
+    """Lowercase + underscore + alias-map ONE injury/limitation id.
+
+    This is the single normaliser every surface must use (row 83 + row 85).
+    It does NOT whitelist: muscle-area chips (`abs`, `quads`, `upper_back`, …)
+    survive unchanged so the injury guard can apply muscle-area filtering to
+    them, while joint ids collapse onto the SINGULAR spelling that the
+    `<joint>_safe` column names require. Returns "" for empty/sentinel input.
+    """
+    key = str(raw or "").strip().lower()
+    if not key or key in {"none", "other", "n/a", "na"}:
+        return ""
+    # Alias BEFORE and AFTER underscoring so both "lower back" and "lower_back"
+    # (and plural app ids like "knees") resolve to the same canonical token.
+    key = _INJURY_JOINT_ALIASES.get(key, key).replace(" ", "_")
+    return _INJURY_JOINT_ALIASES.get(key, key)
+
+
+def canonicalize_injury_tokens(values: Optional[Iterable[Any]]) -> List[str]:
+    """Canonicalize + dedupe a mixed injury/limitation list, order-preserving.
+
+    Keeps muscle-area entries (unlike `normalize_injury_tokens`, which is the
+    joint-only whitelist used to pick `<joint>_safe` columns).
+    """
+    seen: set = set()
+    out: List[str] = []
+    for raw in values or []:
+        key = canonicalize_injury_token(raw)
+        if key and key not in seen:
+            seen.add(key)
+            out.append(key)
+    return out
+
+
+def normalize_injury_tokens(values: Optional[Iterable[Any]]) -> List[str]:
+    """Canonicalize, then whitelist against SUPPORTED_INJURY_JOINTS (deduped).
+
+    The whitelist is also the SQL-injection guard: these tokens are interpolated
+    straight into `f"t.{joint}_safe IS TRUE"`.
+    """
+    out: List[str] = []
+    for key in canonicalize_injury_tokens(values):
+        if key in SUPPORTED_INJURY_JOINTS:
+            out.append(key)
+    return out
 
 # Ordinal ranking for `safety_difficulty`. Used as a numeric ceiling filter so
 # a beginner user never gets advanced/elite exercises, even if Gemini invents
@@ -182,19 +229,12 @@ class UserSafetyContext:
     user_id: str
 
     def normalized_injuries(self) -> List[str]:
-        """Lowercased, alias-mapped, whitelisted-against-SUPPORTED_INJURY_JOINTS, deduped."""
-        seen: set = set()
-        out: List[str] = []
-        for inj in self.injuries or []:
-            raw = (inj or "").strip().lower()
-            # Alias BEFORE and AFTER underscoring so both "lower back" and
-            # "lower_back" (and plural app ids like "knees") resolve.
-            key = _INJURY_JOINT_ALIASES.get(raw, raw).replace(" ", "_")
-            key = _INJURY_JOINT_ALIASES.get(key, key)
-            if key in SUPPORTED_INJURY_JOINTS and key not in seen:
-                seen.add(key)
-                out.append(key)
-        return out
+        """Lowercased, alias-mapped, whitelisted-against-SUPPORTED_INJURY_JOINTS, deduped.
+
+        Delegates to the module-level `normalize_injury_tokens` so there is
+        exactly ONE normaliser shared by generate / regenerate / quick / swap.
+        """
+        return normalize_injury_tokens(self.injuries)
 
     def difficulty_rank(self) -> int:
         return _DIFFICULTY_RANK.get((self.difficulty or "").strip().lower(), 1)

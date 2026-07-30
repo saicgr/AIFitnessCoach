@@ -81,21 +81,12 @@ async def get_upcoming_workouts(
         end_date = today_date + timedelta(days=days)
         end_str = end_date.isoformat()
 
-        # If no gym_profile_id provided, try to get the active one
+        # Day-ownership rule (#104): a scheduled workout belongs to the DAY, not
+        # to the gym profile that was active when it was generated. This read is
+        # only ever scoped when the CALLER explicitly asks for one profile;
+        # it never silently falls back to the active profile, which used to make
+        # every pre-cached day vanish the moment the user switched gyms.
         profile_filter = gym_profile_id
-        if not profile_filter:
-            try:
-                active_result = db.client.table("gym_profiles") \
-                    .select("id") \
-                    .eq("user_id", user_id) \
-                    .eq("is_active", True) \
-                    .single() \
-                    .execute()
-                if active_result.data:
-                    profile_filter = active_result.data.get("id")
-                    logger.info(f"[BATCH] Using active gym profile: {profile_filter}")
-            except Exception as e:
-                logger.debug(f"No active gym profile found: {e}")
 
         # Query workouts in date range, ordered by scheduled_date ASC
         rows = db.list_workouts(

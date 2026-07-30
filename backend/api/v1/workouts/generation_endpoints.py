@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today, target_date_to_utc_iso
+from .scheduled_date_anchor import anchor_scheduled_date
 from core.exceptions import safe_internal_error
 from core.config import get_settings
 from core.rate_limiter import user_limiter
@@ -202,7 +203,15 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 placeholder_data = {
                     "id": placeholder_id,
                     "user_id": body.user_id,
-                    "scheduled_date": body.scheduled_date,
+                    # NOON-anchor the placeholder exactly like the real workout
+                    # it stands in for (#24 class). Written raw, `body.scheduled_date`
+                    # is a bare local "YYYY-MM-DD" → midnight UTC → the
+                    # placeholder sits on the PREVIOUS local day, so /today's
+                    # day-window "is a generation in flight?" check never sees
+                    # it and the dedup it exists to provide silently fails.
+                    "scheduled_date": anchor_scheduled_date(
+                        body.scheduled_date, _gen_tz
+                    ),
                     "status": "generating",
                     "name": "Generating...",
                     "type": body.workout_type or "strength",
