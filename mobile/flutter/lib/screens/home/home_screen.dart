@@ -116,6 +116,7 @@ import '../../core/perf/perf_trace.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../widgets/quick_log_fab_chrome.dart';
 import 'widgets/home_schedule_dates.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
