@@ -1,5 +1,6 @@
 """
-Chat proposal apply / dismiss endpoints.
+Chat proposal apply / dismiss endpoints + the coach workout card's
+deterministic Schedule action.
 
 When the Workout agent stages a change via the `propose_workout_change` tool,
 a row lands in `chat_pending_proposals` and the assistant message returns a
@@ -13,19 +14,34 @@ Security model:
   so the action_data blob alone (if leaked) can't be replayed by another
   client. Compared constant-time.
 - Expired rows return 410; already-consumed rows return 409.
+
+POST /chat/workout-card/schedule exists because the card's Schedule chip used
+to re-enter the LLM with the free text "Schedule this workout for tomorrow."
+(E2E row 99). The model has no handle on the card's identity, so it AUTHORED A
+NEW WORKOUT — different exercises, same title — and scheduled nothing: the user's
+chosen workout was silently discarded and `workouts` gained no row. The chip must
+carry the workout_id and schedule THAT row deterministically, with no model in
+the loop.
 """
 import asyncio
 import hmac
-from datetime import datetime, timezone
+import re
+from datetime import date as date_cls, datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
+from core.timezone_utils import (
+    get_user_today,
+    resolve_timezone,
+    target_date_to_utc_iso,
+    utc_to_local_date,
+)
 from services.langgraph_agents.tools.workout_tools import (
     add_exercise_to_workout,
     remove_exercise_from_workout,
@@ -234,3 +250,145 @@ async def dismiss_proposal(
         raise
     except Exception as e:
         raise safe_internal_error(e, "dismiss_proposal")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Coach workout card — deterministic Schedule action (E2E row 99)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+
+class ScheduleWorkoutCardRequest(BaseModel):
+    """Body for POST /chat/workout-card/schedule.
+
+    `workout_id` is the identity of the workout ON THE CARD — that is the whole
+    point of this endpoint. Exactly one of `target_date` / `days_from_today`
+    decides when; `days_from_today` is the default so the client never has to
+    compute a date (and therefore can never compute it in the wrong timezone).
+    """
+    workout_id: str = Field(..., max_length=64)
+    target_date: Optional[str] = Field(
+        default=None,
+        description="Local calendar date YYYY-MM-DD. Omit to use days_from_today.",
+    )
+    days_from_today: Optional[int] = Field(
+        default=None, ge=0, le=365,
+        description="Offset from the user's local today. 1 = tomorrow.",
+    )
+
+
+def _resolve_target_local_date(
+    body: ScheduleWorkoutCardRequest, tz: str
+) -> str:
+    """The user-local YYYY-MM-DD this workout should land on."""
+    if body.target_date:
+        try:
+            parsed = date_cls.fromisoformat(body.target_date.strip())
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="target_date must be a calendar date in YYYY-MM-DD form",
+            )
+        return parsed.isoformat()
+
+    offset = 1 if body.days_from_today is None else body.days_from_today
+    today = date_cls.fromisoformat(get_user_today(tz))
+    return (today + timedelta(days=offset)).isoformat()
+
+
+@router.post("/workout-card/schedule")
+async def schedule_workout_from_card(
+    request: Request,
+    body: ScheduleWorkoutCardRequest,
+    current_user: dict = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Schedule THE WORKOUT ON THE CARD onto a chosen local day. No LLM.
+
+    Deterministic end-to-end: the workout is looked up by id, ownership is
+    enforced, and `workouts.scheduled_date` is written at NOON of the target
+    local day (CLAUDE.md convention — a bare date sits at 00:00Z and falls
+    outside its own local-day window for every negative-offset user).
+
+    Deliberately does NOT swap with whatever already sits on the target day:
+    displacing the user's planned session to make room for a chat-generated one
+    is destructive, and `workouts` supports several rows per day.
+
+    Returns the PERSISTED row so the card can render the real state rather than
+    an optimistic guess.
+
+    Status contract: 404 unknown workout · 403 not yours · 409 already completed
+    · 422 malformed date · 500 write rejected.
+    """
+    user_id = str(current_user["id"])
+    workout_id = body.workout_id.strip()
+    if not _UUID_RE.match(workout_id):
+        raise HTTPException(status_code=422, detail="workout_id must be a UUID")
+
+    try:
+        db = get_supabase_db()
+        workout = await asyncio.to_thread(db.get_workout, workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        if str(workout.get("user_id")) != user_id:
+            logger.warning(
+                f"IDOR blocked: user {user_id} tried to schedule workout "
+                f"{workout_id} owned by {workout.get('user_id')}"
+            )
+            raise HTTPException(status_code=403, detail="Access denied")
+        if workout.get("is_completed"):
+            raise HTTPException(
+                status_code=409,
+                detail="That workout is already completed — generate a new one to schedule.",
+            )
+
+        tz = resolve_timezone(request, db=db, user_id=user_id)
+        target_local_date = _resolve_target_local_date(body, tz)
+        previous_local_date = (
+            utc_to_local_date(workout.get("scheduled_date"), tz)
+            if workout.get("scheduled_date") else None
+        )
+
+        updated = await asyncio.to_thread(
+            db.update_workout,
+            workout_id,
+            {
+                "scheduled_date": target_date_to_utc_iso(target_local_date, tz),
+                "last_modified_method": "coach_card_schedule",
+            },
+        )
+        if not updated:
+            # A write that changed nothing must never be reported as scheduled.
+            logger.error(
+                f"[workout-card/schedule] update wrote no row for {workout_id} "
+                f"(user={user_id}, target={target_local_date})"
+            )
+            raise safe_internal_error(
+                Exception("scheduled_date update returned no row"),
+                "schedule_workout_from_card",
+            )
+
+        exercises = updated.get("exercises_json") or []
+        logger.info(
+            f"[workout-card/schedule] {workout_id} → {target_local_date} "
+            f"({tz}) for user {user_id}"
+        )
+        return {
+            "success": True,
+            "workout_id": workout_id,
+            "workout_name": updated.get("name"),
+            "scheduled_local_date": target_local_date,
+            "previous_local_date": previous_local_date,
+            "scheduled_date": updated.get("scheduled_date"),
+            "timezone": tz,
+            "exercise_count": len(exercises) if isinstance(exercises, list) else 0,
+            "workout": updated,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "schedule_workout_from_card")

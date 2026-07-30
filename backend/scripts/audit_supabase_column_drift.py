@@ -15,14 +15,30 @@ This has bitten twice:
     key; PGRST204 rejected the WHOLE update, silently dropping all 13
     enrichment fields, so those rows kept a NULL health_score.
 
+  - 2026-07-29: the gate reported CLEAN while four of the coach's five chat
+    "Apply" dispatch actions wrote `{"exercises": [...]}` to `workouts` (the
+    column is `exercises_json`) — because the write went through the DB-facade
+    helper `db.update_workout(...)`, which has no literal `.table("workouts")`
+    receiver for the passes above to key off. See the helper-mediated section.
+
 What it does: statically extracts, from every .py under backend/,
   1. `.table("<name>").select("<cols>")` column lists,
   2. `.insert(...)/.update(...)/.upsert(...)` payload KEYS (inline literal
      dicts, lists of dicts, and variable-bound payloads whose literal keys
-     resolve statically — including one built by a same-file helper), and
-  3. first-arg column names of `.eq/.lt/.order/…` filters,
+     resolve statically — including one built by a same-file helper),
+  3. first-arg column names of `.eq/.lt/.order/…` filters, and
+  4. payload KEYS handed to a DB-facade WRITE HELPER (`db.update_workout(id,
+     payload)`, `db.create_workout_log(payload)`, …). The helper→table map is
+     DERIVED from the helpers' own bodies, never hardcoded.
 and validates each identifier against `schema_columns_snapshot.json`
 (a checked-in dump of information_schema).
+
+NOTE ON THE HELPER-WRITE BACKLOG (2026-07-29)
+---------------------------------------------
+Pass 4 is deliberately NOT baselined. Every finding it currently reports is a
+100%-broken write (PostgREST rejects the whole payload on one phantom key), not
+cosmetic drift, so silencing it would defeat the reason it was added. Fix the
+sites, then the gate goes green on its own.
 
 Usage:
     python scripts/audit_supabase_column_drift.py            # report everything
@@ -640,8 +656,249 @@ def _write_violations(src: str, path, schema: dict):
     return out
 
 
+# ---------------------------------------------------------------------------
+# Helper-mediated writes  (added 2026-07-29 — E2E register row 55)
+#
+# The passes above key everything off a literal `.table("X")` receiver. A write
+# routed through a DB-facade helper has none:
+#
+#     db.update_workout(workout_id, {"exercises": [...]})   # workouts.exercises
+#                                                           # does not exist
+#
+# so the gate reported CLEAN while all four coach "Apply" dispatch actions were
+# PGRST204-rejected on every invocation. The helper is the chokepoint the
+# application actually uses, so the gate has to see through it.
+#
+# The helper→table map is DERIVED, never hardcoded: any `def f(self, …, payload)`
+# whose body does `<x>.table("T").insert/update/upsert(payload)` registers
+# `f -> (T, payload_position)`. Facade methods that merely delegate to a
+# same-named implementation resolve to the same entry, so `db.update_workout`
+# (facade) and `WorkoutDB.update_workout` (impl) are both covered.
+#
+# Conservative: a call site contributes keys only when the payload argument is
+# an inline literal dict, a list of literal dicts, or a local name last assigned
+# a literal dict inside the same function. Anything else yields no keys.
+# ---------------------------------------------------------------------------
+
+
+def _helper_write_map(schema: dict) -> dict:
+    """funcname -> (table, payload_arg_index) for every DB-facade write helper."""
+    import ast
+    out: dict = {}
+    ambiguous = set()
+    for py in sorted(BACKEND.rglob("*.py")):
+        if _skip(py.parts):
+            continue
+        try:
+            tree = ast.parse(py.read_text())
+        except Exception:
+            continue
+        env = _var_table_env(tree)
+        for fn in ast.walk(tree):
+            if not isinstance(fn, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            if fn.name in _WRITE_METHODS or fn.name.startswith("__"):
+                continue
+            params = [a.arg for a in
+                      (getattr(fn.args, "posonlyargs", []) + fn.args.args)]
+            if params and params[0] in ("self", "cls"):
+                params = params[1:]     # call sites never pass self/cls
+            if not params:
+                continue
+            for n in ast.walk(fn):
+                if not (isinstance(n, ast.Call)
+                        and isinstance(n.func, ast.Attribute)
+                        and n.func.attr in _WRITE_METHODS
+                        and n.args
+                        and isinstance(n.args[0], ast.Name)):
+                    continue
+                if n.args[0].id not in params:
+                    continue
+                table = _table_of_call(n.func.value, env)
+                if not table or schema.get(table) is None:
+                    continue
+                entry = (table, params.index(n.args[0].id))
+                if fn.name in out and out[fn.name] != entry:
+                    ambiguous.add(fn.name)   # same name, different tables
+                out[fn.name] = entry
+    for name in ambiguous:
+        out.pop(name, None)
+    return out
+
+
+def _payload_keys(arg, bound: dict) -> set:
+    import ast
+    if isinstance(arg, ast.Dict):
+        return _literal_dict_keys(arg)
+    if isinstance(arg, (ast.List, ast.Tuple)):
+        keys = set()
+        for e in arg.elts:
+            if isinstance(e, ast.Dict):
+                keys |= _literal_dict_keys(e)
+        return keys
+    if isinstance(arg, ast.Name):
+        return set(bound.get(arg.id, set()))
+    return set()
+
+
+def _helper_write_violations(src: str, path, schema: dict, helper_map: dict):
+    """Payload keys handed to a derived DB-facade write helper.
+
+    FLOW-ORDERED within a scope: statements are visited in source order and the
+    name→keys map is snapshotted at each call, so
+
+        payload = {...A...}; db.create_a(uid, payload)
+        payload = {...B...}; db.create_b(uid, payload)
+
+    checks A against a and B against b, instead of leaking B's keys backwards
+    into the first call (which an unordered ast.walk would do). Nested function
+    defs are their own scope and are skipped here.
+    """
+    import ast
+    out = []
+    if not helper_map:
+        return out
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return out
+
+    seen = set()
+
+    def _record(call, table, keys):
+        real_set = set(schema[table])
+        for k in sorted(keys - real_set):
+            sig = (call.lineno, table, k)
+            if sig in seen:
+                continue
+            seen.add(sig)
+            out.append((str(path), call.lineno, table,
+                        f"{k} [helper-write:{_call_name(call)}]"))
+
+    def _call_name(call):
+        if isinstance(call.func, ast.Attribute):
+            return call.func.attr
+        return call.func.id
+
+    def _visit_expr(node, bound):
+        """Evaluate an expression subtree (in order) for helper calls."""
+        if node is None:
+            return
+        for child in ast.iter_child_nodes(node):
+            _visit_expr(child, bound)
+        if not isinstance(node, ast.Call):
+            return
+        if isinstance(node.func, ast.Attribute):
+            name = node.func.attr
+        elif isinstance(node.func, ast.Name):
+            name = node.func.id
+        else:
+            return
+        entry = helper_map.get(name)
+        if entry is None:
+            return
+        table, idx = entry
+        if idx >= len(node.args):
+            return
+        keys = _payload_keys(node.args[idx], bound)
+        if keys:
+            _record(node, table, keys)
+
+    def _visit_body(stmts, bound):
+        for st in stmts:
+            if isinstance(st, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                _visit_body(st.body, {})      # own scope, own bindings
+                continue
+            if isinstance(st, ast.ClassDef):
+                _visit_body(st.body, {})
+                continue
+
+            # RHS/expression first (a call can appear inside the value), then
+            # apply the binding this statement creates.
+            if isinstance(st, ast.Assign):
+                _visit_expr(st.value, bound)
+                if isinstance(st.value, ast.Dict):
+                    for t in st.targets:
+                        if isinstance(t, ast.Name):
+                            bound[t.id] = _literal_dict_keys(st.value)
+                else:
+                    for t in st.targets:
+                        if isinstance(t, ast.Name):
+                            bound.pop(t.id, None)   # rebound to something opaque
+                        elif (isinstance(t, ast.Subscript)
+                              and isinstance(t.value, ast.Name)
+                              and isinstance(t.slice, ast.Constant)
+                              and isinstance(t.slice.value, str)
+                              and t.value.id in bound):
+                            bound[t.value.id] = bound[t.value.id] | {t.slice.value}
+                continue
+
+            if isinstance(st, ast.AnnAssign):
+                _visit_expr(st.value, bound)
+                if isinstance(st.target, ast.Name):
+                    if isinstance(st.value, ast.Dict):
+                        bound[st.target.id] = _literal_dict_keys(st.value)
+                    else:
+                        bound.pop(st.target.id, None)
+                continue
+
+            if isinstance(st, ast.Expr):
+                # `payload.update({...})` / `payload.setdefault("k", …)`
+                call = st.value
+                if (isinstance(call, ast.Call)
+                        and isinstance(call.func, ast.Attribute)
+                        and isinstance(call.func.value, ast.Name)
+                        and call.func.value.id in bound
+                        and call.args):
+                    if call.func.attr == "update" and isinstance(call.args[0], ast.Dict):
+                        bound[call.func.value.id] |= _literal_dict_keys(call.args[0])
+                        continue
+                    if (call.func.attr == "setdefault"
+                            and isinstance(call.args[0], ast.Constant)
+                            and isinstance(call.args[0].value, str)):
+                        bound[call.func.value.id].add(call.args[0].value)
+                        continue
+                _visit_expr(st.value, bound)
+                continue
+
+            # Compound statements: each branch starts from the incoming
+            # bindings and is JOINED BACK BY UNION at the merge point — a key
+            # set on only one branch really can reach a later write, so this is
+            # path-sound (the same convention _ScopeWalker documents). Without
+            # it, the very common
+            #     if x: update_data["exercises"] = ...
+            #     db.update_workout(wid, update_data)
+            # is invisible.
+            handled = False
+            for field in ("test", "iter", "value", "returns"):
+                sub = getattr(st, field, None)
+                if isinstance(sub, ast.AST):
+                    _visit_expr(sub, bound)
+                    handled = True
+            branch_bodies = []
+            for field in ("body", "orelse", "finalbody"):
+                sub = getattr(st, field, None)
+                if isinstance(sub, list):
+                    branch_bodies.append(sub)
+            for h in getattr(st, "handlers", []) or []:
+                branch_bodies.append(h.body)
+            for body in branch_bodies:
+                branch = {k: set(v) for k, v in bound.items()}
+                _visit_body(body, branch)
+                for k, v in branch.items():
+                    bound[k] = bound.get(k, set()) | v
+                handled = True
+            if not handled:
+                for child in ast.iter_child_nodes(st):
+                    _visit_expr(child, bound)
+
+    _visit_body(tree.body, {})
+    return out
+
+
 def audit(schema: dict):
     violations = []
+    helper_map = _helper_write_map(schema)
     for py in sorted(BACKEND.rglob("*.py")):
         if _skip(py.parts):
             continue
@@ -661,6 +918,7 @@ def audit(schema: dict):
                 if col not in real_set:
                     violations.append((str(rel), line, table, col))
         violations.extend(_write_violations(src, rel, schema))
+        violations.extend(_helper_write_violations(src, rel, schema, helper_map))
         violations.extend(_filter_violations(src, rel, schema))
     return violations
 

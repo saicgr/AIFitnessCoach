@@ -76,14 +76,19 @@ def _link_or_create_injury(db, user_id: str, content: str) -> Optional[str]:
         match = _find_matching_injury(active, content)
         if match:
             return match.get("id")
+        # Column names must match `injury_history` exactly: it has NO
+        # `injury_type` and NO `notes` (those live on `user_injuries`). PostgREST
+        # rejects the WHOLE insert on one phantom key (PGRST204), so this
+        # dual-write silently created nothing and every pain memory was left
+        # unlinked. The user's own words go to `user_feedback`, the table's
+        # free-text "what the user reported" column.
         row = db.create_injury_history({
             "user_id": user_id,
-            "injury_type": "pain",
             "body_part": _guess_body_part(content) or "unspecified",
             "severity": "mild",
             "is_active": True,
             "reported_at": _utcnow().isoformat(),
-            "notes": content[:300],
+            "user_feedback": content[:300],
         })
         return row.get("id") if row else None
     except Exception as e:

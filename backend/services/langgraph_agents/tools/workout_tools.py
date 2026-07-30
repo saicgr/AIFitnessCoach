@@ -6,7 +6,7 @@ modifying intensity, rescheduling, and generating quick workouts.
 """
 
 from typing import List, Dict, Any
-from datetime import datetime, timezone
+# (datetime/timezone imports removed — all day math now goes through core.timezone_utils)
 import json
 import re
 
@@ -25,9 +25,37 @@ def _validate_workout_id(workout_id: str) -> bool:
 from services.workout_modifier import WorkoutModifier
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import (
+    get_user_today,
+    local_day_bounds,
+    target_date_to_utc_iso,
+    utc_to_local_date,
+)
 from .base import run_async_in_sync
 
 logger = get_logger(__name__)
+
+
+def _user_timezone(db, user_id: Any) -> str:
+    """The user's IANA timezone from their profile.
+
+    Tools run outside a request, so there is no X-User-Timezone header to read;
+    `users.timezone` is the only source. Returns "UTC" only when the profile
+    genuinely has none — logged, never silent, because a wrong tz mis-days a
+    noon-anchored `scheduled_date`.
+    """
+    if not user_id:
+        logger.warning("[TZ] no user_id for timezone resolution; using UTC")
+        return "UTC"
+    try:
+        user = db.get_user(str(user_id)) or {}
+        tz = (user.get("timezone") or "").strip()
+        if tz:
+            return tz
+    except Exception as e:
+        logger.warning(f"[TZ] could not read users.timezone for {user_id}: {e}")
+    logger.warning(f"[TZ] user {user_id} has no timezone on file; using UTC")
+    return "UTC"
 
 
 def _get_user_equipment_info(user: Dict) -> tuple:
@@ -107,8 +135,10 @@ def add_exercise_to_workout(
                 "message": f"Workout with ID {workout_id} not found"
             }
 
-        # Get current exercises
-        exercises_data = workout.get("exercises")
+        # Get current exercises. The column is `exercises_json` — `workouts` has
+        # no `exercises` column, so reading/writing "exercises" silently yielded
+        # an empty list and made every write a PGRST204 (E2E row 55).
+        exercises_data = workout.get("exercises_json")
         if isinstance(exercises_data, str):
             exercises = json.loads(exercises_data) if exercises_data else []
         else:
@@ -179,12 +209,23 @@ def add_exercise_to_workout(
                 "message": "Could not find exercises in the Exercise Library. Try different exercise names."
             }
 
-        # Update workout in database
+        # Update workout in database. `exercises_json` is the real column.
         update_data = {
-            "exercises": exercises,
+            "exercises_json": exercises,
             "last_modified_method": "ai_coach",
         }
-        db.update_workout(workout_id, update_data)
+        updated = db.update_workout(workout_id, update_data)
+        if not updated:
+            # A rejected/no-op write must NOT be reported as an applied change.
+            logger.error(
+                f"[add_exercise] update_workout wrote no row for {workout_id}"
+            )
+            return {
+                "success": False,
+                "action": "add_exercise",
+                "workout_id": workout_id,
+                "message": "Couldn't save the change to your workout. Please try again.",
+            }
 
         logger.info(f"Successfully added {len(added_exercises)} exercises to workout {workout_id}")
 
@@ -284,7 +325,10 @@ def replace_all_exercises(
                 "message": f"Workout with ID {workout_id} not found"
             }
 
-        current_exercises = workout.get("exercises", [])
+        # Real column is `exercises_json` (E2E row 55).
+        current_exercises = workout.get("exercises_json") or []
+        if isinstance(current_exercises, str):
+            current_exercises = json.loads(current_exercises) if current_exercises else []
         old_exercise_names = [e.get("name", "Unknown") for e in current_exercises]
 
         # Get user profile
@@ -331,6 +375,22 @@ def replace_all_exercises(
             timeout=30
         )
 
+        # Same quality gate the quick-workout authoring path uses — this tool
+        # replaces EVERY exercise, so library junk / off-intent stretches /
+        # gear the user doesn't own land straight in the workout (E2E 97 + 63).
+        try:
+            from services.coach_exercise_quality import filter_candidates
+            rag_exercises = filter_candidates(
+                db, rag_exercises or [],
+                training_intent=focus_area,
+                user_equipment=user_equipment,
+            )
+        except Exception as qe:
+            logger.error(
+                f"[replace_all_exercises] quality gate failed ({qe}); using "
+                f"unfiltered selection", exc_info=True
+            )
+
         if not rag_exercises:
             return {
                 "success": False,
@@ -356,11 +416,21 @@ def replace_all_exercises(
             })
 
         update_data = {
-            "exercises": new_exercises,
+            "exercises_json": new_exercises,   # real column (E2E row 55)
             "name": f"{muscle_group.title()} Workout",
             "last_modified_method": "ai_replace_all"
         }
-        db.update_workout(workout_id, update_data)
+        updated = db.update_workout(workout_id, update_data)
+        if not updated:
+            logger.error(
+                f"[replace_all_exercises] update_workout wrote no row for {workout_id}"
+            )
+            return {
+                "success": False,
+                "action": "replace_all_exercises",
+                "workout_id": workout_id,
+                "message": "Couldn't save the new exercises. Please try again.",
+            }
 
         new_exercise_names = [e["name"] for e in new_exercises]
         logger.info(f"Replaced {len(old_exercise_names)} exercises with {len(new_exercises)} {muscle_group} exercises")
@@ -466,6 +536,13 @@ def reschedule_workout(
         user_id = moved_workout.get("user_id")
         workout_name = moved_workout.get("name")
 
+        # `workouts.scheduled_date` is a timestamptz stored at NOON of the local
+        # day (CLAUDE.md). Writing the bare "YYYY-MM-DD" put the row at 00:00Z,
+        # which falls OUTSIDE its own local-day window for every negative-offset
+        # user — the workout became invisible on the day it was moved to.
+        tz = _user_timezone(db, user_id)
+        new_date_ts = target_date_to_utc_iso(new_date, tz)
+
         # Check for existing workout on new date
         workouts_on_date = db.get_workouts_by_date_range(user_id, new_date, new_date)
 
@@ -474,15 +551,25 @@ def reschedule_workout(
             existing = workouts_on_date[0]
             logger.info(f"Swapping: workout {existing['id']} will move to {old_date}")
             db.update_workout(existing['id'], {
-                "scheduled_date": str(old_date),
+                "scheduled_date": target_date_to_utc_iso(
+                    utc_to_local_date(old_date, tz), tz
+                ),
                 "last_modified_method": "ai_reschedule"
             })
             swapped_with = {"id": existing['id'], "name": existing['name']}
 
-        db.update_workout(workout_id, {
-            "scheduled_date": new_date,
+        moved = db.update_workout(workout_id, {
+            "scheduled_date": new_date_ts,
             "last_modified_method": "ai_reschedule"
         })
+        if not moved:
+            logger.error(f"[reschedule] update_workout wrote no row for {workout_id}")
+            return {
+                "success": False,
+                "action": "reschedule",
+                "workout_id": workout_id,
+                "message": "Couldn't move that workout. Please try again.",
+            }
 
         try:
             db.create_workout_change({
@@ -807,28 +894,38 @@ def generate_quick_workout(
         workout = None
         is_new_workout = False
 
+        # The user's local day drives both the "already have one today?" lookup
+        # and the scheduled_date we write — a UTC day boundary lands the row on
+        # the wrong day for every non-UTC user (CLAUDE.md local-day window rule).
+        user_tz = _user_timezone(db, user_id)
+        local_today = get_user_today(user_tz)
+
         # Try to get existing workout
         if workout_id:
             workout = db.get_workout(workout_id)
             if workout:
-                old_exercises = workout.get("exercises", [])
+                old_exercises = workout.get("exercises_json") or []
+                if isinstance(old_exercises, str):
+                    old_exercises = json.loads(old_exercises) if old_exercises else []
                 old_exercise_names = [e.get("name", "Unknown") for e in old_exercises]
 
         # If no workout found, check for existing incomplete workout for today
         if not workout:
-            today_utc = datetime.now(timezone.utc).date().isoformat()
+            day_start, day_end = local_day_bounds(local_today, user_tz)
             existing_today = db.client.table("workouts").select("*").eq(
                 "user_id", user_id
             ).eq("is_completed", False).eq("is_current", True).gte(
-                "scheduled_date", today_utc
-            ).lte("scheduled_date", today_utc + "T23:59:59Z").order(
+                "scheduled_date", day_start
+            ).lt("scheduled_date", day_end).order(
                 "created_at", desc=True
             ).limit(1).execute()
 
             if existing_today.data:
                 workout = existing_today.data[0]
                 workout_id = workout.get("id")
-                old_exercises = workout.get("exercises_json", []) or workout.get("exercises", [])
+                old_exercises = workout.get("exercises_json") or []
+                if isinstance(old_exercises, str):
+                    old_exercises = json.loads(old_exercises) if old_exercises else []
                 old_exercise_names = [e.get("name", "Unknown") for e in old_exercises] if old_exercises else []
             else:
                 is_new_workout = True
@@ -928,17 +1025,51 @@ def generate_quick_workout(
         avoid_set = {n for n in (old_exercise_names or []) if n}
         rag_exercises: list = []
 
+        # QUALITY GATE (E2E rows 97 + 63) — the library is the noisy free
+        # dataset: it ships coaching cues as exercise names ("Chest Bench Press
+        # Correct Stance"), stretches/yoga poses that contradict a "Quick Power"
+        # strength request, and gear-in-the-name rows mislabelled
+        # equipment='Bodyweight' ("Trx Body-Up" for a user with no straps). We
+        # therefore OVER-FETCH and drop the junk, rather than taking the first
+        # `count` rows the SQL layer happens to return. `_clean` reuses the
+        # curated backfill's filter primitives — see services/coach_exercise_quality.
+        def _clean(rows: list) -> list:
+            if not rows:
+                return rows
+            try:
+                from services.coach_exercise_quality import filter_candidates
+                return filter_candidates(
+                    db, rows,
+                    training_intent=focus_area,
+                    user_equipment=user_equipment,
+                )
+            except Exception as qe:
+                # Fail OPEN — a quality gate must never zero out generation.
+                logger.error(
+                    f"[Quick Workout] quality gate failed ({qe}); using unfiltered "
+                    f"selection", exc_info=True
+                )
+                return rows
+
+        # Over-fetch factor: filtering removes rows, so ask for more candidates
+        # than we need. Measured on the live library, a bodyweight-only beginner
+        # request loses ~60-70% of a body-part slice to stretches/yoga/gear-named
+        # rows, so 4x still shipped a thin session — 8x keeps the requested
+        # exercise count reachable without a second round-trip (the underlying
+        # query already reads up to 160 rows).
+        _overfetch = max(exercise_count * 8, exercise_count + 16)
+
         # Layer 1 — fast SQL from exercise_library_cleaned (equipment-aware).
         try:
-            rag_exercises = workout_fallback.sql_exercises(
+            rag_exercises = _clean(workout_fallback.sql_exercises(
                 db,
                 focus_area=focus_area,
                 fitness_level=rag_fitness_level,
-                count=exercise_count,
+                count=_overfetch,
                 equipment=user_equipment,
                 injury_parts=injury_body_parts,
                 avoid_names=avoid_set,
-            )
+            ))
             logger.info(f"[Quick Workout] SQL selected {len(rag_exercises)} exercises (fast path)")
         except Exception as e:
             logger.warning(f"[Quick Workout] SQL selection failed ({e}); using static")
@@ -948,11 +1079,11 @@ def generate_quick_workout(
         # injury avoidance / niche equipment, broaden to full_body (keep filters).
         if len(rag_exercises) < floor and focus_area != "full_body":
             try:
-                broad = workout_fallback.sql_exercises(
+                broad = _clean(workout_fallback.sql_exercises(
                     db, focus_area="full_body", fitness_level=rag_fitness_level,
-                    count=exercise_count, equipment=user_equipment,
+                    count=_overfetch, equipment=user_equipment,
                     injury_parts=injury_body_parts, avoid_names=avoid_set,
-                )
+                ))
                 rag_exercises = workout_fallback.merge_unique(rag_exercises, broad)
                 if broad:
                     logger.info("[Quick Workout] broadened focus→full_body (injury/equipment starvation)")
@@ -1044,13 +1175,14 @@ def generate_quick_workout(
         final_workout_id = workout_id
 
         if is_new_workout:
-            today_utc = datetime.now(timezone.utc).date().isoformat()
             new_workout_data = {
                 "user_id": user_id,
                 "name": workout_name,
                 "type": workout_type_key.replace("_", " "),
                 "difficulty": intensity_key,
-                "scheduled_date": today_utc,
+                # NOON of the user's local today — a bare date sits at 00:00Z and
+                # falls outside its own local-day window (CLAUDE.md convention).
+                "scheduled_date": target_date_to_utc_iso(local_today, user_tz),
                 "exercises_json": new_exercises,
                 "duration_minutes": min(duration_minutes, 90),
                 "is_completed": False,
