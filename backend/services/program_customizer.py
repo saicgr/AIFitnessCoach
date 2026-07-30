@@ -672,7 +672,7 @@ async def customize_template_days(
     fit_equipment: bool = True,
     context: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Apply the requested customization passes to `days` (mutated in place).
+    """Apply the customization passes to `days` (mutated in place).
 
     Returns a summary dict:
       {injuries:[...], dropped_for_injury:[...], added_for_injury:[...],
@@ -680,6 +680,12 @@ async def customize_template_days(
        level_tweaks:int, fitness_level:str}
     Order matters: injuries first (safety is non-negotiable), then equipment
     fit (don't reintroduce an unavailable movement), then a light level tweak.
+
+    `swap_for_injuries` and `adapt_to_level` are ACCEPTED BUT NOT HONOURED as
+    opt-outs (row 90): both passes always run — a plan is never scheduled for
+    an injured or novice user without gating. `fit_equipment` is the one real
+    toggle. The flags remain in the signature so callers/tests keep working and
+    an explicit opt-out is logged rather than silently ignored.
     """
     ctx = context or resolve_user_context(user_id)
     summary: Dict[str, Any] = {
@@ -692,12 +698,23 @@ async def customize_template_days(
         "level_tweaks": 0,
     }
 
-    if swap_for_injuries:
-        r = await _apply_injury_safety(
-            days, ctx.get("injuries") or [], ctx.get("equipment") or [], user_id
+    # Row 90: injury swaps + level right-sizing are NOT opt-out. `customize`
+    # used to be optional end-to-end (Optional[CustomizeOptions] = None
+    # server-side, and the client only sent the block when a toggle was on), so
+    # turning the toggles off meant a program was scheduled with no safety
+    # gating whatsoever. Equipment fitting stays a genuine user choice —
+    # skipping it only means the plan asks for gear they may not have, not that
+    # it asks an injured or novice lifter to do something unsafe.
+    if not swap_for_injuries:
+        logger.info(
+            "🎯 [ProgramCustomizer] user=%s asked to skip injury swaps — "
+            "running them anyway (safety is not optional)", user_id,
         )
-        summary["dropped_for_injury"] = r["dropped"]
-        summary["added_for_injury"] = r["added"]
+    r = await _apply_injury_safety(
+        days, ctx.get("injuries") or [], ctx.get("equipment") or [], user_id
+    )
+    summary["dropped_for_injury"] = r["dropped"]
+    summary["added_for_injury"] = r["added"]
 
     if fit_equipment:
         r = await _apply_equipment_fit(
@@ -706,10 +723,15 @@ async def customize_template_days(
         summary["dropped_for_equipment"] = r["dropped"]
         summary["added_for_equipment"] = r["added"]
 
-    if adapt_to_level:
-        summary["level_tweaks"] = _apply_level_adaptation(
-            days, ctx.get("fitness_level")
+    if not adapt_to_level:
+        logger.info(
+            "🎯 [ProgramCustomizer] user=%s asked to skip level adaptation — "
+            "running it anyway (a beginner is never given failure sets)",
+            user_id,
         )
+    summary["level_tweaks"] = _apply_level_adaptation(
+        days, ctx.get("fitness_level")
+    )
 
     logger.info(
         "🎯 [ProgramCustomizer] user=%s injuries=%s -inj=%d +inj=%d "

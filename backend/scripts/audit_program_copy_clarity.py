@@ -66,17 +66,58 @@ def fetch_weeks(db, since):
         vids = None
 
     rows, offset = [], 0
+    page = 200  # 1000-row pages of `workouts` jsonb 57014'd on PostgREST
     while True:
         q = db.client.table("program_variant_weeks").select(
             "variant_id, week_number, focus, phase, workouts"
-        ).order("id").range(offset, offset + 999)
+        ).order("id").range(offset, offset + page - 1)
         if vids is not None:
             q = q.in_("variant_id", vids)
         batch = q.execute().data or []
         rows.extend(batch)
-        if len(batch) < 1000:
+        if len(batch) < page:
             return rows
-        offset += 1000
+        offset += page
+
+
+def fetch_weeks_direct(since):
+    """Same rows straight from Postgres with a server-side cursor.
+
+    `workouts` is a fat jsonb column and the catalog is ~58k week rows — the
+    PostgREST path times out (57014) on a full-catalog run, which would leave
+    this gate unrunnable exactly when it matters. Used whenever DATABASE_URL is
+    present; the PostgREST path stays as the fallback."""
+    import psycopg2  # local import: only needed on this path
+
+    dsn = os.environ["DATABASE_URL"].replace(
+        "postgresql+asyncpg://", "postgresql://"
+    )
+    if "sslmode" not in dsn:
+        dsn += ("&" if "?" in dsn else "?") + "sslmode=require"
+    sql = (
+        "SELECT w.variant_id, w.week_number, w.focus, w.phase, w.workouts "
+        "FROM program_variant_weeks w"
+    )
+    params = ()
+    if since:
+        sql += (
+            " JOIN program_variants v ON v.id = w.variant_id"
+            " JOIN programs p ON p.variant_base_id = v.base_program_id"
+            " WHERE p.created_at >= %s"
+        )
+        params = (since,)
+    conn = psycopg2.connect(dsn)
+    try:
+        cur = conn.cursor(name="copy_clarity_scan")
+        cur.itersize = 500
+        cur.execute(sql, params)
+        return [
+            {"variant_id": r[0], "week_number": r[1], "focus": r[2],
+             "phase": r[3], "workouts": r[4]}
+            for r in cur
+        ]
+    finally:
+        conn.close()
 
 
 # Free-text, user-facing prose inside `program_variant_weeks.workouts`. The
@@ -135,8 +176,10 @@ def main():
     ap.add_argument("--since", default=None, help="only programs created >= DATE")
     args = ap.parse_args()
 
-    db = get_supabase()
-    rows = fetch_weeks(db, args.since)
+    if os.environ.get("DATABASE_URL"):
+        rows = fetch_weeks_direct(args.since)
+    else:
+        rows = fetch_weeks(get_supabase(), args.since)
     print(f"linting {len(rows)} week rows ...")
 
     failures = {}

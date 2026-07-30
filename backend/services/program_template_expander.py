@@ -1006,6 +1006,199 @@ def expand_variant_weeks(
     }
 
 
+# ---------------------------------------------------------------------------
+# Targeted reschedule — moving an ACTIVE assignment onto different weekdays.
+#
+# Editing the weekdays of a running program must NEVER delete-and-re-expand:
+# the rows already on the calendar carry each week's OWN authored content
+# (expand_variant_weeks writes a different session per week), and a re-expand
+# from the flat sample-week `template.days` would (a) overwrite every week with
+# week-1 content, (b) restart the program at week 1 from today, and (c) lose
+# the whole remaining plan outright if the re-expansion raises. So the edit is
+# a pure RE-DATING of the surviving rows: same content, same week, same
+# session ordinal — only the calendar date moves, using the identical
+# ordinal → weekday mapping both planners write with.
+# ---------------------------------------------------------------------------
+def plan_assignment_reschedule(
+    rows: List[Dict[str, Any]],
+    *,
+    assigned_days: Optional[List[int]],
+    anchor_date: date,
+    today: date,
+) -> List[Dict[str, Any]]:
+    """Pure planner: given an assignment's existing workout rows, compute the
+    new `scheduled_date` for each under `assigned_days`. NO DB writes.
+
+    `rows` need `id`, `template_week`, `template_day_index`, `scheduled_date`.
+    `anchor_date` is the program's week-1 start date (week w occupies the
+    calendar week starting anchor_date + (w-1)*7), so week alignment — and
+    therefore which week the user is in — is preserved across the edit.
+
+    Session ordinal is the rank of `template_day_index` inside its own week
+    (both expanders write day indices in session order), and ordinal k maps to
+    sorted(assigned_days)[k % n] — the same cycling rule plan_variant_schedule
+    and plan_template_days use. With no assigned_days, sessions fall on
+    consecutive days from the week start (plan_variant_schedule's else-branch).
+
+    The wall-clock time of day is preserved from the existing row. Rows whose
+    new date would fall BEFORE `today` keep their current date (a program day
+    is never moved into the past); they are returned with moved=False.
+
+    Returns [{id, old_scheduled, new_scheduled, moved, week, ordinal}] in input
+    order.
+    """
+    targets = sorted({int(d) for d in (assigned_days or []) if 0 <= int(d) <= 6})
+
+    # Rank day indices within each week → session ordinal.
+    by_week: Dict[int, List[int]] = {}
+    for r in rows:
+        wk = int(r.get("template_week") or 1)
+        di = r.get("template_day_index")
+        di = int(di) if di is not None else 0
+        by_week.setdefault(wk, []).append(di)
+    ordinal_of: Dict[int, Dict[int, int]] = {
+        wk: {di: k for k, di in enumerate(sorted(set(idxs)))}
+        for wk, idxs in by_week.items()
+    }
+
+    out: List[Dict[str, Any]] = []
+    for r in rows:
+        week = int(r.get("template_week") or 1)
+        di = r.get("template_day_index")
+        di = int(di) if di is not None else 0
+        ordinal = ordinal_of.get(week, {}).get(di, di)
+        wi = max(0, week - 1)
+
+        old_raw = str(r.get("scheduled_date") or "")
+        old_dt = _parse_scheduled(old_raw)
+        if old_dt is None:
+            continue
+        if targets:
+            weekday = targets[ordinal % len(targets)]
+            lead = (weekday - anchor_date.weekday()) % 7
+            new_date = anchor_date + timedelta(days=wi * 7 + lead)
+        else:
+            new_date = anchor_date + timedelta(days=wi * 7 + ordinal)
+
+        moved = new_date != old_dt.date() and new_date >= today
+        target_date = new_date if moved else old_dt.date()
+        out.append({
+            "id": r["id"],
+            "old_scheduled": old_raw,
+            "new_scheduled": _anchored_scheduled_date(
+                target_date, old_dt.time()
+            ),
+            "moved": moved,
+            "week": week,
+            "ordinal": ordinal,
+        })
+    return out
+
+
+def _parse_scheduled(value: str) -> Optional[datetime]:
+    """Parse a stored scheduled_date (naive local ISO, or a tz-aware ISO from
+    legacy writers) into a naive datetime. Returns None when unparseable."""
+    if not value:
+        return None
+    raw = value.strip().replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(raw)
+    except ValueError:
+        try:
+            dt = datetime.fromisoformat(raw[:19])
+        except ValueError:
+            return None
+    return dt.replace(tzinfo=None)
+
+
+def reschedule_assignment_days(
+    *,
+    assignment_id: str,
+    user_id: str,
+    assigned_days: Optional[List[int]],
+    anchor_date: date,
+    slot: Optional[str] = None,
+    today: Optional[date] = None,
+) -> Dict[str, Any]:
+    """Re-date an active assignment's FUTURE, NOT-STARTED workouts onto the new
+    weekdays — a targeted UPDATE, never a delete + re-expand (#53).
+
+    Completed / in-progress / past rows are never touched, so history and the
+    user's current week survive the edit. Content is untouched: each row keeps
+    the week's own authored session. Wrapped in one transaction.
+
+    Returns {"workouts_moved", "workouts_kept", "workouts_considered",
+    "slot_updated"}.
+    """
+    today = today or date.today()
+    now_naive = datetime.combine(today, time(0, 0)).isoformat()
+    db = get_supabase()
+    resp = (
+        db.client.table("workouts")
+        .select("id, template_week, template_day_index, scheduled_date, "
+                "status, is_completed")
+        .eq("assignment_id", assignment_id)
+        .eq("user_id", user_id)
+        .gte("scheduled_date", now_naive)
+        .execute()
+    )
+    candidates = [
+        r for r in (resp.data or [])
+        if not r.get("is_completed")
+        and (r.get("status") or "scheduled") in ("scheduled", "paused")
+    ]
+    plan = plan_assignment_reschedule(
+        candidates,
+        assigned_days=assigned_days,
+        anchor_date=anchor_date,
+        today=today,
+    )
+    moves = [p for p in plan if p["moved"]]
+
+    slot_updated = 0
+    conn = psycopg2.connect(_psycopg_dsn())
+    try:
+        conn.autocommit = False
+        with conn.cursor() as cur:
+            for p in moves:
+                cur.execute(
+                    "UPDATE workouts SET scheduled_date = %s, "
+                    "last_modified_at = now(), "
+                    "last_modified_method = 'assignment_reschedule' "
+                    "WHERE id = %s AND is_completed = false "
+                    "AND status IN ('scheduled', 'paused')",
+                    (p["new_scheduled"], p["id"]),
+                )
+            if slot:
+                cur.execute(
+                    "UPDATE workouts SET program_slot = %s "
+                    "WHERE assignment_id = %s AND user_id = %s "
+                    "AND scheduled_date >= %s AND is_completed = false "
+                    "AND program_slot IS DISTINCT FROM %s",
+                    (slot, assignment_id, user_id, now_naive, slot),
+                )
+                slot_updated = cur.rowcount or 0
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+    logger.info(
+        "reschedule_assignment_days %s: %d moved, %d kept (of %d future rows), "
+        "%d slot-retagged",
+        assignment_id, len(moves), len(plan) - len(moves), len(plan),
+        slot_updated,
+    )
+    return {
+        "workouts_moved": len(moves),
+        "workouts_kept": len(plan) - len(moves),
+        "workouts_considered": len(plan),
+        "slot_updated": slot_updated,
+    }
+
+
 def regenerate_future(
     template: Dict[str, Any],
     user_id: str,

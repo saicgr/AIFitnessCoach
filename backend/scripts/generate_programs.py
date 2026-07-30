@@ -406,12 +406,31 @@ RULES:
 5. Include deload weeks where appropriate (typically every 4th week)
 6. Use real, standard exercise names
 
-WEIGHT GUIDANCE FORMAT:
-- Use RPE (Rate of Perceived Exertion): "RPE 7", "RPE 8-9"
-- OR RIR (Reps in Reserve): "RIR 3", "RIR 1-2", "RIR 0 (failure)"
-- OR percentage of 1RM: "70% 1RM", "80% 1RM"
+WEIGHT GUIDANCE FORMAT — PLAIN LANGUAGE ONLY (ordinary users read this on the
+schedule tab; NEVER write coach shorthand):
+- Effort: "effort 7 out of 10", "effort 8-9 out of 10"   (never "RPE 7")
+- OR reps left in the tank: "leave 3 reps in reserve"     (never "RIR 3")
+- OR a share of your best lift: "70% of your heaviest single",
+  "80% of your heaviest set of 5"                         (never "70% 1RM")
 - OR specific weight when known: "20kg/44lb", "Men: 24kg, Women: 16kg"
 - OR relative terms: "Bodyweight", "Light", "Moderate", "Heavy"
+
+BANNED VOCABULARY (in weight_guidance, form_cue, setup, breathing_cue, notes,
+and the week/session focus lines). Write the plain phrase instead:
+  RPE n            -> effort n out of 10
+  RIR n            -> leave n reps in reserve
+  n% 1RM           -> n% of your heaviest single
+  eccentric        -> lowering          concentric   -> lifting
+  unilateral       -> single-side       hypertrophy  -> muscle growth
+  time under tension -> time the muscle spends working
+  proprioception   -> balance awareness  neural drive -> power and speed
+  CNS / supercompensation / periodization / glycolytic / lactate /
+  anaerobic / autoregulation / mechanical tension / motor unit
+                   -> say it in everyday words
+  "60s on 20s off" -> "60 seconds on, 20 seconds off"
+  "10% BW"         -> "10% of your body weight"
+Gate: backend/scripts/audit_program_copy_clarity.py --check fails the run if
+any of this reaches the database.
 
 EXERCISE STRUCTURE (REQUIRED FIELDS - sets and reps MUST be positive integers, NEVER null or 0):
 {
@@ -512,7 +531,7 @@ REQUIREMENTS:
 - Generate exactly {sessions} workouts for Week {week_num}
 - Every exercise must contribute to the PROGRAM GOALS above
 - Include warmup, exercises, cooldown for each workout
-- Include weight_guidance for EVERY exercise (RPE, % 1RM, or relative terms)
+- Include weight_guidance for EVERY exercise, in PLAIN LANGUAGE ("effort 7 out of 10", "70% of your heaviest single", "Moderate") — never "RPE 7" or "70% 1RM"
 
 EXERCISE VARIETY RULES:
 - Use 15-25 DIFFERENT exercises across the week (not the same 5-6 repeated)
@@ -575,7 +594,7 @@ DETAILS:
 
 REQUIREMENTS:
 - Every exercise MUST contribute to the PROGRAM GOALS above
-- Include weight_guidance for EVERY exercise (RPE, % 1RM, or relative terms)
+- Include weight_guidance for EVERY exercise, in PLAIN LANGUAGE ("effort 7 out of 10", "70% of your heaviest single", "Moderate") — never "RPE 7" or "70% 1RM"
 - Progress weights/intensity across weeks to achieve goals
 
 EXERCISE VARIETY RULES:

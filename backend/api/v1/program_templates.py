@@ -54,6 +54,7 @@ from services.program_library_importer import (
     derive_progression_strategy,
     derive_deload_every_n,
 )
+from services.program_assignment_progress import sync_user_assignments
 from services.program_template_parser import parse_to_template_json
 from services.program_template_expander import (
     expand_template,
@@ -61,6 +62,7 @@ from services.program_template_expander import (
     plan_template_days,
     plan_variant_schedule,
     regenerate_future,
+    reschedule_assignment_days,
     resolve_collision,
     MAX_WEEKS,
 )
@@ -199,9 +201,15 @@ class ScheduleRequest(BaseModel):
 
 
 class CustomizeOptions(BaseModel):
-    """The three optional adaptation toggles applied to a cloned program's days
-    BEFORE it is scheduled. All default ON — a user who taps 'Start' without
-    touching options gets a level/injury/equipment-fitted plan."""
+    """Adaptation passes applied to a cloned program's days BEFORE it is
+    scheduled.
+
+    Row 90: `adapt_to_level` and `swap_for_injuries` are NOT opt-outs — the
+    server runs both regardless of what the client sends, and omitting the
+    whole block no longer means "no gating" (it used to). Only `fit_equipment`
+    is a real user choice. The fields stay on the wire so existing clients keep
+    working and an explicit opt-out can be logged.
+    """
     adapt_to_level: bool = True
     swap_for_injuries: bool = True
     fit_equipment: bool = True
@@ -1694,6 +1702,43 @@ async def library_program_detail(
         raise safe_internal_error(e, "program_templates")
 
 
+async def _customize_preview_weeks(
+    weeks_rows: List[Dict[str, Any]], *, user_id: str,
+) -> Optional[Dict[str, Any]]:
+    """Run the assign-time customization over preview weeks, IN MEMORY (row 90).
+
+    The Schedule tab is what a user evaluates before tapping Start, and Start
+    routes every session through `customize_template_days` →
+    `enforce_injury_safety`. Rendering the raw authored content meant the
+    preview could show a movement the user's injuries would immediately swap
+    out. Sessions are mutated in place inside `weeks_rows` (these are response
+    dicts, never written back to program_variant_weeks).
+
+    Returns the customize summary, or None when nothing could be resolved.
+    Fail-open: a failure leaves the preview showing the authored content and is
+    reported as {"status": "failed"} rather than 500ing the tab.
+    """
+    from services.program_customizer import (
+        customize_status,
+        customize_template_days,
+    )
+    sessions = [
+        s
+        for wrow in (weeks_rows or [])
+        for s in (wrow.get("workouts") or [])
+        if isinstance(s, dict)
+    ]
+    if not sessions:
+        return None
+    try:
+        summary = await customize_template_days(sessions, user_id=user_id)
+        summary["status"] = customize_status(summary)
+        return summary
+    except Exception as e:  # noqa: BLE001
+        logger.warning("schedule preview customize failed: %s", e)
+        return {"status": "failed"}
+
+
 @router.get("/library/{program_id}/schedule")
 async def library_program_schedule(
     program_id: str,
@@ -1761,6 +1806,14 @@ async def library_program_schedule(
                 effective_variant_id = None
 
         if effective_variant_id and weeks_resp.data:
+            # ── 2a0. Preview what START would actually schedule (row 90) ──────
+            # The Schedule tab used to render the RAW authored content while
+            # POST /assign routes every day through customize_template_days →
+            # enforce_injury_safety, so what the user evaluated was not what
+            # they got. Run the SAME passes here, in memory, never persisted.
+            customize_preview = await _customize_preview_weeks(
+                weeks_resp.data, user_id=str(current_user["id"])
+            )
             # ── 2a. Build exercise-name → media map for this variant ──────────
             # Fetch all rows from the view for this variant.
             try:
@@ -1984,6 +2037,11 @@ async def library_program_schedule(
             return {
                 "variant_id": effective_variant_id,
                 "weeks": out_weeks,
+                # What the injury/level/equipment passes changed in THIS
+                # preview — the same summary shape /assign returns, so the
+                # client can say "2 swapped for your shoulder" on the tab the
+                # user is actually reading (row 90).
+                "customize_summary": customize_preview,
             }
 
         # ── 3. Single-plan fallback (no variant library) ──────────────────────
@@ -2836,7 +2894,10 @@ async def _finish_program_expansion(
         db = get_supabase()
         # Tailor weeks 2..N with the same resolved context as week 1 (best-effort;
         # a tailoring failure just ships the standard plan for those weeks).
-        if customize is not None and weeks_rows_remaining:
+        # Row 90: weeks 2..N get the SAME non-optional injury/level gating as
+        # week 1, whether or not the client sent a customize block.
+        customize = customize or CustomizeOptions()
+        if weeks_rows_remaining:
             from services.program_customizer import customize_template_days
             try:
                 flat = [
@@ -3040,55 +3101,60 @@ async def assign_program_core(
 
     customize_summary: Optional[Dict[str, Any]] = None
     _customize_ctx = None  # reused by the deferred weeks-2..N tailoring
-    if customize is not None:
-        from services.program_customizer import (
-            customize_status,
-            customize_template_days,
-            resolve_user_context,
-        )
-        try:
-            if _weeks_rows:
-                # Variant program: tailor the REAL per-week sessions (injuries /
-                # equipment / level) with a single resolved context. Sessions are
-                # mutated in place inside _weeks_rows, so expand_variant_weeks
-                # schedules the tailored set. When deferring, tailor only week 1
-                # now (fast); the bg task tailors weeks 2..N with the same ctx.
-                _customize_ctx = resolve_user_context(user_id)
-                _tailor_rows = _weeks_rows[:1] if defer_expansion else _weeks_rows
-                flat_sessions = [
-                    s
-                    for wrow in _tailor_rows
-                    for s in (wrow.get("workouts") or [])
-                    if isinstance(s, dict)
-                ]
-                customize_summary = await customize_template_days(
-                    flat_sessions,
-                    user_id=user_id,
-                    adapt_to_level=customize.adapt_to_level,
-                    swap_for_injuries=customize.swap_for_injuries,
-                    fit_equipment=customize.fit_equipment,
-                    context=_customize_ctx,
-                )
-            else:
-                customize_summary = await customize_template_days(
-                    days,
-                    user_id=user_id,
-                    adapt_to_level=customize.adapt_to_level,
-                    swap_for_injuries=customize.swap_for_injuries,
-                    fit_equipment=customize.fit_equipment,
-                )
-            # Stamp whether the tailoring actually changed anything, so the client
-            # can confirm it honestly ("swapped 2 …") vs say nothing was needed —
-            # instead of silently showing a generic "started" with no signal.
-            customize_summary["status"] = customize_status(customize_summary)
-        except Exception as ce:  # noqa: BLE001 — never block Start on customize
-            logger.warning(
-                "assign customize failed (using uncustomized plan): %s", ce
+    # Row 90: safety is NOT opt-out. `customize` used to be Optional and the
+    # client only sent the block when at least one toggle was on, so a user who
+    # turned all three off got a plan with NO injury or level gating at all.
+    # Injury swaps + level right-sizing now ALWAYS run (customize_template_days
+    # enforces that too); only equipment fitting stays a user choice.
+    customize = customize or CustomizeOptions()
+    from services.program_customizer import (
+        customize_status,
+        customize_template_days,
+        resolve_user_context,
+    )
+    try:
+        if _weeks_rows:
+            # Variant program: tailor the REAL per-week sessions (injuries /
+            # equipment / level) with a single resolved context. Sessions are
+            # mutated in place inside _weeks_rows, so expand_variant_weeks
+            # schedules the tailored set. When deferring, tailor only week 1
+            # now (fast); the bg task tailors weeks 2..N with the same ctx.
+            _customize_ctx = resolve_user_context(user_id)
+            _tailor_rows = _weeks_rows[:1] if defer_expansion else _weeks_rows
+            flat_sessions = [
+                s
+                for wrow in _tailor_rows
+                for s in (wrow.get("workouts") or [])
+                if isinstance(s, dict)
+            ]
+            customize_summary = await customize_template_days(
+                flat_sessions,
+                user_id=user_id,
+                adapt_to_level=customize.adapt_to_level,
+                swap_for_injuries=customize.swap_for_injuries,
+                fit_equipment=customize.fit_equipment,
+                context=_customize_ctx,
             )
-            # Report the failure explicitly (was silently None) so the client can
-            # say "couldn't tailor — started with the standard plan" rather than
-            # leaving the user believing it applied. No silent degradation.
-            customize_summary = {"status": "failed"}
+        else:
+            customize_summary = await customize_template_days(
+                days,
+                user_id=user_id,
+                adapt_to_level=customize.adapt_to_level,
+                swap_for_injuries=customize.swap_for_injuries,
+                fit_equipment=customize.fit_equipment,
+            )
+        # Stamp whether the tailoring actually changed anything, so the client
+        # can confirm it honestly ("swapped 2 …") vs say nothing was needed —
+        # instead of silently showing a generic "started" with no signal.
+        customize_summary["status"] = customize_status(customize_summary)
+    except Exception as ce:  # noqa: BLE001 — never block Start on customize
+        logger.warning(
+            "assign customize failed (using uncustomized plan): %s", ce
+        )
+        # Report the failure explicitly (was silently None) so the client can
+        # say "couldn't tailor — started with the standard plan" rather than
+        # leaving the user believing it applied. No silent degradation.
+        customize_summary = {"status": "failed"}
 
     now = datetime.utcnow().isoformat()
     template_id = str(uuid.uuid4())
@@ -3823,37 +3889,38 @@ async def _build_assign_preview(
     # matches). Runs on ONE representative week (the commit tailors all weeks) to
     # bound the injury-RAG cost; injury-free / gear-less users hit the early
     # guards in the passes and pay ~0. NEVER mutates the resolved plan (deep
-    # copy) and NEVER persists. Only computed when the client opts in (customize
-    # set — i.e. the AI tailor toggle is on).
+    # copy) and NEVER persists. Runs ALWAYS (row 90): injury + level gating is
+    # not opt-out on commit, so the preview must show it whether or not the
+    # client sent a customize block.
     customize_summary: Optional[Dict[str, Any]] = None
-    if req.customize is not None:
-        from services.program_customizer import (
-            customize_status,
-            customize_template_days,
-        )
-        try:
-            if _weeks_rows:
-                first_week = min(
-                    _weeks_rows, key=lambda w: w.get("week_number") or 0
-                )
-                sample = copy.deepcopy([
-                    s for s in (first_week.get("workouts") or [])
-                    if isinstance(s, dict)
-                ])
-            else:
-                sample = copy.deepcopy(days)
-            cs = await customize_template_days(
-                sample,
-                user_id=user_id,
-                adapt_to_level=req.customize.adapt_to_level,
-                swap_for_injuries=req.customize.swap_for_injuries,
-                fit_equipment=req.customize.fit_equipment,
+    _preview_customize = req.customize or CustomizeOptions()
+    from services.program_customizer import (
+        customize_status,
+        customize_template_days,
+    )
+    try:
+        if _weeks_rows:
+            first_week = min(
+                _weeks_rows, key=lambda w: w.get("week_number") or 0
             )
-            cs["status"] = customize_status(cs)
-            customize_summary = cs
-        except Exception as e:  # noqa: BLE001 — never block the preview
-            logger.warning("preview customize dry-run failed: %s", e)
-            customize_summary = {"status": "failed"}
+            sample = copy.deepcopy([
+                s for s in (first_week.get("workouts") or [])
+                if isinstance(s, dict)
+            ])
+        else:
+            sample = copy.deepcopy(days)
+        cs = await customize_template_days(
+            sample,
+            user_id=user_id,
+            adapt_to_level=_preview_customize.adapt_to_level,
+            swap_for_injuries=_preview_customize.swap_for_injuries,
+            fit_equipment=_preview_customize.fit_equipment,
+        )
+        cs["status"] = customize_status(cs)
+        customize_summary = cs
+    except Exception as e:  # noqa: BLE001 — never block the preview
+        logger.warning("preview customize dry-run failed: %s", e)
+        customize_summary = {"status": "failed"}
 
     return {
         "program_id": req.program_id,
@@ -4083,6 +4150,11 @@ async def list_assignments(
     try:
         db = get_supabase()
         user_id = str(current_user["id"])
+        # Row 54: progress is DERIVED from the assignment's workouts, and an
+        # assignment whose scheduled window has fully elapsed is settled here —
+        # otherwise it stays 'active' forever and keeps suppressing /today's
+        # AI generation on its weekdays with no expiry.
+        sync_user_assignments(user_id)
         resp = (
             db.client.table("user_program_assignments")
             .select("*")
@@ -4200,22 +4272,23 @@ async def patch_assignment(
             except Exception as e:  # noqa: BLE001
                 logger.warning("resume: unhide rows failed: %s", e)
 
-        # Reschedule on a day/slot change: rebuild this assignment's future
-        # workouts against the new schedule. (Resume does NOT reschedule — it
+        # Reschedule on a day/slot change: MOVE this assignment's future
+        # workouts onto the new weekdays. (Resume does NOT reschedule — it
         # restores the hidden rows above so progress/week alignment is kept.)
-        needs_reschedule = (
-            "assigned_days" in updates or "slot" in updates
-        ) and row.get("template_id")
+        needs_reschedule = "assigned_days" in updates or "slot" in updates
         if needs_reschedule:
             await _reschedule_assignment(
                 db,
                 assignment_id=assignment_id,
                 user_id=user_id,
-                template_id=str(row["template_id"]),
                 assigned_days=updates.get(
                     "assigned_days", row.get("assigned_days") or []
                 ),
                 slot=updates.get("slot", row.get("slot") or "primary"),
+                started_at=row.get("started_at"),
+                template_id=(
+                    str(row["template_id"]) if row.get("template_id") else None
+                ),
             )
 
         await _clear_today_cache(user_id)
@@ -4231,65 +4304,91 @@ async def patch_assignment(
         raise safe_internal_error(e, "program_templates")
 
 
+def _assignment_anchor_date(
+    db, *, assignment_id: str, user_id: str,
+    started_at: Any = None, template_id: Optional[str] = None,
+) -> date:
+    """The program's WEEK-1 start date — week w occupies the calendar week
+    beginning anchor + (w-1)*7. Resolved from the schedule row the expansion
+    actually used, then the assignment's started_at, then the earliest workout
+    it produced. Keeping this fixed is what stops an edit from restarting the
+    program at week 1 (#53)."""
+    if template_id:
+        try:
+            resp = (
+                db.client.table("user_program_schedules")
+                .select("start_date")
+                .eq("template_id", template_id)
+                .eq("user_id", user_id)
+                .order("start_date", desc=False)
+                .limit(1)
+                .execute()
+            )
+            rows = resp.data or []
+            if rows and rows[0].get("start_date"):
+                return date.fromisoformat(str(rows[0]["start_date"])[:10])
+        except Exception as e:  # noqa: BLE001
+            logger.debug("anchor: schedule lookup skipped: %s", e)
+    if started_at:
+        try:
+            return date.fromisoformat(str(started_at)[:10])
+        except ValueError:
+            pass
+    try:
+        resp = (
+            db.client.table("workouts")
+            .select("scheduled_date")
+            .eq("assignment_id", assignment_id)
+            .eq("user_id", user_id)
+            .order("scheduled_date", desc=False)
+            .limit(1)
+            .execute()
+        )
+        rows = resp.data or []
+        if rows and rows[0].get("scheduled_date"):
+            return date.fromisoformat(str(rows[0]["scheduled_date"])[:10])
+    except Exception as e:  # noqa: BLE001
+        logger.debug("anchor: first-workout lookup skipped: %s", e)
+    return date.today()
+
+
 async def _reschedule_assignment(
     db,
     *,
     assignment_id: str,
     user_id: str,
-    template_id: str,
     assigned_days: List[int],
     slot: str,
+    started_at: Any = None,
+    template_id: Optional[str] = None,
 ) -> None:
-    """Drop this assignment's FUTURE INCOMPLETE workouts and re-expand the
-    template against the new assigned_days/slot. Past + completed rows are kept.
-    """
-    now_iso = datetime.utcnow().isoformat()
-    try:
-        # Remove future incomplete rows produced by THIS assignment.
-        db.client.table("workouts").delete().eq(
-            "assignment_id", assignment_id
-        ).eq("user_id", user_id).gte(
-            "scheduled_date", now_iso
-        ).eq("is_completed", False).execute()
-    except Exception as e:  # noqa: BLE001
-        logger.warning("reschedule: future-row delete failed: %s", e)
+    """MOVE this assignment's future, not-started workouts onto the new
+    weekdays / slot (#53).
 
-    template = _get_template_or_404(db, template_id)
-    weeks = template.get("duration_weeks") or 8
-    weeks = max(1, min(int(weeks), MAX_WEEKS))
-    gym_profile_id = _resolve_active_gym_profile(db, user_id)
-    schedule_id = str(uuid.uuid4())
-    day_alignment = "calendar_weekday" if assigned_days else "start_today"
-    try:
-        db.client.table("user_program_schedules").insert(
-            {
-                "id": schedule_id,
-                "template_id": template_id,
-                "user_id": user_id,
-                "start_date": date.today().isoformat(),
-                "weeks": weeks,
-                "day_alignment": day_alignment,
-                "day_times": {},
-            }
-        ).execute()
-    except Exception as e:  # noqa: BLE001
-        logger.debug("reschedule: schedule row insert skipped: %s", e)
-    try:
-        expand_template(
-            template=template,
-            schedule_id=schedule_id,
-            user_id=user_id,
-            start_date=date.today(),
-            weeks=weeks,
-            day_alignment=day_alignment,
-            day_times={},
-            gym_profile_id=gym_profile_id,
-            assignment_id=assignment_id,
-            program_slot=slot,
-            assigned_days=list(assigned_days or []),
-        )
-    except Exception as e:  # noqa: BLE001
-        logger.error("reschedule: re-expand failed: %s", e, exc_info=True)
+    This is a targeted re-dating, never a destructive rewrite: each row keeps
+    its own week's authored content, its week number and its session ordinal —
+    only the calendar date changes. Completed, in-progress and past rows are
+    untouched, and nothing is deleted, so a failure can never leave the user
+    with an empty plan.
+    """
+    anchor = _assignment_anchor_date(
+        db,
+        assignment_id=assignment_id,
+        user_id=user_id,
+        started_at=started_at,
+        template_id=template_id,
+    )
+    result = reschedule_assignment_days(
+        assignment_id=assignment_id,
+        user_id=user_id,
+        assigned_days=list(assigned_days or []),
+        anchor_date=anchor,
+        slot=slot,
+    )
+    logger.info(
+        "reschedule assignment %s: anchor=%s days=%s → %s",
+        assignment_id, anchor, assigned_days, result,
+    )
 
 
 @router.delete("/assignments/{assignment_id}")
