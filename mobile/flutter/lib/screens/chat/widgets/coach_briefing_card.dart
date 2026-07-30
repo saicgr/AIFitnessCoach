@@ -20,6 +20,8 @@ import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/coach_avatar.dart';
+import 'chat_prompt_pill.dart';
+import 'chat_timestamp.dart';
 import 'generic_blocks_renderer.dart';
 
 class CoachBriefingCard extends StatelessWidget {
@@ -57,14 +59,16 @@ class CoachBriefingCard extends StatelessWidget {
   bool get _isEvening => insight.source == 'evening_recap';
 
   /// "as of 6:36 PM" freshness caption — local time the AI text was generated.
-  String? get _asOfLabel {
+  ///
+  /// Routes through [formatChatTimeOfDay], the same chokepoint the message
+  /// bubble uses (E2E #69). Hand-rolling `hour % 12` + "AM/PM" asserted a
+  /// 12-hour clock on every user, including the ones whose device is set to
+  /// 24-hour — which is the same defect as the bubble's old hardcoded
+  /// `HH:mm`, just pointing the other way.
+  String? _asOfLabel(BuildContext context) {
     final ts = insight.generatedAt;
     if (ts == null) return null;
-    final local = ts.toLocal();
-    final hour12 = local.hour % 12 == 0 ? 12 : local.hour % 12;
-    final minute = local.minute.toString().padLeft(2, '0');
-    final ampm = local.hour >= 12 ? 'PM' : 'AM';
-    return 'as of $hour12:$minute $ampm';
+    return 'as of ${formatChatTimeOfDay(context, ts.toLocal())}';
   }
 
   @override
@@ -118,9 +122,9 @@ class CoachBriefingCard extends StatelessWidget {
               const Spacer(),
               // Freshness caption — makes staleness visible instead of the
               // numbers silently claiming to be "now".
-              if (_asOfLabel != null) ...[
+              if (_asOfLabel(context) != null) ...[
                 Text(
-                  _asOfLabel!,
+                  _asOfLabel(context)!,
                   style: ZType.lbl(10, color: c.textMuted, letterSpacing: 0.4),
                 ),
                 const SizedBox(width: 8),
@@ -441,32 +445,14 @@ class _BriefingChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glyph = _glyph;
-    return InkWell(
-      borderRadius: BorderRadius.circular(999),
+    // One prompt treatment across the whole thread (E2E #33) — this pill used
+    // to differ from the suggested-reply / quick-action pills by a couple of
+    // px and a letter-spacing, which is exactly the kind of near-miss that
+    // makes one surface look like three systems.
+    return ChatPromptPill(
+      label: chip.label,
+      icon: _glyph,
       onTap: onTap,
-      child: Container(
-        // Compact pill — was vertical: 8, which read tall next to 13sp text.
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: accent.withValues(alpha: 0.32)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (glyph != null) ...[
-              Icon(glyph, size: 14, color: accent),
-              const SizedBox(width: 6),
-            ],
-            Text(
-              chip.label,
-              style: ZType.lbl(13, color: accent, letterSpacing: 0.6),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

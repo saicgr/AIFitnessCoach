@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import 'chat_route_dispatch.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Lifecycle of the undo card within a single chat bubble.
@@ -266,7 +266,9 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
       behavior: HitTestBehavior.opaque,
       onTap: () {
         HapticService.selection();
-        context.push(route);
+        // Same chokepoint as every other chat deep link: an unregistered route
+        // must surface, not throw into the void from a gesture callback.
+        pushChatRoute(context, route);
       },
       child: row,
     );

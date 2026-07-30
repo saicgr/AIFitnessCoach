@@ -13,8 +13,10 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../screens/nutrition/menu_analysis_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'chat_prompt_pill.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 /// Overlay shown on top of a video thumbnail while it is uploading or being analyzed.
 class MediaUploadOverlay extends StatefulWidget {
   final String phase; // 'uploading' | 'analyzing'
@@ -118,7 +120,10 @@ class _MediaUploadOverlayState extends State<MediaUploadOverlay> {
         Text(
           label,
           style: const TextStyle(
-              color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 8),
         SizedBox(
@@ -216,6 +221,7 @@ class _StageDot extends StatelessWidget {
 /// Compact summary card for food analysis with 6+ items.
 class FoodAnalysisSummaryCard extends StatelessWidget {
   final List<Map<String, dynamic>> foodItems;
+
   /// Doubles as the plate-analysis log callback (see `_openMenuSheet`), so it
   /// must report whether the write succeeded.
   final Future<bool> Function(List<Map<String, dynamic>>)? onViewAll;
@@ -235,7 +241,8 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
     int totalProtein = 0;
     for (final item in foodItems) {
       totalCal += (item['calories'] as num? ?? 0).toInt();
-      totalProtein += (item['protein_g'] as num? ?? item['protein'] as num? ?? 0).toInt();
+      totalProtein +=
+          (item['protein_g'] as num? ?? item['protein'] as num? ?? 0).toInt();
     }
 
     return Container(
@@ -260,7 +267,11 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                   color: AppColors.green.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.restaurant_rounded, size: 16, color: AppColors.green),
+                child: const Icon(
+                  Icons.restaurant_rounded,
+                  size: 16,
+                  color: AppColors.green,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -305,7 +316,9 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                 _openMenuSheet(context, isDark);
               },
               icon: const Icon(Icons.visibility_outlined, size: 16),
-              label: Text(AppLocalizations.of(context).chatMediaWidgetsViewAllLog),
+              label: Text(
+                AppLocalizations.of(context).chatMediaWidgetsViewAllLog,
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.orange,
                 foregroundColor: Colors.white,
@@ -353,11 +366,7 @@ class ViewLoggedMealButton extends ConsumerWidget {
   final String? mealType;
   final int? calories;
 
-  const ViewLoggedMealButton({
-    super.key,
-    this.mealType,
-    this.calories,
-  });
+  const ViewLoggedMealButton({super.key, this.mealType, this.calories});
 
   String _label() {
     final mt = mealType;
@@ -373,6 +382,8 @@ class ViewLoggedMealButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Single accent source — this pill was hardcoded cyan (E2E #15 / #33).
+    final accent = ThemeColors.of(context).accent;
     return Padding(
       padding: const EdgeInsets.only(top: 10),
       child: InkWell(
@@ -395,23 +406,20 @@ class ViewLoggedMealButton extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withValues(alpha: 0.12),
+            color: accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppColors.cyan.withValues(alpha: 0.35),
-              width: 1,
-            ),
+            border: Border.all(color: accent.withValues(alpha: 0.35), width: 1),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.restaurant_menu_rounded, size: 16, color: AppColors.cyan),
+              Icon(Icons.restaurant_menu_rounded, size: 16, color: accent),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   _label(),
                   style: TextStyle(
-                    color: AppColors.cyan,
+                    color: accent,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
@@ -419,7 +427,7 @@ class ViewLoggedMealButton extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Icon(Icons.arrow_forward_rounded, size: 14, color: AppColors.cyan),
+              Icon(Icons.arrow_forward_rounded, size: 14, color: accent),
             ],
           ),
         ),
@@ -440,6 +448,9 @@ class GoToWorkoutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Accent gradient, not a hardcoded cyan→purple one (E2E #94 / #15).
+    final tc = ThemeColors.of(context);
+    final onAccent = tc.accentContrast;
     return InkWell(
       onTap: () {
         HapticService.selection();
@@ -449,23 +460,21 @@ class GoToWorkoutButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.cyan, AppColors.purple],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
+          gradient: tc.accentGradient,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.fitness_center, size: 18, color: Colors.white),
+            Icon(Icons.fitness_center, size: 18, color: onAccent),
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                workoutName != null ? 'Go to $workoutName' : AppLocalizations.of(context).chatMediaWidgetsGoToWorkout,
-                style: const TextStyle(
-                  color: Colors.white,
+                workoutName != null
+                    ? 'Go to $workoutName'
+                    : AppLocalizations.of(context).chatMediaWidgetsGoToWorkout,
+                style: TextStyle(
+                  color: onAccent,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
@@ -473,7 +482,7 @@ class GoToWorkoutButton extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.arrow_forward, size: 16, color: Colors.white),
+            Icon(Icons.arrow_forward, size: 16, color: onAccent),
           ],
         ),
       ),
@@ -511,21 +520,39 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
   bool _saved = false;
   bool _adjusting = false;
 
+  /// Last failure from a card action, rendered INLINE on the card.
+  ///
+  /// A SnackBar alone is not enough here: the chat list rebuilds constantly
+  /// (streaming turns, seeded chips), so if this element is torn down while a
+  /// request is in flight the `mounted` guard swallows the only feedback the
+  /// user would ever get — which is exactly why "Save" read as a dead button
+  /// while the server was actually 500ing (E2E #98 / #105). The inline row
+  /// keeps the failure on screen until the user retries or it succeeds.
+  String? _error;
+
   /// Quick-adjust: send a templated tweak to the coach without leaving chat.
   /// Reuses the same chat send path the input bar uses, so the coach's
   /// modify-workout tools run and the card updates in place.
   Future<void> _quickAdjust(String message) async {
     if (_adjusting) return;
-    setState(() => _adjusting = true);
+    setState(() {
+      _adjusting = true;
+      _error = null;
+    });
     HapticService.selection();
+    // Captured BEFORE the await: ScaffoldMessenger.of(context) on a defunct
+    // element throws, so a card torn down mid-flight would otherwise lose the
+    // only signal the user gets.
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(chatMessagesProvider.notifier).sendMessage(message);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not send. Please try again.')),
-        );
-      }
+    } catch (e) {
+      HapticService.error();
+      _reportFailure(
+        messenger,
+        "Couldn't send that to your coach.",
+        retry: () => _quickAdjust(message),
+      );
     } finally {
       if (mounted) setState(() => _adjusting = false);
     }
@@ -533,40 +560,101 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
 
   Future<void> _save() async {
     if (_saving || _saved) return;
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
+    final messenger = ScaffoldMessenger.of(context);
     try {
-      await ref.read(savedWorkoutsServiceProvider).saveFromWorkout(
+      await ref
+          .read(savedWorkoutsServiceProvider)
+          .saveFromWorkout(
             workoutId: widget.workoutId,
             name: widget.workoutName,
           );
-      if (!mounted) return;
-      setState(() {
-        _saving = false;
-        _saved = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
+      HapticService.success();
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _saved = true;
+        });
+      }
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
         const SnackBar(content: Text('Saved to your library')),
       );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _saving = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not save. Please try again.')),
-      );
+    } catch (e) {
+      HapticService.error();
+      if (mounted) setState(() => _saving = false);
+      _reportFailure(messenger, "Couldn't save this workout.", retry: _save);
     }
   }
 
   Future<void> _sendThumbs(int value) async {
     HapticService.selection();
+    final previous = _thumbs;
     final next = _thumbs == value ? 0 : value;
-    setState(() => _thumbs = next);
+    setState(() {
+      _thumbs = next;
+      _error = null;
+    });
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await ref
           .read(workoutStudioServiceProvider)
           .sendThumbs(widget.workoutId, next);
-    } catch (_) {
-      // Soft signal — a failed thumbs vote is non-critical.
+    } catch (e) {
+      // The optimistic toggle already told the user the vote landed. It
+      // didn't — roll the pip back and say so, rather than leaving a filled
+      // icon standing in for a write that never happened.
+      if (mounted) setState(() => _thumbs = previous);
+      _reportFailure(
+        messenger,
+        "Couldn't send that feedback.",
+        retry: () => _sendThumbs(value),
+      );
     }
+  }
+
+  /// Single failure chokepoint for every action on this card: inline message
+  /// (survives the SnackBar being missed or obscured) + a SnackBar with a
+  /// Retry. Never swallow — a card action that fails must LOOK failed.
+  void _reportFailure(
+    ScaffoldMessengerState messenger,
+    String message, {
+    required VoidCallback retry,
+  }) {
+    if (mounted) setState(() => _error = message);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: SnackBarAction(
+          label: 'Retry',
+          onPressed: () {
+            // The card can be torn down while this SnackBar is still up —
+            // that is the exact scenario the captured messenger exists for.
+            // Calling back into a defunct State throws "setState() called
+            // after dispose()" and never reaches the service (verified by
+            // widget test), so the Retry would have been a crash, not a
+            // retry. Say so instead of failing silently or throwing.
+            if (!mounted) {
+              messenger.hideCurrentSnackBar();
+              messenger.showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'That workout card is no longer open — ask your coach '
+                    'for it again.',
+                  ),
+                ),
+              );
+              return;
+            }
+            retry();
+          },
+        ),
+      ),
+    );
   }
 
   void _open() {
@@ -577,6 +665,13 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Single accent source (E2E #94 / #15): this card used to hardcode a
+    // cyan→purple gradient with a purple Start pill while the app accent is
+    // whatever the user picked (orange by default). Everything chromatic here
+    // now derives from ThemeColors.accent.
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final onAccent = tc.accentContrast;
     final name = widget.workoutName ?? 'Your workout';
     final meta = <String>[
       if (widget.durationMinutes != null) '${widget.durationMinutes} min',
@@ -589,7 +684,7 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
       margin: const EdgeInsets.only(top: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.purple.withValues(alpha: 0.35)),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
         color: Theme.of(context).cardColor,
       ),
       clipBehavior: Clip.antiAlias,
@@ -601,32 +696,26 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.cyan, AppColors.purple],
-                ),
-              ),
+              decoration: BoxDecoration(gradient: tc.accentGradient),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.fitness_center,
-                          size: 18, color: Colors.white),
+                      Icon(Icons.fitness_center, size: 18, color: onAccent),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           name,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: onAccent,
                             fontWeight: FontWeight.w700,
                             fontSize: 15,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Icon(Icons.chevron_right,
-                          size: 20, color: Colors.white),
+                      Icon(Icons.chevron_right, size: 20, color: onAccent),
                     ],
                   ),
                   if (meta.isNotEmpty) ...[
@@ -634,7 +723,7 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
                     Text(
                       meta.join('  •  '),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
+                        color: onAccent.withValues(alpha: 0.85),
                         fontSize: 12,
                       ),
                     ),
@@ -653,9 +742,11 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
                   for (final c in chips)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.12),
+                        color: accent.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -666,11 +757,15 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
                   if (extra > 0)
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 5),
+                        horizontal: 6,
+                        vertical: 5,
+                      ),
                       child: Text(
                         '+$extra more',
                         style: TextStyle(
-                            fontSize: 11, color: cs.onSurfaceVariant),
+                          fontSize: 11,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ),
                 ],
@@ -679,87 +774,152 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
           // ── Quick-adjust chips — tweak the workout without leaving chat ──
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-            child: Opacity(
-              opacity: _adjusting ? 0.5 : 1.0,
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  _QuickAdjustChip(
-                    icon: Icons.trending_up_rounded,
-                    label: 'Harder',
-                    onTap: () => _quickAdjust('Make this workout harder.'),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                // Same pill as every other prompt in the thread (E2E #33).
+                ChatPromptPill(
+                  icon: Icons.trending_up_rounded,
+                  label: 'Harder',
+                  enabled: !_adjusting,
+                  onTap: () => _quickAdjust('Make this workout harder.'),
+                ),
+                ChatPromptPill(
+                  icon: Icons.trending_down_rounded,
+                  label: 'Easier',
+                  enabled: !_adjusting,
+                  onTap: () => _quickAdjust('Make this workout easier.'),
+                ),
+                ChatPromptPill(
+                  icon: Icons.swap_horiz_rounded,
+                  label: 'Swap',
+                  enabled: !_adjusting,
+                  onTap: () => _quickAdjust(
+                    'Swap one of the exercises in this workout for a different one.',
                   ),
-                  _QuickAdjustChip(
-                    icon: Icons.trending_down_rounded,
-                    label: 'Easier',
-                    onTap: () => _quickAdjust('Make this workout easier.'),
-                  ),
-                  _QuickAdjustChip(
-                    icon: Icons.swap_horiz_rounded,
-                    label: 'Swap',
-                    onTap: () => _quickAdjust(
-                        'Swap one of the exercises in this workout for a different one.'),
-                  ),
-                  _QuickAdjustChip(
-                    icon: Icons.event_rounded,
-                    label: 'Schedule',
-                    onTap: () =>
-                        _quickAdjust('Schedule this workout for tomorrow.'),
-                  ),
-                ],
-              ),
+                ),
+                ChatPromptPill(
+                  icon: Icons.event_rounded,
+                  label: 'Schedule',
+                  enabled: !_adjusting,
+                  onTap: () =>
+                      _quickAdjust('Schedule this workout for tomorrow.'),
+                ),
+              ],
             ),
           ),
+          // ── Actions ───────────────────────────────────────────────────
+          // The primary CTA owns its own full-width row. It used to share one
+          // Row with Save + two IconButtons as the only `Expanded` child:
+          // Expanded gets what is LEFT after the non-flex siblings take their
+          // intrinsic widths, and Save (icon + label + M3 padding) plus two
+          // 48px icon buttons consume essentially the whole 0.8×screen bubble
+          // — so "Start" was handed a near-zero constraint and wrapped one
+          // letter per line, "St / ar / t" (E2E #94 / #62). A hardcoded width
+          // would just move the bug to the next locale (cf. #23), so the fix
+          // is structural: nothing intrinsically-sized competes with the
+          // primary button for horizontal space any more.
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _open,
-                    icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                    label: const Text('Start'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.purple,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                FilledButton.icon(
+                  onPressed: _open,
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: const Text('Start'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: onAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: (_saving || _saved) ? null : _save,
+                        icon: _saving
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    accent,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                _saved
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_border_rounded,
+                                size: 18,
+                              ),
+                        label: Text(
+                          _saved ? 'Saved' : 'Save',
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          side: BorderSide(
+                            color: accent.withValues(alpha: 0.45),
+                          ),
+                          foregroundColor: _saved ? accent : cs.onSurface,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => _sendThumbs(1),
+                      icon: Icon(
+                        _thumbs == 1
+                            ? Icons.thumb_up_alt_rounded
+                            : Icons.thumb_up_alt_outlined,
+                        size: 18,
+                      ),
+                      color: _thumbs == 1 ? accent : cs.onSurfaceVariant,
+                      tooltip: 'Good workout',
+                    ),
+                    IconButton(
+                      onPressed: () => _sendThumbs(-1),
+                      icon: Icon(
+                        _thumbs == -1
+                            ? Icons.thumb_down_alt_rounded
+                            : Icons.thumb_down_alt_outlined,
+                        size: 18,
+                      ),
+                      color: _thumbs == -1 ? cs.error : cs.onSurfaceVariant,
+                      tooltip: 'Not for me',
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: Icon(
-                    _saved
-                        ? Icons.bookmark_rounded
-                        : Icons.bookmark_border_rounded,
-                    size: 18,
+                // A failed action stays visible on the card — the SnackBar can
+                // be missed, and this is what made a 500ing Save read as inert.
+                if (_error != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 16,
+                        color: cs.error,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '$_error Tap again to retry.',
+                          style: TextStyle(fontSize: 12, color: cs.error),
+                        ),
+                      ),
+                    ],
                   ),
-                  label: Text(_saved ? 'Saved' : 'Save'),
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  onPressed: () => _sendThumbs(1),
-                  icon: Icon(
-                    _thumbs == 1
-                        ? Icons.thumb_up_alt_rounded
-                        : Icons.thumb_up_alt_outlined,
-                    size: 18,
-                  ),
-                  color: _thumbs == 1 ? AppColors.cyan : cs.onSurfaceVariant,
-                  tooltip: 'Good workout',
-                ),
-                IconButton(
-                  onPressed: () => _sendThumbs(-1),
-                  icon: Icon(
-                    _thumbs == -1
-                        ? Icons.thumb_down_alt_rounded
-                        : Icons.thumb_down_alt_outlined,
-                    size: 18,
-                  ),
-                  color: _thumbs == -1 ? Colors.redAccent : cs.onSurfaceVariant,
-                  tooltip: 'Not for me',
-                ),
+                ],
               ],
             ),
           ),
@@ -797,24 +957,28 @@ class _WorkoutSkeletonCardState extends State<WorkoutSkeletonCard>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Same accent source as the real card it turns into — otherwise the
+    // skeleton flashes cyan/purple and then snaps to the user's accent.
+    final accent = ThemeColors.of(context).accent;
     Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: cs.onSurface.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        );
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: cs.onSurface.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+    );
 
     return FadeTransition(
-      opacity: Tween<double>(begin: 0.55, end: 1.0).animate(
-        CurvedAnimation(parent: _c, curve: Curves.easeInOut),
-      ),
+      opacity: Tween<double>(
+        begin: 0.55,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut)),
       child: Container(
         margin: const EdgeInsets.only(top: 4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.purple.withValues(alpha: 0.25)),
+          border: Border.all(color: accent.withValues(alpha: 0.25)),
           color: Theme.of(context).cardColor,
         ),
         clipBehavior: Clip.antiAlias,
@@ -827,8 +991,8 @@ class _WorkoutSkeletonCardState extends State<WorkoutSkeletonCard>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.cyan.withValues(alpha: 0.55),
-                    AppColors.purple.withValues(alpha: 0.55),
+                    accent.withValues(alpha: 0.55),
+                    accent.withValues(alpha: 0.30),
                   ],
                 ),
               ),
@@ -863,66 +1027,28 @@ class _WorkoutSkeletonCardState extends State<WorkoutSkeletonCard>
                 children: [bar(72, 24), bar(96, 24), bar(60, 24), bar(84, 24)],
               ),
             ),
+            // Mirrors the real card's action stack (full-width primary on its
+            // own row, secondary row beneath) so the swap doesn't reflow.
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: bar(double.infinity, 38)),
-                  const SizedBox(width: 8),
-                  bar(72, 38),
+                  bar(double.infinity, 40),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: bar(double.infinity, 40)),
+                      const SizedBox(width: 8),
+                      bar(40, 40),
+                      const SizedBox(width: 8),
+                      bar(40, 40),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A small outlined pill that sends a one-tap workout tweak to the coach
-/// ("Harder", "Easier", "Swap", "Schedule"). Visually lighter than the primary
-/// Start/Save buttons so it reads as a secondary affordance.
-class _QuickAdjustChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _QuickAdjustChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: cs.outline.withValues(alpha: 0.4)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: cs.onSurfaceVariant),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -937,17 +1063,23 @@ class _InlineGoToPill extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-  final Color color;
+
+  /// Optional explicit tint. Defaults to the resolved app accent — these pills
+  /// used to be hardcoded cyan or purple depending on which one a call site
+  /// happened to pass, so three identical affordances in one thread painted
+  /// three different colours (E2E #15 / #33).
+  final Color? color;
 
   const _InlineGoToPill({
     required this.icon,
     required this.label,
     required this.onTap,
-    this.color = AppColors.cyan,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? ThemeColors.of(context).accent;
     return InkWell(
       onTap: () {
         HapticService.selection();
@@ -959,10 +1091,7 @@ class _InlineGoToPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: color.withValues(alpha: 0.35),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
         ),
         // Wrap (not Row) so a long label degrades gracefully on narrow
         // bubbles / small devices instead of overflowing.
@@ -1007,7 +1136,6 @@ class ExerciseHowToButton extends StatelessWidget {
     return _InlineGoToPill(
       icon: Icons.play_circle_outline_rounded,
       label: 'How to do $exerciseName',
-      color: AppColors.purple,
       onTap: () {
         final exercise = WorkoutExercise.fromJson(<String, dynamic>{
           'id': exerciseId,
@@ -1028,11 +1156,7 @@ class ViewProgressButton extends StatelessWidget {
   final String kind; // 'pr' | 'progress'
   final String? exerciseName;
 
-  const ViewProgressButton({
-    super.key,
-    required this.kind,
-    this.exerciseName,
-  });
+  const ViewProgressButton({super.key, required this.kind, this.exerciseName});
 
   @override
   Widget build(BuildContext context) {
@@ -1087,7 +1211,6 @@ class ScheduleWorkoutButton extends StatelessWidget {
     return _InlineGoToPill(
       icon: Icons.calendar_month_outlined,
       label: 'Schedule',
-      color: AppColors.purple,
       onTap: () => context.push('/schedule'),
     );
   }

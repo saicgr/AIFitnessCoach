@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/models/quick_action.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../home/widgets/components/quick_action_launcher.dart';
+import 'chat_prompt_pill.dart';
 
 /// Visual metadata for the "virtual" launcher IDs that have no entry in
 /// [quickActionRegistry] (they exist only as chat suggestions). Keeps the card
@@ -208,56 +209,29 @@ class _SuggestedActionsCardState extends ConsumerState<SuggestedActionsCard> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: [for (final id in ids) _chip(id, isDark)],
+            children: [for (final id in ids) _chip(id)],
           ),
         ],
       ),
     );
   }
 
-  Widget _chip(String id, bool isDark) {
+  /// Same pill as every other promptable thing in the thread (E2E #33).
+  ///
+  /// These chips used to paint the launcher registry's per-action colour
+  /// (`#22C55E`, `#16A34A`, `#06B6D4`, …), so a coach turn carrying suggested
+  /// actions rendered a rainbow strip directly above the accent-tinted
+  /// suggested-reply chips and the accent-tinted quick-action strip — three
+  /// treatments for one kind of thing, which is exactly the register's
+  /// complaint. The ICON still differentiates the action; the colour no
+  /// longer pretends the actions are different categories.
+  Widget _chip(String id) {
     final meta = _meta(id)!;
-    final color = meta.color;
-    return Semantics(
-      button: true,
+    return ChatPromptPill(
       label: meta.label,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: _launching ? null : () => _onTap(id),
-          borderRadius: BorderRadius.circular(20),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 40),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: isDark ? 0.20 : 0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: color.withValues(alpha: isDark ? 0.40 : 0.30),
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(meta.icon, size: 16, color: color),
-                  const SizedBox(width: 6),
-                  Text(
-                    meta.label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      icon: meta.icon,
+      enabled: !_launching,
+      onTap: () => _onTap(id),
     );
   }
 }

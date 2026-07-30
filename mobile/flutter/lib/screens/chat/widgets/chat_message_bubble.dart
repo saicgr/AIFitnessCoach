@@ -32,6 +32,7 @@ import 'program_action_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
+import 'chat_timestamp.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -573,7 +574,7 @@ class ChatMessageBubble extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _formatTime(message.timestamp ?? DateTime.now()),
+                  _formatTime(context, message.timestamp ?? DateTime.now()),
                   style: const TextStyle(
                     fontSize: 10,
                     color: AppColors.textMuted,
@@ -878,24 +879,13 @@ class ChatMessageBubble extends ConsumerWidget {
     );
   }
 
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final messageDate = DateTime(time.year, time.month, time.day);
-
-    final hour = time.hour.toString().padLeft(2, '0');
-    final minute = time.minute.toString().padLeft(2, '0');
-    final timeStr = '$hour:$minute';
-
-    if (messageDate == today) {
-      return timeStr;
-    } else if (messageDate == today.subtract(const Duration(days: 1))) {
-      return 'Yesterday, $timeStr';
-    } else {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return '${months[time.month - 1]} ${time.day}, $timeStr';
-    }
-  }
+  /// Delegates to [formatChatTimestamp] — the single chat-timestamp chokepoint.
+  /// It resolves the instant with `.toLocal()` before reading any calendar
+  /// field (a server `timestamptz` parses to a UTC DateTime, which is what made
+  /// a 23:49 CDT message render as "Jul 29, 04:49"), and renders the clock via
+  /// MaterialLocalizations instead of a hardcoded 24-hour "HH:mm".
+  String _formatTime(BuildContext context, DateTime time) =>
+      formatChatTimestamp(context, time);
 
   /// Format a user-perceived latency for display next to the timestamp.
   /// Buckets: sub-second → "Xms", under a minute → "X.Xs", else "Xm Ys".

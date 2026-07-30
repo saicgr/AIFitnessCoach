@@ -7,6 +7,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'chat_prompt_pill.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class EnhancedEmptyState extends StatelessWidget {
@@ -19,20 +20,25 @@ class EnhancedEmptyState extends StatelessWidget {
     required this.onSuggestionTap,
   });
 
-  static const _suggestions = <(String, IconData, Color)>[
-    ('Quick 15-min workout', Icons.flash_on_outlined, Color(0xFF06B6D4)),
-    ('Pre-workout meal ideas', Icons.restaurant_outlined, Color(0xFF22C55E)),
-    ('Improve my squat form', Icons.self_improvement_outlined, Color(0xFFF97316)),
-    ('High-protein meal prep', Icons.lunch_dining_outlined, Color(0xFFA855F7)),
-    ('Should I work out tired?', Icons.bedtime_outlined, Color(0xFF3B82F6)),
-    ('Lower back pain help', Icons.healing_outlined, Color(0xFFEF4444)),
+  /// Prompt + icon only. These carried a hardcoded colour each (cyan, green,
+  /// orange, purple, blue, red…) which made the empty state read as six
+  /// different KINDS of thing sitting next to the accent-tinted reply chips
+  /// and the grey composer pills (E2E #33). They are all prompts: one tint
+  /// (the app accent, via [ChatPromptPill]), differentiated by icon.
+  static const _suggestions = <(String, IconData)>[
+    ('Quick 15-min workout', Icons.flash_on_outlined),
+    ('Pre-workout meal ideas', Icons.restaurant_outlined),
+    ('Improve my squat form', Icons.self_improvement_outlined),
+    ('High-protein meal prep', Icons.lunch_dining_outlined),
+    ('Should I work out tired?', Icons.bedtime_outlined),
+    ('Lower back pain help', Icons.healing_outlined),
     // Reports & Share — these prompts trigger the GENERATE_SHARE_ARTIFACT
     // intent in the coach agent, which mints a zealova.com link inline.
-    ("Share today's workout", Icons.ios_share_rounded, Color(0xFF0EA5E9)),
-    ("Share this week's plan", Icons.calendar_view_week_rounded, Color(0xFF8B5CF6)),
-    ('Share my PRs this month', Icons.emoji_events_outlined, Color(0xFFF59E0B)),
-    ('YTD workout summary', Icons.summarize_outlined, Color(0xFF10B981)),
-    ('Share my 1RM progress', Icons.trending_up_rounded, Color(0xFFEC4899)),
+    ("Share today's workout", Icons.ios_share_rounded),
+    ("Share this week's plan", Icons.calendar_view_week_rounded),
+    ('Share my PRs this month', Icons.emoji_events_outlined),
+    ('YTD workout summary', Icons.summarize_outlined),
+    ('Share my 1RM progress', Icons.trending_up_rounded),
   ];
 
   // First N suggestions shown inline; the rest live behind a "More" pill that
@@ -112,24 +118,15 @@ class EnhancedEmptyState extends StatelessWidget {
             runSpacing: 8,
             children: [
               for (final s in _suggestions.take(_previewCount))
-                _CompactChip(
-                  text: s.$1,
+                ChatPromptPill(
+                  label: s.$1,
                   icon: s.$2,
-                  color: s.$3,
-                  isDark: isDark,
-                  colors: colors,
-                  onTap: () {
-                    HapticService.selection();
-                    onSuggestionTap(s.$1);
-                  },
+                  onTap: () => onSuggestionTap(s.$1),
                 ),
               if (_suggestions.length > _previewCount)
-                _CompactChip(
-                  text: 'More',
+                ChatPromptPill(
+                  label: 'More',
                   icon: Icons.keyboard_arrow_up_rounded,
-                  color: colors.accent,
-                  isDark: isDark,
-                  colors: colors,
                   onTap: () => _showMoreSuggestions(context, colors, isDark),
                 ),
             ],
@@ -146,7 +143,7 @@ class EnhancedEmptyState extends StatelessWidget {
     ThemeColors colors,
     bool isDark,
   ) {
-    HapticService.selection();
+    // No haptic here — ChatPromptPill already fires selection on tap.
     showGlassSheet<void>(
       context: context,
       builder: (sheetContext) {
@@ -171,7 +168,7 @@ class _SuggestionsSheet extends StatelessWidget {
   final CoachPersona coach;
   final ThemeColors colors;
   final bool isDark;
-  final List<(String, IconData, Color)> suggestions;
+  final List<(String, IconData)> suggestions;
   final void Function(String prompt) onSuggestionTap;
 
   const _SuggestionsSheet({
@@ -279,7 +276,8 @@ class _SuggestionsSheet extends StatelessWidget {
                       itemCount: suggestions.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 6),
                       itemBuilder: (context, i) {
-                        final (text, icon, color) = suggestions[i];
+                        final (text, icon) = suggestions[i];
+                        final color = colors.accent;
                         return Material(
                           color: Colors.transparent,
                           child: InkWell(
@@ -353,56 +351,3 @@ class _SuggestionsSheet extends StatelessWidget {
   }
 }
 
-class _CompactChip extends StatelessWidget {
-  final String text;
-  final IconData icon;
-  final Color color;
-  final bool isDark;
-  final ThemeColors colors;
-  final VoidCallback onTap;
-
-  const _CompactChip({
-    required this.text,
-    required this.icon,
-    required this.color,
-    required this.isDark,
-    required this.colors,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withOpacity(0.06)
-              : Colors.black.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.black.withOpacity(0.08),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: colors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

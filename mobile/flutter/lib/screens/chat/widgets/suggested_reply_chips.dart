@@ -14,7 +14,7 @@ library;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/theme_colors.dart';
+import 'chat_prompt_pill.dart';
 
 /// One suggested-reply chip definition.
 ///
@@ -212,16 +212,17 @@ class SuggestedReplyChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (chips.isEmpty) return const SizedBox.shrink();
-    final c = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(46, 6, 16, 8),
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
+          // One shared treatment for every promptable thing in the thread —
+          // see [ChatPromptPill] (E2E #33).
           for (final chip in chips)
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
+            ChatPromptPill(
+              label: chip.label,
               onTap: () {
                 if (chip.route != null && chip.route!.isNotEmpty) {
                   onRouteTap(chip.route!);
@@ -236,25 +237,6 @@ class SuggestedReplyChips extends StatelessWidget {
                 }
                 onMessageTap(chip.label);
               },
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: c.accent.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: c.accent.withValues(alpha: 0.30),
-                  ),
-                ),
-                child: Text(
-                  chip.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: c.accent,
-                  ),
-                ),
-              ),
             ),
         ],
       ),

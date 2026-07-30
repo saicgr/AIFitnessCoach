@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_links.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'dart:ui';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
@@ -21,6 +22,8 @@ import '../../data/models/chat_message.dart';
 import '../../data/providers/daily_coach_insight_provider.dart';
 import '../../data/models/coach_persona.dart';
 import 'widgets/suggested_reply_chips.dart';
+import 'widgets/chat_route_dispatch.dart';
+import 'widgets/chat_prompt_pill.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
 import '../../data/providers/xp_provider.dart';
@@ -580,20 +583,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               .dispatchWorkoutCardAction(kind, p),
         );
       },
-      onRouteTap: (route) {
-        try {
-          context.push(route);
-        } catch (_) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppLocalizations.of(context)!
-                    .chatScreenRouteNotRegistered(route)),
-              ),
-            );
-          }
-        }
-      },
+      onRouteTap: (route) => pushChatRoute(context, route),
     );
   }
 
@@ -603,13 +593,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// route chips deep-link, action chips fire a workout-card action, label
   /// chips send a user turn. No avatar/chart landing is involved.
   Widget _buildOpenGreetingChips(DailyCoachInsight insight) {
-    final accent = ThemeColors.of(context).accent;
     void dispatch(InsightChip chip) {
       HapticService.selection();
       if (chip.route != null && chip.route!.isNotEmpty) {
-        try {
-          context.push(chip.route!);
-        } catch (_) {}
+        pushChatRoute(context, chip.route!);
         return;
       }
       if (chip.action != null && chip.action!.isNotEmpty) {
@@ -635,27 +622,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         spacing: 8,
         runSpacing: 8,
         children: [
+          // Same pill as suggested replies / quick actions / empty-state
+          // prompts — one treatment for one kind of thing (E2E #33).
           for (final chip in insight.chips)
-            InkWell(
-              borderRadius: BorderRadius.circular(999),
+            ChatPromptPill(
+              label: chip.label,
               onTap: () => dispatch(chip),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: accent.withValues(alpha: 0.32)),
-                ),
-                child: Text(
-                  chip.label,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: accent,
-                  ),
-                ),
-              ),
             ),
         ],
       ),
@@ -740,11 +712,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   .dispatchWorkoutCardAction(kind, p),
             );
           },
-          onRouteTap: (route) {
-            try {
-              context.push(route);
-            } catch (_) {}
-          },
+          onRouteTap: (route) => pushChatRoute(context, route),
         ),
         const SizedBox(height: 8),
       ],
@@ -791,18 +759,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               .dispatchWorkoutCardAction(kind, p),
         );
       },
-      onRouteTap: (route) {
-        try {
-          context.push(route);
-        } catch (_) {
-          // Bad route is dev-time noise; surface a snack so QA notices.
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLocalizations.of(context)!.chatScreenRouteNotRegistered(route))),
-            );
-          }
-        }
-      },
+      onRouteTap: (route) => pushChatRoute(context, route),
     );
   }
 

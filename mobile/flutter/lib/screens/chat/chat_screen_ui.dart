@@ -168,9 +168,14 @@ extension _ChatScreenStateUI on _ChatScreenState {
     } else if (messageDate == today.subtract(const Duration(days: 1))) {
       label = 'Yesterday';
     } else {
-      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      label = '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]}';
+      // Read the calendar fields off `local`, never off the raw `date`: a
+      // server timestamptz parses to a UTC DateTime, so `date.day` /
+      // `date.month` print the UTC date — a 23:49 CDT message would sit under
+      // a separator labelled with tomorrow. (E2E #95, same class as the
+      // bubble's own timestamp.) DateFormat also makes the label localised
+      // instead of a hardcoded English day/month table.
+      label = DateFormat.MMMEd(Localizations.localeOf(context).toString())
+          .format(local);
     }
 
     return Padding(

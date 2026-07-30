@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+
+import 'chat_route_dispatch.dart';
 
 /// Renders a list of generic, backend-driven "blocks" inline in an AI-coach
 /// chat bubble — compact metric cards, charts, stat grids, free text, and
@@ -114,13 +115,10 @@ class _TappableBlock extends StatelessWidget {
       type: MaterialType.transparency,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          try {
-            context.push(route);
-          } catch (_) {
-            // Never let a bad route crash the chat; degrade to no-op.
-          }
-        },
+        // Was `catch (_) {}` — a data block whose route isn't registered
+        // swallowed the tap entirely. Route through the chat's one deep-link
+        // chokepoint so a failed navigation is visible, not silent.
+        onTap: () => pushChatRoute(context, route),
         child: child,
       ),
     );

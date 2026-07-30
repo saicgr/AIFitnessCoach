@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +9,7 @@ import '../../../data/providers/chat_quick_action_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import 'chat_prompt_pill.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class ChatQuickPills extends ConsumerStatefulWidget {
@@ -161,102 +161,61 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
-      child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        // Right-edge fade so a clipped trailing pill ("Analyze…") reads as
-        // "there's more, scroll" instead of a layout accident.
-        child: ShaderMask(
-          shaderCallback: (rect) => const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [Colors.white, Colors.white, Colors.transparent],
-            stops: [0.0, 0.93, 1.0],
-          ).createShader(rect),
-          blendMode: BlendMode.dstIn,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                ...pills.map((action) => Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 8),
-                  child: _ChatPill(
-                    action: action,
-                    isDark: isDark,
-                    colors: colors,
-                    onTap: () => _handlePillTap(action),
-                    onLongPress: _showMoreSheet,
+      // MINIMUM height, not a fixed one. A hard `height: 40` clipped the pill
+      // for anyone above ~1.3× text scale — and the app's own accessibility
+      // presets go to 1.5×, with senior mode pinned at 1.35× — so the strip
+      // that was fixed for horizontal clipping (E2E #33) would have clipped
+      // vertically instead. Measured natural pill heights: 35 / 37 / 40 / 41 /
+      // 44 at 1.0 / 1.15 / 1.3 / 1.35 / 1.5.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 40),
+        child: Padding(
+          padding: const EdgeInsetsDirectional.only(start: 16, end: 8),
+          child: Row(
+          children: [
+            Expanded(
+              // Wider right-edge fade than before (7% read as a rendering
+              // glitch on a pill clipped mid-word — "Analyze M…", E2E #33).
+              // The fade now runs under the pinned More button, which is the
+              // real affordance: it never scrolls away, so there is always a
+              // visible "there is more here" control at the end of the strip.
+              child: ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [Colors.white, Colors.white, Colors.transparent],
+                  stops: [0.0, 0.82, 1.0],
+                ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      // Same pill as every other prompt surface in chat.
+                      ...pills.map((action) => Padding(
+                            padding: const EdgeInsetsDirectional.only(end: 8),
+                            child: ChatPromptPill(
+                              label: action.label,
+                              icon: action.icon,
+                              enabled: !widget.isLoading,
+                              onTap: () => _handlePillTap(action),
+                              onLongPress: _showMoreSheet,
+                            ),
+                          )),
+                      // Breathing room so the last pill can scroll clear of
+                      // the fade instead of dying under the More button.
+                      const SizedBox(width: 24),
+                    ],
                   ),
-                )),
-                _MorePill(
-                  isDark: isDark,
-                  colors: colors,
-                  onTap: _showMoreSheet,
                 ),
-                // Breathing room so the last pill can scroll clear of the fade.
-                const SizedBox(width: 12),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ChatPill extends StatelessWidget {
-  final ChatQuickAction action;
-  final bool isDark;
-  final ThemeColors colors;
-  final VoidCallback onTap;
-  final VoidCallback onLongPress;
-
-  const _ChatPill({
-    required this.action,
-    required this.isDark,
-    required this.colors,
-    required this.onTap,
-    required this.onLongPress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            // Compact: was vertical 8 inside a 48px strip — pills read tall.
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.06),
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(action.icon, size: 15, color: action.color),
-                const SizedBox(width: 6),
-                Text(
-                  action.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ],
+            _MorePill(
+              isDark: isDark,
+              colors: colors,
+              onTap: _showMoreSheet,
             ),
+          ],
           ),
         ),
       ),
@@ -264,6 +223,9 @@ class _ChatPill extends StatelessWidget {
   }
 }
 
+/// Trailing "more actions" control, pinned at the end of the strip so it never
+/// scrolls out of reach. Same family as [ChatPromptPill] — accent tint,
+/// stadium shape — because it is the same kind of thing.
 class _MorePill extends StatelessWidget {
   final bool isDark;
   final ThemeColors colors;
@@ -277,31 +239,21 @@ class _MorePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.06),
-              ),
-            ),
-            child: Icon(
-              Icons.more_horiz,
-              size: 18,
-              color: colors.textMuted,
-            ),
-          ),
+    final accent = colors.accent;
+    return Material(
+      color: accent.withValues(alpha: 0.10),
+      shape: StadiumBorder(
+        side: BorderSide(color: accent.withValues(alpha: 0.30)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        // No haptic here — the only callback passed in is `_showMoreSheet`,
+        // which already fires a selection haptic. Firing one here too made
+        // tapping More buzz twice.
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Icon(Icons.more_horiz, size: 18, color: accent),
         ),
       ),
     );
