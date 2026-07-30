@@ -11,6 +11,8 @@ This module integrates with the user_context_logs for AI personalization
 and provides workout modification recommendations based on injury status.
 """
 
+import json
+
 from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -278,6 +280,116 @@ def _parse_injury_summary(data: dict) -> InjurySummary:
     )
 
 
+def _injury_token(value) -> str:
+    """Canonical token for one injury entry, whatever shape it arrives in.
+
+    Uses the SAME canonicalizer the safety chokepoint uses
+    (`services.workout_safety_validator.canonicalize_injury_token`), so
+    "Knees"/"knee"/"lower back" all reconcile to one token and the two stores
+    can be compared without a second alias table.
+    """
+    from services.workout_safety_validator import canonicalize_injury_token
+
+    if isinstance(value, dict):
+        value = value.get("body_part") or value.get("name") or value.get("area") or ""
+    return canonicalize_injury_token(value)
+
+
+def _coerce_profile_injuries(raw) -> List:
+    """`users.active_injuries` is jsonb — a list, or (legacy) a JSON string."""
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except (ValueError, TypeError):
+            return []
+    return list(raw) if isinstance(raw, list) else []
+
+
+def sync_profile_active_injuries(supabase, user_id: str) -> Optional[List]:
+    """Reconcile `user_injuries` onto `users.active_injuries` — ONE chokepoint.
+
+    THE BUG THIS CLOSES: the app has two injury stores. The Report Injury screen
+    writes rows to `user_injuries`; onboarding and the profile editor write
+    `users.active_injuries`. Every generation path resolves injuries through
+    `get_active_injuries_with_muscles`, which UNIONs both — but the regenerate
+    path (and anything else reading the profile column directly) sees only
+    `users.active_injuries`. So a user who reported a knee injury in-app got
+    `injuries=[]` handed to the safety chokepoint, and squats came straight back.
+
+    AUTHORITY: `user_injuries` is authoritative for the injuries IT tracks (it
+    is the only store with status / severity / recovery). `users.active_injuries`
+    stays authoritative for everything it holds that `user_injuries` never
+    recorded (onboarding chips, body-map taps) — those entries are preserved
+    verbatim, shape and all, so nothing a user told us is lost.
+
+    Therefore: profile entries whose token is tracked in `user_injuries` are
+    replaced by that table's current truth (present while active/recovering,
+    gone once healed); untracked entries are left exactly as they are.
+
+    Returns the written list, or None when nothing changed / on failure
+    (fail-open — an injury is still recorded even if the projection fails).
+    """
+    try:
+        rows = (
+            supabase.client.table("user_injuries")
+            .select("body_part, status")
+            .eq("user_id", user_id)
+            .execute()
+        ).data or []
+
+        tracked_tokens = set()
+        active_entries: List[str] = []
+        seen_active = set()
+        for row in rows:
+            body_part = (row.get("body_part") or "").strip()
+            token = _injury_token(body_part)
+            if not token:
+                continue
+            tracked_tokens.add(token)
+            if row.get("status") in ("active", "recovering") and token not in seen_active:
+                seen_active.add(token)
+                active_entries.append(body_part)
+
+        user_res = (
+            supabase.client.table("users")
+            .select("active_injuries")
+            .eq("id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        # PostgREST returns None (not a response with data=None) on 0 rows.
+        if not user_res or not user_res.data:
+            logger.warning(
+                "Injury sync skipped — no users row for %s", user_id
+            )
+            return None
+
+        existing = _coerce_profile_injuries(user_res.data.get("active_injuries"))
+        kept = [e for e in existing if _injury_token(e) not in tracked_tokens]
+        kept_tokens = {_injury_token(e) for e in kept}
+        merged = kept + [
+            e for e in active_entries if _injury_token(e) not in kept_tokens
+        ]
+
+        if merged == existing:
+            return None
+
+        supabase.client.table("users").update(
+            {"active_injuries": merged}
+        ).eq("id", user_id).execute()
+        logger.info(
+            "🩹 [Injuries] users.active_injuries synced for %s: %s -> %s",
+            user_id, existing, merged,
+        )
+        return merged
+
+    except Exception as e:  # noqa: BLE001 — never fail the injury write itself
+        logger.error(
+            f"Failed to sync users.active_injuries for {user_id}: {e}", exc_info=True
+        )
+        return None
+
+
 def _calculate_expected_recovery_date(severity: InjurySeverity) -> date:
     """Calculate expected recovery date based on severity."""
     recovery_days = {
@@ -428,6 +540,11 @@ async def report_injury(
             raise safe_internal_error(RuntimeError("DB insert returned no data"), "injuries")
 
         injury = _parse_injury(result.data[0])
+
+        # Make the two injury stores agree BEFORE anything regenerates: every
+        # reader of `users.active_injuries` (the regenerate path included) must
+        # see this injury, or the safety chokepoint is handed an empty list.
+        sync_profile_active_injuries(supabase, user_id)
 
         recommended_exercises = _get_recommended_rehab_exercises(request.body_part)
 
@@ -594,6 +711,9 @@ async def update_injury(
 
         injury = _parse_injury(result.data[0])
 
+        # Status/area changes move the injury in or out of the active set.
+        sync_profile_active_injuries(supabase, result.data[0].get("user_id"))
+
         # E3: an updated injury (status/affected areas) can change which exercises
         # are safe — clear not-started future workouts so they regenerate. Fail-open.
         try:
@@ -644,6 +764,10 @@ async def mark_injury_healed(
         }
 
         supabase.client.table("user_injuries").update(update_data).eq("id", injury_id).execute()
+
+        # Healed here means healed everywhere: drop it from the profile store too,
+        # or the generator keeps avoiding an area the user just cleared.
+        sync_profile_active_injuries(supabase, current_injury.get("user_id"))
 
         # E3: resolving an injury frees exercises back up — clear not-started
         # future workouts so they regenerate with the area available. Fail-open.
@@ -719,6 +843,10 @@ async def add_check_in(
                 update_data["status"] = InjuryStatus.RECOVERING.value
 
         supabase.client.table("user_injuries").update(update_data).eq("id", injury_id).execute()
+
+        # A check-in can flip the injury to healed/recovering — same reconciliation.
+        if "status" in update_data:
+            sync_profile_active_injuries(supabase, user_id)
 
         c = result.data[0]
         return InjuryCheckIn(

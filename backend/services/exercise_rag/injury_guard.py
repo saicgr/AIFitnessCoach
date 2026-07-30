@@ -35,18 +35,30 @@ Public surface — every workout-producing path funnels through one of these:
                                    finishers) so the gate stays genuinely terminal.
   - ``screen_exercise_for_injury`` — single-exercise verdict, for swap surfaces
                                    where the user picks the replacement.
+  - ``resolve_user_chosen_exercise`` — the ONLY library lookup the user-driven
+                                   swap/add surfaces may use. It resolves AND
+                                   screens in one call, with ``injuries`` a
+                                   REQUIRED keyword-only argument, so a call site
+                                   physically cannot obtain a replacement row
+                                   without the screen having run (register row 88;
+                                   same "make it structurally unavoidable" shape
+                                   as row 84's ``ensure_requested_equipment_represented``).
 
 Fail-OPEN: any error keeps the input list (we never block generation).
 """
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from sqlalchemy import text
 
 from core.logger import get_logger
 from core.supabase_client import get_supabase
-from services.workout_safety_validator import canonicalize_injury_tokens
+from services.workout_safety_validator import (
+    canonicalize_injury_token,
+    canonicalize_injury_tokens,
+)
 from .service import _resolve_injury_columns, fetch_safe_candidates
 
 logger = get_logger(__name__)
@@ -89,6 +101,37 @@ _INJURY_TARGET_MUSCLE_KEYWORDS: Dict[str, Tuple[str, ...]] = {
     "lower_back": ("lower back", "erector spinae", "erector", "spinae", "lumbar"),
     "neck":       ("neck", "sternocleidomastoid", "cervical"),
 }
+
+
+_WORD_SPLIT_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _words(value: str) -> List[str]:
+    return [w for w in _WORD_SPLIT_RE.split(value.strip().lower()) if w]
+
+
+def _injury_key_covers(key: str, needle: str) -> bool:
+    """Does injury token ``key`` name the region ``needle``?
+
+    WORD-SEQUENCE matching, not a raw substring scan. Both keyword tables above
+    are keyed by a region needle (``knee``, ``lower_back``) and the injury token
+    can be a canonical id (``knee``), a plural app id already canonicalized
+    (``knees`` -> ``knee``), or free text a user typed (``left knee``, ``knee
+    pain``) that the canonicalizer leaves alone. A bare ``needle in key`` test
+    both OVER-matches (``back`` fires on ``backache``; ``hip`` on ``whiplash``)
+    and reads as an accident. Matching whole words keeps every legitimate hit —
+    ``left knee`` -> ``knee``, ``lower_back`` -> ``lower_back`` — and drops the
+    accidental ones.
+    """
+    key_words = _words(key)
+    needle_words = _words(needle)
+    if not key_words or not needle_words:
+        return False
+    span = len(needle_words)
+    return any(
+        key_words[i:i + span] == needle_words
+        for i in range(len(key_words) - span + 1)
+    )
 
 
 def resolve_avoided_muscle_tokens(injuries: Sequence[Any]) -> List[str]:
@@ -229,12 +272,15 @@ def _looks_like_stretch(cand: Dict[str, Any]) -> bool:
 def _name_keyword_banned(name_lc: str, injuries: List[str]) -> bool:
     """True if the exercise name contains a contraindicated keyword for any injury."""
     for inj in injuries:
-        key = str(inj or "").strip().lower()
+        # Canonicalize FIRST: callers pass the raw stored ids, which are PLURAL
+        # ("knees", "ankles"). Word matching against the singular needles only
+        # works once they have been collapsed onto the canonical spelling.
+        key = canonicalize_injury_token(inj)
         if not key:
             continue
         for needle, kws in _INJURY_NAME_KEYWORDS.items():
-            if needle in key and any(kw in name_lc for kw in kws):
-                if needle == "back" and "lower_back" in key:
+            if _injury_key_covers(key, needle) and any(kw in name_lc for kw in kws):
+                if needle == "back" and _injury_key_covers(key, "lower_back"):
                     continue  # already covered by lower_back set
                 return True
     return False
@@ -263,11 +309,11 @@ def _targets_injured_region(item: Dict[str, Any], injuries: List[str]) -> bool:
     if not blob.strip():
         return False
     for inj in injuries:
-        key = str(inj or "").strip().lower()
+        key = canonicalize_injury_token(inj)  # plural app ids -> singular needles
         if not key:
             continue
         for needle, kws in _INJURY_TARGET_MUSCLE_KEYWORDS.items():
-            if needle in key and any(kw in blob for kw in kws):
+            if _injury_key_covers(key, needle) and any(kw in blob for kw in kws):
                 return True
     return False
 
@@ -292,24 +338,50 @@ def _exercise_names(exercises: List[Dict[str, Any]]) -> List[str]:
     ]
 
 
-def _build_replacement(template: Dict[str, Any], cand: Dict[str, Any]) -> Dict[str, Any]:
-    """Clone the survivor's structural shape, swap in the safe candidate's identity."""
-    repl = {k: template.get(k) for k in _STRUCTURAL_FIELDS if k in template}
+def _inherit_field(templates: Sequence[Dict[str, Any]], field: str) -> Any:
+    """First non-None value of ``field`` across the donor exercises, else None."""
+    for t in templates:
+        if isinstance(t, dict):
+            v = t.get(field)
+            if v is not None:
+                return v
+    return None
+
+
+def _build_replacement(
+    templates: Sequence[Dict[str, Any]], cand: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Clone the workout's own structural shape, swap in the safe candidate's identity.
+
+    Structural fields (sets / reps / rest / set_targets / …) are INHERITED from
+    the workout's other exercises — survivors first, then the dropped originals,
+    which are unsafe in identity but perfectly good as a shape donor. There are
+    deliberately NO invented defaults: a hardcoded ``sets=3, reps=10,
+    rest=60`` in a safety path silently re-prescribes the user's dose, and in a
+    duration-only session (intervals, circuits, mobility) it fabricates a set
+    scheme that never existed. If no exercise in the whole workout carries a
+    field, the replacement doesn't carry it either and downstream normalization
+    handles it exactly as it already handles the originals.
+    """
+    donors = [t for t in templates if isinstance(t, dict)]
+    repl: Dict[str, Any] = {}
+    for key in _STRUCTURAL_FIELDS:
+        value = _inherit_field(donors, key)
+        if value is not None:
+            repl[key] = value
     cn = (cand.get("name") or "").strip()
     repl["name"] = cn
     repl["exercise_name"] = cn
-    repl["equipment"] = cand.get("equipment") or template.get("equipment")
+    repl["equipment"] = cand.get("equipment") or _inherit_field(donors, "equipment")
     repl["muscle_group"] = (
-        cand.get("target_muscle") or cand.get("body_part") or template.get("muscle_group")
+        cand.get("target_muscle")
+        or cand.get("body_part")
+        or _inherit_field(donors, "muscle_group")
     )
     repl["movement_pattern"] = cand.get("movement_pattern")
     if cand.get("exercise_id") is not None:
         repl["library_id"] = str(cand["exercise_id"])
         repl["exercise_id"] = str(cand["exercise_id"])
-    # Defaults so a clone from a sparse template still validates downstream.
-    repl.setdefault("sets", 3)
-    repl.setdefault("reps", 10)
-    repl.setdefault("rest_seconds", 60)
     return repl
 
 
@@ -388,6 +460,116 @@ async def screen_exercise_for_injury(
             exc, exc_info=True,
         )
         return None
+
+
+class InjuryUnsafeExerciseError(RuntimeError):
+    """A user-picked exercise is contraindicated for that user's active injuries.
+
+    Raised by :func:`resolve_user_chosen_exercise`. The swap/add endpoints turn
+    it into a 409 the client can explain — we never silently substitute a
+    different exercise for the one the user asked for, and we never persist the
+    unsafe one.
+    """
+
+    def __init__(self, exercise_name: str, reason: str, injuries: Sequence[Any]):
+        self.exercise_name = exercise_name
+        self.reason = reason
+        self.injuries = [str(i) for i in (injuries or []) if i]
+        super().__init__(
+            f"{exercise_name!r} is contraindicated ({reason}) for injuries "
+            f"{self.injuries}"
+        )
+
+
+def _lookup_library_exercise(
+    exercise_name: str, exercise_id: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
+    """Resolve one exercise by id or name across both library stores.
+
+    Private on purpose: the user-driven surfaces must go through
+    :func:`resolve_user_chosen_exercise`, which cannot be called without the
+    injury screen. This is the single copy of what used to be duplicated in
+    ``api/v1/workouts/exercises.py`` and ``api/v1/workouts/workout_operations.py``.
+    """
+    from services.exercise_library_service import get_exercise_library_service
+
+    lib = get_exercise_library_service()
+    if exercise_id:
+        found = lib.get_exercise_by_id(exercise_id)
+        if found:
+            return found
+    results = lib.search_exercises(exercise_name, limit=1)
+    if results:
+        return results[0]
+
+    try:
+        from core.db import get_supabase_db
+
+        cleaned = (
+            get_supabase_db()
+            .client.table("exercise_library_cleaned")
+            .select(
+                "id, name, target_muscle, body_part, equipment, gif_url, "
+                "video_url, secondary_muscles, instructions"
+            )
+            .ilike("name", exercise_name)
+            .limit(1)
+            .execute()
+        )
+        if cleaned.data:
+            row = cleaned.data[0]
+            return {
+                **row,
+                "name": row.get("name", exercise_name),
+                "muscle_group": row.get("target_muscle") or row.get("body_part", ""),
+            }
+    except Exception as exc:  # noqa: BLE001 — lookup miss is not a failure
+        logger.warning(
+            "exercise_library_cleaned lookup failed for %r: %s",
+            exercise_name, exc, exc_info=True,
+        )
+    return None
+
+
+async def resolve_user_chosen_exercise(
+    exercise_name: str,
+    exercise_id: Optional[str] = None,
+    *,
+    injuries: Sequence[Any],
+) -> Optional[Dict[str, Any]]:
+    """Resolve a user-picked exercise AND screen it — register row 88.
+
+    ``/workouts/swap-exercise``, ``/workouts/add-exercise`` and their preview
+    twins let the USER name the exercise, so there is no candidate list for
+    ``enforce_injury_safety`` to filter. They used to do a bare library lookup
+    and write whatever came back, which is how a knee-injured user could be
+    handed "Barbell Front Squat" (``knee_safe = FALSE`` in the live index).
+
+    ``injuries`` is keyword-only and REQUIRED: a call site that forgets it gets a
+    TypeError, not an unscreened exercise. Pass the user's resolved active
+    injuries (``get_active_injuries_with_muscles``), never a literal.
+
+    Returns the library row (or None when the library has no match — callers
+    keep their existing bare-name behaviour, and the bare name is screened too).
+    Raises :class:`InjuryUnsafeExerciseError` when the exercise is
+    contraindicated. Fail-OPEN inside the screen itself: an infrastructure error
+    never blocks a swap.
+    """
+    resolved = _lookup_library_exercise(exercise_name, exercise_id)
+    # Screen what the user would actually get: the library row when we have one,
+    # otherwise the bare name (still enough for the keyword backstop to fire).
+    candidate: Dict[str, Any] = dict(resolved) if resolved else {}
+    if not (candidate.get("name") or candidate.get("exercise_name")):
+        candidate["name"] = exercise_name
+    reason = await screen_exercise_for_injury(candidate, list(injuries or []))
+    if reason:
+        blocked = candidate.get("name") or exercise_name
+        logger.warning(
+            "🛡️  [InjuryGuard] blocked user-chosen '%s' (%s) for injuries=%s",
+            blocked, reason, list(injuries or []),
+        )
+        raise InjuryUnsafeExerciseError(blocked, reason, injuries)
+    return resolved
 
 
 async def filter_injury_unsafe(
@@ -486,7 +668,11 @@ async def enforce_injury_safety(
 
         # Backfill one safe replacement per drop so the workout stays full.
         present = {n.lower() for n in names if n}
-        template = safe[0] if safe else dict(exercises[0])
+        # Shape donors: survivors first (they are the session's real prescription),
+        # then the dropped originals — unsafe by identity, still valid as a shape.
+        shape_donors: List[Dict[str, Any]] = [
+            e for e in list(safe) + list(exercises) if isinstance(e, dict)
+        ]
         added: List[str] = []
         cands = await fetch_safe_candidates(
             injuries=injuries,
@@ -515,7 +701,7 @@ async def enforce_injury_safety(
                 if is_stretch and not stretch_pass:
                     continue  # defer stretches to the fallback pass
                 present.add(cn.lower())
-                repl = _build_replacement(template, cand)
+                repl = _build_replacement(shape_donors, cand)
                 safe.append(repl)
                 added.append(cn)
             if len(added) >= len(dropped):

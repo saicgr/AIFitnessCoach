@@ -727,7 +727,7 @@ async def test_preview_swap_exercise_updates_payload_no_db_write(http_client):
     # Perform a preview swap
     new_name = "Bird Dog"
     with patch(
-        "api.v1.workouts.exercises._lookup_exercise",
+        "api.v1.workouts.exercises._lookup_exercise_screened",
         return_value={"name": new_name, "equipment": "bodyweight", "gif_url": None, "video_url": None},
     ):
         swap_resp = await http_client.post(
@@ -784,7 +784,7 @@ async def test_preview_swap_latency_p99_under_100ms(http_client):
     new_name_base = "Plank Variation"
 
     with patch(
-        "api.v1.workouts.exercises._lookup_exercise",
+        "api.v1.workouts.exercises._lookup_exercise_screened",
         return_value={"name": new_name_base, "equipment": "bodyweight", "gif_url": None, "video_url": None},
     ):
         for i in range(10):

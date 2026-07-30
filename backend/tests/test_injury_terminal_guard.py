@@ -36,9 +36,11 @@ from services.workout_safety_validator import (  # noqa: E402
     normalize_injury_tokens,
 )
 from services.exercise_rag.injury_guard import (  # noqa: E402
+    InjuryUnsafeExerciseError,
     enforce_injury_safety,
     filter_injury_unsafe,
     resolve_avoided_muscle_tokens,
+    resolve_user_chosen_exercise,
     screen_exercise_for_injury,
 )
 
@@ -586,3 +588,524 @@ def test_quick_save_does_not_trust_request_state_user_id():
         "request.state.user_id is never assigned in this codebase; reading it "
         "makes the payload the effective identity."
     )
+
+
+# ---------------------------------------------------------------------------
+# row 88 (residual) — the USER-CHOSEN-exercise surfaces
+# ---------------------------------------------------------------------------
+# `/workouts/swap-exercise`, `/workouts/add-exercise` and their preview twins let
+# the user name the exercise, so `enforce_injury_safety` (which filters a list we
+# generated) never sees it. They now resolve through
+# `resolve_user_chosen_exercise`, which screens and CANNOT be called without the
+# user's injuries.
+_SWAP_SURFACES = ("api/v1/workouts/workout_operations.py", "api/v1/workouts/exercises.py")
+
+
+def test_row88_resolver_cannot_be_called_without_injuries():
+    """`injuries` is keyword-only and REQUIRED — forgetting it is a TypeError,
+    not an unscreened exercise (same shape as row 84's finisher fix)."""
+    import inspect
+
+    sig = inspect.signature(resolve_user_chosen_exercise)
+    param = sig.parameters["injuries"]
+    assert param.kind is inspect.Parameter.KEYWORD_ONLY
+    assert param.default is inspect.Parameter.empty
+
+
+@pytest.mark.asyncio
+async def test_row88_resolver_raises_on_a_contraindicated_pick():
+    with patch(f"{_GUARD}._lookup_library_exercise",
+               lambda name, eid=None: {"name": "Barbell Front Squat",
+                                       "target_muscle": "Quadriceps",
+                                       "id": "lib-1"}), \
+         patch(f"{_GUARD}._unsafe_name_set",
+               AsyncMock(return_value={"barbell front squat"})):
+        with pytest.raises(InjuryUnsafeExerciseError) as err:
+            await resolve_user_chosen_exercise("Barbell Front Squat", injuries=["knees"])
+    assert err.value.reason == "safety_index"
+    assert err.value.exercise_name == "Barbell Front Squat"
+
+
+@pytest.mark.asyncio
+async def test_row88_resolver_screens_a_name_the_library_does_not_carry():
+    """A typed-in name with no library row is still screened (keyword backstop)."""
+    with patch(f"{_GUARD}._lookup_library_exercise", lambda name, eid=None: None), \
+         patch(f"{_GUARD}._unsafe_name_set", AsyncMock(return_value=set())):
+        with pytest.raises(InjuryUnsafeExerciseError):
+            await resolve_user_chosen_exercise("Jefferson Curl", injuries=["lower_back"])
+
+
+@pytest.mark.asyncio
+async def test_row88_resolver_returns_a_safe_pick_untouched():
+    row = {"name": "Glute Bridge", "target_muscle": "glutes", "id": "lib-2"}
+    with patch(f"{_GUARD}._lookup_library_exercise", lambda name, eid=None: row), \
+         patch(f"{_GUARD}._unsafe_name_set", AsyncMock(return_value=set())):
+        got = await resolve_user_chosen_exercise("Glute Bridge", injuries=["knees"])
+    assert got == row
+
+
+def test_row88_swap_surfaces_have_no_unscreened_library_lookup():
+    """Structural gate: neither swap file may resolve an exercise on its own.
+
+    Call-site discipline is what failed here the first time — the screen existed
+    (`screen_exercise_for_injury`) with ZERO callers. So the raw lookups are
+    deleted, not merely accompanied by a screen: if these files can't reach the
+    library except through the screened resolver, a future endpoint in them
+    cannot reintroduce the bug.
+    """
+    offenders = []
+    for rel in _SWAP_SURFACES:
+        src = (BACKEND_ROOT / rel).read_text(encoding="utf-8")
+        for needle in ("get_exercise_library_service", "exercise_library_cleaned"):
+            if needle in src:
+                offenders.append(f"{rel}: {needle}")
+    assert offenders == [], (
+        "unscreened library lookup in a user-chosen-exercise surface:\n  "
+        + "\n  ".join(offenders)
+    )
+
+
+def test_row88_every_resolver_call_passes_real_injuries():
+    """No call site may hand the resolver an empty literal (a guard that guards
+    nothing) — the same failure mode row 84's `avoid_names=set()` had."""
+    bad = []
+    for rel in _SWAP_SURFACES:
+        tree = ast.parse((BACKEND_ROOT / rel).read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            fn = node.func
+            name = fn.id if isinstance(fn, ast.Name) else getattr(fn, "attr", "")
+            if name != "resolve_user_chosen_exercise":
+                continue
+            kw = {k.arg: k.value for k in node.keywords}
+            if "injuries" not in kw:
+                bad.append(f"{rel}:{node.lineno} missing injuries=")
+                continue
+            value = kw["injuries"]
+            if isinstance(value, (ast.List, ast.Tuple, ast.Set)) and not value.elts:
+                bad.append(f"{rel}:{node.lineno} injuries= empty literal")
+            elif isinstance(value, ast.Constant) and not value.value:
+                bad.append(f"{rel}:{node.lineno} injuries= falsy constant")
+    assert bad == [], "\n  ".join(bad)
+
+
+def test_row88_swap_endpoints_resolve_only_through_the_screened_helper():
+    """Every user-chosen-exercise endpoint reaches the resolver."""
+    ops = _calls_in_file("api/v1/workouts/workout_operations.py")
+    assert "resolve_user_chosen_exercise" in ops
+    prev = _calls_in_file("api/v1/workouts/exercises.py")
+    assert "_lookup_exercise_screened" in prev
+    src = (BACKEND_ROOT / "api/v1/workouts/exercises.py").read_text(encoding="utf-8")
+    assert "resolve_user_chosen_exercise(" in src
+
+
+@pytest.mark.asyncio
+async def test_row88_swap_exercise_endpoint_refuses_a_contraindicated_pick():
+    """Full-path proof through POST /api/v1/workouts/swap-exercise.
+
+    A knee-injured user asks to swap into "Barbell Front Squat"
+    (`knee_safe = FALSE` in the live index). The endpoint must refuse (409) and
+    must NOT write the workout.
+    """
+    from unittest.mock import MagicMock
+
+    from httpx import ASGITransport, AsyncClient
+
+    from main import app
+    from core.auth import get_current_user
+    import api.v1.workouts.workout_operations as ops_mod
+
+    user_id = "11111111-1111-1111-1111-111111111111"
+    workout_id = "22222222-2222-2222-2222-222222222222"
+
+    fake_db = MagicMock()
+    fake_db.get_workout.return_value = {
+        "id": workout_id, "user_id": user_id,
+        "exercises_json": [{"name": "Goblet Squat", "sets": 3, "reps": 10}],
+    }
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": user_id}
+    try:
+        with patch.object(ops_mod, "get_supabase_db", return_value=fake_db), \
+             patch.object(ops_mod, "get_active_injuries_with_muscles",
+                          AsyncMock(return_value={"injuries": ["knees"],
+                                                  "avoided_muscles": []})), \
+             patch.object(ops_mod, "get_all_muscles_for_exercise",
+                          AsyncMock(return_value=None)), \
+             patch(f"{_GUARD}._lookup_library_exercise",
+                   lambda name, eid=None: {"name": "Barbell Front Squat",
+                                           "target_muscle": "Quadriceps",
+                                           "id": "lib-1"}), \
+             patch(f"{_GUARD}._unsafe_name_set",
+                   AsyncMock(return_value={"barbell front squat"})):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as ac:
+                resp = await ac.post(
+                    "/api/v1/workouts/swap-exercise",
+                    json={"workout_id": workout_id,
+                          "old_exercise_name": "Goblet Squat",
+                          "new_exercise_name": "Barbell Front Squat"},
+                )
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+    assert resp.status_code == 409, resp.text
+    assert resp.json()["detail"]["error"] == "EXERCISE_UNSAFE_FOR_INJURY"
+    fake_db.update_workout.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_row88_swap_exercise_endpoint_allows_a_safe_pick():
+    """The screen must not become a wall: a safe replacement still swaps."""
+    from unittest.mock import MagicMock
+
+    from httpx import ASGITransport, AsyncClient
+
+    from main import app
+    from core.auth import get_current_user
+    import api.v1.workouts.workout_operations as ops_mod
+
+    user_id = "11111111-1111-1111-1111-111111111111"
+    workout_id = "22222222-2222-2222-2222-222222222222"
+
+    fake_db = MagicMock()
+    fake_db.get_workout.return_value = {
+        "id": workout_id, "user_id": user_id,
+        "exercises_json": [{"name": "Goblet Squat", "sets": 3, "reps": 10}],
+    }
+    written: Dict[str, Any] = {}
+
+    def _update(_wid, data):
+        written.update(data)
+        return {"id": workout_id, "user_id": user_id, "name": "W", "type": "strength",
+                "difficulty": "beginner", "scheduled_date": "2026-07-30T12:00:00+00:00",
+                "exercises_json": data["exercises_json"], "duration_minutes": 30}
+
+    fake_db.update_workout.side_effect = _update
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": user_id}
+    try:
+        with patch.object(ops_mod, "get_supabase_db", return_value=fake_db), \
+             patch.object(ops_mod, "get_active_injuries_with_muscles",
+                          AsyncMock(return_value={"injuries": ["knees"],
+                                                  "avoided_muscles": []})), \
+             patch.object(ops_mod, "get_all_muscles_for_exercise",
+                          AsyncMock(return_value=None)), \
+             patch.object(ops_mod, "log_workout_change", MagicMock()), \
+             patch.object(ops_mod, "upsert_substitution", MagicMock()), \
+             patch.object(ops_mod, "index_workout_to_rag", AsyncMock()), \
+             patch(f"{_GUARD}._lookup_library_exercise",
+                   lambda name, eid=None: {"name": "Glute Bridge",
+                                           "target_muscle": "glutes", "id": "lib-2"}), \
+             patch(f"{_GUARD}._unsafe_name_set", AsyncMock(return_value=set())):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as ac:
+                resp = await ac.post(
+                    "/api/v1/workouts/swap-exercise",
+                    json={"workout_id": workout_id,
+                          "old_exercise_name": "Goblet Squat",
+                          "new_exercise_name": "Glute Bridge"},
+                )
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+    assert resp.status_code == 200, resp.text
+    assert "Glute Bridge" in written.get("exercises_json", "")
+
+
+@pytest.mark.asyncio
+async def test_row88_preview_swap_endpoint_refuses_a_contraindicated_pick():
+    """Same rule on the preview twin — the preview is what /save persists."""
+    from unittest.mock import MagicMock
+
+    from httpx import ASGITransport, AsyncClient
+
+    from main import app
+    from core.auth import get_current_user
+    import api.v1.workouts.exercises as ex_mod
+
+    user_id = "11111111-1111-1111-1111-111111111111"
+
+    entry = MagicMock()
+    entry.payload = {"id": "p1", "preview_id": "p1", "user_id": user_id,
+                     "exercises_json": [{"name": "Goblet Squat"}]}
+    fake_cache = MagicMock()
+    fake_cache.get_owned = AsyncMock(return_value=(entry, None))
+    fake_cache.update = AsyncMock(return_value=entry)
+
+    app.dependency_overrides[get_current_user] = lambda: {"id": user_id}
+    try:
+        with patch.object(ex_mod, "get_preview_cache", return_value=fake_cache), \
+             patch.object(ex_mod, "resolve_active_injuries",
+                          AsyncMock(return_value=["knees"])), \
+             patch(f"{_GUARD}._lookup_library_exercise",
+                   lambda name, eid=None: {"name": "Barbell Front Squat",
+                                           "target_muscle": "Quadriceps",
+                                           "id": "lib-1"}), \
+             patch(f"{_GUARD}._unsafe_name_set",
+                   AsyncMock(return_value={"barbell front squat"})):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as ac:
+                resp = await ac.post(
+                    "/api/v1/workouts/preview/swap-exercise",
+                    json={"preview_id": "p1",
+                          "old_exercise_name": "Goblet Squat",
+                          "new_exercise_name": "Barbell Front Squat"},
+                )
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
+
+    assert resp.status_code == 409, resp.text
+    assert resp.json()["detail"]["error"] == "EXERCISE_UNSAFE_FOR_INJURY"
+    fake_cache.update.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# row 83 residual (a) — the two injury stores must agree at one chokepoint
+# ---------------------------------------------------------------------------
+class _FakeTable:
+    def __init__(self, store, name):
+        self._store, self._name = store, name
+        self._filters = {}
+
+    def select(self, *_a, **_k):
+        return self
+
+    def update(self, data):
+        self._store["writes"].append((self._name, data))
+        self._pending = data
+        return self
+
+    def eq(self, col, val):
+        self._filters[col] = val
+        return self
+
+    def maybe_single(self):
+        self._single = True
+        return self
+
+    def execute(self):
+        rows = self._store.get(self._name, [])
+        out = MagicMockData(rows[0] if getattr(self, "_single", False) and rows else rows)
+        return out
+
+
+class MagicMockData:
+    def __init__(self, data):
+        self.data = data
+
+
+class _FakeSupabase:
+    def __init__(self, store):
+        self.client = self
+        self._store = store
+
+    def table(self, name):
+        return _FakeTable(self._store, name)
+
+
+def _run_sync(user_injuries, profile):
+    from api.v1.injuries import sync_profile_active_injuries
+
+    store = {"user_injuries": user_injuries,
+             "users": [{"active_injuries": profile}],
+             "writes": []}
+    result = sync_profile_active_injuries(_FakeSupabase(store), "u1")
+    return result, store["writes"]
+
+
+def test_row83_report_projects_onto_the_profile_store():
+    """A reported injury must land in `users.active_injuries` — the column the
+    regenerate path reads. This is the whole reason the row-83 chokepoint was
+    being handed an empty list."""
+    written, writes = _run_sync(
+        [{"body_part": "knee", "status": "active"}], [],
+    )
+    assert written == ["knee"]
+    assert writes and writes[0][0] == "users"
+    assert writes[0][1] == {"active_injuries": ["knee"]}
+
+
+def test_row83_healed_injury_leaves_the_profile_store():
+    written, _ = _run_sync(
+        [{"body_part": "knee", "status": "healed"}], ["knee"],
+    )
+    assert written == []
+
+
+def test_row83_untracked_profile_entries_are_preserved():
+    """Onboarding chips / body-map taps live only in the profile column — the
+    projection must never delete what `user_injuries` never recorded."""
+    written, _ = _run_sync(
+        [{"body_part": "knee", "status": "active"}], ["shoulders", "abs"],
+    )
+    assert written == ["shoulders", "abs", "knee"]
+
+
+def test_row83_projection_is_idempotent_and_writes_nothing_when_unchanged():
+    written, writes = _run_sync(
+        [{"body_part": "knee", "status": "active"}], ["knee"],
+    )
+    assert written is None
+    assert writes == []
+
+
+def test_row83_projection_reconciles_spelling_across_the_two_stores():
+    """`user_injuries` says "knee", the profile says the app's plural "knees" —
+    one canonicalizer decides they are the same injury, so healing removes it."""
+    written, _ = _run_sync(
+        [{"body_part": "knee", "status": "healed"}], ["knees", "abs"],
+    )
+    assert written == ["abs"]
+
+
+def test_row83_every_user_injuries_writer_syncs_the_profile():
+    """Class gate: no endpoint may write `user_injuries` without reconciling."""
+    src = (BACKEND_ROOT / "api/v1/injuries.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    for fn in ast.walk(tree):
+        if not isinstance(fn, (ast.AsyncFunctionDef, ast.FunctionDef)):
+            continue
+        writes = False
+        for node in ast.walk(fn):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) \
+                    and node.func.attr in ("insert", "update"):
+                inner = node.func.value
+                # ...table("user_injuries").insert(...) / .update(...)
+                while isinstance(inner, ast.Call) and isinstance(inner.func, ast.Attribute):
+                    if inner.func.attr == "table" and inner.args \
+                            and isinstance(inner.args[0], ast.Constant) \
+                            and inner.args[0].value == "user_injuries":
+                        writes = True
+                    inner = inner.func.value
+        if not writes:
+            continue
+        called = {
+            n.func.id for n in ast.walk(fn)
+            if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+        }
+        assert "sync_profile_active_injuries" in called, (
+            f"{fn.name} writes user_injuries without syncing users.active_injuries"
+        )
+
+
+# ---------------------------------------------------------------------------
+# row 83 residual (b) — muscle-area ids reach the validator, not /dev/null
+# ---------------------------------------------------------------------------
+def test_row83_muscle_ids_survive_into_the_validator_context():
+    ctx = UserSafetyContext(
+        injuries=["hamstrings", "quads", "knees"], difficulty="beginner",
+        equipment=[], user_id="t",
+    )
+    # Joints keep going to the <joint>_safe columns ...
+    assert ctx.normalized_injuries() == ["knee"]
+    # ... and the muscle chips are no longer dropped on the floor.
+    tokens = ctx.avoided_muscle_tokens()
+    assert "hamstrings" in tokens and "quadriceps" in tokens
+
+
+def test_row83_muscle_only_limitation_now_produces_a_violation():
+    """Before: a Hamstrings-only user got violations=0 / swaps=0 out of the
+    whole validator, because the joint whitelist emptied their injury list."""
+    from services.workout_safety_validator import _check_row_safety
+
+    ctx = UserSafetyContext(
+        injuries=["hamstrings"], difficulty="advanced", equipment=[], user_id="t",
+    )
+    leg_curl = {
+        "is_tagged": True, "name": "Lying Leg Curl",
+        "target_muscle": "Hamstrings (Biceps Femoris, Semitendinosus)",
+        "body_part": "upper legs", "safety_difficulty": "beginner",
+    }
+    bench = {
+        "is_tagged": True, "name": "Barbell Bench Press",
+        "target_muscle": "Chest (Pectoralis Major)", "body_part": "chest",
+        "safety_difficulty": "beginner",
+    }
+    assert _check_row_safety(leg_curl, ctx) == ["primary_target_is_avoided_muscle"]
+    assert _check_row_safety(bench, ctx) == []
+
+
+def test_row83_joint_injuries_do_not_gain_muscle_wide_drops():
+    """A knee injury must stay governed by knee_safe, not hard-drop every leg
+    exercise — the regression that would make this fix worse than the bug."""
+    ctx = UserSafetyContext(
+        injuries=["knees"], difficulty="advanced", equipment=[], user_id="t",
+    )
+    assert ctx.avoided_muscle_tokens() == []
+
+
+# ---------------------------------------------------------------------------
+# keyword needle matching + replacement shape (safety-path hygiene)
+# ---------------------------------------------------------------------------
+def test_injury_keyword_needle_matches_words_not_substrings():
+    from services.exercise_rag.injury_guard import _name_keyword_banned
+
+    # free text still resolves
+    assert _name_keyword_banned("barbell deadlift", ["left lower back"]) is True
+    assert _name_keyword_banned("box jump", ["knee pain"]) is True
+    # ... but a word that merely CONTAINS the region no longer fires
+    assert _name_keyword_banned("barbell deadlift", ["backache"]) is False
+
+
+def test_replacement_inherits_shape_instead_of_inventing_one():
+    from services.exercise_rag.injury_guard import _build_replacement
+
+    cand = {"name": "Seated Cable Row", "target_muscle": "upper back",
+            "equipment": "cable", "movement_pattern": "horizontal_pull"}
+    # Inherits the session's real prescription from a donor that has it.
+    repl = _build_replacement(
+        [{"name": "Plank"}, {"name": "Row", "sets": 5, "reps": 6, "rest_seconds": 120}],
+        cand,
+    )
+    assert (repl["sets"], repl["reps"], repl["rest_seconds"]) == (5, 6, 120)
+    # A duration-only session gets NO fabricated set scheme.
+    timed = _build_replacement(
+        [{"name": "Bike Intervals", "duration_seconds": 600, "is_timed": True}], cand,
+    )
+    assert "sets" not in timed and "reps" not in timed
+    assert timed["duration_seconds"] == 600
+
+
+@pytest.mark.asyncio
+async def test_row88_whole_list_edit_screens_only_the_newly_introduced_exercise():
+    """The edit endpoints replace `exercises_json` wholesale — the last way a
+    user-picked exercise could reach the DB unscreened.
+
+    Screening the WHOLE list would refuse a plain reorder of what the generator
+    already produced, so only names the edit INTRODUCES are screened.
+    """
+    from api.v1.workouts.workout_operations import (
+        assert_edit_introduces_no_unsafe_exercise,
+    )
+    import api.v1.workouts.workout_operations as ops_mod
+    from fastapi import HTTPException
+
+    existing = [{"name": "Barbell Front Squat", "sets": 3},
+                {"name": "Glute Bridge", "sets": 3}]
+
+    with patch.object(ops_mod, "resolve_active_injuries",
+                      AsyncMock(return_value=["knees"])), \
+         patch(f"{_GUARD}._unsafe_name_set",
+               AsyncMock(return_value={"barbell front squat"})):
+        # Reorder / removal of what is already there: allowed, no exception.
+        await assert_edit_introduces_no_unsafe_exercise(
+            "u1", existing, list(reversed(existing)),
+        )
+        # Introducing the same contraindicated move: refused.
+        with pytest.raises(HTTPException) as err:
+            await assert_edit_introduces_no_unsafe_exercise(
+                "u1",
+                [{"name": "Glute Bridge", "sets": 3}],
+                [{"name": "Glute Bridge"}, {"name": "Barbell Front Squat"}],
+            )
+    assert err.value.status_code == 409
+    assert err.value.detail["error"] == "EXERCISE_UNSAFE_FOR_INJURY"
+
+
+def test_row88_edit_surfaces_call_the_screen():
+    """Static half — both whole-list editors must reach the screen."""
+    for rel in ("api/v1/workouts/workout_operations.py",
+                "api/v1/workouts/exercises.py"):
+        assert "assert_edit_introduces_no_unsafe_exercise" in _calls_in_file(rel), rel

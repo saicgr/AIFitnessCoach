@@ -144,6 +144,13 @@ _DIFFICULTY_RANK: Dict[str, int] = {
 # tier. Beginner/intermediate users get the safety ceiling applied strictly.
 _STRICT_CEILING_TIERS: frozenset = frozenset({"beginner", "intermediate"})
 
+# How many ranked swap candidates to pull per attempt when a muscle-area
+# limitation has to be applied in Python (the index carries no column for it).
+# Only large enough that one avoided-muscle hit at the top of the ranking can't
+# masquerade as "no safe swap"; the query is still ORDER BY similarity, so the
+# first survivor is the same row LIMIT 1 would have returned in its absence.
+_SWAP_CANDIDATE_WINDOW = 25
+
 # Movement-pattern family map used to relax the swap query when the exact
 # pattern yields no candidates. Value = broader parent pattern. When no parent
 # is defined, the swap abandons the pattern constraint entirely as a final
@@ -236,6 +243,37 @@ class UserSafetyContext:
         """
         return normalize_injury_tokens(self.injuries)
 
+    def avoided_muscle_tokens(self) -> List[str]:
+        """Muscle tokens the user's NON-joint limitations rule out (row 83 + 86).
+
+        `normalized_injuries()` whitelists against the 8 joints that have a
+        vetted `<joint>_safe` column, which means the 11 muscle-area chips
+        (upper_back, chest, biceps, triceps, forearms, abs, glutes, groin, quads,
+        hamstrings, calves) fall out of it — correctly, since there is no column
+        to read. They must NOT fall out of the validator entirely, which is what
+        used to happen: a user whose only limitation was "Hamstrings" got
+        violations=0 / swaps=0 out of the whole safety pass.
+
+        So they route into the SAME deterministic muscle machinery row 86 built
+        for the generate paths — one table (`INJURY_TO_AVOIDED_MUSCLES` /
+        `BODY_MAP_MUSCLE_NORMALIZATION`), one matcher, no second copy here.
+        Imported lazily because `injury_guard` imports this module.
+        """
+        cached = getattr(self, "_avoided_muscle_tokens_cache", None)
+        if cached is None:
+            try:
+                from services.exercise_rag.injury_guard import (
+                    resolve_avoided_muscle_tokens,
+                )
+                cached = resolve_avoided_muscle_tokens(self.injuries or [])
+            except Exception as exc:  # noqa: BLE001 — joints still enforced
+                logger.error(
+                    "❌ [SafetyValidator] muscle-token resolution failed: %s", exc
+                )
+                cached = []
+            self._avoided_muscle_tokens_cache = cached
+        return cached
+
     def difficulty_rank(self) -> int:
         return _DIFFICULTY_RANK.get((self.difficulty or "").strip().lower(), 1)
 
@@ -272,6 +310,25 @@ class ValidationResult:
 # ---------------------------------------------------------------------------
 
 _NORMALIZE_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _targets_avoided_muscle(item: Dict[str, Any], muscle_tokens: Sequence[str]) -> bool:
+    """Structure-aware primary-target match, shared with the generate-path guard.
+
+    Delegates to `injury_guard._targets_avoided_muscle` (lazy import — that module
+    imports this one) so there is ONE matcher: a flat substring scan gets
+    `biceps` matching `Hamstrings (Biceps Femoris, …)`. Fail-OPEN.
+    """
+    if not muscle_tokens:
+        return False
+    try:
+        from services.exercise_rag.injury_guard import (
+            _targets_avoided_muscle as _match,
+        )
+        return _match(item, muscle_tokens)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("❌ [SafetyValidator] muscle matcher unavailable: %s", exc)
+        return False
 
 
 def _normalize_name(name: Optional[str]) -> str:
@@ -439,6 +496,13 @@ def _check_row_safety(
         if flag is not True:  # FALSE or NULL
             reasons.append(f"{joint}_safe={flag!r}")
 
+    # Muscle-area limitations have no `<joint>_safe` column; they are enforced on
+    # the exercise's PRIMARY target with the same structure-aware matcher the
+    # generate paths use. Without this the whole non-joint half of the user's
+    # limitations was invisible to the validator.
+    if _targets_avoided_muscle(row, ctx.avoided_muscle_tokens()):
+        reasons.append("primary_target_is_avoided_muscle")
+
     if ctx.apply_strict_ceiling():
         sd = (row.get("safety_difficulty") or "").strip().lower()
         if sd and _DIFFICULTY_RANK.get(sd, 99) > ctx.difficulty_rank():
@@ -506,6 +570,7 @@ async def find_safe_swap(
     # we fall back to trigram name ranking.
 
     injuries = ctx.normalized_injuries()
+    muscle_tokens = ctx.avoided_muscle_tokens()
     strict_ceiling = ctx.apply_strict_ceiling()
     equipment = [e for e in (ctx.equipment or []) if e and e.strip()]
 
@@ -568,6 +633,14 @@ async def find_safe_swap(
     # Inject the difficulty ceiling *after* the computed rank via a CTE to
     # avoid referencing the alias in WHERE (Postgres evaluates WHERE before
     # SELECT-list expressions).
+    # Muscle-area limitations are matched in Python (the index has no boolean
+    # column for them and the match is structure-aware, not a LIKE). So when the
+    # user has any, we pull a ranked window instead of a single row and take the
+    # best candidate that also clears the muscle rule — otherwise a LIMIT 1 that
+    # happens to land on an avoided-muscle exercise would report "no safe swap"
+    # while safe options sat one row below.
+    params["cand_limit"] = _SWAP_CANDIDATE_WINDOW if muscle_tokens else 1
+
     cte_sql = lambda extra_where: f"""
         WITH safe_pool AS (
             SELECT {select_cols}
@@ -579,7 +652,7 @@ async def find_safe_swap(
         WHERE safety_difficulty_rank IS NOT NULL
           AND safety_difficulty_rank <= :max_rank
         ORDER BY rank_score DESC NULLS LAST, name
-        LIMIT 1
+        LIMIT :cand_limit
     """
 
     attempts: List[Tuple[str, str, Dict[str, Any]]] = []
@@ -625,7 +698,13 @@ async def find_safe_swap(
             try:
                 sql = cte_sql(extra_where)
                 res = await conn.execute(text(sql), p)
-                row = res.first()
+                row = next(
+                    (
+                        r for r in res.fetchall()
+                        if not _targets_avoided_muscle(_row_to_dict(r), muscle_tokens)
+                    ),
+                    None,
+                )
                 if row is not None:
                     rd = _row_to_dict(row)
                     logger.info(
@@ -924,8 +1003,20 @@ def validate_in_memory(
         pool_by_pattern.setdefault(pat, []).append(p)
 
     injury_muscles = _injury_muscles_for(injuries)
+    # Muscle-area limitations (quads / hamstrings / biceps / …) carry no
+    # contraindicated-movement patterns, so `_injury_muscles_for` returns nothing
+    # for them and they used to pass straight through this pass untouched. They
+    # are matched on the PRIMARY target with the shared structure-aware matcher.
+    try:
+        from services.exercise_rag.injury_guard import resolve_avoided_muscle_tokens
+        avoided_muscle_tokens = resolve_avoided_muscle_tokens(injuries or [])
+    except Exception as exc:  # noqa: BLE001 — fail-open
+        logger.error("❌ [InMemoryValidator] muscle-token resolution failed: %s", exc)
+        avoided_muscle_tokens = []
 
     def _is_injury_safe(ex: Dict[str, Any]) -> bool:
+        if _targets_avoided_muscle(ex, avoided_muscle_tokens):
+            return False
         if not injury_muscles:
             return True
         muscle = (
