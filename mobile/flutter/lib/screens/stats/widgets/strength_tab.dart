@@ -146,21 +146,123 @@ class StrengthTab extends ConsumerWidget {
   }
 }
 
-/// Fitness Score Summary Card showing overall score and 4 component breakdowns
-class FitnessScoreCard extends ConsumerWidget {
+/// The one entry point for "make sure the fitness-score breakdown is loaded".
+///
+/// `ScoresState.fitnessScore` is written ONLY by `loadFitnessScore` /
+/// `calculateFitnessScore` — `loadScoresOverview` and `loadPersonalRecords`
+/// never touch it. Before this existed, the only things that primed it were two
+/// OVERVIEW-tab widgets (widgets/overview/weekly_score_card.dart and
+/// widgets/overview/fitness_score_breakdown_section.dart), which a deep link
+/// straight to the Score tab never builds — `TabBarView` lazily builds only the
+/// current page. So `/stats?tab=3` and `/stats/readiness` rendered a Score tab
+/// with no Fitness Score card at all.
+///
+/// Both the Stats screen's per-tab loader and the card itself route through
+/// here, and the in-flight future is shared, so a deep link that primes the tab
+/// AND a card that self-primes still issue exactly ONE `/scores/fitness`
+/// request.
+class FitnessScoreLoader {
+  FitnessScoreLoader._();
+
+  static Future<void>? _inFlight;
+
+  /// Resolves once the breakdown is loaded. No-ops when it is already present.
+  static Future<void> ensureLoaded(WidgetRef ref, String userId) {
+    if (ref.read(fitnessScoreBreakdownProvider) != null) {
+      return Future<void>.value();
+    }
+    final existing = _inFlight;
+    if (existing != null) return existing;
+    final future = ref
+        .read(scoresProvider.notifier)
+        .loadFitnessScore(userId: userId)
+        .whenComplete(() => _inFlight = null);
+    _inFlight = future;
+    return future;
+  }
+}
+
+/// Fitness Score Summary Card showing overall score and 4 component breakdowns.
+///
+/// Owns its own data need: if the breakdown isn't there when the card mounts it
+/// asks for it, and it always renders SOMETHING — a layout-matched skeleton
+/// while the fetch is in flight, an honest "couldn't load / retry" state when it
+/// failed. It used to return `SizedBox.shrink()` on a null breakdown, i.e. a
+/// zero-height hole with no skeleton and no error, which is indistinguishable
+/// from "this feature doesn't exist".
+class FitnessScoreCard extends ConsumerStatefulWidget {
   final String userId;
 
   const FitnessScoreCard({super.key, required this.userId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FitnessScoreCard> createState() => _FitnessScoreCardState();
+}
+
+class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
+  /// A fetch this card is waiting on. Starts true so the very first frame
+  /// paints the skeleton rather than an error state.
+  bool _loading = true;
+  bool _loadFailed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  @override
+  void didUpdateWidget(covariant FitnessScoreCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _load();
+    }
+  }
+
+  Future<void> _load() async {
+    if (!mounted) return;
+    if (ref.read(fitnessScoreBreakdownProvider) != null) {
+      setState(() {
+        _loading = false;
+        _loadFailed = false;
+      });
+      return;
+    }
+    setState(() {
+      _loading = true;
+      _loadFailed = false;
+    });
+    await FitnessScoreLoader.ensureLoaded(ref, widget.userId);
+    if (!mounted) return;
+    // `loadFitnessScore` leaves `fitnessScore` null only when the request threw
+    // (getFitnessScore either returns a breakdown or rethrows), so a still-null
+    // breakdown here is a genuine failure, not an empty result.
+    setState(() {
+      _loading = false;
+      _loadFailed = ref.read(fitnessScoreBreakdownProvider) == null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
     final accent = tc.accent;
 
     final fitnessBreakdown = ref.watch(fitnessScoreBreakdownProvider);
 
     if (fitnessBreakdown == null) {
-      return const SizedBox.shrink();
+      if (_loading) {
+        // Same 220px block the tab skeleton reserves, so the swap is
+        // reflow-free.
+        return const SkeletonBox(height: 220, radius: 16);
+      }
+      return _FitnessScoreUnavailable(
+        // Only surface the notifier's error text when OUR load is the one that
+        // just failed — never dress an unrelated loader's message up as this
+        // card's failure.
+        detail: _loadFailed ? ref.read(scoresErrorProvider) : null,
+        onRetry: _load,
+      );
     }
 
     final overallScore = fitnessBreakdown.overallScore;
@@ -253,6 +355,67 @@ class FitnessScoreCard extends ConsumerWidget {
               ),
             );
           }),
+        ],
+      ),
+    );
+  }
+}
+
+/// Honest empty state for the Fitness Score card: says what is missing and
+/// offers the way out. Occupies the card's slot instead of collapsing it, so a
+/// deep link to the Score tab never renders a zero-height hole.
+class _FitnessScoreUnavailable extends StatelessWidget {
+  final String? detail;
+  final Future<void> Function() onRetry;
+
+  const _FitnessScoreUnavailable({required this.onRetry, this.detail});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppLocalizations.of(context).strengthFitnessScore.toUpperCase(),
+            style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "We couldn't load your Fitness Score.",
+            style: ZType.lbl(11, color: tc.textPrimary, letterSpacing: 1.2),
+          ),
+          if (detail != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              detail!,
+              style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.0),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: 16),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () => onRetry(),
+              icon: Icon(Icons.refresh, size: 16, color: tc.accent),
+              label: Text(
+                'RETRY',
+                style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.2),
+              ),
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: const Size(0, 40),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
         ],
       ),
     );

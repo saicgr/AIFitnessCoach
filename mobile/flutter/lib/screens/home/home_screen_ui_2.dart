@@ -306,13 +306,18 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                 );
         }
 
-        // Find today's or next workout
+        // Find today's or next workout. Both matches resolve the LOCAL
+        // calendar day through the shared chokepoint — the old
+        // `startsWith(todayStr)` compared a timestamptz's UTC date against a
+        // local key, and the "next" scan below took `.firstOrNull` off an
+        // UNSORTED list, so it could name a later day while an earlier one
+        // existed (#21 / #65).
         final today = DateTime.now();
-        final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
         // Find today's incomplete workout
         final todayWorkout = workouts.where((w) =>
-            (w.scheduledDate?.startsWith(todayStr) ?? false) && !(w.isCompleted ?? false)
+            isScheduledOnLocalDay(w.scheduledDate, today) &&
+            !(w.isCompleted ?? false)
         ).firstOrNull;
 
         if (todayWorkout != null) {
@@ -322,18 +327,17 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
           );
         }
 
-        // Find next upcoming workout (future, not completed)
-        final nextWorkout = workouts.where((w) {
+        // Find next upcoming workout (future, not completed) — the EARLIEST
+        // one. Sorted by resolved local day; `.firstOrNull` on the raw list
+        // returned whatever order the provider happened to hold.
+        final upcoming = workouts.where((w) {
           if (w.isCompleted ?? false) return false;
-          final dateStr = w.scheduledDate;
-          if (dateStr == null) return false;
-          try {
-            final date = DateTime.parse(dateStr.split('T')[0]);
-            return date.isAfter(today);
-          } catch (_) {
-            return false;
-          }
-        }).firstOrNull;
+          final offset = scheduledDayOffset(w.scheduledDate, today);
+          return offset != null && offset > 0;
+        }).toList()
+          ..sort((a, b) => scheduledLocalDay(a.scheduledDate)!
+              .compareTo(scheduledLocalDay(b.scheduledDate)!));
+        final nextWorkout = upcoming.firstOrNull;
 
         if (nextWorkout != null) {
           return NextWorkoutCard(

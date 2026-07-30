@@ -10,20 +10,29 @@ import '../core/theme/theme_colors.dart';
 // The always-on "+" button that docks above the bottom nav on Home, Workout,
 // Nutrition and You was PHYSICALLY COVERING real controls: "Log water" on Home,
 // the YOUR HABITS row on You, the LUNCH header on Nutrition. Two independent
-// causes, both fixed here:
+// causes:
 //
 //  1. OCCLUSION. Every tab reserved `kMainNavClearance` (68 = nav pill + gap)
-//     at the bottom of its scroll extent, but the FAB is drawn ABOVE the nav —
-//     it occupies another 58 logical pixels that nothing accounted for. So the
-//     last row of every list was, by construction, unreachable under the
-//     button. [kQuickLogFabClearance] is the corrected figure and is derived
-//     from the same tokens the FAB itself is positioned with, so the two can
-//     never drift apart again.
+//     at the bottom of its scroll extent, but the button is drawn ABOVE the nav
+//     — its top edge sits `kQuickLogFabBottomOffset + kQuickLogFabHeight` = 124
+//     px above the safe-area inset, so the last 56 px of every tab's scroll
+//     extent was, by construction, underneath it. [kQuickLogFabClearance] is
+//     the corrected figure and is derived from the same tokens the button is
+//     positioned with (see `widgets/main_shell.dart`), so the two can never
+//     drift apart again.
+//
+//     ADOPTION STATUS: the four tab screens still reserve nav-only clearance
+//     and must switch to [kQuickLogFabClearance] — see the shortfall per screen
+//     in the E2E register, row 16. Those files are owned elsewhere; this
+//     constant is the single value they must all use, and
+//     `test/widgets/quick_log_fab_chrome_test.dart` fails if it is ever
+//     hand-edited away from the button's real geometry.
 //
 //  2. NO LABEL. A bare circular "+" with no caption forces the user to guess.
 //     It opens the SAME quick-actions sheet on every tab, so the honest fix is
 //     one stable, legible caption — not a per-tab label that would imply the
-//     action changes when it does not.
+//     action changes when it does not. Fixed: `main_shell.dart` now renders
+//     [QuickLogFabChrome] with the localised `quickLogOverlayQuickLog` caption.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Height of the quick-log FAB.
@@ -114,20 +123,34 @@ class QuickLogFabChrome extends StatelessWidget {
             children: [
               Icon(Icons.add_rounded, size: 20, color: tc.textPrimary),
               const SizedBox(width: 6),
-              // Flexible + ellipsis: a `maxLines: 1` Text inside a Row with no
-              // Flexible overflows (yellow-stripe) the moment the localised
-              // caption is wider than the remaining space.
+              // Adaptive, never truncated (E2E register row 16 + 108). A bare
+              // `maxLines: 1` Text in a Row overflows (yellow stripe) as soon
+              // as the localised caption or the user's text scale outgrows the
+              // remaining width — and the obvious patch, `TextOverflow
+              // .ellipsis`, would clip the caption to "Quick…", which is
+              // exactly the truncation-on-the-identifying-word defect row 108
+              // is about. Flexible bounds the width, FittedBox.scaleDown
+              // shrinks the glyphs to fit instead of deleting them, so every
+              // letter survives at every locale and every text scale.
               Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                    color: tc.textPrimary,
+                // ExcludeSemantics: the caption is already announced by the
+                // wrapping [Semantics] node. Without this a screen reader
+                // reads "Quick Log, Quick Log, button".
+                child: ExcludeSemantics(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      softWrap: false,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 1.1,
+                        color: tc.textPrimary,
+                      ),
+                    ),
                   ),
                 ),
               ),

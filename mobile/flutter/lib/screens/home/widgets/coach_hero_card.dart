@@ -25,7 +25,10 @@ import 'package:intl/intl.dart' show NumberFormat;
 import '../../../core/theme/app_typography.dart';
 import '../../../widgets/design_system/zealova_stat_tile.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/workout.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/repositories/workout_repository.dart' show workoutsProvider;
+import 'home_schedule_dates.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/providers/sleep_score_provider.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
@@ -60,6 +63,10 @@ class CoachHeroCard extends ConsumerStatefulWidget {
 class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   // Client-side rate-limit on long-press regenerate (≤ once per 30 min).
   DateTime? _lastRegenAt;
+
+  /// (insight.generatedAt | completion.completedAt) pair we have already
+  /// force-regenerated for. See [_isStaleAgainstTodaysCompletion] (#80).
+  String? _staleRefreshKey;
   bool _regenerating = false;
 
   // Inline "Show more / Show less" state for the message body. Collapsed by
@@ -139,6 +146,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             builder: (_) {
               final insight = insightAsync.valueOrNull;
               if (insight != null) {
+                // #80 — never present a body that predates today's completion.
+                if (_isStaleAgainstTodaysCompletion(insight)) {
+                  return _skeleton(c, isMinimized: isMinimized);
+                }
                 return _content(c, insight, isMinimized: isMinimized);
               }
               if (insightAsync.hasError) return _errorPlaceholder(c);
@@ -554,6 +565,76 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         ),
       ),
     );
+  }
+
+  /// The instant today's workout was completed, from the local schedule
+  /// (`workouts.completed_at`), or null when nothing is completed today.
+  /// The day is resolved through the shared home date chokepoint so a
+  /// timestamptz can't be mis-dayed (#21 / #65).
+  DateTime? _todaysCompletionAt() {
+    final today = DateTime.now();
+    DateTime? latest;
+    for (final w in ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[]) {
+      if (w.isCompleted != true) continue;
+      if (w.isSyncedFromHealthApp) continue;
+      if (!isScheduledOnLocalDay(w.scheduledDate, today)) continue;
+      final at = DateTime.tryParse(w.completedAt ?? '');
+      if (at == null) continue;
+      if (latest == null || at.isAfter(latest)) latest = at;
+    }
+    return latest;
+  }
+
+  /// True when the rendered insight was generated BEFORE today's workout was
+  /// completed — i.e. its body cannot possibly know the session is done.
+  ///
+  /// Root cause this closes (#80): `/coach/daily-insight` is cached per
+  /// (user, local_date) server-side, and the ONLY thing that invalidates that
+  /// cache is a food-log mutation (`invalidate_daily_insight_cache` is called
+  /// exclusively from `backend/api/v1/nutrition/summaries.py`). Completing a
+  /// workout invalidates nothing, so the day-zero welcome body the backend
+  /// emits for a `lifecycle == "new"` account — "I'm your AI coach. Generate
+  /// today's workout or log a meal, and I'll start tailoring everything to
+  /// you." (`backend/api/v1/coach/daily_insight.py` `_welcome_payload`) — kept
+  /// being served for the rest of the day, on a screen whose hero was
+  /// simultaneously showing the green "Workout complete" card.
+  ///
+  /// When it fires, the card renders its existing "coach is thinking" state
+  /// (no invented copy, no new string) and force-regenerates through the SAME
+  /// `?refresh=true&fresh=true` path the ⋮ / long-press refresh uses — which
+  /// bypasses the server cache and recomputes lifecycle, so the body comes
+  /// back reading the completed state. Fired at most once per
+  /// (insight, completion) pair so it can never loop.
+  bool _isStaleAgainstTodaysCompletion(DailyCoachInsight insight) {
+    final completedAt = _todaysCompletionAt();
+    if (completedAt == null) return false;
+    final generatedAt = insight.generatedAt;
+    // No `generated_at` (deterministic client fallback / legacy cached
+    // payload) → we cannot prove staleness, so we do not claim it.
+    if (generatedAt == null) return false;
+    if (!generatedAt.toUtc().isBefore(completedAt.toUtc())) return false;
+
+    final key = '${generatedAt.toUtc().toIso8601String()}'
+        '|${completedAt.toUtc().toIso8601String()}';
+    if (_staleRefreshKey != key) {
+      _staleRefreshKey = key;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(dailyCoachInsightRefreshProvider(DateTime.now()).future).then(
+          (_) {
+            if (!mounted) return;
+            ref.invalidate(dailyCoachInsightProvider);
+          },
+          onError: (_) {
+            // Regenerate failed. Release the latch so a later build (or the
+            // next completion) retries instead of pinning the thinking state.
+            if (!mounted) return;
+            setState(() => _staleRefreshKey = null);
+          },
+        );
+      });
+    }
+    return true;
   }
 
   Widget _content(

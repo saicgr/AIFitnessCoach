@@ -33,6 +33,7 @@ import '../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../../settings/sections/social_privacy_section.dart'
     show publicShareLinksProvider;
 import '../../../../services/strain_recommendation_service.dart';
+import '../home_schedule_dates.dart';
 import '../score_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
@@ -161,13 +162,9 @@ class HomeWeekStrip extends ConsumerWidget {
         continue;
       }
       final dayDate = weekStart.add(Duration(days: d));
-      final key =
-          '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
-      final dayWorkouts = merged.where((w) {
-        final raw = w.scheduledDate;
-        if (raw == null) return false;
-        return (raw.length >= 10 ? raw.substring(0, 10) : raw) == key;
-      });
+      final dayWorkouts = merged.where(
+        (w) => isScheduledOnLocalDay(w.scheduledDate, dayDate),
+      );
       final done = dayWorkouts.any(
         (w) => w.isCompleted == true && !w.isSyncedFromHealthApp,
       );
@@ -202,9 +199,6 @@ class HomeWeekStrip extends ConsumerWidget {
 class HomeWorkoutCard extends ConsumerWidget {
   const HomeWorkoutCard({super.key});
 
-  static String _dateKey(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ref.colors(context);
@@ -225,13 +219,9 @@ class HomeWorkoutCard extends ConsumerWidget {
     // by scheduledDate. The /today provider only ever knows about today. ---
     if (!viewingToday) {
       final workoutsAsync = ref.watch(workoutsProvider);
-      final key = _dateKey(selDay);
       Workout? dayWorkout;
       for (final w in workoutsAsync.valueOrNull ?? const <Workout>[]) {
-        final raw = w.scheduledDate;
-        if (raw == null) continue;
-        final d = raw.length >= 10 ? raw.substring(0, 10) : raw;
-        if (d == key) {
+        if (isScheduledOnLocalDay(w.scheduledDate, selDay)) {
           dayWorkout = w;
           break;
         }
@@ -290,17 +280,12 @@ class HomeWorkoutCard extends ConsumerWidget {
       // when todayWorkout is null, fall back to a workoutsProvider row
       // dated today — the SAME source the Workouts-tab carousel trusts —
       // before dropping to the generic future nextWorkout.
-      final todayKey = _dateKey(today);
+      final all = ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[];
       Workout? todayWorkout = resp?.todayWorkout?.toWorkout();
       if (todayWorkout == null) {
-        final all =
-            ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[];
         final hits = <Workout>[];
         for (final w in all) {
-          final raw = w.scheduledDate;
-          if (raw == null) continue;
-          final d = raw.length >= 10 ? raw.substring(0, 10) : raw;
-          if (d == todayKey) hits.add(w);
+          if (isScheduledOnLocalDay(w.scheduledDate, today)) hits.add(w);
         }
         if (hits.isNotEmpty) {
           // Prefer a not-yet-completed workout if the day has several.
@@ -332,7 +317,30 @@ class HomeWorkoutCard extends ConsumerWidget {
               iconName: 'check');
         }
       } else {
-        final workout = todayWorkout ?? resp?.nextWorkout?.toWorkout();
+        // ---- Next session (#65) -----------------------------------------
+        // `/workouts/today` returns exactly ONE `next_workout`, chosen as the
+        // earliest future row with `is_completed = false`. So a scheduled day
+        // whose session is already done vanishes from the hero completely: on
+        // Tue Jul 28, with training days Mon/Wed/Fri/Sun and Wednesday's
+        // session already marked complete, the card jumped straight to
+        // "FRI, JUL 31" and Wednesday was never mentioned — the user cannot
+        // tell whether they missed it, whether it was dropped, or whether the
+        // app is broken.
+        //
+        // Resolve the next DAY from the same local schedule the week strip
+        // and the Workouts carousel read (`workoutsProvider`), through the
+        // local-day chokepoint so it can never disagree with them, and render
+        // the earliest upcoming day that HAS a session — including when that
+        // session is already complete (shown in the completed treatment with
+        // its own date, so "done" is visible instead of missing). The server's
+        // `next_workout` still participates as a candidate, so a row the local
+        // list hasn't synced yet is never lost.
+        final upcoming = _resolveUpcoming(all, resp?.nextWorkout?.toWorkout(),
+            after: today);
+        final workout = todayWorkout ?? upcoming?.workout;
+        final upcomingCompleted = todayWorkout == null &&
+            upcoming != null &&
+            upcoming.isCompleted;
         if (workout == null && state.hasError && !state.hasValue) {
           // The /today fetch FAILED and neither workoutsProvider nor a cached
           // response gave us anything — this is a genuine load error, NOT a
@@ -358,7 +366,7 @@ class HomeWorkoutCard extends ConsumerWidget {
           content = KeyedSubtree(
             key: ValueKey('today-workout-${workout.id}'),
             child: _workoutRow(context, ref, c, workout,
-                isToday: isToday, completed: false),
+                isToday: isToday, completed: upcomingCompleted),
           );
         }
       }
@@ -481,6 +489,64 @@ class HomeWorkoutCard extends ConsumerWidget {
     );
   }
 
+
+  /// Resolve the next scheduled session strictly AFTER [after]'s local day.
+  ///
+  /// See the call site for the defect this closes (#65). Rules:
+  ///   * candidates = the full local schedule + the server's `next_workout`
+  ///     (deduped by id), so neither source alone can hide a day;
+  ///   * every `scheduled_date` is resolved to a LOCAL calendar day via
+  ///     [scheduledLocalDay], never a UTC substring;
+  ///   * the EARLIEST upcoming day wins — a completed session on that day does
+  ///     NOT push the hero forward, it is returned with `isCompleted: true` so
+  ///     the day stays visible as done;
+  ///   * synced health-app activities are not scheduled sessions and never win
+  ///     the slot;
+  ///   * within the winning day an incomplete session is preferred, so a day
+  ///     carrying both a done and a pending session still shows the pending one.
+  ({Workout workout, bool isCompleted})? _resolveUpcoming(
+    List<Workout> schedule,
+    Workout? serverNext, {
+    required DateTime after,
+  }) {
+    final seen = <String>{};
+    final candidates = <Workout>[];
+    void add(Workout? w) {
+      if (w == null) return;
+      if (w.isSyncedFromHealthApp) return;
+      // Dedupe by id when there is one; an id-less row (rare, local-only) is
+      // still a real candidate and must not be dropped.
+      final id = w.id;
+      if (id != null && id.isNotEmpty && !seen.add(id)) return;
+      candidates.add(w);
+    }
+
+    for (final w in schedule) {
+      add(w);
+    }
+    add(serverNext);
+
+    DateTime? bestDay;
+    Workout? best;
+    for (final w in candidates) {
+      final day = scheduledLocalDay(w.scheduledDate);
+      if (day == null) continue;
+      if (!day.isAfter(DateTime(after.year, after.month, after.day))) continue;
+      final completed = w.isCompleted == true;
+      if (bestDay == null || day.isBefore(bestDay)) {
+        bestDay = day;
+        best = w;
+      } else if (day == bestDay &&
+          !completed &&
+          (best?.isCompleted == true)) {
+        // Same day, and this one still has to be done — prefer it.
+        best = w;
+      }
+    }
+
+    if (best == null) return null;
+    return (workout: best, isCompleted: best.isCompleted == true);
+  }
 
   /// The shared workout body — a compact image hero. Renders the first
   /// exercise's photo as a background behind an accent-tinted gradient scrim,
@@ -640,13 +706,11 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
   /// DAY/DATE instead of a generic "SCHEDULED" (e.g. "WED, JUN 3", "TOMORROW").
   /// Safe on null/malformed dates and uses the user's local calendar day.
   String _scheduledLabel(String? iso) {
-    final dt = DateTime.tryParse(iso ?? '');
-    if (dt == null) return 'SCHEDULED';
-    final local = dt.toLocal();
-    final now = DateTime.now();
-    final dayDiff = DateTime(local.year, local.month, local.day)
-        .difference(DateTime(now.year, now.month, now.day))
-        .inDays;
+    // Resolved through the local-day chokepoint so the label can never name a
+    // different day than the week strip above it (#21 / #65).
+    final local = scheduledLocalDay(iso);
+    if (local == null) return 'SCHEDULED';
+    final dayDiff = scheduledDayOffset(iso, DateTime.now());
     if (dayDiff == 1) return 'TOMORROW';
     return DateFormat('EEE, MMM d').format(local).toUpperCase(); // "WED, JUN 3"
   }
@@ -1623,9 +1687,16 @@ class HomeStrengthBreakdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ref.colors(context);
-    final overall = ref.watch(overallStrengthScoreProvider);
+    // Nullable read — `null` means the server has not scored this account, and
+    // must not be shown as a real "0". (The `?? 0` getter is the fabricated-
+    // default class; see the note on ScoresState.overallStrengthScore.)
+    final overall =
+        ref.watch(scoresProvider.select((s) => s.overallStrengthScoreOrNull));
     final muscles = ref.watch(muscleScoresProvider);
-    if (overall <= 0 && muscles.isEmpty) return const SizedBox.shrink();
+    if (overall == null && muscles.isEmpty) return const SizedBox.shrink();
+    if (overall != null && overall <= 0 && muscles.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     final entries = muscles.values.toList()
       ..sort((a, b) => b.strengthScore.compareTo(a.strengthScore));
@@ -1643,7 +1714,8 @@ class HomeStrengthBreakdown extends ConsumerWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text('$overall',
+              // Un-scored → an em dash, not a fabricated 0.
+              Text(overall == null ? '—' : '$overall',
                   style: ZType.disp(48, color: c.textPrimary)
                       .copyWith(height: 0.9)),
               const SizedBox(width: 11),

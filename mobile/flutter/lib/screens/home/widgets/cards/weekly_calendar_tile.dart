@@ -9,6 +9,7 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../home_schedule_dates.dart';
 /// Weekly Calendar Card - Shows 7-day workout overview
 class WeeklyCalendarCard extends ConsumerWidget {
   final TileSize size;
@@ -42,14 +43,14 @@ class WeeklyCalendarCard extends ConsumerWidget {
     // Build day data in display order
     final days = List.generate(7, (i) {
       final date = weekStart.add(Duration(days: i));
-      final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
       bool isScheduled = false;
       bool isCompleted = false;
 
       for (final w in allWorkouts) {
-        final wDate = w.scheduledDate?.split('T')[0] ?? '';
-        if (wDate == dateStr) {
+        // LOCAL-day match (chokepoint). `split('T')[0]` gave the UTC date of a
+        // timestamptz and mis-dayed the strip for tz-shifted users (#21/#65).
+        if (isScheduledOnLocalDay(w.scheduledDate, date)) {
           isScheduled = true;
           if (w.isCompleted == true) {
             isCompleted = true;

@@ -6,6 +6,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import 'home_schedule_dates.dart';
 /// Compact workout row - minimal workout display with quick start
 /// Used below nutrition/fasting hero cards when workout isn't primary focus
 class CompactWorkoutRow extends ConsumerWidget {
@@ -17,13 +18,13 @@ class CompactWorkoutRow extends ConsumerWidget {
   });
 
   String _getDateLabel(String? scheduledDate) {
-    if (scheduledDate == null) return '';
-    // Parse date from string directly to avoid timezone shift
-    final dateStr = scheduledDate.split('T')[0];
-    final parts = dateStr.split('-');
-    if (parts.length != 3) return '';
+    // LOCAL calendar day via the shared chokepoint. The old
+    // `split('T')[0]` read the UTC date of a timestamptz, so for any user
+    // whose local noon crosses the UTC date line the label named the wrong
+    // day (#21/#65).
+    final date = scheduledLocalDay(scheduledDate);
+    if (date == null) return '';
     try {
-      final date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));

@@ -195,23 +195,59 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
   Timer? _watchdog;
 
-  /// Watchdog (plan §3D): if after 5s we're still showing the cold-start
-  /// loading shimmer OR a stale response with everything null and we're
-  /// not currently fetching, force a fresh fetch. Catches edge cases where
-  /// `_fetchFromApi` gets disposed mid-request and the next provider
-  /// instance never re-fires its own fetch.
+  /// Is this `/today` response a FINAL answer from the backend?
+  ///
+  /// This is the ONE place that draws that line, and it draws it exactly where
+  /// the backend draws it: `today.py` caches a response under the full TTL when
+  /// `is_generating` and `needs_generation` are both false, and under a 30s
+  /// transient TTL otherwise (backend/api/v1/workouts/today.py:1595-1601). Those
+  /// two flags — and nothing else — separate "the server still owes us a
+  /// workout" from "this IS the answer".
+  ///
+  /// A settled response can legitimately carry nothing to display. A rest day
+  /// with no upcoming session (end of program, or no AI generation days
+  /// configured — `needs_generation` is gated on `ai_generation_days` being
+  /// truthy at today.py:1496) is exactly
+  /// `today:null, next:null, completed:false, generating:false, needs_generation:false`.
+  ///
+  /// Do NOT use [TodayWorkoutResponse.hasDisplayableContent] as the rest-day
+  /// test: its `restDayMessage` term is DEAD. The backend's
+  /// `TodayWorkoutResponse` (today.py:286-310) has no `rest_day_message` field
+  /// at all — the server-composed message was retired — so that term is always
+  /// null in production and a rest day fell through to "nothing to show".
+  static bool _isSettled(TodayWorkoutResponse r) =>
+      !r.isGenerating && !r.needsGeneration;
+
+  /// Watchdog (plan §3D): if after 5s we still have NO answer at all and we're
+  /// not currently fetching, force a fresh fetch. Catches the one edge case
+  /// this watchdog exists for — `_fetchFromApi` gets disposed mid-request and
+  /// the next provider instance never re-fires its own fetch.
+  ///
+  /// Every OTHER state already owns its own advance and must not be re-fetched
+  /// here: `is_generating` is driven by [_handleGenerationPolling] (with a
+  /// 3-minute hard ceiling), `needs_generation` by the auto-gen branch and its
+  /// futile-run breaker, and a settled-empty day by the bounded ladder in
+  /// [_scheduleEmptyStateRefresh]. Re-deriving "is this empty?" here is what
+  /// produced issue #92: the watchdog is re-armed in the `finally` of every
+  /// fetch, so any predicate that stays true forever fires forever (measured:
+  /// 21 fires in 120s, ~2 requests each).
+  bool _isStuckState() {
+    // An error state is owned by the circuit breaker + the retry CTA, never
+    // by an automatic 5s re-fetch.
+    if (state.hasError) return false;
+    return state.isLoading || state.valueOrNull == null;
+  }
+
+  /// Exposed for the #92 regression gate — the watchdog itself can never run
+  /// in a unit test (it requires a live Supabase session for `_currentUserId`).
+  @visibleForTesting
+  bool get debugIsStuckState => _isStuckState();
+
   void _startStuckStateWatchdog() {
     _watchdog?.cancel();
     _watchdog = Timer(const Duration(seconds: 5), () {
       if (_disposed || _isRefreshing) return;
-      final v = state.valueOrNull;
-      // "Stuck" means the response carries NOTHING worth showing. Use the
-      // model's own predicate rather than re-deriving it: a finished day
-      // (completedToday) and a rest day (restDayMessage) both legitimately have
-      // todayWorkout == null && nextWorkout == null, and treating those as
-      // stuck put the provider in a permanent refresh loop.
-      final stuck = state.isLoading ||
-          (v != null && !v.hasDisplayableContent && !v.isGenerating);
+      final stuck = _isStuckState();
       if (stuck && _currentUserId() != null) {
         debugPrint('🐶 [TodayWorkout] Watchdog fired — state stuck, forcing refresh');
         // §12 — surface stuck-state events as a Sentry breadcrumb so we can
@@ -365,17 +401,17 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     if (response.isGenerating && !response.hasDisplayableContent) return;
 
     // PLAN §3E: refuse to overwrite a populated in-memory cache with a
-    // null-on-everything response. An empty "today" + empty "next" is "no
-    // data right now from this fetch" — keep the prior cached good data so
-    // the user doesn't fall back to "No workout yet" while the next fetch
-    // races to refill.
-    // Same predicate as the watchdog: only a response with NOTHING displayable
-    // is treated as "no data right now". A completed-today or rest-day response
-    // is real, settled content and must be allowed to replace the cache —
-    // otherwise the cache stays populated, the state never changes, and the
-    // watchdog re-fetches forever.
+    // null-on-everything response — but ONLY while the backend still owes us a
+    // workout (`is_generating` / `needs_generation`, see [_isSettled]). That is
+    // genuinely "no data right now from this fetch", and keeping the last good
+    // workout is correct there.
+    //
+    // A SETTLED response is a final answer and must always be allowed to
+    // replace the cache, even when it has nothing to show: a completed day
+    // (issue #92) and an unscheduled rest day both look content-less. Refusing
+    // those left the cache populated and the state unchanged forever.
     if (!response.hasDisplayableContent &&
-        !response.isGenerating &&
+        !_isSettled(response) &&
         _inMemoryCache != null &&
         _inMemoryCache!.hasDisplayableContent) {
       debugPrint('🛡️ [TodayWorkout] Refused to overwrite cached workout with empty response');
@@ -497,32 +533,28 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       var response = await repository.getTodayWorkout();
       debugPrint('⏱️ [startup] /today fetch returned in ${apiSw.elapsedMilliseconds}ms (showLoading=$showLoading)');
 
-      // B5 OFFLINE WIRING — the cloud `/today` call (getTodayWorkout) catches
-      // its own errors and returns null when the device is offline. If we're
-      // offline AND there's nothing in the disk/in-memory cache for today
-      // either, fall back to the on-device orchestrator so the user still
-      // gets a workout with no connection. Per no-silent-fallback rules,
-      // getOfflineWorkout THROWS on an empty library / zero-result generation,
-      // and we surface that as an error state rather than swallowing it.
-      if (response == null && !_disposed) {
-        final isOnline = _ref.read(isOnlineProvider);
-        // "Disk cache had nothing for today" == we have no displayable cached
-        // content. _loadWithCacheFirst races the disk read into `state`/
-        // `_inMemoryCache`, so both being empty means the cache miss is real.
-        final cachedHasContent = (_inMemoryCache?.hasDisplayableContent ??
-                false) ||
-            (state.valueOrNull?.hasDisplayableContent ?? false);
-        if (!isOnline && !cachedHasContent) {
-          final offline = await _tryOfflineWorkout();
-          if (offline == null) {
-            // Offline generation failed and already surfaced an error state
-            // (empty library / over-constrained / zero-result). Stop here —
-            // do NOT fall through to the empty-state / needs-generation paths
-            // which would clobber the actionable error with "No workout yet".
-            return;
-          }
-          response = offline;
+      // B5 OFFLINE WIRING — if we're offline AND there's nothing in the
+      // disk/in-memory cache for today either, fall back to the on-device
+      // orchestrator so the user still gets a workout with no connection. Per
+      // no-silent-fallback rules, getOfflineWorkout THROWS on an empty library
+      // / zero-result generation, and we surface that as an error state rather
+      // than swallowing it.
+      //
+      // NOTE the offline path is reached from TWO places now. getTodayWorkout
+      // used to swallow its own errors and return null; it now THROWS (so a
+      // backend outage can no longer masquerade as a rest day), which means the
+      // offline case normally lands in the `catch` below. This null branch
+      // still covers the one remaining null return (no user id).
+      if (response == null && !_disposed && _shouldTryOfflineWorkout()) {
+        final offline = await _tryOfflineWorkout();
+        if (offline == null) {
+          // Offline generation failed and already surfaced an error state
+          // (empty library / over-constrained / zero-result). Stop here —
+          // do NOT fall through to the empty-state / needs-generation paths
+          // which would clobber the actionable error with "No workout yet".
+          return;
         }
+        response = offline;
       }
 
       // §8d — a fresh response carrying real content must clear any stale
@@ -757,12 +789,23 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         response = _normalizeResponse(response);
       }
 
-      // Handle empty state polling
-      if (response?.todayWorkout == null &&
-          response?.nextWorkout == null &&
-          response?.completedToday != true &&
-          response?.isGenerating != true &&
-          response?.needsGeneration != true) {
+      // A response that actually carries something to show ends the
+      // empty-state cycle, so the NEXT empty response starts a fresh ladder.
+      // This is the only implicit reset. `_cancelPolling()` used to do it,
+      // which was the bug: it runs on every non-generating response (see the
+      // `isGenerating != true` branch above) — i.e. BEFORE the ladder is
+      // re-armed a few lines down — so the counter was always 0 and the delay
+      // was pinned at `3 * (1 << 0)` = 3s forever. 20 requests a minute, no
+      // ceiling, for as long as the app stayed open.
+      if (response != null && response.hasDisplayableContent) {
+        _resetEmptyStateRefreshBackoff();
+      }
+
+      // Handle empty state polling. Same predicate the cache guard uses, so
+      // the two can't drift: nothing to show AND the backend is done talking.
+      if (response != null &&
+          !response.hasDisplayableContent &&
+          _isSettled(response)) {
         _scheduleEmptyStateRefresh();
       }
 
@@ -784,6 +827,19 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       _consecutiveTimeoutFailures = 0;
     } catch (e, stack) {
       debugPrint('❌ [TodayWorkout] API error: $e');
+      // B5 OFFLINE WIRING (primary entry). A signed-in user with no connection
+      // now reaches this catch, not the null branch above — getTodayWorkout
+      // throws on transport failure. Without this the on-device generator was
+      // dead code and offline users got an error hero instead of a workout.
+      if (!_disposed && _shouldTryOfflineWorkout()) {
+        final offline = await _tryOfflineWorkout();
+        if (offline != null) {
+          _safeSetState(AsyncValue.data(offline));
+          return;
+        }
+        // _tryOfflineWorkout already surfaced its own descriptive error state.
+        return;
+      }
       // A2 — classify timeout-ish failures so we can short-circuit. Dio's
       // DioException with type connectionTimeout/receiveTimeout/sendTimeout
       // is the common shape; we also bucket the connectivity-flap pattern
@@ -836,6 +892,17 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// over-constrained / zero-result — getOfflineWorkout THROWS in those cases),
   /// this SURFACES the descriptive error to the UI via an error state and
   /// returns null. We never swallow the error or fabricate an empty workout.
+  /// True when the on-device generator is the right answer: the device is
+  /// offline AND neither the in-memory nor the disk cache has anything for
+  /// today. `_loadWithCacheFirst` races the disk read into `state` /
+  /// `_inMemoryCache`, so both being empty means the cache miss is real.
+  bool _shouldTryOfflineWorkout() {
+    final isOnline = _ref.read(isOnlineProvider);
+    final cachedHasContent = (_inMemoryCache?.hasDisplayableContent ?? false) ||
+        (state.valueOrNull?.hasDisplayableContent ?? false);
+    return !isOnline && !cachedHasContent;
+  }
+
   Future<TodayWorkoutResponse?> _tryOfflineWorkout() async {
     final userId = _currentUserId();
     if (userId == null) {
@@ -960,13 +1027,17 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
   /// Cancel any active polling.
   ///
-  /// Also clears the empty-state backoff: every call site is either a
-  /// successful load or an explicit teardown, and in both cases the next empty
-  /// response deserves a fresh ladder rather than a latched, exhausted one.
+  /// Deliberately does NOT touch the empty-state backoff counter. It used to,
+  /// and that single line neutered the whole ladder: `_cancelPolling()` runs on
+  /// every non-generating response, which is a strict superset of every empty
+  /// response, and it runs BEFORE `_scheduleEmptyStateRefresh()` arms the next
+  /// timer — so the counter was reset to 0 on every cycle and the delay never
+  /// advanced past the first 3s rung. The counter is reset only where a cycle
+  /// genuinely ends: a response with displayable content, or an explicit
+  /// user refresh ([refresh]).
   void _cancelPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = null;
-    _resetEmptyStateRefreshBackoff();
   }
 
   /// Schedule refresh for empty state.
@@ -983,8 +1054,40 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// other refresh paths already do.
   static const int _maxEmptyStateRefreshes = 5;
   int _emptyStateRefreshCount = 0;
+  Duration? _lastEmptyStateDelay;
 
-  void _resetEmptyStateRefreshBackoff() => _emptyStateRefreshCount = 0;
+  /// Delay before the [attempt]-th (0-based) empty-state refresh: 3, 6, 12,
+  /// 24, 48 seconds.
+  @visibleForTesting
+  static Duration emptyStateRefreshDelayFor(int attempt) =>
+      Duration(seconds: 3 * (1 << attempt));
+
+  /// How many rungs of the ladder have been armed since the last reset.
+  /// Stops incrementing once the ceiling is reached — that is the proof the
+  /// ladder stood down rather than re-armed.
+  @visibleForTesting
+  int get debugEmptyStateAttempts => _emptyStateRefreshCount;
+
+  /// The delay of the most recently ARMED rung (null before the first one).
+  @visibleForTesting
+  Duration? get debugLastEmptyStateDelay => _lastEmptyStateDelay;
+
+  /// Runs exactly one `/today` fetch cycle WITHOUT resetting the bounded
+  /// empty-state ladder, so the regression gate can prove the ladder actually
+  /// advances 3 → 6 → 12 → 24 → 48 and then stands down. Production code calls
+  /// [refresh] / [invalidateAndRefresh], both of which reset it.
+  @visibleForTesting
+  Future<void> debugFetchOnce() => _fetchFromApi();
+
+  /// The in-memory cache the guard in [_saveToCache] protects. Exposed so the
+  /// #92 gate can prove a settled rest-day response is allowed to replace it.
+  @visibleForTesting
+  static TodayWorkoutResponse? get debugInMemoryCache => _inMemoryCache;
+
+  void _resetEmptyStateRefreshBackoff() {
+    _emptyStateRefreshCount = 0;
+    _lastEmptyStateDelay = null;
+  }
 
   void _scheduleEmptyStateRefresh() {
     if (_disposed) return;
@@ -996,11 +1099,14 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       return;
     }
 
-    final delaySeconds = 3 * (1 << _emptyStateRefreshCount); // 3,6,12,24,48
+    final delay = emptyStateRefreshDelayFor(_emptyStateRefreshCount);
     _emptyStateRefreshCount++;
+    _lastEmptyStateDelay = delay;
+    debugPrint('[TodayWorkout] Empty-state refresh #$_emptyStateRefreshCount/'
+        '$_maxEmptyStateRefreshes in ${delay.inSeconds}s');
 
     _pollingTimer?.cancel();
-    _pollingTimer = Timer(Duration(seconds: delaySeconds), () {
+    _pollingTimer = Timer(delay, () {
       if (!_disposed) {
         _fetchFromApi();
       }

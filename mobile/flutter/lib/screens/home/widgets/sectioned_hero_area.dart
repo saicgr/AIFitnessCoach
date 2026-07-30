@@ -20,6 +20,7 @@ import 'week_calendar_strip.dart';
 import 'swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 
 import '../../../l10n/generated/app_localizations.dart';
+import 'home_schedule_dates.dart';
 /// Sectioned hero area with tab pills (Workouts | Nutrition | Fasting).
 /// Calendar strip only shows for the Workouts tab.
 class SectionedHeroArea extends ConsumerStatefulWidget {
@@ -209,16 +210,11 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
         continue;
       }
       final dayDate = weekStart.add(Duration(days: displayIndex));
-      final dateKey =
-          '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
-
-      final workout = mergedWorkouts.where((w) {
-        if (w.scheduledDate == null) return false;
-        // Match both "YYYY-MM-DDT…" and "YYYY-MM-DD …" Postgres formats.
-        final raw = w.scheduledDate!;
-        final dateOnly = raw.length >= 10 ? raw.substring(0, 10) : raw;
-        return dateOnly == dateKey;
-      }).toList();
+      // LOCAL-day match through the shared chokepoint — handles both the bare
+      // "YYYY-MM-DD" /today serves and the raw timestamptz /workouts serves.
+      final workout = mergedWorkouts
+          .where((w) => isScheduledOnLocalDay(w.scheduledDate, dayDate))
+          .toList();
 
       // Only Zealova-authored workouts paint the green completion dot.
       // Synced Health-Connect / Apple-Health imports surface in their own

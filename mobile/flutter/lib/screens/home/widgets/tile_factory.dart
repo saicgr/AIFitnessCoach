@@ -20,6 +20,7 @@ import 'achievements_section.dart';
 import 'today_stats_row.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import 'home_schedule_dates.dart';
 /// Factory class for creating tile widgets based on TileType
 class TileFactory {
   /// Build a widget for the given tile configuration
@@ -275,12 +276,10 @@ class TileFactory {
         if (todayWorkout != null) {
           // Pin to today so NextWorkoutCard badges it "Today" even when the
           // workout's stored scheduled_date is a reschedule's original day.
-          final n = DateTime.now();
-          final todayKey = '${n.year.toString().padLeft(4, '0')}-'
-              '${n.month.toString().padLeft(2, '0')}-'
-              '${n.day.toString().padLeft(2, '0')}';
-          final raw = todayWorkout.scheduledDate;
-          if (raw == null || raw.length < 10 || raw.substring(0, 10) != todayKey) {
+          final todayKey = homeLocalDateKey(DateTime.now());
+          // Compare LOCAL days (chokepoint) — the old raw.substring(0, 10)
+          // compared the timestamptz's UTC date against a local key (#21/#65).
+          if (scheduledLocalDateKey(todayWorkout.scheduledDate) != todayKey) {
             todayWorkout = todayWorkout.copyWith(scheduledDate: todayKey);
           }
         }

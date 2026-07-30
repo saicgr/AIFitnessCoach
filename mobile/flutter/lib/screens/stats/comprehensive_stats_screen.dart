@@ -161,8 +161,17 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       case 2: // Photos
         ref.read(progressPhotosNotifierProvider(_userId!).notifier).loadAll();
         break;
-      case 3: // Score
+      case 3: // Score — PR list AND the Fitness Score card's breakdown.
+        // `state.fitnessScore` is written only by loadFitnessScore /
+        // calculateFitnessScore; loadScoresOverview and loadPersonalRecords
+        // never touch it. Priming it here only looked unnecessary because
+        // Overview is the DEFAULT tab and two of its widgets self-trigger the
+        // load — a deep link to /stats?tab=3 (or /stats/readiness, which routes
+        // to initialTab 3) never builds them, so the card had no data at all.
+        // FitnessScoreLoader shares its in-flight future with the card's own
+        // self-prime, so this is one request, not two.
         ref.read(scoresProvider.notifier).loadPersonalRecords(userId: _userId!);
+        FitnessScoreLoader.ensureLoaded(ref, _userId!);
         break;
       // Tabs 4-6 (Measurements, Nutrition, Mood) load their own data via providers
     }

@@ -116,6 +116,7 @@ import '../../core/perf/perf_trace.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import 'widgets/home_schedule_dates.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
 
@@ -1627,9 +1628,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final allWorkouts = ref.read(workoutsProvider).valueOrNull ?? [];
     Workout? matchedWorkout;
     for (final w in allWorkouts) {
-      final raw = w.scheduledDate;
-      if (raw == null || raw.length < 10) continue;
-      if (raw.substring(0, 10) == tappedKey) {
+      // LOCAL-day match (chokepoint) so the tapped strip day and the workout
+      // it opens can never be different days (#21/#65).
+      if (scheduledLocalDateKey(w.scheduledDate) == tappedKey) {
         matchedWorkout = w;
         break;
       }

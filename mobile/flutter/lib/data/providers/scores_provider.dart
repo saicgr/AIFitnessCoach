@@ -108,43 +108,93 @@ class ScoresState {
   bool get hasCheckedInToday =>
       overview?.hasCheckedInToday ?? todayReadiness != null;
 
-  /// Get overall readiness score (0-100)
-  int get readinessScore =>
-      todayReadiness?.readinessScore ??
-      overview?.todayReadiness?.readinessScore ??
-      0;
+  // ==========================================================================
+  // Resolved score values — NULLABLE. `null` means "the server has not scored
+  // this yet", which is NOT the same as a score of 0 / "Beginner" /
+  // "Needs work".
+  //
+  // The `?? 0` / `?? FitnessLevel.beginner` coalescing getters below are the
+  // fabricated-default class (identical in shape to the 2000 kcal nutrition
+  // bug): the server sends null for an un-scored account, the getter turns it
+  // into a real-looking number, and every presenting surface then states it as
+  // fact. A brand-new user is told their fitness score is 0/100 and their level
+  // is "Beginner" before a single workout exists to grade.
+  //
+  // Presenting surfaces MUST read these `…OrNull` getters and render a real
+  // empty state when they are null. The non-nullable getters are retained only
+  // for the call sites not yet migrated (see the deprecation note on each) and
+  // must not be used by new code.
+  // ==========================================================================
 
-  /// Get overall strength score (0-100)
-  int get overallStrengthScore =>
-      strengthScores?.overallScore ?? overview?.overallStrengthScore ?? 0;
+  /// Overall readiness score (0-100), or null when the user has not been
+  /// scored yet.
+  int? get readinessScoreOrNull =>
+      todayReadiness?.readinessScore ?? overview?.todayReadiness?.readinessScore;
 
-  /// Get 7-day readiness average
+  /// Overall strength score (0-100), or null when un-scored.
+  int? get overallStrengthScoreOrNull =>
+      strengthScores?.overallScore ?? overview?.overallStrengthScore;
+
+  /// PR count in the last 30 days, or null when the stat has not loaded.
+  int? get prCount30DaysOrNull =>
+      prStats?.prsThisPeriod ?? overview?.prCount30Days;
+
+  /// Nutrition score (0-100), or null when un-scored.
+  int? get nutritionScoreOrNull =>
+      nutritionScore?.overallScore ?? overview?.nutritionScore;
+
+  /// Nutrition level, or null when un-scored. Never defaults to
+  /// [NutritionLevel.needsWork] — that is a real grade, not an empty state.
+  NutritionLevel? get nutritionLevelOrNull =>
+      nutritionScore?.level ?? overview?.nutritionLevelEnum;
+
+  /// Overall fitness score (0-100), or null when un-scored.
+  int? get overallFitnessScoreOrNull =>
+      fitnessScore?.overallScore ?? overview?.overallFitnessScore;
+
+  /// Fitness level, or null when un-scored. Never defaults to
+  /// [FitnessLevel.beginner] — that is a real grade the app would be inventing.
+  FitnessLevel? get fitnessLevelOrNull =>
+      fitnessScore?.level ?? overview?.fitnessLevelEnum;
+
+  /// Consistency score (0-100), or null when un-scored.
+  int? get consistencyScoreOrNull =>
+      fitnessScore?.consistencyScore ?? overview?.consistencyScore;
+
+  /// 7-day readiness average. Already nullable — no fabricated default.
   double? get readinessAverage7Days =>
       readinessHistory?.averageScore ?? overview?.readinessAverage7Days;
 
-  /// Get PR count in last 30 days
-  int get prCount30Days =>
-      prStats?.prsThisPeriod ?? overview?.prCount30Days ?? 0;
+  // --------------------------------------------------------------------------
+  // Legacy coalescing getters. Each FABRICATES a value the server never sent.
+  // Do not use in new code; migrate the remaining call sites to the `…OrNull`
+  // getters above and delete these.
+  // --------------------------------------------------------------------------
 
-  /// Get nutrition score (0-100)
-  int get nutritionScoreValue =>
-      nutritionScore?.overallScore ?? overview?.nutritionScore ?? 0;
+  /// FABRICATES 0 when un-scored. Use [readinessScoreOrNull].
+  int get readinessScore => readinessScoreOrNull ?? 0;
 
-  /// Get nutrition level (needs_work, fair, good, excellent)
+  /// FABRICATES 0 when un-scored. Use [overallStrengthScoreOrNull].
+  int get overallStrengthScore => overallStrengthScoreOrNull ?? 0;
+
+  /// FABRICATES 0 when un-scored. Use [prCount30DaysOrNull].
+  int get prCount30Days => prCount30DaysOrNull ?? 0;
+
+  /// FABRICATES 0 when un-scored. Use [nutritionScoreOrNull].
+  int get nutritionScoreValue => nutritionScoreOrNull ?? 0;
+
+  /// FABRICATES `needsWork` when un-scored. Use [nutritionLevelOrNull].
   NutritionLevel get nutritionLevel =>
-      nutritionScore?.level ?? overview?.nutritionLevelEnum ?? NutritionLevel.needsWork;
+      nutritionLevelOrNull ?? NutritionLevel.needsWork;
 
-  /// Get overall fitness score (0-100)
-  int get overallFitnessScore =>
-      fitnessScore?.overallScore ?? overview?.overallFitnessScore ?? 0;
+  /// FABRICATES 0 when un-scored. Use [overallFitnessScoreOrNull].
+  int get overallFitnessScore => overallFitnessScoreOrNull ?? 0;
 
-  /// Get fitness level (beginner, developing, fit, athletic, elite)
-  FitnessLevel get fitnessLevel =>
-      fitnessScore?.level ?? overview?.fitnessLevelEnum ?? FitnessLevel.beginner;
+  /// FABRICATES `beginner` when un-scored. Use [fitnessLevelOrNull].
+  FitnessLevel get fitnessLevel => fitnessLevelOrNull ?? FitnessLevel.beginner;
 
-  /// Get consistency score (0-100)
-  int get consistencyScore =>
-      fitnessScore?.consistencyScore ?? overview?.consistencyScore ?? 0;
+  /// FABRICATES 0 when un-scored. Use [consistencyScoreOrNull].
+  int get consistencyScore => consistencyScoreOrNull ?? 0;
 }
 
 // ============================================

@@ -15,6 +15,7 @@ import '../regenerate_workout_sheet.dart';
 import 'exercise_image_thumbnail.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../home_schedule_dates.dart';
 /// The main workout card showing the next scheduled workout
 /// Displays workout details with start, customize, and skip actions
 class NextWorkoutCard extends ConsumerStatefulWidget {
@@ -88,13 +89,11 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
   }
 
   String _getScheduledDateLabel(String? scheduledDate) {
-    if (scheduledDate == null) return 'Scheduled';
-    // Parse date from string directly to avoid timezone shift
-    final dateStr = scheduledDate.split('T')[0];
-    final parts = dateStr.split('-');
-    if (parts.length != 3) return 'Scheduled';
+    // LOCAL calendar day via the shared chokepoint (#21/#65) — never the
+    // UTC date prefix of a timestamptz.
+    final date = scheduledLocalDay(scheduledDate);
+    if (date == null) return 'Scheduled';
     try {
-      final date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));

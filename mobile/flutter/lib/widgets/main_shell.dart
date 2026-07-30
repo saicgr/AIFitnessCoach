@@ -39,6 +39,7 @@ import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
 import 'offline_banner.dart';
 import 'email_verification_banner.dart';
+import 'quick_log_fab_chrome.dart';
 import '../data/providers/xp_provider.dart'
     show
         xpProvider,
@@ -559,62 +560,51 @@ class MainShell extends ConsumerWidget {
           // bottom-nav tab supersedes it — always reachable, never collapses
           // on scroll. Contextual chat deep links (coach hero card, active
           // workout, food tips) still push the /chat overlay unchanged.
-          // Signature "+" quick-log FAB — outlined rounded-rect that docks on
-          // every tab except Coach (a floating button over the chat composer
-          // is clutter; spec .rh-plus). Surface fill, hairline border, white
-          // glyph; opens the existing quick-log overlay.
+          // Signature quick-log button — docks on every tab except Coach (a
+          // floating button over the chat composer is clutter; spec .rh-plus).
+          //
+          // E2E register row 16: this used to be a bare 44×44 square with a
+          // naked "+" glyph and no Semantics, so its action was unknowable
+          // until you tapped it — and a screen-reader user got an anonymous
+          // button. It is now [QuickLogFabChrome]: same destination, same
+          // hit target height, but captioned and semantically labelled.
+          //
+          // ONE caption for all four tabs on purpose. `showQuickLogSheet`
+          // renders the identical quick-actions grid from Home, Workout,
+          // Nutrition and You, so four per-tab labels would advertise four
+          // actions that do not exist.
+          //
+          // The vertical offset is [kQuickLogFabBottomOffset] — the same token
+          // `kQuickLogFabClearance` (the space a tab must reserve at the end of
+          // its scroll extent) is derived from, so the button's real footprint
+          // and the space reserved for it can never drift apart again.
           if (isNavBarVisible && selectedIndex != 2)
             Positioned(
               right: 24,
               bottom:
-                  MediaQuery.of(context).padding.bottom +
-                  kMainNavBarHeight +
-                  kMainNavBottomGap +
-                  14,
+                  MediaQuery.paddingOf(context).bottom +
+                  kQuickLogFabBottomOffset,
               // Anchor for nav-tour step 3 ("Quick Log") — the spotlight must
-              // ring THIS always-visible "+" FAB. The key used to live on the
+              // ring THIS always-visible button. The key used to live on the
               // home QuickActionsRow section, which is opt-in (hidden for new
               // users), so the tour showed a dim with no cutout.
               child: KeyedSubtree(
                 key: AppTourKeys.quickLogKey,
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    // The "+" opens the Signature quick-actions grid (Scan menu,
-                    // Log workout, Log water, …), not the bare food-log dialog.
-                    showQuickLogSheet(context, ref);
-                  },
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surface
-                          : AppColorsLight.surface,
-                      borderRadius: BorderRadius.circular(6),
-                      // Accent (orange) border so the quick-actions "+" stands out.
-                      border: Border.all(
-                        color: ThemeColors.of(context).accent,
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(
-                            alpha: isDark ? 0.45 : 0.12,
-                          ),
-                          blurRadius: 24,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.add,
-                      size: 26,
-                      color: isDark
-                          ? AppColors.textPrimary
-                          : AppColorsLight.textPrimary,
-                    ),
+                // Bound the caption so a long localisation or a large text
+                // scale widens the button toward the screen edge and then
+                // stops — inside, the caption scales down rather than being
+                // ellipsised away (row 108).
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.sizeOf(context).width - 48,
+                  ),
+                  child: QuickLogFabChrome(
+                    // Existing shipped key — already translated in all 36
+                    // locales, so the caption is never English-only.
+                    label: AppLocalizations.of(context).quickLogOverlayQuickLog,
+                    // Opens the Signature quick-actions grid (Scan menu, Log
+                    // workout, Log water, …), not the bare food-log dialog.
+                    onTap: () => showQuickLogSheet(context, ref),
                   ),
                 ),
               ),

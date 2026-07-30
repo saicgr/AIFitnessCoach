@@ -42,6 +42,7 @@ import 'workout_card/workout_card_mode.dart' show WorkoutCardMode;
 
 
 import '../../../l10n/generated/app_localizations.dart';
+import 'home_schedule_dates.dart';
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
 part 'hero_workout_card_part_stat_chip.dart';
 
@@ -239,12 +240,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
   /// Check if a workout is "missed" — scheduled for a past date and not completed
   bool _isMissedWorkout(Workout w) {
-    if (w.scheduledDate == null) return false;
+    // LOCAL calendar day via the shared chokepoint (#21/#65).
+    final scheduledDate = scheduledLocalDay(w.scheduledDate);
+    if (scheduledDate == null) return false;
     try {
-      final dateStr = w.scheduledDate!.split('T')[0];
-      final parts = dateStr.split('-');
-      if (parts.length != 3) return false;
-      final scheduledDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       return scheduledDate.isBefore(today);
@@ -282,13 +281,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   String _getScheduledDateLabel(String? scheduledDate) {
-    if (scheduledDate == null) return 'TODAY';
-    // Parse date from string directly to avoid timezone shift
-    final dateStr = scheduledDate.split('T')[0];
-    final parts = dateStr.split('-');
-    if (parts.length != 3) return 'TODAY';
+    // LOCAL calendar day via the shared chokepoint (#21/#65).
+    final date = scheduledLocalDay(scheduledDate);
+    if (date == null) return 'TODAY';
     try {
-      final date = DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));
@@ -317,13 +313,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   /// "Yesterday · Jun 26" or "Friday · Jun 20" — so the user can tell WHICH
   /// past day the missed session was scheduled for, not just that one exists.
   String _getMissedDateLabel(String? scheduledDate) {
-    if (scheduledDate == null) return '';
-    final dateStr = scheduledDate.split('T')[0];
-    final parts = dateStr.split('-');
-    if (parts.length != 3) return '';
+    // LOCAL calendar day via the shared chokepoint (#21/#65).
+    final date = scheduledLocalDay(scheduledDate);
+    if (date == null) return '';
     try {
-      final date = DateTime(
-          int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final yesterday = today.subtract(const Duration(days: 1));

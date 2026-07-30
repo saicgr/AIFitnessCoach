@@ -56,13 +56,26 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
 
     // .select() the 4 scalars this section reads — a whole-state watch
     // rebuilt it on every scores mutation (isLoading flips, PR loads, etc.).
+    // NULLABLE reads. `null` = the server has not scored this account yet,
+    // which is NOT a score of 0 or a level of "Beginner" — the `?? 0` /
+    // `?? FitnessLevel.beginner` getters fabricate those (the same shape as the
+    // 2000 kcal nutrition bug), and a brand-new user was being shown a hard
+    // "0 / 100 · Beginner" verdict before a single workout existed to grade.
     final (overallScore, strengthScore, consistencyScore, fitnessLevel) =
         ref.watch(scoresProvider.select((s) => (
-              s.overallFitnessScore,
-              s.overallStrengthScore,
-              s.consistencyScore,
-              s.fitnessLevel,
+              s.overallFitnessScoreOrNull,
+              s.overallStrengthScoreOrNull,
+              s.consistencyScoreOrNull,
+              s.fitnessLevelOrNull,
             )));
+
+    // Nothing scored at all → the section has nothing honest to say. Collapse
+    // rather than render a wall of fabricated zeroes.
+    if (overallScore == null &&
+        strengthScore == null &&
+        consistencyScore == null) {
+      return const SizedBox.shrink();
+    }
 
     return Padding(
       padding: const EdgeInsets.only(top: 24),
@@ -111,7 +124,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
                     context,
                     title: AppLocalizations.of(context).strengthFitnessScore,
                     score: overallScore,
-                    subtitle: fitnessLevel.displayName,
+                    subtitle: fitnessLevel?.displayName,
                     icon: Icons.fitness_center,
                     accentColor: accentColor,
                     cardBg: cardBg,
@@ -165,8 +178,8 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
   Widget _buildScoreCard(
     BuildContext context, {
     required String title,
-    required int score,
-    required String subtitle,
+    required int? score,
+    required String? subtitle,
     required IconData icon,
     required Color accentColor,
     required Color cardBg,
@@ -206,13 +219,16 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
             const SizedBox(height: 12),
             // Hero focal number for the card — big & glanceable, with the
             // "/ 100" denominator rendered as the smaller trailing unit.
+            // Un-scored → an em dash and no "/ 100" denominator, so the card
+            // never asserts a grade the server did not give.
             StatNumber(
-              value: '$score',
+              value: score == null ? '—' : '$score',
               size: StatType.hero,
               color: accentColor,
-              unit: '/ 100',
+              unit: score == null ? null : '/ 100',
               unitColor: textSecondary,
             ),
+            if (subtitle != null) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -229,6 +245,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
                 ),
               ),
             ),
+            ],
           ],
         ),
       ),
@@ -237,7 +254,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
 
   Widget _buildMiniScoreCard({
     required String title,
-    required int score,
+    required int? score,
     required IconData icon,
     required Color accentColor,
     required Color cardBg,
@@ -273,8 +290,9 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
             ],
           ),
           const SizedBox(height: 4),
+          // Un-scored → an em dash, never a fabricated 0.
           StatNumber(
-            value: '$score',
+            value: score == null ? '—' : '$score',
             size: StatType.secondary,
             color: textPrimary,
           ),

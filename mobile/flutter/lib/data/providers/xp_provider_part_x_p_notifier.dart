@@ -20,7 +20,117 @@ class XPNotifier extends StateNotifier<XPState> {
   /// strictly greater than what we've already celebrated locally.
   static const _kCelebratedLevelKeyPrefix = 'xp_celebrated_level_';
 
+  /// SharedPreferences key prefix for the "this account has earned XP from a
+  /// real, user-performed action" latch (E2E #66). Sticky once true — the
+  /// transactions endpoint is windowed (`limit`), so a genuine action must not
+  /// age out of the window and re-arm the suppression.
+  static const _kRealActionKeyPrefix = 'xp_real_action_seen_';
+
+  /// SharedPreferences key prefix for a level-up that was DEFERRED because the
+  /// account had not yet earned any real-action XP. Stores the level the user
+  /// was on before the (unearned) crossing, so the celebration can still be
+  /// shown — correctly, and with the right "from" level — the moment they do
+  /// something real. Nothing is silently dropped.
+  static const _kPendingLevelUpFromKeyPrefix = 'xp_pending_levelup_from_';
+
   String _celebratedLevelKey(String uid) => '$_kCelebratedLevelKeyPrefix$uid';
+
+  String _realActionKey(String uid) => '$_kRealActionKeyPrefix$uid';
+
+  String _pendingLevelUpFromKey(String uid) =>
+      '$_kPendingLevelUpFromKeyPrefix$uid';
+
+  /// Sources in the server's XP ledger that represent a REAL action the user
+  /// performed, as opposed to XP granted for merely existing.
+  ///
+  /// The `daily_goal_` PREFIX is the server's own naming convention for "the
+  /// user completed a tracked daily goal" (`daily_goal_workout_complete`,
+  /// `daily_goal_meal_log`, `daily_goal_weight_log`, `daily_goal_calorie_goal`,
+  /// …) — matching on the prefix means a new daily goal counts automatically,
+  /// with nothing to keep in sync here. `trophy` and `streak_milestone` are
+  /// likewise only reachable by doing the work.
+  ///
+  /// Everything else is passive: `first_login` (+100 for creating the
+  /// account), `daily_login` (+12 for opening the app), `daily_crate` /
+  /// `first_crate_bonus` (a tap on a gift box), and `first_time_bonus`, which
+  /// covers onboarding steps the APP performs — "first goal set" (+12), "first
+  /// chat" (+7, the onboarding coach preview) and "first plan generated"
+  /// (+25, the plan the app builds for you at the end of the funnel).
+  ///
+  /// Production, a fresh account minutes after signup: 100 + 12 + 12 + 7 + 25
+  /// = 156 XP, past the level-2 threshold of 150
+  /// (`calculate_level_from_xp(156) = 2`), with zero workouts and zero meals.
+  /// That is the "Level 2 on day 0" celebration users saw.
+  static bool _isRealActionXpSource(String source) {
+    final s = source.trim().toLowerCase();
+    return s.startsWith('daily_goal_') ||
+        s == 'trophy' ||
+        s == 'streak_milestone';
+  }
+
+  Future<bool> _readRealActionSeen(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_realActionKey(uid)) ?? false;
+    } catch (e) {
+      debugPrint('[XPProvider] _readRealActionSeen failed: $e');
+      // Unknown, not "no" — never suppress a celebration on a storage error.
+      return true;
+    }
+  }
+
+  Future<void> _writeRealActionSeen(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_realActionKey(uid), true);
+    } catch (e) {
+      debugPrint('[XPProvider] _writeRealActionSeen failed: $e');
+    }
+  }
+
+  Future<int?> _readPendingLevelUpFrom(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getInt(_pendingLevelUpFromKey(uid));
+    } catch (e) {
+      debugPrint('[XPProvider] _readPendingLevelUpFrom failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _writePendingLevelUpFrom(String uid, int? fromLevel) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (fromLevel == null) {
+        await prefs.remove(_pendingLevelUpFromKey(uid));
+      } else {
+        await prefs.setInt(_pendingLevelUpFromKey(uid), fromLevel);
+      }
+    } catch (e) {
+      debugPrint('[XPProvider] _writePendingLevelUpFrom failed: $e');
+    }
+  }
+
+  /// Has this account ever earned XP from a real action?
+  ///
+  /// Latched in SharedPreferences once true. Until then it is answered from the
+  /// XP ledger. An EMPTY ledger means UNRESOLVED, not "no": every account has
+  /// at least a `first_login` row from the moment it exists, and
+  /// `XPRepository.getXPTransactions` returns `[]` on a network error — so an
+  /// empty list can only mean the fetch failed, and we fail OPEN (celebrate)
+  /// rather than swallow a real level-up because the network blipped.
+  Future<bool> _hasEarnedRealActionXp(String uid) async {
+    if (await _readRealActionSeen(uid)) return true;
+
+    final ledger = state.recentTransactions.isNotEmpty
+        ? state.recentTransactions
+        : await _repository.getXPTransactions(uid, limit: 50);
+    if (ledger.isEmpty) return true; // unresolved → do not suppress
+
+    final earned = ledger.any((t) => _isRealActionXpSource(t.source));
+    if (earned) await _writeRealActionSeen(uid);
+    return earned;
+  }
 
   Future<int?> _readCelebratedLevel(String uid) async {
     try {
@@ -134,23 +244,55 @@ class XPNotifier extends StateNotifier<XPState> {
       //   • On dismiss (`clearLevelUp`) we advance `celebratedLevel`.
       LevelUpEvent? levelUp;
       final celebratedLevel = await _readCelebratedLevel(uid);
+      // #66 — a level-up must be EARNED before it is celebrated. A brand-new
+      // account crosses level 2 on signup XP + onboarding-step bonuses alone
+      // (see `_isRealActionXpSource`), so the overlay used to congratulate the
+      // user for finishing the funnel. Hold it (do NOT drop it) until the XP
+      // ledger shows a real action; the deferred crossing is persisted and
+      // replayed at that moment.
+      final pendingFrom = await _readPendingLevelUpFrom(uid);
       if (celebratedLevel == null) {
         // First-run quiet init for this user. No confetti for the current
         // level, just snapshot it.
         await _writeCelebratedLevel(uid, userXp.currentLevel);
-      } else if (oldLevel != null &&
-          userXp.currentLevel > oldLevel &&
-          userXp.currentLevel > celebratedLevel) {
+      } else if (pendingFrom != null &&
+          userXp.currentLevel > celebratedLevel &&
+          await _hasEarnedRealActionXp(uid)) {
+        // A crossing we deferred earlier, now honestly earned. Replay it with
+        // the level the user was actually on when it happened.
         levelUp = LevelUpEvent(
-          oldLevel: oldLevel,
+          oldLevel: pendingFrom,
           newLevel: userXp.currentLevel,
           oldTitle: oldTitle,
           newTitle: userXp.title != oldTitle ? userXp.title : null,
           totalXp: userXp.totalXp,
         );
+        await _writePendingLevelUpFrom(uid, null);
         debugPrint(
-            '🎯 [XPProvider] Level-up detected! $oldLevel → ${userXp.currentLevel} '
-            '(celebrated was $celebratedLevel)');
+            '🎯 [XPProvider] Deferred level-up released: $pendingFrom → '
+            '${userXp.currentLevel} (first real-action XP landed)');
+      } else if (oldLevel != null &&
+          userXp.currentLevel > oldLevel &&
+          userXp.currentLevel > celebratedLevel) {
+        if (await _hasEarnedRealActionXp(uid)) {
+          levelUp = LevelUpEvent(
+            oldLevel: oldLevel,
+            newLevel: userXp.currentLevel,
+            oldTitle: oldTitle,
+            newTitle: userXp.title != oldTitle ? userXp.title : null,
+            totalXp: userXp.totalXp,
+          );
+          debugPrint(
+              '🎯 [XPProvider] Level-up detected! $oldLevel → ${userXp.currentLevel} '
+              '(celebrated was $celebratedLevel)');
+        } else {
+          // Unearned crossing — defer, don't drop. `celebratedLevel` is NOT
+          // advanced, so the level still counts as uncelebrated.
+          await _writePendingLevelUpFrom(uid, pendingFrom ?? oldLevel);
+          debugPrint(
+              '🎯 [XPProvider] Level-up DEFERRED ($oldLevel → '
+              '${userXp.currentLevel}) — no real-action XP earned yet (#66)');
+        }
       } else if (oldLevel != null && userXp.currentLevel > oldLevel) {
         // Cached old vs server new shows a delta, but `celebratedLevel`
         // already covers `currentLevel` — suppress and keep persistence

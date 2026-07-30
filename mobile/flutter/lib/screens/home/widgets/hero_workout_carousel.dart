@@ -15,6 +15,7 @@ import '../../../data/providers/synced_workouts_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../core/providers/synced_visibility_provider.dart';
+import 'home_schedule_dates.dart';
 import 'hero_workout_card.dart';
 import 'synced_workouts_summary_card.dart';
 
@@ -57,16 +58,10 @@ class CarouselItem {
   DateTime? get date {
     if (placeholderDate != null) return placeholderDate;
     if (syncedAggregateDate != null) return syncedAggregateDate;
-    if (workout?.scheduledDate != null) {
-      try {
-        final dateStr = workout!.scheduledDate!.split('T')[0];
-        final parts = dateStr.split('-');
-        if (parts.length == 3) {
-          return DateTime(int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
-        }
-      } catch (_) {}
-    }
-    return null;
+    // LOCAL calendar day via the shared chokepoint — `split('T')[0]` read the
+    // UTC date of a timestamptz and put the card on the wrong carousel day for
+    // any user whose local noon crosses the UTC date line (#21 / #65).
+    return scheduledLocalDay(workout?.scheduledDate);
   }
 }
 
@@ -247,9 +242,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     super.dispose();
   }
 
-  /// Date key for tracking (YYYY-MM-DD)
-  String _dateKey(DateTime date) =>
-      '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  /// Date key for tracking (YYYY-MM-DD) — delegates to the shared home
+  /// date chokepoint so every surface keys days identically.
+  String _dateKey(DateTime date) => homeLocalDateKey(date);
 
   /// Pick the default-focused carousel card in priority order. Treats
   /// `isCompleted == null` as actionable (freshly-generated, never-attempted
@@ -303,35 +298,20 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     return dates;
   }
 
-  /// Parse the YYYY-MM-DD prefix of a workout's scheduledDate as a local date.
-  /// Returns null when the field is absent or unparseable. Used by the synced-
-  /// workout merge so we can compare against today without re-implementing
-  /// the substring/timezone dance everywhere.
-  DateTime? _scheduledDate(Workout w) {
-    final raw = w.scheduledDate;
-    if (raw == null || raw.length < 10) return null;
-    final parts = raw.substring(0, 10).split('-');
-    if (parts.length != 3) return null;
-    final y = int.tryParse(parts[0]);
-    final m = int.tryParse(parts[1]);
-    final d = int.tryParse(parts[2]);
-    if (y == null || m == null || d == null) return null;
-    return DateTime(y, m, d);
-  }
+  /// The workout's LOCAL calendar day. Delegates to [scheduledLocalDay] — the
+  /// old body sliced the first 10 chars of the raw `scheduled_date`, which is
+  /// the UTC date of a `timestamptz` and lands on the wrong day for any user
+  /// whose local noon crosses the UTC date line (#21 / #65).
+  DateTime? _scheduledDate(Workout w) => scheduledLocalDay(w.scheduledDate);
 
-  /// Find ALL workouts for a specific date using string comparison
-  /// to avoid timezone shift issues (DateTime.parse on date-only strings
-  /// creates UTC midnight, and .toLocal() can shift the date backward).
-  /// Returns multiple workouts when quick workouts coexist with scheduled ones.
+  /// Find ALL workouts whose LOCAL scheduled day is [date]. Resolved through
+  /// the shared chokepoint (handles both the bare `YYYY-MM-DD` /today serves
+  /// and the raw `timestamptz` /workouts serves). Returns multiple workouts
+  /// when quick workouts coexist with scheduled ones.
   List<Workout> _findAllWorkoutsForDate(List<Workout> workouts, DateTime date) {
-    final targetKey = _dateKey(date); // "YYYY-MM-DD" from local DateTime
     final results = <Workout>[];
     for (final workout in workouts) {
-      if (workout.scheduledDate == null) continue;
-      // Extract YYYY-MM-DD: handles "YYYY-MM-DD", "YYYY-MM-DDT...", "YYYY-MM-DD ..."
-      final raw = workout.scheduledDate!;
-      final dateOnly = raw.length >= 10 ? raw.substring(0, 10) : raw;
-      if (dateOnly == targetKey) {
+      if (isScheduledOnLocalDay(workout.scheduledDate, date)) {
         results.add(workout);
       }
     }
@@ -465,22 +445,14 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
           final todayIsScheduled = workoutDays.contains(todayDate.weekday - 1);
 
-          DateTime? rowDate;
-          if (raw != null && raw.length >= 10) {
-            try {
-              final p = raw.substring(0, 10).split('-');
-              if (p.length == 3) {
-                rowDate = DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]));
-              }
-            } catch (_) {}
-          }
+          final DateTime? rowDate = scheduledLocalDay(raw);
           final daysOff = rowDate == null
               ? 0
               : rowDate.difference(todayDate).inDays.abs();
 
           if (todayIsScheduled && daysOff <= 1) {
             // Safe to pin to today (covers "Do this today" reschedule case).
-            if (raw == null || raw.length < 10 || raw.substring(0, 10) != todayKey) {
+            if (rowDate == null || _dateKey(rowDate) != todayKey) {
               todayWorkout = todayWorkout.copyWith(scheduledDate: todayKey);
             }
           } else {

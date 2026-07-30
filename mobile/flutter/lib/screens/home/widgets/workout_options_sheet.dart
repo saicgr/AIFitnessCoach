@@ -23,6 +23,7 @@ import '../../workout/widgets/exercise_add_sheet.dart';
 import 'regenerate_workout_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import 'home_schedule_dates.dart';
 /// Standalone, reusable workout-options bottom sheet.
 ///
 /// This is the exact option set the Workouts-tab hero carousel exposes
@@ -123,12 +124,10 @@ bool _isQuickWorkout(Workout w) {
 }
 
 String _scheduledDateLabel(String? scheduledDate) {
-  if (scheduledDate == null) return 'TODAY';
-  final parts = scheduledDate.split('T')[0].split('-');
-  if (parts.length != 3) return 'TODAY';
+  // LOCAL calendar day via the shared chokepoint (#21/#65).
+  final date = scheduledLocalDay(scheduledDate);
+  if (date == null) return 'TODAY';
   try {
-    final date = DateTime(
-        int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     if (date == today) return 'TODAY';
