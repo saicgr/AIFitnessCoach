@@ -20,7 +20,7 @@ Endpoints:
 - GET /overview - Combined dashboard data
 """
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, NamedTuple, Optional, Sequence
 from datetime import datetime, timedelta, date
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from core.timezone_utils import user_today_date, resolve_timezone
@@ -60,6 +60,75 @@ from .scores_models import (
 )
 
 router = APIRouter()
+
+
+# ============================================================================
+# Readiness aggregation chokepoint
+# ============================================================================
+# `readiness_scores.readiness_score` is NULLABLE and partial rows are NORMAL:
+# the mid-workout quick check-in (api/v1/workouts/reshape.py
+# `_persist_checkin_gauges`) upserts on (user_id, score_date) writing only the
+# gauges it collected and deliberately never computes a score. Any aggregation
+# that sums the raw column therefore evaluates `int + None` -> TypeError, which
+# either 500s the endpoint or — worse — gets swallowed by an enclosing
+# `except Exception` and silently reports "no readiness data" to a user who has
+# plenty. Every readiness average in this module goes through the helper below
+# so a new call site cannot reintroduce the bug, and so "not enough data" is an
+# explicit, inspectable state instead of a caught exception.
+
+
+class ReadinessWindow(NamedTuple):
+    """Outcome of averaging one window of readiness rows.
+
+    `average` is None ONLY when the window holds no *scored* row. `scored_rows`
+    and `unscored_rows` say which situation produced that None, so callers can
+    report an honest "not enough data" rather than a swallowed failure.
+    """
+
+    average: Optional[float]
+    scored_rows: int
+    unscored_rows: int
+
+    @property
+    def has_signal(self) -> bool:
+        """True when at least one row in the window carried a real score."""
+        return self.average is not None
+
+
+def average_readiness_rows(rows: Optional[Sequence[Mapping[str, Any]]]) -> ReadinessWindow:
+    """Average `readiness_score` across readiness rows, skipping unscored rows.
+
+    Unscored rows (quick check-ins that recorded gauges but no score) are
+    counted, not coerced to a number — a missing score is not a zero.
+    """
+    scored: List[float] = []
+    unscored = 0
+    for row in (rows or []):
+        value = row.get("readiness_score")
+        if value is None:
+            unscored += 1
+            continue
+        scored.append(float(value))
+    if not scored:
+        return ReadinessWindow(None, 0, unscored)
+    return ReadinessWindow(sum(scored) / len(scored), len(scored), unscored)
+
+
+def readiness_window_from_response(response: Any) -> ReadinessWindow:
+    """`average_readiness_rows` for a PostgREST response that may itself be None."""
+    return average_readiness_rows(response.data if response else None)
+
+
+# The overall fitness score needs an integer readiness component even when the
+# user has no readiness signal at all. `FitnessScoreCalculatorService` types
+# `readiness_score: int` and its focus-recommendation picker re-applies its own
+# hardcoded component weights, so passing 0 would both understate the total and
+# pin every recommendation to "prioritize sleep and recovery" for someone who
+# simply never checked in. The midpoint of the 0-100 scale is the only value
+# that biases the weighted total in neither direction. Its use is logged at the
+# call site so the substitution is never invisible.
+NEUTRAL_READINESS_BASELINE = 50
+
 
 @router.get("/personal-records/{exercise}", tags=["Personal Records"])
 async def get_exercise_pr_history(
@@ -600,8 +669,21 @@ async def calculate_fitness_score(
         "score_date", seven_days_ago
     ).execute()))
 
-    readiness_scores = [r["readiness_score"] for r in (readiness_response.data or [])]
-    readiness_score = round(sum(readiness_scores) / len(readiness_scores)) if readiness_scores else 50
+    readiness_window = readiness_window_from_response(readiness_response)
+    if readiness_window.has_signal:
+        readiness_score = round(readiness_window.average)
+    else:
+        # No scored row in the window — either the user never checked in, or
+        # every row is an unscored mid-workout quick check-in. Say so out loud;
+        # the component falls back to the scale midpoint (see the constant's
+        # note) rather than to a number pretending to be the user's readiness.
+        readiness_score = NEUTRAL_READINESS_BASELINE
+        logger.info(
+            "Fitness score for %s has no readiness signal in the 7-day window "
+            "(scored=0, unscored=%d) — readiness component uses the neutral "
+            "baseline %d",
+            user_id, readiness_window.unscored_rows, NEUTRAL_READINESS_BASELINE,
+        )
 
     # 5. Get previous fitness score
     try:
@@ -748,7 +830,11 @@ async def get_scores_overview(
     def _q_readiness_avg():
         try:
             return db.client.table("readiness_scores").select("readiness_score").eq("user_id", user_id).gte("score_date", seven_days_ago).execute()
-        except: return None
+        except Exception as e:
+            # A query failure is not "no readiness data" — log it so the two are
+            # distinguishable in the logs instead of collapsing to a bare None.
+            logger.warning(f"Readiness 7-day window query failed for {user_id}: {e}", exc_info=True)
+            return None
 
     def _q_nutrition():
         try:
@@ -798,8 +884,11 @@ async def get_scores_overview(
             ai_workout_recommendation=r.get("ai_workout_recommendation"),
             recommended_intensity=r.get("recommended_intensity"),
             ai_insight=r.get("ai_insight"),
-            submitted_at=datetime.fromisoformat(r["submitted_at"]),
-            created_at=datetime.fromisoformat(r["created_at"]),
+            # Both columns are nullable in readiness_scores; a partial row must
+            # not blow up the whole dashboard. Same guarded form as the three
+            # sibling ReadinessResponse builders in scores.py.
+            submitted_at=datetime.fromisoformat(r["submitted_at"]) if r.get("submitted_at") else None,
+            created_at=datetime.fromisoformat(r["created_at"]) if r.get("created_at") else None,
         )
 
     # Process strength scores (already fetched in parallel)
@@ -855,16 +944,19 @@ async def get_scores_overview(
     except Exception as e:
         logger.warning(f"Failed to fetch personal records: {e}", exc_info=True)
 
-    # Process 7-day readiness average (already fetched in parallel)
-    readiness_average = None
-    try:
-        readiness_scores = [r["readiness_score"] for r in (readiness_avg_response.data or [])] if readiness_avg_response else []
-        readiness_average = (
-            sum(readiness_scores) / len(readiness_scores)
-            if readiness_scores else None
+    # Process 7-day readiness average (already fetched in parallel).
+    # No try/except here on purpose: the aggregation goes through the readiness
+    # chokepoint, which cannot raise on unscored rows, and a genuine "no scored
+    # row in the window" is reported as an explicit None — not as a swallowed
+    # exception that makes a user with six scored days look like they have zero.
+    readiness_window = readiness_window_from_response(readiness_avg_response)
+    readiness_average = readiness_window.average
+    if readiness_window.unscored_rows:
+        logger.info(
+            "Readiness 7-day average for %s skipped %d unscored check-in row(s); "
+            "averaged %d scored row(s)",
+            user_id, readiness_window.unscored_rows, readiness_window.scored_rows,
         )
-    except Exception as e:
-        logger.warning(f"Failed to fetch readiness average: {e}", exc_info=True)
 
     # Process nutrition score (already fetched in parallel)
     nutrition_score = None
@@ -895,7 +987,7 @@ async def get_scores_overview(
         muscle_scores_summary=muscle_scores_summary,
         recent_prs=recent_prs,
         pr_count_30_days=pr_count,
-        readiness_average_7_days=round(readiness_average, 1) if readiness_average else None,
+        readiness_average_7_days=round(readiness_average, 1) if readiness_average is not None else None,
         nutrition_score=nutrition_score,
         nutrition_level=nutrition_level,
         consistency_score=consistency_score,
