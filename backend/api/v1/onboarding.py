@@ -24,6 +24,7 @@ from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
+import math
 
 from services.langgraph_onboarding_service import LangGraphOnboardingService
 from core.logger import get_logger
@@ -326,14 +327,54 @@ class ComputedGoalDateResponse(BaseModel):
     cycle_adjusted: bool = False  # true when a luteal water-weight offset was removed
 
 
-# Weekly rate map (kg/week). Mirrors the client-side projection math so
-# the date the user sees pre-signup matches what the backend records.
-_WEEKLY_RATE_KG = {
-    "slow": 0.25,
-    "moderate": 0.5,
-    "fast": 0.75,
-    "aggressive": 1.0,
+# ─────────────────────────────────────────────────────────────────────
+# THE weekly-rate table. Singular.
+#
+# Four independent copies of this map existed and disagreed, so the same plan
+# was quoted three different goal dates (E2E row 39). The one that shipped here
+# was direction-blind — `{slow:0.25, moderate:0.5, fast:0.75, aggressive:1.0}`
+# with a blanket `min(rate, 0.5)` for gain — while the chip the user actually
+# TAPS is direction-specific: a gaining user picking "Standard" is shown
+# **0.35 kg/wk** on the chip itself
+# (mobile/flutter/lib/screens/onboarding/widgets/quiz_weight_rate.dart:68),
+# not 0.5. For 70 kg -> 76 kg that is 18 weeks on the chip and 12 weeks from
+# this endpoint: a 42-day gap on the sign-in "Goal:" chip for every bulking
+# user. The rounding disagreed too — this endpoint used round(), the projection
+# and pact screens use ceil() — worth another 7 days even where the rates match.
+#
+# The table below is now the single authority and is byte-for-byte the chip
+# values, direction included. `api/v1/preferences_contract.py --check` reads
+# quiz_weight_rate.dart at runtime and fails if either side drifts, so this
+# cannot silently fork again. GET /onboarding/weight-rate-table serves it so
+# the client-side copies can be replaced by a fetch rather than re-typed.
+#
+# Sources of truth for each entry (label the user sees -> kg/week):
+#   losing: Gradual 0.25 · Moderate 0.5 · Faster 0.75 · Aggressive 1.0
+#   gaining: Lean Bulk 0.25 · Standard 0.35 · Aggressive 0.5
+# Gaining has no 'aggressive' chip; the entry exists only so a stale client
+# that sends one is answered with the fastest rate the product will actually
+# prescribe for a bulk, rather than silently falling back to the losing table.
+WEEKLY_RATE_KG_BY_DIRECTION: Dict[str, Dict[str, float]] = {
+    "lose": {"slow": 0.25, "moderate": 0.5, "fast": 0.75, "aggressive": 1.0},
+    "gain": {"slow": 0.25, "moderate": 0.35, "fast": 0.5, "aggressive": 0.5},
 }
+
+# The pace assumed when the caller states no preference. Not a magic number:
+# it is the chip marked `isRecommended` for losing and the neighbour of the
+# recommended Lean Bulk for gaining, i.e. the same "moderate" the client falls
+# back to (`quizData.weightChangeRate ?? 'moderate'`).
+DEFAULT_WEIGHT_CHANGE_RATE = "moderate"
+
+
+def resolve_weekly_rate_kg(direction: str, weight_change_rate: Optional[str]) -> float:
+    """kg/week for a (direction, pace) pair — the ONLY way to answer that.
+
+    Raises on an unknown direction rather than guessing; an unknown pace falls
+    to the recommended chip, which is what the client does with a null rate.
+    """
+    table = WEEKLY_RATE_KG_BY_DIRECTION[direction]
+    return table.get(weight_change_rate or DEFAULT_WEIGHT_CHANGE_RATE,
+                     table[DEFAULT_WEIGHT_CHANGE_RATE])
 
 # Estimated transient water-weight carried in the water-retaining cycle
 # phases. Luteal-phase retention runs ~1-2 kg; menstrual onset still carries
@@ -384,12 +425,16 @@ async def computed_goal_date(request: Request, body: ComputedGoalDateRequest):
         )
 
     direction = "lose" if delta < 0 else "gain"
-    weekly_rate = _WEEKLY_RATE_KG.get(body.weight_change_rate or "moderate", 0.5)
-    # Gain pace tops out lower than loss pace per ACSM guidance.
-    if direction == "gain":
-        weekly_rate = min(weekly_rate, 0.5)
+    # Direction-aware by table, not by a post-hoc clamp — the gaining chips are
+    # their own scale (Lean Bulk / Standard / Aggressive), not the losing scale
+    # capped at 0.5.
+    weekly_rate = resolve_weekly_rate_kg(direction, body.weight_change_rate)
 
-    weeks = max(1, int(round(abs(delta) / weekly_rate)))
+    # ceil(), matching WeightProjectionCalculator.calculateGoalDate and the
+    # commitment pact. round() used to shave a week off any plan whose
+    # remainder was under half a week, which is how two surfaces that agreed on
+    # the RATE could still quote dates 7 days apart.
+    weeks = max(1, math.ceil(abs(delta) / weekly_rate))
     goal_date = date.today() + timedelta(weeks=weeks)
 
     return ComputedGoalDateResponse(
@@ -399,6 +444,32 @@ async def computed_goal_date(request: Request, body: ComputedGoalDateRequest):
         total_change_kg=abs(delta),
         direction=direction,
         cycle_adjusted=cycle_adjusted,
+    )
+
+
+class WeightRateTableResponse(BaseModel):
+    """The one weekly-rate table, served so nobody has to re-type it."""
+    rates_kg_per_week: Dict[str, Dict[str, float]]
+    default_rate: str
+    rounding: str  # how weeks_to_goal is derived from weeks-of-change
+
+
+@router.get("/weight-rate-table", response_model=WeightRateTableResponse)
+@limiter.limit("60/minute")
+async def weight_rate_table(request: Request):
+    """Serve the authoritative weekly-rate table + rounding rule.
+
+    Exists so the surfaces that currently carry their own copy of this map
+    (weight_projection_screen_part_weight_data_point.dart,
+    quiz_weight_rate.dart, goal_speed_calculator.dart,
+    calorie_macro_estimator.dart) can read it instead of restating it. Every
+    re-typed copy is a chance for the three goal dates of E2E row 39 to come
+    back. No auth: the pre-auth quiz needs it before the account exists.
+    """
+    return WeightRateTableResponse(
+        rates_kg_per_week=WEEKLY_RATE_KG_BY_DIRECTION,
+        default_rate=DEFAULT_WEIGHT_CHANGE_RATE,
+        rounding="ceil",
     )
 
 

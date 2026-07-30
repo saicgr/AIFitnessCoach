@@ -23,6 +23,7 @@ from api.v1.users.models import (
     merge_extended_fields_into_preferences,
 )
 from api.v1.users.onboarding import create_gym_profiles_from_onboarding
+from api.v1.users.field_routing import USER_UPDATE_ROUTING, apply_routes
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -724,33 +725,46 @@ async def update_user(user_id: str, user: UserUpdate,
             new_days = sorted(user.workout_days)
             schedule_changed = old_days != new_days
 
+        # The preferences blob is now built UNCONDITIONALLY, because the
+        # contract-routed pass at the end of this handler also writes into it
+        # (accessibility_mode, exercise_consistency, sleep_quality … have no
+        # `users` column and the JSONB is their only home). It is only added to
+        # `update_data` if something actually changed it, so a PUT that touches
+        # no preference still leaves the blob alone.
+        current_prefs = existing.get("preferences", {})
+        if isinstance(current_prefs, str):
+            try:
+                current_prefs = json.loads(current_prefs)
+            except (ValueError, TypeError):
+                current_prefs = {}
+        if not isinstance(current_prefs, dict):
+            current_prefs = {}
+        # preferences may arrive as a dict (preferred) or a JSON string
+        # (legacy). merge_extended_fields_into_preferences expects a dict
+        # (it drops non-dicts), so normalize a string to a dict here —
+        # otherwise a string payload would silently wipe the user's prefs.
+        _incoming_prefs = user.preferences
+        if isinstance(_incoming_prefs, str):
+            try:
+                _incoming_prefs = json.loads(_incoming_prefs)
+            except (ValueError, TypeError):
+                _incoming_prefs = None
+        final_preferences = merge_extended_fields_into_preferences(
+            dict(_incoming_prefs) if _incoming_prefs else dict(current_prefs),
+            user.days_per_week,
+            user.workout_duration,
+            user.training_split,
+            user.intensity_preference,
+            user.preferred_time,
+            user.progression_pace,
+            user.workout_type_preference,
+            user.workout_environment,
+            user.gym_name,
+            workout_variety=user.workout_variety,
+            workout_days=user.workout_days,
+            cardio_preference=user.cardio_preference,
+        )
         if user.preferences is not None or has_extended_fields:
-            current_prefs = existing.get("preferences", {})
-            # preferences may arrive as a dict (preferred) or a JSON string
-            # (legacy). merge_extended_fields_into_preferences expects a dict
-            # (it drops non-dicts), so normalize a string to a dict here —
-            # otherwise a string payload would silently wipe the user's prefs.
-            _incoming_prefs = user.preferences
-            if isinstance(_incoming_prefs, str):
-                try:
-                    _incoming_prefs = json.loads(_incoming_prefs)
-                except (ValueError, TypeError):
-                    _incoming_prefs = None
-            final_preferences = merge_extended_fields_into_preferences(
-                _incoming_prefs if _incoming_prefs else current_prefs,
-                user.days_per_week,
-                user.workout_duration,
-                user.training_split,
-                user.intensity_preference,
-                user.preferred_time,
-                user.progression_pace,
-                user.workout_type_preference,
-                user.workout_environment,
-                user.gym_name,
-                workout_variety=user.workout_variety,
-                workout_days=user.workout_days,
-                cardio_preference=user.cardio_preference,
-            )
             update_data["preferences"] = final_preferences
             logger.info(f"🔍 [DEBUG] Final preferences to save: {final_preferences}")
 
@@ -904,6 +918,26 @@ async def update_user(user_id: str, user: UserUpdate,
                 )
             update_data["muscle_focus_points"] = user.muscle_focus_points
             logger.info(f"Updating muscle_focus_points for user {user_id}: {user.muscle_focus_points}")
+
+        # ── Every remaining declared field, routed by contract ──────────────
+        # The hand-written block above covers the fields that need bespoke
+        # handling (JSON re-encoding, dual-writes, change detection). This pass
+        # covers the rest, driven by the single registry in field_routing.py,
+        # which asserts at IMPORT TIME that every declared field names a
+        # destination. Before it existed, 32 of the 81 fields UserUpdate
+        # declares were accepted, validated, and then thrown away behind a
+        # 200 — including workout_ui_mode / workout_ui_mode_user_explicit
+        # (E2E row 13b), timezone, goal_target_date, coach_name, photo_url and
+        # both accessibility fields.
+        routed = apply_routes(
+            user, USER_UPDATE_ROUTING, update_data, final_preferences
+        )
+        if routed:
+            logger.info(f"[Profile] Routed {len(routed)} field(s) for {user_id}: {routed}")
+            # A prefs-destined field may have been the ONLY thing this PUT
+            # changed, in which case the blob is not in update_data yet.
+            if any(dest.startswith("preferences.") for dest in routed.values()):
+                update_data["preferences"] = final_preferences
 
         logger.info(f"🔍 [DEBUG] Final update_data to save: {update_data}")
         if update_data:

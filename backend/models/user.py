@@ -1,6 +1,6 @@
 """User-related Pydantic models."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, Union, List
 from datetime import datetime
 
@@ -115,6 +115,24 @@ class NotificationPreferences(BaseModel):
 
 
 class UserUpdate(BaseModel):
+    """Request body for PUT /users/{user_id}.
+
+    `extra="forbid"` is load-bearing, not tidiness. Pydantic's default
+    (`extra="ignore"`) let PUT /users/{id} accept a field it had no idea what to
+    do with, drop it, and still answer 200 — so the client believed the write
+    landed. That is how `workout_weight_unit` (written from three separate UI
+    toggles) never once reached the database, and it is the mechanism behind
+    E2E register rows 13(b) and 18. A write the server cannot honour must fail
+    loudly: an unknown key now 422s naming itself.
+
+    Declaring a field is only half the contract — every declared field must
+    also be ROUTED to a destination. `api/v1/users/field_routing.py` owns that
+    half and asserts completeness at import time, so a field added here without
+    a route breaks startup instead of being silently discarded at runtime.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
     fitness_level: Optional[str] = Field(default=None, max_length=50)
     goals: Optional[str] = Field(default=None, max_length=2000)
     equipment: Optional[str] = Field(default=None, max_length=2000)
@@ -183,10 +201,21 @@ class UserUpdate(BaseModel):
     wake_time: Optional[str] = Field(default=None, max_length=10)  # HH:MM format, e.g., "07:00"
     sleep_time: Optional[str] = Field(default=None, max_length=10)  # HH:MM format, e.g., "23:00"
     coach_id: Optional[str] = Field(default=None, max_length=50)  # Selected coach ID
-    # Weight unit preference - 'kg' or 'lbs'
-    weight_unit: Optional[str] = Field(default=None, max_length=5)
-    # Body measurement unit preference - 'cm' or 'in'
-    measurement_unit: Optional[str] = Field(default=None, max_length=5)
+    # ── The THREE separate unit settings, plus distance. Each is its own
+    # column and its own user choice; none of them derives from another
+    # (feedback_weight_unit_separation). `workout_weight_unit` was written by
+    # three shipped UI toggles (settings_card.dart:251,
+    # workout_settings_page.dart:356, workout/shared/unit_chip.dart:116) but was
+    # NOT declared here, so every one of those writes was silently dropped and
+    # the workout logger stayed in kg — E2E row 18.
+    weight_unit: Optional[str] = Field(default=None, max_length=5)         # body weight: kg | lbs
+    workout_weight_unit: Optional[str] = Field(default=None, max_length=5)  # lifted load: kg | lbs
+    measurement_unit: Optional[str] = Field(default=None, max_length=5)     # tape: cm | in
+    distance_unit: Optional[str] = Field(default=None, max_length=5)        # runs: km | mi
+    # Exercise variety preference ('consistent' | 'varied'). PUT by
+    # core/providers/consistency_mode_provider.dart:131; undeclared until now,
+    # so the toggle never persisted.
+    exercise_consistency: Optional[str] = Field(default=None, max_length=20)
     # Primary training goal: muscle_hypertrophy, muscle_strength, or strength_hypertrophy
     primary_goal: Optional[str] = Field(default=None, max_length=50)
     # Muscle focus points allocation (max 5 total)
@@ -262,10 +291,18 @@ class User(BaseModel):
     date_of_birth: Optional[str] = Field(default=None, max_length=20)
     gender: Optional[str] = Field(default=None, max_length=20)  # 'male', 'female', or 'other'
     activity_level: Optional[str] = Field(default=None, max_length=50)
-    # Weight unit preference - syncs across app
-    weight_unit: str = Field(default="kg", max_length=5)  # 'kg' or 'lbs'
-    # Body measurement unit preference - 'cm' or 'in'
-    measurement_unit: str = Field(default="cm", max_length=5)  # 'cm' or 'in'
+    # ── Unit preferences. All four are NULLABLE and are served RAW: NULL means
+    # "the user has not chosen", which is a different fact from "chose kg".
+    # They used to be coerced (`row.get(...) or "kg"`), which hid the un-chosen
+    # state from the client and made the locale-based default unreachable.
+    # `workout_weight_unit` and `distance_unit` were missing from this model
+    # entirely, so `response_model=User` stripped them on every read — the
+    # client's `preferredWorkoutWeightUnit` could never see the column even
+    # once it was written (E2E row 18).
+    weight_unit: Optional[str] = Field(default=None, max_length=5)          # 'kg' | 'lbs' | None
+    workout_weight_unit: Optional[str] = Field(default=None, max_length=5)  # 'kg' | 'lbs' | None
+    measurement_unit: Optional[str] = Field(default=None, max_length=5)     # 'cm' | 'in'  | None
+    distance_unit: Optional[str] = Field(default=None, max_length=5)        # 'km' | 'mi'  | None
     # Accessibility settings
     accessibility_mode: Optional[str] = Field(default="standard", max_length=20)  # 'standard', 'senior', 'kids'
     accessibility_settings: Optional[dict] = None  # Detailed settings
@@ -274,6 +311,15 @@ class User(BaseModel):
     equipment_details: Optional[list] = None
     # Primary training goal: muscle_hypertrophy, muscle_strength, or strength_hypertrophy
     primary_goal: Optional[str] = Field(default=None, max_length=50)
+    # Onboarding fitness assessment (columns added by migration 2381). Served
+    # back so a client can prove the assessment landed instead of taking a 200
+    # on faith — before 2381 these five answers had nowhere to go at all.
+    training_experience: Optional[str] = Field(default=None, max_length=50)
+    pushup_capacity: Optional[str] = Field(default=None, max_length=20)
+    pullup_capacity: Optional[str] = Field(default=None, max_length=20)
+    plank_capacity: Optional[str] = Field(default=None, max_length=20)
+    squat_capacity: Optional[str] = Field(default=None, max_length=20)
+    cardio_capacity: Optional[str] = Field(default=None, max_length=20)
     # Muscle focus points allocation (max 5 total)
     # Format: {"triceps": 2, "lats": 1, "obliques": 2}
     muscle_focus_points: Optional[dict] = None

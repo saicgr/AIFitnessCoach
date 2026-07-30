@@ -26,6 +26,7 @@ from api.v1.users.models import (
     row_to_user,
     merge_extended_fields_into_preferences,
 )
+from api.v1.users.field_routing import USER_PREFERENCES_ROUTING, apply_routes
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -62,7 +63,11 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             full_name = (
                 user_metadata.get("full_name")
                 or user_metadata.get("name")
-                or (request.name if hasattr(request, "name") else None)
+                # `name` is now a DECLARED field. This used to read
+                # `request.name if hasattr(request, "name")`, which is always
+                # False on an undeclared Pydantic field — i.e. dead code that
+                # made the quiz's name unreachable on the auto-create path.
+                or request.name
                 or email.split("@")[0]
                 or "User"
             )
@@ -92,6 +97,55 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
 
         # Use the canonical ID from the DB row (not the potentially stale URL user_id)
         actual_user_id = existing["id"]
+
+        # ── Flatten the two nested blocks AIProfilePayloadBuilder emits ─────
+        # `buildPayload` nests nutrition + fasting answers; only
+        # coach_selection_screen also re-sends flat copies, so on the
+        # backup-service and auth-repository paths those answers used to be
+        # dropped entirely. Flat values already on the request win — they are
+        # the more specific statement.
+        if request.nutrition is not None:
+            n = request.nutrition
+            if request.nutrition_goals is None:
+                request.nutrition_goals = n.nutrition_goals
+            if request.dietary_restrictions is None:
+                request.dietary_restrictions = n.dietary_restrictions
+            if request.meals_per_day is None:
+                request.meals_per_day = n.meals_per_day
+        if request.fasting is not None:
+            f = request.fasting
+            if request.fasting_protocol is None:
+                request.fasting_protocol = f.protocol
+            if request.wake_time is None:
+                request.wake_time = f.wake_time
+            if request.sleep_time is None:
+                request.sleep_time = f.sleep_time
+            if request.interested_in_fasting is None and f.protocol is not None:
+                request.interested_in_fasting = True
+
+        # ── Aliases the payload builder sends under two names ───────────────
+        if request.days_per_week is None and request.workouts_per_week is not None:
+            request.days_per_week = request.workouts_per_week
+        if request.selected_days is None and request.workout_days is not None:
+            request.selected_days = request.workout_days
+
+        # ── Units: the quiz's own kg/lb toggle ─────────────────────────────
+        # `PreAuthQuizData.useMetricUnits` is the answer the user actually gave;
+        # nothing ever sent it, so users.weight_unit fell to its column DEFAULT
+        # of 'kg' for every account — including US users who picked lb — and the
+        # workout logger followed it (E2E row 18). The four unit settings stay
+        # SEPARATE columns (project rule); the toggle only seeds the ones the
+        # client did not state explicitly, and never overrides an explicit one.
+        if request.use_metric_units is not None:
+            metric = request.use_metric_units
+            if request.weight_unit is None:
+                request.weight_unit = "kg" if metric else "lbs"
+            if request.workout_weight_unit is None:
+                request.workout_weight_unit = "kg" if metric else "lbs"
+            if request.measurement_unit is None:
+                request.measurement_unit = "cm" if metric else "in"
+            if request.distance_unit is None:
+                request.distance_unit = "km" if metric else "mi"
 
         # Build update data
         update_data = {}
@@ -125,6 +179,14 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             update_data["primary_goal"] = request.primary_goal
         if request.muscle_focus_points is not None:
             update_data["muscle_focus_points"] = request.muscle_focus_points
+        # training_experience is dual-homed on purpose: the workout generator
+        # reads it off the users ROW (generation_endpoints.py
+        # `user.get("training_experience")`) while the rest of onboarding reads
+        # the preferences JSONB copy. It only ever reached the JSONB, so that
+        # generator read was always None. Column added by migration 2381; the
+        # JSONB copy below is kept so nothing that reads it breaks.
+        if request.training_experience is not None:
+            update_data["training_experience"] = request.training_experience
         equipment_changed = False
         if request.equipment is not None:
             # Dual-write: legacy `equipment` VARCHAR-of-JSON + new
@@ -212,6 +274,10 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             meals_per_day=request.meals_per_day,
             weight_direction=request.weight_direction,
             weight_change_amount=request.weight_change_amount,
+            # The pace chip the user picked. Declared on the model but routed
+            # nowhere until now, so the server never knew the rate its own
+            # /onboarding/computed-goal-date endpoint is supposed to project at.
+            weight_change_rate=request.weight_change_rate,
             motivations=request.motivations,
             nutrition_goals=request.nutrition_goals,
             interested_in_fasting=request.interested_in_fasting,
@@ -234,6 +300,21 @@ async def save_user_preferences(user_id: str, request: UserPreferencesRequest,
             # generation can snap prescribed set weights to the owned set.
             equipment_weights=request.equipment_weights,
         )
+
+        # ── Every remaining declared field, routed by contract ──────────────
+        # The hand-written block above covers the fields that need bespoke
+        # handling. This pass covers the rest, driven by the single registry in
+        # field_routing.py — which asserts at import time that EVERY declared
+        # field names a destination. That is what makes "declared but silently
+        # dropped" (the fitness assessment, coach_name, is_trainer, name,
+        # date_of_birth, the unit settings) structurally impossible to
+        # reintroduce, rather than something the next person has to remember.
+        routed = apply_routes(
+            request, USER_PREFERENCES_ROUTING, update_data, final_preferences
+        )
+        if routed:
+            logger.info(f"[Preferences] Routed {len(routed)} field(s): {routed}")
+
         update_data["preferences"] = final_preferences
 
         # Perform update

@@ -4,7 +4,7 @@ Pydantic models and helper functions for user endpoints.
 import json
 import re
 from typing import Optional, List, Dict
-from pydantic import BaseModel, Field, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 
 
 def get_default_equipment_for_environment(environment: str) -> list:
@@ -123,8 +123,53 @@ class ProgramPreferences(BaseModel):
     workout_environment: Optional[str] = None  # commercial_gym, home_gym, home, outdoors, hotel, etc.
 
 
+class NutritionOnboardingBlock(BaseModel):
+    """The nested `nutrition` block AIProfilePayloadBuilder emits.
+
+    `buildPayload` (mobile/flutter/lib/data/models/ai_profile_payload.dart:164)
+    nests these three under a `nutrition` key. Only coach_selection_screen
+    re-sends flat copies, so on the backup-service and auth-repository paths the
+    whole block used to be dropped. Declared here and flattened onto the
+    top-level fields in save_user_preferences.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    nutrition_goals: Optional[List[str]] = None
+    dietary_restrictions: Optional[List[str]] = None
+    meals_per_day: Optional[int] = None
+
+
+class FastingOnboardingBlock(BaseModel):
+    """The nested `fasting` block AIProfilePayloadBuilder emits.
+
+    Note the key is `protocol` here and `fasting_protocol` at the top level —
+    the flattening in save_user_preferences translates it.
+    """
+    model_config = ConfigDict(extra="forbid")
+
+    protocol: Optional[str] = None
+    wake_time: Optional[str] = None
+    sleep_time: Optional[str] = None
+
+
 class UserPreferencesRequest(BaseModel):
-    """Request body for updating user preferences from pre-auth quiz."""
+    """Request body for updating user preferences from pre-auth quiz.
+
+    `extra="forbid"` is load-bearing. Pydantic's default (`extra="ignore"`) let
+    this endpoint accept the entire fitness assessment — five capacities the
+    onboarding client has always POSTed — drop all five, and answer 200. Same
+    for `coach_name`, `is_trainer`, `name`, `date_of_birth`, `workouts_per_week`
+    and the nested `nutrition`/`fasting` blocks. A write the server cannot
+    honour must not report success, so an unknown key now 422s naming itself.
+
+    Every declared field must also name a destination in
+    `api/v1/users/field_routing.py::USER_PREFERENCES_ROUTING`; that contract is
+    asserted at import time, so adding a field here without wiring it up breaks
+    startup rather than quietly losing user answers.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
     # Goals & Fitness
     goals: Optional[List[str]] = None
     # The quiz's dedicated "primary training focus" answer (hypertrophy /
@@ -149,9 +194,63 @@ class UserPreferencesRequest(BaseModel):
     weight_change_amount: Optional[float] = None
     weight_change_rate: Optional[str] = None  # slow, moderate, fast, aggressive
 
+    # ── Fitness assessment (fitness_assessment_screen.dart) ────────────────
+    # Five capacity buckets, POSTed by every onboarding client since the
+    # screen shipped. They were undeclared here AND had no `users` column, so
+    # the entire assessment step of onboarding wrote nothing — and
+    # generation_endpoints.py's `has_assessment` (which reads these straight
+    # off the users row) was structurally False for every user, forever.
+    # Columns added by migration 2381; values stored verbatim as the client's
+    # bucket strings, which is what the generator prompt interpolates.
+    pushup_capacity: Optional[str] = None   # none | 1-10 | 11-25 | 26-40 | 40+
+    pullup_capacity: Optional[str] = None   # none | assisted | 1-5 | 6-10 | 10+
+    plank_capacity: Optional[str] = None    # <15sec | 15-30sec | 31-60sec | 1-2min | 2+min
+    squat_capacity: Optional[str] = None    # 0-10 | 11-25 | 26-40 | 40+
+    cardio_capacity: Optional[str] = None   # <5min | 5-15min | 15-30min | 30+min
+
+    # ── Identity captured by the quiz ──────────────────────────────────────
+    # `name` and `date_of_birth` are POSTed here by coach_selection_screen and
+    # the backup service. They used to be dropped, which is why
+    # personal_info_screen's PUT was the only thing that ever persisted them
+    # and why onboarding.py's `request.name if hasattr(request, "name")`
+    # recovery path was dead code (hasattr is always False for an undeclared
+    # Pydantic field).
+    name: Optional[str] = None
+    date_of_birth: Optional[str] = None  # ISO YYYY-MM-DD
+    # User-given AI coach name (coach_selection_screen.dart:1035). Dropped
+    # until now: production had 0 of 13 users with a coach_name.
+    coach_name: Optional[str] = None
+    # Onboarding "are you a trainer?" answer (pre_auth_quiz_backup_service).
+    # Dropped until now, and indistinguishable from a real `false` because the
+    # column is NOT NULL DEFAULT false.
+    is_trainer: Optional[bool] = None
+    # Projected goal date the onboarding funnel quotes back to the user.
+    goal_target_date: Optional[str] = None  # ISO YYYY-MM-DD
+
+    # ── Units: THREE SEPARATE SETTINGS, plus distance ──────────────────────
+    # The quiz's own kg/lb toggle lives in `PreAuthQuizData.useMetricUnits` and
+    # was never sent anywhere, so `users.weight_unit` fell to its column
+    # DEFAULT of 'kg' for every account including US users who chose lb — that
+    # is the whole of E2E row 18. `use_metric_units` is that toggle; the four
+    # explicit fields let a client state each unit independently (they are
+    # separate settings by project rule, never derived from one another).
+    # When only the toggle is sent, it seeds all four — that is the user's own
+    # answer being applied, not a fabricated default.
+    use_metric_units: Optional[bool] = None
+    weight_unit: Optional[str] = None          # kg | lbs
+    workout_weight_unit: Optional[str] = None  # kg | lbs
+    measurement_unit: Optional[str] = None     # cm | in
+    distance_unit: Optional[str] = None        # km | mi
+
     # Schedule
     days_per_week: Optional[int] = None
+    # `workouts_per_week` is the payload builder's alias for days_per_week
+    # (ai_profile_payload.dart:32-33 sends BOTH). Declared so the alias does not
+    # 422; folded onto the same preferences key rather than stored twice.
+    workouts_per_week: Optional[int] = None
     selected_days: Optional[List[int]] = None  # List of day indices [0=Mon, 1=Tue, ..., 6=Sun]
+    # Same list under the payload builder's other name (ai_profile_payload.dart:108).
+    workout_days: Optional[List[int]] = None
     workout_duration: Optional[int] = None  # Duration in minutes (kept for backwards compatibility)
     workout_duration_min: Optional[int] = None  # Min duration in range (e.g., 45 for "45-60")
     workout_duration_max: Optional[int] = None  # Max duration in range (e.g., 60 for "45-60")
@@ -220,6 +319,12 @@ class UserPreferencesRequest(BaseModel):
 
     # Focus areas (muscle groups / body parts to prioritize)
     focus_areas: Optional[List[str]] = None
+
+    # Nested blocks emitted by AIProfilePayloadBuilder. Flattened onto their
+    # top-level siblings in save_user_preferences; declared so the two client
+    # paths that DON'T also send flat copies stop losing them.
+    nutrition: Optional[NutritionOnboardingBlock] = None
+    fasting: Optional[FastingOnboardingBlock] = None
 
     # Coach (duplicate removed in model, kept for compat)
     # coach_id already defined above
@@ -418,10 +523,41 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
         activity_level=get_with_fallback("activity_level"),
         # Detailed equipment with quantities and weights
         equipment_details=row.get("equipment_details"),
-        # Weight unit preference (kg or lbs)
-        weight_unit=row.get("weight_unit") or "kg",
-        # Body measurement unit preference (cm or in)
-        measurement_unit=row.get("measurement_unit") or "cm",
+        # ── The four unit settings, served RAW. These used to be coerced
+        # (`or "kg"` / `or "cm"`), which told the client the user had chosen kg
+        # when nobody had ever asked — and `workout_weight_unit`/`distance_unit`
+        # were not on the response model at all, so the client physically could
+        # not read the column its three toggles wrote to (E2E row 18). NULL now
+        # travels as NULL and means "not chosen"; each caller resolves its own
+        # default (backend convention is lbs).
+        weight_unit=row.get("weight_unit"),
+        workout_weight_unit=row.get("workout_weight_unit"),
+        measurement_unit=row.get("measurement_unit"),
+        distance_unit=row.get("distance_unit"),
+        # Timezone was never populated here, so every client read the model's
+        # "UTC" default no matter what the column said.
+        timezone=row.get("timezone"),
+        # Onboarding fitness assessment (migration 2381).
+        training_experience=get_with_fallback("training_experience"),
+        pushup_capacity=row.get("pushup_capacity"),
+        pullup_capacity=row.get("pullup_capacity"),
+        plank_capacity=row.get("plank_capacity"),
+        squat_capacity=row.get("squat_capacity"),
+        cardio_capacity=row.get("cardio_capacity"),
+        # No `users` column exists for these; the preferences JSONB is their
+        # home, and PUT /users/{id} routes them there.
+        accessibility_mode=prefs_dict.get("accessibility_mode"),
+        accessibility_settings=prefs_dict.get("accessibility_settings"),
+        # Onboarding v5 columns — read back so a client can verify its write.
+        primary_goal=row.get("primary_goal"),
+        muscle_focus_points=row.get("muscle_focus_points"),
+        coach_name=row.get("coach_name"),
+        goal_target_date=(
+            str(row.get("goal_target_date")) if row.get("goal_target_date") else None
+        ),
+        workout_ui_mode=row.get("workout_ui_mode"),
+        workout_ui_mode_user_explicit=bool(row.get("workout_ui_mode_user_explicit")),
+        is_trainer=bool(row.get("is_trainer")),
         # Profile photo URL and bio. The bucket is private, so we presign the
         # stored S3 URL each time we serve the user (OAuth avatars pass through
         # unchanged).
@@ -475,6 +611,11 @@ def merge_extended_fields_into_preferences(
     meals_per_day: Optional[int] = None,
     weight_direction: Optional[str] = None,
     weight_change_amount: Optional[float] = None,
+    # The pace chip the user picked (slow|moderate|fast|aggressive). It was
+    # declared on UserPreferencesRequest but routed nowhere, so the server never
+    # learned the rate the whole projection funnel is built on and every goal
+    # date had to be recomputed from a client-supplied guess (E2E row 39).
+    weight_change_rate: Optional[str] = None,
     motivations: Optional[List[str]] = None,
     nutrition_goals: Optional[List[str]] = None,
     interested_in_fasting: Optional[bool] = None,
@@ -555,6 +696,8 @@ def merge_extended_fields_into_preferences(
         prefs["weight_direction"] = weight_direction
     if weight_change_amount is not None:
         prefs["weight_change_amount"] = weight_change_amount
+    if weight_change_rate is not None:
+        prefs["weight_change_rate"] = weight_change_rate
     if motivations is not None:
         prefs["motivations"] = motivations
     if nutrition_goals is not None:
