@@ -604,7 +604,46 @@ class MenuDishSchema(BaseModel):
     coach_tip: Optional[str] = Field(default=None, description="≤18 words: pick-or-skip guidance tailored to the user's goals.")
 
 
-class BuffetAnalysisResponse(BaseModel):
+# ─────────────────────────────────────────────────────────────────────────────
+# Unreadable-image escape hatch
+#
+# Every OCR prompt (menu / buffet / bill) opens with a CONTENT CHECK telling the
+# model to return an EMPTY result flagged `unreadable` when the photo is blank,
+# a solid colour, a single pixel, or otherwise illegible. That instruction was
+# previously unreachable by construction: the call binds a response_schema, and
+# Gemini's constrained decoder can only emit properties the schema DECLARES —
+# so the model could not say "I can't read this", was forced to fill the
+# required `sections` / `dishes` / `lines` array, and filled it by echoing the
+# prompt's own format illustration (a real dish, with a price and macros, ready
+# to log). These two fields are what make the escape hatch emittable; they are
+# mixed into all three OCR response schemas below.
+# ─────────────────────────────────────────────────────────────────────────────
+
+class UnreadableImageMixin(BaseModel):
+    """The 'I could not read this image' signal, declared so it can be emitted.
+
+    REQUIRED, and declared on the mixin so it sorts FIRST in the schema's
+    property_ordering. Both properties matter:
+
+    - Optional, the model simply omitted it and went straight to inventing
+      entries (measured: a blank 1400x1000 white page produced a full menu for
+      "The Coffee Club", a Cheesecake Factory receipt, and a buffet of roast
+      chicken — `unreadable` absent from all three responses).
+    - Required + first, constrained decoding forces the model to COMMIT to a
+      legibility verdict before it may open the entries array, which is the
+      only point at which "there is nothing here" is still a cheap answer.
+    """
+    unreadable: bool = Field(
+        ...,
+        description="Decide this FIRST, before emitting any entry. True when the image is blank, a solid colour, a single pixel, too low-resolution, out of focus beyond legibility, or is not the kind of image this analysis expects. When true, the entries array MUST be empty — never invent an entry to fill it. False only when you can actually READ the entries you are about to emit.",
+    )
+    unreadable_reason: Optional[str] = Field(
+        default=None,
+        description="≤10 words describing what you actually saw, when unreadable is true. Null otherwise.",
+    )
+
+
+class BuffetAnalysisResponse(UnreadableImageMixin):
     """Schema for buffet-mode multi-dish analysis — flat list of dishes."""
     analysis_type: str = Field(default="buffet", description="Always 'buffet'.")
     # Restaurant / venue name if visible on signage, station labels, or
@@ -613,7 +652,7 @@ class BuffetAnalysisResponse(BaseModel):
         default=None,
         description="Name of the restaurant / venue if visible anywhere in the image (signage, station labels, branding). Null if not visible.",
     )
-    dishes: List[MenuDishSchema] = Field(..., description="Every distinct dish visible in the buffet. Do not skip any.")
+    dishes: List[MenuDishSchema] = Field(..., description="Every distinct dish visible in the buffet. Do not skip any. EMPTY when unreadable is true.")
 
 
 class MenuSectionSchema(BaseModel):
@@ -641,7 +680,7 @@ class BillLineSchema(BaseModel):
     is_food: bool = Field(..., description="False for anything that is not eaten or drunk: subtotal, tax, tip, gratuity, service fee, delivery fee, small-order fee, promo/discount, rounding, bag fee, loyalty credit.")
 
 
-class BillAnalysisResponse(BaseModel):
+class BillAnalysisResponse(UnreadableImageMixin):
     """Schema for bill-mode analysis — a flat list of ordered line items."""
     analysis_type: str = Field(default="bill", description="Always 'bill'.")
     restaurant_name: Optional[str] = Field(
@@ -649,10 +688,10 @@ class BillAnalysisResponse(BaseModel):
         description="Restaurant / merchant name from the header of the check or the delivery order. Null if not visible.",
     )
     currency: Optional[str] = Field(default=None, description="Currency code inferred from the symbol (USD/EUR/INR/GBP). Null when no prices are visible.")
-    lines: List[BillLineSchema] = Field(..., description="Every line on the bill, in printed order, including the non-food ones (flagged is_food=false) so nothing is silently dropped.")
+    lines: List[BillLineSchema] = Field(..., description="Every line on the bill, in printed order, including the non-food ones (flagged is_food=false) so nothing is silently dropped. EMPTY when unreadable is true.")
 
 
-class MenuAnalysisResponse(BaseModel):
+class MenuAnalysisResponse(UnreadableImageMixin):
     """Schema for menu-mode analysis — sections containing dishes."""
     analysis_type: str = Field(default="menu", description="Always 'menu'.")
     # Restaurant name if visible anywhere on the menu image (header, logo,
@@ -661,7 +700,7 @@ class MenuAnalysisResponse(BaseModel):
         default=None,
         description="Name of the restaurant if visible anywhere on the menu image (header, logo, footer). Null if not visible.",
     )
-    sections: List[MenuSectionSchema] = Field(..., description="All sections of the menu; extract EVERY dish across ALL sections.")
+    sections: List[MenuSectionSchema] = Field(..., description="All sections of the menu; extract EVERY dish across ALL sections. EMPTY when unreadable is true.")
 
 
 # =============================================================================

@@ -83,6 +83,374 @@ def _get_nutrition_cache() -> Optional[str]:
 _OCR_MODES = {"menu", "buffet", "bill"}
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Prompt exemplars are PLACEHOLDER TOKENS, never realistic data
+#
+# Each OCR prompt ends with a JSON format illustration. Those illustrations used
+# to carry a real-looking restaurant name, dish name, printed description, price
+# and macro set for each of the three modes (see the retired-literal list in
+# tests/test_vision_unreadable_and_exemplars.py, which is the gate that keeps
+# them out). When the photo is blank, dark or
+# unreadable the model has nothing to read but a schema it MUST fill, and a
+# measurable fraction of the time it fills it by echoing the illustration — the
+# user saw a fully-formed dish with a price and macros that appears nowhere in
+# their photo, sitting in the checklist ready to log.
+#
+# A prompt sentence saying "do not copy the example" is probabilistic and was
+# demonstrably not enough. Self-identifying `<TOKEN>` placeholders are
+# deterministic: an echo is then obviously fake, and `_strip_exemplar_echoes`
+# drops it on the way out. The SAME constants are interpolated into the prompt
+# and consulted by the stripper, so the two can never drift apart.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_EX_RESTAURANT = "<RESTAURANT_NAME>"
+_EX_DISH = "<DISH_NAME>"
+_EX_DESCRIPTION = "<PRINTED_DESCRIPTION_VERBATIM>"
+_EX_INCLUDED = "<INCLUDED_CHOICES_LINE>"
+_EX_CURRENCY = "<CURRENCY_CODE>"
+_EX_ALLERGEN = "<ALLERGEN>"
+_EX_RATING_REASON = "<RATING_REASON>"
+_EX_TRIGGER = "<INFLAMMATION_TRIGGER>"
+_EX_COACH_TIP = "<COACH_TIP>"
+_EX_SERVING = "<SERVING_DESCRIPTION>"
+_EX_LINE_ITEM = "<LINE_ITEM_NAME>"
+_EX_NON_FOOD_LINE = "<NON_FOOD_LINE_NAME>"
+_EX_MODIFIER = "<MODIFIER>"
+
+# Every name-shaped placeholder, lowercased. An entry whose name is one of
+# these came from the illustration, not from the image.
+_EXEMPLAR_NAME_TOKENS = frozenset(
+    tok.lower()
+    for tok in (
+        _EX_RESTAURANT,
+        _EX_DISH,
+        _EX_LINE_ITEM,
+        _EX_NON_FOOD_LINE,
+        _EX_DESCRIPTION,
+        _EX_INCLUDED,
+    )
+)
+
+_MENU_EXEMPLAR_JSON = f"""{{
+    "analysis_type": "menu",
+    "restaurant_name": "{_EX_RESTAURANT}",
+    "sections": [
+        {{
+            "section_name": "mains",
+            "dishes": [
+                {{
+                    "name": "{_EX_DISH}",
+                    "description": "{_EX_DESCRIPTION}",
+                    "addon_group": null,
+                    "included_choices": "{_EX_INCLUDED}",
+                    "price": 0.00,
+                    "currency": "{_EX_CURRENCY}",
+                    "calories": 0,
+                    "protein_g": 0.0,
+                    "carbs_g": 0.0,
+                    "fat_g": 0.0,
+                    "weight_g": 0,
+                    "detected_allergens": ["{_EX_ALLERGEN}"],
+                    "rating": "green",
+                    "rating_reason": "{_EX_RATING_REASON}",
+                    "inflammation_score": 0,
+                    "inflammation_triggers": ["{_EX_TRIGGER}"],
+                    "glycemic_load": 0,
+                    "fodmap_rating": "low",
+                    "fodmap_reason": null,
+                    "added_sugar_g": 0.0,
+                    "is_ultra_processed": false,
+                    "coach_tip": "{_EX_COACH_TIP}"
+                }}
+            ]
+        }}
+    ]
+}}"""
+
+_BUFFET_EXEMPLAR_JSON = f"""{{
+    "analysis_type": "buffet",
+    "restaurant_name": "{_EX_RESTAURANT}",
+    "dishes": [
+        {{
+            "name": "{_EX_DISH}",
+            "calories": 0,
+            "protein_g": 0.0,
+            "carbs_g": 0.0,
+            "fat_g": 0.0,
+            "weight_g": 0,
+            "serving_description": "{_EX_SERVING}",
+            "detected_allergens": ["{_EX_ALLERGEN}"],
+            "rating": "green",
+            "rating_reason": "{_EX_RATING_REASON}",
+            "inflammation_score": 0,
+            "inflammation_triggers": ["{_EX_TRIGGER}"],
+            "glycemic_load": 0,
+            "fodmap_rating": "low",
+            "fodmap_reason": null,
+            "added_sugar_g": 0.0,
+            "is_ultra_processed": false,
+            "coach_tip": "{_EX_COACH_TIP}"
+        }}
+    ]
+}}"""
+
+_BILL_EXEMPLAR_JSON = f"""{{
+    "analysis_type": "bill",
+    "restaurant_name": "{_EX_RESTAURANT}",
+    "currency": "{_EX_CURRENCY}",
+    "lines": [
+        {{
+            "name": "{_EX_LINE_ITEM}",
+            "qty": 1,
+            "unit_price": 0.0,
+            "price": 0.0,
+            "modifiers": ["{_EX_MODIFIER}"],
+            "is_food": true
+        }},
+        {{
+            "name": "{_EX_NON_FOOD_LINE}",
+            "qty": 1,
+            "unit_price": null,
+            "price": 0.0,
+            "modifiers": null,
+            "is_food": false
+        }}
+    ]
+}}"""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unreadable-image escape hatch (menu / buffet / bill)
+#
+# The CONTENT CHECK is the model's only honest way out of a required entries
+# array. It is emittable ONLY because `unreadable` / `unreadable_reason` are
+# declared on the bound response schemas (models/gemini_schemas.py,
+# UnreadableImageMixin) — without that declaration constrained decoding forbids
+# the very keys the instruction demands, which is exactly how the fabricated
+# dish shipped.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_UNREADABLE_SUBJECT = {
+    "menu": "a food menu",
+    "buffet": "a buffet / food spread",
+    "bill": "an itemized restaurant check or delivery order",
+}
+
+_UNREADABLE_ENTRIES_KEY = {"menu": "sections", "buffet": "dishes", "bill": "lines"}
+
+
+def build_unreadable_result(analysis_mode: str, reason: str) -> dict:
+    """The canonical empty-but-honest result for an image we cannot read.
+
+    One builder for every producer (model-declared, dimension floor, echo
+    stripper) so every consumer only has to recognise one shape.
+    """
+    result: dict = {
+        "analysis_type": analysis_mode,
+        "unreadable": True,
+        "unreadable_reason": reason,
+    }
+    if analysis_mode == "plate":
+        result["food_items"] = []
+        return result
+    result["restaurant_name"] = None
+    if analysis_mode == "bill":
+        result["currency"] = None
+    result[_UNREADABLE_ENTRIES_KEY.get(analysis_mode, "sections")] = []
+    return result
+
+
+def _ocr_content_check_block(analysis_mode: str) -> str:
+    """CONTENT CHECK + anti-echo ban, identical across all three OCR prompts.
+
+    Lives in one place so the menu branch can never be hardened while the bill
+    and buffet branches quietly keep fabricating (which is what happened).
+    """
+    subject = _UNREADABLE_SUBJECT.get(analysis_mode, "the expected image")
+    empty = json.dumps(
+        build_unreadable_result(analysis_mode, "<=10 words: what you actually saw"),
+        separators=(", ", ": "),
+    )
+    return f"""
+CONTENT CHECK — DO THIS FIRST, BEFORE ANYTHING ELSE:
+Look at the image. If it is blank, a solid colour, a single pixel, too
+low-resolution to read, out of focus beyond legibility, or is simply not
+{subject}, then return EXACTLY:
+{empty}
+Return that and STOP. Do not continue to the schema below.
+
+NEVER invent, guess, or infer an entry you cannot actually READ in the image.
+NEVER copy a name, price, calorie figure or description from the example below:
+every value in it is a PLACEHOLDER TOKEN in <ANGLE_BRACKETS> or a zero, never
+data. Every value you emit must come from the image in front of you. Returning
+zero entries is correct and expected when the image is unreadable; inventing
+one is a serious error.
+"""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Subject gate — "is the thing I am about to extract actually in this photo?"
+#
+# Measured, not assumed. On a blank 1400x1000 page the extraction call invents
+# a whole restaurant (menu: "The Coffee Club"; bill: "The Cheesecake Factory";
+# buffet: roast chicken) and the in-schema `unreadable` verdict flips run to
+# run — a prompt cannot close this. The existing recall-gate count call is no
+# help either: asked how many dishes a BLANK page holds it answered "12", twice,
+# which then drove the split-and-retry path into two MORE chances to fabricate.
+#
+# A yes/no question with no array to fill is a different task, and it is stable:
+# 18/18 correct across blank / black / gradient / noise / printed-text samples.
+# So the gate is its own tiny call (≈1 output token, default media resolution),
+# fired CONCURRENTLY with the extraction so it costs no latency, and its NO
+# overrides whatever the extraction invented.
+# ─────────────────────────────────────────────────────────────────────────────
+
+_SUBJECT_GATE_SUBJECT = {
+    "menu": "printed menu text — dish names or prices — that you can actually READ",
+    "bill": "printed receipt / check lines that you can actually READ",
+    "buffet": "actual food or drink",
+    "plate": "actual food or drink",
+}
+
+
+_SUBJECT_GATE_MISSING = {
+    "menu": "no readable menu text in the photo",
+    "bill": "no readable receipt lines in the photo",
+    "buffet": "no food visible in the photo",
+    "plate": "no food visible in the photo",
+}
+
+
+def _subject_gate_missing_reason(analysis_mode: str) -> str:
+    return _SUBJECT_GATE_MISSING.get(analysis_mode, _SUBJECT_GATE_MISSING["plate"])
+
+
+def _subject_gate_prompt(analysis_mode: str) -> str:
+    subject = _SUBJECT_GATE_SUBJECT.get(analysis_mode, _SUBJECT_GATE_SUBJECT["plate"])
+    return (
+        f"Do these images contain {subject}? Answer with one word: YES or NO.\n"
+        "Answer NO only when there is nothing to work with at all — the image is "
+        "blank, a solid colour, empty, pure noise, or shows nothing of the kind "
+        "described. If you can make anything out at all, even partly or dimly, "
+        "answer YES."
+    )
+
+
+def _is_exemplar_echo(name) -> bool:
+    """True when this entry name came from the prompt illustration, not the image.
+
+    Deterministic, not a heuristic: a real dish is never named `<SOMETHING>`,
+    and an entry with no name at all cannot be logged.
+    """
+    normalized = " ".join(str(name or "").split()).lower()
+    if not normalized:
+        return True
+    if normalized in _EXEMPLAR_NAME_TOKENS:
+        return True
+    return normalized.startswith("<") and normalized.endswith(">")
+
+
+def _entry_count(result: dict, analysis_mode: str) -> int:
+    """How many entries this OCR result actually carries, per mode shape."""
+    if analysis_mode == "bill":
+        return len(result.get("lines") or [])
+    if analysis_mode == "buffet":
+        return len(result.get("dishes") or [])
+    return sum(
+        len(section.get("dishes") or [])
+        for section in (result.get("sections") or [])
+        if isinstance(section, dict)
+    )
+
+
+def _strip_exemplar_echoes(result: dict, analysis_mode: str) -> int:
+    """Drop every entry the model copied from the format illustration.
+
+    Returns how many entries were removed. Belt to the placeholder braces:
+    prompts are probabilistic, this is not.
+    """
+    removed = 0
+    if _is_exemplar_echo(result.get("restaurant_name")) and result.get("restaurant_name"):
+        result["restaurant_name"] = None
+
+    if analysis_mode == "bill":
+        lines = [ln for ln in (result.get("lines") or []) if isinstance(ln, dict)]
+        kept = [ln for ln in lines if not _is_exemplar_echo(ln.get("name"))]
+        removed = len(lines) - len(kept)
+        result["lines"] = kept
+    elif analysis_mode == "buffet":
+        dishes = [d for d in (result.get("dishes") or []) if isinstance(d, dict)]
+        kept = [d for d in dishes if not _is_exemplar_echo(d.get("name"))]
+        removed = len(dishes) - len(kept)
+        result["dishes"] = kept
+    elif analysis_mode == "menu":
+        sections = []
+        for section in (result.get("sections") or []):
+            if not isinstance(section, dict):
+                continue
+            dishes = [d for d in (section.get("dishes") or []) if isinstance(d, dict)]
+            kept = [d for d in dishes if not _is_exemplar_echo(d.get("name"))]
+            removed += len(dishes) - len(kept)
+            section["dishes"] = kept
+            if kept:
+                sections.append(section)
+        result["sections"] = sections
+
+    if removed:
+        logger.warning(
+            f"[vision:exemplar_echo] mode={analysis_mode} dropped {removed} "
+            f"entr{'y' if removed == 1 else 'ies'} copied from the prompt illustration"
+        )
+    return removed
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Degenerate-image floor (server-side)
+#
+# A 631-byte 1x1 JPEG was proved to sail through the API's content-type + 10MB
+# checks and run a full Gemini analysis, which then invented a dish. The client
+# now uploads at full resolution, but the client is not a security boundary:
+# every binary already on a user's device, every retry of an older build and
+# every non-app caller still reaches this code. So the floor lives here, next
+# to the analysis, and is re-asserted at the HTTP boundary.
+#
+# 640px matches the floor the app's own picker enforces before it will upload a
+# menu page (media_picker_helper.dart). Below it, printed menu text is gone at
+# any tokenization resolution. 64px is the universal floor: below that an image
+# cannot carry identifiable food at all, whatever the mode.
+# ─────────────────────────────────────────────────────────────────────────────
+
+MIN_IMAGE_DIMENSION_PX = 64
+MIN_OCR_IMAGE_DIMENSION_PX = 640
+
+
+def min_dimension_for_mode(analysis_mode: str) -> int:
+    """Shortest-edge floor in pixels for this analysis mode."""
+    return (
+        MIN_OCR_IMAGE_DIMENSION_PX
+        if analysis_mode in _OCR_MODES
+        else MIN_IMAGE_DIMENSION_PX
+    )
+
+
+def degenerate_image_reason(data: bytes, analysis_mode: str) -> Optional[str]:
+    """Why this image is too small to analyze, or None when it is usable.
+
+    Returns None when the dimensions cannot be parsed (e.g. HEIC) — this is a
+    floor, not a whitelist; it must never reject an image it did not measure.
+    """
+    dims = _image_dimensions(data)
+    if not dims:
+        return None
+    width, height = dims
+    if width <= 0 or height <= 0:
+        return f"image reports a {width}x{height} frame"
+    floor = min_dimension_for_mode(analysis_mode)
+    if min(width, height) < floor:
+        return f"image is {width}x{height}, below the {floor}px minimum"
+    return None
+
+
 def _media_resolution_for(analysis_mode: str) -> Optional[types.PartMediaResolutionLevel]:
     """ULTRA_HIGH for text-dense modes, None (model default) otherwise."""
     if analysis_mode in _OCR_MODES:
@@ -785,7 +1153,7 @@ For each item:
 - section: 'Appetizers' | 'Mains' | 'Entrees' | 'Desserts' | 'Drinks' | 'Sides' | 'Sauces' | 'Enhancements' | 'Soups' | 'Salads' | 'Breakfast' | 'Brunch' | 'Lunch' | 'Dinner' | null
 - description: the printed description under the dish name, copied VERBATIM and trimmed to 160 characters. NULL when the menu prints no description for that dish. Never invent one.
 - addon_group: 'sauce' | 'side' | 'topping' | 'enhancement' | 'upgrade' when the item is an add-on rather than a standalone dish (it sits under a SAUCES / SIDES / ENHANCEMENTS / EXTRAS / ADD-ONS / TOPPINGS heading, or is an "Add X" line). NULL for standalone dishes.
-- included_choices: when a heading says the dishes below it come with choices (e.g. "Served with choice of one (1) Side and one (1) Sauce"), copy that line VERBATIM onto every dish in that block. NULL otherwise.
+- included_choices: when a heading says the dishes below it come with choices (e.g. a line offering a choice of sides or sauces), copy that heading line VERBATIM onto every dish in that block. NULL otherwise.
 
 CRITICAL:
 - Do NOT include prices.
@@ -1441,6 +1809,21 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
         """
         data = await self._download_image_from_s3(s3_key)
 
+        # Too small to read anything printed on it — refuse before spending
+        # either Gemini call. The count call is the more dangerous of the two
+        # here: on a blank page it happily answers with a hallucinated integer,
+        # which then drives the recall gate into splitting and re-running the
+        # page, giving the model two MORE chances to fill a required array.
+        degenerate = degenerate_image_reason(data, analysis_mode)
+        if degenerate:
+            logger.warning(
+                f"[vision:degenerate] mode={analysis_mode} page rejected: {degenerate}"
+            )
+            return (
+                build_unreadable_result(analysis_mode, degenerate),
+                {"expected": None, "extracted": 0, "retried": False, "unreadable": True},
+            )
+
         # Count and extract concurrently — the count is only used afterwards,
         # so making the user wait for it serially would be pure latency.
         count_task = asyncio.create_task(
@@ -1457,6 +1840,21 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
             image_bytes_override=[data],
         )
         expected = await count_task
+
+        # An unreadable page must NOT enter the recall gate: `expected` there
+        # is whatever number the model guessed off a blank page, and a short
+        # extraction would split the page and re-run it twice more.
+        if result.get("unreadable") is True:
+            logger.warning(
+                f"[vision:unreadable] mode={analysis_mode} page unreadable "
+                f"({result.get('unreadable_reason')}); recall gate skipped"
+            )
+            return result, {
+                "expected": expected,
+                "extracted": 0,
+                "retried": False,
+                "unreadable": True,
+            }
 
         def _extracted(res: dict) -> int:
             if analysis_mode == "bill":
@@ -1566,6 +1964,43 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
             logger.warning(f"[vision:recall_gate] count call failed: {exc}")
             return None
 
+    async def _subject_present(
+        self,
+        image_data_list: List[bytes],
+        mime_types: List[str],
+        analysis_mode: str,
+    ) -> Optional[bool]:
+        """Is the thing we are about to extract actually in these photos?
+
+        Returns True / False, or None when the model gave no usable answer —
+        the caller then proceeds, because a broken gate must never block a
+        legitimate scan. Sent at DEFAULT media resolution: deciding "is there
+        anything here" needs no fine detail, and this call runs on every scan.
+        """
+        try:
+            response = await gemini_generate_with_retry(
+                model=self.model,
+                contents=[_subject_gate_prompt(analysis_mode)] + _build_image_parts(
+                    image_data_list, mime_types, "plate"
+                ),
+                config=types.GenerateContentConfig(
+                    temperature=0.0,
+                    max_output_tokens=5,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
+                ),
+                method_name="vision_subject_gate",
+            )
+            answer = (response.text or "").strip().upper()
+            if answer.startswith("NO"):
+                return False
+            if answer.startswith("YES"):
+                return True
+            logger.warning(f"[vision:subject_gate] unusable answer {answer!r}")
+            return None
+        except Exception as exc:  # noqa: BLE001 — never block a scan on the gate
+            logger.warning(f"[vision:subject_gate] call failed: {exc}")
+            return None
+
     async def _classify_food_images(self, image_parts: list) -> str:
         """Quick classification: plate, buffet, or menu."""
         classify_prompt = (
@@ -1634,6 +2069,30 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
                 download_tasks = [self._download_image_from_s3(key) for key in s3_keys]
                 image_data_list = await asyncio.gather(*download_tasks)
 
+            # Step 1b: Degenerate-image floor. A 1x1 / thumbnail-sized frame
+            # carries no food and no legible text, but the model still has a
+            # required entries array to fill — that is how a blank scan came
+            # back as a priced dish. Refuse BEFORE spending a Gemini call, and
+            # before the classifier, which cannot classify a blank pixel either.
+            def _floor_check(mode: str) -> Optional[str]:
+                for data in image_data_list:
+                    why = degenerate_image_reason(data, mode)
+                    if why:
+                        return why
+                return None
+
+            degenerate = _floor_check(
+                analysis_mode if analysis_mode != "auto" else "plate"
+            )
+            if degenerate:
+                logger.warning(
+                    f"[vision:degenerate] mode={analysis_mode} rejected before "
+                    f"analysis: {degenerate}"
+                )
+                return build_unreadable_result(
+                    analysis_mode if analysis_mode != "auto" else "plate", degenerate
+                )
+
             # Step 2: Create Gemini Parts for each image. The classifier only
             # needs to tell a plate from a menu, so it runs at the default
             # resolution; the real extraction call re-builds the parts below
@@ -1650,6 +2109,16 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
                     image_parts = _build_image_parts(
                         image_data_list, mime_types, analysis_mode
                     )
+                    # OCR modes carry a much higher floor than plate: printed
+                    # menu text is unreadable below it at any tokenization
+                    # resolution. Re-check now that the mode is known.
+                    degenerate = _floor_check(analysis_mode)
+                    if degenerate:
+                        logger.warning(
+                            f"[vision:degenerate] auto-classified {analysis_mode} "
+                            f"rejected before analysis: {degenerate}"
+                        )
+                        return build_unreadable_result(analysis_mode, degenerate)
 
             _log_image_parts(image_data_list, mime_types, analysis_mode, len(s3_keys))
 
@@ -1714,7 +2183,8 @@ Return JSON: {{"analysis_type": "buffet", "dishes": [ ... ]}}"""
                 instruction_block = instruction_block + standing_rules_block
 
             if analysis_mode == "buffet":
-                prompt = f"""Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not skip any.
+                prompt = f"""{_ocr_content_check_block("buffet")}
+Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not skip any.
 
 CRITICAL RULES:
 1. Derive calories from realistic portion weight (weight_g × kcal/g) and report your BEST estimate. Do NOT force numbers to be artificially precise or artificially round — the same dish must produce the same figure every time, so estimate from the food itself.
@@ -1737,36 +2207,13 @@ REQUIRED per dish (NEVER omit any field below):
 RESTAURANT NAME: If the restaurant / venue name is visible anywhere in the image (signage, station labels, branding), extract it into a top-level "restaurant_name" string. Set "restaurant_name" to null if no name is visible.
 {nutrition_ctx_str}{user_ctx_str}{instruction_block}
 
-Return ONLY this JSON, no other keys:
-{{
-    "analysis_type": "buffet",
-    "restaurant_name": "Spice Garden Buffet",
-    "dishes": [
-        {{
-            "name": "Chicken Biryani",
-            "calories": 538,
-            "protein_g": 28.4,
-            "carbs_g": 62.1,
-            "fat_g": 19.3,
-            "weight_g": 240,
-            "serving_description": "1 cup, heaping",
-            "detected_allergens": ["milk"],
-            "rating": "yellow",
-            "rating_reason": "balanced, watch the ghee",
-            "inflammation_score": 4,
-            "inflammation_triggers": ["saturated_fat", "refined_flour"],
-            "glycemic_load": 18,
-            "fodmap_rating": "medium",
-            "fodmap_reason": "contains onion, garlic",
-            "added_sugar_g": 0.0,
-            "is_ultra_processed": false,
-            "coach_tip": "Decent option; take half portion + extra protein."
-        }}
-    ]
-}}"""
+Return ONLY this JSON shape, no other keys (values below are PLACEHOLDERS
+showing the format — never echo them):
+{_BUFFET_EXEMPLAR_JSON}"""
 
             elif analysis_mode == "menu":
-                prompt = f"""Analyze this restaurant menu. OCR extract EVERY dish across ALL sections — do not skip any, do not truncate.
+                prompt = f"""{_ocr_content_check_block("menu")}
+Analyze this restaurant menu. OCR extract EVERY dish across ALL sections — do not skip any, do not truncate.
 {source_hint_block}
 COMPLETENESS CONTRACT (read first):
 0. Before producing JSON, COUNT the dishes visible across ALL sections (including descriptions in small print). The final response MUST contain that exact count of dish entries. If you can't fit them all, shorten coach_tip / rating_reason first — never drop a dish and never drop a printed description.
@@ -1781,7 +2228,7 @@ CRITICAL RULES:
 5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from the dish name AND its printed description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
 6. DESCRIPTION — copy the description printed under each dish VERBATIM into "description", trimmed to 160 characters (e.g. "Maple-lacquered Pork Belly, Smoked Cheese Grits, Perfect Egg"). Use null when that dish has no printed description. NEVER invent, paraphrase or generate one.
 7. ADD-ONS — set "addon_group" ("sauce" | "side" | "topping" | "enhancement" | "upgrade") on any item that is an accompaniment rather than a standalone dish: everything under a SAUCES / SIDES / ENHANCEMENTS / EXTRAS / ADD-ONS / TOPPINGS heading, and any "Add …" line. Standalone dishes get null.
-8. INCLUDED CHOICES — when a heading states what comes with the dishes below it ("Served with choice of one (1) Side and one (1) Sauce"), copy that line VERBATIM into "included_choices" on EVERY dish in that block. null elsewhere.
+8. INCLUDED CHOICES — when a heading states what comes with the dishes below it (a line offering a choice of sides / sauces / accompaniments), copy that heading line VERBATIM into "included_choices" on EVERY dish in that block. null elsewhere.
 
 REQUIRED per dish (NEVER omit any field below):
 - rating ("green" | "yellow" | "red") + rating_reason (≤ 8 words).
@@ -1796,97 +2243,30 @@ REQUIRED per dish (NEVER omit any field below):
 
 RESTAURANT NAME: If the restaurant's name is visible anywhere on the menu image (header, logo, footer), extract it into a top-level "restaurant_name" string. Set "restaurant_name" to null if no name is visible.
 
-CONTENT CHECK — DO THIS FIRST, BEFORE ANYTHING ELSE:
-Look at the image. If it is blank, a solid colour, a single pixel, too
-low-resolution to read, out of focus beyond legibility, or is simply not a
-food menu, then return EXACTLY:
-{{"analysis_type": "menu", "restaurant_name": null, "sections": [], "unreadable": true, "unreadable_reason": "<≤10 words: what you actually saw>"}}
-Return that and STOP. Do not continue to the schema below.
-
-NEVER invent, guess, or infer a dish that you cannot actually READ in the
-image. NEVER copy any dish name, price, calorie figure or description from the
-example below — it is a FORMAT ILLUSTRATION ONLY, using placeholder tokens.
-Every value you emit must come from the image in front of you. Returning zero
-dishes is correct and expected when the image is unreadable; inventing one is
-a serious error.
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON shape, no other keys (values below are PLACEHOLDERS
 showing the format — never echo them):
-{{
-    "analysis_type": "menu",
-    "restaurant_name": "Tandoor House",
-    "sections": [
-        {{
-            "section_name": "mains",
-            "dishes": [
-                {{
-                    "name": "Tandoori Chicken Half",
-                    "description": "Yogurt-marinated, clay-oven roasted, served with mint chutney",
-                    "addon_group": null,
-                    "included_choices": "Served with choice of one (1) Side",
-                    "price": 14.95,
-                    "currency": "USD",
-                    "calories": 487,
-                    "protein_g": 48.3,
-                    "carbs_g": 6.2,
-                    "fat_g": 28.7,
-                    "weight_g": 220,
-                    "detected_allergens": ["milk"],
-                    "rating": "green",
-                    "rating_reason": "high protein, moderate fat",
-                    "inflammation_score": 2,
-                    "inflammation_triggers": ["turmeric", "whole_grains"],
-                    "glycemic_load": 4,
-                    "fodmap_rating": "low",
-                    "fodmap_reason": null,
-                    "added_sugar_g": 0.0,
-                    "is_ultra_processed": false,
-                    "coach_tip": "Hits your protein target; skip the naan if possible."
-                }}
-            ]
-        }}
-    ]
-}}"""
+{_MENU_EXEMPLAR_JSON}"""
 
             elif analysis_mode == "bill":
-                prompt = f"""Read this itemized restaurant check / delivery order and list EVERY line exactly as printed, in order.
+                prompt = f"""{_ocr_content_check_block("bill")}
+Read this itemized restaurant check / delivery order and list EVERY line exactly as printed, in order.
 {source_hint_block}
 This is a BILL, not a menu — it records what was actually ordered. Do NOT estimate nutrition here.
 
 RULES:
 1. EVERY line on the receipt gets an entry, including the non-food ones. Flag those with is_food=false: subtotal, tax, tip, gratuity, service fee, delivery fee, small-order fee, promo/discount, rounding, bag fee, loyalty credit, "amount due", card footer. Never silently drop a line — the user needs to see nothing was missed.
 2. QUANTITY — "2 x Filet", "x2", "(2)" or a leading "2" means qty=2. Default qty=1. Keep the price EXACTLY as printed (that is the line total, not the unit price) and put the per-item price in unit_price only when the bill prints it separately.
-3. ABBREVIATIONS — receipts truncate. Expand to the real dish name: "CTR CUT FILET" -> "Center Cut Filet", "MAC N CHS" -> "Macaroni & Cheese", "SD CAESAR" -> "Side Caesar Salad", "BEV" -> the drink named. Keep the size/cut wording ("10-oz New York Strip"). If a line is genuinely unreadable, keep it verbatim rather than guessing a dish.
-4. MODIFIERS — indented sub-lines, "+" lines and "ADD/SUB/EXTRA/NO" lines belong to the item ABOVE them. Put them in that item's "modifiers" array, NOT as their own line item ("Add Avocado", "Sub sweet potato fries", "Extra Béarnaise", "No onions").
+3. ABBREVIATIONS — receipts truncate. Expand to the real dish name: "CTR CUT FILET" -> "Center Cut Filet", "MAC N CHS" -> "Macaroni & Cheese", "SD CAESAR" -> "Side Caesar Salad", "BEV" -> the drink named. Keep whatever size / cut / weight wording is printed on that line. If a line is genuinely unreadable, keep it verbatim rather than guessing a dish.
+4. MODIFIERS — indented sub-lines, "+" lines and "ADD/SUB/EXTRA/NO" lines belong to the item ABOVE them. Put them in that item's "modifiers" array, NOT as their own line item ("Add Avocado", "Sub sweet potato fries", "Extra sauce", "No onions").
 5. A single check often covers several people. Do not merge or de-duplicate identical lines — two people ordering the same steak is two lines (or one line with qty=2, exactly as the bill shows it).
 6. RESTAURANT NAME from the header; currency from the symbol.
 {user_ctx_str}
 
-Return ONLY this JSON, no other keys:
-{{
-    "analysis_type": "bill",
-    "restaurant_name": "Steakhouse 71",
-    "currency": "USD",
-    "lines": [
-        {{
-            "name": "10-oz New York Strip",
-            "qty": 2,
-            "unit_price": 38.0,
-            "price": 76.0,
-            "modifiers": ["Béarnaise", "Mashed Potatoes"],
-            "is_food": true
-        }},
-        {{
-            "name": "Sales Tax",
-            "qty": 1,
-            "unit_price": null,
-            "price": 7.24,
-            "modifiers": null,
-            "is_food": false
-        }}
-    ]
-}}"""
+Return ONLY this JSON shape, no other keys (values below are PLACEHOLDERS
+showing the format — never echo them):
+{_BILL_EXEMPLAR_JSON}"""
 
             else:
                 # plate mode (default)
@@ -2040,12 +2420,28 @@ Guidelines:
                 f"cache={'yes' if cache_name else 'no'}, max_tokens={max_tokens}"
             )
 
-            response = await gemini_generate_with_retry(
-                model=self.model,
-                contents=[prompt] + image_parts,
-                config=gen_config,
-                method_name="vision_analyze_food_s3",
+            # The subject gate runs CONCURRENTLY with the extraction, so it
+            # costs latency only when it fires. Its NO is authoritative: the
+            # extraction call has a required entries array and will fill it
+            # from imagination rather than return empty (measured on a blank
+            # page: a whole invented restaurant, in all three OCR modes).
+            subject_present, response = await asyncio.gather(
+                self._subject_present(image_data_list, mime_types, analysis_mode),
+                gemini_generate_with_retry(
+                    model=self.model,
+                    contents=[prompt] + image_parts,
+                    config=gen_config,
+                    method_name="vision_analyze_food_s3",
+                ),
             )
+            if subject_present is False:
+                logger.warning(
+                    f"[vision:subject_gate] mode={analysis_mode} NO — discarding "
+                    f"extraction, nothing in the photo to read"
+                )
+                return build_unreadable_result(
+                    analysis_mode, _subject_gate_missing_reason(analysis_mode)
+                )
 
             content = response.text.strip()
             logger.info(f"Multi-image food analysis response received ({len(content)} chars)")
@@ -2072,6 +2468,29 @@ Guidelines:
                         raise parse_err
                 else:
                     raise parse_err
+
+            # The model said it could not read the image. This is now an
+            # emittable answer (UnreadableImageMixin is declared on the bound
+            # response schema), so honour it verbatim instead of letting the
+            # empty-but-required entries array flow on as a "successful" scan.
+            if analysis_mode in _OCR_MODES:
+                if result.get("unreadable") is True:
+                    reason = result.get("unreadable_reason") or "model could not read the image"
+                    logger.warning(
+                        f"[vision:unreadable] mode={analysis_mode} model reported: {reason}"
+                    )
+                    return build_unreadable_result(analysis_mode, str(reason))
+
+                # Deterministic backstop to the placeholder tokens: anything
+                # named after the prompt's own illustration is an echo, not a
+                # reading of the image. If that was ALL we got, the image was
+                # unreadable and saying so beats returning a silent zero.
+                dropped = _strip_exemplar_echoes(result, analysis_mode)
+                if dropped and not _entry_count(result, analysis_mode):
+                    return build_unreadable_result(
+                        analysis_mode,
+                        "only the prompt's format example came back — nothing readable",
+                    )
 
             # Normalize plate mode results for compatibility
             if analysis_mode == "plate":

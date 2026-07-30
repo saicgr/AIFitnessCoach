@@ -55,6 +55,40 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Degenerate-upload floor
+#
+# Content-type + a 10MB ceiling were the ONLY checks these endpoints ran, so a
+# 631-byte 1x1 JPEG was accepted and ran a full Gemini analysis — which then
+# invented a dish, with a price and macros, ready to log. The client now
+# uploads menu pages at full resolution, but the client is not a security
+# boundary: every binary already on a user's device, and every non-app caller,
+# still reaches this endpoint. The floor itself lives beside the analysis in
+# services/vision_service.degenerate_image_reason (so nothing can route around
+# it); this re-asserts it at the HTTP edge, where rejecting is free — no S3
+# write, no Gemini spend, and a 400 the user can act on.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _reject_degenerate_images(
+    payloads: List[Tuple[bytes, str]], analysis_mode: str
+) -> None:
+    """400 on any uploaded image too small to carry a readable subject."""
+    from services.vision_service import degenerate_image_reason
+
+    for idx, (data, _mime) in enumerate(payloads):
+        why = degenerate_image_reason(data, analysis_mode)
+        if why:
+            label = f"Photo {idx + 1}" if len(payloads) > 1 else "That photo"
+            logger.warning(
+                f"[upload:degenerate] mode={analysis_mode} image {idx + 1}/"
+                f"{len(payloads)} rejected: {why}"
+            )
+            raise HTTPException(
+                status_code=400,
+                detail=f"{label} came through too small to read ({why}). Please retake it.",
+            )
+
+
 def _build_remembered_message(food_items: list) -> Optional[str]:
     """L3 — derive the meal-level "Zealova remembered…" affirmation.
 
@@ -702,6 +736,7 @@ async def log_food_from_image_streaming(
     if len(image_bytes) > MAX_IMAGE_SIZE:
         raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
     content_type = image.content_type or 'image/jpeg'
+    _reject_degenerate_images([(image_bytes, content_type)], "plate")
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = time.time()
@@ -1049,6 +1084,7 @@ async def analyze_food_from_image_streaming(
     if len(image_bytes) > MAX_IMAGE_SIZE:
         raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
     content_type = image.content_type or 'image/jpeg'
+    _reject_degenerate_images([(image_bytes, content_type)], "plate")
     image_size_kb = len(image_bytes) // 1024
 
     # Read original if provided (used for S3 archive). Falls back to the thumb
@@ -1820,6 +1856,14 @@ async def log_food_from_multi_image_streaming(
             raise HTTPException(status_code=400, detail=f"Image too large (max {MAX_IMAGE_SIZE // (1024*1024)}MB)")
         image_payloads.append((data, img.content_type or 'image/jpeg'))
 
+    # Floor is mode-aware: a menu page has printed text to read, a plate does
+    # not. "auto" is measured at the plate floor because the mode isn't decided
+    # until the classifier runs; vision_service re-checks at the OCR floor if
+    # auto classifies INTO menu/buffet.
+    _reject_degenerate_images(
+        image_payloads, analysis_mode if analysis_mode != "auto" else "plate"
+    )
+
     normalized_input_type = (input_type or '').strip().lower() or 'image'
 
     async def generate_sse() -> AsyncGenerator[str, None]:
@@ -1914,6 +1958,12 @@ async def log_food_from_multi_image_streaming(
 
                 all_items: List[dict] = []
                 successful_pages = 0
+                # Pages the model (or the dimension floor) said were not
+                # readable. Counted separately from failures so `done` can tell
+                # "nothing was legible" from "the call broke" — and so an
+                # unreadable page can never masquerade as a successful one with
+                # zero dishes.
+                unreadable_pages = 0
                 # First non-null restaurant name seen across all menu pages.
                 # Stays None if no page surfaced a name (emitted as null below).
                 restaurant_name: Optional[str] = None
@@ -1979,6 +2029,37 @@ async def log_food_from_multi_image_streaming(
                 for _fut in asyncio.as_completed(_page_tasks):
                     try:
                         page_num, idx, per_image_result, page_items, recall = await _fut
+                        # The image was blank / illegible / not a menu. The
+                        # model can finally SAY so (UnreadableImageMixin is
+                        # declared on the bound response schema), so surface it
+                        # as an error the user can act on instead of streaming
+                        # an empty page that reads as "this menu had nothing".
+                        if per_image_result.get("unreadable") is True:
+                            unreadable_pages += 1
+                            reason = (
+                                per_image_result.get("unreadable_reason")
+                                or "nothing readable in the photo"
+                            )
+                            logger.warning(
+                                f"[STREAM multi] page {page_num}/{n} unreadable: {reason}"
+                            )
+                            yield (
+                                "event: page_error\ndata: "
+                                + json.dumps({
+                                    "type": "page_error",
+                                    "page": page_num,
+                                    "total_pages": n,
+                                    "error": "unreadable",
+                                    "unreadable": True,
+                                    "reason": reason,
+                                    "message": (
+                                        f"We couldn't read {scan_noun} {page_num} "
+                                        f"({reason}). Retake it and scan again."
+                                    ),
+                                })
+                                + "\n\n"
+                            )
+                            continue
                         _page_items_by_num[page_num] = page_items
                         successful_pages += 1
                         page_rn = per_image_result.get("restaurant_name")
@@ -2054,6 +2135,7 @@ async def log_food_from_multi_image_streaming(
                     # First non-null restaurant name across pages, else null.
                     "restaurant_name": restaurant_name,
                     "successful_pages": successful_pages,
+                    "unreadable_pages": unreadable_pages,
                     "total_pages": n,
                     "image_urls": image_urls,
                     "menu_photo_urls": image_urls,  # alias for client readability
@@ -2082,6 +2164,20 @@ async def log_food_from_multi_image_streaming(
 
             if not analysis_result:
                 yield send_error("Could not analyze the images. Please try a clearer photo.")
+                return
+
+            # Blank / illegible / not-food input. Say so — never fall through
+            # into the plate branch, which would derive a 0-calorie meal from
+            # an empty food_items list and offer it for logging.
+            if analysis_result.get("unreadable") is True:
+                reason = (
+                    analysis_result.get("unreadable_reason")
+                    or "nothing readable in the photo"
+                )
+                logger.warning(f"[STREAM multi] unreadable input: {reason}")
+                yield send_error(
+                    f"We couldn't read that photo ({reason}). Please retake it."
+                )
                 return
 
             actual_mode = analysis_result.get("analysis_type", analysis_mode)
