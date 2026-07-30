@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
+import 'seeded_scheme.dart';
 
 /// App theme configuration - Dark OLED optimized
 class AppTheme {
@@ -8,15 +9,32 @@ class AppTheme {
 
   static ThemeData buildDarkTheme(Color primary) {
     final onPrimary = primary.computeLuminance() > 0.4 ? Colors.black : Colors.white;
+    // Every colour ROLE is seeded from the single accent (register row 15).
+    //
+    // This used to be `ColorScheme.dark(primary: primary, secondary:
+    // AppColors.purple, …)`, which left two independent accents live at once:
+    // `colorScheme.primary` followed the user's accent while
+    // `colorScheme.secondary` was always purple and every unspecified role
+    // (`secondaryContainer`, `tertiary`, `primaryContainer`, …) fell back to
+    // Material's baseline purple. 173 widgets read those roles, so a single
+    // screen could legitimately paint three unrelated "accents".
+    //
+    // Seeding derives them all from `primary`, so choosing an accent moves the
+    // whole scheme together. The app's own surface/error tokens are re-applied
+    // on top because those are brand decisions, not tonal ones.
+    //
+    // Memoised (see seeded_scheme.dart): `ColorScheme.fromSeed` costs ~287 µs
+    // versus ~0.4 µs for the const scheme it replaced, and `app.dart` builds
+    // BOTH themes on every root rebuild.
+    final seeded = seededScheme(primary, Brightness.dark);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
 
       // Color Scheme
-      colorScheme: ColorScheme.dark(
+      colorScheme: seeded.copyWith(
         primary: primary,
         onPrimary: onPrimary,
-        secondary: AppColors.purple,
         onSecondary: AppColors.textPrimary,
         surface: AppColors.nearBlack,
         onSurface: AppColors.textPrimary,

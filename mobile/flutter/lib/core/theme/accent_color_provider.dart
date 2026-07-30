@@ -2,10 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// NOTE: gymAccentColorProvider is intentionally NOT imported here any more —
-// the active gym's colour must not repaint the global accent (see
-// AccentColorScopeWrapper.build). Gym-identifying UI should import it directly
-// from data/providers/gym_profile_provider.dart.
+// ─────────────────────────────────────────────────────────────────────────────
+// THE app accent lives here and NOWHERE else.
+//
+// History (E2E register rows 13c + 15): the accent used to be decided in three
+// places at once — `AccentColorScopeWrapper` (fixed by 4662b7d8), `app.dart`'s
+// `effectivePrimary` feeding `ColorScheme.primary`, and ~1,600 widget-level
+// hardcoded accent-family literals. Because one of those sources (the gym
+// profile colour) resolves ASYNCHRONOUSLY, the same screen painted orange on
+// one launch and cyan on the next, and neighbouring surfaces disagreed inside a
+// single frame (orange screen, cyan "Quick check-in" sheet).
+//
+// The contract now:
+//   • `accentColorProvider` is the ONLY input.
+//   • `appPrimaryColorProvider` is the ONLY thing `MaterialApp` may pass as
+//     `ColorScheme.primary`. It takes no override parameter, so a
+//     load-timing-dependent colour cannot be reintroduced without deleting it.
+//   • `AccentColorScope.colorOf(context)` / `context.accentColor` is the ONLY
+//     thing a widget may read for "the accent".
+//   • `AccentColorScope` no longer accepts an override colour at all.
+//
+// gymAccentColorProvider is intentionally NOT imported here. The active gym's
+// colour is a per-gym identity signal — gym-identifying UI (the gym chip, the
+// Switch Gym sheet) should import it directly from
+// data/providers/gym_profile_provider.dart and scope it to that widget.
+//
+// A regression gate lives beside this file: `accent_source_gate.dart`.
+// ─────────────────────────────────────────────────────────────────────────────
 
 /// Available accent colors for the app
 enum AccentColor {
@@ -194,66 +217,60 @@ class AccentColorNotifier extends StateNotifier<AccentColor> {
   }
 }
 
-/// Resolved accent — combines the user's enum-based [AccentColor] with an
-/// optional accentOverride Color (currently used by the active gym profile).
+/// The single fully-resolved app accent.
 ///
-/// Returned by [AccentColorScope.of] so that all existing call sites of
-/// `AccentColorScope.of(context).getColor(isDark)` transparently apply
-/// the accentOverride. Switching on `.accent` (the underlying enum) still works
-/// where call sites need the original semantic color identity.
+/// Deliberately has NO override field. The previous `accentOverride` (wired to
+/// the active gym profile's colour) is what made the accent load-timing
+/// dependent — see the header comment. Removing the field, rather than merely
+/// stopping one caller from setting it, is what makes the regression
+/// impossible: there is no longer an API through which a second accent source
+/// can be injected.
 class ResolvedAccent {
   /// The user-selected accent. Always present — falls back to the default.
   final AccentColor accent;
 
-  /// Higher-priority accentOverride (e.g. active gym profile color). When
-  /// non-null, [getColor] / [previewColor] return this color directly.
-  final Color? accentOverride;
+  const ResolvedAccent({required this.accent});
 
-  const ResolvedAccent({required this.accent, this.accentOverride});
+  /// The accent colour for the requested brightness.
+  Color getColor(bool isDark) => accent.getColor(isDark);
 
-  /// Returns the accentOverride if present, else the enum-based color for the
-  /// requested brightness. Drop-in replacement for [AccentColor.getColor].
-  Color getColor(bool isDark) => accentOverride ?? accent.getColor(isDark);
+  /// Preview color (theme-independent).
+  Color get previewColor => accent.previewColor;
 
-  /// Preview color (theme-independent). Override wins when set.
-  Color get previewColor => accentOverride ?? accent.previewColor;
-
-  /// Display name for the user-facing accent. The accentOverride is anonymous
-  /// (no name) — fall back to the enum's display name.
+  /// Display name for the user-facing accent.
   String get displayName => accent.displayName;
 
   /// Whether the visible color is a light tone that needs dark text/icons
-  /// on top. Computed from the actual rendered color when an accentOverride is
-  /// in play, so a light gym color also reports as light.
-  bool isLightFor(bool isDark) {
-    final c = getColor(isDark);
-    return c.computeLuminance() > 0.55;
-  }
+  /// on top.
+  bool isLightFor(bool isDark) => getColor(isDark).computeLuminance() > 0.55;
 }
+
+/// THE colour `MaterialApp`'s `ColorScheme.primary` must be built from.
+///
+/// `app.dart` must read this and nothing else. It takes no override argument
+/// on purpose: `effectivePrimary = gymOverride ?? accent.getColor(isDark)` is
+/// exactly the expression that made the whole app repaint when an async fetch
+/// landed (register row 15, still live in `app.dart` after 4662b7d8).
+final appPrimaryColorProvider = Provider.family<Color, bool>((ref, isDark) {
+  return ref.watch(accentColorProvider).getColor(isDark);
+});
 
 /// InheritedWidget to provide accent color to the entire widget tree
 /// Wrap your MaterialApp with AccentColorScope for automatic accent color support
 class AccentColorScope extends InheritedWidget {
   final AccentColor accent;
 
-  /// Optional accentOverride color that takes precedence over the enum-based
-  /// accent. Wired from `gymAccentColorProvider` so the active gym
-  /// profile's chosen color tints every widget that reads accent via
-  /// `AccentColorScope.of(context).getColor(isDark)`.
-  final Color? accentOverride;
-
   const AccentColorScope({
     super.key,
     required this.accent,
-    this.accentOverride,
     required super.child,
   });
 
-  /// Get the resolved accent (enum + accentOverride) from the nearest ancestor.
+  /// Get the resolved accent from the nearest ancestor.
   static ResolvedAccent? maybeOf(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AccentColorScope>();
     if (scope == null) return null;
-    return ResolvedAccent(accent: scope.accent, accentOverride: scope.accentOverride);
+    return ResolvedAccent(accent: scope.accent);
   }
 
   /// Get the resolved accent, or default to orange if not found.
@@ -261,10 +278,27 @@ class AccentColorScope extends InheritedWidget {
     return maybeOf(context) ?? const ResolvedAccent(accent: AccentColor.orange);
   }
 
+  /// The one-liner every surface should use for "the accent colour".
+  ///
+  /// Resolves brightness from the ambient [Theme], so a widget never has to
+  /// re-derive `isDark` (a place where surfaces used to diverge).
+  static Color colorOf(BuildContext context) {
+    return of(context).getColor(Theme.of(context).brightness == Brightness.dark);
+  }
+
   @override
   bool updateShouldNotify(AccentColorScope oldWidget) {
-    return accent != oldWidget.accent || accentOverride != oldWidget.accentOverride;
+    return accent != oldWidget.accent;
   }
+}
+
+/// `context.accentColor` — the shortest correct way to read the accent.
+///
+/// Exists so that "read the theme" is strictly less typing than hardcoding a
+/// colour; the regression gate (`accent_source_gate.dart`) points offenders
+/// here.
+extension AccentColorContext on BuildContext {
+  Color get accentColor => AccentColorScope.colorOf(this);
 }
 
 /// Consumer widget that wraps the app with AccentColorScope

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
+import 'seeded_scheme.dart';
 
 /// Theme mode provider
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
@@ -112,15 +113,18 @@ class AppThemeLight {
 
   static ThemeData buildTheme(Color primary) {
     final onPrimary = primary.computeLuminance() > 0.4 ? Colors.black : Colors.white;
+    // Light-theme mirror of AppTheme.buildDarkTheme — see the comment there.
+    // `secondary: AppColorsLight.purple` was a second live accent.
+    // Memoised — see seeded_scheme.dart for the measured cost.
+    final seeded = seededScheme(primary, Brightness.light);
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
 
       // Color Scheme
-      colorScheme: ColorScheme.light(
+      colorScheme: seeded.copyWith(
         primary: primary,
         onPrimary: onPrimary,
-        secondary: AppColorsLight.purple,
         onSecondary: AppColorsLight.pureWhite,
         surface: AppColorsLight.nearWhite,
         onSurface: AppColorsLight.textPrimary,

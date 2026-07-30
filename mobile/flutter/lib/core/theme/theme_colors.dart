@@ -17,9 +17,12 @@ import 'accent_color_provider.dart';
 /// Wrap your app with AccentColorScopeWrapper to enable dynamic accent colors.
 class ThemeColors {
   final bool isDark;
-  /// Resolved accent (enum + optional gym override). Stored as
-  /// [ResolvedAccent] so the active gym profile's override flows through
-  /// every getter that reads `_selectedAccent.getColor(...)`.
+
+  /// The single resolved accent, read from the ambient [AccentColorScope].
+  ///
+  /// There is no override channel any more (register row 15): [ResolvedAccent]
+  /// carries only the user's chosen [AccentColor], so every getter below
+  /// resolves to the same colour no matter when it is read.
   final ResolvedAccent? _selectedAccent;
 
   const ThemeColors._({required this.isDark, ResolvedAccent? selectedAccent})
@@ -33,8 +36,10 @@ class ThemeColors {
     return ThemeColors._(isDark: isDark, selectedAccent: resolved);
   }
 
-  /// Get ThemeColors with a specific accent color (explicit override —
-  /// no gym override applied; use only for previews / settings UIs).
+  /// Get ThemeColors for an explicitly named accent.
+  ///
+  /// Use ONLY for previews (the accent picker's swatches) — never to paint a
+  /// live surface, or that surface becomes a second accent source.
   static ThemeColors withAccent(BuildContext context, AccentColor accent) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return ThemeColors._(
@@ -81,10 +86,9 @@ class ThemeColors {
   /// Text color on accent backgrounds
   Color get accentContrast {
     if (_selectedAccent != null) {
-      // No override + black-mono accent → flip with theme. Otherwise pick
-      // dark text on light accents and white text on dark/colorful ones.
-      if (_selectedAccent.accentOverride == null &&
-          _selectedAccent.accent == AccentColor.black) {
+      // Black-mono accent → flip with theme. Otherwise pick dark text on light
+      // accents and white text on dark/colorful ones.
+      if (_selectedAccent.accent == AccentColor.black) {
         return isDark ? Colors.black : Colors.white;
       }
       return _selectedAccent.isLightFor(isDark) ? Colors.black : Colors.white;
@@ -95,8 +99,7 @@ class ThemeColors {
   /// Accent gradient for buttons
   LinearGradient get accentGradient {
     if (_selectedAccent != null &&
-        !(_selectedAccent.accentOverride == null &&
-            _selectedAccent.accent == AccentColor.black)) {
+        _selectedAccent.accent != AccentColor.black) {
       final baseColor = _selectedAccent.getColor(isDark);
       // Create a gradient from the accent color to a slightly darker version
       return LinearGradient(
@@ -110,10 +113,16 @@ class ThemeColors {
     return isDark ? AppColors.accentGradient : AppColorsLight.accentGradient;
   }
 
-  // Legacy color names - now map to theme-aware accent for monochrome design
-  Color get cyan => isDark ? AppColors.accent : AppColorsLight.accent;
+  // ── Legacy colour-name aliases ───────────────────────────────────────────
+  // These are named after colours but every caller means "the accent". They
+  // used to return the STATIC `AppColors.accent` (pure white in dark, pure
+  // black in light), which ignored the user's chosen accent entirely — so a
+  // screen built from `colors.cyan` and a screen built from `colors.accent`
+  // rendered two different colours for the same intent (register row 15).
+  // They now all route through the single [accent] getter.
+  Color get cyan => accent;
   Color get cyanDark => isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-  LinearGradient get cyanGradient => isDark ? AppColors.accentGradient : AppColorsLight.accentGradient;
+  LinearGradient get cyanGradient => accentGradient;
 
   // ─────────────────────────────────────────────────────────────────
   // Semantic Colors (theme-aware)
@@ -134,15 +143,42 @@ class ThemeColors {
   Color get hiit => isDark ? AppColors.hiit : AppColorsLight.hiit;
 
   // ─────────────────────────────────────────────────────────────────
-  // Accent Colors (theme-aware - all map to accent for monochrome)
+  // Accent Colors — every one of these IS the single accent.
   // ─────────────────────────────────────────────────────────────────
 
-  Color get orange => isDark ? AppColors.accent : AppColorsLight.accent;
-  Color get purple => isDark ? AppColors.accent : AppColorsLight.accent;
-  Color get coral => isDark ? AppColors.accent : AppColorsLight.accent;
-  Color get magenta => isDark ? AppColors.accent : AppColorsLight.accent;
-  Color get electricBlue => isDark ? AppColors.accent : AppColorsLight.accent;
-  Color get teal => isDark ? AppColors.accent : AppColorsLight.accent;
+  Color get orange => accent;
+  Color get purple => accent;
+  Color get coral => accent;
+  Color get magenta => accent;
+  Color get electricBlue => accent;
+  Color get teal => accent;
+
+  // ─────────────────────────────────────────────────────────────────
+  // Metadata pill role (register row 51)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Workout/exercise metadata chips (duration · difficulty · exercise count ·
+  // equipment) were each given their OWN colour, which reads as a legend the
+  // app never defines — the user hunts for a meaning that does not exist.
+  // Metadata is not a status, so it gets ONE quiet neutral treatment. Use the
+  // semantic getters ([success] / [warning] / [error]) only where the pill
+  // really does encode state.
+
+  /// Fill behind a metadata pill.
+  Color get metaPillFill => isDark
+      ? AppColors.textPrimary.withValues(alpha: 0.06)
+      : AppColorsLight.textPrimary.withValues(alpha: 0.05);
+
+  /// Hairline border of a metadata pill.
+  Color get metaPillBorder => cardBorder;
+
+  /// Label + icon colour inside a metadata pill.
+  Color get metaPillText => textSecondary;
+
+  /// The one metadata pill per group that is allowed to carry the accent
+  /// (e.g. the pill naming the workout's primary focus). Everything else in
+  /// the row must use [metaPillText] — one accent per group, never three.
+  Color get metaPillLeadText => accent;
 }
 
 /// Extension on BuildContext for convenient access to theme colors
