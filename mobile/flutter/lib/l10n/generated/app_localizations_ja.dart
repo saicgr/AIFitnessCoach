@@ -9043,7 +9043,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'スナップされた';
 
   @override
-  String get exerciseAddSheetSubtitle => 'サブタイトル';
+  String get exerciseAddSheetSubtitle => 'ワークアウトに追加する種目を探す';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AIのおすすめ';
@@ -27928,10 +27928,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get progressionSelectorSetProgression => 'プログレッションを設定';
 
   @override
-  String get progressionSelectorSubtitle => 'サブタイトル';
+  String get progressionSelectorSubtitle => 'セットごとの重量の変化を選択';
 
   @override
-  String get progressionSelectorTitle => 'タイトル';
+  String get progressionSelectorTitle => 'セットの進行';
 
   @override
   String get progressionSelectorWhenToUse => '使用タイミング';
@@ -28730,13 +28730,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'ワークアウトのフォーカス';
 
   @override
-  String get quickWorkoutSubtitle => 'サブタイトル';
+  String get quickWorkoutSubtitle => '忙しい日にぴったり';
 
   @override
   String get quickWorkoutTapToAddPairs => 'タップしてダンベルペアを追加';
 
   @override
-  String get quickWorkoutTitle => 'タイトル';
+  String get quickWorkoutTitle => 'クイックワークアウト';
 
   @override
   String get quickWorkoutUnfavorite => 'お気に入り解除';
@@ -40617,7 +40617,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'エクササイズを入れ替える';
 
   @override
-  String get workoutPlanDrawerTitle => 'タイトル';
+  String get workoutPlanDrawerTitle => 'ワークアウトプラン';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'ワークアウトプラン';

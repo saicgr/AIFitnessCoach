@@ -9563,7 +9563,8 @@ class AppLocalizationsTa extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'புகைப்படம் எடுக்கப்பட்டது';
 
   @override
-  String get exerciseAddSheetSubtitle => 'துணைத்தலைப்பு';
+  String get exerciseAddSheetSubtitle =>
+      'உங்கள் பயிற்சியில் சேர்க்க ஏற்ற பயிற்சியைக் கண்டறியவும்';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai தேர்வுகள்';
@@ -29541,10 +29542,11 @@ class AppLocalizationsTa extends AppLocalizations {
   String get progressionSelectorSetProgression => 'முன்னேற்றத்தை அமைக்கவும்';
 
   @override
-  String get progressionSelectorSubtitle => 'துணைத்தலைப்பு';
+  String get progressionSelectorSubtitle =>
+      'செட்டுகளில் எடை எப்படி மாறும் என்பதைத் தேர்ந்தெடுக்கவும்';
 
   @override
-  String get progressionSelectorTitle => 'தலைப்பு';
+  String get progressionSelectorTitle => 'செட் முன்னேற்றம்';
 
   @override
   String get progressionSelectorWhenToUse => 'எப்போது பயன்படுத்த வேண்டும்';
@@ -30387,13 +30389,13 @@ class AppLocalizationsTa extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'பயிற்சி கவனம்';
 
   @override
-  String get quickWorkoutSubtitle => 'துணைத் தலைப்பு';
+  String get quickWorkoutSubtitle => 'பரபரப்பான நாட்களுக்கு ஏற்றது';
 
   @override
   String get quickWorkoutTapToAddPairs => 'டம்பெல் ஜோடிகளைச் சேர்க்க தட்டவும்';
 
   @override
-  String get quickWorkoutTitle => 'தலைப்பு';
+  String get quickWorkoutTitle => 'விரைவு உடற்பயிற்சி';
 
   @override
   String get quickWorkoutUnfavorite => 'பிடித்தவற்றிலிருந்து நீக்கு';
@@ -42941,7 +42943,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'பயிற்சியை மாற்று';
 
   @override
-  String get workoutPlanDrawerTitle => 'தலைப்பு';
+  String get workoutPlanDrawerTitle => 'பயிற்சித் திட்டம்';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'வொர்க்அவுட் திட்டம்';

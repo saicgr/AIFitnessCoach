@@ -9406,7 +9406,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Tarandı';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Alt başlık';
+  String get exerciseAddSheetSubtitle =>
+      'Antrenmanına ekleyecek doğru hareketi bul';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai seçimleri';
@@ -29074,10 +29075,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get progressionSelectorSetProgression => 'İlerlemeyi Ayarla';
 
   @override
-  String get progressionSelectorSubtitle => 'Alt başlık';
+  String get progressionSelectorSubtitle =>
+      'Ağırlığın setler arasında nasıl değiştiğini seçin';
 
   @override
-  String get progressionSelectorTitle => 'Başlık';
+  String get progressionSelectorTitle => 'Set İlerlemesi';
 
   @override
   String get progressionSelectorWhenToUse => 'Ne zaman kullanılır';
@@ -29905,14 +29907,14 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Antrenman Odağı';
 
   @override
-  String get quickWorkoutSubtitle => 'Alt başlık';
+  String get quickWorkoutSubtitle => 'Yoğun günler için ideal';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'Dambıl çiftleri eklemek için dokunun';
 
   @override
-  String get quickWorkoutTitle => 'Başlık';
+  String get quickWorkoutTitle => 'Hızlı Antrenman';
 
   @override
   String get quickWorkoutUnfavorite => 'Favorilerden çıkar';
@@ -42261,7 +42263,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Egzersizi değiştir';
 
   @override
-  String get workoutPlanDrawerTitle => 'Başlık';
+  String get workoutPlanDrawerTitle => 'Antrenman Planı';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Antrenman Planı';

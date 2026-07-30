@@ -9381,7 +9381,8 @@ class AppLocalizationsSv extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Fotad';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Undertitel';
+  String get exerciseAddSheetSubtitle =>
+      'Hitta rätt övning att lägga till i passet';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AI-val';
@@ -28997,10 +28998,11 @@ class AppLocalizationsSv extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Ställ in progression';
 
   @override
-  String get progressionSelectorSubtitle => 'Undertext';
+  String get progressionSelectorSubtitle =>
+      'Välj hur vikten ändras mellan seten';
 
   @override
-  String get progressionSelectorTitle => 'Titel';
+  String get progressionSelectorTitle => 'Setprogression';
 
   @override
   String get progressionSelectorWhenToUse => 'När ska den användas';
@@ -29824,13 +29826,13 @@ class AppLocalizationsSv extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Träningsfokus';
 
   @override
-  String get quickWorkoutSubtitle => 'Underrubrik';
+  String get quickWorkoutSubtitle => 'Perfekt för hektiska dagar';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Tryck för att lägga till hantelpar';
 
   @override
-  String get quickWorkoutTitle => 'Titel';
+  String get quickWorkoutTitle => 'Snabbpass';
 
   @override
   String get quickWorkoutUnfavorite => 'Ta bort favorit';
@@ -42158,7 +42160,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Byt övning';
 
   @override
-  String get workoutPlanDrawerTitle => 'Titel';
+  String get workoutPlanDrawerTitle => 'Träningsplan';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Träningsplan';

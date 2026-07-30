@@ -9403,7 +9403,8 @@ class AppLocalizationsUr extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'تصویر لی گئی';
 
   @override
-  String get exerciseAddSheetSubtitle => 'سب ٹائٹل';
+  String get exerciseAddSheetSubtitle =>
+      'اپنی ورزش میں شامل کرنے کے لیے موزوں مشق تلاش کریں';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai انتخاب';
@@ -29103,10 +29104,11 @@ class AppLocalizationsUr extends AppLocalizations {
   String get progressionSelectorSetProgression => 'پیشرفت سیٹ کریں';
 
   @override
-  String get progressionSelectorSubtitle => 'سب ٹائٹل';
+  String get progressionSelectorSubtitle =>
+      'منتخب کریں کہ سیٹوں میں وزن کیسے بدلے';
 
   @override
-  String get progressionSelectorTitle => 'عنوان';
+  String get progressionSelectorTitle => 'سیٹ پروگریشن';
 
   @override
   String get progressionSelectorWhenToUse => 'کب استعمال کریں';
@@ -29932,14 +29934,14 @@ class AppLocalizationsUr extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'ورک آؤٹ فوکس';
 
   @override
-  String get quickWorkoutSubtitle => 'ذیلی عنوان';
+  String get quickWorkoutSubtitle => 'مصروف دنوں کے لیے بہترین';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'ڈمبل کے جوڑے شامل کرنے کے لیے تھپتھپائیں';
 
   @override
-  String get quickWorkoutTitle => 'عنوان';
+  String get quickWorkoutTitle => 'فوری ورزش';
 
   @override
   String get quickWorkoutUnfavorite => 'پسندیدہ سے ہٹائیں';
@@ -42297,7 +42299,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'ورزش تبدیل کریں';
 
   @override
-  String get workoutPlanDrawerTitle => 'عنوان';
+  String get workoutPlanDrawerTitle => 'ورزش کا پلان';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'ورک آؤٹ پلان';

@@ -9425,7 +9425,8 @@ class AppLocalizationsHa extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'An kama';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Taken ƙasa';
+  String get exerciseAddSheetSubtitle =>
+      'Nemo motsa jikin da ya dace ka ƙara a horonka';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Zaɓin AI';
@@ -29177,10 +29178,11 @@ class AppLocalizationsHa extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Saita Ci Gaba';
 
   @override
-  String get progressionSelectorSubtitle => 'Subtitle';
+  String get progressionSelectorSubtitle =>
+      'Zaɓi yadda nauyi ke canzawa tsakanin saiti';
 
   @override
-  String get progressionSelectorTitle => 'Take';
+  String get progressionSelectorTitle => 'Ci gaban saiti';
 
   @override
   String get progressionSelectorWhenToUse => 'Yaushe za a yi amfani da shi';
@@ -30011,13 +30013,13 @@ class AppLocalizationsHa extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Manufar Motsa Jiki';
 
   @override
-  String get quickWorkoutSubtitle => 'Subtitle';
+  String get quickWorkoutSubtitle => 'Ya dace da kwanaki masu cushewa';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Danna don ƙara nau\'in dumbbell';
 
   @override
-  String get quickWorkoutTitle => 'Take';
+  String get quickWorkoutTitle => 'Motsa jiki cikin sauri';
 
   @override
   String get quickWorkoutUnfavorite => 'Cire daga fi so';
@@ -42393,7 +42395,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Sauya motsa jiki';
 
   @override
-  String get workoutPlanDrawerTitle => 'Take';
+  String get workoutPlanDrawerTitle => 'Shirin motsa jiki';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Shirin motsa jiki';

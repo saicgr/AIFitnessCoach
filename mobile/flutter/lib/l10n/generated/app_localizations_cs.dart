@@ -9404,7 +9404,8 @@ class AppLocalizationsCs extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Prasklo';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Podtitul';
+  String get exerciseAddSheetSubtitle =>
+      'Najděte ideální cvik, který přidáte do tréninku';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Výběr AI';
@@ -29064,10 +29065,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Nastavit progresi';
 
   @override
-  String get progressionSelectorSubtitle => 'Podnadpis';
+  String get progressionSelectorSubtitle =>
+      'Zvolte, jak se mění váha mezi sériemi';
 
   @override
-  String get progressionSelectorTitle => 'Název';
+  String get progressionSelectorTitle => 'Progrese sérií';
 
   @override
   String get progressionSelectorWhenToUse => 'Kdy použít';
@@ -29896,13 +29898,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Zaměření tréninku';
 
   @override
-  String get quickWorkoutSubtitle => 'Podtitul';
+  String get quickWorkoutSubtitle => 'Ideální pro nabité dny';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Klepnutím přidáte páry jednoruček';
 
   @override
-  String get quickWorkoutTitle => 'Název';
+  String get quickWorkoutTitle => 'Rychlý trénink';
 
   @override
   String get quickWorkoutUnfavorite => 'Odebrat z oblíbených';
@@ -42248,7 +42250,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Vyměnit cvik';
 
   @override
-  String get workoutPlanDrawerTitle => 'Název';
+  String get workoutPlanDrawerTitle => 'Plán tréninku';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Tréninkový plán';

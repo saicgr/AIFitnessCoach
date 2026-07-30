@@ -9426,7 +9426,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Đã chụp';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Phụ đề';
+  String get exerciseAddSheetSubtitle =>
+      'Tìm bài tập phù hợp để thêm vào buổi tập';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AI gợi ý';
@@ -29128,10 +29129,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Thiết lập tiến triển';
 
   @override
-  String get progressionSelectorSubtitle => 'Phụ đề';
+  String get progressionSelectorSubtitle =>
+      'Chọn cách mức tạ thay đổi qua các hiệp';
 
   @override
-  String get progressionSelectorTitle => 'Tiêu đề';
+  String get progressionSelectorTitle => 'Tiến độ hiệp tập';
 
   @override
   String get progressionSelectorWhenToUse => 'Khi nào nên sử dụng';
@@ -29959,13 +29961,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Trọng tâm bài tập';
 
   @override
-  String get quickWorkoutSubtitle => 'Phụ đề';
+  String get quickWorkoutSubtitle => 'Hoàn hảo cho những ngày bận rộn';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Chạm để thêm cặp tạ đơn';
 
   @override
-  String get quickWorkoutTitle => 'Tiêu đề';
+  String get quickWorkoutTitle => 'Bài tập nhanh';
 
   @override
   String get quickWorkoutUnfavorite => 'Bỏ yêu thích';
@@ -42330,7 +42332,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Đổi bài tập';
 
   @override
-  String get workoutPlanDrawerTitle => 'Tiêu đề';
+  String get workoutPlanDrawerTitle => 'Kế hoạch tập luyện';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Kế hoạch tập luyện';

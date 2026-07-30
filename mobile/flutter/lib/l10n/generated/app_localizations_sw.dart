@@ -9441,7 +9441,8 @@ class AppLocalizationsSw extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Imepigwa picha';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Kichwa kidogo';
+  String get exerciseAddSheetSubtitle =>
+      'Tafuta zoezi linalofaa kuongeza kwenye mazoezi yako';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Mapendekezo ya AI';
@@ -29189,10 +29190,11 @@ class AppLocalizationsSw extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Weka maendeleo';
 
   @override
-  String get progressionSelectorSubtitle => 'Kichwa kidogo';
+  String get progressionSelectorSubtitle =>
+      'Chagua jinsi uzito unavyobadilika kati ya seti';
 
   @override
-  String get progressionSelectorTitle => 'Kichwa';
+  String get progressionSelectorTitle => 'Mfuatano wa Seti';
 
   @override
   String get progressionSelectorWhenToUse => 'Wakati wa kutumia';
@@ -30020,13 +30022,13 @@ class AppLocalizationsSw extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Lengo la Mazoezi';
 
   @override
-  String get quickWorkoutSubtitle => 'Kichwa kidogo';
+  String get quickWorkoutSubtitle => 'Yanafaa kwa siku zenye shughuli nyingi';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Gusa ili kuongeza jozi za dumbbell';
 
   @override
-  String get quickWorkoutTitle => 'Kichwa';
+  String get quickWorkoutTitle => 'Mazoezi ya Haraka';
 
   @override
   String get quickWorkoutUnfavorite => 'Ondoa kwenye vipendwa';
@@ -42408,7 +42410,7 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Badilisha zoezi';
 
   @override
-  String get workoutPlanDrawerTitle => 'Kichwa';
+  String get workoutPlanDrawerTitle => 'Mpango wa Mazoezi';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Mpango wa Mazoezi';

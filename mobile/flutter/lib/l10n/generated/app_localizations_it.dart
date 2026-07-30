@@ -9486,7 +9486,8 @@ class AppLocalizationsIt extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Scattato';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Sottotitolo';
+  String get exerciseAddSheetSubtitle =>
+      'Trova l\'esercizio giusto da aggiungere all\'allenamento';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Scelte AI';
@@ -29301,10 +29302,11 @@ class AppLocalizationsIt extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Imposta progressione';
 
   @override
-  String get progressionSelectorSubtitle => 'Sottotitolo';
+  String get progressionSelectorSubtitle =>
+      'Scegli come cambia il peso tra le serie';
 
   @override
-  String get progressionSelectorTitle => 'Titolo';
+  String get progressionSelectorTitle => 'Progressione delle serie';
 
   @override
   String get progressionSelectorWhenToUse => 'Quando utilizzare';
@@ -30137,14 +30139,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Focus allenamento';
 
   @override
-  String get quickWorkoutSubtitle => 'Sottotitolo';
+  String get quickWorkoutSubtitle => 'Perfetto per le giornate piene';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'Tocca per aggiungere coppie di manubri';
 
   @override
-  String get quickWorkoutTitle => 'Titolo';
+  String get quickWorkoutTitle => 'Allenamento veloce';
 
   @override
   String get quickWorkoutUnfavorite => 'Rimuovi dai preferiti';
@@ -42585,7 +42587,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Scambia esercizio';
 
   @override
-  String get workoutPlanDrawerTitle => 'Titolo';
+  String get workoutPlanDrawerTitle => 'Piano di allenamento';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Piano di allenamento';

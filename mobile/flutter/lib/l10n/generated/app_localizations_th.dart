@@ -9389,7 +9389,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'ถ่ายแล้ว';
 
   @override
-  String get exerciseAddSheetSubtitle => 'คำบรรยาย';
+  String get exerciseAddSheetSubtitle =>
+      'ค้นหาท่าที่ใช่เพื่อเพิ่มลงในเวิร์กเอาต์';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai เลือกให้';
@@ -29021,10 +29022,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get progressionSelectorSetProgression => 'ตั้งค่าการพัฒนา';
 
   @override
-  String get progressionSelectorSubtitle => 'คำบรรยาย';
+  String get progressionSelectorSubtitle =>
+      'เลือกว่าน้ำหนักจะเปลี่ยนอย่างไรในแต่ละเซ็ต';
 
   @override
-  String get progressionSelectorTitle => 'หัวข้อ';
+  String get progressionSelectorTitle => 'การไล่ระดับเซ็ต';
 
   @override
   String get progressionSelectorWhenToUse => 'เมื่อไหร่ที่ควรใช้';
@@ -29849,13 +29851,13 @@ class AppLocalizationsTh extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'จุดเน้นการออกกำลังกาย';
 
   @override
-  String get quickWorkoutSubtitle => 'คำบรรยาย';
+  String get quickWorkoutSubtitle => 'เหมาะกับวันที่ยุ่ง';
 
   @override
   String get quickWorkoutTapToAddPairs => 'แตะเพื่อเพิ่มคู่ดัมเบล';
 
   @override
-  String get quickWorkoutTitle => 'ชื่อ';
+  String get quickWorkoutTitle => 'เวิร์กเอาต์แบบเร็ว';
 
   @override
   String get quickWorkoutUnfavorite => 'เลิกเป็นรายการโปรด';
@@ -42174,7 +42176,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'สลับท่าออกกำลังกาย';
 
   @override
-  String get workoutPlanDrawerTitle => 'ชื่อ';
+  String get workoutPlanDrawerTitle => 'แผนเวิร์กเอาต์';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'แผนการออกกำลังกาย';

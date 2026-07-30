@@ -16047,7 +16047,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseAddSheetSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Subtitle'**
+  /// **'Find the perfect exercise to add to your workout'**
   String get exerciseAddSheetSubtitle;
 
   /// No description provided for @exerciseAddSheetTabAiPicks.
@@ -48883,13 +48883,13 @@ abstract class AppLocalizations {
   /// No description provided for @progressionSelectorSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Subtitle'**
+  /// **'Choose how weight changes across sets'**
   String get progressionSelectorSubtitle;
 
   /// No description provided for @progressionSelectorTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Set Progression'**
   String get progressionSelectorTitle;
 
   /// No description provided for @progressionSelectorWhenToUse.
@@ -50351,7 +50351,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickWorkoutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Subtitle'**
+  /// **'Perfect for busy days'**
   String get quickWorkoutSubtitle;
 
   /// No description provided for @quickWorkoutTapToAddPairs.
@@ -50363,7 +50363,7 @@ abstract class AppLocalizations {
   /// No description provided for @quickWorkoutTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Quick Workout'**
   String get quickWorkoutTitle;
 
   /// No description provided for @quickWorkoutUnfavorite.
@@ -71117,7 +71117,7 @@ abstract class AppLocalizations {
   /// No description provided for @workoutPlanDrawerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Workout Plan'**
   String get workoutPlanDrawerTitle;
 
   /// No description provided for @workoutPlanDrawerWorkoutPlan.

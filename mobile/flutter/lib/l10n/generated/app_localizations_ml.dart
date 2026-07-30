@@ -9549,7 +9549,8 @@ class AppLocalizationsMl extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'പൊട്ടിത്തെറിച്ചു';
 
   @override
-  String get exerciseAddSheetSubtitle => 'സബ്‌ടൈറ്റിൽ';
+  String get exerciseAddSheetSubtitle =>
+      'നിങ്ങളുടെ വർക്കൗട്ടിൽ ചേർക്കാൻ അനുയോജ്യമായ വ്യായാമം കണ്ടെത്തുക';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai നിർദ്ദേശങ്ങൾ';
@@ -29562,10 +29563,11 @@ class AppLocalizationsMl extends AppLocalizations {
   String get progressionSelectorSetProgression => 'പുരോഗതി സജ്ജമാക്കുക';
 
   @override
-  String get progressionSelectorSubtitle => 'സബ്‌ടൈറ്റിൽ';
+  String get progressionSelectorSubtitle =>
+      'സെറ്റുകളിൽ ഭാരം എങ്ങനെ മാറണമെന്ന് തിരഞ്ഞെടുക്കുക';
 
   @override
-  String get progressionSelectorTitle => 'തലക്കെട്ട്';
+  String get progressionSelectorTitle => 'സെറ്റ് പ്രോഗ്രഷൻ';
 
   @override
   String get progressionSelectorWhenToUse => 'എപ്പോൾ ഉപയോഗിക്കണം';
@@ -30405,14 +30407,14 @@ class AppLocalizationsMl extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'വർക്ക്ഔട്ട് ഫോക്കസ്';
 
   @override
-  String get quickWorkoutSubtitle => 'സബ്‌ടൈറ്റിൽ';
+  String get quickWorkoutSubtitle => 'തിരക്കുള്ള ദിവസങ്ങൾക്ക് അനുയോജ്യം';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'ഡംബെൽ ജോഡികൾ ചേർക്കാൻ ടാപ്പ് ചെയ്യുക';
 
   @override
-  String get quickWorkoutTitle => 'തലക്കെട്ട്';
+  String get quickWorkoutTitle => 'ദ്രുത വർക്കൗട്ട്';
 
   @override
   String get quickWorkoutUnfavorite => 'അൺഫേവറിറ്റ്';
@@ -42944,7 +42946,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'വ്യായാമം മാറ്റുക';
 
   @override
-  String get workoutPlanDrawerTitle => 'തലക്കെട്ട്';
+  String get workoutPlanDrawerTitle => 'വർക്കൗട്ട് പ്ലാൻ';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'വർക്കൗട്ട് പ്ലാൻ';

@@ -8942,7 +8942,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseAddSheetSnapped => '已拍摄';
 
   @override
-  String get exerciseAddSheetSubtitle => '副标题';
+  String get exerciseAddSheetSubtitle => '找到适合加入训练的动作';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AI 精选';
@@ -27578,10 +27578,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressionSelectorSetProgression => '设置进阶';
 
   @override
-  String get progressionSelectorSubtitle => '副标题';
+  String get progressionSelectorSubtitle => '选择各组之间重量如何变化';
 
   @override
-  String get progressionSelectorTitle => '标题';
+  String get progressionSelectorTitle => '组次递进';
 
   @override
   String get progressionSelectorWhenToUse => '何时使用';
@@ -28375,13 +28375,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => '训练重点';
 
   @override
-  String get quickWorkoutSubtitle => '副标题';
+  String get quickWorkoutSubtitle => '适合忙碌的日子';
 
   @override
   String get quickWorkoutTapToAddPairs => '点击添加哑铃对';
 
   @override
-  String get quickWorkoutTitle => '标题';
+  String get quickWorkoutTitle => '快速训练';
 
   @override
   String get quickWorkoutUnfavorite => '取消收藏';
@@ -40121,7 +40121,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => '替换动作';
 
   @override
-  String get workoutPlanDrawerTitle => '标题';
+  String get workoutPlanDrawerTitle => '训练计划';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => '训练计划';

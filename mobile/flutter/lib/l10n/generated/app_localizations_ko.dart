@@ -9041,7 +9041,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get exerciseAddSheetSnapped => '스냅됨';
 
   @override
-  String get exerciseAddSheetSubtitle => '부제목';
+  String get exerciseAddSheetSubtitle => '운동에 추가할 알맞은 종목을 찾아보세요';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AI 추천';
@@ -27941,10 +27941,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressionSelectorSetProgression => '진행 설정';
 
   @override
-  String get progressionSelectorSubtitle => '부제목';
+  String get progressionSelectorSubtitle => '세트별로 무게가 어떻게 바뀔지 선택하세요';
 
   @override
-  String get progressionSelectorTitle => '제목';
+  String get progressionSelectorTitle => '세트 프로그레션';
 
   @override
   String get progressionSelectorWhenToUse => '사용 시기';
@@ -28742,13 +28742,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => '운동 집중 부위';
 
   @override
-  String get quickWorkoutSubtitle => '부제목';
+  String get quickWorkoutSubtitle => '바쁜 날에 딱 맞아요';
 
   @override
   String get quickWorkoutTapToAddPairs => '탭하여 덤벨 쌍 추가';
 
   @override
-  String get quickWorkoutTitle => '제목';
+  String get quickWorkoutTitle => '퀵 운동';
 
   @override
   String get quickWorkoutUnfavorite => '즐겨찾기 해제';
@@ -40628,7 +40628,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => '운동 교체';
 
   @override
-  String get workoutPlanDrawerTitle => '제목';
+  String get workoutPlanDrawerTitle => '운동 플랜';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => '운동 플랜';

@@ -9446,7 +9446,8 @@ class AppLocalizationsNe extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'खिचियो';
 
   @override
-  String get exerciseAddSheetSubtitle => 'उपशीर्षक';
+  String get exerciseAddSheetSubtitle =>
+      'आफ्नो वर्कआउटमा थप्न उपयुक्त व्यायाम खोज्नुहोस्';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Ai छनोटहरू';
@@ -29245,10 +29246,11 @@ class AppLocalizationsNe extends AppLocalizations {
   String get progressionSelectorSetProgression => 'प्रगति सेट गर्नुहोस्';
 
   @override
-  String get progressionSelectorSubtitle => 'सबटाइटल';
+  String get progressionSelectorSubtitle =>
+      'सेटहरूमा तौल कसरी परिवर्तन हुन्छ छान्नुहोस्';
 
   @override
-  String get progressionSelectorTitle => 'शीर्षक';
+  String get progressionSelectorTitle => 'सेट प्रोग्रेसन';
 
   @override
   String get progressionSelectorWhenToUse => 'कहिले प्रयोग गर्ने';
@@ -30077,13 +30079,13 @@ class AppLocalizationsNe extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'वर्कआउट फोकस';
 
   @override
-  String get quickWorkoutSubtitle => 'उपशीर्षक';
+  String get quickWorkoutSubtitle => 'व्यस्त दिनहरूका लागि उपयुक्त';
 
   @override
   String get quickWorkoutTapToAddPairs => 'डम्बेल जोडीहरू थप्न ट्याप गर्नुहोस्';
 
   @override
-  String get quickWorkoutTitle => 'शीर्षक';
+  String get quickWorkoutTitle => 'छिटो वर्कआउट';
 
   @override
   String get quickWorkoutUnfavorite => 'मनपर्नेबाट हटाउनुहोस्';
@@ -42475,7 +42477,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'व्यायाम साट्नुहोस्';
 
   @override
-  String get workoutPlanDrawerTitle => 'शीर्षक';
+  String get workoutPlanDrawerTitle => 'वर्कआउट योजना';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'वर्कआउट योजना';

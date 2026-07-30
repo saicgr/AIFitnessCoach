@@ -9496,7 +9496,8 @@ class AppLocalizationsTl extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Nakuha';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Subtitle';
+  String get exerciseAddSheetSubtitle =>
+      'Hanapin ang tamang ehersisyo na idadagdag sa workout mo';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Mga pinili ng AI';
@@ -29378,10 +29379,11 @@ class AppLocalizationsTl extends AppLocalizations {
   String get progressionSelectorSetProgression => 'I-set ang Progression';
 
   @override
-  String get progressionSelectorSubtitle => 'Subtitle';
+  String get progressionSelectorSubtitle =>
+      'Piliin kung paano nagbabago ang bigat sa bawat set';
 
   @override
-  String get progressionSelectorTitle => 'Pamagat';
+  String get progressionSelectorTitle => 'Set Progression';
 
   @override
   String get progressionSelectorWhenToUse => 'Kailan gagamitin';
@@ -30215,14 +30217,14 @@ class AppLocalizationsTl extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Pokus sa Workout';
 
   @override
-  String get quickWorkoutSubtitle => 'Subtitle';
+  String get quickWorkoutSubtitle => 'Perpekto para sa abalang araw';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'I-tap para magdagdag ng mga pares ng dumbbell';
 
   @override
-  String get quickWorkoutTitle => 'Pamagat';
+  String get quickWorkoutTitle => 'Mabilisang Workout';
 
   @override
   String get quickWorkoutUnfavorite => 'Alisin sa paborito';
@@ -42683,7 +42685,7 @@ class AppLocalizationsTl extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Palitan ang exercise';
 
   @override
-  String get workoutPlanDrawerTitle => 'Pamagat';
+  String get workoutPlanDrawerTitle => 'Plano ng Workout';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Plano ng Ehersisyo';

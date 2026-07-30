@@ -9460,7 +9460,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Отсканировано';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Подзаголовок';
+  String get exerciseAddSheetSubtitle =>
+      'Найдите подходящее упражнение для тренировки';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Выбор AI';
@@ -29213,10 +29214,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Установить прогрессию';
 
   @override
-  String get progressionSelectorSubtitle => 'Подзаголовок';
+  String get progressionSelectorSubtitle =>
+      'Выберите, как меняется вес между подходами';
 
   @override
-  String get progressionSelectorTitle => 'Заголовок';
+  String get progressionSelectorTitle => 'Прогрессия подходов';
 
   @override
   String get progressionSelectorWhenToUse => 'Когда использовать';
@@ -30046,14 +30048,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Фокус тренировки';
 
   @override
-  String get quickWorkoutSubtitle => 'Подзаголовок';
+  String get quickWorkoutSubtitle => 'Идеально для занятых дней';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'Нажмите, чтобы добавить пары гантелей';
 
   @override
-  String get quickWorkoutTitle => 'Название';
+  String get quickWorkoutTitle => 'Быстрая тренировка';
 
   @override
   String get quickWorkoutUnfavorite => 'Убрать из избранного';
@@ -42459,7 +42461,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Заменить упражнение';
 
   @override
-  String get workoutPlanDrawerTitle => 'Название';
+  String get workoutPlanDrawerTitle => 'План тренировки';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'План тренировки';

@@ -9416,7 +9416,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Nappasi';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Alaotsikko';
+  String get exerciseAddSheetSubtitle => 'Löydä täydellinen liike treeniisi';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'AI-valinnat';
@@ -29146,10 +29146,11 @@ class AppLocalizationsFi extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Aseta edistyminen';
 
   @override
-  String get progressionSelectorSubtitle => 'Alaotsikko';
+  String get progressionSelectorSubtitle =>
+      'Valitse, miten paino muuttuu sarjojen välillä';
 
   @override
-  String get progressionSelectorTitle => 'Otsikko';
+  String get progressionSelectorTitle => 'Sarjojen progressio';
 
   @override
   String get progressionSelectorWhenToUse => 'Milloin käyttää';
@@ -29977,13 +29978,13 @@ class AppLocalizationsFi extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Treenin painopiste';
 
   @override
-  String get quickWorkoutSubtitle => 'Alaotsikko';
+  String get quickWorkoutSubtitle => 'Täydellinen kiireisiin päiviin';
 
   @override
   String get quickWorkoutTapToAddPairs => 'Napauta lisätäksesi käsipainopareja';
 
   @override
-  String get quickWorkoutTitle => 'Otsikko';
+  String get quickWorkoutTitle => 'Pikatreeni';
 
   @override
   String get quickWorkoutUnfavorite => 'Poista suosikeista';
@@ -42333,7 +42334,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Vaihda liike';
 
   @override
-  String get workoutPlanDrawerTitle => 'Otsikko';
+  String get workoutPlanDrawerTitle => 'Treenisuunnitelma';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Harjoitussuunnitelma';

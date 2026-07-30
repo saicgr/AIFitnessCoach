@@ -9410,7 +9410,8 @@ class AppLocalizationsId extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'Bentak';
 
   @override
-  String get exerciseAddSheetSubtitle => 'Subjudul';
+  String get exerciseAddSheetSubtitle =>
+      'Temukan latihan yang pas untuk ditambahkan';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'Pilihan AI';
@@ -29110,10 +29111,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get progressionSelectorSetProgression => 'Atur Progresi';
 
   @override
-  String get progressionSelectorSubtitle => 'Subjudul';
+  String get progressionSelectorSubtitle =>
+      'Pilih bagaimana beban berubah di tiap set';
 
   @override
-  String get progressionSelectorTitle => 'Judul';
+  String get progressionSelectorTitle => 'Progresi Set';
 
   @override
   String get progressionSelectorWhenToUse => 'Kapan digunakan';
@@ -29937,14 +29939,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'Fokus Latihan';
 
   @override
-  String get quickWorkoutSubtitle => 'Subjudul';
+  String get quickWorkoutSubtitle => 'Cocok untuk hari yang sibuk';
 
   @override
   String get quickWorkoutTapToAddPairs =>
       'Ketuk untuk menambahkan pasangan dumbbell';
 
   @override
-  String get quickWorkoutTitle => 'Judul';
+  String get quickWorkoutTitle => 'Latihan Cepat';
 
   @override
   String get quickWorkoutUnfavorite => 'Hapus dari Favorit';
@@ -42310,7 +42312,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'Tukar latihan';
 
   @override
-  String get workoutPlanDrawerTitle => 'Judul';
+  String get workoutPlanDrawerTitle => 'Rencana Latihan';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'Rencana Latihan';

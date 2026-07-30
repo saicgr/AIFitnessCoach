@@ -9309,7 +9309,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get exerciseAddSheetSnapped => 'قطعت';
 
   @override
-  String get exerciseAddSheetSubtitle => 'عنوان فرعي';
+  String get exerciseAddSheetSubtitle =>
+      'اعثر على التمرين المثالي لإضافته إلى تمرينك';
 
   @override
   String get exerciseAddSheetTabAiPicks => 'اختيارات AI';
@@ -28792,10 +28793,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get progressionSelectorSetProgression => 'ضبط التقدم';
 
   @override
-  String get progressionSelectorSubtitle => 'العنوان الفرعي';
+  String get progressionSelectorSubtitle =>
+      'اختر كيف يتغير الوزن عبر المجموعات';
 
   @override
-  String get progressionSelectorTitle => 'العنوان';
+  String get progressionSelectorTitle => 'تدرّج المجموعات';
 
   @override
   String get progressionSelectorWhenToUse => 'متى تستخدم';
@@ -29616,13 +29618,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quickWorkoutSheetWorkoutFocus => 'تركيز التمرين';
 
   @override
-  String get quickWorkoutSubtitle => 'العنوان الفرعي';
+  String get quickWorkoutSubtitle => 'مثالي للأيام المزدحمة';
 
   @override
   String get quickWorkoutTapToAddPairs => 'اضغط لإضافة أزواج الدمبل';
 
   @override
-  String get quickWorkoutTitle => 'العنوان';
+  String get quickWorkoutTitle => 'تمرين سريع';
 
   @override
   String get quickWorkoutUnfavorite => 'إزالة من المفضلة';
@@ -41836,7 +41838,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get workoutPlanDrawerSwapExercise => 'استبدال التمرين';
 
   @override
-  String get workoutPlanDrawerTitle => 'العنوان';
+  String get workoutPlanDrawerTitle => 'خطة التمرين';
 
   @override
   String get workoutPlanDrawerWorkoutPlan => 'خطة تجريب';
