@@ -373,7 +373,14 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                       isDark: isDark,
                       accentColor: accentColor,
                       onTap: () {
-                        context.push('/exercise-progress-detail', extra: {
+                        // E2E register row 118: this pushed
+                        // `/exercise-progress-detail`, a route that has never
+                        // existed. Not currently user-reachable — this is the
+                        // v1 summary screen and only workout_summary_screen_v2
+                        // is wired up. `/stats/exercise-history` is the real
+                        // per-exercise history surface; pointed there so this
+                        // cannot ship a 404 if v1 is ever revived.
+                        context.push('/stats/exercise-history', extra: {
                           'exercise_name': exercise.name,
                         });
                       },

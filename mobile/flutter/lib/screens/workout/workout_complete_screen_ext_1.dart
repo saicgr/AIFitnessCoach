@@ -679,7 +679,13 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
                 label: AppLocalizations.of(context)!.completeViewGoals,
                 textColor: Colors.white,
                 onPressed: () {
-                  context.push('/goals');
+                  // E2E register row 118: this pushed `/goals`, which has never
+                  // been a registered route — the "View goals" action on the
+                  // goal-progress toast landed on a full-screen "Page not
+                  // found". The screen it means is PersonalGoalsScreen at
+                  // `/personal-goals`. Found by the route-existence gate, not
+                  // by anyone tapping it.
+                  context.push('/personal-goals');
                 },
               ),
             ),

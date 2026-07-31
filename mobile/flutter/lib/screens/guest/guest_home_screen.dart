@@ -809,7 +809,14 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
         child: InkWell(
           onTap: () {
             HapticService.light();
-            context.push('/guest-library');
+            // E2E register row 118: this pushed `/guest-library`, a route that
+            // has never existed. Not currently user-reachable — guest mode is
+            // parked (its imports are commented out in app_router.dart), and
+            // GuestLibraryScreen has no route of its own. Pointed at the real
+            // `/library` so reviving guest mode cannot ship a 404; if guest
+            // mode comes back with its own library surface, give it a route and
+            // repoint here.
+            context.push('/library');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

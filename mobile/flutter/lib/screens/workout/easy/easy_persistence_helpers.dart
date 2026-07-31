@@ -429,6 +429,35 @@ final OfflineWriteQueue _easyFinalizeQueue =
 /// Finish permanently stranded that row at `in_progress` (post-migration
 /// 2390: empty sets_json ⇒ in_progress) even though every individual set
 /// had already persisted via `logSetPerformance`.
+/// Test seam for [_easyFinalizeWithOfflineFallback].
+///
+/// The enqueue path ends in `bindConnectivity`, which opens
+/// `Connectivity().onConnectivityChanged` — a real platform EventChannel. Under
+/// `flutter test` that stalls the binding on a message that never arrives, so a
+/// test of the ENQUEUE (the thing E2E register row 1 is actually about) hangs
+/// for the full timeout instead of asserting. Passing `bindReplay: false` skips
+/// only the replay subscription; the enqueue itself, which is what must never
+/// drop a user's sets, runs exactly as in production.
+@visibleForTesting
+Future<void> easyFinalizeWithOfflineFallbackForTest({
+  required WidgetRef ref,
+  required Workout workout,
+  required String? workoutLogId,
+  required String setsJson,
+  required int totalTimeSeconds,
+  required Map<String, dynamic> metadata,
+  bool bindReplay = false,
+}) =>
+    _easyFinalizeWithOfflineFallback(
+      ref: ref,
+      workout: workout,
+      workoutLogId: workoutLogId,
+      setsJson: setsJson,
+      totalTimeSeconds: totalTimeSeconds,
+      metadata: metadata,
+      bindReplay: bindReplay,
+    );
+
 Future<void> _easyFinalizeWithOfflineFallback({
   required WidgetRef ref,
   required Workout workout,
@@ -436,6 +465,7 @@ Future<void> _easyFinalizeWithOfflineFallback({
   required String setsJson,
   required int totalTimeSeconds,
   required Map<String, dynamic> metadata,
+  bool bindReplay = true,
 }) async {
   final repo = ref.read(workoutRepositoryProvider);
   try {
@@ -500,6 +530,7 @@ Future<void> _easyFinalizeWithOfflineFallback({
         : OfflineWriteQueue.idempotencyKey('wkfin'),
   };
   await _easyFinalizeQueue.enqueue(userId: userId, body: body);
+  if (!bindReplay) return;
   _easyFinalizeQueue.bindConnectivity(
     userId: userId,
     sender: (queuedBody) async {

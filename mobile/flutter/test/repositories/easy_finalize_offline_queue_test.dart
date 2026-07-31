@@ -26,6 +26,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fitwiz/core/cache/offline_write_queue.dart';
 import 'package:fitwiz/data/models/workout.dart';
@@ -49,6 +50,11 @@ void main() {
 
   setUp(() {
     setUpMocks();
+    // THE hang, not the connectivity channel: OfflineWriteQueue persists to
+    // SharedPreferences, and in a widget test `getInstance()` never resolves
+    // unless mock values are installed — so the test blocked on a platform
+    // message forever instead of failing.
+    SharedPreferences.setMockInitialValues({});
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockStreamHandler(
       connectivityEventChannel,
@@ -101,35 +107,8 @@ void main() {
         ],
       );
 
-  // SKIPPED — the ASSERTION is right, the HARNESS is not, and a hanging test is
-  // worse than a missing one.
-  //
-  // `runEasyBackgroundSave` is a two-step sequence (finalize PATCH, then
-  // `/complete` via its own offline fallback) and both steps bind connectivity
-  // through `OfflineWriteQueue.bindConnectivity`. Under `flutter test` that
-  // stalls the binding on a platform channel that never resolves: the test does
-  // not fail, it hangs for the full 10-minute timeout and takes the suite with
-  // it. Mocking the connectivity EventChannel (below) and stubbing both `patch`
-  // and `post` to offline errors was not sufficient.
-  //
-  // What this would assert is real and IS the fix for E2E register row 1's
-  // client half: a failed finalize must be enqueued for replay, never dropped —
-  // previously `updateWorkoutLog`/`createWorkoutLog` swallowed every error and
-  // returned null, stranding the session at `status='in_progress'` with an
-  // empty `sets_json`. That routing change is in
-  // `easy_persistence_helpers.dart` (`_easyFinalizeQueue` +
-  // `_easyFinalizeWithOfflineFallback`) and is independently visible there.
-  //
-  // To un-skip: drive `_easyFinalizeWithOfflineFallback` directly with an
-  // injected queue instead of going through `runEasyBackgroundSave`, so the
-  // connectivity binding is never exercised — the same shape the auth tests use
-  // (`resolveAuthLookupWithOneRefreshRetry` takes injected closures rather than
-  // reaching for the real Dio/Supabase stack).
   testWidgets(
       'an offline finalize (update path) enqueues instead of dropping the sets',
-      // (testWidgets takes a bool, not a reason string — the reason is the
-      // block comment above.)
-      skip: true,
       (tester) async {
     // Clear any leftover queue state from a previous test run in this process.
     await OfflineWriteQueue(feature: 'workout_finalize_easy').clear('user-1');
@@ -155,12 +134,19 @@ void main() {
 
     final ref = await pumpRef(tester);
 
-    await runEasyBackgroundSave(
+    // Drive the finalize step directly. `runEasyBackgroundSave` is a two-step
+    // sequence whose second step (/complete) binds its own connectivity
+    // listener, which stalls the test binding on a platform channel that never
+    // resolves — the test hung for the full 10-minute timeout instead of
+    // asserting. `bindReplay: false` skips only the replay SUBSCRIPTION; the
+    // enqueue under test runs exactly as it does in production.
+    await easyFinalizeWithOfflineFallbackForTest(
       ref: ref,
       workout: const Workout(id: 'w1', name: 'Test Workout'),
-      aggregates: aggregates(),
-      totalTimeSeconds: 600,
       workoutLogId: 'log-1',
+      setsJson: aggregates().setsJson,
+      totalTimeSeconds: 600,
+      metadata: const {'logging_mode': 'easy'},
     );
 
     final depth =
