@@ -295,6 +295,60 @@ def _inject_staples(
 _LIBRARY_META_CACHE: Dict[str, Optional[Dict[str, Any]]] = {}
 
 
+# name (as written in the template) -> exercise_library.id, or None for a
+# confirmed miss. Cached per process: program expansion writes ~50 workouts whose
+# exercise names repeat heavily week to week, so after the first day almost every
+# lookup is a cache hit.
+_LIBRARY_ID_CACHE: Dict[str, Optional[str]] = {}
+
+
+def _prime_library_ids(names: List[str]) -> None:
+    """Batch-resolve any not-yet-cached names via resolve_exercise_library_ids_batch.
+
+    Why a SQL RPC rather than a Python map
+    --------------------------------------
+    Template names differ from library names by case, plurals, hyphens and
+    apostrophes ('Calf Raises' vs 'Calf Raise', 'Push-Ups' vs 'Normal Push-up',
+    "Farmers Carry" vs "Farmer's Carry"), so exact matching resolves almost
+    nothing — measured 0 of 18 real unresolved names. Correct matching needs
+    `normalize_exercise_name()`, which carries ~18 plural rules plus abbreviation
+    expansion and parenthetical stripping. Re-implementing that in Python would
+    drift from the SQL truth the moment either side changed, so normalization
+    stays server-side and we send raw names (migration 2393).
+
+    Resolution is exact-normalized only. Unresolved names are cached as None so we
+    do not re-query them, and the caller leaves `exercise_id` NULL — never a guess.
+    """
+    pending = sorted({
+        n.strip() for n in names
+        if n and n.strip() and n.strip() not in _LIBRARY_ID_CACHE
+    })
+    if not pending:
+        return
+    try:
+        from core.db import get_supabase_db
+        db = get_supabase_db()
+        res = db.client.rpc(
+            "resolve_exercise_library_ids_batch", {"p_names": pending}
+        ).execute()
+        for row in (res.data or []):
+            rn = row.get("requested_name")
+            if rn:
+                _LIBRARY_ID_CACHE[rn] = row.get("exercise_library_id")
+    except Exception as e:  # noqa: BLE001 — never block expansion on a lookup
+        logger.warning(f"[Expander] library id batch resolve failed: {e}")
+    # Cache confirmed misses so a whole program doesn't re-query the same name.
+    for n in pending:
+        _LIBRARY_ID_CACHE.setdefault(n, None)
+
+
+def _library_id_for_name(name: Optional[str]) -> Optional[str]:
+    """Look up a name in the cache primed by _prime_library_ids(). None on miss."""
+    if not name or not name.strip():
+        return None
+    return _LIBRARY_ID_CACHE.get(name.strip())
+
+
 def _library_meta_for(exercise_id: Optional[str]) -> Optional[Dict[str, Any]]:
     """Fetch the canonical exercise_library row (equipment/is_timed/
     movement_pattern/default_hold_seconds) for an exercise_id, cached per
@@ -332,7 +386,15 @@ def _day_to_exercises_json(
 ) -> List[Dict[str, Any]]:
     """Build the literal `exercises_json` list for one template day."""
     out: List[Dict[str, Any]] = []
-    for i, ex in enumerate(day.get("exercises") or []):
+    _src_exercises = day.get("exercises") or []
+    # One batched resolve per day for any name we haven't seen yet, so the loop
+    # below is pure cache lookups instead of a query per exercise.
+    _prime_library_ids([
+        (e.get("name") or e.get("original_name") or "")
+        for e in _src_exercises
+        if not e.get("exercise_id")
+    ])
+    for i, ex in enumerate(_src_exercises):
         name = ex.get("name") or ex.get("original_name") or ""
         weight = ex.get("target_weight_kg")
         if weight is None:
@@ -340,9 +402,13 @@ def _day_to_exercises_json(
         if weight is not None and is_deload:
             # Scheduled deload week: ~60% load, same sets/reps (#45).
             weight = round(float(weight) * 0.6, 2)
+        # Fill in a missing exercise_id from the name so the stored row does not
+        # depend on name matching at read time. Only ever FILLS a gap — an id the
+        # template already carries is authoritative and left untouched.
+        resolved_id = ex.get("exercise_id") or _library_id_for_name(name)
         obj: Dict[str, Any] = {
             "name": name,
-            "exercise_id": ex.get("exercise_id"),
+            "exercise_id": resolved_id,
             "order": i + 1,
             "sets": ex.get("sets", 3),
             "reps": ex.get("reps"),
@@ -369,7 +435,10 @@ def _day_to_exercises_json(
             # Consult the canonical library row first (authoritative equipment /
             # is_timed / movement_pattern) so the derived tracking_type +
             # metric_keys are correct even when the template blob is sparse.
-            _lib = _library_meta_for(ex.get("exercise_id"))
+            # Use the RESOLVED id, so name-only template entries now also get the
+            # authoritative equipment / is_timed / movement_pattern metadata that
+            # drives tracking_type — previously they silently got none.
+            _lib = _library_meta_for(resolved_id)
             _tm = derive_tracking_metadata(obj, library_meta=_lib)
             if _tm.get("tracking_type"):
                 obj["tracking_type"] = _tm["tracking_type"]
