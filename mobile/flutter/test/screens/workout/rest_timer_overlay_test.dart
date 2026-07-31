@@ -43,6 +43,9 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
         ),
       ));
 
@@ -59,6 +62,9 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
         ),
       ));
 
@@ -77,6 +83,9 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
         ),
       ));
 
@@ -95,6 +104,9 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
         ),
       ));
 
@@ -117,6 +129,9 @@ void main() {
           totalSets: 3,
           isRestBetweenExercises: false,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
         ),
       ));
 
@@ -147,6 +162,9 @@ void main() {
           nextExercise: next,
           isRestBetweenExercises: true,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
         ),
       ));
 
@@ -168,6 +186,7 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () => skipCalled = true,
+          useKg: false,
         ),
       ));
 
@@ -189,6 +208,9 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
           onLog1RM: () {},
         ),
       ));
@@ -211,6 +233,9 @@ void main() {
           completedSetsCount: 1,
           totalSets: 3,
           onSkipRest: () {},
+          // E2E row 18: the overlay now renders weights in the user's unit,
+          // so the unit must be supplied. false = pounds, matching these fixtures.
+          useKg: false,
           onLog1RM: () => log1RMCalled = true,
         ),
       ));
@@ -232,6 +257,7 @@ void main() {
         completedSetsCount: 1,
         totalSets: 3,
         onSkipRest: () {},
+        useKg: false,
       );
 
       expect(overlay.restProgress, 0.5);
@@ -246,6 +272,7 @@ void main() {
         completedSetsCount: 1,
         totalSets: 3,
         onSkipRest: () {},
+        useKg: false,
       );
 
       expect(overlay.restProgress, 0.0);
@@ -262,6 +289,7 @@ void main() {
         totalSets: 3,
         isRestBetweenExercises: false,
         onSkipRest: () {},
+        useKg: false,
       );
 
       expect(restBetweenSets.isRestBetweenSets, true);
@@ -276,6 +304,7 @@ void main() {
         totalSets: 3,
         isRestBetweenExercises: true,
         onSkipRest: () {},
+        useKg: false,
       );
 
       expect(restBetweenExercises.isRestBetweenSets, false);

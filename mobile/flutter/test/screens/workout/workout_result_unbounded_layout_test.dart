@@ -31,7 +31,6 @@ import 'package:fitwiz/data/models/workout.dart';
 import 'package:fitwiz/l10n/generated/app_localizations.dart';
 import 'package:fitwiz/screens/library/providers/library_providers.dart'
     show exercisesProvider;
-import 'package:fitwiz/screens/workout/workout_summary_advanced.dart';
 import 'package:fitwiz/screens/workout/workout_summary_general.dart';
 
 // ───────────────────────── render matrix ─────────────────────────
@@ -409,16 +408,6 @@ void main() {
   group('Workout result screens never force infinite height', () {
     for (final f in _fixtures()) {
       for (final rc in _renderCases) {
-        testWidgets('Advanced · ${f.label} · ${rc.label}', (tester) async {
-          await _pumpResult(
-            tester,
-            WorkoutSummaryAdvanced(data: f.data, metadata: f.metadata, topPadding: 0),
-            rc,
-          );
-          _expectNoLayoutFailure(
-              tester, rc, 'WorkoutSummaryAdvanced · ${f.label}');
-        });
-
         testWidgets('General · ${f.label} · ${rc.label}', (tester) async {
           await _pumpResult(
             tester,

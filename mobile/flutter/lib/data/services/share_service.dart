@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -30,6 +31,38 @@ class ShareResult {
 
 /// Service for sharing images to external platforms
 class ShareService {
+  /// Anchor rect for the iOS share sheet.
+  ///
+  /// E2E register row 138: "Tapping Share never presents the OS share sheet —
+  /// the controller activates and deallocates in ~19 ms." That was filed as
+  /// possibly Simulator-only. It is not: on **iPad** — and this app ships for
+  /// iPad (`TARGETED_DEVICE_FAMILY = "1,2"`) — `UIActivityViewController` is
+  /// presented as a POPOVER, and a popover must have an anchor. `share_plus`
+  /// supplies that anchor from `sharePositionOrigin`. Pass nothing and there is
+  /// nowhere to attach it, so iOS tears the controller straight back down —
+  /// exactly the activate-then-deallocate signature in the report.
+  ///
+  /// 19 of 20 `shareXFiles` call sites in this app passed nothing, so every
+  /// share entry point was affected on iPad.
+  ///
+  /// A caller that knows which widget was tapped should still pass its real
+  /// global rect (the popover then points at the button). This is the FALLBACK
+  /// so that not doing so degrades to a centred sheet instead of no sheet at
+  /// all. Deliberately a real, non-empty rect: a zero-size origin is treated the
+  /// same as none.
+  static Rect defaultSharePositionOrigin() => _fallbackSharePositionOrigin();
+
+  static Rect _fallbackSharePositionOrigin() {
+    final view = ui.PlatformDispatcher.instance.views.first;
+    final size = view.physicalSize / view.devicePixelRatio;
+    // A small rect at the centre — visually neutral, and valid as an anchor.
+    return Rect.fromCenter(
+      center: Offset(size.width / 2, size.height / 2),
+      width: 1,
+      height: 1,
+    );
+  }
+
   /// Share to Instagram Stories via deep link
   ///
   /// This uses Instagram's native Stories composer.
@@ -143,6 +176,7 @@ class ShareService {
       await Share.shareXFiles(
         [XFile(imageFile.path)],
         text: 'Check out my workout!',
+        sharePositionOrigin: _fallbackSharePositionOrigin(),
       );
 
       return const ShareResult(
@@ -230,6 +264,7 @@ class ShareService {
       await Share.shareXFiles(
         [XFile(videoPath)],
         text: 'Check out my workout!',
+        sharePositionOrigin: _fallbackSharePositionOrigin(),
       );
       return const ShareResult(
         success: true,
@@ -262,7 +297,8 @@ class ShareService {
         [XFile(file.path)],
         text: caption ?? 'Check out my workout!',
         subject: subject ?? 'My Workout Recap',
-        sharePositionOrigin: sharePositionOrigin,
+        sharePositionOrigin:
+            sharePositionOrigin ?? _fallbackSharePositionOrigin(),
       );
 
       debugPrint('✅ [Share] System share completed: ${result.status}');

@@ -20,7 +20,6 @@ import 'package:fitwiz/core/providers/locale_provider.dart' show supportedAppLoc
 import 'package:fitwiz/core/providers/user_provider.dart' show useKgForWorkoutProvider;
 import 'package:fitwiz/data/models/workout.dart';
 import 'package:fitwiz/l10n/generated/app_localizations.dart';
-import 'package:fitwiz/screens/workout/workout_summary_advanced.dart';
 import 'package:fitwiz/screens/workout/workout_summary_general.dart';
 
 void main() {
@@ -67,59 +66,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('225 lb x 5'), findsOneWidget);
-      expect(find.textContaining('100 kg'), findsNothing);
-    });
-  });
-
-  group('WorkoutSummaryAdvanced — Estimated 1RM follows useKgForWorkoutProvider (#18)', () {
-    // A single-rep set: the Epley estimate is just the lifted weight itself
-    // (100 kg), so the expected snapped conversion is exactly "225 lb".
-    final summaryData = WorkoutSummaryResponse(
-      workout: const {'name': 'Push Day'}, // no 'id' -> no recap network fetch
-      setLogs: const [
-        SetLogInfo(
-          exerciseName: 'Bench Press',
-          setNumber: 1,
-          repsCompleted: 1,
-          weightKg: 100,
-          setType: 'working',
-        ),
-      ],
-    );
-
-    Widget buildAdvanced({required bool useKg}) {
-      return ProviderScope(
-        overrides: [useKgForWorkoutProvider.overrideWithValue(useKg)],
-        child: MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: supportedAppLocales,
-          home: Scaffold(
-            body: WorkoutSummaryAdvanced(data: summaryData, metadata: null),
-          ),
-        ),
-      );
-    }
-
-    testWidgets('useKg=true renders the estimated 1RM in kg', (tester) async {
-      await tester.pumpWidget(buildAdvanced(useKg: true));
-      await tester.pumpAndSettle();
-
-      // Estimated 1RM lives in the collapsed "More details" section.
-      await tester.tap(find.text('More details'));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('100 kg'), findsWidgets);
-      expect(find.textContaining('225 lb'), findsNothing);
-    });
-
-    testWidgets('useKg=false renders the estimated 1RM in lb', (tester) async {
-      await tester.pumpWidget(buildAdvanced(useKg: false));
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('More details'));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('225 lb'), findsWidgets);
       expect(find.textContaining('100 kg'), findsNothing);
     });
   });
