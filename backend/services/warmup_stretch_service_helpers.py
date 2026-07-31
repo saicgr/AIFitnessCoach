@@ -694,8 +694,13 @@ class WarmupStretchService:
 
             return result.data[0] if result.data else None
         except Exception as e:
+            # Do NOT swallow this into None. The endpoint turns None into a 404
+            # meaning "not generated yet", and the client reacts by POSTing a
+            # generation request. A transient DB error returning None was therefore
+            # indistinguishable from "no warmup exists" and silently triggered a
+            # redundant regeneration instead of surfacing the fault.
             logger.error(f"❌ Failed to get warmup: {e}", exc_info=True)
-            return None
+            raise
 
     def get_stretches_for_workout(self, workout_id: str) -> Optional[Dict[str, Any]]:
         """Get current stretches for a workout (latest current version)."""
@@ -708,8 +713,10 @@ class WarmupStretchService:
 
             return result.data[0] if result.data else None
         except Exception as e:
+            # See get_warmup_for_workout: a swallowed error becomes a 404 that the
+            # client reads as "not generated yet", masking real DB faults.
             logger.error(f"❌ Failed to get stretches: {e}", exc_info=True)
-            return None
+            raise
 
     def update_warmup_order(self, workout_id: str, exercises: List[Dict]) -> Optional[Dict[str, Any]]:
         """Persist a user-reordered warmup list onto the current warmup row.
