@@ -217,7 +217,11 @@ def _picks_to_remove(
 @router.post("/{workout_id}/quick-adjust", response_model=QuickAdjustResponse)
 @limiter.limit("20/minute")
 async def quick_adjust_workout(
-    workout_id: int,
+    # `workouts.id` is a UUID (see core/db/workout_db.py:get_workout -> workout_id: str).
+    # This was declared `int`, so FastAPI 422'd every real id before the handler ran,
+    # and the Flutter client papered over it with `int.tryParse(id) ?? 0` — sending
+    # /workouts/0/quick-adjust. Both sides fixed together.
+    workout_id: str,
     # Explicit `Body(...)` so FastAPI's OpenAPI schema generation under
     # `from __future__ import annotations` doesn't fall back to treating
     # this ForwardRef as a Query parameter (which crashes /openapi.json
@@ -275,7 +279,8 @@ async def quick_adjust_workout(
         logger.warning(f"[QuickAdjust] readiness insert failed (non-fatal): {e}")
 
     # Normalize exercises into a List[Dict] we can mutate.
-    exercises_data = workout.get("exercises")
+    # `workouts` has no `exercises` column — the array lives in `exercises_json`.
+    exercises_data = workout.get("exercises_json")
     if isinstance(exercises_data, str):
         exercises = json.loads(exercises_data) if exercises_data else []
     else:
@@ -325,8 +330,16 @@ async def quick_adjust_workout(
             ]
             names_to_remove = [n for n in names_to_remove if n]
             if names_to_remove:
-                modifier.remove_exercises_from_workout(workout_id, names_to_remove)
-                exercises_removed = names_to_remove
+                # Check the result — this used to be discarded, so a failed write
+                # (e.g. the phantom-column 42703 this endpoint shipped with) still
+                # reported the exercises as removed in the response.
+                if modifier.remove_exercises_from_workout(workout_id, names_to_remove):
+                    exercises_removed = names_to_remove
+                else:
+                    logger.error(
+                        f"[QuickAdjust] failed to remove {names_to_remove} from "
+                        f"workout {workout_id} — reporting no removal"
+                    )
 
     # Branch 3 — ease intensity if sore/tired. Applies AFTER trim so we're
     # easing the already-shorter list.
@@ -340,7 +353,7 @@ async def quick_adjust_workout(
 
     # Re-read workout to get authoritative updated state for the response.
     updated_workout = db.get_workout(workout_id) or {}
-    updated_exercises_raw = updated_workout.get("exercises")
+    updated_exercises_raw = updated_workout.get("exercises_json")
     if isinstance(updated_exercises_raw, str):
         updated_exercises = json.loads(updated_exercises_raw) if updated_exercises_raw else []
     else:

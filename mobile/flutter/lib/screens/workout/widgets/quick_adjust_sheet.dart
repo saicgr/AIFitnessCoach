@@ -72,7 +72,7 @@ class QuickAdjustResult {
 Future<QuickAdjustResult?> showQuickAdjustSheet({
   required BuildContext context,
   required WidgetRef ref,
-  required int workoutId,
+  required String workoutId,
   required List<int> remainingIndices,
   required int currentEstimatedMinutes,
 }) {
@@ -92,7 +92,7 @@ Future<QuickAdjustResult?> showQuickAdjustSheet({
 
 class _QuickAdjustSheet extends StatefulWidget {
   final WidgetRef ref;
-  final int workoutId;
+  final String workoutId;
   final List<int> remainingIndices;
   final int currentEstimatedMinutes;
 

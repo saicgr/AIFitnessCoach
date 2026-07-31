@@ -21,7 +21,7 @@ class WorkoutModifier:
 
     def add_exercises_to_workout(
         self,
-        workout_id: int,
+        workout_id: str,   # workouts.id is a UUID
         exercise_names: List[str],
         muscle_groups: Optional[List[str]] = None
     ) -> bool:
@@ -38,7 +38,10 @@ class WorkoutModifier:
                 logger.error(f"Workout {workout_id} not found")
                 return False
 
-            exercises_data = workout.get("exercises")
+            # `workouts` stores the exercise array in `exercises_json`. There is no
+            # `exercises` column — reading it always returned None, so every path
+            # below silently operated on an empty list.
+            exercises_data = workout.get("exercises_json")
             modification_history = workout.get("modification_history") or []
 
             # Handle exercises (could be string or list)
@@ -83,12 +86,23 @@ class WorkoutModifier:
 
             # Update workout in database
             update_data = {
-                "exercises": exercises,
+                # NOT "exercises" — that column does not exist on `workouts`, and a
+                # single phantom column makes PostgREST reject the ENTIRE update
+                # (42703), including modification_history. Every AI-coach workout
+                # edit failed this way.
+                "exercises_json": exercises,
                 "modification_history": history,
                 "last_modified_method": "ai_coach",
             }
 
-            self.db.update_workout(workout_id, update_data)
+            # update_workout returns the updated row, or None when nothing matched.
+            # Ignoring it meant a no-op write (bad id, RLS, rejected column) still
+            # reported success to the caller.
+            if not self.db.update_workout(workout_id, update_data):
+                logger.error(
+                    f"update_workout({workout_id}) matched no rows — workout NOT modified"
+                )
+                return False
 
             # Log the workout change
             self._log_workout_change(
@@ -110,7 +124,7 @@ class WorkoutModifier:
 
     def remove_exercises_from_workout(
         self,
-        workout_id: int,
+        workout_id: str,   # workouts.id is a UUID
         exercise_names: List[str]
     ) -> bool:
         """
@@ -126,7 +140,10 @@ class WorkoutModifier:
                 logger.error(f"Workout {workout_id} not found")
                 return False
 
-            exercises_data = workout.get("exercises")
+            # `workouts` stores the exercise array in `exercises_json`. There is no
+            # `exercises` column — reading it always returned None, so every path
+            # below silently operated on an empty list.
+            exercises_data = workout.get("exercises_json")
             modification_history = workout.get("modification_history") or []
 
             # Handle exercises (could be string or list)
@@ -163,12 +180,23 @@ class WorkoutModifier:
 
             # Update workout in database
             update_data = {
-                "exercises": exercises,
+                # NOT "exercises" — that column does not exist on `workouts`, and a
+                # single phantom column makes PostgREST reject the ENTIRE update
+                # (42703), including modification_history. Every AI-coach workout
+                # edit failed this way.
+                "exercises_json": exercises,
                 "modification_history": history,
                 "last_modified_method": "ai_coach",
             }
 
-            self.db.update_workout(workout_id, update_data)
+            # update_workout returns the updated row, or None when nothing matched.
+            # Ignoring it meant a no-op write (bad id, RLS, rejected column) still
+            # reported success to the caller.
+            if not self.db.update_workout(workout_id, update_data):
+                logger.error(
+                    f"update_workout({workout_id}) matched no rows — workout NOT modified"
+                )
+                return False
 
             # Log the workout change
             self._log_workout_change(
@@ -190,7 +218,7 @@ class WorkoutModifier:
 
     def modify_workout_intensity(
         self,
-        workout_id: int,
+        workout_id: str,   # workouts.id is a UUID
         modification: str = "adjust"
     ) -> bool:
         """
@@ -222,7 +250,10 @@ class WorkoutModifier:
             }
             ceiling = FITNESS_CEILINGS.get(fitness_level.lower(), FITNESS_CEILINGS["intermediate"])
 
-            exercises_data = workout.get("exercises")
+            # `workouts` stores the exercise array in `exercises_json`. There is no
+            # `exercises` column — reading it always returned None, so every path
+            # below silently operated on an empty list.
+            exercises_data = workout.get("exercises_json")
             modification_history = workout.get("modification_history") or []
 
             # Handle exercises (could be string or list)
@@ -265,12 +296,23 @@ class WorkoutModifier:
 
             # Update workout in database
             update_data = {
-                "exercises": exercises,
+                # NOT "exercises" — that column does not exist on `workouts`, and a
+                # single phantom column makes PostgREST reject the ENTIRE update
+                # (42703), including modification_history. Every AI-coach workout
+                # edit failed this way.
+                "exercises_json": exercises,
                 "modification_history": history,
                 "last_modified_method": "ai_coach",
             }
 
-            self.db.update_workout(workout_id, update_data)
+            # update_workout returns the updated row, or None when nothing matched.
+            # Ignoring it meant a no-op write (bad id, RLS, rejected column) still
+            # reported success to the caller.
+            if not self.db.update_workout(workout_id, update_data):
+                logger.error(
+                    f"update_workout({workout_id}) matched no rows — workout NOT modified"
+                )
+                return False
 
             # Log the workout change
             self._log_workout_change(
@@ -292,7 +334,7 @@ class WorkoutModifier:
 
     def _log_workout_change(
         self,
-        workout_id: int,
+        workout_id: str,   # workouts.id is a UUID
         user_id: int,
         change_type: str,
         field_changed: str,

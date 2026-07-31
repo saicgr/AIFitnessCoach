@@ -2439,7 +2439,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
     final result = await showQuickAdjustSheet(
       context: context,
       ref: ref,
-      workoutId: int.tryParse(workoutId) ?? 0,
+      workoutId: workoutId,
       remainingIndices: remainingIndices,
       currentEstimatedMinutes: estimatedMinutes,
     );
