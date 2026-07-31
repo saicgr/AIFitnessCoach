@@ -27,6 +27,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/program_assignments_provider.dart';
+import '../../../../data/providers/root_messenger.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
@@ -233,13 +234,14 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       }
       _poll?.cancel();
       if (mounted && result.crateGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: const Text(
                 '🎉 Get Started Challenge complete! +100 XP and a reward crate'),
+            duration: const Duration(seconds: 4),
             action: SnackBarAction(
               label: 'OPEN',
-              onPressed: () => context.push('/xp'),
+              onPressed: () => context.push('/rewards'),
             ),
           ),
         );
@@ -543,7 +545,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
                 ),
                 onPressed: () {
                   HapticService.light();
-                  context.push('/xp');
+                  context.push('/rewards');
                 },
                 icon: const Icon(Icons.card_giftcard_rounded, size: 18),
                 label: const Text('Open your crate'),

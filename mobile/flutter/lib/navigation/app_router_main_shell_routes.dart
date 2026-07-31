@@ -103,9 +103,22 @@ List<RouteBase> _mainShellRoutes() => [
             // the branch state.
             GoRoute(
               path: '/social',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: SocialScreen(),
-              ),
+              // `?tab=` selects the top-tab. Challenge notifications used to
+              // push a `/challenges` route that never existed (E2E row 118),
+              // so they 404'd; challenges are a TAB here, not a route.
+              pageBuilder: (context, state) {
+                const tabIndex = <String, int>{
+                  'feed': 0,
+                  'challenges': 1,
+                  'leaderboard': 2,
+                  'friends': 3,
+                };
+                return NoTransitionPage(
+                  child: SocialScreen(
+                    initialTab: tabIndex[state.uri.queryParameters['tab']] ?? 0,
+                  ),
+                );
+              },
             ),
           ]),
           // Branch 4: You (formerly Profile) — hub screen wrapping the

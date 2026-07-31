@@ -59,10 +59,10 @@ class _UsagePill extends StatelessWidget {
   const _UsagePill({required this.feature, this.remaining});
 
   Color _pillColor(bool isDark) {
-    if (remaining == null) return isDark ? AppColors.success : AppColorsLight.success;
-    if (remaining! >= 2) return isDark ? AppColors.success : AppColorsLight.success;
-    if (remaining! == 1) return isDark ? AppColors.warning : AppColorsLight.warning;
-    return isDark ? AppColors.error : AppColorsLight.error;
+    if (remaining == null) return isDark ? AppColors.success : AppColorsLight.success; // accent-allowlist: usage-limit severity color (success/warning/error)
+    if (remaining! >= 2) return isDark ? AppColors.success : AppColorsLight.success; // accent-allowlist: usage-limit severity color (success/warning/error)
+    if (remaining! == 1) return isDark ? AppColors.warning : AppColorsLight.warning; // accent-allowlist: usage-limit severity color (success/warning/error)
+    return isDark ? AppColors.error : AppColorsLight.error; // accent-allowlist: usage-limit severity color (success/warning/error)
   }
 
   @override
@@ -72,7 +72,7 @@ class _UsagePill extends StatelessWidget {
     final displayCount = remaining ?? 0;
 
     return GestureDetector(
-      onTap: () => context.push('/paywall'),
+      onTap: () => context.go('/hard-paywall'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(

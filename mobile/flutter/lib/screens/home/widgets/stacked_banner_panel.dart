@@ -9,6 +9,8 @@ import '../../../core/providers/subscription_provider.dart';
 import '../../../core/utils/banner_notification_mapper.dart';
 import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
+import '../../../data/providers/daily_coach_insight_provider.dart'
+    show dailyCoachInsightProvider, CalibrationStatus;
 import '../../../data/providers/discover_provider.dart';
 import '../../../data/providers/health_insight_provider.dart';
 import '../../../data/providers/scheduling_provider.dart';
@@ -17,6 +19,7 @@ import '../../../data/providers/scores_provider.dart';
 import '../../../data/providers/week1_tips_provider.dart';
 import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../data/providers/wrapped_provider.dart';
+import '../../../data/services/rating_prompt_service.dart';
 import '../../../data/providers/xp_provider.dart'
     show activeDoubleXPEventProvider, dailyCratesProvider, showDailyCrateBannerProvider,
          unclaimedCratesProvider, unclaimedCratesCountProvider, xpProvider, XPNotifierExt;
@@ -27,6 +30,7 @@ import '../../../data/repositories/scheduling_repository.dart' show MissedWorkou
 import '../../../data/services/crate_notification_router.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/rating_prompt_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
 import 'open_all_crates_sheet.dart';
 import 'banner_card_data.dart';
@@ -36,6 +40,18 @@ import 'stacked_banner_controller.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../data/providers/root_messenger.dart';
+import '../../../core/theme/accent_color_provider.dart';
+
+/// Bridges [RatingPromptService.shouldShowBanner]'s async eligibility check
+/// into something [StackedBannerPanel._collectBanners] (synchronous) can
+/// `ref.watch`. Folded in from the standalone `RatingPromptBanner` widget
+/// (E2E #150) — the panel invalidates this after a dismiss/sheet-close so
+/// eligibility re-checks immediately, matching the old widget's behavior.
+final _ratingPromptEligibleProvider = FutureProvider.autoDispose<bool>((ref) {
+  return ref.watch(ratingPromptServiceProvider).shouldShowBanner();
+});
+
 /// A phone notification-panel style stacked banner system.
 ///
 /// Collects ALL active banners (not just the highest priority), renders them
@@ -93,6 +109,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   // rebuilt from scratch. Persisted per-day so the banner naturally comes
   // back tomorrow if a new crate is still unclaimed.
   bool _dailyCrateDismissedToday = false;
+
+  // Calibration banner permanent-dismiss state (E2E #150 — folded in from
+  // the standalone CalibrationBanner widget). Same SharedPreferences key as
+  // the old widget so a user who already dismissed it doesn't see it again.
+  bool _calibrationDismissed = false;
 
   // Session flag: when dismiss-all is used, suppress ALL banners until
   // the widget is remounted (e.g. user navigates away and back).
@@ -180,6 +201,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     // tomorrow if a new crate is still unclaimed.
     final dailyCrateDismissed = prefs.getBool('daily_crate_dismissed_$todayKey') ?? false;
 
+    // Calibration banner permanent-dismiss flag — same key the standalone
+    // CalibrationBanner widget used, so an existing dismissal carries over.
+    final calibrationDismissed =
+        prefs.getBool('calibration_banner_dismissed') ?? false;
+
     // Discord community banner state
     final discordJoined = prefs.getBool('discord_joined') ?? false;
     final discordDismissedStr = prefs.getString('discord_banner_dismissed');
@@ -204,6 +230,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         _dismissedMissedWorkoutIds = prunedMissedIds.toSet();
         _week1TipDismissedToday = week1Dismissed != null;
         _dailyCrateDismissedToday = dailyCrateDismissed;
+        _calibrationDismissed = calibrationDismissed;
         _discordJoined = discordJoined;
         _discordLastShown = discordLastShown;
         _instagramFollowed = instagramFollowed;
@@ -223,10 +250,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     if (renewal != null && renewal.showBanner) {
       final days = renewal.daysUntilRenewal ?? 0;
       final urgencyColor = days <= 1
-          ? Colors.red
+          ? Colors.red  // accent-allowlist: error/destructive -- must stay red
           : days <= 3
-              ? AppColors.orange
-              : AppColors.cyan;
+              ? context.accentColor
+              : context.accentColor;
       // Append billing cadence so the subtitle reads "Premium yearly renews
       // in 3 days for $49.99" instead of dropping the cadence on the floor.
       final cadence = ref.watch(
@@ -268,7 +295,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         subtitle: streakRisk.lastChance
             ? 'Log anything to keep your streak alive.'
             : 'A quick log keeps the fire burning.',
-        accentColor: AppColors.orange,
+        accentColor: context.accentColor,
         actionLabel: 'Log now',
         onAction: () {
           HapticService.light();
@@ -289,7 +316,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         icon: Icons.schedule_rounded,
         title: 'Missed: ${_formatWorkoutType(workout.type)}',
         subtitle: '${workout.missedDescription} · ${workout.durationMinutes}min · ${workout.exercisesCount} exercises',
-        accentColor: AppColors.orange,
+        accentColor: context.accentColor,
         actionLabel: 'Do Today',
         onAction: () => _handleDoToday(workout),
         onTap: () => _handleDoToday(workout),
@@ -363,7 +390,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         icon: Icons.bar_chart_rounded,
         title: title,
         subtitle: subtitle,
-        accentColor: AppColors.purple,
+        accentColor: context.accentColor,
         onTap: () {
           HapticService.light();
           context.push('/leaderboard');
@@ -390,7 +417,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         subtitle: displayCount > 1
             ? '$displayCount crates ready to open'
             : 'Tap to pick your reward',
-        accentColor: const Color(0xFFFFB300),
+        accentColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate), gamification tier convention
         actionLabel: displayCount > 1 ? 'Open All' : 'Open',
         onTap: () {
           HapticService.medium();
@@ -412,10 +439,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         icon: Icons.bolt_rounded,
         title: '${doubleXPEvent.xpMultiplier.toInt()}x XP Active',
         subtitle: '${doubleXPEvent.eventName} · $timeStr',
-        accentColor: AppColors.orange,
+        accentColor: context.accentColor,
         onTap: () {
           HapticService.light();
-          context.push('/xp');
+          context.push('/xp-goals');
         },
       ));
     }
@@ -463,7 +490,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
             emoji: '✨',
             title: 'Your $month Wrapped Is Here',
             subtitle: '${info.totalWorkouts} workouts · $volumeStr lifted',
-            accentColor: const Color(0xFF9D4EDD),
+            accentColor: const Color(0xFF9D4EDD),  // accent-allowlist: "Wrapped" banner's own fixed identity colour (per-banner-type system: crate=gold, Wrapped=purple, Discord/Instagram=brand), not the app accent
             actionLabel: 'View',
             onTap: () {
               HapticService.medium();
@@ -479,7 +506,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
             emoji: '✨',
             title: '$month Wrapped',
             subtitle: AppLocalizations.of(context).stackedBannerPanelTapToRevisitYour,
-            accentColor: const Color(0xFF7B2FF7),
+            accentColor: const Color(0xFF7B2FF7),  // accent-allowlist: "Wrapped" banner's own fixed identity colour (per-banner-type system: crate=gold, Wrapped=purple, Discord/Instagram=brand), not the app accent
             actionLabel: 'View',
             onTap: () {
               HapticService.light();
@@ -517,10 +544,70 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         // game plan (Phase E4) — the full multi-part plan lives on the home
         // [HealthInsightCard] and the deep-linked /health/sleep screen.
         subtitle: hi.briefMessage,
-        accentColor: AppColors.cyan,
+        accentColor: context.accentColor,
         onTap: () {
           HapticService.light();
           context.push(hi.route);
+        },
+      ));
+    }
+
+    // 9. Calibration ("Coach is learning you") — folded in from the
+    //    standalone CalibrationBanner widget (E2E #150) so it takes a turn
+    //    in the fold instead of always occupying its own row. Self-hides
+    //    once every baseline is ready, past 30 days of account age,
+    //    dismissed, or the server payload omits calibration_status
+    //    (loading/error/indeterminate) — same rules as the old widget.
+    if (!_calibrationDismissed) {
+      final createdAtStr = ref.watch(authStateProvider).user?.createdAt;
+      final createdAt = createdAtStr != null && createdAtStr.isNotEmpty
+          ? DateTime.tryParse(createdAtStr)
+          : null;
+      final withinCalibrationWindow = createdAt != null &&
+          DateTime.now().difference(createdAt) < const Duration(days: 30);
+      final calibrationStatus =
+          ref.watch(dailyCoachInsightProvider).valueOrNull?.calibrationStatus;
+      if (withinCalibrationWindow &&
+          calibrationStatus != null &&
+          !calibrationStatus.allReady) {
+        final ready = calibrationStatus.readyCount;
+        final total = calibrationStatus.totalCount;
+        banners.add(BannerCardData(
+          type: BannerType.calibration,
+          id: 'calibration',
+          icon: Icons.auto_awesome_rounded,
+          title: 'Coach is learning you',
+          subtitle: ready > 0
+              ? '$ready of $total baselines ready · tap for details'
+              : 'Building your baselines · tap for details',
+          accentColor: context.accentColor,
+          onTap: () {
+            HapticService.light();
+            _showCalibrationDetailSheet(calibrationStatus);
+          },
+        ));
+      }
+    }
+
+    // 10. In-app rating prompt — folded in from the standalone
+    //     RatingPromptBanner widget (E2E #150).
+    final ratingEligible =
+        ref.watch(_ratingPromptEligibleProvider).valueOrNull ?? false;
+    if (ratingEligible) {
+      banners.add(BannerCardData(
+        type: BannerType.ratingPrompt,
+        id: 'rating_prompt',
+        emoji: '⭐',
+        title: AppLocalizations.of(context).ratingPromptBannerGot30Seconds,
+        subtitle:
+            AppLocalizations.of(context).ratingPromptBannerHelpUsOutRate,
+        accentColor: context.accentColor,
+        onTap: () async {
+          HapticService.light();
+          await showRatingPromptSheet(context, ref);
+          // Re-check eligibility — the sheet almost certainly flipped it
+          // (submitted, dismissed, or remind-later), same as the old widget.
+          ref.invalidate(_ratingPromptEligibleProvider);
         },
       ));
     }
@@ -561,7 +648,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               icon: Icons.flag_outlined,
               title: AppLocalizations.of(context).stackedBannerPanelKeepItUp,
               subtitle: "You're $remaining $workoutWord away from your weekly goal",
-              accentColor: AppColors.cyan,
+              accentColor: context.accentColor,
               actionLabel: 'View',
               onTap: () {
                 HapticService.light();
@@ -594,7 +681,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                 icon: Icons.emoji_events_outlined,
                 title: AppLocalizations.of(context).stackedBannerPanelNewPr,
                 subtitle: '${pr.exerciseName}: $weightLbs lbs',
-                accentColor: AppColors.success,
+                accentColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 actionLabel: 'View',
                 onTap: () {
                   HapticService.light();
@@ -621,7 +708,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           icon: Icons.forum_outlined,
           title: AppLocalizations.of(context).stackedBannerPanelJoinTheCommunity,
           subtitle: AppLocalizations.of(context).stackedBannerPanelGetHelpShareWins,
-          accentColor: const Color(0xFF5865F2),
+          accentColor: const Color(0xFF5865F2),  // accent-allowlist: third-party brand mark -- Discord
           actionLabel: 'Join',
           onTap: () async {
             HapticService.light();
@@ -650,7 +737,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           icon: Icons.camera_alt_outlined,
           title: AppLocalizations.of(context).stackedBannerPanelFollowUsOnInstagram,
           subtitle: 'Workout tips, meal ideas, and community highlights @${Branding.marketingDomain}',
-          accentColor: const Color(0xFFE4405F),
+          accentColor: const Color(0xFFE4405F),  // accent-allowlist: third-party brand mark -- Instagram
           actionLabel: 'Follow',
           onTap: () async {
             HapticService.light();
@@ -665,6 +752,95 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     }
 
     return null;
+  }
+
+  /// Per-signal calibration breakdown — ported from the standalone
+  /// CalibrationBanner's inline-expand UI (E2E #150). The compact stacked
+  /// card format doesn't support in-place expansion, so tapping the card
+  /// opens this sheet instead; the content is otherwise unchanged.
+  void _showCalibrationDetailSheet(CalibrationStatus status) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    const signalLabels = <String, String>{
+      'resting_hr': 'Resting HR baseline',
+      'hrv': 'HRV baseline',
+      'sleep': 'Sleep pattern',
+      'training_intensity': 'Training intensity',
+    };
+
+    showGlassSheet<void>(
+      context: context,
+      builder: (sheetCtx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                status.readyCount > 0
+                    ? 'Coach is learning you — ${status.readyCount} of ${status.totalCount} baselines ready'
+                    : 'Coach is learning you',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 14),
+              for (final sig in status.signals)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Icon(
+                        sig.isReady
+                            ? Icons.check_circle_rounded
+                            : Icons.circle_outlined,
+                        size: 16,
+                        color: sig.isReady
+                            ? context.accentColor
+                            : textSecondary.withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          signalLabels[sig.key] ?? sig.key,
+                          style: TextStyle(fontSize: 13, color: textSecondary),
+                        ),
+                      ),
+                      Text(
+                        sig.isReady
+                            ? 'Ready'
+                            : sig.hasNoData
+                                ? 'Waiting for data'
+                                : '${sig.daysCollected}/${sig.daysNeeded} days',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: sig.isReady ? context.accentColor : textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 2),
+              Text(
+                'Insights get sharper as data comes in.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: textSecondary,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _handleDoToday(MissedWorkout workout) async {
@@ -728,7 +904,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(dialogContext, 'open'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFB300),
+                    backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate), gamification tier convention
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -799,7 +975,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     }
 
     if (unclaimed.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).stackedBannerPanelNoCratesAvailableRight),
           behavior: SnackBarBehavior.floating,
@@ -816,7 +992,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       _isClaimingCrate = true;
       ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
           content: Row(
             children: [
@@ -828,7 +1004,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               Text(AppLocalizations.of(context).stackedBannerPanelOpeningCrate),
             ],
           ),
-          backgroundColor: const Color(0xFFFFB300),
+          backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate), gamification tier convention
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 30),
         ),
@@ -889,7 +1065,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       if (!mounted) return;
 
       if (_isHomeRouteActive()) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        rootScaffoldMessengerKey.currentState?.hideCurrentSnackBar();
       }
 
       if (result.success) {
@@ -898,10 +1074,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
         if (_isHomeRouteActive()) {
           final rewardName = result.reward?.displayName ?? 'a reward';
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text('🎁 Crate opened! You got $rewardName'),
-              backgroundColor: const Color(0xFFFFB300),
+              backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate), gamification tier convention
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 3),
             ),
@@ -917,10 +1093,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           HapticService.error();
           ref.read(stackedBannerControllerProvider.notifier).undismiss('daily_crate');
           if (_isHomeRouteActive()) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            rootSnackBar(
               SnackBar(
                 content: Text(result.message ?? AppLocalizations.of(context).stackedBannerPanelFailedToClaimCrate),
-                backgroundColor: Colors.red,
+                backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -934,11 +1110,11 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       // the user finds the crate ready again when they return to Home.
       ref.read(stackedBannerControllerProvider.notifier).undismiss('daily_crate');
       if (_isHomeRouteActive()) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootScaffoldMessengerKey.currentState?.hideCurrentSnackBar();
+        rootSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1109,6 +1285,15 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           reasonCategory: 'dismissed',
         );
       }
+    } else if (banner.type == BannerType.calibration) {
+      // Same SharedPreferences key the standalone CalibrationBanner used —
+      // permanent per-install dismissal (E2E #150).
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('calibration_banner_dismissed', true);
+      if (mounted) setState(() => _calibrationDismissed = true);
+    } else if (banner.type == BannerType.ratingPrompt) {
+      await ref.read(ratingPromptServiceProvider).dismissBanner();
+      ref.invalidate(_ratingPromptEligibleProvider);
     }
   }
 
@@ -1181,7 +1366,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isDismissAllExpanded
-                    ? AppColors.orange.withOpacity(0.5)
+                    ? context.accentColor.withOpacity(0.5)
                     : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
                 width: 0.5,
               ),
@@ -1193,7 +1378,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                   Icons.close_rounded,
                   size: 18,
                   color: _isDismissAllExpanded
-                      ? AppColors.orange
+                      ? context.accentColor
                       : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
                 ),
                 // Animated "Dismiss All" label
@@ -1209,7 +1394,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -1365,24 +1550,41 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     );
   }
 
+  /// Stack-depth indicator — how many banner cards are queued behind the
+  /// top one. A bare number here reads identically to every other count
+  /// badge on Home (missed-workout, section headers) even though this one
+  /// means something different (depth, not a quantity of a thing). A small
+  /// layers icon disambiguates it at a glance (E2E #149).
   Widget _buildCountBadge(int count) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-          width: 0.5,
+    final color =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return Semantics(
+      label: '$count banners in this stack',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            width: 0.5,
+          ),
         ),
-      ),
-      child: Text(
-        '$count',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.layers_rounded, size: 10, color: color),
+            const SizedBox(width: 3),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
         ),
       ),
     );

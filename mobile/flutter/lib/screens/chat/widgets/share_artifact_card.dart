@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -52,14 +53,14 @@ class ShareArtifactCard extends StatelessWidget {
     // to Reports. Single-workout shares route to the workout-detail.
     final s = (_scope ?? 'plan').toLowerCase();
     if (s == 'workout') {
-      context.push('/workout-tab');
+      context.go('/workouts');
       return;
     }
     if (s == 'prs' || s == 'one_rm' || s == 'summary') {
       context.push('/reports');
       return;
     }
-    context.push('/workout-tab');
+    context.go('/workouts');
   }
 
   @override
@@ -69,13 +70,13 @@ class ShareArtifactCard extends StatelessWidget {
         margin: const EdgeInsets.only(top: 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.08),
+          color: AppColors.error.withOpacity(0.08),  // accent-allowlist: error state
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.error.withOpacity(0.4)),
+          border: Border.all(color: AppColors.error.withOpacity(0.4)),  // accent-allowlist: error state
         ),
         child: Text(
           _error ?? AppLocalizations.of(context).shareArtifactCardCouldNotCreateShare,
-          style: const TextStyle(fontSize: 13, color: AppColors.error),
+          style: const TextStyle(fontSize: 13, color: AppColors.error),  // accent-allowlist: error state
         ),
       );
     }
@@ -96,8 +97,8 @@ class ShareArtifactCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
             child: Row(
               children: [
-                const Icon(Icons.ios_share_rounded,
-                    size: 18, color: AppColors.cyan),
+                Icon(Icons.ios_share_rounded,
+                    size: 18, color: context.accentColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -140,7 +141,7 @@ class ShareArtifactCard extends StatelessWidget {
                   icon: const Icon(Icons.ios_share_rounded, size: 16),
                   label: Text(AppLocalizations.of(context).shareArtifactCardCopyShare),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.cyan,
+                    foregroundColor: context.accentColor,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.only(

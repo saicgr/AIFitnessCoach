@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/unified_notifications_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -222,7 +223,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         context.push('/summaries');
         break;
       case 'challenge_received':
-        context.push('/challenges');
+        context.go('/social?tab=challenges');
         break;
       case 'challenge_accepted':
         ScaffoldMessenger.of(context).showSnackBar(
@@ -237,7 +238,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         if (challengeId != null) {
           context.push('/challenge-compare', extra: challengeId);
         } else {
-          context.push('/challenges');
+          context.go('/social?tab=challenges');
         }
         break;
       case 'friend_request':
@@ -287,7 +288,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     final unifiedState = ref.watch(unifiedNotificationsProvider);
 
@@ -307,7 +308,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     value: 'mark_all_read',
                     child: Row(
                       children: [
-                        Icon(Icons.done_all, size: 20, color: AppColors.cyan),
+                        Icon(Icons.done_all, size: 20, color: context.accentColor),
                         const SizedBox(width: 12),
                         Text(AppLocalizations.of(context).notificationsMarkAllAsRead),
                       ],
@@ -317,7 +318,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     value: 'clear_all',
                     child: Row(
                       children: [
-                        Icon(Icons.clear_all, size: 20, color: AppColors.error),
+                        Icon(Icons.clear_all, size: 20, color: AppColors.error), // accent-allowlist: destructive clear-all action // accent-allowlist: destructive/clear action, error semantic
                         const SizedBox(width: 12),
                         Text(AppLocalizations.of(context).settingsCardPartClearAll),
                       ],
@@ -440,7 +441,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.only(right: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.error,
+                      color: AppColors.error, // accent-allowlist: destructive/clear action, error semantic
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Icon(Icons.delete, color: Colors.white),

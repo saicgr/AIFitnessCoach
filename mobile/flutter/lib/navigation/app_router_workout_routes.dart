@@ -19,7 +19,7 @@ List<RouteBase> _workoutRoutes() => [
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),  // accent-allowlist: route error/fallback state -- error semantic
                     const SizedBox(height: 16),
                     const Text('No workout data'),
                     const SizedBox(height: 16),
@@ -198,7 +198,7 @@ List<RouteBase> _workoutRoutes() => [
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),  // accent-allowlist: route error/fallback state -- error semantic
                     const SizedBox(height: 16),
                     const Text('No exercise data'),
                     const SizedBox(height: 16),
@@ -254,7 +254,7 @@ List<RouteBase> _workoutRoutes() => [
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),  // accent-allowlist: route error/fallback state -- error semantic
                     const SizedBox(height: 16),
                     const Text('No workout data available'),
                     const SizedBox(height: 16),
@@ -275,7 +275,7 @@ List<RouteBase> _workoutRoutes() => [
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
+                    const Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),  // accent-allowlist: empty-exercises fallback -- warning semantic
                     const SizedBox(height: 16),
                     const Text(
                       'Workout has no exercises',
@@ -347,7 +347,7 @@ List<RouteBase> _workoutRoutes() => [
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.check_circle, size: 48, color: Colors.green),
+                    const Icon(Icons.check_circle, size: 48, color: Colors.green),  // accent-allowlist: workout-complete fallback -- success semantic
                     const SizedBox(height: 16),
                     const Text('Workout Complete!'),
                     const SizedBox(height: 16),

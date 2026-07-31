@@ -19,6 +19,7 @@ import '../../core/services/posthog_service.dart';
 import 'friend_search_screen.dart';
 import 'conversation_screen.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 part 'social_screen_part_messages_screen.dart';
 
@@ -26,7 +27,16 @@ part 'social_screen_part_messages_screen.dart';
 /// Social screen - Shows activity feed, challenges, and friends
 /// Adapts UI based on accessibility mode (Normal vs Senior)
 class SocialScreen extends ConsumerStatefulWidget {
-  const SocialScreen({super.key});
+  /// Tab to open on: 0 Feed · 1 Challenges · 2 Leaderboard · 3 Friends.
+  ///
+  /// E2E register row 118's route gate found `notifications_screen.dart`
+  /// pushing `/challenges`, a path that has never existed — challenge
+  /// notifications landed on a full-screen "Page not found". Challenges are a
+  /// TAB of this screen, not a route, so the deep link needs somewhere to say
+  /// WHICH tab. `/social?tab=challenges` maps here.
+  final int initialTab;
+
+  const SocialScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<SocialScreen> createState() => _SocialScreenState();
@@ -39,7 +49,11 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(
+      length: 4,
+      initialIndex: widget.initialTab.clamp(0, 3),
+      vsync: this,
+    );
     _tabController.addListener(_onTabChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'social_feed_viewed');
@@ -175,10 +189,10 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
 
   // Distinct pill colors per tab
   static const _pillColors = [
-    Color(0xFF5B8DEF), // Feed — blue
-    Color(0xFFFFB020), // Challenges — amber
-    Color(0xFF34D399), // Ranks — emerald
-    Color(0xFFE879F9), // Friends — fuchsia
+    Color(0xFF5B8DEF), // Feed — blue  // accent-allowlist: informational state — must stay blue regardless of accent
+    Color(0xFFFFB020), // Challenges — amber  // accent-allowlist: warning severity — must stay amber regardless of accent
+    Color(0xFF34D399), // Ranks — emerald  // accent-allowlist: success/positive state — must stay green regardless of accent
+    Color(0xFFE879F9), // Friends — fuchsia  // accent-allowlist: tab identity — distinct pill color per social tab (Feed/Challenges/Ranks/Friends), fixed categorical palette, not tied to accent
   ];
 
   Widget _buildPillTabs(BuildContext context, bool isDark) {
