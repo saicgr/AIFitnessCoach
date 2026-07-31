@@ -17,12 +17,13 @@ import 'widgets/summary_floating_pill.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/utils/weight_utils.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 // TODO(i18n): _buildKpiTiles() and _PyramidExerciseCardState._modelLabel are
 // top-level / getter contexts with no BuildContext — their labels ('VOLUME',
 // 'TOP 1RM', 'PRs HIT', 'AVG EFFORT', progression model names) remain
 // hardcoded English until those are refactored to accept AppLocalizations.
-class WorkoutSummaryAdvanced extends StatelessWidget {
+class WorkoutSummaryAdvanced extends ConsumerWidget {
   final WorkoutSummaryResponse? data;
   final Map<String, dynamic>? metadata;
   final double topPadding;
@@ -41,9 +42,11 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
   // ── build ────────────────────────────────────────────────────────
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // E2E #18: KPI tiles (Density/TOP 1RM) were hard-converted to lb.
+    final useKg = ref.watch(useKgForWorkoutProvider);
 
     final hasSetLogs = data != null && data!.setLogs.isNotEmpty;
 
@@ -83,6 +86,7 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
           data: data,
           metadata: metadata,
           isDark: isDark,
+          useKg: useKg,
         ),
         isDark: isDark,
       ).animate().fadeIn(
@@ -340,7 +344,7 @@ class _SectionCard extends StatelessWidget {
 // 1. Performance Comparison
 // ═══════════════════════════════════════════════════════════════════
 
-class _PerformanceComparisonSection extends StatelessWidget {
+class _PerformanceComparisonSection extends ConsumerWidget {
   final PerformanceComparisonInfo comparison;
   final bool isDark;
 
@@ -350,12 +354,23 @@ class _PerformanceComparisonSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context)!;
     final wc = comparison.workoutComparison;
     final days = wc.previousPerformedAt != null
         ? DateTime.now().difference(wc.previousPerformedAt!).inDays
         : 0;
+    // E2E #18: volume was hard-converted to lb with a hardcoded "lb" suffix.
+    // Total volume is a summed derived quantity (not a real plate weight),
+    // so it uses a plain linear conversion — same pattern as
+    // _VolumeBreakdownSection — rather than the gym-snapped
+    // WeightUtils.formatWorkoutWeight used for individual lift weights.
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    final unitLabel = WeightUtils.workoutUnitLabel(useKg);
+    String fmtVolume(double volumeKg) {
+      final v = useKg ? volumeKg : WeightUtils.kgToLbs(volumeKg);
+      return '${v.toStringAsFixed(0)} $unitLabel';
+    }
 
     return _SectionCard(
       isDark: isDark,
@@ -380,9 +395,9 @@ class _PerformanceComparisonSection extends StatelessWidget {
           if (wc.hasPrevious) ...[
             _ComparisonRow(
               label: l.summaryVolume,
-              current: '${(wc.currentTotalVolumeKg * 2.20462).toStringAsFixed(0)} lb',
+              current: fmtVolume(wc.currentTotalVolumeKg),
               previous: wc.previousTotalVolumeKg != null
-                  ? '${(wc.previousTotalVolumeKg! * 2.20462).toStringAsFixed(0)} lb'
+                  ? fmtVolume(wc.previousTotalVolumeKg!)
                   : '-',
               diffPercent: wc.volumeDiffPercent,
               isDark: isDark,
@@ -471,9 +486,9 @@ class _PerformanceComparisonSection extends StatelessWidget {
   Color _statusColor(String status) {
     switch (status) {
       case 'improved':
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'declined':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
         return AppColors.textMuted;
     }
@@ -519,9 +534,9 @@ class _ComparisonRow extends StatelessWidget {
     final isPositive = diffPercent != null && diffPercent! > 0;
     final isNegative = diffPercent != null && diffPercent! < 0;
     final diffColor = isPositive
-        ? AppColors.success
+        ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
         : isNegative
-            ? AppColors.error
+            ? AppColors.error  // accent-allowlist: error/destructive — must stay red
             : (isDark ? AppColors.textMuted : AppColorsLight.textMuted);
 
     return Padding(
@@ -665,7 +680,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = status == 'completed';
-    final color = isCompleted ? AppColors.success : AppColors.warning;
+    final color = isCompleted ? AppColors.success : AppColors.warning;  // accent-allowlist: success/positive state — must stay green regardless of accent; warning severity
     final label = isCompleted ? 'Completed' : 'Skipped';
 
     return Container(
@@ -849,11 +864,11 @@ class _RestAnalysisSection extends StatelessWidget {
             if (prescribed != null && prescribed > 0) {
               final diff = (actual - prescribed).abs() / prescribed;
               if (diff <= 0.10) {
-                restColor = AppColors.success; // within 10%
+                restColor = AppColors.success; // within 10%  // accent-allowlist: success/positive state — must stay green regardless of accent
               } else if (actual > prescribed) {
-                restColor = AppColors.warning; // over prescribed
+                restColor = AppColors.warning; // over prescribed  // accent-allowlist: warning severity
               } else {
-                restColor = AppColors.success; // under prescribed
+                restColor = AppColors.success; // under prescribed  // accent-allowlist: success/positive state — must stay green regardless of accent
               }
             } else {
               restColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -971,7 +986,7 @@ class _HydrationSection extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.waterBlue,
+              color: AppColors.waterBlue,  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
             ),
           ),
           if (drinkEvents.isNotEmpty) ...[
@@ -1041,18 +1056,18 @@ class _HydrationSection extends StatelessWidget {
   Color _drinkTypeColor(String type) {
     switch (type.toLowerCase()) {
       case 'water':
-        return AppColors.waterBlue;
+        return AppColors.waterBlue;  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
       case 'electrolyte':
       case 'electrolytes':
-        return AppColors.warning;
+        return AppColors.warning;  // accent-allowlist: warning severity
       case 'protein':
       case 'protein_shake':
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'bcaa':
       case 'pre_workout':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
-        return AppColors.waterBlue;
+        return AppColors.waterBlue;  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
     }
   }
 
@@ -1356,21 +1371,21 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
             return dn != null && dn.toLowerCase() == entry.key;
           }).toList();
 
-          // Calculate 1RM from best set (Epley formula).
+          // Calculate 1RM from best set (Epley formula), kept in kg — the
+          // card converts to the user's unit at display time (E2E #18).
           //
           // Field-name contract must match `buildSetsJson()` in
           // mobile/flutter/lib/screens/workout/mixins/set_logging_mixin.dart —
           // the canonical key is `weight_kg`; bare `weight` is a legacy
           // fallback for any pre-rename rows.
-          double? best1RM;
+          double? best1RmKg;
           for (final s in sets) {
             final w = (s['weight_kg'] as num?)?.toDouble() ??
                 (s['weight'] as num?)?.toDouble();
             final r = (s['reps'] as num?)?.toInt();
             if (w != null && w > 0 && r != null && r > 0) {
-              final lbWeight = w * 2.20462;
-              final estimate = r == 1 ? lbWeight : lbWeight * (1 + r / 30.0);
-              if (best1RM == null || estimate > best1RM) best1RM = estimate;
+              final estimate = r == 1 ? w : w * (1 + r / 30.0);
+              if (best1RmKg == null || estimate > best1RmKg) best1RmKg = estimate;
             }
           }
 
@@ -1380,7 +1395,7 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
             progressionModel: progressionModel,
             barType: barType,
             drinks: exerciseDrinks,
-            best1RM: best1RM,
+            best1RmKg: best1RmKg,
             isDark: isDark,
           );
         }).toList(),
@@ -1389,13 +1404,13 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
   }
 }
 
-class _ExerciseDeepDiveCard extends StatefulWidget {
+class _ExerciseDeepDiveCard extends ConsumerStatefulWidget {
   final String exerciseName;
   final List<Map<String, dynamic>> sets;
   final String? progressionModel;
   final String? barType;
   final List<Map<String, dynamic>> drinks;
-  final double? best1RM;
+  final double? best1RmKg;
   final bool isDark;
 
   const _ExerciseDeepDiveCard({
@@ -1404,21 +1419,24 @@ class _ExerciseDeepDiveCard extends StatefulWidget {
     this.progressionModel,
     this.barType,
     required this.drinks,
-    this.best1RM,
+    this.best1RmKg,
     required this.isDark,
   });
 
   @override
-  State<_ExerciseDeepDiveCard> createState() => _ExerciseDeepDiveCardState();
+  ConsumerState<_ExerciseDeepDiveCard> createState() =>
+      _ExerciseDeepDiveCardState();
 }
 
-class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
+class _ExerciseDeepDiveCardState extends ConsumerState<_ExerciseDeepDiveCard> {
   bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
     final isDark = widget.isDark;
+    // E2E #18: 1RM was hard-converted to lb with a hardcoded "lb" suffix.
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final modelName = _PerExerciseDeepDiveSection
         ._progressionModelNames[widget.progressionModel];
 
@@ -1525,7 +1543,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Set table
-                  _buildSetTable(),
+                  _buildSetTable(useKg),
 
                   // Timing rows
                   const SizedBox(height: 10),
@@ -1578,23 +1596,30 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
                   ],
 
                   // 1RM estimate
-                  if (widget.best1RM != null) ...[
+                  if (widget.best1RmKg != null) ...[
                     const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: isDark ? 0.12 : 0.08),
+                        color: AppColors.success.withValues(alpha: isDark ? 0.12 : 0.08),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.emoji_events,
-                              size: 14, color: AppColors.warning),
+                              size: 14, color: AppColors.warning),  // accent-allowlist: warning severity
                           const SizedBox(width: 6),
                           Text(
-                            l.summaryEst1RM(widget.best1RM!.toStringAsFixed(0)),
+                            AppLocalizations.of(context).summaryEst1RM(
+                              WeightUtils.workoutUnitLabel(useKg),
+                              WeightUtils.formatWorkoutWeight(
+                                widget.best1RmKg!,
+                                useKg: useKg,
+                                withUnit: false,
+                              ),
+                            ),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1616,7 +1641,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
     );
   }
 
-  Widget _buildSetTable() {
+  Widget _buildSetTable(bool useKg) {
     final l = AppLocalizations.of(context)!;
     final isDark = widget.isDark;
     final headerStyle = TextStyle(
@@ -1651,7 +1676,7 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
         prSetIndex = i;
       }
     }
-    final prGreen = isDark ? AppColors.green : AppColorsLight.green;
+    final prGreen = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent; success/positive state — same value as AppColorsLight.success, must stay green regardless of accent
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -1688,13 +1713,13 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
           final aiSource = s['ai_input_source'] as String?;
 
           final prevStr = prevW != null && prevR != null
-              ? '${(prevW * 2.20462).toStringAsFixed(0)}x$prevR'
+              ? '${WeightUtils.formatWorkoutWeight(prevW, useKg: useKg, withUnit: false)}x$prevR'
               : '-';
           final targetStr = targetW != null && targetR != null
-              ? '${(targetW * 2.20462).toStringAsFixed(0)}x$targetR'
+              ? '${WeightUtils.formatWorkoutWeight(targetW, useKg: useKg, withUnit: false)}x$targetR'
               : '-';
           final weightStr = weight != null
-              ? '${(weight * 2.20462).toStringAsFixed(0)} lb'
+              ? WeightUtils.formatWorkoutWeight(weight, useKg: useKg)
               : '-';
 
           return DataRow(cells: [
@@ -2033,12 +2058,12 @@ class _WorkoutExitStatsSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: isDark ? 0.12 : 0.08),
+              color: AppColors.warning.withValues(alpha: isDark ? 0.12 : 0.08),  // accent-allowlist: warning severity
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(Icons.warning_amber, size: 16, color: AppColors.warning),
+                Icon(Icons.warning_amber, size: 16, color: AppColors.warning),  // accent-allowlist: warning severity
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -2159,7 +2184,7 @@ class _VolumeBreakdownSection extends ConsumerWidget {
             padding: const EdgeInsets.all(10),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: isDark ? 0.12 : 0.08),
+              color: context.accentColor.withValues(alpha: isDark ? 0.12 : 0.08),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -2177,7 +2202,7 @@ class _VolumeBreakdownSection extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                 ),
               ],
@@ -2224,7 +2249,7 @@ class _VolumeBreakdownSection extends ConsumerWidget {
                           ? AppColors.cardBorder
                           : AppColorsLight.cardBorder,
                       valueColor: AlwaysStoppedAnimation(
-                        AppColors.orange.withValues(alpha: 0.8),
+                        context.accentColor.withValues(alpha: 0.8),
                       ),
                     ),
                   ),
@@ -2284,10 +2309,10 @@ class _IntensityAnalysisSection extends StatelessWidget {
 
     // Color for RPE level
     Color rpeColor(double rpe) {
-      if (rpe < 6) return AppColors.success;
-      if (rpe < 8) return AppColors.orange;
-      if (rpe < 10) return AppColors.error.withValues(alpha: 0.8);
-      return AppColors.error;
+      if (rpe < 6) return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+      if (rpe < 8) return context.accentColor;
+      if (rpe < 10) return AppColors.error.withValues(alpha: 0.8);  // accent-allowlist: error/destructive — must stay red
+      return AppColors.error;  // accent-allowlist: error/destructive — must stay red
     }
 
     // RPE intensity label
@@ -2335,7 +2360,7 @@ class _IntensityAnalysisSection extends StatelessWidget {
                     label: loc.summaryAvgRir,
                     value: avgRir.toStringAsFixed(1),
                     subLabel: loc.summaryRepsLeft(avgRir.toStringAsFixed(0)),
-                    color: avgRir <= 1 ? AppColors.error : avgRir <= 2 ? AppColors.orange : AppColors.success,
+                    color: avgRir <= 1 ? AppColors.error : avgRir <= 2 ? context.accentColor : AppColors.success,  // accent-allowlist: error/destructive — must stay red; success/positive state — must stay green regardless of accent
                     isDark: isDark,
                   ),
                 ),
@@ -2356,10 +2381,10 @@ class _IntensityAnalysisSection extends StatelessWidget {
             Row(
               children: rpeBuckets.entries.where((e) => e.value > 0).map((e) {
                 final bucketColors = {
-                  'Easy (<6)': AppColors.success,
-                  'Moderate (6-7)': AppColors.orange,
-                  'Hard (8-9)': AppColors.error.withValues(alpha: 0.8),
-                  'Max (10)': AppColors.error,
+                  'Easy (<6)': AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
+                  'Moderate (6-7)': context.accentColor,
+                  'Hard (8-9)': AppColors.error.withValues(alpha: 0.8),  // accent-allowlist: error/destructive — must stay red
+                  'Max (10)': AppColors.error,  // accent-allowlist: error/destructive — must stay red
                 };
                 final color = bucketColors[e.key] ?? AppColors.textMuted;
                 return Expanded(
@@ -2454,7 +2479,7 @@ class _IntensityStat extends StatelessWidget {
 // C. Estimated 1RM (from setLogs, Epley formula)
 // ═══════════════════════════════════════════════════════════════════
 
-class _Estimated1RMSection extends StatelessWidget {
+class _Estimated1RMSection extends ConsumerWidget {
   final List<SetLogInfo> setLogs;
   final bool isDark;
 
@@ -2464,24 +2489,25 @@ class _Estimated1RMSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Calculate best estimated 1RM per exercise (Epley formula)
-    final best1RMs = <String, double>{};
+  Widget build(BuildContext context, WidgetRef ref) {
+    // E2E #18: 1RM was hard-converted to lb with a hardcoded "lb" suffix.
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    // Calculate best estimated 1RM per exercise (Epley formula), kept in kg.
+    final best1RMsKg = <String, double>{};
     final bestSets = <String, SetLogInfo>{};
     for (final s in setLogs) {
       if (s.exerciseName.isEmpty || s.weightKg <= 0 || s.repsCompleted <= 0) continue;
-      final lbWeight = s.weightKg * 2.20462;
       final estimate = s.repsCompleted == 1
-          ? lbWeight
-          : lbWeight * (1 + s.repsCompleted / 30.0);
-      if (!best1RMs.containsKey(s.exerciseName) || estimate > best1RMs[s.exerciseName]!) {
-        best1RMs[s.exerciseName] = estimate;
+          ? s.weightKg
+          : s.weightKg * (1 + s.repsCompleted / 30.0);
+      if (!best1RMsKg.containsKey(s.exerciseName) || estimate > best1RMsKg[s.exerciseName]!) {
+        best1RMsKg[s.exerciseName] = estimate;
         bestSets[s.exerciseName] = s;
       }
     }
-    if (best1RMs.isEmpty) return const SizedBox.shrink();
+    if (best1RMsKg.isEmpty) return const SizedBox.shrink();
 
-    final sorted = best1RMs.entries.toList()
+    final sorted = best1RMsKg.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
     final l = AppLocalizations.of(context)!;
@@ -2505,7 +2531,6 @@ class _Estimated1RMSection extends StatelessWidget {
           ),
           ...sorted.map((entry) {
             final set = bestSets[entry.key]!;
-            final weightLb = set.weightKg * 2.20462;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Container(
@@ -2535,7 +2560,15 @@ class _Estimated1RMSection extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            l.summaryBestSet(weightLb.toStringAsFixed(1), set.repsCompleted),
+                            AppLocalizations.of(context).summaryBestSet(
+                              set.repsCompleted,
+                              WeightUtils.workoutUnitLabel(useKg),
+                              WeightUtils.formatWorkoutWeight(
+                                set.weightKg,
+                                useKg: useKg,
+                                withUnit: false,
+                              ),
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
@@ -2547,15 +2580,15 @@ class _Estimated1RMSection extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withValues(alpha: isDark ? 0.15 : 0.1),
+                        color: context.accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '${entry.value.toStringAsFixed(0)} lb',
+                        WeightUtils.formatWorkoutWeight(entry.value, useKg: useKg),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -2594,14 +2627,19 @@ class _SetTypeDistributionSection extends StatelessWidget {
     'myo_rep': 'Myo-Rep',
   };
 
-  static const _typeColors = {
-    'working': AppColors.orange,
-    'warmup': AppColors.success,
-    'drop': Color(0xFF8E44AD),
-    'failure': AppColors.error,
-    'backoff': Color(0xFF3498DB),
-    'rest_pause': Color(0xFFE67E22),
-    'myo_rep': Color(0xFF1ABC9C),
+  // Instance method (not `static const`) because 'working' now reads the
+  // user's accent colour, which needs a BuildContext — the rest of the map
+  // is a fixed set-type legend (warmup/drop/failure/backoff/rest-pause/
+  // myo-rep), each colour distinguishing a category, not standing in for
+  // the accent.
+  Map<String, Color> _typeColors(BuildContext context) => {
+    'working': context.accentColor,
+    'warmup': AppColors.success,  // accent-allowlist: set-type legend — warm-up sets are always green in this legend
+    'drop': const Color(0xFF8E44AD),  // accent-allowlist: set-type legend — drop sets are always this purple
+    'failure': AppColors.error,  // accent-allowlist: set-type legend — failure sets are always red in this legend
+    'backoff': const Color(0xFF3498DB),  // accent-allowlist: set-type legend — back-off sets are always this blue
+    'rest_pause': const Color(0xFFE67E22),  // accent-allowlist: set-type legend — rest-pause sets are always this orange, independent of app accent
+    'myo_rep': const Color(0xFF1ABC9C),  // accent-allowlist: set-type legend — myo-rep sets are always this teal
   };
 
   @override
@@ -2635,7 +2673,7 @@ class _SetTypeDistributionSection extends StatelessWidget {
               height: 20,
               child: Row(
                 children: sorted.map((e) {
-                  final color = _typeColors[e.key] ?? AppColors.textMuted;
+                  final color = _typeColors(context)[e.key] ?? AppColors.textMuted;
                   return Expanded(
                     flex: e.value,
                     child: Container(
@@ -2652,7 +2690,7 @@ class _SetTypeDistributionSection extends StatelessWidget {
             spacing: 12,
             runSpacing: 6,
             children: sorted.map((e) {
-              final color = _typeColors[e.key] ?? AppColors.textMuted;
+              final color = _typeColors(context)[e.key] ?? AppColors.textMuted;
               final label = _typeLabels[e.key] ?? e.key;
               final pct = (e.value / total * 100).toStringAsFixed(0);
               return Row(
@@ -2828,8 +2866,8 @@ class _CoachHeroCardState extends ConsumerState<_CoachHeroCard> {
             : (_firstSentence(widget.coachSummary) ?? _recapHeadline);
     if (narrative == null) return const SizedBox.shrink();
 
-    final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accent = isDark ? context.accentColor : _darkenColor(context.accentColor);
+    final cyan = context.accentColor;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
@@ -3021,8 +3059,8 @@ class _KpiTileCard extends StatelessWidget {
     final deltaColor = data.deltaSigned == null
         ? textMuted
         : (data.deltaSigned! >= 0
-            ? (isDark ? AppColors.success : AppColorsLight.success)
-            : (isDark ? AppColors.error : AppColorsLight.error));
+            ? (isDark ? AppColors.success : AppColorsLight.success)  // accent-allowlist: success/positive state — must stay green regardless of accent
+            : (isDark ? AppColors.error : AppColorsLight.error));  // accent-allowlist: error/destructive — must stay red
     final deltaArrow = data.deltaSigned == null
         ? null
         : (data.deltaSigned! >= 0
@@ -3262,17 +3300,26 @@ class _KpiSparklinePainter extends CustomPainter {
 // TODO(i18n): no BuildContext at top-level function — KPI tile labels are
 // hardcoded English ('VOLUME', 'TOP 1RM', 'PRs HIT', 'AVG EFFORT').
 // Migrate by adding a BuildContext/AppLocalizations parameter.
+//
+// E2E #18: DENSITY/TOP 1RM were hard-converted to lb with a hardcoded "lb"
+// suffix. `useKg` is threaded in from the caller (which reads
+// useKgForWorkoutProvider) since this is a plain function, not a widget.
 List<_KpiTileData> _buildKpiTiles({
   required WorkoutSummaryResponse? data,
   required Map<String, dynamic>? metadata,
   required bool isDark,
+  required bool useKg,
 }) {
-  final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
-  final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-  final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-  final success = isDark ? AppColors.success : AppColorsLight.success;
+  // KPI-tile palette — top-level function (no BuildContext, see comment
+  // above), and each of the 4 tiles (Density/1RM/Adherence/Effort) keeps
+  // its own colour so the dashboard reads as 4 distinct stats, not one.
+  final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);  // accent-allowlist: KPI-tile palette — Density tile is always this purple
+  final cyan = AppColors.cyan;  // accent-allowlist: KPI-tile palette — Avg Effort tile is always this cyan
+  final orange = AppColors.orange;  // accent-allowlist: KPI-tile palette — Plan Adherence tile is always this orange
+  final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+  final unitLabel = WeightUtils.workoutUnitLabel(useKg);
 
-  String formatPounds(double v) {
+  String formatWeightNum(double v) {
     if (v.abs() >= 10000) return '${(v / 1000).toStringAsFixed(1)}k';
     if (v.abs() >= 1000) return '${(v / 1000).toStringAsFixed(2)}k';
     return v.toStringAsFixed(0);
@@ -3343,45 +3390,52 @@ List<_KpiTileData> _buildKpiTiles({
   final effectiveVolKg = (backendVolKg != null && backendVolKg > 0)
       ? backendVolKg
       : (computedVolKg > 0 ? computedVolKg : null);
-  final volLb = effectiveVolKg != null ? effectiveVolKg * 2.20462 : null;
+  // Volume is a summed derived quantity (not a real plate weight), so it
+  // uses a plain linear conversion rather than the gym-snapped
+  // WeightUtils.formatWorkoutWeight used for individual lift weights below.
+  final volDisplay = effectiveVolKg != null
+      ? (useKg ? effectiveVolKg : WeightUtils.kgToLbs(effectiveVolKg))
+      : null;
   final durationSeconds = (data?.durationSeconds ?? 0) > 0
       ? data!.durationSeconds
       : ((metadata?['total_time_seconds'] as num?)?.toInt() ?? 0);
-  final densityLbPerMin = (volLb != null && durationSeconds >= 60)
-      ? volLb / (durationSeconds / 60.0)
+  final densityPerMin = (volDisplay != null && durationSeconds >= 60)
+      ? volDisplay / (durationSeconds / 60.0)
       : null;
   final densityTile = _KpiTileData(
     label: 'DENSITY',
-    value: densityLbPerMin != null ? formatPounds(densityLbPerMin) : '—',
-    unit: densityLbPerMin != null ? 'lb/min' : null,
+    value: densityPerMin != null ? formatWeightNum(densityPerMin) : '—',
+    unit: densityPerMin != null ? '$unitLabel/min' : null,
     icon: Icons.bolt_rounded,
     accent: accent,
     deltaSigned: null,
-    deltaLabel: densityLbPerMin != null
-        ? '${formatPounds(volLb!)} lb in ${(durationSeconds / 60).round()} min'
+    deltaLabel: densityPerMin != null
+        ? '${formatWeightNum(volDisplay!)} $unitLabel in ${(durationSeconds / 60).round()} min'
         : null,
-    zeroStateCopy: densityLbPerMin == null
+    zeroStateCopy: densityPerMin == null
         ? 'Track time + weight to see work rate'
         : null,
   );
 
   // ── TOP 1RM tile (Epley estimate from heaviest working set) ───────
   // Surfaces the heaviest implied 1RM in the session so the user sees
-  // their peak lift in 1RM terms even if no all-time PR was set.
-  final top1RmLb = computedBest1RmKg > 0
-      ? computedBest1RmKg * 2.20462
+  // their peak lift in 1RM terms even if no all-time PR was set. A real
+  // liftable weight, so it uses the gym-snapped conversion (unlike volume
+  // above) for the same rounding correctness as formatWorkoutWeight.
+  final top1RmDisplay = computedBest1RmKg > 0
+      ? WeightUtils.fromKgSnapped(computedBest1RmKg, displayInLbs: !useKg)
       : null;
   final lift1RmTile = _KpiTileData(
     label: 'TOP 1RM',
-    value: top1RmLb != null ? formatPounds(top1RmLb) : '—',
-    unit: top1RmLb != null ? 'lb' : null,
+    value: top1RmDisplay != null ? formatWeightNum(top1RmDisplay) : '—',
+    unit: top1RmDisplay != null ? unitLabel : null,
     icon: Icons.fitness_center_rounded,
     accent: success,
     deltaSigned: null,
-    deltaLabel: top1RmLb != null && best1RmExerciseName != null
-        ? '${best1RmExerciseName!} · ${formatPounds(best1RmWeightKg * 2.20462)}×$best1RmReps'
+    deltaLabel: top1RmDisplay != null && best1RmExerciseName != null
+        ? '${best1RmExerciseName!} · ${formatWeightNum(WeightUtils.fromKgSnapped(best1RmWeightKg, displayInLbs: !useKg))}×$best1RmReps'
         : null,
-    zeroStateCopy: top1RmLb == null
+    zeroStateCopy: top1RmDisplay == null
         ? 'Log weight + reps to estimate 1RM'
         : null,
   );
@@ -3734,9 +3788,9 @@ class _SessionScoreRings extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final teal = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
+    final orange = context.accentColor;
+    final teal = context.accentColor;
     final track = isDark
         ? Colors.white.withValues(alpha: 0.06)
         : Colors.black.withValues(alpha: 0.06);
@@ -3806,10 +3860,10 @@ class _SessionScoreRings extends StatelessWidget {
     final scoreColor = score == null
         ? textMuted
         : score >= 85
-            ? AppColors.success
+            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
             : score >= 65
                 ? orange
-                : const Color(0xFFEF4444);
+                : const Color(0xFFEF4444);  // accent-allowlist: error/destructive — must stay red
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
@@ -4092,10 +4146,10 @@ class _IntensityDonutRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
-    final warning = isDark ? AppColors.warning : AppColorsLight.warning;
-    final error = isDark ? AppColors.error : AppColorsLight.error;
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final warning = isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: warning severity
+    final error = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive — must stay red
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // ── Rest Compliance ──
@@ -4281,7 +4335,7 @@ class _SessionTimeline extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final accent = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final restColor = isDark
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.08);
@@ -4717,11 +4771,11 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
     if (maxVol <= 0) return const {};
 
     final cool = isDark
-        ? const Color(0xFF4FC3F7) // cyan
-        : const Color(0xFF0288D1);
+        ? const Color(0xFF4FC3F7) // cyan  // accent-allowlist: volume heatmap scale — cool (low-volume) band
+        : const Color(0xFF0288D1);  // accent-allowlist: volume heatmap scale — cool (low-volume) band
     final hot = isDark
-        ? const Color(0xFFFF7043) // orange
-        : const Color(0xFFD84315);
+        ? const Color(0xFFFF7043) // orange  // accent-allowlist: volume heatmap scale — hot (high-volume) band
+        : const Color(0xFFD84315);  // accent-allowlist: volume heatmap scale — hot (high-volume) band
     final idleTint = isDark
         ? const Color(0xFF6B7280).withValues(alpha: 0.18)
         : Colors.black.withValues(alpha: 0.12);
@@ -4993,17 +5047,17 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.info.withValues(alpha: 0.10),
+          color: AppColors.info.withValues(alpha: 0.10),  // accent-allowlist: informational
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: AppColors.info.withValues(alpha: 0.25),
+            color: AppColors.info.withValues(alpha: 0.25),  // accent-allowlist: informational
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.label_important_outline,
-                size: 14, color: AppColors.info),
+                size: 14, color: AppColors.info),  // accent-allowlist: informational
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -5011,7 +5065,7 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.info,
+                  color: AppColors.info,  // accent-allowlist: informational
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -5182,7 +5236,7 @@ class _PyramidDeepDiveSection extends StatelessWidget {
   }
 }
 
-class _PyramidExerciseCard extends StatefulWidget {
+class _PyramidExerciseCard extends ConsumerStatefulWidget {
   final String exerciseName;
   final List<Map<String, dynamic>> sets;
   final bool isDark;
@@ -5194,10 +5248,11 @@ class _PyramidExerciseCard extends StatefulWidget {
   });
 
   @override
-  State<_PyramidExerciseCard> createState() => _PyramidExerciseCardState();
+  ConsumerState<_PyramidExerciseCard> createState() =>
+      _PyramidExerciseCardState();
 }
 
-class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
+class _PyramidExerciseCardState extends ConsumerState<_PyramidExerciseCard> {
 
   /// Canonicalise the progression_model string into a known shape key.
   String get _modelKey {
@@ -5255,9 +5310,11 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
 
   @override
   Widget build(BuildContext context) {
+    // E2E #18: 1RM was hard-converted to lb with a hardcoded "lb" suffix.
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final accent = widget.isDark
-        ? AppColors.purple
-        : _darkenColor(AppColors.purple);
+        ? context.accentColor
+        : _darkenColor(context.accentColor);
     final textPrimary = widget.isDark
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
@@ -5283,17 +5340,17 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
     }
     if (maxWeight <= 0) maxWeight = 1;
 
-    // 1RM estimate (Epley) in lbs from the best set.
-    double best1RM = 0;
+    // 1RM estimate (Epley), kept in kg — converted to the user's unit only
+    // at display time below.
+    double best1RmKg = 0;
     for (final s in sorted) {
       final w = (s['weight_kg'] as num?)?.toDouble() ??
           (s['weight'] as num?)?.toDouble() ??
           0;
       final r = (s['reps'] as num?)?.toInt() ?? 0;
       if (w > 0 && r > 0) {
-        final lb = w * 2.20462;
-        final est = r == 1 ? lb : lb * (1 + r / 30.0);
-        if (est > best1RM) best1RM = est;
+        final est = r == 1 ? w : w * (1 + r / 30.0);
+        if (est > best1RmKg) best1RmKg = est;
       }
     }
 
@@ -5340,11 +5397,11 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
                               color: accent,
                             ),
                           ),
-                          if (best1RM > 0) ...[
+                          if (best1RmKg > 0) ...[
                             Text(' · ',
                                 style: TextStyle(fontSize: 11, color: textMuted)),
                             Text(
-                              'est. 1RM ${best1RM.toStringAsFixed(0)} lb',
+                              'est. 1RM ${WeightUtils.formatWorkoutWeight(best1RmKg, useKg: useKg)}',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -5373,6 +5430,7 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
             maxWeight: maxWeight,
             modelKey: _modelKey,
             isDark: widget.isDark,
+            useKg: useKg,
           ),
         ],
       ),
@@ -5388,18 +5446,20 @@ class _PyramidShapeBars extends StatelessWidget {
   final double maxWeight;
   final String modelKey;
   final bool isDark;
+  final bool useKg;
 
   const _PyramidShapeBars({
     required this.sets,
     required this.maxWeight,
     required this.modelKey,
     required this.isDark,
+    required this.useKg,
   });
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accent = isDark ? context.accentColor : _darkenColor(context.accentColor);
+    final cyan = context.accentColor;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -5425,9 +5485,8 @@ class _PyramidShapeBars extends StatelessWidget {
       final setNum = (s['set_number'] as num?)?.toInt() ?? 0;
       final widthFrac =
           (weightKg / maxWeight).clamp(0.08, 1.0); // always visible
-      final lb = weightKg * 2.20462;
       final label = weightKg > 0 && reps > 0
-          ? '${lb.toStringAsFixed(0)} lb × $reps'
+          ? '${WeightUtils.formatWorkoutWeight(weightKg, useKg: useKg)} × $reps'
           : reps > 0
               ? 'BW × $reps'
               : '—';

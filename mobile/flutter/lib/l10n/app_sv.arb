@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Genomsnittlig RIR",
   "summaryAvgRpe": "Genomsnittlig RPE",
   "summaryAvgSets": "Genomsnitt (set)",
-  "summaryBestSet": "Bästa set: {weight} lb x {reps}",
+  "summaryBestSet": "Bästa set: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Bästa svit",
   "summaryCardHours": "Timmar",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Varaktighet",
   "summaryEpleyFormula": "Baserat på Epley-formeln från dina bästa set",
   "summaryEquipmentIncrement": "{name}-ökning",
-  "summaryEst1RM": "Uppskattad 1RM: {value} lb",
+  "summaryEst1RM": "Uppskattad 1RM: {value} {unit}",
   "summaryEstimated1RM": "Uppskattad 1RM",
   "summaryEverySetRated": "Varje set betygsatt",
   "summaryExerciseOrderAndTime": "Övningsordning & tid",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Energi",
   "workoutSummaryGeneralExercises": "ÖVNINGAR",
   "workoutSummaryGeneralHeartRate": "Puls",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} reps",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} reps",
   "workoutSummaryGeneralLibraryId": "Biblioteks-ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "TRÄNADE MUSKLER",
   "workoutSummaryGeneralPersonalRecords": "Personbästa",

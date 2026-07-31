@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "RIR trung bình",
   "summaryAvgRpe": "RPE trung bình",
   "summaryAvgSets": "Trung bình (Hiệp)",
-  "summaryBestSet": "Hiệp tốt nhất: {weight} lb x {reps}",
+  "summaryBestSet": "Hiệp tốt nhất: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Chuỗi tốt nhất",
   "summaryCardHours": "Giờ",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Thời lượng",
   "summaryEpleyFormula": "Dựa trên công thức Epley từ các hiệp tốt nhất của bạn",
   "summaryEquipmentIncrement": "Mức tăng {name}",
-  "summaryEst1RM": "Ước tính 1RM: {value} lb",
+  "summaryEst1RM": "Ước tính 1RM: {value} {unit}",
   "summaryEstimated1RM": "Ước tính 1RM",
   "summaryEverySetRated": "Mọi hiệp đều được đánh giá",
   "summaryExerciseOrderAndTime": "Thứ tự bài tập & Thời gian",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Năng lượng",
   "workoutSummaryGeneralExercises": "BÀI TẬP",
   "workoutSummaryGeneralHeartRate": "Nhịp tim",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} lần",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} lần",
   "workoutSummaryGeneralLibraryId": "ID thư viện: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "CƠ BẮP ĐƯỢC TẬP",
   "workoutSummaryGeneralPersonalRecords": "Kỷ lục cá nhân",

@@ -37248,8 +37248,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get summaryAvgSets => 'Среднее (подходы)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Лучший подход: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Лучший подход: $weight $unit x $reps';
   }
 
   @override
@@ -37331,8 +37331,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Расчетный 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Расчетный 1RM: $value $unit';
   }
 
   @override
@@ -43490,8 +43490,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Пульс';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs фунтов x $reps повт.';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps повт.';
   }
 
   @override

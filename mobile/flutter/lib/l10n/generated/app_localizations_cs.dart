@@ -37064,8 +37064,8 @@ class AppLocalizationsCs extends AppLocalizations {
   String get summaryAvgSets => 'Průměr (série)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Nejlepší série: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Nejlepší série: $weight $unit x $reps';
   }
 
   @override
@@ -37147,8 +37147,8 @@ class AppLocalizationsCs extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Odhad 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Odhad 1RM: $value $unit';
   }
 
   @override
@@ -43274,8 +43274,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Tepová frekvence';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps opakování';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps opakování';
   }
 
   @override

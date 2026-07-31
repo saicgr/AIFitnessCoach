@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "சராசரி RIR",
   "summaryAvgRpe": "சராசரி RPE",
   "summaryAvgSets": "சராசரி (செட்கள்)",
-  "summaryBestSet": "சிறந்த செட்: {weight} lb x {reps}",
+  "summaryBestSet": "சிறந்த செட்: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "சிறந்த தொடர்",
   "summaryCardHours": "மணிநேரம்",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "கால அளவு",
   "summaryEpleyFormula": "உங்கள் சிறந்த செட்களின் அடிப்படையில் Epley சூத்திரம்",
   "summaryEquipmentIncrement": "{name} அதிகரிப்பு",
-  "summaryEst1RM": "தோராயமான 1RM: {value} lb",
+  "summaryEst1RM": "தோராயமான 1RM: {value} {unit}",
   "summaryEstimated1RM": "தோராயமான 1RM",
   "summaryEverySetRated": "ஒவ்வொரு செட்டும் மதிப்பிடப்பட்டது",
   "summaryExerciseOrderAndTime": "உடற்பயிற்சி வரிசை மற்றும் நேரம்",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ஆற்றல்",
   "workoutSummaryGeneralExercises": "பயிற்சிகள்",
   "workoutSummaryGeneralHeartRate": "இதயத் துடிப்பு",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} முறை",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} முறை",
   "workoutSummaryGeneralLibraryId": "Library ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "செயல்பட்ட தசைகள்",
   "workoutSummaryGeneralPersonalRecords": "தனிப்பட்ட சாதனைகள்",

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Gem. RIR",
   "summaryAvgRpe": "Gem. RPE",
   "summaryAvgSets": "Gem. (sets)",
-  "summaryBestSet": "Beste set: {weight} lb x {reps}",
+  "summaryBestSet": "Beste set: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Beste reeks",
   "summaryCardHours": "Uren",
   "summaryCardPrs": "PR's",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Duur",
   "summaryEpleyFormula": "Gebaseerd op de Epley-formule van je beste sets",
   "summaryEquipmentIncrement": "{name} toename",
-  "summaryEst1RM": "Geschatte 1RM: {value} lb",
+  "summaryEst1RM": "Geschatte 1RM: {value} {unit}",
   "summaryEstimated1RM": "Geschatte 1RM",
   "summaryEverySetRated": "Elke set beoordeeld",
   "summaryExerciseOrderAndTime": "Volgorde van oefeningen & tijd",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Energie",
   "workoutSummaryGeneralExercises": "OEFENINGEN",
   "workoutSummaryGeneralHeartRate": "Hartslag",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} herh.",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} herh.",
   "workoutSummaryGeneralLibraryId": "Bibliotheek-ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "GETRAINDE SPIEREN",
   "workoutSummaryGeneralPersonalRecords": "Persoonlijke records",

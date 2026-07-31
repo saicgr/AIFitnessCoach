@@ -37093,8 +37093,8 @@ class AppLocalizationsJv extends AppLocalizations {
   String get summaryAvgSets => 'Rata-rata (Set)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Set paling apik: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Set paling apik: $weight $unit x $reps';
   }
 
   @override
@@ -37176,8 +37176,8 @@ class AppLocalizationsJv extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Est. 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Est. 1RM: $value $unit';
   }
 
   @override
@@ -43297,8 +43297,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Detak Jantung';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps reps';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps reps';
   }
 
   @override

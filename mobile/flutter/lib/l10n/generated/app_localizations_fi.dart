@@ -37143,8 +37143,8 @@ class AppLocalizationsFi extends AppLocalizations {
   String get summaryAvgSets => 'Keskim. (sarjat)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Paras sarja: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Paras sarja: $weight $unit x $reps';
   }
 
   @override
@@ -37226,8 +37226,8 @@ class AppLocalizationsFi extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Arvioitu 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Arvioitu 1RM: $value $unit';
   }
 
   @override
@@ -43363,8 +43363,12 @@ class AppLocalizationsFi extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Syke';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps toistoa';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps toistoa';
   }
 
   @override

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "平均 RIR",
   "summaryAvgRpe": "平均 RPE",
   "summaryAvgSets": "平均（セット数）",
-  "summaryBestSet": "ベストセット: {weight} lb x {reps}",
+  "summaryBestSet": "ベストセット: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "ベストストリーク",
   "summaryCardHours": "時間",
   "summaryCardPrs": "PR",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "時間",
   "summaryEpleyFormula": "ベストセットに基づく Epley 式",
   "summaryEquipmentIncrement": "{name} の増分",
-  "summaryEst1RM": "推定 1RM: {value} lb",
+  "summaryEst1RM": "推定 1RM: {value} {unit}",
   "summaryEstimated1RM": "推定 1RM",
   "summaryEverySetRated": "全セット評価済み",
   "summaryExerciseOrderAndTime": "種目の順序と時間",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "エネルギー",
   "workoutSummaryGeneralExercises": "種目",
   "workoutSummaryGeneralHeartRate": "心拍数",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} 回",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} 回",
   "workoutSummaryGeneralLibraryId": "ライブラリID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "鍛えた筋肉",
   "workoutSummaryGeneralPersonalRecords": "パーソナルレコード",

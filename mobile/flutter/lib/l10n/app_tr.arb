@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Ort. RIR",
   "summaryAvgRpe": "Ort. RPE",
   "summaryAvgSets": "Ort. (Setler)",
-  "summaryBestSet": "En iyi set: {weight} lb x {reps}",
+  "summaryBestSet": "En iyi set: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "En İyi Seri",
   "summaryCardHours": "Saat",
   "summaryCardPrs": "PR'lar",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Süre",
   "summaryEpleyFormula": "En iyi setlerinizden Epley formülüne göre",
   "summaryEquipmentIncrement": "{name} Artışı",
-  "summaryEst1RM": "Tahmini 1RM: {value} lb",
+  "summaryEst1RM": "Tahmini 1RM: {value} {unit}",
   "summaryEstimated1RM": "Tahmini 1RM",
   "summaryEverySetRated": "Her set puanlandı",
   "summaryExerciseOrderAndTime": "Egzersiz Sırası ve Zamanı",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Enerji",
   "workoutSummaryGeneralExercises": "EGZERSİZLER",
   "workoutSummaryGeneralHeartRate": "Nabız",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} tekrar",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} tekrar",
   "workoutSummaryGeneralLibraryId": "Kütüphane Kimliği: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "ÇALIŞAN KASLAR",
   "workoutSummaryGeneralPersonalRecords": "Kişisel Rekorlar",

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Purata RIR",
   "summaryAvgRpe": "Purata RPE",
   "summaryAvgSets": "Purata (Set)",
-  "summaryBestSet": "Set terbaik: {weight} lb x {reps}",
+  "summaryBestSet": "Set terbaik: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Rentetan Terbaik",
   "summaryCardHours": "Jam",
   "summaryCardPrs": "PR",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Tempoh",
   "summaryEpleyFormula": "Berdasarkan formula Epley daripada set terbaik anda",
   "summaryEquipmentIncrement": "Kenaikan {name}",
-  "summaryEst1RM": "Anggaran 1RM: {value} lb",
+  "summaryEst1RM": "Anggaran 1RM: {value} {unit}",
   "summaryEstimated1RM": "Anggaran 1RM",
   "summaryEverySetRated": "Setiap set dinilai",
   "summaryExerciseOrderAndTime": "Urutan & Masa Senaman",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Tenaga",
   "workoutSummaryGeneralExercises": "SENAMAN",
   "workoutSummaryGeneralHeartRate": "Kadar Denyutan Jantung",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} ulangan",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} ulangan",
   "workoutSummaryGeneralLibraryId": "ID Pustaka: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "OTOT YANG DILATIH",
   "workoutSummaryGeneralPersonalRecords": "Rekod Peribadi",

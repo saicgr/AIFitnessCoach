@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Rata-rata RIR",
   "summaryAvgRpe": "Rata-rata RPE",
   "summaryAvgSets": "Rata-rata (Set)",
-  "summaryBestSet": "Set paling apik: {weight} lb x {reps}",
+  "summaryBestSet": "Set paling apik: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Streak Paling Apik",
   "summaryCardHours": "Jam",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Durasi",
   "summaryEpleyFormula": "Adhedhasar rumus Epley saka set paling apikmu",
   "summaryEquipmentIncrement": "Increment {name}",
-  "summaryEst1RM": "Est. 1RM: {value} lb",
+  "summaryEst1RM": "Est. 1RM: {value} {unit}",
   "summaryEstimated1RM": "Estimasi 1RM",
   "summaryEverySetRated": "Saben set wis dirating",
   "summaryExerciseOrderAndTime": "Urutan & Wektu Latihan",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Energi",
   "workoutSummaryGeneralExercises": "LATIHAN",
   "workoutSummaryGeneralHeartRate": "Detak Jantung",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} reps",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} reps",
   "workoutSummaryGeneralLibraryId": "ID Pustaka: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "OTOT SING DILATIH",
   "workoutSummaryGeneralPersonalRecords": "Rekor Pribadi",

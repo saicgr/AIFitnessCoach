@@ -12855,6 +12855,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12869,6 +12872,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15110,6 +15116,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25884,7 +25893,7 @@
   "summaryAvgRir": "Průměrné RIR",
   "summaryAvgRpe": "Průměrné RPE",
   "summaryAvgSets": "Průměr (série)",
-  "summaryBestSet": "Nejlepší série: {weight} lb x {reps}",
+  "summaryBestSet": "Nejlepší série: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Nejlepší série",
   "summaryCardHours": "Hodiny",
   "summaryCardPrs": "PRs",
@@ -25910,7 +25919,7 @@
   "summaryDuration": "Doba trvání",
   "summaryEpleyFormula": "Na základě Epleyho vzorce z vašich nejlepších sérií",
   "summaryEquipmentIncrement": "Přírůstek {name}",
-  "summaryEst1RM": "Odhad 1RM: {value} lb",
+  "summaryEst1RM": "Odhad 1RM: {value} {unit}",
   "summaryEstimated1RM": "Odhadované 1RM",
   "summaryEverySetRated": "Každá série ohodnocena",
   "summaryExerciseOrderAndTime": "Pořadí cviků a čas",
@@ -27617,7 +27626,7 @@
   "workoutSummaryGeneralEnergy": "Energie",
   "workoutSummaryGeneralExercises": "CVIKY",
   "workoutSummaryGeneralHeartRate": "Tepová frekvence",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} opakování",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} opakování",
   "workoutSummaryGeneralLibraryId": "ID knihovny: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "PROCVIČENÉ SVALY",
   "workoutSummaryGeneralPersonalRecords": "Osobní rekordy",

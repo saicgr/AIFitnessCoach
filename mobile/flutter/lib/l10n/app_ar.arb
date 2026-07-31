@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "متوسط RIR",
   "summaryAvgRpe": "متوسط RPE",
   "summaryAvgSets": "المتوسط (المجموعات)",
-  "summaryBestSet": "أفضل مجموعة: {weight} lb × {reps}",
+  "summaryBestSet": "أفضل مجموعة: {weight} {unit} × {reps}",
   "summaryCardBestStreak": "أفضل سلسلة",
   "summaryCardHours": "ساعات",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "المدة",
   "summaryEpleyFormula": "بناءً على معادلة Epley من أفضل مجموعاتك",
   "summaryEquipmentIncrement": "زيادة {name}",
-  "summaryEst1RM": "تقدير 1RM: {value} lb",
+  "summaryEst1RM": "تقدير 1RM: {value} {unit}",
   "summaryEstimated1RM": "تقدير 1RM",
   "summaryEverySetRated": "تم تقييم كل مجموعة",
   "summaryExerciseOrderAndTime": "ترتيب التمارين والوقت",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "الطاقة",
   "workoutSummaryGeneralExercises": "التمارين",
   "workoutSummaryGeneralHeartRate": "معدل ضربات القلب",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} رطل x {reps} تكرار",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} تكرار",
   "workoutSummaryGeneralLibraryId": "معرف المكتبة: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "العضلات التي تم تمرينها",
   "workoutSummaryGeneralPersonalRecords": "الأرقام القياسية الشخصية",

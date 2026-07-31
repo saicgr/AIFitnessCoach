@@ -35648,8 +35648,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String get summaryAvgSets => '평균 (세트)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return '최고 세트: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return '최고 세트: $weight $unit x $reps';
   }
 
   @override
@@ -35730,8 +35730,8 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return '추정 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return '추정 1RM: $value $unit';
   }
 
   @override
@@ -41619,8 +41619,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => '심박수';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps 회';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps 회';
   }
 
   @override

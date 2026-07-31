@@ -23,6 +23,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitwiz/core/providers/user_provider.dart' show useKgForWorkoutProvider;
 
 import 'package:fitwiz/core/providers/locale_provider.dart' show supportedAppLocales;
 import 'package:fitwiz/data/models/exercise.dart' show LibraryExercise;
@@ -112,6 +113,16 @@ Future<void> _pumpResult(
         exercisesProvider.overrideWith(
           (ref) => const AsyncValue<List<LibraryExercise>>.data([]),
         ),
+        // E2E register row 18: both summary widgets became ConsumerWidgets so
+        // every lifting weight renders in the user's chosen unit instead of a
+        // hardcoded lb. That added a read of `useKgForWorkoutProvider`, whose
+        // real implementation resolves the signed-in user and therefore
+        // touches `Supabase.instance` — which a pure layout test never
+        // initialises, so every case here threw "You must initialize the
+        // supabase instance". Override it the same way
+        // `workout_summary_weight_unit_test.dart` does. false = pounds, which
+        // is what these fixtures were written against.
+        useKgForWorkoutProvider.overrideWith((ref) => false),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

@@ -37150,8 +37150,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String get summaryAvgSets => 'Gem. (sets)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Beste set: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Beste set: $weight $unit x $reps';
   }
 
   @override
@@ -37233,8 +37233,8 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Geschatte 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Geschatte 1RM: $value $unit';
   }
 
   @override
@@ -43362,8 +43362,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Hartslag';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps herh.';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps herh.';
   }
 
   @override

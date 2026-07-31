@@ -12855,6 +12855,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12869,6 +12872,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15110,6 +15116,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25884,7 +25893,7 @@
   "summaryAvgRir": "RIR moyen",
   "summaryAvgRpe": "RPE moyen",
   "summaryAvgSets": "Moyenne (séries)",
-  "summaryBestSet": "Meilleure série : {weight} lb x {reps}",
+  "summaryBestSet": "Meilleure série : {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Meilleure série",
   "summaryCardHours": "Heures",
   "summaryCardPrs": "Records",
@@ -25910,7 +25919,7 @@
   "summaryDuration": "Durée",
   "summaryEpleyFormula": "Basé sur la formule d'Epley de vos meilleures séries",
   "summaryEquipmentIncrement": "Incrément {name}",
-  "summaryEst1RM": "1RM estimé : {value} lb",
+  "summaryEst1RM": "1RM estimé : {value} {unit}",
   "summaryEstimated1RM": "1RM estimé",
   "summaryEverySetRated": "Chaque série notée",
   "summaryExerciseOrderAndTime": "Ordre des exercices et temps",
@@ -27617,7 +27626,7 @@
   "workoutSummaryGeneralEnergy": "Énergie",
   "workoutSummaryGeneralExercises": "EXERCICES",
   "workoutSummaryGeneralHeartRate": "Fréquence cardiaque",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} répétitions",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} répétitions",
   "workoutSummaryGeneralLibraryId": "ID de bibliothèque : {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "MUSCLES SOLLICITÉS",
   "workoutSummaryGeneralPersonalRecords": "Records personnels",

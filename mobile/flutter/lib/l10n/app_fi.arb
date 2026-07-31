@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Keskim. RIR",
   "summaryAvgRpe": "Keskim. RPE",
   "summaryAvgSets": "Keskim. (sarjat)",
-  "summaryBestSet": "Paras sarja: {weight} lb x {reps}",
+  "summaryBestSet": "Paras sarja: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Paras putki",
   "summaryCardHours": "Tuntia",
   "summaryCardPrs": "PR-ennätykset",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Kesto",
   "summaryEpleyFormula": "Perustuu Epley-kaavaan parhaista sarjoistasi",
   "summaryEquipmentIncrement": "{name} lisäys",
-  "summaryEst1RM": "Arvioitu 1RM: {value} lb",
+  "summaryEst1RM": "Arvioitu 1RM: {value} {unit}",
   "summaryEstimated1RM": "Arvioitu 1RM",
   "summaryEverySetRated": "Jokainen sarja arvioitu",
   "summaryExerciseOrderAndTime": "Liikejärjestys ja aika",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Energia",
   "workoutSummaryGeneralExercises": "LIIKKEET",
   "workoutSummaryGeneralHeartRate": "Syke",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} toistoa",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} toistoa",
   "workoutSummaryGeneralLibraryId": "Kirjasto-ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "TYÖSKENNELEVÄT LIHAKSET",
   "workoutSummaryGeneralPersonalRecords": "Ennätykset",

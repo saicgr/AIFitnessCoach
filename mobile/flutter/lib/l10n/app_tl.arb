@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Avg RIR",
   "summaryAvgRpe": "Avg RPE",
   "summaryAvgSets": "Avg (Mga Set)",
-  "summaryBestSet": "Pinakamahusay na set: {weight} lb x {reps}",
+  "summaryBestSet": "Pinakamahusay na set: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Pinakamahusay na Streak",
   "summaryCardHours": "Mga Oras",
   "summaryCardPrs": "mga PR",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Tagal",
   "summaryEpleyFormula": "Batay sa Epley formula mula sa iyong pinakamahusay na mga set",
   "summaryEquipmentIncrement": "{name} Pagdagdag",
-  "summaryEst1RM": "Est. 1RM: {value} lb",
+  "summaryEst1RM": "Est. 1RM: {value} {unit}",
   "summaryEstimated1RM": "Tinatayang 1RM",
   "summaryEverySetRated": "Bawat set ay may rating",
   "summaryExerciseOrderAndTime": "Pagkakasunod-sunod ng Ehersisyo at Oras",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Enerhiya",
   "workoutSummaryGeneralExercises": "MGA EHERSISYO",
   "workoutSummaryGeneralHeartRate": "Bilis ng Tibok ng Puso",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} mga ulit",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} mga ulit",
   "workoutSummaryGeneralLibraryId": "Library ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "MGA MUSKULONG GINAMIT",
   "workoutSummaryGeneralPersonalRecords": "Mga Personal na Rekord",

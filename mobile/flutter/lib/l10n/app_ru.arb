@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Средний RIR",
   "summaryAvgRpe": "Средний RPE",
   "summaryAvgSets": "Среднее (подходы)",
-  "summaryBestSet": "Лучший подход: {weight} lb x {reps}",
+  "summaryBestSet": "Лучший подход: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Лучшая серия",
   "summaryCardHours": "Часы",
   "summaryCardPrs": "Рекорды",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Длительность",
   "summaryEpleyFormula": "На основе формулы Эпли по вашим лучшим подходам",
   "summaryEquipmentIncrement": "Шаг {name}",
-  "summaryEst1RM": "Расчетный 1RM: {value} lb",
+  "summaryEst1RM": "Расчетный 1RM: {value} {unit}",
   "summaryEstimated1RM": "Расчетный 1RM",
   "summaryEverySetRated": "Каждый подход оценен",
   "summaryExerciseOrderAndTime": "Порядок упражнений и время",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Энергия",
   "workoutSummaryGeneralExercises": "УПРАЖНЕНИЯ",
   "workoutSummaryGeneralHeartRate": "Пульс",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} фунтов x {reps} повт.",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} повт.",
   "workoutSummaryGeneralLibraryId": "ID библиотеки: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "ЗАДЕЙСТВОВАННЫЕ МЫШЦЫ",
   "workoutSummaryGeneralPersonalRecords": "Личные рекорды",

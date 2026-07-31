@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "平均 RIR",
   "summaryAvgRpe": "平均 RPE",
   "summaryAvgSets": "平均（组数）",
-  "summaryBestSet": "最佳组: {weight} lb x {reps}",
+  "summaryBestSet": "最佳组: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "最佳连胜",
   "summaryCardHours": "小时",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "时长",
   "summaryEpleyFormula": "基于你最佳组数的 Epley 公式计算",
   "summaryEquipmentIncrement": "{name} 增量",
-  "summaryEst1RM": "预估 1RM: {value} lb",
+  "summaryEst1RM": "预估 1RM: {value} {unit}",
   "summaryEstimated1RM": "预估 1RM",
   "summaryEverySetRated": "每组均已评分",
   "summaryExerciseOrderAndTime": "动作顺序与时间",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "能量",
   "workoutSummaryGeneralExercises": "动作",
   "workoutSummaryGeneralHeartRate": "心率",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} 磅 x {reps} 次",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} 次",
   "workoutSummaryGeneralLibraryId": "库 ID：{libraryId}",
   "workoutSummaryGeneralMusclesWorked": "锻炼肌肉",
   "workoutSummaryGeneralPersonalRecords": "个人纪录",

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "ಸರಾಸರಿ RIR",
   "summaryAvgRpe": "ಸರಾಸರಿ RPE",
   "summaryAvgSets": "ಸರಾಸರಿ (ಸೆಟ್‌ಗಳು)",
-  "summaryBestSet": "ಅತ್ಯುತ್ತಮ ಸೆಟ್: {weight} lb x {reps}",
+  "summaryBestSet": "ಅತ್ಯುತ್ತಮ ಸೆಟ್: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "ಅತ್ಯುತ್ತಮ ಸ್ಟ್ರೀಕ್",
   "summaryCardHours": "ಗಂಟೆಗಳು",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "ಅವಧಿ",
   "summaryEpleyFormula": "ನಿಮ್ಮ ಅತ್ಯುತ್ತಮ ಸೆಟ್‌ಗಳ ಆಧಾರದ ಮೇಲೆ Epley ಫಾರ್ಮುಲಾ",
   "summaryEquipmentIncrement": "{name} ಹೆಚ್ಚಳ",
-  "summaryEst1RM": "ಅಂದಾಜು 1RM: {value} lb",
+  "summaryEst1RM": "ಅಂದಾಜು 1RM: {value} {unit}",
   "summaryEstimated1RM": "ಅಂದಾಜು 1RM",
   "summaryEverySetRated": "ಪ್ರತಿ ಸೆಟ್ ರೇಟ್ ಮಾಡಲಾಗಿದೆ",
   "summaryExerciseOrderAndTime": "ವ್ಯಾಯಾಮದ ಕ್ರಮ ಮತ್ತು ಸಮಯ",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ಶಕ್ತಿ",
   "workoutSummaryGeneralExercises": "ವ್ಯಾಯಾಮಗಳು",
   "workoutSummaryGeneralHeartRate": "ಹೃದಯ ಬಡಿತ",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} ರೆಪ್‌ಗಳು",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} ರೆಪ್‌ಗಳು",
   "workoutSummaryGeneralLibraryId": "ಲೈಬ್ರರಿ ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "ಕೆಲಸ ಮಾಡಿದ ಸ್ನಾಯುಗಳು",
   "workoutSummaryGeneralPersonalRecords": "ವೈಯಕ್ತಿಕ ದಾಖಲೆಗಳು",

@@ -12855,6 +12855,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12869,6 +12872,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15110,6 +15116,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25884,7 +25893,7 @@
   "summaryAvgRir": "Średnie RIR",
   "summaryAvgRpe": "Średnie RPE",
   "summaryAvgSets": "Średnio (serie)",
-  "summaryBestSet": "Najlepsza seria: {weight} lb x {reps}",
+  "summaryBestSet": "Najlepsza seria: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Najlepsza seria",
   "summaryCardHours": "Godziny",
   "summaryCardPrs": "Rekordy (PRs)",
@@ -25910,7 +25919,7 @@
   "summaryDuration": "Czas trwania",
   "summaryEpleyFormula": "Na podstawie wzoru Epleya z Twoich najlepszych serii",
   "summaryEquipmentIncrement": "Przyrost {name}",
-  "summaryEst1RM": "Szac. 1RM: {value} lb",
+  "summaryEst1RM": "Szac. 1RM: {value} {unit}",
   "summaryEstimated1RM": "Szacowane 1RM",
   "summaryEverySetRated": "Każda seria oceniona",
   "summaryExerciseOrderAndTime": "Kolejność ćwiczeń i czas",
@@ -27617,7 +27626,7 @@
   "workoutSummaryGeneralEnergy": "Energia",
   "workoutSummaryGeneralExercises": "ĆWICZENIA",
   "workoutSummaryGeneralHeartRate": "Tętno",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} powt.",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} powt.",
   "workoutSummaryGeneralLibraryId": "ID biblioteki: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "ZAANGAŻOWANE MIĘŚNIE",
   "workoutSummaryGeneralPersonalRecords": "Rekordy osobiste",

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "సగటు RIR",
   "summaryAvgRpe": "సగటు RPE",
   "summaryAvgSets": "సగటు (సెట్లు)",
-  "summaryBestSet": "ఉత్తమ సెట్: {weight} lb x {reps}",
+  "summaryBestSet": "ఉత్తమ సెట్: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "ఉత్తమ స్ట్రీక్",
   "summaryCardHours": "గంటలు",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "వ్యవధి",
   "summaryEpleyFormula": "మీ ఉత్తమ సెట్ల నుండి Epley ఫార్ములా ఆధారంగా",
   "summaryEquipmentIncrement": "{name} ఇంక్రిమెంట్",
-  "summaryEst1RM": "అంచనా 1RM: {value} lb",
+  "summaryEst1RM": "అంచనా 1RM: {value} {unit}",
   "summaryEstimated1RM": "అంచనా 1RM",
   "summaryEverySetRated": "ప్రతి సెట్ రేట్ చేయబడింది",
   "summaryExerciseOrderAndTime": "వ్యాయామ క్రమం & సమయం",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "శక్తి",
   "workoutSummaryGeneralExercises": "వ్యాయామాలు",
   "workoutSummaryGeneralHeartRate": "హృదయ స్పందన రేటు",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} రెప్స్",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} రెప్స్",
   "workoutSummaryGeneralLibraryId": "లైబ్రరీ ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "కండరాల పనితీరు",
   "workoutSummaryGeneralPersonalRecords": "వ్యక్తిగత రికార్డులు",

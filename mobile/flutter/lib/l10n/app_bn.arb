@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "গড় RIR",
   "summaryAvgRpe": "গড় RPE",
   "summaryAvgSets": "গড় (সেট)",
-  "summaryBestSet": "সেরা সেট: {weight} lb x {reps}",
+  "summaryBestSet": "সেরা সেট: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "সেরা স্ট্রিক",
   "summaryCardHours": "ঘণ্টা",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "সময়কাল",
   "summaryEpleyFormula": "আপনার সেরা সেটের ওপর ভিত্তি করে Epley ফর্মুলা",
   "summaryEquipmentIncrement": "{name} বৃদ্ধি",
-  "summaryEst1RM": "অনুমানিত 1RM: {value} lb",
+  "summaryEst1RM": "অনুমানিত 1RM: {value} {unit}",
   "summaryEstimated1RM": "অনুমানিত 1RM",
   "summaryEverySetRated": "প্রতিটি সেট রেট করা হয়েছে",
   "summaryExerciseOrderAndTime": "ব্যায়ামের ক্রম ও সময়",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "এনার্জি",
   "workoutSummaryGeneralExercises": "ব্যায়ামসমূহ",
   "workoutSummaryGeneralHeartRate": "হার্ট রেট",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} রেপস",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} রেপস",
   "workoutSummaryGeneralLibraryId": "লাইব্রেরি আইডি: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "যেসব পেশী কাজ করেছে",
   "workoutSummaryGeneralPersonalRecords": "পার্সোনাল রেকর্ডস",

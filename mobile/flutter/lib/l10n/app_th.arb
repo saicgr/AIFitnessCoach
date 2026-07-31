@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "RIR เฉลี่ย",
   "summaryAvgRpe": "RPE เฉลี่ย",
   "summaryAvgSets": "เฉลี่ย (เซต)",
-  "summaryBestSet": "เซตที่ดีที่สุด: {weight} lb x {reps}",
+  "summaryBestSet": "เซตที่ดีที่สุด: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "สถิติสูงสุด",
   "summaryCardHours": "ชั่วโมง",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "ระยะเวลา",
   "summaryEpleyFormula": "อ้างอิงจากสูตร Epley จากเซตที่ดีที่สุดของคุณ",
   "summaryEquipmentIncrement": "การเพิ่มน้ำหนัก {name}",
-  "summaryEst1RM": "1RM โดยประมาณ: {value} lb",
+  "summaryEst1RM": "1RM โดยประมาณ: {value} {unit}",
   "summaryEstimated1RM": "1RM โดยประมาณ",
   "summaryEverySetRated": "ให้คะแนนทุกเซตแล้ว",
   "summaryExerciseOrderAndTime": "ลำดับท่าและเวลา",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "พลังงาน",
   "workoutSummaryGeneralExercises": "ท่าออกกำลังกาย",
   "workoutSummaryGeneralHeartRate": "อัตราการเต้นของหัวใจ",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} ปอนด์ x {reps} ครั้ง",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} ครั้ง",
   "workoutSummaryGeneralLibraryId": "Library ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "กล้ามเนื้อที่ใช้งาน",
   "workoutSummaryGeneralPersonalRecords": "สถิติส่วนตัว",

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "ਔਸਤ RIR",
   "summaryAvgRpe": "ਔਸਤ RPE",
   "summaryAvgSets": "ਔਸਤ (ਸੈੱਟ)",
-  "summaryBestSet": "ਸਭ ਤੋਂ ਵਧੀਆ ਸੈੱਟ: {weight} lb x {reps}",
+  "summaryBestSet": "ਸਭ ਤੋਂ ਵਧੀਆ ਸੈੱਟ: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "ਸਭ ਤੋਂ ਵਧੀਆ ਸਟ੍ਰੀਕ",
   "summaryCardHours": "ਘੰਟੇ",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "ਅਵਧੀ",
   "summaryEpleyFormula": "ਤੁਹਾਡੇ ਸਭ ਤੋਂ ਵਧੀਆ ਸੈੱਟਾਂ ਤੋਂ Epley ਫਾਰਮੂਲੇ 'ਤੇ ਆਧਾਰਿਤ",
   "summaryEquipmentIncrement": "{name} ਵਾਧਾ",
-  "summaryEst1RM": "ਅਨੁਮਾਨਿਤ 1RM: {value} lb",
+  "summaryEst1RM": "ਅਨੁਮਾਨਿਤ 1RM: {value} {unit}",
   "summaryEstimated1RM": "ਅਨੁਮਾਨਿਤ 1RM",
   "summaryEverySetRated": "ਹਰ ਸੈੱਟ ਰੇਟ ਕੀਤਾ ਗਿਆ",
   "summaryExerciseOrderAndTime": "ਕਸਰਤ ਦਾ ਕ੍ਰਮ ਅਤੇ ਸਮਾਂ",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ਊਰਜਾ",
   "workoutSummaryGeneralExercises": "ਕਸਰਤਾਂ",
   "workoutSummaryGeneralHeartRate": "ਦਿਲ ਦੀ ਧੜਕਣ",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} ਰੈਪਸ",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} ਰੈਪਸ",
   "workoutSummaryGeneralLibraryId": "ਲਾਇਬ੍ਰੇਰੀ ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "ਕੰਮ ਕਰਨ ਵਾਲੇ ਮਾਸਪੇਸ਼ੀ",
   "workoutSummaryGeneralPersonalRecords": "ਨਿੱਜੀ ਰਿਕਾਰਡ",

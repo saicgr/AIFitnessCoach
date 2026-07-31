@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "औसत RIR",
   "summaryAvgRpe": "औसत RPE",
   "summaryAvgSets": "औसत (सेट)",
-  "summaryBestSet": "सर्वश्रेष्ठ सेट: {weight} lb x {reps}",
+  "summaryBestSet": "सर्वश्रेष्ठ सेट: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "सर्वश्रेष्ठ स्ट्रीक",
   "summaryCardHours": "घंटे",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "अवधि",
   "summaryEpleyFormula": "आपके सर्वश्रेष्ठ सेट के Epley फॉर्मूले पर आधारित",
   "summaryEquipmentIncrement": "{name} इंक्रीमेंट",
-  "summaryEst1RM": "अनुमानित 1RM: {value} lb",
+  "summaryEst1RM": "अनुमानित 1RM: {value} {unit}",
   "summaryEstimated1RM": "अनुमानित 1RM",
   "summaryEverySetRated": "हर सेट रेट किया गया",
   "summaryExerciseOrderAndTime": "एक्सरसाइज क्रम और समय",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ऊर्जा",
   "workoutSummaryGeneralExercises": "व्यायाम",
   "workoutSummaryGeneralHeartRate": "हार्ट रेट",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} रेप्स",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} रेप्स",
   "workoutSummaryGeneralLibraryId": "लाइब्रेरी ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "काम करने वाली मांसपेशियां",
   "workoutSummaryGeneralPersonalRecords": "पर्सनल रिकॉर्ड्स",

@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Wastani wa RIR",
   "summaryAvgRpe": "Wastani wa RPE",
   "summaryAvgSets": "Wastani (Seti)",
-  "summaryBestSet": "Seti bora: {weight} lb x {reps}",
+  "summaryBestSet": "Seti bora: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Mfululizo Bora",
   "summaryCardHours": "Saa",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Muda",
   "summaryEpleyFormula": "Kulingana na fomula ya Epley kutoka kwa seti zako bora",
   "summaryEquipmentIncrement": "Ongezeko la {name}",
-  "summaryEst1RM": "Makadirio ya 1RM: {value} lb",
+  "summaryEst1RM": "Makadirio ya 1RM: {value} {unit}",
   "summaryEstimated1RM": "Makadirio ya 1RM",
   "summaryEverySetRated": "Kila seti imekadiriwa",
   "summaryExerciseOrderAndTime": "Mpangilio wa Mazoezi & Muda",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Nishati",
   "workoutSummaryGeneralExercises": "MAZOEZI",
   "workoutSummaryGeneralHeartRate": "Mapigo ya moyo",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} marudio",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} marudio",
   "workoutSummaryGeneralLibraryId": "Kitambulisho cha Maktaba: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "MISULI ILIYOFANYA KAZI",
   "workoutSummaryGeneralPersonalRecords": "Rekodi binafsi",

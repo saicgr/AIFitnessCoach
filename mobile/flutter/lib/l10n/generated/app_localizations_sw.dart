@@ -37211,8 +37211,8 @@ class AppLocalizationsSw extends AppLocalizations {
   String get summaryAvgSets => 'Wastani (Seti)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Seti bora: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Seti bora: $weight $unit x $reps';
   }
 
   @override
@@ -37294,8 +37294,8 @@ class AppLocalizationsSw extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Makadirio ya 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Makadirio ya 1RM: $value $unit';
   }
 
   @override
@@ -43443,8 +43443,12 @@ class AppLocalizationsSw extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Mapigo ya moyo';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps marudio';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps marudio';
   }
 
   @override

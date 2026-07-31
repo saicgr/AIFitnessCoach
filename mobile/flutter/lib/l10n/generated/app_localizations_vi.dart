@@ -37143,8 +37143,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String get summaryAvgSets => 'Trung bình (Hiệp)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'Hiệp tốt nhất: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'Hiệp tốt nhất: $weight $unit x $reps';
   }
 
   @override
@@ -37226,8 +37226,8 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return 'Ước tính 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return 'Ước tính 1RM: $value $unit';
   }
 
   @override
@@ -43356,8 +43356,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'Nhịp tim';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs lb x $reps lần';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps lần';
   }
 
   @override

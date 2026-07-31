@@ -62488,8 +62488,8 @@ abstract class AppLocalizations {
   /// No description provided for @summaryBestSet.
   ///
   /// In en, this message translates to:
-  /// **'Best set: {weight} lb x {reps}'**
-  String summaryBestSet(Object reps, Object weight);
+  /// **'Best set: {weight} {unit} x {reps}'**
+  String summaryBestSet(Object reps, String unit, Object weight);
 
   /// No description provided for @summaryCardBestStreak.
   ///
@@ -62644,8 +62644,8 @@ abstract class AppLocalizations {
   /// No description provided for @summaryEst1RM.
   ///
   /// In en, this message translates to:
-  /// **'Est. 1RM: {value} lb'**
-  String summaryEst1RM(Object value);
+  /// **'Est. 1RM: {value} {unit}'**
+  String summaryEst1RM(String unit, Object value);
 
   /// No description provided for @summaryEstimated1RM.
   ///
@@ -72928,8 +72928,12 @@ abstract class AppLocalizations {
   /// No description provided for @workoutSummaryGeneralLbXReps.
   ///
   /// In en, this message translates to:
-  /// **'{weightLbs} lb x {reps} reps'**
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs);
+  /// **'{weightLbs} {unit} x {reps} reps'**
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  );
 
   /// No description provided for @workoutSummaryGeneralLibraryId.
   ///

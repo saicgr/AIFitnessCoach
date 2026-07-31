@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "ശരാശരി RIR",
   "summaryAvgRpe": "ശരാശരി RPE",
   "summaryAvgSets": "ശരാശരി (സെറ്റുകൾ)",
-  "summaryBestSet": "മികച്ച സെറ്റ്: {weight} lb x {reps}",
+  "summaryBestSet": "മികച്ച സെറ്റ്: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "മികച്ച സ്ട്രീക്ക്",
   "summaryCardHours": "മണിക്കൂറുകൾ",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "ദൈർഘ്യം",
   "summaryEpleyFormula": "നിങ്ങളുടെ മികച്ച സെറ്റുകളെ അടിസ്ഥാനമാക്കിയുള്ള Epley ഫോർമുല",
   "summaryEquipmentIncrement": "{name} വർദ്ധനവ്",
-  "summaryEst1RM": "Est. 1RM: {value} lb",
+  "summaryEst1RM": "Est. 1RM: {value} {unit}",
   "summaryEstimated1RM": "കണക്കാക്കിയ 1RM",
   "summaryEverySetRated": "എല്ലാ സെറ്റുകളും റേറ്റ് ചെയ്തു",
   "summaryExerciseOrderAndTime": "വ്യായാമ ക്രമവും സമയവും",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ഊർജ്ജം",
   "workoutSummaryGeneralExercises": "എക്സർസൈസുകൾ",
   "workoutSummaryGeneralHeartRate": "ഹാർട്ട് റേറ്റ്",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} റെപ്പുകൾ",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} റെപ്പുകൾ",
   "workoutSummaryGeneralLibraryId": "ലൈബ്രറി ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "പ്രവർത്തിച്ച പേശികൾ",
   "workoutSummaryGeneralPersonalRecords": "പേഴ്സണൽ റെക്കോർഡുകൾ",

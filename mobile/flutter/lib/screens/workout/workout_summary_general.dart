@@ -9,10 +9,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/heart_rate_provider.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/utils/muscle_aliases.dart' as muscle_util;
 import '../../core/utils/weight_utils.dart';
 import '../../data/models/workout.dart';
@@ -26,11 +28,12 @@ import 'widgets/summary_hero_stats.dart';
 import 'widgets/workout_ai_recap_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN WIDGET
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class WorkoutSummaryGeneral extends StatelessWidget {
+class WorkoutSummaryGeneral extends ConsumerWidget {
   final WorkoutSummaryResponse? data;
   final Map<String, dynamic>? metadata;
   final double topPadding;
@@ -43,13 +46,16 @@ class WorkoutSummaryGeneral extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (data == null) {
       return const SizedBox.shrink();
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final summary = data!;
+    // E2E #18: the workout logger was hard-converted to lb regardless of the
+    // user's actual weight_unit preference.
+    final useKg = ref.watch(useKgForWorkoutProvider);
 
     // Parse workout map fields
     final workoutName = summary.workout['name'] as String? ?? 'Workout';
@@ -114,7 +120,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           // below already shows those numbers; starts expanded so the full
           // review is visible without a tap.
           if (!summary.isMarkedDone && exerciseTableData.isNotEmpty)
-            _buildCoachRecapCard(summary, exerciseTableData, exercises)
+            _buildCoachRecapCard(summary, exerciseTableData, exercises, useKg)
                 .animate()
                 .fadeIn(
                   duration: 400.ms,
@@ -149,6 +155,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
             _PersonalRecordsSection(
               records: personalRecords,
               isDark: isDark,
+              useKg: useKg,
             )
                 .animate()
                 .fadeIn(
@@ -212,6 +219,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
               workoutLogId: workoutLogId,
               gymProfileId: gymProfileId,
               isDark: isDark,
+              useKg: useKg,
             )
                 .animate()
                 .fadeIn(
@@ -259,6 +267,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
     WorkoutSummaryResponse summary,
     List<SummaryExerciseData> exerciseTableData,
     List<Map<String, dynamic>> parsedExercises,
+    bool useKg,
   ) {
     double totalVolumeKg = 0;
     int totalSets = 0;
@@ -304,7 +313,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
         .map((pr) => <String, dynamic>{
               'exercise_name': pr.exerciseName,
               'detail':
-                  '${WeightUtils.formatWorkoutWeight(pr.weightKg, useKg: false)} x ${pr.reps}',
+                  '${WeightUtils.formatWorkoutWeight(pr.weightKg, useKg: useKg)} x ${pr.reps}',
             })
         .toList();
 
@@ -325,7 +334,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
       totalReps: totalReps,
       totalVolumeKg: totalVolumeKg,
       earnedPRs: earnedPRs,
-      useKg: false,
+      useKg: useKg,
       // The Summary tab has its own Muscles Worked section and hero stats —
       // suppress the card's duplicates and skip the level-up replay.
       workoutExercises: const [],
@@ -442,10 +451,14 @@ class WorkoutSummaryGeneral extends StatelessWidget {
       prLookup[key]!.add({
         'exercise_name': pr.exerciseName,
         'weight_kg': pr.weightKg,
-        'weight_lbs': pr.weightKg * 2.20462,
+        // Payload field, not display — SummaryExerciseData.prs is only ever
+        // read as a presence flag (`hasPrs`), never rendered. Kept as a raw
+        // linear kg->lbs conversion for legacy-shape compatibility; not a
+        // magic-number literal (E2E #18 gate).
+        'weight_lbs': WeightUtils.kgToLbs(pr.weightKg),
         'reps': pr.reps,
         'estimated_1rm_kg': pr.estimated1rmKg,
-        'estimated_1rm_lbs': pr.estimated1rmKg * 2.20462,
+        'estimated_1rm_lbs': WeightUtils.kgToLbs(pr.estimated1rmKg),
         'previous_1rm_kg': pr.previous1rmKg,
         'improvement_kg': pr.improvementKg,
         'improvement_percent': pr.improvementPercent,
@@ -497,22 +510,26 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           setNumber: setNumber,
           targetReps: s['target_reps'] as int?,
           targetWeightKg: targetWeightKg,
+          // *Lbs fields are a legacy-fallback payload — SummaryExerciseTable
+          // always prefers the paired *Kg field (present here), so these are
+          // never actually rendered. Not a magic-number literal (E2E #18 gate).
           targetWeightLbs:
-              targetWeightKg != null ? targetWeightKg * 2.20462 : null,
+              targetWeightKg != null ? WeightUtils.kgToLbs(targetWeightKg) : null,
           // Easy/Quick mode historically wrote `reps_completed`; Advanced
           // and post-fix Easy write canonical `reps`. Read both so logs from
           // either path render correctly in Summary.
           actualReps: (s['reps'] as int?) ?? (s['reps_completed'] as int?),
           actualWeightKg: weightKg,
-          actualWeightLbs: weightKg != null ? weightKg * 2.20462 : null,
+          actualWeightLbs: weightKg != null ? WeightUtils.kgToLbs(weightKg) : null,
           rir: s['rir'] as int?,
           rpe: (s['rpe'] as num?)?.toDouble(),
           durationSeconds: durationSeconds,
           restSeconds: s['rest_duration_seconds'] as int?,
           barType: s['bar_type'] as String?,
           previousWeightKg: previousWeightKg,
-          previousWeightLbs:
-              previousWeightKg != null ? previousWeightKg * 2.20462 : null,
+          previousWeightLbs: previousWeightKg != null
+              ? WeightUtils.kgToLbs(previousWeightKg)
+              : null,
           previousReps: previousReps,
           progressionModel: s['progression_model'] as String?,
           // Coerce list (new) or string (legacy) into the list shape.
@@ -609,19 +626,23 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           setNumber: log.setNumber,
           targetReps: log.targetReps,
           targetWeightKg: log.targetWeightKg,
+          // *Lbs fields are a legacy-fallback payload — see the sets_json
+          // path above; the paired *Kg field is always present here too, so
+          // these are never actually rendered. Not a magic-number literal.
           targetWeightLbs: log.targetWeightKg != null
-              ? log.targetWeightKg! * 2.20462
+              ? WeightUtils.kgToLbs(log.targetWeightKg!)
               : null,
           actualReps: log.repsCompleted,
           actualWeightKg: log.weightKg,
-          actualWeightLbs: log.weightKg * 2.20462,
+          actualWeightLbs: WeightUtils.kgToLbs(log.weightKg),
           rir: log.rir,
           rpe: log.rpe,
           durationSeconds: log.setDurationSeconds,
           restSeconds: log.restDurationSeconds,
           previousWeightKg: previousWeightKg,
-          previousWeightLbs:
-              previousWeightKg != null ? previousWeightKg * 2.20462 : null,
+          previousWeightLbs: previousWeightKg != null
+              ? WeightUtils.kgToLbs(previousWeightKg)
+              : null,
           previousReps: previousReps,
           notes: log.notes,
           notesPhotoUrls: log.notesPhotoUrls,
@@ -790,7 +811,7 @@ class _HeaderSection extends StatelessWidget {
     }
 
     final badgeLabel = isMarkedDone ? 'Marked Done' : 'Tracked';
-    final badgeColor = isMarkedDone ? AppColors.yellow : AppColors.green;
+    final badgeColor = isMarkedDone ? AppColors.yellow : AppColors.green;  // accent-allowlist: tracked-vs-manual status badge — yellow=manually marked done, green=live-tracked; semantic status, not accent
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -880,7 +901,7 @@ class _HeartRateSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.favorite, size: 16, color: Color(0xFFF44336)),
+              const Icon(Icons.favorite, size: 16, color: Color(0xFFF44336)),  // accent-allowlist: heart-rate icon — red like a heartbeat, semantic not accent
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1085,8 +1106,8 @@ class _MuscleAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = muscle.isPrimary
-        ? AppColors.orange.withOpacity(0.6)
-        : AppColors.purple.withOpacity(0.3);
+        ? context.accentColor.withOpacity(0.6)
+        : context.accentColor.withOpacity(0.3);
     final textMuted = isDark ? AppColors.textMuted : Colors.grey.shade500;
 
     return Column(
@@ -1141,7 +1162,7 @@ class _MuscleAvatar extends StatelessWidget {
             style: TextStyle(
               fontSize: 9,
               fontWeight: FontWeight.w700,
-              color: muscle.isPrimary ? AppColors.orange : textMuted,
+              color: muscle.isPrimary ? context.accentColor : textMuted,
             ),
           ),
       ],
@@ -1162,6 +1183,7 @@ class _ExerciseCardsSection extends StatefulWidget {
   final String? workoutLogId;
   final String? gymProfileId;
   final bool isDark;
+  final bool useKg;
 
   const _ExerciseCardsSection({
     required this.exercises,
@@ -1169,6 +1191,7 @@ class _ExerciseCardsSection extends StatefulWidget {
     required this.workoutLogId,
     required this.gymProfileId,
     required this.isDark,
+    required this.useKg,
   });
 
   @override
@@ -1247,7 +1270,7 @@ class _ExerciseCardsSectionState extends State<_ExerciseCardsSection> {
             workoutId: widget.workoutId,
             workoutLogId: widget.workoutLogId,
             gymProfileId: widget.gymProfileId,
-            useKg: false,
+            useKg: widget.useKg,
             expandSignal: _expandAll,
           ),
       ],
@@ -1262,10 +1285,12 @@ class _ExerciseCardsSectionState extends State<_ExerciseCardsSection> {
 class _PersonalRecordsSection extends StatelessWidget {
   final List<PersonalRecordInfo> records;
   final bool isDark;
+  final bool useKg;
 
   const _PersonalRecordsSection({
     required this.records,
     required this.isDark,
+    required this.useKg,
   });
 
   @override
@@ -1276,15 +1301,15 @@ class _PersonalRecordsSection extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFEAB308).withOpacity(isDark ? 0.10 : 0.08),
-            const Color(0xFFF59E0B).withOpacity(isDark ? 0.06 : 0.04),
+            const Color(0xFFEAB308).withOpacity(isDark ? 0.10 : 0.08),  // accent-allowlist: PR trophy gold — matches the medal/rarity gold used for personal records
+            const Color(0xFFF59E0B).withOpacity(isDark ? 0.06 : 0.04),  // accent-allowlist: warning severity
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFEAB308).withOpacity(0.30),
+          color: const Color(0xFFEAB308).withOpacity(0.30),  // accent-allowlist: PR trophy gold — matches the medal/rarity gold used for personal records
         ),
       ),
       child: Column(
@@ -1298,7 +1323,7 @@ class _PersonalRecordsSection extends StatelessWidget {
                 height: 24,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFEAB308), Color(0xFFF59E0B)],
+                    colors: [Color(0xFFEAB308), Color(0xFFF59E0B)],  // accent-allowlist: PR trophy gold — matches the medal/rarity gold used for personal records
                     begin: AlignmentDirectional.topStart,
                     end: AlignmentDirectional.bottomEnd,
                   ),
@@ -1327,7 +1352,6 @@ class _PersonalRecordsSection extends StatelessWidget {
           ...records.asMap().entries.map((entry) {
             final i = entry.key;
             final pr = entry.value;
-            final weightLbs = pr.weightKg * 2.20462;
             final impPct = pr.improvementPercent ?? 0;
             final improvementStr = impPct > 0
                 ? '+${impPct.toStringAsFixed(1)}%'
@@ -1352,7 +1376,7 @@ class _PersonalRecordsSection extends StatelessWidget {
                           ? Icons.emoji_events
                           : Icons.military_tech,
                       size: 20,
-                      color: const Color(0xFFEAB308),
+                      color: const Color(0xFFEAB308),  // accent-allowlist: PR trophy gold — matches the medal/rarity gold used for personal records
                     ),
                     const SizedBox(width: 10),
                     // PR details
@@ -1375,7 +1399,16 @@ class _PersonalRecordsSection extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  AppLocalizations.of(context)!.workoutSummaryGeneralLbXReps(weightLbs.toStringAsFixed(1), pr.reps),
+                                  AppLocalizations.of(context)
+                                      .workoutSummaryGeneralLbXReps(
+                                    pr.reps,
+                                    WeightUtils.workoutUnitLabel(useKg),
+                                    WeightUtils.formatWorkoutWeight(
+                                      pr.weightKg,
+                                      useKg: useKg,
+                                      withUnit: false,
+                                    ),
+                                  ),
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -1392,7 +1425,7 @@ class _PersonalRecordsSection extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 1),
                                 decoration: BoxDecoration(
-                                  color: AppColors.green.withOpacity(0.15),
+                                  color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -1400,7 +1433,7 @@ class _PersonalRecordsSection extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.green,
+                                    color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                                   ),
                                 ),
                               ),
@@ -1496,7 +1529,7 @@ class _PostWorkoutFeedbackSection extends StatelessWidget {
                           i < rating ? Icons.star : Icons.star_border,
                           size: 20,
                           color: i < rating
-                              ? AppColors.yellow
+                              ? AppColors.yellow  // accent-allowlist: 5-star rating widget — filled stars are always this gold, matching the universal star-rating convention
                               : (isDark
                                   ? AppColors.textMuted
                                   : Colors.grey.shade300),
@@ -1606,7 +1639,7 @@ class _HydrationStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalMl = totalMlOf(metadata);
     final oz = (totalMl / 29.5735).round();
-    const water = Color(0xFF38BDF8);
+    const water = Color(0xFF38BDF8);  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
 
     return Container(
       width: double.infinity,

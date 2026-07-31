@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "Matsakaicin RIR",
   "summaryAvgRpe": "Matsakaicin RPE",
   "summaryAvgSets": "Matsakaici (Sets)",
-  "summaryBestSet": "Mafi kyawun saiti: {weight} lb x {reps}",
+  "summaryBestSet": "Mafi kyawun saiti: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "Mafi Kyawun Jeri",
   "summaryCardHours": "Awanni",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "Tsawon lokaci",
   "summaryEpleyFormula": "Dangane da dabarar Epley daga mafi kyawun saitunanka",
   "summaryEquipmentIncrement": "{name} Ƙari",
-  "summaryEst1RM": "Kiyasin 1RM: {value} lb",
+  "summaryEst1RM": "Kiyasin 1RM: {value} {unit}",
   "summaryEstimated1RM": "Kiyasin 1RM",
   "summaryEverySetRated": "Kowane saiti an kiyasta shi",
   "summaryExerciseOrderAndTime": "Tsarin Motsa Jiki da Lokaci",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "Ƙarfi",
   "workoutSummaryGeneralExercises": "MOTSA JIKI",
   "workoutSummaryGeneralHeartRate": "Bugun zuciya",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} maimaitawa",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} maimaitawa",
   "workoutSummaryGeneralLibraryId": "ID na ɗakin karatu: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "TSOKOKIN DA AKA AIKATA",
   "workoutSummaryGeneralPersonalRecords": "Rikodin kashin kai",

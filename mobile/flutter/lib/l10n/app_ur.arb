@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "اوسط RIR",
   "summaryAvgRpe": "اوسط RPE",
   "summaryAvgSets": "اوسط (سیٹس)",
-  "summaryBestSet": "بہترین سیٹ: {weight} lb x {reps}",
+  "summaryBestSet": "بہترین سیٹ: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "بہترین اسٹریک",
   "summaryCardHours": "گھنٹے",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "دورانیہ",
   "summaryEpleyFormula": "آپ کے بہترین سیٹس سے Epley فارمولے پر مبنی",
   "summaryEquipmentIncrement": "{name} اضافہ",
-  "summaryEst1RM": "تخمینہ 1RM: {value} lb",
+  "summaryEst1RM": "تخمینہ 1RM: {value} {unit}",
   "summaryEstimated1RM": "تخمینہ شدہ 1RM",
   "summaryEverySetRated": "ہر سیٹ کی درجہ بندی کی گئی",
   "summaryExerciseOrderAndTime": "ورزش کی ترتیب اور وقت",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "توانائی",
   "workoutSummaryGeneralExercises": "ورزشیں",
   "workoutSummaryGeneralHeartRate": "دل کی دھڑکن",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} ریپس",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} ریپس",
   "workoutSummaryGeneralLibraryId": "لائبریری ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "متحرک پٹھے",
   "workoutSummaryGeneralPersonalRecords": "ذاتی ریکارڈز",

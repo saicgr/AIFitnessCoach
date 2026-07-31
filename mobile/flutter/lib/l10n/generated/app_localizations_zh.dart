@@ -35202,8 +35202,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get summaryAvgSets => '平均（组数）';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return '最佳组: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return '最佳组: $weight $unit x $reps';
   }
 
   @override
@@ -35284,8 +35284,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return '预估 1RM: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return '预估 1RM: $value $unit';
   }
 
   @override
@@ -41101,8 +41101,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => '心率';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs 磅 x $reps 次';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps 次';
   }
 
   @override

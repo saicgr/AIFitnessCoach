@@ -37003,8 +37003,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get summaryAvgSets => 'เฉลี่ย (เซต)';
 
   @override
-  String summaryBestSet(Object reps, Object weight) {
-    return 'เซตที่ดีที่สุด: $weight lb x $reps';
+  String summaryBestSet(Object reps, String unit, Object weight) {
+    return 'เซตที่ดีที่สุด: $weight $unit x $reps';
   }
 
   @override
@@ -37086,8 +37086,8 @@ class AppLocalizationsTh extends AppLocalizations {
   }
 
   @override
-  String summaryEst1RM(Object value) {
-    return '1RM โดยประมาณ: $value lb';
+  String summaryEst1RM(String unit, Object value) {
+    return '1RM โดยประมาณ: $value $unit';
   }
 
   @override
@@ -43196,8 +43196,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get workoutSummaryGeneralHeartRate => 'อัตราการเต้นของหัวใจ';
 
   @override
-  String workoutSummaryGeneralLbXReps(Object reps, Object weightLbs) {
-    return '$weightLbs ปอนด์ x $reps ครั้ง';
+  String workoutSummaryGeneralLbXReps(
+    Object reps,
+    String unit,
+    Object weightLbs,
+  ) {
+    return '$weightLbs $unit x $reps ครั้ง';
   }
 
   @override

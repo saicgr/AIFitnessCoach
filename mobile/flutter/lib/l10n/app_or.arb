@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "ହାରାହାରି RIR",
   "summaryAvgRpe": "ହାରାହାରି RPE",
   "summaryAvgSets": "ହାରାହାରି (ସେଟ୍)",
-  "summaryBestSet": "ସର୍ବଶ୍ରେଷ୍ଠ ସେଟ୍: {weight} lb x {reps}",
+  "summaryBestSet": "ସର୍ବଶ୍ରେଷ୍ଠ ସେଟ୍: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "ସର୍ବୋତ୍ତମ ଷ୍ଟ୍ରିକ୍",
   "summaryCardHours": "ଘଣ୍ଟା",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "ଅବଧି",
   "summaryEpleyFormula": "ଆପଣଙ୍କ ସର୍ବଶ୍ରେଷ୍ଠ ସେଟ୍ ଗୁଡିକରୁ Epley ଫର୍ମୁଲା ଉପରେ ଆଧାରିତ",
   "summaryEquipmentIncrement": "{name} ବୃଦ୍ଧି",
-  "summaryEst1RM": "ଅନୁମାନିତ 1RM: {value} lb",
+  "summaryEst1RM": "ଅନୁମାନିତ 1RM: {value} {unit}",
   "summaryEstimated1RM": "ଆକଳିତ 1RM",
   "summaryEverySetRated": "ପ୍ରତ୍ୟେକ ସେଟ୍ ରେଟ୍ କରାଯାଇଛି",
   "summaryExerciseOrderAndTime": "ବ୍ୟାୟାମ କ୍ରମ ଏବଂ ସମୟ",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ଶକ୍ତି",
   "workoutSummaryGeneralExercises": "ବ୍ୟାୟାମ",
   "workoutSummaryGeneralHeartRate": "ହୃଦସ୍ପନ୍ଦନ",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} ଥର",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} ଥର",
   "workoutSummaryGeneralLibraryId": "ଲାଇବ୍ରେରୀ ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "କାର୍ଯ୍ୟକାରୀ ମାଂସପେଶୀ",
   "workoutSummaryGeneralPersonalRecords": "ବ୍ୟକ୍ତିଗତ ରେକର୍ଡ",

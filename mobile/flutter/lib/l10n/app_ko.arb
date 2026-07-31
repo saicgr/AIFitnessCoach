@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "평균 RIR",
   "summaryAvgRpe": "평균 RPE",
   "summaryAvgSets": "평균 (세트)",
-  "summaryBestSet": "최고 세트: {weight} lb x {reps}",
+  "summaryBestSet": "최고 세트: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "최고 연속 기록",
   "summaryCardHours": "시간",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "운동 시간",
   "summaryEpleyFormula": "최고 세트 기준 Epley 공식 적용",
   "summaryEquipmentIncrement": "{name} 증분",
-  "summaryEst1RM": "추정 1RM: {value} lb",
+  "summaryEst1RM": "추정 1RM: {value} {unit}",
   "summaryEstimated1RM": "예상 1RM",
   "summaryEverySetRated": "모든 세트 평가 완료",
   "summaryExerciseOrderAndTime": "운동 순서 및 시간",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "에너지",
   "workoutSummaryGeneralExercises": "운동",
   "workoutSummaryGeneralHeartRate": "심박수",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} 회",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} 회",
   "workoutSummaryGeneralLibraryId": "라이브러리 ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "사용된 근육",
   "workoutSummaryGeneralPersonalRecords": "개인 기록",

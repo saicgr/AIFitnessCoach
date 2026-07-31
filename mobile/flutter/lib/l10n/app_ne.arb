@@ -12856,6 +12856,9 @@
       "reps": {
         "type": "Object"
       },
+      "unit": {
+        "type": "String"
+      },
       "weight": {
         "type": "Object"
       }
@@ -12870,6 +12873,9 @@
   },
   "@summaryEst1RM": {
     "placeholders": {
+      "unit": {
+        "type": "String"
+      },
       "value": {
         "type": "Object"
       }
@@ -15111,6 +15117,9 @@
     "placeholders": {
       "reps": {
         "type": "Object"
+      },
+      "unit": {
+        "type": "String"
       },
       "weightLbs": {
         "type": "Object"
@@ -25885,7 +25894,7 @@
   "summaryAvgRir": "औसत RIR",
   "summaryAvgRpe": "औसत RPE",
   "summaryAvgSets": "औसत (सेटहरू)",
-  "summaryBestSet": "उत्कृष्ट सेट: {weight} lb x {reps}",
+  "summaryBestSet": "उत्कृष्ट सेट: {weight} {unit} x {reps}",
   "summaryCardBestStreak": "सर्वश्रेष्ठ स्ट्रिक",
   "summaryCardHours": "घण्टा",
   "summaryCardPrs": "PRs",
@@ -25911,7 +25920,7 @@
   "summaryDuration": "अवधि",
   "summaryEpleyFormula": "तपाईंको उत्कृष्ट सेटहरूबाट Epley सूत्रमा आधारित",
   "summaryEquipmentIncrement": "{name} वृद्धि",
-  "summaryEst1RM": "अनुमानित 1RM: {value} lb",
+  "summaryEst1RM": "अनुमानित 1RM: {value} {unit}",
   "summaryEstimated1RM": "अनुमानित 1RM",
   "summaryEverySetRated": "प्रत्येक सेट मूल्याङ्कन गरिएको",
   "summaryExerciseOrderAndTime": "व्यायाम क्रम र समय",
@@ -27618,7 +27627,7 @@
   "workoutSummaryGeneralEnergy": "ऊर्जा",
   "workoutSummaryGeneralExercises": "व्यायामहरू",
   "workoutSummaryGeneralHeartRate": "मुटुको धड्कन",
-  "workoutSummaryGeneralLbXReps": "{weightLbs} lb x {reps} पटक",
+  "workoutSummaryGeneralLbXReps": "{weightLbs} {unit} x {reps} पटक",
   "workoutSummaryGeneralLibraryId": "लाइब्रेरी ID: {libraryId}",
   "workoutSummaryGeneralMusclesWorked": "काम गरेका मांसपेशीहरू",
   "workoutSummaryGeneralPersonalRecords": "व्यक्तिगत रेकर्डहरू",
