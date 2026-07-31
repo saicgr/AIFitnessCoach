@@ -917,19 +917,19 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.error.withValues(alpha: 0.1),
+          color: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error state
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline, color: AppColors.error, size: 18),
+            Icon(Icons.error_outline, color: AppColors.error, size: 18),  // accent-allowlist: error state
             const SizedBox(width: 8),
             Expanded(
               child: Text(_error!,
-                  style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                  style: const TextStyle(color: AppColors.error, fontSize: 13)),  // accent-allowlist: error state
             ),
             IconButton(
-              icon: Icon(Icons.refresh, color: AppColors.error, size: 18),
+              icon: Icon(Icons.refresh, color: AppColors.error, size: 18),  // accent-allowlist: error state
               onPressed: () {
                 setState(() => _error = null);
                 if (_includedItems.isNotEmpty || _imagesB64.isNotEmpty) {

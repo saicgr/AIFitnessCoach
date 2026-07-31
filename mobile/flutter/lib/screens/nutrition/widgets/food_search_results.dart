@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/food_search_service.dart' as search;
 import '../../../widgets/empty_state.dart';
@@ -533,7 +534,7 @@ class _ResultCard extends StatelessWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     // Get source-specific icon and color
-    final (IconData icon, Color color) = _getSourceIcon(result.source, isDark);
+    final (IconData icon, Color color) = _getSourceIcon(context, result.source, isDark);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -644,17 +645,17 @@ class _ResultCard extends StatelessWidget {
     );
   }
 
-  (IconData, Color) _getSourceIcon(search.FoodSearchSource source, bool isDark) {
+  (IconData, Color) _getSourceIcon(BuildContext context, search.FoodSearchSource source, bool isDark) {
     switch (source) {
       case search.FoodSearchSource.saved:
         return (
           Icons.bookmark_rounded,
-          isDark ? AppColors.cyan : AppColorsLight.cyan
+          context.accentColor
         );
       case search.FoodSearchSource.recent:
         return (
           Icons.history_rounded,
-          isDark ? AppColors.purple : AppColorsLight.purple
+          isDark ? AppColors.purple : AppColorsLight.purple // accent-allowlist: search-result-source categorical badge legend
         );
       case search.FoodSearchSource.database:
         return (
@@ -664,12 +665,12 @@ class _ResultCard extends StatelessWidget {
       case search.FoodSearchSource.barcode:
         return (
           Icons.qr_code_scanner_rounded,
-          isDark ? AppColors.orange : AppColorsLight.orange
+          context.accentColor
         );
       case search.FoodSearchSource.foodDatabase:
         return (
           Icons.restaurant_menu_rounded,
-          isDark ? AppColors.green : AppColorsLight.green
+          isDark ? AppColors.green : AppColorsLight.green // accent-allowlist: search-result-source categorical badge legend
         );
     }
   }
@@ -804,7 +805,7 @@ class _ErrorState extends StatelessWidget {
         subtitle: message,
         actionLabel: AppLocalizations.of(context).buttonRetry,
         onAction: onRetry,
-        iconColor: AppColors.error,
+        iconColor: AppColors.error,  // accent-allowlist: error state
         useLottie: false,
       ),
     );

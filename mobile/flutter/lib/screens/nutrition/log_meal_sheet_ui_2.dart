@@ -361,16 +361,13 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           const SizedBox(height: 12),
           SizedBox(
             height: 84,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
+            // E2E register #148: the trailing add-tile could sit flush
+            // against the edge with no affordance the row scrolls.
+            child: FadingChipRow(
               children: [
                 for (int i = 0; i < _describePhotos.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _describeThumb(isDark, i),
-                  ),
-                if (_describePhotos.length < 5)
-                  _describeAddTile(isDark),
+                  _describeThumb(isDark, i),
+                if (_describePhotos.length < 5) _describeAddTile(isDark),
               ],
             ),
           ),
@@ -508,7 +505,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
     final tc = ThemeColors.of(context);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity — protein is always this colour
     final over = fits.caloriesRemaining < 0;
 
     return Container(
@@ -522,7 +519,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
       child: Row(
         children: [
           Icon(over ? Icons.warning_amber_rounded : Icons.track_changes_rounded,
-              size: 15, color: over ? AppColors.coral : accent),
+              size: 15, color: over ? AppColors.coral : accent), // accent-allowlist: over-budget warning state
           const SizedBox(width: 8),
           Expanded(
             child: FittedBox(
@@ -545,7 +542,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: over ? AppColors.coral : textPrimary),
+                        color: over ? AppColors.coral : textPrimary), // accent-allowlist: over-budget warning state
                   ),
                   if (fits.proteinRemaining != null) ...[
                     Text(' · ',
@@ -721,7 +718,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                                 ? Icons.stop_circle_outlined
                                 : Icons.mic_none_rounded,
                             color: _isListening
-                                ? const Color(0xFFEF4444)
+                                ? const Color(0xFFEF4444) // accent-allowlist: recording indicator, matches AppColors.error value
                                 : textMuted,
                             size: 22,
                           ),

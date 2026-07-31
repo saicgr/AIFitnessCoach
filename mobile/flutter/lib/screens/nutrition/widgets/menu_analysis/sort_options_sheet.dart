@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/sort_spec.dart';
 import '../../../../widgets/glass_sheet.dart' show GlassSheet, showGlassSheet;
 
@@ -166,7 +167,7 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
                     child: Text(
                       AppLocalizations.of(context).vacationModeClear,
                       style: TextStyle(
-                        color: AppColors.orange,
+                        color: context.accentColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -254,7 +255,7 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(_sort),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -324,10 +325,10 @@ class _UnifiedFieldTile extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.10),
+                color: context.accentColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.orange.withValues(alpha: 0.35),
+                  color: context.accentColor.withValues(alpha: 0.35),
                   width: 1,
                 ),
               ),
@@ -339,7 +340,7 @@ class _UnifiedFieldTile extends StatelessWidget {
                     height: 24,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -377,7 +378,7 @@ class _UnifiedFieldTile extends StatelessWidget {
                                 ? Icons.arrow_upward_rounded
                                 : Icons.arrow_downward_rounded,
                             size: 16,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -385,7 +386,7 @@ class _UnifiedFieldTile extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -397,7 +398,7 @@ class _UnifiedFieldTile extends StatelessWidget {
                   IconButton(
                     onPressed: onRemove,
                     icon: Icon(Icons.check_circle,
-                        color: AppColors.orange, size: 22),
+                        color: context.accentColor, size: 22),
                     padding: EdgeInsets.zero,
                     tooltip: AppLocalizations.of(context).sortOptionsRemoveFromSort,
                     constraints:

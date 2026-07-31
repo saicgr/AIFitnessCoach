@@ -481,7 +481,7 @@ class _SearchResultTile extends StatelessWidget {
                 Text('  ', style: TextStyle(color: textMuted, fontSize: 12)),
                 Text(
                   '${result.protein!.round()}g P',
-                  style: ZType.data(12, color: AppColors.macroProtein),
+                  style: ZType.data(12, color: AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
                 ),
               ],
               Text(
@@ -652,7 +652,7 @@ class _HistoryListView extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(
                       '${dayProtein.round()}g P',
-                      style: ZType.data(12, color: AppColors.macroProtein),
+                      style: ZType.data(12, color: AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
                     ),
                   ],
                 ),

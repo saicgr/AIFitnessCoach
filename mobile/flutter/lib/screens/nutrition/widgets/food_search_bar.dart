@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/food_search_service.dart';
@@ -124,7 +125,7 @@ class _FoodSearchBarState extends ConsumerState<FoodSearchBar> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : context.accentColor;
 
     final isLoading = searchState.maybeWhen(
       data: (state) => state is FoodSearchLoading,
@@ -385,7 +386,7 @@ class _FoodSearchBarCompactState extends ConsumerState<FoodSearchBarCompact> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : context.accentColor;
 
     final isLoading = searchState.maybeWhen(
       data: (state) => state is FoodSearchLoading,
@@ -515,7 +516,7 @@ class RecentSearchesList extends ConsumerWidget {
                   child: Text(
                     AppLocalizations.of(context).foodSearchBarClearAll,
                     style: TextStyle(
-                      color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                      color: isDark ? context.accentColor : context.accentColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),

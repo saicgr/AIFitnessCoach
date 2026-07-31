@@ -270,6 +270,18 @@ class _LeverageContext {
   _LeverageContext(this.kind, this.reach);
 }
 
+/// E2E register #132(c): the only client-side gate on `ContributorKind.move`
+/// copy (`_moveHeadlines`/`_moveBodies`) is that this loop reads
+/// [TodayScore.applicableContributors], never the raw [TodayScore.contributors]
+/// list. Move is only `applicable` when a Health source is linked
+/// (`moveApplicable = i.healthConnected` in `today_score_service.dart`), so
+/// an inapplicable Move contributor can never be picked here regardless of
+/// how large its (unused) weight/gap would otherwise be — do not change this
+/// to iterate `score.contributors` without adding an explicit applicability
+/// check, or a disconnected account can be told to "close the Move ring".
+/// (This governs `CoachHeroSurface.home` only; the fixed `eveningRecap` /
+/// `morningBrief` pools below bypass this picker entirely and, as of this
+/// fix, contain no Move-pillar copy of their own.)
 _LeverageContext? _leverageContext(TodayScore score, {DateTime? now}) {
   ScoreContributor? best;
   double bestGain = 0;

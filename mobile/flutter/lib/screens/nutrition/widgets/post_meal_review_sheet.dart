@@ -169,10 +169,10 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
+                  color: Colors.green.withValues(alpha: 0.1),  // accent-allowlist: success state
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                child: const Icon(Icons.check_circle, color: Colors.green, size: 20),  // accent-allowlist: success state
               ),
               const SizedBox(width: 12),
               Expanded(

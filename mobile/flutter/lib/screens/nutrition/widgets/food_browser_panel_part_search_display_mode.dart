@@ -39,7 +39,7 @@ class _BrowseFilterTabs extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    const orange = Color(0xFFF97316);
+    final orange = context.accentColor;
 
     Widget tab(FoodBrowserFilter filter, String label, IconData icon) {
       final isActive = selected == filter;
@@ -130,7 +130,7 @@ class _SourceDropdownPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -225,7 +225,7 @@ class _CountrySearchPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -344,7 +344,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : context.accentColor;
     final inputBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return DraggableScrollableSheet(
@@ -547,7 +547,7 @@ class _BrowseSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final teal = isDark ? context.accentColor : context.accentColor;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),

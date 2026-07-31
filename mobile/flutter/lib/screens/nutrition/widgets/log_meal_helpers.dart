@@ -40,11 +40,11 @@ class NutriscoreBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = grade.toUpperCase();
     final color = switch (g) {
-      'A' => const Color(0xFF038141),
-      'B' => const Color(0xFF85BB2F),
-      'C' => const Color(0xFFFECB02),
-      'D' => const Color(0xFFEE8100),
-      _ => const Color(0xFFE63E11),
+      'A' => const Color(0xFF038141),  // accent-allowlist: Nutri-Score official grading scale
+      'B' => const Color(0xFF85BB2F),  // accent-allowlist: Nutri-Score official grading scale
+      'C' => const Color(0xFFFECB02),  // accent-allowlist: Nutri-Score official grading scale
+      'D' => const Color(0xFFEE8100),  // accent-allowlist: Nutri-Score official grading scale
+      _ => const Color(0xFFE63E11),  // accent-allowlist: Nutri-Score official grading scale
     };
     return Tooltip(
       message: 'Nutri-Score rates overall nutritional quality\nfrom A (best) to E (worst)',
@@ -78,10 +78,10 @@ class NovaBadge extends StatelessWidget {
   const NovaBadge({super.key, required this.group, required this.isDark, this.onInfoTap});
 
   static Color colorForGroup(int group) => switch (group) {
-    1 => const Color(0xFF038141),
-    2 => const Color(0xFF85BB2F),
-    3 => const Color(0xFFEE8100),
-    _ => const Color(0xFFE63E11),
+    1 => const Color(0xFF038141),  // accent-allowlist: NOVA processing-group official scale
+    2 => const Color(0xFF85BB2F),  // accent-allowlist: NOVA processing-group official scale
+    3 => const Color(0xFFEE8100),  // accent-allowlist: NOVA processing-group official scale
+    _ => const Color(0xFFE63E11),  // accent-allowlist: NOVA processing-group official scale
   };
 
   static String labelForGroup(int group) => switch (group) {
@@ -142,10 +142,10 @@ enum ProcessingLevel {
   };
 
   Color get color => switch (this) {
-    ultraProcessed => const Color(0xFFE63E11),
-    harmfulInExcess => const Color(0xFFEE8100),
-    okInModeration => const Color(0xFFFECB02),
-    minimallyProcessed => const Color(0xFF038141),
+    ultraProcessed => const Color(0xFFE63E11),  // accent-allowlist: ingredient processing-level severity scale
+    harmfulInExcess => const Color(0xFFEE8100),  // accent-allowlist: ingredient processing-level severity scale
+    okInModeration => const Color(0xFFFECB02),  // accent-allowlist: ingredient processing-level severity scale
+    minimallyProcessed => const Color(0xFF038141),  // accent-allowlist: ingredient processing-level severity scale
   };
 
   IconData get icon => switch (this) {
@@ -719,13 +719,13 @@ class ConfidenceIndicator extends StatelessWidget {
 
     switch (confidenceLevel) {
       case 'high':
-        indicatorColor = isDark ? AppColors.green : AppColorsLight.green;
+        indicatorColor = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: confidence-level severity scale (high)
         indicatorIcon = Icons.verified;
         displayText = 'High confidence';
         subText = sourceType == 'barcode' ? 'Verified from barcode' : 'AI analysis confident';
         break;
       case 'medium':
-        indicatorColor = isDark ? AppColors.orange : AppColorsLight.orange;
+        indicatorColor = isDark ? AppColors.orange : AppColorsLight.orange;  // accent-allowlist: confidence-level severity scale (medium)
         indicatorIcon = Icons.info_outline;
         displayText = 'Medium confidence';
         subText = sourceType == 'restaurant'
@@ -840,11 +840,11 @@ class EcoscoreBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final g = grade.toUpperCase();
     final color = switch (g) {
-      'A' => const Color(0xFF038141),
-      'B' => const Color(0xFF85BB2F),
-      'C' => const Color(0xFFFECB02),
-      'D' => const Color(0xFFEE8100),
-      _ => const Color(0xFFE63E11),
+      'A' => const Color(0xFF038141),  // accent-allowlist: Eco-Score official grading scale
+      'B' => const Color(0xFF85BB2F),  // accent-allowlist: Eco-Score official grading scale
+      'C' => const Color(0xFFFECB02),  // accent-allowlist: Eco-Score official grading scale
+      'D' => const Color(0xFFEE8100),  // accent-allowlist: Eco-Score official grading scale
+      _ => const Color(0xFFE63E11),  // accent-allowlist: Eco-Score official grading scale
     };
     return Tooltip(
       message: 'Eco-Score rates environmental impact\nfrom A (low impact) to E (high impact)',
@@ -908,12 +908,12 @@ class FoodLabelChip extends StatelessWidget {
 
   Color _labelColor(String label) {
     final lower = label.toLowerCase();
-    if (lower.contains('organic') || lower.contains('bio')) return const Color(0xFF038141);
-    if (lower.contains('vegan')) return const Color(0xFF038141);
-    if (lower.contains('vegetarian')) return const Color(0xFF85BB2F);
-    if (lower.contains('gluten') && lower.contains('free')) return const Color(0xFFEE8100);
-    if (lower.contains('palm oil free')) return const Color(0xFF038141);
-    if (lower.contains('no') || lower.contains('free')) return const Color(0xFF85BB2F);
+    if (lower.contains('organic') || lower.contains('bio')) return const Color(0xFF038141);  // accent-allowlist: food-label categorical colour (organic/bio)
+    if (lower.contains('vegan')) return const Color(0xFF038141);  // accent-allowlist: food-label categorical colour (vegan)
+    if (lower.contains('vegetarian')) return const Color(0xFF85BB2F);  // accent-allowlist: food-label categorical colour (vegetarian)
+    if (lower.contains('gluten') && lower.contains('free')) return const Color(0xFFEE8100);  // accent-allowlist: food-label categorical colour (gluten-free)
+    if (lower.contains('palm oil free')) return const Color(0xFF038141);  // accent-allowlist: food-label categorical colour (palm-oil-free)
+    if (lower.contains('no') || lower.contains('free')) return const Color(0xFF85BB2F);  // accent-allowlist: food-label categorical colour (free-from)
     return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
   }
 
@@ -939,10 +939,10 @@ class AdditivesCountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = count > 5
-        ? const Color(0xFFE63E11)
+        ? const Color(0xFFE63E11)  // accent-allowlist: additives-count severity scale
         : count > 2
-            ? const Color(0xFFEE8100)
-            : const Color(0xFFFECB02);
+            ? const Color(0xFFEE8100)  // accent-allowlist: additives-count severity scale
+            : const Color(0xFFFECB02);  // accent-allowlist: additives-count severity scale
 
     return Tooltip(
       message: '$count food additive${count != 1 ? 's' : ''} detected',

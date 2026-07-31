@@ -181,11 +181,11 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                                 value: 'revert',
                                 child: Row(
                                   children: [
-                                    Icon(Icons.history_rounded, size: 18, color: AppColors.warning),
+                                    Icon(Icons.history_rounded, size: 18, color: AppColors.warning),  // accent-allowlist: warning severity
                                     const SizedBox(width: 10),
                                     Text(
                                       AppLocalizations.of(context).workoutDetailRevert,
-                                      style: const TextStyle(color: AppColors.warning),
+                                      style: const TextStyle(color: AppColors.warning),  // accent-allowlist: warning severity
                                     ),
                                   ],
                                 ),
@@ -258,7 +258,7 @@ class _DiffSheet extends StatelessWidget {
           dense: true,
           leading: Icon(
             d.change == 'added' ? Icons.add_circle : d.change == 'removed' ? Icons.remove_circle : Icons.edit,
-            color: d.change == 'added' ? AppColors.success : d.change == 'removed' ? AppColors.error : AppColors.yellow,
+            color: d.change == 'added' ? AppColors.success : d.change == 'removed' ? AppColors.error : AppColors.yellow, // accent-allowlist: ingredient-diff severity (added/removed/edited)
           ),
           title: Text(d.foodName, style: TextStyle(color: text)),
           subtitle: Text(d.change),

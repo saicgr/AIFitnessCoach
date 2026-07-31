@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/chat_message.dart';
@@ -591,7 +592,7 @@ class ChatMessageBubble extends ConsumerWidget {
                 ],
                 if (isUser) ...[
                   const SizedBox(width: 4),
-                  _buildStatusIcon(message.status),
+                  _buildStatusIcon(context, message.status),
                 ],
               ],
             ),
@@ -632,7 +633,7 @@ class ChatMessageBubble extends ConsumerWidget {
         }
       }
       if (equippedTitle != null) {
-        final primary = equippedTitle.color ?? AppColors.cyan;
+        final primary = equippedTitle.color ?? context.accentColor;
         titlePill = Padding(
           padding: const EdgeInsetsDirectional.only(bottom: 4, end: 4),
           child: Container(
@@ -681,7 +682,7 @@ class ChatMessageBubble extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatusIcon(MessageStatus status) {
+  Widget _buildStatusIcon(BuildContext context, MessageStatus status) {
     final statusColor = AppColors.textMuted;
     switch (status) {
       case MessageStatus.pending:
@@ -689,9 +690,9 @@ class ChatMessageBubble extends ConsumerWidget {
       case MessageStatus.sent:
         return Icon(Icons.check, size: 10, color: statusColor);
       case MessageStatus.delivered:
-        return const Icon(Icons.done_all, size: 10, color: AppColors.cyan);
+        return Icon(Icons.done_all, size: 10, color: context.accentColor);
       case MessageStatus.error:
-        return const Icon(Icons.close, size: 10, color: AppColors.error);
+        return const Icon(Icons.close, size: 10, color: AppColors.error);  // accent-allowlist: error state
     }
   }
 
@@ -741,8 +742,8 @@ class ChatMessageBubble extends ConsumerWidget {
                   ),
                 if (isUser)
                   ListTile(
-                    leading: const Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                    title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
+                    leading: const Icon(Icons.delete_outline, size: 20, color: AppColors.error),  // accent-allowlist: error state
+                    title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error state
                     onTap: () {
                       Navigator.pop(ctx);
                       showDialog(
@@ -766,7 +767,7 @@ class ChatMessageBubble extends ConsumerWidget {
                                   ref.read(chatMessagesProvider.notifier).state = AsyncValue.data(updated);
                                 }
                               },
-                              child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
+                              child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error state
                             ),
                           ],
                         ),
@@ -775,7 +776,7 @@ class ChatMessageBubble extends ConsumerWidget {
                   ),
                 if (!isUser)
                   ListTile(
-                    leading: const Icon(Icons.flag_outlined, size: 20, color: AppColors.orange),
+                    leading: Icon(Icons.flag_outlined, size: 20, color: context.accentColor),
                     title: Text(AppLocalizations.of(context).logMealSheetReport),
                     onTap: () {
                       Navigator.pop(ctx);
@@ -804,10 +805,10 @@ class ChatMessageBubble extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isDark
-              ? Colors.red.withOpacity(0.1)
-              : Colors.red.withOpacity(0.06),
+              ? Colors.red.withOpacity(0.1)  // accent-allowlist: error state
+              : Colors.red.withOpacity(0.06),  // accent-allowlist: error state
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.red.withOpacity(0.3)),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),  // accent-allowlist: error state
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -816,13 +817,13 @@ class ChatMessageBubble extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.warning_amber_rounded, size: 18,
-                    color: isDark ? Colors.red[300] : Colors.red[600]),
+                    color: isDark ? Colors.red[300] : Colors.red[600]),  // accent-allowlist: error state
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     message.content,
                     style: TextStyle(fontSize: 13,
-                        color: isDark ? Colors.red[300] : Colors.red[700]),
+                        color: isDark ? Colors.red[300] : Colors.red[700]),  // accent-allowlist: error state
                   ),
                 ),
               ],
@@ -833,10 +834,10 @@ class ChatMessageBubble extends ConsumerWidget {
                 child: TextButton.icon(
                   onPressed: onRetry,
                   icon: Icon(Icons.refresh, size: 14,
-                      color: isDark ? Colors.red[300] : Colors.red[600]),
+                      color: isDark ? Colors.red[300] : Colors.red[600]),  // accent-allowlist: error state
                   label: Text(AppLocalizations.of(context).buttonRetry,
                       style: TextStyle(fontSize: 12,
-                          color: isDark ? Colors.red[300] : Colors.red[600])),
+                          color: isDark ? Colors.red[300] : Colors.red[600])),  // accent-allowlist: error state
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     minimumSize: Size.zero,
@@ -1036,7 +1037,7 @@ class _ViewMicrosButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const color = Color(0xFF14B8A6); // teal — matches the micros surface
+    const color = Color(0xFF14B8A6); // teal — matches the micros surface -- accent-allowlist: micronutrients feature's own distinct sub-brand colour
     final path = foodLogId != null && foodLogId!.isNotEmpty
         ? '/nutrition/micros?foodLogId=$foodLogId'
         : '/nutrition/micros';

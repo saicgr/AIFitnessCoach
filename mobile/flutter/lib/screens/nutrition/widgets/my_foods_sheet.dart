@@ -438,7 +438,7 @@ class _SavedFoodsFilterSheetState extends State<SavedFoodsFilterSheet> {
                               alignment: Alignment.centerRight,
                               padding: const EdgeInsets.only(right: 20),
                               decoration: BoxDecoration(
-                                color: Colors.red.withValues(alpha: 0.8),
+                                color: Colors.red.withValues(alpha: 0.8),  // accent-allowlist: error state
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Icon(Icons.delete, color: Colors.white),

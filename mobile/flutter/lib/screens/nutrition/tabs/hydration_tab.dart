@@ -112,8 +112,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
   Widget build(BuildContext context) {
     final state = ref.watch(hydrationProvider);
     final electricBlue = widget.isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     if (state.isLoading) {
       // Layout-matched skeleton instead of a full-screen spinner, so the tab
@@ -316,8 +316,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
     final electricBlue = widget.isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     return ZealovaCard(
       padding: const EdgeInsets.all(16),
@@ -359,7 +359,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
               label: AppLocalizations.of(context).hydrationRemaining,
               value: _selectedUnit.format(remaining),
               unit: _selectedUnit.label,
-              color: remaining > 0 ? AppColors.orange : AppColors.success,
+              color: remaining > 0 ? AppColors.orange : AppColors.success,  // accent-allowlist: remaining-hydration warning
               textPrimary: textPrimary,
               textSecondary: textSecondary,
             ),
@@ -384,7 +384,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Added $displayAmount${_selectedUnit.label} of water'),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success state
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -472,7 +472,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
     final textMuted =
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final blue =
-        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
+        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     final added = await showGlassSheet<bool>(
       context: context,
@@ -573,8 +573,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final electricBlue = widget.isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     final result = await showGlassSheet<int>(
       context: context,
@@ -728,8 +728,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final electricBlue = widget.isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     final result = await showGlassSheet<Map<String, dynamic>>(
       context: context,
@@ -839,7 +839,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Added ${result['amount']}ml of ${type.label}'),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success state
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -870,8 +870,8 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final electricBlue = widget.isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     showGlassSheet(
       context: context,

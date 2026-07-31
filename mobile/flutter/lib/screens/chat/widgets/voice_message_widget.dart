@@ -96,7 +96,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _isRecording ? AppColors.red.withValues(alpha: 0.15) : colors.glassSurface,
+          color: _isRecording ? AppColors.red.withValues(alpha: 0.15) : colors.glassSurface,  // accent-allowlist: recording indicator
           shape: BoxShape.circle,
         ),
         child: _isRecording
@@ -107,7 +107,7 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
                     width: 10,
                     height: 10,
                     decoration: const BoxDecoration(
-                      color: AppColors.red,
+                      color: AppColors.red,  // accent-allowlist: recording indicator
                       shape: BoxShape.circle,
                     ),
                   ),

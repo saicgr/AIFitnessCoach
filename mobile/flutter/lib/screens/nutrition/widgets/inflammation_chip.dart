@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import 'score_explain_sheet.dart';
 
@@ -9,9 +10,9 @@ import 'score_explain_sheet.dart';
 /// (green = anti-inflammatory, orange = neutral/mild, red = highly
 /// inflammatory) so the same food reads the same color everywhere.
 Color inflammationColor(num score) {
-  if (score >= 7) return AppColors.error;
-  if (score >= 4) return AppColors.orange;
-  return AppColors.success;
+  if (score >= 7) return AppColors.error;  // accent-allowlist: inflammation severity scale — must read the same everywhere regardless of the user's accent
+  if (score >= 4) return AppColors.orange; // accent-allowlist: inflammation severity scale — neutral/mild tier, must read the same everywhere
+  return AppColors.success;  // accent-allowlist: inflammation severity scale
 }
 
 /// Short severity label for an inflammation score (0-10).

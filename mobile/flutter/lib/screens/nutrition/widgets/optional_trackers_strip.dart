@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -140,7 +141,7 @@ class OptionalTrackersStrip extends ConsumerWidget {
             _TrackerCard(
               isDark: isDark,
               icon: Icons.cookie_rounded,
-              color: AppColors.pink,
+              color: AppColors.pink,  // accent-allowlist: tracker-type categorical identity, consistent colour per tracked substance
               label: 'Added sugar',
               value: t.sugarG,
               limit: t.sugarLimitG.toDouble(),
@@ -151,7 +152,7 @@ class OptionalTrackersStrip extends ConsumerWidget {
             _TrackerCard(
               isDark: isDark,
               icon: Icons.coffee_rounded,
-              color: AppColors.orange,
+              color: context.accentColor,
               label: 'Caffeine',
               value: t.caffeineMg,
               limit: t.caffeineLimitMg.toDouble(),
@@ -162,7 +163,7 @@ class OptionalTrackersStrip extends ConsumerWidget {
             _TrackerCard(
               isDark: isDark,
               icon: Icons.local_bar_rounded,
-              color: AppColors.purple,
+              color: AppColors.purple,  // accent-allowlist: tracker-type categorical identity
               label: 'Alcohol',
               value: t.alcoholUnits,
               limit: t.alcoholLimitUnits.toDouble(),
@@ -230,7 +231,7 @@ class _TrackerCard extends StatelessWidget {
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final over = limit > 0 && value > limit;
     final pct = limit > 0 ? (value / limit).clamp(0.0, 1.0) : 0.0;
-    final accent = over ? AppColors.coral : color;
+    final accent = over ? AppColors.coral : color;  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
     final valueStr =
         value >= 100 ? value.round().toString() : value.toStringAsFixed(value == value.roundToDouble() ? 0 : 1);
 
@@ -244,7 +245,7 @@ class _TrackerCard extends StatelessWidget {
         color: surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: over ? AppColors.coral.withValues(alpha: 0.4) : cardBorder,
+          color: over ? AppColors.coral.withValues(alpha: 0.4) : cardBorder,  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
         ),
       ),
       child: Column(
@@ -297,7 +298,7 @@ class _TrackerCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.coral,
+                color: AppColors.coral,  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
               ),
             ),
           ],

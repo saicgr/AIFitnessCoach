@@ -766,7 +766,7 @@ class _NLItemSectionState extends State<_NLItemSection> {
           ),
           const SizedBox(width: 6),
           Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary))),
-          Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
+          Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),  // accent-allowlist: calorie-delta warning (over target)
           Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
         ],
       ),

@@ -76,7 +76,7 @@ class PublicRecipeScreen extends ConsumerWidget {
           if (v.caloriesPerServing != null)
             _statChip('${v.caloriesPerServing} KCAL/SERV', text),
           if (v.proteinPerServingG != null)
-            _statChip('${v.proteinPerServingG!.toStringAsFixed(0)}G P', AppColors.macroProtein),
+            _statChip('${v.proteinPerServingG!.toStringAsFixed(0)}G P', AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
         ]),
         const SizedBox(height: 24),
         ZealovaSectionKicker(AppLocalizations.of(context).recipeSuggestionCardIngredients),

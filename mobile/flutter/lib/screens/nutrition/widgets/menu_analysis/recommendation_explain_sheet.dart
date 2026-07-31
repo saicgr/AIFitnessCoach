@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../services/menu_recommendation_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 
@@ -65,7 +66,7 @@ class RecommendationExplainSheet extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.pop(context),
-                style: FilledButton.styleFrom(backgroundColor: AppColors.orange),
+                style: FilledButton.styleFrom(backgroundColor: context.accentColor),
                 child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
               ),
             ),
@@ -80,7 +81,7 @@ class RecommendationExplainSheet extends StatelessWidget {
     final signalValue = _signalValue(kind);
     final isPositive = contribution > 0;
     final icon = isPositive ? Icons.check_circle : Icons.cancel;
-    final color = isPositive ? AppColors.success : AppColors.error;
+    final color = isPositive ? AppColors.success : AppColors.error;  // accent-allowlist: success state
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -163,11 +164,11 @@ class _AxisStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _bar('Nutrition', axes.nutrition, AppColors.coral)),
+        Expanded(child: _bar('Nutrition', axes.nutrition, AppColors.coral)),  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
         const SizedBox(width: 6),
-        Expanded(child: _bar('Pleasure', axes.pleasure, AppColors.orange)),
+        Expanded(child: _bar('Pleasure', axes.pleasure, context.accentColor)),
         const SizedBox(width: 6),
-        Expanded(child: _bar('Wellness', axes.wellness, AppColors.success)),
+        Expanded(child: _bar('Wellness', axes.wellness, AppColors.success)),  // accent-allowlist: success state
       ],
     );
   }

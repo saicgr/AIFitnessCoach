@@ -108,9 +108,9 @@ class _PortionAmountInputState extends State<PortionAmountInput> {
     final accentEnum = AccentColorScope.of(context);
     final teal = accentEnum.getColor(widget.isDark);
     final glassSurface = widget.isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final macroProtein = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final macroCarbs = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final macroFat = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final macroProtein = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final macroCarbs = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final macroFat = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     // Calculate current values based on multiplier
     final currentCalories = (widget.baseCalories * _currentMultiplier).round();

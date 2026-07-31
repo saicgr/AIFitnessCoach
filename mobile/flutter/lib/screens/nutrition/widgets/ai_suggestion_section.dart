@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
 
@@ -150,8 +151,8 @@ class _PersonalHistoryPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = AppColors.orange.withValues(alpha: 0.12);
-    final fg = isDark ? AppColors.orange : AppColorsLight.orange;
+    final bg = context.accentColor.withValues(alpha: 0.12);
+    final fg = isDark ? context.accentColor : context.accentColor;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -294,9 +295,9 @@ class AISuggestionContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final encourageColor = isDark ? AppColors.green : AppColorsLight.green;
-    final warningColor = isDark ? AppColors.error : AppColorsLight.error;
-    final swapColor = isDark ? AppColors.purple : AppColorsLight.purple;
+    final encourageColor = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state (logged, synced, completed)
+    final warningColor = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error state
+    final swapColor = context.accentColor;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final encouragementsClean = encouragements?.where((e) => e.trim().isNotEmpty).toList() ?? const [];

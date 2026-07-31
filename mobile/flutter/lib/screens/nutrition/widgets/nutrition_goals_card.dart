@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/models/nutrition.dart';
@@ -101,9 +102,9 @@ class NutritionGoalsCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     // Macro colors matching home screen hero_nutrition_card
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity
+    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs; // accent-allowlist: macro identity
+    final orange = isDark ? AppColors.macroFat : AppColorsLight.macroFat; // accent-allowlist: macro identity
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final electricBlue = isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -137,7 +138,7 @@ class NutritionGoalsCard extends ConsumerWidget {
     // Calories burned from Health Connect / Watch
     final activityState = ref.watch(dailyActivityProvider);
     final caloriesBurned = activityState.today?.caloriesBurned ?? 0;
-    final green = isDark ? AppColors.green : AppColorsLight.green;
+    final green = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state (logged, synced, completed)
 
     final hasCaloriesBurned = caloriesBurned > 0;
     final hasGoal = nutritionGoal != null;
@@ -504,15 +505,15 @@ class _CycleAdjustmentBanner extends StatelessWidget {
   Color get _phaseColor {
     switch (phase) {
       case 'menstrual':
-        return const Color(0xFFE57373);
+        return const Color(0xFFE57373);  // accent-allowlist: menstrual-cycle-phase categorical palette (used app-wide)
       case 'follicular':
-        return const Color(0xFF81C784);
+        return const Color(0xFF81C784);  // accent-allowlist: menstrual-cycle-phase categorical palette
       case 'ovulation':
-        return const Color(0xFFFFD54F);
+        return const Color(0xFFFFD54F);  // accent-allowlist: menstrual-cycle-phase categorical palette
       case 'luteal':
-        return const Color(0xFF64B5F6);
+        return const Color(0xFF64B5F6);  // accent-allowlist: menstrual-cycle-phase categorical palette
       default:
-        return const Color(0xFF64B5F6);
+        return const Color(0xFF64B5F6);  // accent-allowlist: menstrual-cycle-phase categorical palette
     }
   }
 
@@ -608,9 +609,9 @@ class CompactMacroTargets extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity
+    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs; // accent-allowlist: macro identity
+    final orange = isDark ? AppColors.macroFat : AppColorsLight.macroFat; // accent-allowlist: macro identity
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     // Use provider's unified targets (dynamic > prefs) — single source of truth

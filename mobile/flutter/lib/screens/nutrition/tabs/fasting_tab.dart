@@ -865,7 +865,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to start fast: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -929,7 +929,7 @@ class _FastingTabState extends ConsumerState<FastingTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to end fast: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }

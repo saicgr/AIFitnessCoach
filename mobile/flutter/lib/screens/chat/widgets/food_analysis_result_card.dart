@@ -46,9 +46,9 @@ class _FoodAnalysisResultCardState extends State<FoodAnalysisResultCard> {
 
   static const _collapsedItemCount = 5;
 
-  static const Color _greenColor = Color(0xFF4CAF50);
-  static const Color _yellowColor = Color(0xFFFF9800);
-  static const Color _redColor = Color(0xFFE91E63);
+  static const Color _greenColor = Color(0xFF4CAF50); // accent-allowlist: score severity scale — good
+  static const Color _yellowColor = Color(0xFFFF9800); // accent-allowlist: score severity scale — moderate
+  static const Color _redColor = Color(0xFFE91E63); // accent-allowlist: score severity scale — poor
 
   @override
   Widget build(BuildContext context) {

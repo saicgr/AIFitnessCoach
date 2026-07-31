@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/sauna_log.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -138,7 +139,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final green = isDark ? AppColors.green : AppColorsLight.green;
+    final green = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state (logged, synced, completed)
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark
         ? AppColors.cardBorder
@@ -271,12 +272,12 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                     _BreakdownChip(
                       label: AppLocalizations.of(context).caloriesBurnedInApp,
                       value: inApp.round(),
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                     _BreakdownChip(
                       label: AppLocalizations.of(context).caloriesBurnedSynced,
                       value: synced.round(),
-                      color: AppColors.green,
+                      color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                     ),
                     if (passive >= 1)
                       _BreakdownChip(
@@ -284,7 +285,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                           context,
                         ).caloriesBurnedPassive,
                         value: passive.round(),
-                        color: AppColors.purple,
+                        color: AppColors.purple,  // accent-allowlist: calorie-source categorical legend (passive)
                       ),
                     if (saunaTotal > 0)
                       _BreakdownChip(
@@ -292,7 +293,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                           context,
                         ).workoutCompleteSauna,
                         value: saunaTotal.round(),
-                        color: const Color(0xFFE65100),
+                        color: const Color(0xFFE65100),  // accent-allowlist: calorie-source categorical legend (sauna)
                       ),
                   ],
                 );
@@ -304,7 +305,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
             if (fitWizWorkouts.isNotEmpty) ...[
               _SectionLabel(
                 label: '${Branding.appName} Workouts',
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
               const SizedBox(height: 8),
               for (final w in fitWizWorkouts)
@@ -339,7 +340,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                 label: AppLocalizations.of(
                   context,
                 ).workoutDayDetailSyncedFromHealth,
-                color: AppColors.green,
+                color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
               ),
               const SizedBox(height: 8),
               for (final w in _healthWorkouts)
@@ -362,7 +363,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                 _saunaSummary!.entries.isNotEmpty) ...[
               _SectionLabel(
                 label: AppLocalizations.of(context).workoutCompleteSauna,
-                color: const Color(0xFFE65100),
+                color: const Color(0xFFE65100),  // accent-allowlist: calorie-source categorical legend (sauna)
               ),
               const SizedBox(height: 8),
               for (final entry in _saunaSummary!.entries)
@@ -511,7 +512,7 @@ class _WorkoutTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = entry.isFromHealth ? AppColors.green : AppColors.cyan;
+    final iconColor = entry.isFromHealth ? AppColors.green : context.accentColor;  // accent-allowlist: success/positive state for the health-synced branch
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -588,15 +589,15 @@ class _WorkoutTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.12),
+                  color: context.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${entry.caloriesBurned!.toInt()} kcal',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                 ),
               ),

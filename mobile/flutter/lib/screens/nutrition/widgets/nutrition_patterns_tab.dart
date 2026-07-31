@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/services/data_cache_service.dart';
@@ -327,10 +328,10 @@ class _RangeHeaderDelegate extends SliverPersistentHeaderDelegate {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: selected ? AppColors.cyan.withValues(alpha: 0.15) : Colors.transparent,
+              color: selected ? context.accentColor.withValues(alpha: 0.15) : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               border: selected
-                  ? Border.all(color: AppColors.cyan.withValues(alpha: 0.3))
+                  ? Border.all(color: context.accentColor.withValues(alpha: 0.3))
                   : null,
             ),
             alignment: Alignment.center,
@@ -613,24 +614,25 @@ class _MacroPie extends StatelessWidget {
     final c = summary.avgCarbsG * 4;
     final f = summary.avgFatG * 9;
     final total = (p + c + f).clamp(1, double.infinity);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final sections = <PieChartSectionData>[
       PieChartSectionData(
         value: p,
-        color: AppColors.orange,
+        color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein, // accent-allowlist: macro identity — chart-series slice, must stay distinct from the carbs/fat slices
         title: '${((p / total) * 100).round()}%',
         radius: 60,
         titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
       ),
       PieChartSectionData(
         value: c,
-        color: AppColors.cyan,
+        color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs, // accent-allowlist: macro identity — chart-series slice
         title: '${((c / total) * 100).round()}%',
         radius: 60,
         titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
       ),
       PieChartSectionData(
         value: f,
-        color: AppColors.purple,
+        color: isDark ? AppColors.macroFat : AppColorsLight.macroFat, // accent-allowlist: macro identity — chart-series slice
         title: '${((f / total) * 100).round()}%',
         radius: 60,
         titleStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white),
@@ -701,9 +703,9 @@ class _MacroLegend extends StatelessWidget {
               style: TextStyle(fontSize: 11, color: textMuted),
             ),
           const SizedBox(height: 12),
-          row('Protein', AppColors.orange, summary.avgProteinG, summary.proteinGoal),
-          row('Carbs', AppColors.cyan, summary.avgCarbsG, summary.carbsGoal),
-          row('Fat', AppColors.purple, summary.avgFatG, summary.fatGoal),
+          row('Protein', isDark ? AppColors.macroProtein : AppColorsLight.macroProtein, summary.avgProteinG, summary.proteinGoal), // accent-allowlist: macro identity — matches the _MacroPie chart legend
+          row('Carbs', isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs, summary.avgCarbsG, summary.carbsGoal), // accent-allowlist: macro identity — matches the _MacroPie chart legend
+          row('Fat', isDark ? AppColors.macroFat : AppColorsLight.macroFat, summary.avgFatG, summary.fatGoal), // accent-allowlist: macro identity — matches the _MacroPie chart legend
         ],
       ),
     );
@@ -782,23 +784,23 @@ const _METRICS = <MapEntry<String, String>>[
 /// match the rest of the app's macro color language (purple=protein,
 /// cyan=carbs, orange=fat). Light and dark themes use the theme-appropriate
 /// darker/brighter variants already defined in AppColors / AppColorsLight.
-Color _metricColor(String key, bool isDark) {
+Color _metricColor(BuildContext context, String key, bool isDark) {
   switch (key) {
     case 'protein':
-      return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+      return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
     case 'carbs':
-      return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+      return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
     case 'fat':
-      return isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+      return isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
     case 'fiber':
-      return AppColors.limeGreen;
+      return AppColors.limeGreen;  // accent-allowlist: metric categorical legend (fiber)
     case 'sugar':
-      return AppColors.pink;
+      return AppColors.pink;  // accent-allowlist: metric categorical legend (sugar)
     case 'sodium':
-      return AppColors.info;
+      return AppColors.info;  // accent-allowlist: informational state
     case 'calories':
     default:
-      return AppColors.cyan;
+      return context.accentColor;
   }
 }
 
@@ -892,7 +894,7 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
                 for (final m in _METRICS)
                   () {
                     final selected = _metric == m.key;
-                    final mColor = _metricColor(m.key, widget.isDark);
+                    final mColor = _metricColor(context, m.key, widget.isDark);
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: ChoiceChip(
@@ -1163,7 +1165,7 @@ class _MoodSectionState extends ConsumerState<_MoodSection> {
               if (data.drainingFoods.isNotEmpty) ...[
                 _MoodListHeader(
                   label: AppLocalizations.of(context).nutritionPatternsFoodsThatDragYou,
-                  color: AppColors.orange,
+                  color: AppColors.orange, // accent-allowlist: negative-connotation, paired against the positive/success "energize" header below
                   isDark: isDark,
                 ),
                 for (final e in data.drainingFoods)
@@ -1173,7 +1175,7 @@ class _MoodSectionState extends ConsumerState<_MoodSection> {
               if (data.energizingFoods.isNotEmpty) ...[
                 _MoodListHeader(
                   label: AppLocalizations.of(context).nutritionPatternsFoodsThatEnergizeYou,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success state
                   isDark: isDark,
                 ),
                 for (final e in data.energizingFoods)
@@ -1260,15 +1262,15 @@ class _CheckinDisabledBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.08),
+        color: context.accentColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.25)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Icon(Icons.visibility_off_outlined, size: 18, color: AppColors.orange),
+            Icon(Icons.visibility_off_outlined, size: 18, color: context.accentColor),
             const SizedBox(width: 8),
             Text(
               AppLocalizations.of(context).nutritionPatternsCheckInsAreOff,
@@ -1286,7 +1288,7 @@ class _CheckinDisabledBanner extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => _reenable(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               ),
@@ -1374,7 +1376,7 @@ class _MoodFoodTile extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.15),
+                        color: context.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -1382,7 +1384,7 @@ class _MoodFoodTile extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.purple,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -1397,7 +1399,7 @@ class _MoodFoodTile extends ConsumerWidget {
           ),
           Icon(
             negative ? Icons.trending_down : Icons.trending_up,
-            color: negative ? AppColors.orange : AppColors.success,
+            color: negative ? AppColors.orange : AppColors.success,  // accent-allowlist: negative/positive trend indicator
             size: 20,
           ),
         ],
@@ -1512,7 +1514,7 @@ class _ToggleRow extends StatelessWidget {
               ],
             ),
           ),
-          Switch(value: value, onChanged: onChanged, activeTrackColor: AppColors.cyan),
+          Switch(value: value, onChanged: onChanged, activeTrackColor: context.accentColor),
         ],
       ),
     );
@@ -1587,7 +1589,7 @@ class _ErrorStub extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Text(message, style: const TextStyle(color: AppColors.error, fontSize: 12)),
+      child: Text(message, style: const TextStyle(color: AppColors.error, fontSize: 12)),  // accent-allowlist: error state
     );
   }
 }
@@ -2381,14 +2383,14 @@ class _GentleGoalCard extends StatelessWidget {
 Color _goalColor(String key, bool isDark, ThemeColors tc) {
   switch (key) {
     case 'protein':
-      return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+      return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
     case 'carbs':
-      return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+      return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
     case 'fat':
-      return isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+      return isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
     case 'fiber':
     case 'veggies':
-      return AppColors.limeGreen;
+      return AppColors.limeGreen;  // accent-allowlist: metric categorical legend (fiber/veggies)
     default:
       return tc.accent;
   }
@@ -2534,7 +2536,7 @@ class _DeltaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final up = delta >= 0;
-    final color = up ? AppColors.success : AppColors.warning;
+    final color = up ? AppColors.success : AppColors.warning;  // accent-allowlist: success state
     final v = delta.abs();
     final txt = '${up ? '+' : '−'}${v >= 10 ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}$unit';
     return Container(

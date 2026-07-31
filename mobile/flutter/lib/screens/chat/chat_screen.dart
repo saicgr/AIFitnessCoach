@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'dart:ui';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/design_system/zealova_rule.dart';
@@ -283,7 +284,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       if (mounted) {
         final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.chatScreenFailedToSendVoice(e.toString())), backgroundColor: AppColors.error),
+          SnackBar(content: Text(l10n.chatScreenFailedToSendVoice(e.toString())), backgroundColor: AppColors.error),  // accent-allowlist: error state
         );
       }
     } finally {
@@ -888,8 +889,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             children: [
               // Usage info — relocated from the old standalone (i) button.
               ListTile(
-                leading: const Icon(Icons.info_outline_rounded,
-                    color: AppColors.cyan),
+                leading: Icon(Icons.info_outline_rounded,
+                    color: context.accentColor),
                 title: const Text('Usage info'),
                 subtitle: Text(
                   'See your remaining messages and limits',
@@ -904,8 +905,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
-                leading: const Icon(Icons.add_comment_outlined,
-                    color: AppColors.cyan),
+                leading: Icon(Icons.add_comment_outlined,
+                    color: context.accentColor),
                 title: const Text('New chat'),
                 subtitle: Text(
                   'Start a fresh conversation',
@@ -920,8 +921,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
-                leading: const Icon(Icons.bug_report_outlined,
-                    color: AppColors.orange),
+                leading: Icon(Icons.bug_report_outlined,
+                    color: context.accentColor),
                 title: Text(l10n.chatScreenExtReportAProblem),
                 subtitle: Text(
                   l10n.chatScreenExtEmailOurSupportTeam,
@@ -940,7 +941,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
-                leading: const Icon(Icons.swap_horiz, color: AppColors.purple),
+                leading: Icon(Icons.swap_horiz, color: context.accentColor),
                 title: Text(l10n.coachSelectionScreenChangeCoach),
                 subtitle: Text(
                   l10n.chatScreenExtSwitchToADifferent,
@@ -956,7 +957,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               const Divider(height: 1, indent: 16, endIndent: 16),
               ListTile(
                 leading:
-                    const Icon(Icons.delete_outline, color: AppColors.error),
+                    const Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error state
                 title: Text(l10n.chatScreenExtClearChatHistory),
                 onTap: () {
                   Navigator.pop(context);
@@ -1146,7 +1147,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     width: 7,
                                     height: 7,
                                     decoration: const BoxDecoration(
-                                      color: AppColors.warning,
+                                      color: AppColors.warning,  // accent-allowlist: warning severity
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -1224,8 +1225,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final statusColor = _isLoading
         ? accentColor
         : offlineChatState.isAvailable
-            ? Colors.amber
-            : AppColors.success;
+            ? Colors.amber  // accent-allowlist: warning severity
+            : AppColors.success;  // accent-allowlist: success state
 
     return PopScope(
       // #21 — intercept Android system-back so it routes through the same
@@ -1289,9 +1290,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 // still show the spinner while the targeted history loads.
                 loading: () => _isOrganicOpen
                     ? _buildOpenComposingPlaceholder()
-                    : const Center(
-                        key: ValueKey('loading'),
-                        child: CircularProgressIndicator(color: AppColors.cyan),
+                    : Center(
+                        key: const ValueKey('loading'),
+                        child: CircularProgressIndicator(color: context.accentColor),
                       ),
                 error: (e, _) {
                   // Collapse noisy transport errors (DioException [connection
@@ -1325,7 +1326,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         children: [
                           const Icon(
                             Icons.error_outline,
-                            color: AppColors.error,
+                            color: AppColors.error,  // accent-allowlist: error state
                             size: 48,
                           ),
                           const SizedBox(height: 16),
@@ -1578,7 +1579,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       final wrappedBubble = isHighlighted
                           ? Container(
                               decoration: BoxDecoration(
-                                color: AppColors.cyan.withOpacity(0.1),
+                                color: context.accentColor.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: bubble,
@@ -1701,14 +1702,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             return Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              color: AppColors.warning.withOpacity(isDark ? 0.15 : 0.1),
+              color: AppColors.warning.withOpacity(isDark ? 0.15 : 0.1),  // accent-allowlist: warning severity
               child: Text(
                 l10n.chatScreenMessagesLeftToday(remaining),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: isDark ? AppColors.warning : Colors.orange.shade800,
+                  color: isDark ? AppColors.warning : Colors.orange.shade800,  // accent-allowlist: warning severity
                 ),
               ),
             );
@@ -1811,11 +1812,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                   : AppColorsLight.cardBorder)
                               .withValues(alpha: 0.4),
                         ),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                         ),
                       )
@@ -1948,7 +1949,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                   width: 8,
                                   height: 8,
                                   decoration: const BoxDecoration(
-                                    color: AppColors.warning,
+                                    color: AppColors.warning,  // accent-allowlist: warning severity
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -2045,8 +2046,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.fitness_center_rounded,
-                    color: AppColors.cyan, size: 32),
+                Icon(Icons.fitness_center_rounded,
+                    color: context.accentColor, size: 32),
                 const SizedBox(height: 12),
                 Text(
                   'Start a workout to use $matchName',
@@ -2073,7 +2074,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.cyan,
+                          backgroundColor: context.accentColor,
                           foregroundColor: Colors.black,
                         ),
                         onPressed: () {
@@ -2252,7 +2253,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             },
             child: const Text(
               'Clear',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error state
             ),
           ),
         ],

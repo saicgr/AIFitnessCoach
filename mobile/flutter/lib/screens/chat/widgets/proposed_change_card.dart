@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -136,11 +137,11 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isDark
-              ? AppColors.orange.withValues(alpha: 0.08)
-              : AppColors.orange.withValues(alpha: 0.06),
+              ? context.accentColor.withValues(alpha: 0.08)
+              : context.accentColor.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.orange.withValues(alpha: 0.35),
+            color: context.accentColor.withValues(alpha: 0.35),
             width: 1,
           ),
         ),
@@ -150,10 +151,10 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
+                Icon(
                   Icons.auto_fix_high_rounded,
                   size: 18,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -200,7 +201,7 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
       case _ProposalUiState.applied:
         return _StatusRow(
           icon: Icons.check_circle_rounded,
-          color: AppColors.green,
+          color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
           label: AppLocalizations.of(context).proposedChangeCardApplied,
         );
       case _ProposalUiState.dismissed:
@@ -229,7 +230,7 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                   _errorMessage!,
                   style: const TextStyle(
                     fontSize: 12,
-                    color: AppColors.error,
+                    color: AppColors.error,  // accent-allowlist: error state
                   ),
                 ),
               ),
@@ -266,10 +267,10 @@ class _ProposedChangeCardState extends ConsumerState<ProposedChangeCard> {
                         ? null
                         : _onApply,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor:
-                          AppColors.orange.withValues(alpha: 0.4),
+                          context.accentColor.withValues(alpha: 0.4),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(

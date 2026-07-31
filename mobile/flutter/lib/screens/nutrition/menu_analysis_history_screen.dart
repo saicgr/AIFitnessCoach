@@ -332,9 +332,9 @@ class _MenuAnalysisHistoryScreenState
               ? Center(child: Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    Icon(Icons.error_outline, size: 48, color: AppColors.error),  // accent-allowlist: error state
                     const SizedBox(height: 12),
-                    Text(AppLocalizations.of(context).menuAnalysisHistoryCouldnTLoadYour, style: TextStyle(color: AppColors.error)),
+                    Text(AppLocalizations.of(context).menuAnalysisHistoryCouldnTLoadYour, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error state
                     const SizedBox(height: 4),
                     Text(_error!, style: const TextStyle(fontSize: 11), textAlign: TextAlign.center),
                   ]),
@@ -509,8 +509,8 @@ class _Card extends StatelessWidget {
               onTap: () { Navigator.pop(context); onEditDetails(); },
             ),
             ListTile(
-              leading: Icon(Icons.delete_outline, color: AppColors.error),
-              title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
+              leading: Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error state
+              title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error state
               onTap: () { Navigator.pop(context); onDelete(); },
             ),
           ]),

@@ -540,22 +540,22 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
               ],
             ),
           ),
-          _buildPrefRow(Icons.access_time_outlined, AppColors.cyan, 'Meal Pattern', _mealPatternLabel(preferences.mealPattern), textPrimary, textMuted),
+          _buildPrefRow(Icons.access_time_outlined, context.accentColor, 'Meal Pattern', _mealPatternLabel(preferences.mealPattern), textPrimary, textMuted),
           Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-          _buildPrefRow(Icons.soup_kitchen_outlined, AppColors.info, 'Cooking', '${CookingSkill.fromString(preferences.cookingSkill).displayName} · ${preferences.cookingTimeMinutes} min', textPrimary, textMuted),
+          _buildPrefRow(Icons.soup_kitchen_outlined, context.accentColor, 'Cooking', '${CookingSkill.fromString(preferences.cookingSkill).displayName} · ${preferences.cookingTimeMinutes} min', textPrimary, textMuted),
           Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-          _buildPrefRow(Icons.account_balance_wallet_outlined, AppColors.green, 'Budget', BudgetLevel.fromString(preferences.budgetLevel).displayName, textPrimary, textMuted),
+          _buildPrefRow(Icons.account_balance_wallet_outlined, context.accentColor, 'Budget', BudgetLevel.fromString(preferences.budgetLevel).displayName, textPrimary, textMuted),
           if (preferences.allergies.isNotEmpty) ...[
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-            _buildPrefRow(Icons.warning_amber_outlined, AppColors.orange, 'Allergens', _formatList(preferences.allergies, FoodAllergen.values.map((e) => MapEntry(e.value, e.displayName)).toList()), textPrimary, textMuted),
+            _buildPrefRow(Icons.warning_amber_outlined, context.accentColor, 'Allergens', _formatList(preferences.allergies, FoodAllergen.values.map((e) => MapEntry(e.value, e.displayName)).toList()), textPrimary, textMuted),
           ],
           if (preferences.dietaryRestrictions.isNotEmpty) ...[
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-            _buildPrefRow(Icons.no_meals_outlined, AppColors.purple, 'Restrictions', _formatList(preferences.dietaryRestrictions, DietaryRestriction.values.map((e) => MapEntry(e.value, e.displayName)).toList()), textPrimary, textMuted),
+            _buildPrefRow(Icons.no_meals_outlined, context.accentColor, 'Restrictions', _formatList(preferences.dietaryRestrictions, DietaryRestriction.values.map((e) => MapEntry(e.value, e.displayName)).toList()), textPrimary, textMuted),
           ],
           if (preferences.dislikedFoods.isNotEmpty) ...[
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
-            _buildPrefRow(Icons.thumb_down_outlined, AppColors.orange, 'Disliked', preferences.dislikedFoods.take(3).join(', ') + (preferences.dislikedFoods.length > 3 ? ' +${preferences.dislikedFoods.length - 3} more' : ''), textPrimary, textMuted),
+            _buildPrefRow(Icons.thumb_down_outlined, context.accentColor, 'Disliked', preferences.dislikedFoods.take(3).join(', ') + (preferences.dislikedFoods.length > 3 ? ' +${preferences.dislikedFoods.length - 3} more' : ''), textPrimary, textMuted),
           ],
           const SizedBox(height: 8),
         ],
@@ -743,9 +743,9 @@ class _MacroRingsRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final accent = AccentColorScope.of(context).getColor(isDark);
     final protein =
-        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbs = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fat = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final carbs = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final fat = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -939,21 +939,23 @@ class _GoalPill extends StatelessWidget {
     }
   }
 
-  Color _colorFor(String value, bool isDark) {
-    // Match each goal to a semantic accent so users can scan the pill.
+  Color _colorFor(BuildContext context, String value, bool isDark) {
+    // Match each goal to a colour so users can scan the pill. lose_fat/
+    // recomposition (the two most common primary goals) follow the app
+    // accent; the rest are a categorical legend, allowlisted below.
     switch (value) {
       case 'lose_fat':
-        return AppColors.orange;
+        return context.accentColor;
       case 'build_muscle':
-        return AppColors.purple;
+        return AppColors.purple; // accent-allowlist: goal-type categorical legend, distinct colour per fitness goal
       case 'maintain':
-        return AppColors.green;
+        return AppColors.green; // accent-allowlist: goal-type categorical legend
       case 'improve_energy':
-        return AppColors.yellow;
+        return AppColors.yellow; // accent-allowlist: goal-type categorical legend
       case 'eat_healthier':
-        return AppColors.green;
+        return AppColors.green; // accent-allowlist: goal-type categorical legend
       case 'recomposition':
-        return AppColors.cyan;
+        return context.accentColor;
       default:
         return isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     }
@@ -961,7 +963,7 @@ class _GoalPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = _colorFor(primaryGoal, isDark);
+    final accent = _colorFor(context, primaryGoal, isDark);
     final secondary = allGoals.where((g) => g != primaryGoal).toList();
 
     return InkWell(

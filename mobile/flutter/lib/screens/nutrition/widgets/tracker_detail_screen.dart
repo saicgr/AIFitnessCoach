@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -25,11 +26,11 @@ class TrackerDetailScreen extends ConsumerWidget {
   ({String label, String unit, Color color, IconData icon}) get _meta {
     switch (kind) {
       case TrackerKind.sugar:
-        return (label: 'Added sugar', unit: 'g', color: AppColors.pink, icon: Icons.cookie_rounded);
+        return (label: 'Added sugar', unit: 'g', color: AppColors.pink, icon: Icons.cookie_rounded); // accent-allowlist: tracker-type categorical identity, consistent colour per tracked substance
       case TrackerKind.caffeine:
-        return (label: 'Caffeine', unit: 'mg', color: AppColors.orange, icon: Icons.coffee_rounded);
+        return (label: 'Caffeine', unit: 'mg', color: AppColors.orange, icon: Icons.coffee_rounded); // accent-allowlist: tracker-type categorical identity
       case TrackerKind.alcohol:
-        return (label: 'Alcohol', unit: 'drinks', color: AppColors.purple, icon: Icons.local_bar_rounded);
+        return (label: 'Alcohol', unit: 'drinks', color: AppColors.purple, icon: Icons.local_bar_rounded); // accent-allowlist: tracker-type categorical identity
     }
   }
 
@@ -82,7 +83,7 @@ class TrackerDetailScreen extends ConsumerWidget {
           final limit = _limit(t).toDouble();
           final over = limit > 0 && value > limit;
           final pct = limit > 0 ? (value / limit).clamp(0.0, 1.0) : 0.0;
-          final accent = over ? AppColors.coral : m.color;
+          final accent = over ? AppColors.coral : m.color;  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
@@ -145,17 +146,17 @@ class TrackerDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.5)),
+                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.5)),  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.coral),
+                      const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.coral),  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           "You're ${(value - limit) % 1 == 0 ? (value - limit).toInt() : (value - limit).toStringAsFixed(1)} ${m.unit} over your daily limit.",
                           style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral),
+                              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.coral),  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                         ),
                       ),
                     ],
@@ -349,7 +350,7 @@ class _HistoryChart extends StatelessWidget {
                         height: (values[i] / maxV * chartHeight).clamp(2.0, chartHeight),
                         decoration: BoxDecoration(
                           color: (limit > 0 && values[i] > limit)
-                              ? AppColors.coral
+                              ? AppColors.coral  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                               : color,
                           borderRadius: BorderRadius.circular(4),
                         ),

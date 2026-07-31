@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
@@ -831,6 +832,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                                 isWeightEditable: false,
                                 isDark: widget.isDark,
                                 goalTags: _buildGoalTags(
+                                  context,
                                   goals: userGoals,
                                   calories: result.calories,
                                   protein: result.protein ?? 0,
@@ -908,7 +910,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                         style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF97316),
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -999,7 +1001,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    const orange = Color(0xFFF97316);
+    final orange = context.accentColor;
 
     if (result.foodItems.isEmpty) {
       return Center(
@@ -1284,7 +1286,8 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
 }
 
 /// Build goal tags based on user goals and food macros (per 100g).
-List<_GoalTag> _buildGoalTags({
+List<_GoalTag> _buildGoalTags(
+  BuildContext context, {
   required List<String> goals,
   required int calories,
   required double protein,
@@ -1295,8 +1298,8 @@ List<_GoalTag> _buildGoalTags({
 }) {
   if (goals.isEmpty) return [];
   final tags = <_GoalTag>[];
-  final green = isDark ? AppColors.green : AppColorsLight.green;
-  const orange = Color(0xFFF97316);
+  final green = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state (logged, synced, completed)
+  final orange = context.accentColor;
 
   final hasMuscleGoal = goals.any((g) => g.contains('build_muscle') || g.contains('gain_muscle'));
   final hasWeightLossGoal = goals.any((g) => g.contains('lose_weight') || g.contains('lose_fat'));

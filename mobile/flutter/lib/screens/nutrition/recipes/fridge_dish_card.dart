@@ -167,12 +167,12 @@ class FridgeStatStrip extends StatelessWidget {
           _stat('${s.caloriesPerServing}', 'KCAL', neutral, labelColor),
         if (s.proteinPerServingG != null)
           _stat(s.proteinPerServingG!.toStringAsFixed(0), 'PROTEIN',
-              AppColors.macroProtein, labelColor),
+              AppColors.macroProtein, labelColor),  // accent-allowlist: macro identity — protein is always this colour
         if (s.carbsPerServingG != null)
           _stat(s.carbsPerServingG!.toStringAsFixed(0), 'CARBS',
-              AppColors.macroCarbs, labelColor),
+              AppColors.macroCarbs, labelColor),  // accent-allowlist: macro identity — carbs is always this colour
         if (s.fatPerServingG != null)
-          _stat(s.fatPerServingG!.toStringAsFixed(0), 'FAT', AppColors.macroFat,
+          _stat(s.fatPerServingG!.toStringAsFixed(0), 'FAT', AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
               labelColor),
       ],
     );

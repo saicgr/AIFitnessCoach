@@ -462,7 +462,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       ),
       child: Text(
         AppLocalizations.of(context).recipeDetailUd83cUdf1fCuratedRecipe.toUpperCase(),
-        style: ZType.lbl(10, color: AppColors.yellow, letterSpacing: 1.2),
+        style: ZType.lbl(10, color: AppColors.yellow, letterSpacing: 1.2), // accent-allowlist: curated/featured badge — gold rarity convention
       ),
     );
   }
@@ -495,17 +495,17 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
               _macroTile(
                 (r.proteinPerServingG ?? 0).toStringAsFixed(0),
                 'P g',
-                AppColors.macroProtein,
+                AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
               ),
               _macroTile(
                 (r.carbsPerServingG ?? 0).toStringAsFixed(0),
                 'C g',
-                AppColors.macroCarbs,
+                AppColors.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
               ),
               _macroTile(
                 (r.fatPerServingG ?? 0).toStringAsFixed(0),
                 'F g',
-                AppColors.macroFat,
+                AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
               ),
             ],
           ),
@@ -538,7 +538,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     required bool canDelete,
     required bool isDark,
   }) {
-    final improvizeColor = const Color(0xFF9B59FF); // distinct purple accent
+    final improvizeColor = accent;
     final favSet = ref.watch(recipeFavoritesProvider).ids;
     final isFav = favSet.contains(r.id) || r.isFavorited;
     return Wrap(
@@ -653,7 +653,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         _ActionChip(
           label: isFav ? AppLocalizations.of(context).recipeDetailFavorited : AppLocalizations.of(context).recipeDetailFavorite,
           icon: isFav ? Icons.favorite : Icons.favorite_border,
-          color: isFav ? AppColors.error : accent,
+          color: isFav ? AppColors.error : accent,  // accent-allowlist: error state
           onTap: () => _toggleFavorite(r.id),
         ),
         _ActionChip(
@@ -666,7 +666,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           _ActionChip(
             label: AppLocalizations.of(context).buttonDelete,
             icon: Icons.delete_outline,
-            color: AppColors.error,
+            color: AppColors.error,  // accent-allowlist: error state
             onTap: () => _confirmDelete(r),
           ),
       ],
@@ -977,7 +977,7 @@ class _HeartToggle extends StatelessWidget {
             child: Icon(
               isFav ? Icons.favorite : Icons.favorite_border,
               color: isFav
-                  ? Colors.redAccent
+                  ? Colors.redAccent  // accent-allowlist: error state
                   : (isDark
                       ? Colors.white.withValues(alpha: 0.9)
                       : AppColorsLight.textSecondary),

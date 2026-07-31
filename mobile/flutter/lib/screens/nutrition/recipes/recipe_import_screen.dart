@@ -528,7 +528,7 @@ class _ProgressFooter extends StatelessWidget {
               children: [
                 Text(
                   hasError ? AppLocalizations.of(context).recipeImportFailed.toUpperCase() : last.step.toUpperCase(),
-                  style: ZType.lbl(11, color: hasError ? AppColors.error : accent, letterSpacing: 1.5),
+                  style: ZType.lbl(11, color: hasError ? AppColors.error : accent, letterSpacing: 1.5),  // accent-allowlist: error state
                 ),
                 Text(last.message, style: TextStyle(color: text, fontSize: 13)),
                 if (last.confidence != null)

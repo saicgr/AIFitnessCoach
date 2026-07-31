@@ -177,7 +177,7 @@ class RecipeCard extends StatelessWidget {
       return _SourceBadge(
         label: l10n.recipeCardCurated,
         icon: Icons.verified_rounded,
-        color: const Color(0xFFFFB020), // warm gold
+        color: const Color(0xFFFFB020), // warm gold  // accent-allowlist: recipe-source categorical badge legend
       );
     }
 
@@ -188,7 +188,7 @@ class RecipeCard extends StatelessWidget {
       return _SourceBadge(
         label: l10n.recipeCardImprovized,
         icon: Icons.auto_awesome_rounded,
-        color: const Color(0xFFB388FF), // purple
+        color: const Color(0xFFB388FF), // purple  // accent-allowlist: recipe-source categorical badge legend
       );
     }
 
@@ -197,7 +197,7 @@ class RecipeCard extends StatelessWidget {
       return _SourceBadge(
         label: l10n.recipeCardImported,
         icon: Icons.download_rounded,
-        color: const Color(0xFF40C4FF), // blue
+        color: const Color(0xFF40C4FF), // blue  // accent-allowlist: recipe-source categorical badge legend
       );
     }
 
@@ -206,7 +206,7 @@ class RecipeCard extends StatelessWidget {
       return _SourceBadge(
         label: l10n.recipeCardAi,
         icon: Icons.auto_awesome,
-        color: const Color(0xFF69F0AE), // green
+        color: const Color(0xFF69F0AE), // green  // accent-allowlist: recipe-source categorical badge legend
       );
     }
 
@@ -277,7 +277,7 @@ class _HeartOverlay extends StatelessWidget {
       ),
       child: const Icon(
         Icons.favorite,
-        color: Color(0xFFFF3B30), // iOS-red
+        color: Color(0xFFFF3B30), // iOS-red  // accent-allowlist: favorite heart icon — iOS-red platform convention, independent of accent
         size: 16,
       ),
     );

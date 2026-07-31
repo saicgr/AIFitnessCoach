@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
@@ -99,7 +100,7 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                 Text(AppLocalizations.of(context).nutritionStreakCardStreakFreezeUsedYour),
               ],
             ),
-            backgroundColor: AppColors.cyan,
+            backgroundColor: context.accentColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -109,7 +110,7 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not use freeze: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -122,9 +123,9 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
   @override
   Widget build(BuildContext context) {
     final s = widget.streak;
-    final fire = AppColors.orange;
-    final fireDeep = AppColors.red;
-    final ice = AppColors.cyan;
+    final fire = AppColors.orange;  // accent-allowlist: fire/ice temperature metaphor — active vs frozen streak, independent of accent
+    final fireDeep = AppColors.red;  // accent-allowlist: fire gradient companion — flame visual, independent of accent
+    final ice = AppColors.cyan;  // accent-allowlist: fire/ice temperature metaphor — active vs frozen streak, independent of accent
     final textPrimary =
         widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted =
@@ -461,8 +462,8 @@ class _StreakDetailsSheet extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final fire = AppColors.orange;
-    final ice = AppColors.cyan;
+    final fire = AppColors.orange;  // accent-allowlist: fire/ice temperature metaphor — active vs frozen streak, independent of accent
+    final ice = AppColors.cyan;  // accent-allowlist: fire/ice temperature metaphor — active vs frozen streak, independent of accent
 
     // Parent GlassSheet provides the top handle + blurred background.
     return SafeArea(
@@ -496,7 +497,7 @@ class _StreakDetailsSheet extends StatelessWidget {
             const SizedBox(height: 8),
             _StatRow(
               icon: Icons.emoji_events_rounded,
-              color: AppColors.yellow,
+              color: AppColors.yellow,  // accent-allowlist: stat-row categorical legend — trophy/best-ever, gold rarity convention
               label: AppLocalizations.of(context).nutritionStreakCardBestEver,
               value: '${streak?.longestStreakEver ?? 0} days',
               textPrimary: textPrimary,
@@ -505,7 +506,7 @@ class _StreakDetailsSheet extends StatelessWidget {
             const SizedBox(height: 8),
             _StatRow(
               icon: Icons.calendar_today_rounded,
-              color: AppColors.purple,
+              color: AppColors.purple,  // accent-allowlist: stat-row categorical legend
               label: AppLocalizations.of(context).nutritionStreakCardTotalDaysLogged,
               value: '${streak?.totalDaysLogged ?? 0}',
               textPrimary: textPrimary,

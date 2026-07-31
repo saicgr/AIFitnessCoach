@@ -551,9 +551,9 @@ class _NutritionSummaryCard extends StatelessWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Semantic macro colors
-    final proteinColor = AppColors.macroProtein;
-    final carbsColor = AppColors.macroCarbs;
-    final fatColor = AppColors.macroFat;
+    final proteinColor = AppColors.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final carbsColor = AppColors.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final fatColor = AppColors.macroFat;  // accent-allowlist: macro identity — fat is always this colour
     final fiberColor = tc.textSecondary;
 
     return Container(

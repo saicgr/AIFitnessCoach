@@ -286,7 +286,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
           SnackBar(
             content: Text('Logged ${food.name}'),
             backgroundColor:
-                widget.isDark ? AppColors.success : AppColorsLight.success,
+                widget.isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success state
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -298,7 +298,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
           SnackBar(
             content: Text('Failed to log: $e'),
             backgroundColor:
-                widget.isDark ? AppColors.error : AppColorsLight.error,
+                widget.isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -314,9 +314,9 @@ class _DailyTabState extends ConsumerState<DailyTab>
     final textMuted =
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
-    final purple = widget.isDark ? AppColors.purple : AppColorsLight.purple;
-    final orange = widget.isDark ? AppColors.orange : AppColorsLight.orange;
-    final coral = widget.isDark ? AppColors.coral : AppColorsLight.coral;
+    final purple = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity
+    final orange = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs; // accent-allowlist: macro identity
+    final coral = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat; // accent-allowlist: macro identity
 
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
@@ -404,7 +404,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                         label: AppLocalizations.of(context).recipeBuilderSheetFiber,
                         value: '30',
                         unit: 'g',
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         isDark: widget.isDark,
                       ),
                     ],
@@ -915,7 +915,7 @@ class _LeftoversCarousel extends ConsumerWidget {
       error: (_, __) => const SizedBox.shrink(),
       data: (items) {
         if (items.isEmpty) return const SizedBox.shrink();
-        final accent = AppColors.orange; // matches leftovers warning color family
+        final accent = context.accentColor; // matches leftovers warning color family
         final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
         final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
         final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -940,9 +940,9 @@ class _LeftoversCarousel extends ConsumerWidget {
                   itemBuilder: (_, i) {
                     final ev = items[i];
                     final warningColor = ev.isExpired
-                        ? AppColors.error
+                        ? AppColors.error  // accent-allowlist: error state
                         : ev.isExpiringSoon
-                            ? AppColors.yellow
+                            ? AppColors.yellow  // accent-allowlist: warning severity — leftovers expiring soon
                             : accent;
                     return InkWell(
                       borderRadius: BorderRadius.circular(14),
@@ -1506,7 +1506,7 @@ class _NutritionHeadline extends ConsumerWidget {
           Row(
             children: [
               _MacroStat(
-                color: AppColors.macroProtein,
+                color: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                 eaten: eatenP,
                 target: pTarget,
                 mark: 'P',
@@ -1514,7 +1514,7 @@ class _NutritionHeadline extends ConsumerWidget {
               ),
               const SizedBox(width: 14),
               _MacroStat(
-                color: AppColors.macroCarbs,
+                color: AppColors.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                 eaten: eatenC,
                 target: cTarget,
                 mark: 'C',
@@ -1522,7 +1522,7 @@ class _NutritionHeadline extends ConsumerWidget {
               ),
               const SizedBox(width: 14),
               _MacroStat(
-                color: AppColors.macroFat,
+                color: AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                 eaten: eatenF,
                 target: fTarget,
                 mark: 'F',
@@ -1728,7 +1728,7 @@ class _PendingSyncBar extends ConsumerWidget {
     if (pending <= 0) return const SizedBox.shrink();
 
     final colors = ref.colors(context);
-    final amber = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE08600);
+    final amber = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE08600); // accent-allowlist: warning severity — pending sync banner
     final label = pending == 1
         ? '1 meal waiting to sync'
         : '$pending meals waiting to sync';

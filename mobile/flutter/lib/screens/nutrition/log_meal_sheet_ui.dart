@@ -26,11 +26,11 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? Colors.amber.withValues(alpha: 0.12)
-                        : Colors.amber.withValues(alpha: 0.10),
+                        ? Colors.amber.withValues(alpha: 0.12) // accent-allowlist: warning-severity tip banner
+                        : Colors.amber.withValues(alpha: 0.10), // accent-allowlist: warning-severity tip banner
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: Colors.amber.withValues(alpha: isDark ? 0.25 : 0.30),
+                      color: Colors.amber.withValues(alpha: isDark ? 0.25 : 0.30), // accent-allowlist: warning-severity tip banner
                       width: 0.5,
                     ),
                   ),
@@ -42,7 +42,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         child: Icon(
                           Icons.lightbulb_outline,
                           size: 16,
-                          color: isDark ? Colors.amber[300] : Colors.amber[700],
+                          color: isDark ? Colors.amber[300] : Colors.amber[700], // accent-allowlist: warning-severity tip banner
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -52,7 +52,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                           style: TextStyle(
                             fontSize: 12,
                             height: 1.35,
-                            color: isDark ? Colors.amber[200] : Colors.amber[800],
+                            color: isDark ? Colors.amber[200] : Colors.amber[800], // accent-allowlist: warning-severity tip banner
                           ),
                         ),
                       ),
@@ -131,6 +131,11 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
 
   Widget _buildBottomBar(bool isDark) {
     final hasText = _descriptionController.text.trim().isNotEmpty;
+    // E2E row 15 — the 4 capture chips used to each carry their own colour
+    // (blue/green/amber/violet), five colours in one row alongside the
+    // orange Analyze CTA. They're chrome, not categories, so they now share
+    // the single app accent.
+    final chipAccent = context.accentColor;
     // Keyboard-open: tighten the footer's fixed vertical gaps so the chips +
     // Analyze CTA + macro bar clear the shrunken sheet with zero overflow. The
     // safe-area inset is already absorbed by the keyboard, so drop it too.
@@ -185,7 +190,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 child: _CaptureChip(
                   icon: Icons.photo_camera_outlined,
                   label: AppLocalizations.of(context).recipeImportPhoto,
-                  color: const Color(0xFF3B82F6), // blue
+                  color: chipAccent,
                   isDark: isDark,
                   onTap: _openPhotoChooser,
                 ),
@@ -198,7 +203,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 child: _CaptureChip(
                   icon: CupertinoIcons.barcode,
                   label: AppLocalizations.of(context).quickActionsRowBarcode,
-                  color: const Color(0xFF10B981), // green
+                  color: chipAccent,
                   isDark: isDark,
                   onTap: _openBarcodeScanner,
                 ),
@@ -210,7 +215,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 child: _CaptureChip(
                   icon: Icons.menu_book_outlined,
                   label: AppLocalizations.of(context).quickActionsRowMenu,
-                  color: const Color(0xFFF59E0B), // amber
+                  color: chipAccent,
                   isDark: isDark,
                   onTap: _scanMenu,
                 ),
@@ -223,7 +228,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 child: _CaptureChip(
                   icon: Icons.more_horiz_rounded,
                   label: 'More',
-                  color: const Color(0xFF8B5CF6), // violet
+                  color: chipAccent,
                   isDark: isDark,
                   onTap: _openMoreWaysToLog,
                 ),
@@ -258,7 +263,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   /// (multi-shot loop) or choose existing photos from the library. Both
   /// delegate to the existing [_pickImages].
   Future<void> _openPhotoChooser() async {
-    const blue = Color(0xFF3B82F6);
+    final blue = context.accentColor;
     final source = await showGlassSheet<ImageSource>(
       context: context,
       builder: (ctx) {
@@ -312,7 +317,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   /// coach. Every one of them still works identically — this only changes
   /// where they are reached from, so no capability is lost.
   Future<void> _openMoreWaysToLog() async {
-    const violet = Color(0xFF8B5CF6);
+    final violet = context.accentColor;
     final choice = await showGlassSheet<String>(
       context: context,
       builder: (ctx) {
@@ -414,7 +419,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   /// letting the `ignore` keep it alive silently.
   // ignore: unused_element
   Future<void> _openScanChooser() async {
-    const violet = Color(0xFF8B5CF6);
+    final violet = context.accentColor;
     final choice = await showGlassSheet<String>(
       context: context,
       builder: (ctx) {
@@ -533,9 +538,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    final amber = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final coral = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final amber = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs; // accent-allowlist: macro identity — carbs is always this colour
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity — protein is always this colour
+    final coral = isDark ? AppColors.macroFat : AppColorsLight.macroFat; // accent-allowlist: macro identity — fat is always this colour
 
     Widget macroSegment(String label, int value, int target, Color color) {
       return Row(
@@ -713,23 +718,25 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 // returns a short affirmation. Surfaced as a "Remembered" chip.
                 if (response.rememberedMessage != null &&
                     response.rememberedMessage!.trim().isNotEmpty)
-                  Padding(
+                  Builder(builder: (ctx) {
+                    final rememberedAccent = ctx.accentColor;
+                    return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.10),
+                        color: rememberedAccent.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                             color:
-                                AppColors.purple.withValues(alpha: 0.25)),
+                                rememberedAccent.withValues(alpha: 0.25)),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(Icons.auto_awesome_rounded,
-                              size: 16, color: AppColors.purple),
+                              size: 16, color: rememberedAccent),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -745,7 +752,8 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         ],
                       ),
                     ),
-                  ),
+                  );
+                  }),
 
                 // Gap 1 — water-in-text. When the entry also mentioned a
                 // beverage, show that it'll be logged to hydration on confirm.
@@ -757,15 +765,15 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppColors.waterBlue.withValues(alpha: 0.10),
+                        color: AppColors.waterBlue.withValues(alpha: 0.10), // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                            color: AppColors.waterBlue.withValues(alpha: 0.25)),
+                            color: AppColors.waterBlue.withValues(alpha: 0.25)), // accent-allowlist: hydration identity colour
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.water_drop_rounded,
-                              size: 16, color: AppColors.waterBlue),
+                              size: 16, color: AppColors.waterBlue), // accent-allowlist: hydration identity colour
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -984,7 +992,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     // endpoint framed as a correction, and REPLACES the item
                     // set with the result (Add appends — Refine replaces).
                     Builder(builder: (ctx) {
-                      final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+                      final purple = ctx.accentColor;
                       return GestureDetector(
                         onTap: _refiningMeal ? null : _handleRefineMeal,
                         child: Row(
@@ -1026,7 +1034,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       onTap: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
                       child: _isSaving
                           ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
-                          : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted),
+                          : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted), // accent-allowlist: gold star = universally-recognized favorited/starred indicator, independent of accent
                     ),
                     // Add to recipe — append the analyzed items to an existing
                     // recipe, or start a new one from them.
@@ -1045,7 +1053,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     // Make this recipe — AI-generate a cookable recipe (steps +
                     // ingredients) for this dish, opened in the recipe editor.
                     Builder(builder: (ctx) {
-                      final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+                      final purple = ctx.accentColor;
                       return GestureDetector(
                         onTap: _makingRecipe ? null : () => _handleMakeThisRecipe(response),
                         child: Row(
@@ -1149,12 +1157,12 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   ),
                   child: Row(
                     children: [
-                      AnimatedCalorieChip(calories: response.totalCalories, color: AppColors.coral),
+                      AnimatedCalorieChip(calories: response.totalCalories, color: AppColors.coral), // accent-allowlist: calorie identity colour, paired with the macroProtein/Carbs/Fat trio below
                       // null = server couldn't determine this macro; show "—"
                       // rather than a fabricated 0g.
-                      CompactMacroChip(icon: Icons.fitness_center, value: response.proteinG != null ? '${response.proteinG!.toStringAsFixed(0)}g' : '—', unit: 'Protein', color: AppColors.macroProtein),
-                      CompactMacroChip(icon: Icons.grain, value: response.carbsG != null ? '${response.carbsG!.toStringAsFixed(0)}g' : '—', unit: 'Carbs', color: AppColors.macroCarbs),
-                      CompactMacroChip(icon: Icons.opacity, value: response.fatG != null ? '${response.fatG!.toStringAsFixed(0)}g' : '—', unit: 'Fat', color: AppColors.macroFat),
+                      CompactMacroChip(icon: Icons.fitness_center, value: response.proteinG != null ? '${response.proteinG!.toStringAsFixed(0)}g' : '—', unit: 'Protein', color: AppColors.macroProtein), // accent-allowlist: macro identity
+                      CompactMacroChip(icon: Icons.grain, value: response.carbsG != null ? '${response.carbsG!.toStringAsFixed(0)}g' : '—', unit: 'Carbs', color: AppColors.macroCarbs), // accent-allowlist: macro identity
+                      CompactMacroChip(icon: Icons.opacity, value: response.fatG != null ? '${response.fatG!.toStringAsFixed(0)}g' : '—', unit: 'Fat', color: AppColors.macroFat), // accent-allowlist: macro identity
                     ],
                   ),
                 ),
@@ -1458,7 +1466,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity — protein is always this colour
 
     return Padding(
       padding: const EdgeInsets.only(top: 12),
@@ -1489,7 +1497,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                           ? Icons.warning_amber_rounded
                           : Icons.track_changes_rounded,
                       size: 16,
-                      color: overBudget ? AppColors.coral : teal),
+                      color: overBudget ? AppColors.coral : teal), // accent-allowlist: over-budget warning state, paired with the on-track teal
                   const SizedBox(width: 7),
                   Expanded(
                     child: FittedBox(
@@ -1510,7 +1518,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w700,
                                 color: overBudget
-                                    ? AppColors.coral
+                                    ? AppColors.coral // accent-allowlist: over-budget warning state
                                     : textPrimary),
                           ),
                           if (fits.proteinRemaining != null) ...[
@@ -1707,7 +1715,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
 
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    const amber = Color(0xFFF59E0B);
+    const amber = Color(0xFFF59E0B); // accent-allowlist: warning-severity — low-confidence estimate banner
 
     // C10 — every item shaky → one re-photo prompt, not a confirm storm.
     final allLow = lowIdx.length == items.length && items.length > 1;
@@ -2006,7 +2014,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   void _showWhyEstimateSheet(bool isDark, List<FoodItemRanking> lowItems) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    const amber = Color(0xFFF59E0B);
+    const amber = Color(0xFFF59E0B); // accent-allowlist: warning-severity — low-confidence estimate explainer
 
     showGlassSheet(
       context: context,

@@ -15,6 +15,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -75,13 +76,13 @@ class EquipmentMatchCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center_outlined,
                   size: 18,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
               const SizedBox(width: 10),
@@ -168,8 +169,8 @@ class EquipmentMatchCard extends StatelessWidget {
             icon: const Icon(Icons.add_outlined, size: 18),
             label: Text(cta),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.cyan,
-              side: BorderSide(color: AppColors.cyan.withOpacity(0.4)),
+              foregroundColor: context.accentColor,
+              side: BorderSide(color: context.accentColor.withOpacity(0.4)),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -215,7 +216,7 @@ class EquipmentMatchCard extends StatelessWidget {
           icon: const Icon(Icons.flash_on_outlined, size: 16),
           label: Text(AppLocalizations.of(context).equipmentMatchCardStartAWorkoutWith),
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.cyan,
+            foregroundColor: context.accentColor,
             padding: EdgeInsets.zero,
             minimumSize: const Size(0, 32),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -306,14 +307,14 @@ class _MatchRow extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cyan.withOpacity(0.12),
+                          color: context.accentColor.withOpacity(0.12),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           badge,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -327,7 +328,7 @@ class _MatchRow extends StatelessWidget {
               padding: const EdgeInsets.symmetric(
                   horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.cyan,
+                color: context.accentColor,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(

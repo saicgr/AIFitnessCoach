@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/providers/antioxidant_provider.dart';
@@ -150,7 +151,7 @@ class _CoverageBanner extends StatelessWidget {
     if (withData == null || total == null || total == 0 || withData >= total) {
       return const SizedBox.shrink();
     }
-    final amber = isDark ? AppColors.orange : AppColorsLight.orange;
+    final amber = isDark ? context.accentColor : context.accentColor;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
@@ -232,8 +233,8 @@ class _AntioxidantCard extends ConsumerWidget {
   const _AntioxidantCard();
 
   Color _scoreColor(int s) => s >= 70
-      ? const Color(0xFF22C55E)
-      : (s >= 40 ? const Color(0xFFF59E0B) : const Color(0xFFF97316));
+      ? const Color(0xFF22C55E)  // accent-allowlist: antioxidant score severity scale
+      : (s >= 40 ? const Color(0xFFF59E0B) : const Color(0xFFF97316));  // accent-allowlist: antioxidant score severity scale
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/menu_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'score_explain_sheet.dart';
@@ -57,7 +58,7 @@ class HealthBreakdownSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.insights_rounded, color: AppColors.orange, size: 22),
+                Icon(Icons.insights_rounded, color: context.accentColor, size: 22),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -283,10 +284,10 @@ class _InflammationRow extends StatelessWidget {
       );
     }
     final accent = s >= 7
-        ? AppColors.error
+        ? AppColors.error  // accent-allowlist: error state
         : s >= 4
-            ? AppColors.orange
-            : AppColors.success;
+            ? AppColors.orange  // accent-allowlist: score severity scale — moderate tier
+            : AppColors.success;  // accent-allowlist: success state
     final severityLabel = s <= 3
         ? 'ANTI-INFLAMMATORY'
         : s <= 6
@@ -347,10 +348,10 @@ class _BloodSugarRow extends StatelessWidget {
       );
     }
     final accent = gl >= 20
-        ? AppColors.error
+        ? AppColors.error  // accent-allowlist: error state
         : gl >= 10
-            ? AppColors.orange
-            : AppColors.success;
+            ? AppColors.orange  // accent-allowlist: score severity scale — moderate tier
+            : AppColors.success;  // accent-allowlist: success state
     final severityLabel = gl < 10
         ? 'LOW IMPACT'
         : gl < 20
@@ -404,10 +405,10 @@ class _FodmapRow extends StatelessWidget {
       );
     }
     final accent = r == 'high'
-        ? AppColors.error
+        ? AppColors.error  // accent-allowlist: error state
         : r == 'medium'
-            ? AppColors.orange
-            : AppColors.success;
+            ? AppColors.orange  // accent-allowlist: score severity scale — moderate tier
+            : AppColors.success;  // accent-allowlist: success state
     final label = r == 'high'
         ? 'HIGH TRIGGERS'
         : r == 'medium'
@@ -466,10 +467,10 @@ class _AddedSugarRow extends StatelessWidget {
       );
     }
     final accent = g >= 15
-        ? AppColors.error
+        ? AppColors.error  // accent-allowlist: error state
         : g >= 5
-            ? AppColors.orange
-            : AppColors.success;
+            ? AppColors.orange  // accent-allowlist: score severity scale — moderate tier
+            : AppColors.success;  // accent-allowlist: success state
     final severityLabel = g < 5
         ? 'LOW'
         : g < 15
@@ -530,7 +531,7 @@ class _UltraProcessedRow extends StatelessWidget {
         hint: AppLocalizations.of(context).healthBreakdownNotClassifiedForThis,
       );
     }
-    final accent = v ? AppColors.error : AppColors.success;
+    final accent = v ? AppColors.error : AppColors.success;  // accent-allowlist: error state
     return _SignalRow(
       emoji: '🏭',
       label: AppLocalizations.of(context).scoreExplainUltraProcessed,
@@ -583,7 +584,7 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = positive ? AppColors.success : AppColors.error;
+    final c = positive ? AppColors.success : AppColors.error;  // accent-allowlist: success state
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

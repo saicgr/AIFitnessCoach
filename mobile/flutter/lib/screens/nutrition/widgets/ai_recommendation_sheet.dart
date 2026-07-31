@@ -818,12 +818,12 @@ class _AiRecommendationSheetState extends ConsumerState<AiRecommendationSheet> {
   Color _macroColor(bool isDark, String macro) {
     switch (macro) {
       case 'p':
-        return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+        return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
       case 'c':
-        return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+        return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
       case 'f':
       default:
-        return isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+        return isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
     }
   }
 }

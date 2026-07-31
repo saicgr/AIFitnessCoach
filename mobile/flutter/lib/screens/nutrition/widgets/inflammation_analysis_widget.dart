@@ -304,7 +304,7 @@ class _InflammationScoreHeader extends StatelessWidget {
     if (score <= 3) {
       scoreColor = InflammationColors.antiInflammatory;
     } else if (score <= 6) {
-      scoreColor = AppColors.warning;
+      scoreColor = AppColors.warning;  // accent-allowlist: warning severity
     } else {
       scoreColor = InflammationColors.inflammatory;
     }

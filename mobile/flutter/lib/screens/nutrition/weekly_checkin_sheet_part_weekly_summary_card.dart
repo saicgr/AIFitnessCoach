@@ -50,7 +50,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: AppLocalizations.of(context).weeklyCheckinSheetDaysLogged,
                   value: '${summary.daysLogged}/7',
                   icon: Icons.check_circle,
-                  color: isDark ? AppColors.green : AppColorsLight.green,
+                  color: isDark ? AppColors.green : AppColorsLight.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                   isDark: isDark,
                 ),
               ),
@@ -60,7 +60,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: AppLocalizations.of(context).weeklyCheckinSheetAvgCalories,
                   value: '${summary.avgCalories}',
                   icon: Icons.local_fire_department,
-                  color: isDark ? AppColors.orange : AppColorsLight.orange,
+                  color: isDark ? context.accentColor : context.accentColor,
                   isDark: isDark,
                 ),
               ),
@@ -74,7 +74,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: AppLocalizations.of(context).weeklyCheckinSheetAvgProtein,
                   value: '${summary.avgProtein}g',
                   icon: Icons.fitness_center,
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  color: isDark ? context.accentColor : context.accentColor,
                   isDark: isDark,
                 ),
               ),
@@ -84,7 +84,7 @@ class _WeeklySummaryCard extends StatelessWidget {
                   label: AppLocalizations.of(context).weeklyCheckinSheetWeightChange,
                   value: _formatWeightChange(summary.weightChange),
                   icon: Icons.trending_flat,
-                  color: _getWeightChangeColor(summary.weightChange),
+                  color: _getWeightChangeColor(context, summary.weightChange),
                   isDark: isDark,
                 ),
               ),
@@ -101,11 +101,11 @@ class _WeeklySummaryCard extends StatelessWidget {
     return '$sign${change.toStringAsFixed(1)} kg';
   }
 
-  Color _getWeightChangeColor(double? change) {
+  Color _getWeightChangeColor(BuildContext context, double? change) {
     if (change == null) return Colors.grey;
-    if (change.abs() < 0.2) return isDark ? AppColors.cyan : AppColorsLight.cyan; // Stable
-    if (change < 0) return isDark ? AppColors.green : AppColorsLight.green; // Loss
-    return isDark ? AppColors.orange : AppColorsLight.orange; // Gain
+    if (change.abs() < 0.2) return context.accentColor; // Stable
+    if (change < 0) return isDark ? AppColors.green : AppColorsLight.green; // Loss  // accent-allowlist: success/positive state (logged, synced, completed)
+    return context.accentColor; // Gain
   }
 }
 
@@ -358,7 +358,7 @@ class _DetailedTdeeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? AppColors.elevated : AppColorsLight.elevated),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),  // accent-allowlist: warning severity — insufficient data quality
       ),
       child: Column(
         children: [
@@ -366,10 +366,10 @@ class _DetailedTdeeCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
+              color: Colors.orange.withValues(alpha: 0.1),  // accent-allowlist: warning severity — insufficient data quality
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.hourglass_empty, size: 32, color: Colors.orange),
+            child: Icon(Icons.hourglass_empty, size: 32, color: Colors.orange),  // accent-allowlist: warning severity — insufficient data quality
           ),
           const SizedBox(height: 16),
           Text(
@@ -404,7 +404,7 @@ class _DetailedTdeeCard extends StatelessWidget {
                       '$dataQualityPercent%',
                       style: TextStyle(
                         fontSize: 13,
-                        color: dataQualityPercent >= 60 ? AppColors.textPrimary : Colors.orange,
+                        color: dataQualityPercent >= 60 ? AppColors.textPrimary : Colors.orange,  // accent-allowlist: warning severity — insufficient data quality
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -415,9 +415,9 @@ class _DetailedTdeeCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: detailedTdee.dataQualityScore,
-                    backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                    backgroundColor: Colors.orange.withValues(alpha: 0.2),  // accent-allowlist: warning severity — insufficient data quality
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      dataQualityPercent >= 60 ? AppColors.textPrimary : Colors.orange,
+                      dataQualityPercent >= 60 ? AppColors.textPrimary : Colors.orange,  // accent-allowlist: warning severity — insufficient data quality
                     ),
                     minHeight: 8,
                   ),

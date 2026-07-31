@@ -114,7 +114,7 @@ class GutHealthCard extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     color: hasLog && lastItem != null && _isIdeal(lastItem.type)
-                        ? AppColors.success
+                        ? AppColors.success  // accent-allowlist: success state
                         : textSecondary,
                   ),
                 ),
@@ -217,7 +217,7 @@ class _GutHealthSheetState extends ConsumerState<_GutHealthSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Logged Type $_bristol'),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success state
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -285,7 +285,7 @@ class _GutHealthSheetState extends ConsumerState<_GutHealthSheet> {
                   style: TextStyle(
                     fontSize: 12.5,
                     color: _isIdeal(_bristol!)
-                        ? AppColors.success
+                        ? AppColors.success  // accent-allowlist: success state
                         : tc.textSecondary,
                   ),
                 ),

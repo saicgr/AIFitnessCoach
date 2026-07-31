@@ -477,7 +477,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                   behavior: HitTestBehavior.opaque,
                   child: Padding(
                     padding: const EdgeInsets.all(4),
-                    child: Icon(Icons.close, size: 16, color: widget.isDark ? AppColors.error : AppColorsLight.error),
+                    child: Icon(Icons.close, size: 16, color: widget.isDark ? AppColors.error : AppColorsLight.error),  // accent-allowlist: error state
                   ),
                 ),
               ],
@@ -721,9 +721,9 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
   /// Inline-editable P / C / F chips. Shown only when onFieldEdited is wired.
   /// Uses macro-specific palette per feedback_accent_colors.md.
   Widget _buildMacroChipsRow(Color textPrimary, Color textMuted, Color accent) {
-    final proteinColor = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbsColor = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fatColor = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final proteinColor = widget.isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final carbsColor = widget.isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final fatColor = widget.isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     return Wrap(
       spacing: 6,

@@ -331,7 +331,7 @@ class LoggedMealsSection extends StatelessWidget {
       secondaryBackground: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: AppColors.error.withValues(alpha: 0.9),
+        color: AppColors.error.withValues(alpha: 0.9),  // accent-allowlist: error state
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
@@ -499,9 +499,9 @@ class LoggedMealsSection extends StatelessWidget {
       ));
     }
 
-    add(proteinG, 'P', AppColors.macroProtein);
-    add(carbsG, 'C', AppColors.macroCarbs);
-    add(fatG, 'F', AppColors.macroFat);
+    add(proteinG, 'P', AppColors.macroProtein);  // accent-allowlist: macro identity — protein is always this colour
+    add(carbsG, 'C', AppColors.macroCarbs);  // accent-allowlist: macro identity — carbs is always this colour
+    add(fatG, 'F', AppColors.macroFat);  // accent-allowlist: macro identity — fat is always this colour
     if (spans.isEmpty) return const SizedBox.shrink();
 
     return RichText(
@@ -592,9 +592,9 @@ class LoggedMealsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          bar('P', eatenProtein, target.proteinG, AppColors.macroProtein),
-          bar('C', eatenCarbs, target.carbsG, AppColors.macroCarbs),
-          bar('F', eatenFat, target.fatG, AppColors.macroFat),
+          bar('P', eatenProtein, target.proteinG, AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
+          bar('C', eatenCarbs, target.carbsG, AppColors.macroCarbs),  // accent-allowlist: macro identity — carbs is always this colour
+          bar('F', eatenFat, target.fatG, AppColors.macroFat),  // accent-allowlist: macro identity — fat is always this colour
         ],
       ),
     );
@@ -817,7 +817,7 @@ class LoggedMealsSection extends StatelessWidget {
                       Navigator.pop(ctx);
                       onDeleteMeal(meal.id);
                     },
-                    icon: Icon(Icons.delete_outline, color: AppColors.error),
+                    icon: Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error state
                     tooltip: 'Delete meal',
                   ),
                 ],
@@ -1082,19 +1082,19 @@ class LoggedMealsSection extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.08),
+                          color: Colors.red.withValues(alpha: 0.08),  // accent-allowlist: error state
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                          border: Border.all(color: Colors.red.withValues(alpha: 0.2)),  // accent-allowlist: error state
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),
+                            Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),  // accent-allowlist: error state
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(AppLocalizations.of(context).loggedMealsContainsUltraProcessedItems,
-                                style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),
+                                style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w500)),  // accent-allowlist: error state
                             ),
-                            Icon(Icons.info_outline, size: 16, color: Colors.red.withValues(alpha: 0.7)),
+                            Icon(Icons.info_outline, size: 16, color: Colors.red.withValues(alpha: 0.7)),  // accent-allowlist: error state
                           ],
                         ),
                       ),
@@ -1115,10 +1115,10 @@ class LoggedMealsSection extends StatelessWidget {
                           _GlFodmapChip(
                             label: 'GL ${meal.glycemicLoad}',
                             color: meal.glycemicLoad! >= 20
-                                ? AppColors.error
+                                ? AppColors.error  // accent-allowlist: error state
                                 : meal.glycemicLoad! >= 10
-                                    ? AppColors.orange
-                                    : AppColors.success,
+                                    ? AppColors.orange  // accent-allowlist: score severity scale — medium tier
+                                    : AppColors.success,  // accent-allowlist: success state
                             sublabel: meal.glycemicLoad! >= 20
                                 ? 'High'
                                 : meal.glycemicLoad! >= 10
@@ -1134,10 +1134,10 @@ class LoggedMealsSection extends StatelessWidget {
                           _GlFodmapChip(
                             label: 'FODMAP',
                             color: meal.fodmapRating == 'high'
-                                ? AppColors.error
+                                ? AppColors.error  // accent-allowlist: error state
                                 : meal.fodmapRating == 'medium'
-                                    ? AppColors.orange
-                                    : AppColors.success,
+                                    ? AppColors.orange  // accent-allowlist: score severity scale — medium tier
+                                    : AppColors.success,  // accent-allowlist: success state
                             sublabel: meal.fodmapRating!.toUpperCase(),
                             onTap: () => ScoreExplainSheet.show(
                               context,
@@ -1259,19 +1259,19 @@ class LoggedMealsSection extends StatelessWidget {
                     label: 'Protein',
                     // Single-meal macro → "—" when unknown, never "0g".
                     value: macroGrams(meal.proteinG),
-                    color: AppColors.purple,
+                    color: isDarkTheme ? AppColors.macroProtein : AppColorsLight.macroProtein, // accent-allowlist: macro identity
                     isDark: isDarkTheme,
                   ),
                   _MacroSummaryItem(
                     label: 'Carbs',
                     value: macroGrams(meal.carbsG),
-                    color: AppColors.orange,
+                    color: isDarkTheme ? AppColors.macroCarbs : AppColorsLight.macroCarbs, // accent-allowlist: macro identity
                     isDark: isDarkTheme,
                   ),
                   _MacroSummaryItem(
                     label: 'Fat',
                     value: macroGrams(meal.fatG),
-                    color: AppColors.error,
+                    color: isDarkTheme ? AppColors.macroFat : AppColorsLight.macroFat, // accent-allowlist: macro identity
                     isDark: isDarkTheme,
                   ),
                 ],
@@ -1564,8 +1564,8 @@ class LoggedMealsSection extends StatelessWidget {
               _ActionTile(
                 icon: Icons.delete_outline,
                 label: 'Delete',
-                iconColor: AppColors.error,
-                textColor: AppColors.error,
+                iconColor: AppColors.error,  // accent-allowlist: error state
+                textColor: AppColors.error,  // accent-allowlist: error state
                 onTap: () {
                   Navigator.pop(ctx);
                   onDeleteMeal(meal.id);
@@ -1717,8 +1717,8 @@ class LoggedMealsSection extends StatelessWidget {
               _ActionTile(
                 icon: Icons.delete_outline,
                 label: 'Remove from meal',
-                iconColor: AppColors.error,
-                textColor: AppColors.error,
+                iconColor: AppColors.error,  // accent-allowlist: error state
+                textColor: AppColors.error,  // accent-allowlist: error state
                 onTap: () {
                   Navigator.pop(ctx);
                   // Delegate to the existing _FoodGroup helper via a synthetic
@@ -1786,9 +1786,9 @@ class LoggedMealsSection extends StatelessWidget {
     final accentEnum = AccentColorScope.of(context);
     final accent = accentEnum.getColor(isDarkTheme);
     final glassSurface = isDarkTheme ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final macroProtein = isDarkTheme ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final macroCarbs = isDarkTheme ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final macroFat = isDarkTheme ? AppColors.macroFat : AppColorsLight.macroFat;
+    final macroProtein = isDarkTheme ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final macroCarbs = isDarkTheme ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final macroFat = isDarkTheme ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     // Baselines captured at open time — used both for multiplier-driven
     // defaults and as the `previous_value` in any per-item audit rows when
@@ -2272,9 +2272,9 @@ class LoggedMealsSection extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final macroP = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final macroC = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final macroF = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final macroP = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final macroC = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final macroF = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     // Baselines captured once at open time — used both to compute the
     // multiplier-driven defaults and as `previous_value` in the audit rows.
@@ -3069,9 +3069,9 @@ class LoggedMealsSection extends StatelessWidget {
   }
 
   Color _scoreColor(int score) {
-    if (score >= 7) return Colors.green;
-    if (score >= 4) return Colors.orange;
-    return AppColors.error;
+    if (score >= 7) return Colors.green;  // accent-allowlist: success state
+    if (score >= 4) return Colors.orange;  // accent-allowlist: inflammation severity scale
+    return AppColors.error;  // accent-allowlist: error state
   }
 
   String _scoreLabel(int score) {
@@ -3083,10 +3083,10 @@ class LoggedMealsSection extends StatelessWidget {
   }
 
   Color _inflammationColor(int score) {
-    if (score <= 3) return Colors.green;
-    if (score <= 5) return Colors.teal;
-    if (score <= 7) return Colors.orange;
-    return Colors.red;
+    if (score <= 3) return Colors.green;  // accent-allowlist: success state
+    if (score <= 5) return Colors.teal;  // accent-allowlist: inflammation severity scale — neutral tier
+    if (score <= 7) return Colors.orange;  // accent-allowlist: inflammation severity scale
+    return Colors.red;  // accent-allowlist: error state
   }
 
   String _inflammationLabel(int score) {
@@ -3112,7 +3112,7 @@ class LoggedMealsSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.local_fire_department, color: Colors.orange),
+                  Icon(Icons.local_fire_department, color: Colors.orange),  // accent-allowlist: inflammation severity scale
                   const SizedBox(width: 8),
                   Text(AppLocalizations.of(context).loggedMealsInflammationScore, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black)),
@@ -3122,10 +3122,10 @@ class LoggedMealsSection extends StatelessWidget {
               Text(AppLocalizations.of(context).loggedMealsRatesHowInflammatoryA,
                 style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
               const SizedBox(height: 16),
-              _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green), // TODO(i18n): loggedMealsAntiInflammatory
-              _buildInfoRow('4-5', 'Neutral', Colors.teal), // TODO(i18n): loggedMealsNeutral
-              _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange), // TODO(i18n): loggedMealsMildlyInflammatory
-              _buildInfoRow('8-10', 'Inflammatory', Colors.red), // TODO(i18n): loggedMealsInflammatory
+              _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green), // TODO(i18n): loggedMealsAntiInflammatory  // accent-allowlist: success state
+              _buildInfoRow('4-5', 'Neutral', Colors.teal), // TODO(i18n): loggedMealsNeutral  // accent-allowlist: inflammation severity scale — neutral tier
+              _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange), // TODO(i18n): loggedMealsMildlyInflammatory  // accent-allowlist: inflammation severity scale
+              _buildInfoRow('8-10', 'Inflammatory', Colors.red), // TODO(i18n): loggedMealsInflammatory  // accent-allowlist: error state
               const SizedBox(height: 16),
               Text(AppLocalizations.of(context).loggedMealsLowerIsBetterFor,
                 style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
@@ -3172,7 +3172,7 @@ class LoggedMealsSection extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.red),
+                  Icon(Icons.warning_amber_rounded, color: Colors.red),  // accent-allowlist: error state
                   const SizedBox(width: 8),
                   Text(AppLocalizations.of(context).loggedMealsUltraProcessedFoods, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white : Colors.black)),
@@ -3456,7 +3456,7 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
     final removalController = ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Removed $removedName'),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success state
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -3693,14 +3693,14 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
   @override
   Widget build(BuildContext context) {
     final proteinCol = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.macroProtein
-        : AppColorsLight.macroProtein;
+        ? AppColors.macroProtein  // accent-allowlist: macro identity — protein is always this colour
+        : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
     final carbsCol = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.macroCarbs
-        : AppColorsLight.macroCarbs;
+        ? AppColors.macroCarbs  // accent-allowlist: macro identity — carbs is always this colour
+        : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
     final fatCol = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.macroFat
-        : AppColorsLight.macroFat;
+        ? AppColors.macroFat  // accent-allowlist: macro identity — fat is always this colour
+        : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     return Column(
       children: [
@@ -3727,7 +3727,7 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
               color: widget.cardBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
               border: needsConfirm
-                  ? Border.all(color: Colors.amber, width: 2)
+                  ? Border.all(color: Colors.amber, width: 2)  // accent-allowlist: warning severity
                   : (edited
                       ? Border.all(color: widget.accent.withValues(alpha: 0.45), width: 1)
                       : null),
@@ -3789,7 +3789,7 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
                       borderRadius: BorderRadius.circular(8),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
-                        child: Icon(Icons.close_rounded, size: 18, color: Colors.red.shade400),
+                        child: Icon(Icons.close_rounded, size: 18, color: Colors.red.shade400),  // accent-allowlist: error state
                       ),
                     ),
                   ],
@@ -3846,9 +3846,9 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
+                        color: Colors.amber.withValues(alpha: 0.15),  // accent-allowlist: warning severity
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.amber.withValues(alpha: 0.6), width: 1),
+                        border: Border.all(color: Colors.amber.withValues(alpha: 0.6), width: 1),  // accent-allowlist: warning severity
                       ),
                       child: Row(
                         children: [
@@ -3860,11 +3860,11 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.amber.shade900,
+                                color: Colors.amber.shade900,  // accent-allowlist: warning severity
                               ),
                             ),
                           ),
-                          Icon(Icons.chevron_right_rounded, size: 18, color: Colors.amber.shade900),
+                          Icon(Icons.chevron_right_rounded, size: 18, color: Colors.amber.shade900),  // accent-allowlist: warning severity
                         ],
                       ),
                     ),
@@ -4369,8 +4369,8 @@ class _MealSectionState extends State<_MealSection> {
                   eaten: totalProtein,
                   target: mealTarget.proteinG,
                   color: isDark
-                      ? AppColors.macroProtein
-                      : AppColorsLight.macroProtein,
+                      ? AppColors.macroProtein  // accent-allowlist: macro identity — protein is always this colour
+                      : AppColorsLight.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                   isDark: isDark,
                 ),
                 const SizedBox(width: 5),
@@ -4379,8 +4379,8 @@ class _MealSectionState extends State<_MealSection> {
                   eaten: totalCarbs,
                   target: mealTarget.carbsG,
                   color: isDark
-                      ? AppColors.macroCarbs
-                      : AppColorsLight.macroCarbs,
+                      ? AppColors.macroCarbs  // accent-allowlist: macro identity — carbs is always this colour
+                      : AppColorsLight.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                   isDark: isDark,
                 ),
                 const SizedBox(width: 5),
@@ -4389,7 +4389,7 @@ class _MealSectionState extends State<_MealSection> {
                   eaten: totalFat,
                   target: mealTarget.fatG,
                   color:
-                      isDark ? AppColors.macroFat : AppColorsLight.macroFat,
+                      isDark ? AppColors.macroFat : AppColorsLight.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                   isDark: isDark,
                 ),
               ],
@@ -4603,7 +4603,7 @@ class _FoodGroup extends StatelessWidget {
           secondaryBackground: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 16),
-            color: AppColors.error.withValues(alpha: 0.9),
+            color: AppColors.error.withValues(alpha: 0.9),  // accent-allowlist: error state
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
@@ -4739,7 +4739,7 @@ class _FoodGroup extends StatelessWidget {
       secondaryBackground: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: AppColors.error.withValues(alpha: 0.9),
+        color: AppColors.error.withValues(alpha: 0.9),  // accent-allowlist: error state
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,

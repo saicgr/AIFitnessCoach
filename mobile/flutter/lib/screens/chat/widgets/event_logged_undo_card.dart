@@ -230,7 +230,7 @@ class _EventLoggedUndoCardState extends ConsumerState<EventLoggedUndoCard> {
             size: 16,
             color: struck
                 ? theme.colorScheme.error
-                : AppColors.success,
+                : AppColors.success,  // accent-allowlist: success state
           ),
           const SizedBox(width: 8),
           Expanded(

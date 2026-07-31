@@ -161,13 +161,13 @@ class _AiCoachMealSuggestionSheetState
 
   // Category accent colors — tuned to match the design preference for rich,
   // differentiable color across categories rather than a single accent wash.
-  static const _colorMealPicks = Color(0xFFF59E0B); // amber
-  static const _colorMacro = Color(0xFF8B5CF6); // violet
-  static const _colorTiming = Color(0xFF10B981); // emerald
-  static const _colorMood = Color(0xFFEC4899); // pink
-  static const _colorGoal = Color(0xFF6366F1); // indigo
-  static const _colorHealth = Color(0xFF14B8A6); // teal
-  static const _colorCuisine = Color(0xFFF97316); // orange
+  static const _colorMealPicks = Color(0xFFF59E0B); // amber  // accent-allowlist: deliberate rich differentiable category palette
+  static const _colorMacro = Color(0xFF8B5CF6); // violet  // accent-allowlist: deliberate rich differentiable category palette
+  static const _colorTiming = Color(0xFF10B981); // emerald  // accent-allowlist: deliberate rich differentiable category palette
+  static const _colorMood = Color(0xFFEC4899); // pink  // accent-allowlist: deliberate rich differentiable category palette
+  static const _colorGoal = Color(0xFF6366F1); // indigo  // accent-allowlist: deliberate rich differentiable category palette
+  static const _colorHealth = Color(0xFF14B8A6); // teal  // accent-allowlist: deliberate rich differentiable category palette
+  static const _colorCuisine = Color(0xFFF97316); // orange -- accent-allowlist: deliberate rich differentiable category palette (see comment above), not the app accent
 
   /// The full pill library. Prompts are deliberately casual ("hit me", "keep it
   /// real") so the nutrition agent's voice stays consistent. Every prompt asks
@@ -203,7 +203,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'quick_snack',
         label: AppLocalizations.of(context).aiCoachMealQuickSnackIdeas,
         icon: Icons.bolt_outlined,
-        color: const Color(0xFF06B6D4),
+        color: const Color(0xFF06B6D4), // accent-allowlist: deliberate rich differentiable category palette (see _colorMealPicks etc. comment above)
         category: _PillCategory.mealPicks,
         prompt:
             "Short on time — give me 2–3 quick snack ideas with macros that won't tank my day.",
@@ -214,7 +214,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'fast_food_pick',
         label: AppLocalizations.of(context).aiCoachMealFastFoodPick,
         icon: Icons.fastfood_outlined,
-        color: const Color(0xFFF97316),
+        color: const Color(0xFFF97316), // accent-allowlist: deliberate rich differentiable category palette
         category: _PillCategory.mealPicks,
         prompt:
             "Craving fast food. Pick ONE real item from a common US chain "
@@ -226,7 +226,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'low_cal',
         label: AppLocalizations.of(context).aiCoachMealLowCalSwap,
         icon: Icons.local_fire_department_outlined,
-        color: const Color(0xFFEF4444),
+        color: const Color(0xFFEF4444),  // accent-allowlist: deliberate rich differentiable category palette
         category: _PillCategory.mealPicks,
         prompt:
             "Drop a low-cal $meal swap that still hits my macros. Keep it hype, include macros.",
@@ -262,7 +262,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'favorite',
         label: AppLocalizations.of(context).aiCoachMealFavoriteIMissed,
         icon: Icons.favorite_border,
-        color: const Color(0xFFA855F7),
+        color: const Color(0xFFA855F7),  // accent-allowlist: deliberate rich differentiable category palette
         category: _PillCategory.mealPicks,
         prompt:
             "Surface one of my favorite meals I haven't had this week and tell me why it fits today.",
@@ -596,7 +596,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'healthy',
         label: AppLocalizations.of(context).aiCoachMealAnythingHealthy,
         icon: Icons.spa_outlined,
-        color: const Color(0xFF10B981),
+        color: const Color(0xFF10B981),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "Logging my $meal. Hit me with one healthy real-food pick that fits my day — macros, short and direct.$budgetTail",
       ),
@@ -604,7 +604,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'fast_food',
         label: AppLocalizations.of(context).aiCoachMealFastFood,
         icon: Icons.fastfood_outlined,
-        color: const Color(0xFFF97316),
+        color: const Color(0xFFF97316), // accent-allowlist: deliberate rich differentiable category palette (see _colorMealPicks etc. comment above)
         prompt:
             "Craving fast food for $meal. Pick ONE real item from a common US chain "
             "(McDonald's, Chipotle, Chick-fil-A, Subway, Taco Bell, Wendy's, In-N-Out, Shake Shack, Panera). "
@@ -614,7 +614,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'high_protein',
         label: AppLocalizations.of(context).aiCoachMealHighProtein,
         icon: Icons.egg_outlined,
-        color: const Color(0xFFA78BFA),
+        color: const Color(0xFFA78BFA),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "High-protein $meal pick. One item, full macros, brief prep.$budgetTail",
       ),
@@ -622,7 +622,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'no_cook',
         label: AppLocalizations.of(context).aiCoachMealNoCook5Min,
         icon: Icons.blender_outlined,
-        color: const Color(0xFF06B6D4),
+        color: const Color(0xFF06B6D4), // accent-allowlist: deliberate rich differentiable category palette
         prompt:
             "No stove, no oven — one quick $meal I can throw together in 5 minutes. Macros + what to grab.$budgetTail",
       ),
@@ -630,7 +630,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'indian',
         label: AppLocalizations.of(context).aiCoachMealIndian,
         icon: Icons.local_dining_outlined,
-        color: const Color(0xFFF59E0B),
+        color: const Color(0xFFF59E0B),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "Indian $meal — one authentic pick (north or south), macros, sides to skip/include to stay on track.$budgetTail",
       ),
@@ -638,7 +638,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'mexican',
         label: AppLocalizations.of(context).aiCoachMealMexican,
         icon: Icons.lunch_dining_outlined,
-        color: const Color(0xFFEF4444),
+        color: const Color(0xFFEF4444),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "Mexican $meal — one real pick (bowl, tacos, etc.), macros, what to build it with to stay on track.$budgetTail",
       ),
@@ -646,7 +646,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'asian',
         label: AppLocalizations.of(context).aiCoachMealAsian,
         icon: Icons.ramen_dining_outlined,
-        color: const Color(0xFFEC4899),
+        color: const Color(0xFFEC4899),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "Asian-inspired $meal — one pick (rice bowl, noodles, sushi, stir fry), macros and prep.$budgetTail",
       ),
@@ -654,7 +654,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'mediterranean',
         label: AppLocalizations.of(context).aiCoachMealMediterranean,
         icon: Icons.eco_outlined,
-        color: const Color(0xFF14B8A6),
+        color: const Color(0xFF14B8A6),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "Mediterranean $meal — one pick (bowl, plate, wrap), macros, what makes it fit.$budgetTail",
       ),
@@ -662,7 +662,7 @@ class _AiCoachMealSuggestionSheetState
         id: 'italian',
         label: AppLocalizations.of(context).aiCoachMealItalianComfort,
         icon: Icons.soup_kitchen_outlined,
-        color: const Color(0xFFFB7185),
+        color: const Color(0xFFFB7185),  // accent-allowlist: deliberate rich differentiable category palette (cuisine options)
         prompt:
             "Italian or comfort $meal — one real pick, macros, lighter swap if needed.$budgetTail",
       ),
@@ -1244,9 +1244,9 @@ class _AiCoachMealSuggestionSheetState
       Map<String, dynamic> meal, ThemeColors colors) {
     final isDark = colors.isDark;
     final proteinColor =
-        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     num asNum(Object? v) => v is num ? v : 0;
     final emoji = (meal['emoji'] ?? '🍽️').toString();
@@ -1373,7 +1373,7 @@ class _AiCoachMealSuggestionSheetState
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         children: [
-          Icon(Icons.error_outline, color: Colors.red, size: 32),
+          Icon(Icons.error_outline, color: Colors.red, size: 32),  // accent-allowlist: error state
           const SizedBox(height: 10),
           Text(
             _errorMsg ?? AppLocalizations.of(context).equipmentSnapFlowSomethingWentWrong,
@@ -1399,7 +1399,7 @@ class _AiCoachMealSuggestionSheetState
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Column(
         children: [
-          const Icon(Icons.wifi_off, color: Colors.orange, size: 32),
+          const Icon(Icons.wifi_off, color: Colors.orange, size: 32),  // accent-allowlist: warning severity — offline state
           const SizedBox(height: 10),
           Text(
             AppLocalizations.of(context).aiCoachMealCoachNeedsAConnection,

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../widgets/design_system/zealova.dart';
 import '../../data/models/nutrition_preferences.dart';
@@ -242,7 +243,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             ),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(AppLocalizations.of(context).weeklyCheckinDisable, style: TextStyle(color: Colors.red.shade400)),
+              child: Text(AppLocalizations.of(context).weeklyCheckinDisable, style: TextStyle(color: Colors.red.shade400)),  // accent-allowlist: error state
             ),
           ],
         );
@@ -350,7 +351,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: widget.isDark ? AppColors.success : AppColorsLight.success,
+        backgroundColor: widget.isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success state
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

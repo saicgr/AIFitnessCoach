@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/menu_item.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -225,10 +226,10 @@ class ScoreExplainSheet extends StatelessWidget {
           title: l10n.scoreExplainHowThisDishRates,
           subtitle: l10n.scoreExplainAiPicksATrafficLight,
           accent: switch (r) {
-            'green' => AppColors.success,
-            'yellow' => AppColors.orange,
-            'red' => AppColors.error,
-            _ => AppColors.orange,
+            'green' => AppColors.success,  // accent-allowlist: success state
+            'yellow' => AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
+            'red' => AppColors.error,  // accent-allowlist: error state
+            _ => AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
           },
           currentLabel: switch (r) {
             'green' => l10n.scoreExplainCurrentLabelGood,
@@ -239,17 +240,17 @@ class ScoreExplainSheet extends StatelessWidget {
           activeIndex: idx,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplainGood,
               body: l10n.scoreExplainHitsYourGoalMacros,
             ),
             _Level(
-              color: AppColors.orange,
+              color: AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
               label: l10n.scoreExplainModerate,
               body: l10n.scoreExplainReasonableChoiceWithA,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplainSkip,
               body: l10n.scoreExplainHighInflammationUltraProce,
             ),
@@ -271,10 +272,10 @@ class ScoreExplainSheet extends StatelessWidget {
           title: l10n.scoreExplainInflammationScoreValue(v),
           subtitle: l10n.scoreExplainChronicLowGradeInflammation,
           accent: v >= 7
-              ? AppColors.error
+              ? AppColors.error  // accent-allowlist: error state
               : v >= 4
-                  ? AppColors.orange
-                  : AppColors.success,
+                  ? AppColors.orange  // accent-allowlist: score severity scale — moderate/average tier
+                  : AppColors.success,  // accent-allowlist: success state
           currentLabel: v < 0
               ? null
               : v <= 3
@@ -285,17 +286,17 @@ class ScoreExplainSheet extends StatelessWidget {
           activeIndex: idx,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplain03AntiInflammatory,
               body: l10n.scoreExplainLeafyGreensBerriesWild,
             ),
             _Level(
-              color: AppColors.orange,
+              color: AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
               label: l10n.scoreExplain46NeutralMild,
               body: l10n.scoreExplainWhiteRicePlainEggs,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplain710HighlyInflammatory,
               body: l10n.scoreExplainFriedFoodsProcessedMeats,
             ),
@@ -317,10 +318,10 @@ class ScoreExplainSheet extends StatelessWidget {
           title: l10n.scoreExplainGlycemicLoadValue(v),
           subtitle: l10n.scoreExplainGlycemicLoadCombines,
           accent: v >= 20
-              ? AppColors.error
+              ? AppColors.error  // accent-allowlist: error state
               : v >= 10
-                  ? AppColors.orange
-                  : AppColors.success,
+                  ? AppColors.orange  // accent-allowlist: score severity scale — moderate/average tier
+                  : AppColors.success,  // accent-allowlist: success state
           currentLabel: v < 0
               ? null
               : v < 10
@@ -331,17 +332,17 @@ class ScoreExplainSheet extends StatelessWidget {
           activeIndex: idx,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplainLowUnder10,
               body: l10n.scoreExplainMinimalBloodSugarSpike,
             ),
             _Level(
-              color: AppColors.orange,
+              color: AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
               label: l10n.scoreExplainMedium1019,
               body: l10n.scoreExplainModerateSpikeOatsWhole,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplainHigh20,
               body: l10n.scoreExplainSteepSpikeCrashWhite,
             ),
@@ -362,10 +363,10 @@ class ScoreExplainSheet extends StatelessWidget {
           title: l10n.scoreExplainFodmapRating,
           subtitle: l10n.scoreExplainFodmapsAreShortChain,
           accent: switch (r) {
-            'low' => AppColors.success,
-            'medium' => AppColors.orange,
-            'high' => AppColors.error,
-            _ => AppColors.orange,
+            'low' => AppColors.success,  // accent-allowlist: success state
+            'medium' => AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
+            'high' => AppColors.error,  // accent-allowlist: error state
+            _ => AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
           },
           currentLabel: switch (r) {
             'low' => l10n.scoreExplainCurrentLabelLow,
@@ -376,17 +377,17 @@ class ScoreExplainSheet extends StatelessWidget {
           activeIndex: idx,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplainLow,
               body: l10n.scoreExplainMeatEggsRiceOats,
             ),
             _Level(
-              color: AppColors.orange,
+              color: AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
               label: l10n.scoreExplainMedium,
               body: l10n.scoreExplainCertainPortionsOfAvocado,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplainHigh,
               body: l10n.scoreExplainOnionGarlicWheatRye,
             ),
@@ -400,17 +401,17 @@ class ScoreExplainSheet extends StatelessWidget {
           icon: Icons.science_rounded,
           title: v == true ? l10n.scoreExplainUltraProcessed : l10n.scoreExplainWholeMinimallyProcessed,
           subtitle: l10n.scoreExplainWeUseTheNovaClassification,
-          accent: v == true ? AppColors.error : AppColors.success,
+          accent: v == true ? AppColors.error : AppColors.success,  // accent-allowlist: error state
           currentLabel: v == true ? l10n.scoreExplainCurrentLabelNova4 : l10n.scoreExplainCurrentLabelWhole,
           activeIndex: v == true ? 1 : 0,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplainWholeMinimallyProcessed,
               body: l10n.scoreExplainRawOrBasicCooked,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplainUltraProcessedNova4,
               body: l10n.scoreExplainEngineeredFoodProductsChip,
             ),
@@ -439,10 +440,10 @@ class ScoreExplainSheet extends StatelessWidget {
           title: g < 0 ? l10n.scoreExplainAddedSugar : l10n.scoreExplainAddedSugarValue(_fmtGrams(g)),
           subtitle: l10n.scoreExplainAddedSugarIsThe,
           accent: g >= 15
-              ? AppColors.error
+              ? AppColors.error  // accent-allowlist: error state
               : g >= 5
-                  ? AppColors.orange
-                  : AppColors.success,
+                  ? AppColors.orange  // accent-allowlist: score severity scale — moderate/average tier
+                  : AppColors.success,  // accent-allowlist: success state
           currentLabel: g < 0
               ? null
               : g < 5
@@ -453,17 +454,17 @@ class ScoreExplainSheet extends StatelessWidget {
           activeIndex: idx,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplainLowUnder5G,
               body: l10n.scoreExplainMostSavouryDishesPlain,
             ),
             _Level(
-              color: AppColors.orange,
+              color: AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
               label: l10n.scoreExplainModerate514G,
               body: l10n.scoreExplainSweetenedYogurtASmall,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplainHigh15G,
               body: l10n.scoreExplainDessertsSugaryDrinksCandy,
             ),
@@ -498,10 +499,10 @@ class ScoreExplainSheet extends StatelessWidget {
           // >=4 AVERAGE (orange), else POOR (error). Keeping the badge
           // colour and the highlighted legend band in lock-step.
           accent: v >= 7
-              ? AppColors.success
+              ? AppColors.success  // accent-allowlist: success state
               : v >= 4
-                  ? AppColors.orange
-                  : AppColors.error,
+                  ? AppColors.orange  // accent-allowlist: score severity scale — moderate/average tier
+                  : AppColors.error,  // accent-allowlist: error state
           currentLabel: v < 0
               ? null
               : v >= 7
@@ -512,17 +513,17 @@ class ScoreExplainSheet extends StatelessWidget {
           activeIndex: idx,
           levels: [
             _Level(
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               label: l10n.scoreExplain710GoodExcellent,
               body: l10n.scoreExplainHighProteinOrFiber,
             ),
             _Level(
-              color: AppColors.orange,
+              color: AppColors.orange,  // accent-allowlist: score severity scale — moderate/average tier
               label: l10n.scoreExplain46Average,
               body: l10n.scoreExplainReasonableChoiceCouldBe,
             ),
             _Level(
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state
               label: l10n.scoreExplain13Poor,
               body: l10n.scoreExplainUltraProcessedDeepFried,
             ),
@@ -605,9 +606,9 @@ class _TriggerChip extends StatelessWidget {
     // red. User can tell at a glance which ingredients pulled the score up
     // vs pushed it down without reading additional copy.
     final bg = positive
-        ? AppColors.success.withValues(alpha: 0.15)
-        : AppColors.error.withValues(alpha: 0.12);
-    final fg = positive ? AppColors.success : AppColors.error;
+        ? AppColors.success.withValues(alpha: 0.15)  // accent-allowlist: success state
+        : AppColors.error.withValues(alpha: 0.12);  // accent-allowlist: error state
+    final fg = positive ? AppColors.success : AppColors.error;  // accent-allowlist: success state
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

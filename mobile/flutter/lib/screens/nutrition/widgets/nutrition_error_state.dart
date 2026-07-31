@@ -21,7 +21,7 @@ class NutritionErrorState extends StatelessWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final errorColor = isDark ? AppColors.error : AppColorsLight.error;
+    final errorColor = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error state
 
     return Center(
       child: Padding(

@@ -140,9 +140,9 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final proteinColor =
-        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
+    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     final hasItems = s.foodItems.isNotEmpty;
     final logged = _logState == _LogState.logged;
@@ -273,14 +273,14 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
                         label: Text(logged ? 'Logged' : 'Log this'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: logged
-                              ? AppColors.green.withValues(alpha: 0.2)
+                              ? AppColors.green.withValues(alpha: 0.2)  // accent-allowlist: success/positive state (logged, synced, completed)
                               : accent,
-                          foregroundColor: logged ? AppColors.green : Colors.white,
+                          foregroundColor: logged ? AppColors.green : Colors.white,  // accent-allowlist: success/positive state (logged, synced, completed)
                           disabledBackgroundColor: logged
-                              ? AppColors.green.withValues(alpha: 0.2)
+                              ? AppColors.green.withValues(alpha: 0.2)  // accent-allowlist: success/positive state (logged, synced, completed)
                               : accent.withValues(alpha: 0.5),
                           disabledForegroundColor:
-                              logged ? AppColors.green : Colors.white,
+                              logged ? AppColors.green : Colors.white,  // accent-allowlist: success/positive state (logged, synced, completed)
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           shape: RoundedRectangleBorder(
@@ -293,7 +293,7 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
                         padding: const EdgeInsets.only(top: 6),
                         child: Text("Couldn't log that — tap to try again.",
                             style: TextStyle(
-                                fontSize: 11, color: AppColors.error)),
+                                fontSize: 11, color: AppColors.error)),  // accent-allowlist: error state
                       ),
                   ],
                 ],

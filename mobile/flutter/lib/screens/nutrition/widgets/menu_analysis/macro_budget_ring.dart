@@ -40,7 +40,7 @@ class MacroBudgetRing extends StatelessWidget {
     final remaining = target - consumed;
     final progress = target <= 0 ? 0.0 : (consumed / target).clamp(0.0, 1.0);
 
-    final ringColor = isOver ? Colors.redAccent : color;
+    final ringColor = isOver ? Colors.redAccent : color;  // accent-allowlist: error state
     final centerText = isOver
         ? '+${remaining.abs().round()}'
         : remaining.round().toString();

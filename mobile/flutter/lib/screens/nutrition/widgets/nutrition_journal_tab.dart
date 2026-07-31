@@ -1258,7 +1258,7 @@ class _FeedCard extends StatelessWidget {
                         _MetaChip(
                           icon: Icons.bolt_outlined,
                           label: 'Energy ${log.energyLevel}',
-                          color: AppColors.limeGreen,
+                          color: AppColors.limeGreen,  // accent-allowlist: meta-chip categorical legend (energy vs mood)
                         ),
                       for (final t in tags)
                         _MetaChip(
@@ -1270,7 +1270,7 @@ class _FeedCard extends StatelessWidget {
                         _MetaChip(
                           icon: Icons.monitor_heart_outlined,
                           label: s,
-                          color: AppColors.macroFat,
+                          color: AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                         ),
                     ],
                   ),
@@ -1383,10 +1383,10 @@ class _ScorePill extends StatelessWidget {
   const _ScorePill({required this.score});
 
   Color _scoreColor() {
-    if (score >= 80) return AppColors.success;
-    if (score >= 60) return AppColors.macroCarbs;
-    if (score >= 40) return AppColors.macroFat;
-    return AppColors.error;
+    if (score >= 80) return AppColors.success;  // accent-allowlist: success state
+    if (score >= 60) return AppColors.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    if (score >= 40) return AppColors.macroFat;  // accent-allowlist: macro identity — fat is always this colour
+    return AppColors.error;  // accent-allowlist: error state
   }
 
   @override

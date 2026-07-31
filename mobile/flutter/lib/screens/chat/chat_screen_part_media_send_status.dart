@@ -178,7 +178,7 @@ class _InputBarState extends State<_InputBar> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.message),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -254,11 +254,11 @@ class _InputBarState extends State<_InputBar> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Row(
                       children: [
-                        const Icon(Icons.phone_android, size: 12, color: Colors.amber),
+                        const Icon(Icons.phone_android, size: 12, color: Colors.amber),  // accent-allowlist: warning severity
                         const SizedBox(width: 4),
                         Text(
                           'Offline AI${widget.modelName != null ? ' \u00b7 ${widget.modelName}' : ''}',
-                          style: const TextStyle(fontSize: 11, color: Colors.amber),
+                          style: const TextStyle(fontSize: 11, color: Colors.amber),  // accent-allowlist: warning severity
                         ),
                       ],
                     ),
@@ -462,8 +462,8 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
         Container(
           width: 40,
           height: 40,
-          decoration: const BoxDecoration(
-            color: AppColors.cyan,
+          decoration: BoxDecoration(
+            color: context.accentColor,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
@@ -508,13 +508,13 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: availability.isAvailable
-                    ? AppColors.success.withOpacity(0.1)
-                    : AppColors.warning.withOpacity(0.1),
+                    ? AppColors.success.withOpacity(0.1)  // accent-allowlist: success state
+                    : AppColors.warning.withOpacity(0.1),  // accent-allowlist: warning severity
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: availability.isAvailable
-                      ? AppColors.success.withOpacity(0.3)
-                      : AppColors.warning.withOpacity(0.3),
+                      ? AppColors.success.withOpacity(0.3)  // accent-allowlist: success state
+                      : AppColors.warning.withOpacity(0.3),  // accent-allowlist: warning severity
                 ),
               ),
               child: Row(
@@ -525,8 +525,8 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                         : Icons.schedule,
                     size: 20,
                     color: availability.isAvailable
-                        ? AppColors.success
-                        : AppColors.warning,
+                        ? AppColors.success  // accent-allowlist: success state
+                        : AppColors.warning,  // accent-allowlist: warning severity
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -538,8 +538,8 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             color: availability.isAvailable
-                                ? AppColors.success
-                                : AppColors.warning,
+                                ? AppColors.success  // accent-allowlist: success state
+                                : AppColors.warning,  // accent-allowlist: warning severity
                             fontSize: 13,
                           ),
                         ),
@@ -567,7 +567,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
                 SizedBox(width: 8),
@@ -679,7 +679,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to connect: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -695,7 +695,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
       ElevatedButton(
         onPressed: _isLoading ? null : _handleConnect,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
+          backgroundColor: context.accentColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),

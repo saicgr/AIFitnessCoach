@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/models/quick_action.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../home/widgets/components/quick_action_launcher.dart';
@@ -18,23 +19,23 @@ const Map<String, ({String label, IconData icon, Color color})>
   'scan_nutrition_label': (
     label: 'Scan a label',
     icon: Icons.receipt_long_outlined,
-    color: Color(0xFF22C55E),
+    color: Color(0xFF22C55E),  // accent-allowlist: static const virtual-action metadata table has no BuildContext; `.color` unused by this card's own chip rendering
   ),
   'scan_app_screenshot': (
     label: 'Import screenshot',
     icon: Icons.add_photo_alternate_outlined,
-    color: Color(0xFF16A34A),
+    color: Color(0xFF16A34A),  // accent-allowlist: static const virtual-action metadata table has no BuildContext; `.color` unused by this card's own chip rendering
   ),
   'attach_form_video': (
     label: 'Check my form',
     icon: Icons.videocam_outlined,
-    color: Color(0xFF06B6D4),
+    color: Color(0xFFF97316), // accent-allowlist: static const virtual-action metadata table has no BuildContext; the `.color` field is unused by this card's own chip rendering (see _chip below, which reads only label/icon)
   ),
   // F5 — deep-link to the micronutrient detail view for a logged food.
   'view_micros': (
     label: 'Vitamins & minerals',
     icon: Icons.science_outlined,
-    color: Color(0xFF14B8A6),
+    color: Color(0xFF14B8A6),  // accent-allowlist: static const virtual-action metadata table has no BuildContext; `.color` unused by this card's own chip rendering
   ),
 };
 

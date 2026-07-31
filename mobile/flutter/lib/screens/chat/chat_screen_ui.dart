@@ -92,13 +92,13 @@ class _StreamingBubble extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.cloud_off_rounded,
-                          size: 14, color: AppColors.warning),
+                          size: 14, color: AppColors.warning),  // accent-allowlist: warning severity
                       const SizedBox(width: 6),
                       Text(
                         AppLocalizations.of(context).chatScreenUiConnectionDropped,
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.warning,
+                          color: AppColors.warning,  // accent-allowlist: warning severity
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -112,14 +112,14 @@ class _StreamingBubble extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.refresh_rounded,
-                                size: 14, color: AppColors.cyan),
+                            Icon(Icons.refresh_rounded,
+                                size: 14, color: context.accentColor),
                             const SizedBox(width: 4),
                             Text(
                               AppLocalizations.of(context).buttonRetry,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

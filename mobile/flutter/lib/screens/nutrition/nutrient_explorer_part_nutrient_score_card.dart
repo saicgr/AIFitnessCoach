@@ -28,16 +28,16 @@ class _NutrientScoreCard extends StatelessWidget {
     Color scoreColor;
     String scoreLabel;
     if (score >= 80) {
-      scoreColor = const Color(0xFF4CAF50); // Green
+      scoreColor = const Color(0xFF4CAF50); // Green  // accent-allowlist: nutrient/score severity scale
       scoreLabel = 'Excellent';
     } else if (score >= 60) {
-      scoreColor = const Color(0xFF8BC34A); // Light green
+      scoreColor = const Color(0xFF8BC34A); // Light green  // accent-allowlist: nutrient/score severity scale
       scoreLabel = 'Good';
     } else if (score >= 40) {
-      scoreColor = const Color(0xFFFFC107); // Amber
+      scoreColor = const Color(0xFFFFC107); // Amber  // accent-allowlist: nutrient/score severity scale
       scoreLabel = 'Needs Attention';
     } else {
-      scoreColor = const Color(0xFFFF9800); // Orange
+      scoreColor = const Color(0xFFFF9800); // Orange  // accent-allowlist: nutrient/score severity scale
       scoreLabel = 'Low';
     }
 
@@ -92,19 +92,19 @@ class _NutrientScoreCard extends StatelessWidget {
                       _StatChip(
                         label: AppLocalizations.of(context).strengthOverviewCardOptimal,
                         count: optimalCount,
-                        color: const Color(0xFF4CAF50), // Green
+                        color: const Color(0xFF4CAF50), // Green  // accent-allowlist: nutrient/score severity scale
                       ),
                       const SizedBox(width: 8),
                       _StatChip(
                         label: AppLocalizations.of(context).scoreExplainLow,
                         count: lowCount,
-                        color: const Color(0xFFFFC107), // Amber
+                        color: const Color(0xFFFFC107), // Amber  // accent-allowlist: nutrient/score severity scale
                       ),
                       const SizedBox(width: 8),
                       _StatChip(
                         label: AppLocalizations.of(context).scoreExplainHigh,
                         count: overCount,
-                        color: const Color(0xFFFF9800), // Orange
+                        color: const Color(0xFFFF9800), // Orange  // accent-allowlist: nutrient/score severity scale
                       ),
                     ],
                   ),
@@ -429,13 +429,13 @@ class _NutrientRow extends StatelessWidget {
   Color _getStatusColor(NutrientStatus status) {
     switch (status) {
       case NutrientStatus.low:
-        return const Color(0xFFFFC107); // Amber - below target
+        return const Color(0xFFFFC107); // Amber - below target  // accent-allowlist: nutrient/score severity scale
       case NutrientStatus.optimal:
-        return const Color(0xFF4CAF50); // Green - on target
+        return const Color(0xFF4CAF50); // Green - on target  // accent-allowlist: nutrient/score severity scale
       case NutrientStatus.high:
-        return const Color(0xFFFF9800); // Orange - above target
+        return const Color(0xFFFF9800); // Orange - above target  // accent-allowlist: nutrient/score severity scale
       case NutrientStatus.overCeiling:
-        return const Color(0xFFF44336); // Red - over limit
+        return const Color(0xFFF44336); // Red - over limit  // accent-allowlist: nutrient/score severity scale
     }
   }
 }

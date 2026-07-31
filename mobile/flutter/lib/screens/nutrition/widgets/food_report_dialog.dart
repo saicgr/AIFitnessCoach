@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/food_search_service.dart';
@@ -88,11 +89,11 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
               height: 72,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.green.withValues(alpha: 0.15),
+                color: AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state (logged, synced, completed)
               ),
               child: const Icon(
                 Icons.check_circle_rounded,
-                color: AppColors.green,
+                color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                 size: 44,
               ),
             ),
@@ -129,7 +130,7 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
               child: ElevatedButton(
                 onPressed: () => Navigator.of(sheetContext).pop(),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.green,
+                  backgroundColor: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -311,8 +312,8 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Colorful accents for the report sheet
-    const wrongNutritionColor = AppColors.orange;
-    const wrongFoodColor = AppColors.coral;
+    final wrongNutritionColor = context.accentColor;
+    const wrongFoodColor = AppColors.coral;  // accent-allowlist: negative/warning-connotation colour, consistent across nutrition surfaces
     final activeChipColor = _reportType == 'wrong_nutrition'
         ? wrongNutritionColor
         : wrongFoodColor;
@@ -431,7 +432,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
-                      accentColor: AppColors.macroProtein,
+                      accentColor: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                     ),
                   ),
                 ],
@@ -448,7 +449,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
-                      accentColor: AppColors.macroCarbs,
+                      accentColor: AppColors.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -461,7 +462,7 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
                       surfaceColor: surfaceColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
-                      accentColor: AppColors.macroFat,
+                      accentColor: AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                     ),
                   ),
                 ],

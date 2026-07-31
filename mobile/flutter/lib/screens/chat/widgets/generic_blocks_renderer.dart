@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import 'chart_axis_math.dart' as axis_math;
 import 'chat_route_dispatch.dart';
 
 /// Renders a list of generic, backend-driven "blocks" inline in an AI-coach
@@ -150,16 +151,11 @@ double? _asDouble(Object? v) {
   return null;
 }
 
-/// Render a JSON value (num or str) for display, trimming trailing `.0`.
-String _formatValue(Object? v) {
-  if (v is num) {
-    if (v == v.roundToDouble() && v.abs() < 1e15) {
-      return v.toInt().toString();
-    }
-    return v.toString();
-  }
-  return v?.toString() ?? '';
-}
+/// Render a JSON value (num or str) for display, trimming trailing `.0` and
+/// capping non-integer values at 2 decimals (see `chart_axis_math.dart` —
+/// E2E register #132b: an uncapped fractional axis tick rendered as a
+/// garbled, wrapped "334.5" / "8").
+String _formatValue(Object? v) => axis_math.formatAxisValue(v);
 
 // ─── metric block ─────────────────────────────────────────────────────────
 
@@ -270,11 +266,11 @@ class _DeltaPill extends StatelessWidget {
     switch (direction) {
       case 'up':
         icon = Icons.arrow_upward_rounded;
-        color = const Color(0xFF22C55E);
+        color = const Color(0xFF22C55E);  // accent-allowlist: delta-direction severity (up=good)
         break;
       case 'down':
         icon = Icons.arrow_downward_rounded;
-        color = const Color(0xFFEF4444);
+        color = const Color(0xFFEF4444);  // accent-allowlist: delta-direction severity (down=bad)
         break;
       default:
         icon = Icons.remove_rounded;
@@ -441,21 +437,12 @@ class _ChartBlock extends StatelessWidget {
     return (count / 6).ceilToDouble();
   }
 
-  // y bounds, with a little headroom when not explicitly provided.
-  (double, double) _yBounds(List<double> points, double? yMin, double? yMax) {
-    var lo = points.reduce((a, b) => a < b ? a : b);
-    var hi = points.reduce((a, b) => a > b ? a : b);
-    if (lo == hi) {
-      // Flat series — pad so the line/bar is visible.
-      lo = lo - 1;
-      hi = hi + 1;
-    } else {
-      final pad = (hi - lo) * 0.12;
-      lo -= pad;
-      hi += pad;
-    }
-    return (yMin ?? lo, yMax ?? hi);
-  }
+  /// y bounds + tick step, with headroom when not explicitly provided. See
+  /// `chart_axis_math.dart` (E2E register #132b) for why this snaps to a nice
+  /// round number instead of returning the raw padded fraction.
+  (double, double, double) _yBounds(
+          List<double> points, double? yMin, double? yMax) =>
+      axis_math.yBounds(points, yMin, yMax);
 
   Widget _buildLineChart({
     required BuildContext context,
@@ -472,7 +459,7 @@ class _ChartBlock extends StatelessWidget {
     final spots = <FlSpot>[
       for (var i = 0; i < points.length; i++) FlSpot(i.toDouble(), points[i]),
     ];
-    final (lo, hi) = _yBounds(points, yMin, yMax);
+    final (lo, hi, step) = _yBounds(points, yMin, yMax);
     final showAxes = !isSparkline;
     final hasXLabels = showAxes && xLabels.isNotEmpty;
 
@@ -485,6 +472,7 @@ class _ChartBlock extends StatelessWidget {
         gridData: FlGridData(
           show: showAxes,
           drawVerticalLine: false,
+          horizontalInterval: step,
           getDrawingHorizontalLine: (value) => FlLine(
             color: cs.outline.withValues(alpha: 0.15),
             strokeWidth: 1,
@@ -500,7 +488,8 @@ class _ChartBlock extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: showAxes,
-              reservedSize: 32,
+              reservedSize: axis_math.axisReservedSize(lo, hi),
+              interval: step,
               getTitlesWidget: (value, meta) {
                 if (value == meta.min || value == meta.max) {
                   return const SizedBox.shrink();
@@ -601,7 +590,7 @@ class _ChartBlock extends StatelessWidget {
     required bool highlightLast,
   }) {
     final cs = Theme.of(context).colorScheme;
-    final (lo, hi) = _yBounds(points, yMin, yMax);
+    final (lo, hi, step) = _yBounds(points, yMin, yMax);
     // Bars read from a baseline; honor an explicit y_min, else start at 0
     // (or the data min when the series dips negative).
     final baseline = yMin ?? (lo < 0 ? lo : 0.0);
@@ -615,6 +604,7 @@ class _ChartBlock extends StatelessWidget {
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
+          horizontalInterval: step,
           getDrawingHorizontalLine: (value) => FlLine(
             color: cs.outline.withValues(alpha: 0.15),
             strokeWidth: 1,
@@ -629,7 +619,8 @@ class _ChartBlock extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
+              reservedSize: axis_math.axisReservedSize(lo, hi),
+              interval: step,
               getTitlesWidget: (value, meta) {
                 if (value == meta.min || value == meta.max) {
                   return const SizedBox.shrink();
@@ -753,11 +744,11 @@ class _StatChip extends StatelessWidget {
   Color _statusColor(BuildContext context, String? status) {
     switch (status) {
       case 'good':
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E);  // accent-allowlist: status severity scale (good/warn/bad)
       case 'warn':
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B);  // accent-allowlist: status severity scale (good/warn/bad)
       case 'bad':
-        return const Color(0xFFEF4444);
+        return const Color(0xFFEF4444);  // accent-allowlist: status severity scale (good/warn/bad)
       default:
         return Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/menu_item.dart';
 import '../../../../widgets/glass_sheet.dart';
 import 'diet_heuristics.dart';
@@ -159,9 +160,9 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
       child: FilledButton(
         onPressed: matches == 0 ? null : () => Navigator.pop(context, _state),
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.orange,
+          backgroundColor: context.accentColor,
           padding: const EdgeInsets.symmetric(vertical: 14),
-          disabledBackgroundColor: AppColors.orange.withValues(alpha: 0.3),
+          disabledBackgroundColor: context.accentColor.withValues(alpha: 0.3),
         ),
         child: Text(
           matches == 0
@@ -555,7 +556,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
     final midpoint = ((min + max) / 2).roundToDouble();
     final current = (value ?? midpoint).clamp(min, max).toDouble();
     final offColor = AppColors.textMuted.withValues(alpha: 0.6);
-    final activeColor = AppColors.orange;
+    final activeColor = context.accentColor;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -644,10 +645,10 @@ class _PresetChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = selected
-        ? AppColors.orange.withValues(alpha: 0.16)
+        ? context.accentColor.withValues(alpha: 0.16)
         : Colors.white.withValues(alpha: 0.05);
     final border = selected
-        ? AppColors.orange
+        ? context.accentColor
         : Colors.white.withValues(alpha: 0.12);
     return Material(
       color: bg,
@@ -676,7 +677,7 @@ class _PresetChip extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: selected ? AppColors.orange : null,
+                      color: selected ? context.accentColor : null,
                     ),
                   ),
                   Text(
@@ -714,10 +715,10 @@ class _Pill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = selected
-        ? AppColors.orange.withValues(alpha: 0.18)
+        ? context.accentColor.withValues(alpha: 0.18)
         : Colors.white.withValues(alpha: 0.06);
     final border = selected
-        ? AppColors.orange
+        ? context.accentColor
         : Colors.white.withValues(alpha: 0.12);
     final chip = Material(
       color: bg,
@@ -736,7 +737,7 @@ class _Pill extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-              color: selected ? AppColors.orange : null,
+              color: selected ? context.accentColor : null,
             ),
           ),
         ),
@@ -784,7 +785,7 @@ class _SwitchRow extends StatelessWidget {
           ),
           Switch.adaptive(
             value: value,
-            activeTrackColor: AppColors.orange,
+            activeTrackColor: context.accentColor,
             onChanged: onChanged,
           ),
         ],

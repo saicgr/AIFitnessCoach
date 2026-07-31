@@ -145,19 +145,19 @@ class _RecommendationOptionCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.proteinG}g P',
-                  color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,
+                  color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.carbsG}g C',
-                  color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,
+                  color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.fatG}g F',
-                  color: isDark ? AppColors.macroFat : AppColorsLight.macroFat,
+                  color: isDark ? AppColors.macroFat : AppColorsLight.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                   isDark: isDark,
                 ),
               ],
@@ -309,7 +309,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                 size: 16,
                 color: calculation.dataQualityScore >= 0.7
                     ? AppColors.textPrimary
-                    : Colors.orange,
+                    : Colors.orange,  // accent-allowlist: warning severity — insufficient data quality
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -339,7 +339,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? AppColors.elevated : AppColorsLight.elevated),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),  // accent-allowlist: warning severity — insufficient data quality
       ),
       child: Column(
         children: [
@@ -347,10 +347,10 @@ class _AdaptiveTdeeCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.1),
+              color: Colors.orange.withValues(alpha: 0.1),  // accent-allowlist: warning severity — insufficient data quality
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.hourglass_empty, size: 32, color: Colors.orange),
+            child: Icon(Icons.hourglass_empty, size: 32, color: Colors.orange),  // accent-allowlist: warning severity — insufficient data quality
           ),
           const SizedBox(height: 16),
           Text(
@@ -383,7 +383,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                   label: 'Food Logging',
                   current: calculation.daysLogged,
                   target: 6,
-                  color: calculation.daysLogged >= 6 ? AppColors.textPrimary : Colors.orange,
+                  color: calculation.daysLogged >= 6 ? AppColors.textPrimary : Colors.orange,  // accent-allowlist: warning severity — insufficient data quality
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -394,7 +394,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                   label: 'Weight Logs',
                   current: calculation.weightEntries,
                   target: 2,
-                  color: calculation.weightEntries >= 2 ? AppColors.textPrimary : Colors.orange,
+                  color: calculation.weightEntries >= 2 ? AppColors.textPrimary : Colors.orange,  // accent-allowlist: warning severity — insufficient data quality
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -585,7 +585,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Protein',
                   value: '${recommendation.recommendedProteinG}',
                   unit: 'g',
-                  color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,
+                  color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                   isDark: isDark,
                 ),
               ),
@@ -599,7 +599,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Carbs',
                   value: '${recommendation.recommendedCarbsG}',
                   unit: 'g',
-                  color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,
+                  color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                   isDark: isDark,
                 ),
               ),
@@ -609,7 +609,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Fat',
                   value: '${recommendation.recommendedFatG}',
                   unit: 'g',
-                  color: isDark ? AppColors.macroFat : AppColorsLight.macroFat,
+                  color: isDark ? AppColors.macroFat : AppColorsLight.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                   isDark: isDark,
                 ),
               ),

@@ -116,7 +116,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
 
   List<Widget> _buildReview(CoachReview r, Color accent, Color text, Color muted) {
     final score = r.overallScore ?? 0;
-    final scoreColor = score >= 75 ? AppColors.success : score >= 50 ? AppColors.yellow : AppColors.error;
+    final scoreColor = score >= 75 ? AppColors.success : score >= 50 ? AppColors.yellow : AppColors.error;  // accent-allowlist: coach-review score severity scale
     return [
       // Score donut + status
       Container(
@@ -143,9 +143,9 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
                 Container(
                   margin: const EdgeInsets.only(top: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.2),
+                  decoration: BoxDecoration(color: AppColors.yellow.withValues(alpha: 0.2),  // accent-allowlist: warning severity — stale review
                       borderRadius: BorderRadius.circular(6)),
-                  child: Text(AppLocalizations.of(context).coachReviewOutOfDate, style: TextStyle(color: AppColors.yellow, fontSize: 10, fontWeight: FontWeight.w700)),
+                  child: Text(AppLocalizations.of(context).coachReviewOutOfDate, style: TextStyle(color: AppColors.yellow, fontSize: 10, fontWeight: FontWeight.w700)),  // accent-allowlist: warning severity — stale review
                 ),
             ]),
           ),
@@ -157,15 +157,15 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.error.withValues(alpha: 0.1),
+            color: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error state
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),  // accent-allowlist: error state
           ),
           child: Row(children: [
-            Icon(Icons.warning_amber, color: AppColors.error),
+            Icon(Icons.warning_amber, color: AppColors.error),  // accent-allowlist: error state
             const SizedBox(width: 8),
             Expanded(child: Text(AppLocalizations.of(context)!.coachReviewSheetAllergenAlert(r.allergenFlags.join(", ")),
-                style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700))),
+                style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w700))),  // accent-allowlist: error state
           ]),
         ),
       const SizedBox(height: 16),
@@ -181,8 +181,8 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         ...r.micronutrientGaps.map((g) => ListTile(
           dense: true,
           leading: CircleAvatar(
-            backgroundColor: AppColors.yellow.withValues(alpha: 0.2),
-            child: Text(AppLocalizations.of(context)!.coachReviewSheetValue(g.deficitPct), style: TextStyle(color: AppColors.yellow, fontSize: 10)),
+            backgroundColor: AppColors.yellow.withValues(alpha: 0.2),  // accent-allowlist: warning severity — micronutrient gap
+            child: Text(AppLocalizations.of(context)!.coachReviewSheetValue(g.deficitPct), style: TextStyle(color: AppColors.yellow, fontSize: 10)),  // accent-allowlist: warning severity — micronutrient gap
           ),
           title: Text(g.nutrient, style: TextStyle(color: text)),
           subtitle: g.suggestion != null ? Text(g.suggestion!) : null,

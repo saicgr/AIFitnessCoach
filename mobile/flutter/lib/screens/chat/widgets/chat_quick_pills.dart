@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/models/chat_quick_action.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/chat_quick_action_provider.dart';
@@ -62,10 +63,10 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: action.color.withOpacity(0.12),
+                        color: context.accentColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(action.icon, size: 18, color: action.color),
+                      child: Icon(action.icon, size: 18, color: context.accentColor),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -84,7 +85,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                 _MiniPickerOption(
                   icon: isVideo ? Icons.videocam_outlined : Icons.camera_alt_outlined,
                   label: isVideo ? AppLocalizations.of(context).mediaPickerHelperRecordVideo : AppLocalizations.of(context).progressTakePhoto,
-                  color: action.color,
+                  color: context.accentColor,
                   onTap: () {
                     Navigator.pop(ctx);
                     HapticService.selection();
@@ -98,7 +99,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                 _MiniPickerOption(
                   icon: isVideo ? Icons.video_library_outlined : Icons.photo_library_outlined,
                   label: isVideo ? AppLocalizations.of(context).mediaPickerHelperChooseVideo : AppLocalizations.of(context).mediaPickerHelperChoosePhoto,
-                  color: action.color,
+                  color: context.accentColor,
                   onTap: () {
                     Navigator.pop(ctx);
                     HapticService.selection();
@@ -113,7 +114,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                   _MiniPickerOption(
                     icon: Icons.collections_outlined,
                     label: AppLocalizations.of(context).mediaPickerHelperChooseMultiplePhotos,
-                    color: action.color,
+                    color: context.accentColor,
                     onTap: () {
                       Navigator.pop(ctx);
                       HapticService.selection();
@@ -477,7 +478,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.cyan : const Color(0xFF0891B2),
+                        color: context.accentColor,
                       ),
                     ),
                   ),
@@ -530,11 +531,11 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
                       color: isTop5
-                          ? action.color.withOpacity(isDark ? 0.12 : 0.08)
+                          ? context.accentColor.withOpacity(isDark ? 0.12 : 0.08)
                           : elevatedColor,
                       borderRadius: BorderRadius.circular(12),
                       border: isTop5
-                          ? Border.all(color: action.color.withOpacity(0.3))
+                          ? Border.all(color: context.accentColor.withOpacity(0.3))
                           : null,
                     ),
                     child: Row(
@@ -550,10 +551,10 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: action.color.withOpacity(0.15),
+                            color: context.accentColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(action.icon, color: action.color, size: 18),
+                          child: Icon(action.icon, color: context.accentColor, size: 18),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -572,7 +573,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                             height: 24,
                             margin: const EdgeInsetsDirectional.only(end: 12),
                             decoration: BoxDecoration(
-                              color: action.color,
+                              color: context.accentColor,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(
@@ -671,10 +672,10 @@ class _ActionRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: action.color.withOpacity(0.12),
+                  color: context.accentColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(action.icon, size: 18, color: action.color),
+                child: Icon(action.icon, size: 18, color: context.accentColor),
               ),
               const SizedBox(width: 14),
               Expanded(

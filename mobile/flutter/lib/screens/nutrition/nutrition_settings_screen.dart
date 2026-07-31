@@ -128,7 +128,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Logging',
                     Icons.edit_note_rounded,
-                    AppColors.cyan,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -147,7 +147,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, quickLogModeEnabled: value),
                         icon: Icons.bolt_rounded,
-                        iconColor: AppColors.yellow,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -161,7 +161,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showMacrosOnLog: value),
                         icon: Icons.pie_chart_rounded,
-                        iconColor: AppColors.macroProtein,
+                        iconColor: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -175,7 +175,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Weekly Check-In',
                     Icons.event_note_rounded,
-                    AppColors.cyan,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -198,7 +198,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Weekly Goal',
                     Icons.calendar_view_week_rounded,
-                    AppColors.purple,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -220,7 +220,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Dynamic Calorie Adjustments',
                     Icons.trending_up_rounded,
-                    AppColors.green,
+                    AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -239,7 +239,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, adjustCaloriesForTraining: value),
                         icon: Icons.fitness_center_rounded,
-                        iconColor: AppColors.green,
+                        iconColor: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -253,7 +253,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, adjustCaloriesForRest: value),
                         icon: Icons.nightlight_round,
-                        iconColor: AppColors.purple,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -268,7 +268,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, weeklyCheckinEnabled: value),
                         icon: Icons.calendar_today_rounded,
-                        iconColor: AppColors.cyan,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -282,7 +282,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Calorie Estimate Bias',
                     Icons.tune_rounded,
-                    AppColors.yellow,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -304,7 +304,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Display',
                     Icons.view_compact_rounded,
-                    AppColors.purple,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -323,7 +323,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, compactTrackerViewEnabled: value),
                         icon: Icons.density_small_rounded,
-                        iconColor: AppColors.cyan,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -337,7 +337,7 @@ class _NutritionSettingsScreenState
                     context,
                     'AI Assistance',
                     Icons.auto_awesome,
-                    AppColors.purple,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -356,7 +356,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showAiFeedbackAfterLogging: !value),
                         icon: Icons.lightbulb_outline_rounded,
-                        iconColor: AppColors.purple,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -372,7 +372,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Mental Health & Wellbeing',
                     Icons.favorite_rounded,
-                    AppColors.pink,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -391,7 +391,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, calmModeEnabled: value),
                         icon: Icons.spa_rounded,
-                        iconColor: AppColors.green,
+                        iconColor: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -405,7 +405,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updatePreference(userId, preferences, showWeeklyInsteadOfDaily: value),
                         icon: Icons.calendar_view_week_rounded,
-                        iconColor: AppColors.cyan,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -422,7 +422,7 @@ class _NutritionSettingsScreenState
                           setState(() => _hidePostMealReview = !value);
                         },
                         icon: Icons.mood_rounded,
-                        iconColor: AppColors.yellow,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -438,7 +438,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Optional Trackers',
                     Icons.tune_rounded,
-                    AppColors.waterBlue,
+                    AppColors.waterBlue,  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -457,7 +457,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) => _updatePreference(userId, preferences,
                             hydrationTrackingEnabled: value),
                         icon: Icons.water_drop_rounded,
-                        iconColor: AppColors.waterBlue,
+                        iconColor: AppColors.waterBlue,  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -471,7 +471,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) => _updatePreference(userId, preferences,
                             sugarTrackingEnabled: value),
                         icon: Icons.cookie_rounded,
-                        iconColor: AppColors.pink,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -485,7 +485,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) => _updatePreference(userId, preferences,
                             caffeineTrackingEnabled: value),
                         icon: Icons.coffee_rounded,
-                        iconColor: AppColors.orange,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -499,7 +499,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) => _updatePreference(userId, preferences,
                             alcoholTrackingEnabled: value),
                         icon: Icons.local_bar_rounded,
-                        iconColor: AppColors.purple,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -556,7 +556,7 @@ class _NutritionSettingsScreenState
                           title: 'Eating window opens',
                           hour: preferences.eatingWindowStartHour ?? 12,
                           icon: Icons.wb_sunny_rounded,
-                          iconColor: AppColors.yellow,
+                          iconColor: context.accentColor,
                           textPrimary: textPrimary,
                           textMuted: textMuted,
                           elevated: elevated,
@@ -572,7 +572,7 @@ class _NutritionSettingsScreenState
                           title: 'Eating window closes',
                           hour: preferences.eatingWindowEndHour ?? 20,
                           icon: Icons.nightlight_round,
-                          iconColor: AppColors.purple,
+                          iconColor: context.accentColor,
                           textPrimary: textPrimary,
                           textMuted: textMuted,
                           elevated: elevated,
@@ -595,7 +595,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Life Stage',
                     Icons.pregnant_woman_rounded,
-                    AppColors.pink,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -614,7 +614,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updateLifeStage(isPregnant: value),
                         icon: Icons.pregnant_woman_rounded,
-                        iconColor: AppColors.pink,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -628,7 +628,7 @@ class _NutritionSettingsScreenState
                         onChanged: (value) =>
                             _updateLifeStage(isLactating: value),
                         icon: Icons.child_friendly_rounded,
-                        iconColor: AppColors.purple,
+                        iconColor: context.accentColor,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -642,7 +642,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Food Library',
                     Icons.menu_book_rounded,
-                    AppColors.orange,
+                    context.accentColor,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -656,7 +656,7 @@ class _NutritionSettingsScreenState
                     title: AppLocalizations.of(context).nutritionSettingsSavedFoodsRecipes,
                     subtitle: AppLocalizations.of(context).nutritionSettingsManageYourFoodLibrary,
                     icon: Icons.bookmark_rounded,
-                    iconColor: AppColors.orange,
+                    iconColor: context.accentColor,
                     onTap: () {
                       HapticService.light();
                       Navigator.push(
@@ -681,7 +681,7 @@ class _NutritionSettingsScreenState
                     subtitle:
                         AppLocalizations.of(context).nutritionSettingsStandingRulesZealovaApplies,
                     icon: Icons.auto_awesome_rounded,
-                    iconColor: AppColors.purple,
+                    iconColor: context.accentColor,
                     onTap: () {
                       HapticService.light();
                       Navigator.push(

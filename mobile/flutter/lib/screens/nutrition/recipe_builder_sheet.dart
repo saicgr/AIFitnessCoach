@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -194,7 +195,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
           SnackBar(
             content: Text('Recipe "${_nameController.text}" created!'),
             backgroundColor:
-                widget.isDark ? AppColors.success : AppColorsLight.success,
+                widget.isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success state
           ),
         );
       }
@@ -225,7 +226,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
             '${result.foodName} = ${result.outputGrams.toStringAsFixed(0)}g '
             '${result.direction == ConversionDirection.rawToCooked ? "cooked" : "raw"}',
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.orange,  // accent-allowlist: warning severity
           duration: const Duration(seconds: 4),
         ),
       );
@@ -256,7 +257,7 @@ class _RecipeBuilderSheetState extends ConsumerState<RecipeBuilderSheet> {
             'Logged ${result.portionEaten} serving(s) of "${result.recipeName}": '
             '${result.caloriesConsumed} kcal',
           ),
-          backgroundColor: Colors.purple,
+          backgroundColor: context.accentColor,
           duration: const Duration(seconds: 4),
         ),
       );

@@ -304,12 +304,13 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
           const SizedBox(height: 8),
           SizedBox(
             height: 56,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _frequentMeals.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) =>
-                  _buildFrequentMealChip(isDark, _frequentMeals[i]),
+            // E2E register #148: sibling row to the Quick Log pills — same
+            // sliced-last-chip bug, same fix.
+            child: FadingChipRow(
+              children: [
+                for (final meal in _frequentMeals)
+                  _buildFrequentMealChip(isDark, meal),
+              ],
             ),
           ),
         ],
@@ -577,7 +578,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
+    final coral = isDark ? AppColors.coral : AppColorsLight.coral; // accent-allowlist: recording/negative-state indicator (mic capturing, voice unavailable) — same coral used for over-limit warnings elsewhere in nutrition
     final hasTranscript = _voiceTranscriptController.text.trim().isNotEmpty;
     final busy = _isAnalyzing || _isLoading;
 

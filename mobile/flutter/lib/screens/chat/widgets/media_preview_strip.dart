@@ -12,6 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import 'media_picker_helper.dart';
 
@@ -106,10 +107,10 @@ class _MediaPreviewStripState extends State<MediaPreviewStrip> {
                       Navigator.pop(dialogCtx);
                       _handleRemoveWithUndo(index);
                     },
-                    icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                    icon: const Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error state
                     label: Text(
                       AppLocalizations.of(context).workoutPlanDrawerRemove,
-                      style: TextStyle(color: AppColors.error),
+                      style: TextStyle(color: AppColors.error),  // accent-allowlist: error state
                     ),
                     style: TextButton.styleFrom(
                       backgroundColor: Colors.black54,
@@ -254,7 +255,7 @@ class _VideoPreviewPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.videocam_rounded, color: AppColors.purple, size: 48),
+          Icon(Icons.videocam_rounded, color: context.accentColor, size: 48),
           if (media.duration != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -357,7 +358,7 @@ class _MediaThumbnail extends StatelessWidget {
                   width: 20,
                   height: 20,
                   decoration: const BoxDecoration(
-                    color: AppColors.error,
+                    color: AppColors.error,  // accent-allowlist: error state
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -459,10 +460,10 @@ class _VideoThumbnailWidgetState extends State<_VideoThumbnailWidget> {
         // Loading or error fallback
         return Container(
           color: widget.isDark ? AppColors.glassSurface : Colors.grey.shade200,
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.videocam_rounded,
-              color: AppColors.purple,
+              color: context.accentColor,
               size: 24,
             ),
           ),

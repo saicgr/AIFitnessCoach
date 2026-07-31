@@ -591,7 +591,7 @@ class _MacroProjection extends StatelessWidget {
             keyLabel: 'P',
             current: protein,
             target: proteinTarget,
-            color: AppColors.macroProtein,
+            color: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
             text: text,
             muted: muted,
           ),
@@ -600,7 +600,7 @@ class _MacroProjection extends StatelessWidget {
             keyLabel: 'C',
             current: carbs,
             target: carbsTarget,
-            color: AppColors.macroCarbs,
+            color: AppColors.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
             text: text,
             muted: muted,
           ),
@@ -609,7 +609,7 @@ class _MacroProjection extends StatelessWidget {
             keyLabel: 'F',
             current: fat,
             target: fatTarget,
-            color: AppColors.macroFat,
+            color: AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
             text: text,
             muted: muted,
           ),

@@ -197,21 +197,21 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
                 label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                 grams: prefs.targetProteinG ?? 0,
                 pct: proteinPct,
-                color: isDark ? AppColors.purple : AppColorsLight.purple,
+                color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein, // accent-allowlist: macro identity
               ),
               const SizedBox(width: 8),
               _MacroChip(
                 label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                 grams: prefs.targetCarbsG ?? 0,
                 pct: carbPct,
-                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs, // accent-allowlist: macro identity
               ),
               const SizedBox(width: 8),
               _MacroChip(
                 label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                 grams: prefs.targetFatG ?? 0,
                 pct: fatPct,
-                color: isDark ? AppColors.orange : AppColorsLight.orange,
+                color: isDark ? AppColors.macroFat : AppColorsLight.macroFat, // accent-allowlist: macro identity
               ),
             ],
           ),

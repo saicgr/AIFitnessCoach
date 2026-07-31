@@ -276,10 +276,10 @@ class _FoodLoggingRulesScreenState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+        color: const Color(0xFFF59E0B).withValues(alpha: 0.12),  // accent-allowlist: warning severity — conflicting rules banner
         borderRadius: BorderRadius.circular(16),
         border:
-            Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+            Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),  // accent-allowlist: warning severity — conflicting rules banner
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,7 +287,7 @@ class _FoodLoggingRulesScreenState
           Row(
             children: [
               const Icon(Icons.warning_amber_rounded,
-                  color: Color(0xFFF59E0B), size: 20),
+                  color: Color(0xFFF59E0B), size: 20),  // accent-allowlist: warning severity — conflicting rules banner
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).foodLoggingRulesConflictingRules,
@@ -441,7 +441,7 @@ class _FoodLoggingRulesScreenState
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(AppLocalizations.of(context).buttonDelete,
-                style: TextStyle(color: Color(0xFFEF4444))),
+                style: TextStyle(color: Color(0xFFEF4444))),  // accent-allowlist: error state — delete confirmation
           ),
         ],
       ),

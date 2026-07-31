@@ -147,7 +147,7 @@ class _FoodLibraryCard extends StatelessWidget {
                                 ),
                                 Text(
                                   '${item.protein!.round()}g protein',
-                                  style: ZType.data(12, color: AppColors.macroProtein),
+                                  style: ZType.data(12, color: AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
                                 ),
                               ],
                             ],
@@ -236,7 +236,7 @@ class _SortOptionsSheet extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : context.accentColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -415,7 +415,7 @@ class _FoodDetailSheet extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : context.accentColor;
 
     final isRecipe = item is RecipeLibraryItem;
     final typeColor = isRecipe

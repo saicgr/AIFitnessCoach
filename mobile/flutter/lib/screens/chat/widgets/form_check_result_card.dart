@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -139,15 +140,15 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   'BETA',
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -202,15 +203,15 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             margin: const EdgeInsetsDirectional.only(end: 8),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: const Text(
+            child: Text(
               'BETA',
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
-                color: AppColors.orange,
+                color: context.accentColor,
                 letterSpacing: 0.5,
               ),
             ),
@@ -262,14 +263,14 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
       margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(isDark ? 0.1 : 0.06),
+        color: AppColors.error.withOpacity(isDark ? 0.1 : 0.06),  // accent-allowlist: error state
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.error.withOpacity(0.2)),
+        border: Border.all(color: AppColors.error.withOpacity(0.2)),  // accent-allowlist: error state
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.error),
+          const Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.error),  // accent-allowlist: error state
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -277,7 +278,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: AppColors.error,
+                color: AppColors.error,  // accent-allowlist: error state
                 height: 1.4,
               ),
             ),
@@ -295,7 +296,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.check_circle, size: 14, color: AppColors.success),
+              const Icon(Icons.check_circle, size: 14, color: AppColors.success),  // accent-allowlist: success state
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.of(context).formCheckResultDoingWell,
@@ -315,7 +316,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
               children: [
                 const Padding(
                   padding: EdgeInsets.only(top: 4),
-                  child: Icon(Icons.check, size: 12, color: AppColors.success),
+                  child: Icon(Icons.check, size: 12, color: AppColors.success),  // accent-allowlist: success state
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -349,7 +350,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
         children: [
           Row(
             children: [
-              const Icon(Icons.trending_up, size: 14, color: AppColors.warning),
+              const Icon(Icons.trending_up, size: 14, color: AppColors.warning),  // accent-allowlist: warning severity
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.of(context).formCheckResultAreasToImprove,
@@ -432,7 +433,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
     final pattern = breathing['pattern_observed'] as String? ?? '';
     final isCorrect = breathing['is_correct'] as bool? ?? true;
     final recommendation = breathing['recommendation'] as String? ?? '';
-    final color = isCorrect ? AppColors.success : AppColors.warning;
+    final color = isCorrect ? AppColors.success : AppColors.warning;  // accent-allowlist: success state
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
@@ -502,7 +503,7 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
     final observed = tempo['observed_tempo'] as String? ?? '';
     final isAppropriate = tempo['is_appropriate'] as bool? ?? true;
     final recommendation = tempo['recommendation'] as String? ?? '';
-    final color = isAppropriate ? AppColors.success : AppColors.warning;
+    final color = isAppropriate ? AppColors.success : AppColors.warning;  // accent-allowlist: success state
     final badgeLabel = isAppropriate ? 'Good Tempo' : _tempoDirectionLabel(tempo);
 
     return Padding(
@@ -601,22 +602,22 @@ class _FormCheckResultCardState extends State<FormCheckResultCard> {
   }
 
   Color _getScoreColor(double score) {
-    if (score < 4) return AppColors.error;
-    if (score <= 7) return AppColors.warning;
-    return AppColors.success;
+    if (score < 4) return AppColors.error;  // accent-allowlist: error state
+    if (score <= 7) return AppColors.warning;  // accent-allowlist: warning severity
+    return AppColors.success;  // accent-allowlist: success state
   }
 
   Color _getSeverityColor(String severity) {
     switch (severity.toLowerCase()) {
       case 'high':
       case 'critical':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error state
       case 'medium':
-        return AppColors.warning;
+        return AppColors.warning;  // accent-allowlist: warning severity
       case 'low':
-        return AppColors.info;
+        return AppColors.info;  // accent-allowlist: informational state
       default:
-        return AppColors.warning;
+        return AppColors.warning;  // accent-allowlist: warning severity
     }
   }
 }

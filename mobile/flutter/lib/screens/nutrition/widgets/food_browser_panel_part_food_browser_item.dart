@@ -120,7 +120,7 @@ class _FoodBrowserItem extends StatelessWidget {
       );
     }
     if (logState == _LogState.done) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);  // accent-allowlist: success state
     }
     return Icon(Icons.add_circle, color: teal, size: 24);
   }
@@ -161,22 +161,22 @@ class _VerifiedBadge extends StatelessWidget {
     switch (l) {
       case 'curated':
         icon = Icons.verified_rounded;
-        color = isDark ? AppColors.info : AppColorsLight.info;
+        color = isDark ? AppColors.info : AppColorsLight.info;  // accent-allowlist: informational state
         tooltip = 'Verified source';
         break;
       case 'lab_verified':
         icon = Icons.verified_rounded;
-        color = isDark ? AppColors.info : AppColorsLight.info;
+        color = isDark ? AppColors.info : AppColorsLight.info;  // accent-allowlist: informational state
         tooltip = 'Lab-verified nutrition';
         break;
       case 'manufacturer_verified':
         icon = Icons.verified_rounded;
-        color = isDark ? AppColors.info : AppColorsLight.info;
+        color = isDark ? AppColors.info : AppColorsLight.info;  // accent-allowlist: informational state
         tooltip = 'Manufacturer-verified nutrition';
         break;
       case 'community_verified':
         icon = Icons.verified_user_outlined;
-        color = isDark ? AppColors.green : AppColorsLight.green;
+        color = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state (logged, synced, completed)
         tooltip = 'Community-verified';
         break;
       default:
@@ -276,9 +276,9 @@ class _FoodReviewCardState extends State<_FoodReviewCard> {
     }
 
     // Expanded: full card
-    final encourageColor = widget.isDark ? AppColors.green : AppColorsLight.green;
-    final warningColor = widget.isDark ? AppColors.error : AppColorsLight.error;
-    final swapColor = widget.isDark ? AppColors.purple : AppColorsLight.purple;
+    final encourageColor = widget.isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state (logged, synced, completed)
+    final warningColor = widget.isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error state
+    final swapColor = context.accentColor;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -526,9 +526,9 @@ class _FoodReviewCardState extends State<_FoodReviewCard> {
   }
 
   Color _scoreColor(int score) {
-    if (score >= 7) return widget.isDark ? AppColors.green : AppColorsLight.green;
-    if (score >= 4) return const Color(0xFFF97316);
-    return widget.isDark ? AppColors.error : AppColorsLight.error;
+    if (score >= 7) return widget.isDark ? AppColors.green : AppColorsLight.green; // accent-allowlist: health-score severity scale
+    if (score >= 4) return const Color(0xFFF97316); // accent-allowlist: health-score severity scale — medium tier
+    return widget.isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error state
   }
 }
 

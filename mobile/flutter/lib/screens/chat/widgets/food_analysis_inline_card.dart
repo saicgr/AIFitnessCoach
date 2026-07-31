@@ -7,6 +7,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -108,10 +109,10 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.12),
+                    color: AppColors.green.withValues(alpha: 0.12),  // accent-allowlist: success/positive state (logged, synced, completed)
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.fastfood_rounded, size: 16, color: AppColors.green),
+                  child: const Icon(Icons.fastfood_rounded, size: 16, color: AppColors.green),  // accent-allowlist: success/positive state (logged, synced, completed)
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -152,7 +153,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.coral,
+                        color: AppColors.coral,  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                       ),
                     ),
                   ],
@@ -173,13 +174,13 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                           : 'Log This Meal',
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       disabledBackgroundColor: _logged
-                          ? AppColors.green.withValues(alpha: 0.15)
+                          ? AppColors.green.withValues(alpha: 0.15)  // accent-allowlist: success/positive state (logged, synced, completed)
                           : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade200),
                       disabledForegroundColor: _logged
-                          ? AppColors.green
+                          ? AppColors.green  // accent-allowlist: success/positive state (logged, synced, completed)
                           : colors.textMuted,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       shape: RoundedRectangleBorder(
@@ -236,7 +237,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                           }),
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
-                  activeColor: AppColors.orange,
+                  activeColor: context.accentColor,
                   side: BorderSide(color: colors.textMuted, width: 1.5),
                 ),
               ),
@@ -267,7 +268,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: m != 1.0 ? AppColors.orange : AppColors.coral,
+                  color: m != 1.0 ? AppColors.orange : AppColors.coral, // accent-allowlist: portion-adjusted flag vs calorie identity colour
                 ),
               ),
             ],
@@ -278,11 +279,11 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
             padding: const EdgeInsets.only(left: 28, top: 4),
             child: Row(
               children: [
-                _MacroChip(label: '${protein}g P', color: AppColors.macroProtein),
+                _MacroChip(label: '${protein}g P', color: AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
                 const SizedBox(width: 6),
-                _MacroChip(label: '${carbs}g C', color: AppColors.macroCarbs),
+                _MacroChip(label: '${carbs}g C', color: AppColors.macroCarbs),  // accent-allowlist: macro identity — carbs is always this colour
                 const SizedBox(width: 6),
-                _MacroChip(label: '${fat}g F', color: AppColors.macroFat),
+                _MacroChip(label: '${fat}g F', color: AppColors.macroFat),  // accent-allowlist: macro identity — fat is always this colour
               ],
             ),
           ),
@@ -306,11 +307,11 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? AppColors.orange.withValues(alpha: 0.15)
+                              ? context.accentColor.withValues(alpha: 0.15)
                               : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade100),
                           borderRadius: BorderRadius.circular(6),
                           border: isActive
-                              ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
+                              ? Border.all(color: context.accentColor.withValues(alpha: 0.4))
                               : null,
                         ),
                         child: Text(
@@ -318,7 +319,7 @@ class _FoodAnalysisInlineCardState extends State<FoodAnalysisInlineCard> {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                            color: isActive ? AppColors.orange : colors.textMuted,
+                            color: isActive ? context.accentColor : colors.textMuted,
                           ),
                         ),
                       ),

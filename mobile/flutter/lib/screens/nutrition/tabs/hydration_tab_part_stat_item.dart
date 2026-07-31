@@ -278,8 +278,8 @@ class _BreakdownRow extends StatelessWidget {
         ? AppColors.glassSurface
         : AppColorsLight.glassSurface;
     final electricBlue = isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
     final textSecondary = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
@@ -377,8 +377,8 @@ class _LogEntry extends StatelessWidget {
         : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final electricBlue = isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
 
     final source = log.sourceEnum;
     final sourceMeta = _sourceMeta[source];

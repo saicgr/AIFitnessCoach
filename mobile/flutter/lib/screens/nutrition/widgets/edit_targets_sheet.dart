@@ -1851,15 +1851,15 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.orange.withValues(alpha: 0.10),
+            color: Colors.orange.withValues(alpha: 0.10),  // accent-allowlist: warning severity
             borderRadius: BorderRadius.circular(11),
-            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),
+            border: Border.all(color: Colors.orange.withValues(alpha: 0.35)),  // accent-allowlist: warning severity
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Icon(Icons.warning_amber_rounded,
-                  size: 14, color: Colors.orange),
+                  size: 14, color: Colors.orange),  // accent-allowlist: warning severity
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1867,7 +1867,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   'replaced by your day targets — today shows exactly what you '
                   'set, never a surprise number.',
                   style: const TextStyle(
-                      fontSize: 11.5, color: Colors.orange, height: 1.4),
+                      fontSize: 11.5, color: Colors.orange, height: 1.4),  // accent-allowlist: warning severity
                 ),
               ),
             ],
@@ -1982,10 +1982,10 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // Current Targets card. ThemeColors has no macro-specific getters, so
     // these still resolve directly from AppColors / AppColorsLight.
     final proteinColor =
-        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity — protein is always this colour
     final carbsColor =
-        isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+        isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always this colour
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity — fat is always this colour
 
     final calories = int.tryParse(_caloriesController.text);
     final canToggleToPercent = calories != null && calories > 0;
@@ -2333,7 +2333,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 'By-Day targets are on — these boosts are replaced by your '
                 'per-day targets.',
                 style: TextStyle(
-                    fontSize: 11, color: Colors.orange, height: 1.4),
+                    fontSize: 11, color: Colors.orange, height: 1.4),  // accent-allowlist: warning severity
               ),
             ),
           // B1: weekly auto-adjust opt-in + one-tap "apply suggested target"
@@ -3300,12 +3300,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       return Row(
         children: [
           const Icon(Icons.warning_amber_rounded,
-              size: 14, color: Colors.orange),
+              size: 14, color: Colors.orange),  // accent-allowlist: warning severity
           const SizedBox(width: 4),
           Expanded(
             child: Text(
               _macroOverflowWarning!,
-              style: const TextStyle(fontSize: 12, color: Colors.orange),
+              style: const TextStyle(fontSize: 12, color: Colors.orange),  // accent-allowlist: warning severity
               overflow: TextOverflow.ellipsis,
               maxLines: 2,
             ),
@@ -3322,14 +3322,14 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           Icon(
             ok ? Icons.check_circle_outline : Icons.warning_amber_rounded,
             size: 14,
-            color: ok ? teal : Colors.orange,
+            color: ok ? teal : Colors.orange,  // accent-allowlist: warning severity
           ),
           const SizedBox(width: 4),
           Text(
             ok ? AppLocalizations.of(context).editTargetsTotal100 : 'Total: $sum% \u00b7 Must equal 100%',
             style: TextStyle(
               fontSize: 12,
-              color: ok ? textMuted : Colors.orange,
+              color: ok ? textMuted : Colors.orange,  // accent-allowlist: warning severity
             ),
           ),
         ],
@@ -3350,7 +3350,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         Icon(
           ok ? Icons.check_circle_outline : Icons.info_outline,
           size: 14,
-          color: ok ? teal : Colors.orange,
+          color: ok ? teal : Colors.orange,  // accent-allowlist: warning severity
         ),
         const SizedBox(width: 4),
         Text(
@@ -3358,7 +3358,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           '${ok ? '' : ' \u00b7 off by $diff'}',
           style: TextStyle(
             fontSize: 12,
-            color: ok ? textMuted : Colors.orange,
+            color: ok ? textMuted : Colors.orange,  // accent-allowlist: warning severity
           ),
         ),
       ],
@@ -3446,13 +3446,13 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           child: Row(
             children: [
               const Icon(Icons.warning_amber_rounded,
-                  size: 14, color: Colors.orange),
+                  size: 14, color: Colors.orange),  // accent-allowlist: warning severity
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   'Safe-minimum calories ($cappedMinimum) meet your TDEE \u2014 '
                   'no deficit possible. Increase activity to lose fat.',
-                  style: const TextStyle(fontSize: 12, color: Colors.orange),
+                  style: const TextStyle(fontSize: 12, color: Colors.orange),  // accent-allowlist: warning severity
                   maxLines: 2,
                 ),
               ),
@@ -3523,7 +3523,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               child: Text(
                 'Capped at safe minimum ($cappedMinimum kcal). '
                 'Timeline reflects the actual deficit.',
-                style: const TextStyle(fontSize: 10, color: Colors.orange),
+                style: const TextStyle(fontSize: 10, color: Colors.orange),  // accent-allowlist: warning severity
                 maxLines: 2,
               ),
             ),
@@ -3936,13 +3936,13 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.warning_amber_rounded,
-                    size: 14, color: Colors.orange),
+                    size: 14, color: Colors.orange),  // accent-allowlist: warning severity
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     w,
                     style: const TextStyle(
-                        fontSize: 11, color: Colors.orange),
+                        fontSize: 11, color: Colors.orange),  // accent-allowlist: warning severity
                     maxLines: 3,
                   ),
                 ),

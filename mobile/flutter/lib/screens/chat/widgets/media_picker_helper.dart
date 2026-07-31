@@ -17,6 +17,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:video_compress/video_compress.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -795,7 +796,7 @@ class MediaPickerHelper {
                   icon: Icons.photo_library_outlined,
                   label: AppLocalizations.of(context).mediaPickerHelperChoosePhoto,
                   subtitle: AppLocalizations.of(context).mediaPickerHelperFromGallery,
-                  color: AppColors.info,
+                  color: context.accentColor,
                   onTap: () async {
                     pickingInProgress = true;
                     Navigator.pop(ctx);
@@ -813,7 +814,7 @@ class MediaPickerHelper {
                   icon: Icons.collections_outlined,
                   label: AppLocalizations.of(context).mediaPickerHelperChooseMultiplePhotos,
                   subtitle: AppLocalizations.of(context).mediaPickerHelperSelectUpTo5,
-                  color: const Color(0xFF00BCD4),
+                  color: context.accentColor,
                   onTap: () async {
                     pickingInProgress = true;
                     Navigator.pop(ctx);
@@ -831,7 +832,7 @@ class MediaPickerHelper {
                   icon: Icons.camera_alt_outlined,
                   label: AppLocalizations.of(context).progressTakePhoto,
                   subtitle: AppLocalizations.of(context).progressUseCamera,
-                  color: AppColors.success,
+                  color: context.accentColor,
                   onTap: () async {
                     pickingInProgress = true;
                     Navigator.pop(ctx);
@@ -861,15 +862,15 @@ class MediaPickerHelper {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
+                      child: Text(
                         'BETA',
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -881,7 +882,7 @@ class MediaPickerHelper {
                   icon: Icons.video_library_outlined,
                   label: AppLocalizations.of(context).mediaPickerHelperChooseVideo,
                   subtitle: AppLocalizations.of(context).mediaPickerHelperFromGalleryMax60s,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   onTap: () async {
                     pickingInProgress = true;
                     Navigator.pop(ctx);
@@ -899,7 +900,7 @@ class MediaPickerHelper {
                   icon: Icons.videocam_outlined,
                   label: AppLocalizations.of(context).mediaPickerHelperRecordVideo,
                   subtitle: AppLocalizations.of(context).mediaPickerHelperUseCameraMax60s,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () async {
                     pickingInProgress = true;
                     Navigator.pop(ctx);

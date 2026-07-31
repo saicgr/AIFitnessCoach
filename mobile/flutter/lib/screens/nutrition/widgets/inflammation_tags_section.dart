@@ -113,18 +113,18 @@ class InflammationTagsSection extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.40)),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.40)),  // accent-allowlist: error state
             ),
             child: Row(
               children: [
-                Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),
+                Icon(Icons.warning_amber_rounded, size: 18, color: Colors.red),  // accent-allowlist: error state
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     AppLocalizations.of(context).loggedMealsContainsUltraProcessedItems,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.red,
+                      color: Colors.red,  // accent-allowlist: error state
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -134,7 +134,7 @@ class InflammationTagsSection extends StatelessWidget {
                   child: Icon(
                     Icons.info_outline,
                     size: 16,
-                    color: Colors.red.withValues(alpha: 0.7),
+                    color: Colors.red.withValues(alpha: 0.7),  // accent-allowlist: error state
                   ),
                 ),
               ],
@@ -146,10 +146,10 @@ class InflammationTagsSection extends StatelessWidget {
   }
 
   Color _inflammationColor(int score) {
-    if (score <= 3) return Colors.green;
-    if (score <= 5) return Colors.teal;
-    if (score <= 7) return Colors.orange;
-    return Colors.red;
+    if (score <= 3) return Colors.green;  // accent-allowlist: success state
+    if (score <= 5) return Colors.teal;  // accent-allowlist: inflammation severity scale — neutral tier
+    if (score <= 7) return Colors.orange;  // accent-allowlist: inflammation severity scale
+    return Colors.red;  // accent-allowlist: error state
   }
 
   String _inflammationLabel(int score) {
@@ -180,7 +180,7 @@ class InflammationTagsSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.local_fire_department, color: Colors.orange),
+                Icon(Icons.local_fire_department, color: Colors.orange),  // accent-allowlist: inflammation severity scale
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).loggedMealsInflammationScore,
@@ -304,10 +304,10 @@ class InflammationTagsSection extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),
-            _buildInfoRow('4-5', 'Neutral', Colors.teal),
-            _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),
-            _buildInfoRow('8-10', 'Inflammatory', Colors.red),
+            _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),  // accent-allowlist: success state
+            _buildInfoRow('4-5', 'Neutral', Colors.teal),  // accent-allowlist: inflammation severity scale — neutral tier
+            _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),  // accent-allowlist: inflammation severity scale
+            _buildInfoRow('8-10', 'Inflammatory', Colors.red),  // accent-allowlist: error state
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context).inflammationTagsLowerScoresReduceSystemic,
@@ -410,7 +410,7 @@ class InflammationTagsSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.red),
+                Icon(Icons.warning_amber_rounded, color: Colors.red),  // accent-allowlist: error state
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).loggedMealsUltraProcessedFoods,

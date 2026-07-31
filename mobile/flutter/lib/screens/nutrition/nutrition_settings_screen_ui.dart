@@ -80,7 +80,7 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                           decoration: BoxDecoration(
                             color: currentBias == 0
                                 ? textMuted
-                                : (currentBias > 0 ? teal : Colors.orange),
+                                : (currentBias > 0 ? teal : Colors.orange),  // accent-allowlist: bias-direction warning (negative)
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -366,11 +366,11 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.orange.withValues(alpha: 0.15) : elevated,
+                          color: selected ? context.accentColor.withValues(alpha: 0.15) : elevated,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: selected ? AppColors.orange.withValues(alpha: 0.5) : Colors.transparent),
+                          border: Border.all(color: selected ? context.accentColor.withValues(alpha: 0.5) : Colors.transparent),
                         ),
-                        child: Text(a.displayName, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? AppColors.orange : textMuted)),
+                        child: Text(a.displayName, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? context.accentColor : textMuted)),
                       ),
                     );
                   }).toList(),
@@ -389,11 +389,11 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.purple.withValues(alpha: 0.15) : elevated,
+                          color: selected ? context.accentColor.withValues(alpha: 0.15) : elevated,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: selected ? AppColors.purple.withValues(alpha: 0.5) : Colors.transparent),
+                          border: Border.all(color: selected ? context.accentColor.withValues(alpha: 0.5) : Colors.transparent),
                         ),
-                        child: Text(r.displayName, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? AppColors.purple : textMuted)),
+                        child: Text(r.displayName, style: TextStyle(fontSize: 13, fontWeight: selected ? FontWeight.w600 : FontWeight.w500, color: selected ? context.accentColor : textMuted)),
                       ),
                     );
                   }).toList(),
@@ -464,46 +464,46 @@ extension __NutritionSettingsScreenStateExt on _NutritionSettingsScreenState {
         'id': 'lose_fat',
         'name': 'Lose Fat',
         'icon': Icons.local_fire_department_rounded,
-        'color': AppColors.orange,
+        'color': context.accentColor,
       },
       {
         'id': 'build_muscle',
         'name': 'Build Muscle',
         'icon': Icons.fitness_center_rounded,
-        'color': AppColors.purple,
+        'color': AppColors.purple,  // accent-allowlist: goal-type categorical legend, distinct colour per fitness goal
       },
       {
         'id': 'maintain',
         'name': 'Maintain Weight',
         'icon': Icons.balance_rounded,
-        'color': AppColors.green,
+        'color': AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
       },
       {
         'id': 'improve_energy',
         'name': 'Improve Energy',
         'icon': Icons.bolt_rounded,
-        'color': AppColors.yellow,
+        'color': AppColors.yellow, // accent-allowlist: goal-type categorical legend
       },
       {
         'id': 'eat_healthier',
         'name': 'Eat Healthier',
         'icon': Icons.eco_rounded,
-        'color': AppColors.green,
+        'color': AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
       },
       {
         'id': 'recomposition',
         'name': 'Body Recomposition',
         'icon': Icons.swap_vert_rounded,
-        'color': AppColors.cyan,
+        'color': context.accentColor,
       },
     ];
 
     Color primaryGoalColor(List<String> goals) {
-      if (goals.isEmpty) return AppColors.purple;
+      if (goals.isEmpty) return AppColors.purple;  // accent-allowlist: goal-type categorical legend default
       final first = goals.first;
       return (allGoals.firstWhere(
         (g) => g['id'] == first,
-        orElse: () => <String, dynamic>{'color': AppColors.purple},
+        orElse: () => <String, dynamic>{'color': AppColors.purple},  // accent-allowlist: goal-type categorical legend default
       )['color']) as Color;
     }
 

@@ -30,7 +30,7 @@ void showAccuracyFeedbackSnackbar(
     SnackBar(
       content: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColors.green, size: 18),
+          Icon(Icons.check_circle, color: AppColors.green, size: 18),  // accent-allowlist: success/positive state (logged, synced, completed)
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -51,7 +51,7 @@ void showAccuracyFeedbackSnackbar(
           const SizedBox(width: 4),
           _FeedbackButton(
             icon: Icons.thumb_up_outlined,
-            color: AppColors.green,
+            color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
             onTap: () {
               HapticService.light();
               messenger.hideCurrentSnackBar();
@@ -60,7 +60,7 @@ void showAccuracyFeedbackSnackbar(
           const SizedBox(width: 2),
           _FeedbackButton(
             icon: Icons.thumb_down_outlined,
-            color: AppColors.red,
+            color: AppColors.red, // accent-allowlist: negative-feedback state, paired with the thumb_up green above
             onTap: () {
               HapticService.medium();
               messenger.hideCurrentSnackBar();

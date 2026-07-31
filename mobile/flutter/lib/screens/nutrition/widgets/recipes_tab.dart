@@ -1454,8 +1454,8 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
             ),
             if (!s.isCurated)
               ListTile(
-                leading: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
-                title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
+                leading: Icon(Icons.delete_outline, size: 20, color: AppColors.error),  // accent-allowlist: error state
+                title: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error state
                 onTap: () {
                   Navigator.of(ctx).pop();
                   _confirmDeleteRecipe(context, ref, s);
@@ -1478,7 +1478,7 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
           TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error state
           ),
         ],
       ),
@@ -1560,7 +1560,7 @@ class _ErrorSliver extends StatelessWidget {
         child: Text(
           'Couldn\'t load recipes: $message',
           style: TextStyle(
-              color: isDark ? AppColors.error : AppColorsLight.error),
+              color: isDark ? AppColors.error : AppColorsLight.error),  // accent-allowlist: error state
         ),
       ),
     );

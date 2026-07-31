@@ -10,6 +10,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -42,7 +43,7 @@ class FormComparisonResultCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          _buildHeader(colors, isDark, l10n),
+          _buildHeader(context, colors, isDark, l10n),
 
           // Score badges
           if (videos.isNotEmpty) _buildScoreBadges(context, colors, isDark, videos),
@@ -65,21 +66,21 @@ class FormComparisonResultCard extends StatelessWidget {
               colors, isDark,
               label: l10n.formComparisonResultImproved,
               icon: Icons.check_circle,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success state
               items: (comparison['improved'] as List?)?.cast<String>() ?? [],
             ),
             _buildComparisonSection(
               colors, isDark,
               label: l10n.formComparisonResultRegressed,
               icon: Icons.warning_amber_rounded,
-              color: const Color(0xFFFF9800),
+              color: const Color(0xFFFF9800),  // accent-allowlist: warning severity — regressed form metric
               items: (comparison['regressed'] as List?)?.cast<String>() ?? [],
             ),
             _buildComparisonSection(
               colors, isDark,
               label: l10n.formComparisonResultConsistent,
               icon: Icons.info_outline,
-              color: AppColors.info,
+              color: AppColors.info,  // accent-allowlist: informational state
               items: (comparison['consistent'] as List?)?.cast<String>() ?? [],
             ),
 
@@ -98,7 +99,8 @@ class FormComparisonResultCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(ThemeColors colors, bool isDark, AppLocalizations l10n) {
+  Widget _buildHeader(BuildContext context, ThemeColors colors, bool isDark, AppLocalizations l10n) {
+    final accent = context.accentColor;
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
@@ -107,10 +109,10 @@ class FormComparisonResultCard extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.12),
+              color: accent.withOpacity(0.12),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.compare_rounded, size: 18, color: AppColors.purple),
+            child: Icon(Icons.compare_rounded, size: 18, color: accent),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -126,15 +128,15 @@ class FormComparisonResultCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.15),
+              color: accent.withOpacity(0.15),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               l10n.formComparisonResultBeta,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
-                color: AppColors.orange,
+                color: accent,
                 letterSpacing: 0.5,
               ),
             ),
@@ -249,15 +251,15 @@ class FormComparisonResultCard extends StatelessWidget {
     final String trendLabel;
     if (diff > 0.5) {
       trendIcon = Icons.trending_up;
-      trendColor = AppColors.success;
+      trendColor = AppColors.success;  // accent-allowlist: success state
       trendLabel = l10n.formComparisonResultImproving;
     } else if (diff < -0.5) {
       trendIcon = Icons.trending_down;
-      trendColor = AppColors.error;
+      trendColor = AppColors.error;  // accent-allowlist: error state
       trendLabel = l10n.formComparisonResultRegressing;
     } else {
       trendIcon = Icons.trending_flat;
-      trendColor = AppColors.info;
+      trendColor = AppColors.info;  // accent-allowlist: informational state
       trendLabel = l10n.formComparisonResultStable;
     }
 
@@ -569,8 +571,8 @@ class FormComparisonResultCard extends StatelessWidget {
   }
 
   Color _getScoreColor(double score) {
-    if (score >= 8) return AppColors.success;
-    if (score >= 6) return const Color(0xFFFF9800);
-    return AppColors.error;
+    if (score >= 8) return AppColors.success;  // accent-allowlist: success state
+    if (score >= 6) return const Color(0xFFFF9800);  // accent-allowlist: score severity scale — moderate
+    return AppColors.error;  // accent-allowlist: error state
   }
 }

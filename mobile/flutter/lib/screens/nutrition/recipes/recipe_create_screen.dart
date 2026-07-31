@@ -114,8 +114,8 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
               ),
               if (_photo != null)
                 ListTile(
-                  leading: Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                  title: Text(AppLocalizations.of(context).recipeCreateRemovePhoto, style: TextStyle(color: Colors.redAccent)),
+                  leading: Icon(Icons.delete_outline_rounded, color: Colors.redAccent),  // accent-allowlist: error state
+                  title: Text(AppLocalizations.of(context).recipeCreateRemovePhoto, style: TextStyle(color: Colors.redAccent)),  // accent-allowlist: error state
                   onTap: () {
                     setState(() => _photo = null);
                     Navigator.pop(ctx);
@@ -280,13 +280,13 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
                   ),
                 ),
                 Expanded(
-                  child: _macroStat(totals['p']!, 'PROTEIN', AppColors.macroProtein, muted),
+                  child: _macroStat(totals['p']!, 'PROTEIN', AppColors.macroProtein, muted),  // accent-allowlist: macro identity — protein is always this colour
                 ),
                 Expanded(
-                  child: _macroStat(totals['c']!, 'CARBS', AppColors.macroCarbs, muted),
+                  child: _macroStat(totals['c']!, 'CARBS', AppColors.macroCarbs, muted),  // accent-allowlist: macro identity — carbs is always this colour
                 ),
                 Expanded(
-                  child: _macroStat(totals['f']!, 'FAT', AppColors.macroFat, muted),
+                  child: _macroStat(totals['f']!, 'FAT', AppColors.macroFat, muted),  // accent-allowlist: macro identity — fat is always this colour
                 ),
               ],
             ),
@@ -632,9 +632,9 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
     }
 
     final sourceColor = switch (a.nutritionSource) {
-      NutritionSourceKind.branded => AppColors.success,
+      NutritionSourceKind.branded => AppColors.success,  // accent-allowlist: success state
       NutritionSourceKind.usda => accent,
-      NutritionSourceKind.aiEstimate => AppColors.yellow,
+      NutritionSourceKind.aiEstimate => AppColors.yellow,  // accent-allowlist: nutrition-source confidence scale (branded/usda=verified, ai=estimate)
     };
 
     return ZealovaCard(
@@ -658,11 +658,11 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
                   children: [
                     _badge(a.nutritionSource.shortLabel, sourceColor),
                     _badge('${a.calories.toStringAsFixed(0)} KCAL', muted, bg: false),
-                    _badge('P ${a.proteinG.toStringAsFixed(0)}', AppColors.macroProtein),
-                    _badge('C ${a.carbsG.toStringAsFixed(0)}', AppColors.macroCarbs),
-                    _badge('F ${a.fatG.toStringAsFixed(0)}', AppColors.macroFat),
+                    _badge('P ${a.proteinG.toStringAsFixed(0)}', AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
+                    _badge('C ${a.carbsG.toStringAsFixed(0)}', AppColors.macroCarbs),  // accent-allowlist: macro identity — carbs is always this colour
+                    _badge('F ${a.fatG.toStringAsFixed(0)}', AppColors.macroFat),  // accent-allowlist: macro identity — fat is always this colour
                     if (a.nutritionSource == NutritionSourceKind.aiEstimate)
-                      _badge('${a.nutritionConfidence}%', AppColors.yellow),
+                      _badge('${a.nutritionConfidence}%', AppColors.yellow),  // accent-allowlist: nutrition-source confidence scale — AI estimate confidence badge
                   ],
                 ),
               ],

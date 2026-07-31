@@ -145,10 +145,10 @@ class _FoodLogTile extends StatelessWidget {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.15),
+          color: Colors.red.withValues(alpha: 0.15),  // accent-allowlist: error state
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.red, size: 22),
+        child: const Icon(Icons.delete_outline, color: Colors.red, size: 22),  // accent-allowlist: error state
       ),
       onDismissed: (_) => onDismissed(),
       child: GestureDetector(
@@ -703,10 +703,10 @@ class _InflammationRow extends StatelessWidget {
   Widget build(BuildContext context) {
     // 0-3 anti-inflammatory (green), 4-6 neutral (amber), 7-10 inflammatory
     final tone = score <= 3
-        ? const Color(0xFF10B981) // emerald
+        ? const Color(0xFF10B981) // emerald  // accent-allowlist: inflammation severity scale
         : score <= 6
-            ? const Color(0xFFF59E0B) // amber
-            : const Color(0xFFEF4444); // red
+            ? const Color(0xFFF59E0B) // amber  // accent-allowlist: inflammation severity scale
+            : const Color(0xFFEF4444); // red  // accent-allowlist: inflammation severity scale
     final label = score <= 3
         ? 'Anti-inflammatory'
         : score <= 6

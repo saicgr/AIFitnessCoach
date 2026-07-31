@@ -112,7 +112,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: AppLocalizations.of(context).nutrientExplorerVitamins,
                 icon: Icons.wb_sunny_outlined,
                 nutrients: summary.vitamins,
-                categoryColor: const Color(0xFFFF9F43), // Warm orange
+                categoryColor: const Color(0xFFFF9F43), // Warm orange  // accent-allowlist: nutrient-category categorical legend
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 150.ms),
@@ -122,7 +122,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: AppLocalizations.of(context).nutrientExplorerMinerals,
                 icon: Icons.diamond_outlined,
                 nutrients: summary.minerals,
-                categoryColor: const Color(0xFF00D9C0), // Teal
+                categoryColor: const Color(0xFF00D9C0), // Teal  // accent-allowlist: nutrient-category categorical legend
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 200.ms),
@@ -132,7 +132,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: AppLocalizations.of(context).nutrientExplorerFattyAcids,
                 icon: Icons.water_drop_outlined,
                 nutrients: summary.fattyAcids,
-                categoryColor: const Color(0xFF4D96FF), // Blue
+                categoryColor: const Color(0xFF4D96FF), // Blue  // accent-allowlist: nutrient-category categorical legend
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 250.ms),
@@ -142,7 +142,7 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 title: 'OTHER',
                 icon: Icons.more_horiz,
                 nutrients: summary.other,
-                categoryColor: const Color(0xFF9B59B6), // Purple
+                categoryColor: const Color(0xFF9B59B6), // Purple  // accent-allowlist: nutrient-category categorical legend
                 isDark: widget.isDark,
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 300.ms),
@@ -201,7 +201,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
     final tc = ThemeColors.of(context);
     // Pink — the cycle feature's accent — distinguishes this from the
     // ordinary vitamin / mineral category cards.
-    const accent = Color(0xFFE91E63);
+    const accent = Color(0xFFE91E63);  // accent-allowlist: cycle feature's own distinct sub-brand colour, deliberately different from the app accent
 
     return Container(
       decoration: BoxDecoration(
@@ -595,13 +595,13 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
   Color _getStatusColor(NutrientStatus status) {
     switch (status) {
       case NutrientStatus.low:
-        return const Color(0xFFFFC107); // Amber - below target
+        return const Color(0xFFFFC107); // Amber - below target  // accent-allowlist: nutrient-status severity scale
       case NutrientStatus.optimal:
-        return const Color(0xFF4CAF50); // Green - on target
+        return const Color(0xFF4CAF50); // Green - on target  // accent-allowlist: nutrient-status severity scale
       case NutrientStatus.high:
-        return const Color(0xFFFF9800); // Orange - above target
+        return const Color(0xFFFF9800); // Orange - above target  // accent-allowlist: nutrient-status severity scale
       case NutrientStatus.overCeiling:
-        return const Color(0xFFF44336); // Red - over limit
+        return const Color(0xFFF44336); // Red - over limit  // accent-allowlist: nutrient-status severity scale
     }
   }
 

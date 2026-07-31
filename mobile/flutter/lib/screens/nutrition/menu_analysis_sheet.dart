@@ -37,6 +37,7 @@ import 'widgets/add_food_sheet.dart';
 import 'widgets/edit_targets_sheet.dart';
 import '../../services/menu_recommendation_service.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/fading_chip_row.dart';
 import 'widgets/menu_analysis/macro_budget_ring.dart';
 import 'widgets/menu_analysis/menu_analysis_item_card.dart';
 import 'widgets/menu_analysis/diet_heuristics.dart';
@@ -1438,7 +1439,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Couldn\'t save: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error state
         ));
       }
     } finally {
@@ -1566,7 +1567,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   onPressed: () => Navigator.pop(ctx, 'remove'),
                   child: Text(
                     AppLocalizations.of(context).menuAnalysisRemoveFromSaved,
-                    style: TextStyle(color: AppColors.error),
+                    style: TextStyle(color: AppColors.error),  // accent-allowlist: error state
                   ),
                 ),
                 TextButton(
@@ -1622,7 +1623,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               child: Text(AppLocalizations.of(context).buttonCancel),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),  // accent-allowlist: error state
               onPressed: () => Navigator.pop(ctx, true),
               child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
             ),
@@ -1645,7 +1646,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Couldn\'t remove: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ));
         }
       } finally {
@@ -1674,7 +1675,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Couldn\'t update: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error state
         ));
       }
     } finally {
@@ -2067,15 +2068,15 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   label: AppLocalizations.of(context).workoutShowcaseCal,
                   consumed: consumedCal.toDouble(),
                   target: state.currentCalorieTarget!.toDouble(),
-                  color: isDark ? AppColors.coral : AppColorsLight.coral,
+                  color: isDark ? AppColors.coral : AppColorsLight.coral,  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                 ),
                 MacroBudgetRing(
                   label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   consumed: consumedP,
                   target: (state.currentProteinTarget ?? 0).toDouble(),
                   color: isDark
-                      ? AppColors.macroProtein
-                      : AppColorsLight.macroProtein,
+                      ? AppColors.macroProtein  // accent-allowlist: macro identity — protein is always this colour
+                      : AppColorsLight.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                   unit: 'g',
                 ),
                 MacroBudgetRing(
@@ -2083,8 +2084,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   consumed: consumedC,
                   target: (state.currentCarbsTarget ?? 0).toDouble(),
                   color: isDark
-                      ? AppColors.macroCarbs
-                      : AppColorsLight.macroCarbs,
+                      ? AppColors.macroCarbs  // accent-allowlist: macro identity — carbs is always this colour
+                      : AppColorsLight.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                   unit: 'g',
                 ),
                 MacroBudgetRing(
@@ -2092,7 +2093,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   consumed: consumedF,
                   target: (state.currentFatTarget ?? 0).toDouble(),
                   color:
-                      isDark ? AppColors.macroFat : AppColorsLight.macroFat,
+                      isDark ? AppColors.macroFat : AppColorsLight.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                   unit: 'g',
                 ),
               ],
@@ -2392,41 +2393,36 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final extraCount = _sort.specs
         .where((s) => !quickFields.contains(s.field))
         .length;
+    // E2E register #148: this row used a bare `ListView` with
+    // `padding: EdgeInsets.zero` — the exact combination that butted the
+    // "More…" pill against the screen edge with no fade/gutter, reading as a
+    // sliced layout bug rather than "scroll me". `FadingChipRow` fixes it.
     return SizedBox(
       height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.zero,
+      child: FadingChipRow(
         children: [
           // Leading "Sort:" label so the pills read as a sort affordance
           // rather than a generic chip filter row.
-          Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.swap_vert_rounded,
-                      size: 16, color: colors.textSecondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    AppLocalizations.of(context).nutritionShowcaseSort,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textSecondary,
-                      letterSpacing: 0.2,
-                    ),
+          Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.swap_vert_rounded,
+                    size: 16, color: colors.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  AppLocalizations.of(context).nutritionShowcaseSort,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textSecondary,
+                    letterSpacing: 0.2,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          for (final field in quickFields) ...[
-            _quickSortPill(field, colors),
-            const SizedBox(width: 8),
-          ],
+          for (final field in quickFields) _quickSortPill(field, colors),
           _moreSortPill(colors, extraCount: extraCount),
         ],
       ),

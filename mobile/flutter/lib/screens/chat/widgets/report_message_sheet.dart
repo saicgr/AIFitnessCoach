@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -75,12 +76,12 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.error.withOpacity(0.1),
+                      color: AppColors.error.withOpacity(0.1),  // accent-allowlist: error state
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.flag_outlined,
-                      color: AppColors.error,
+                      color: AppColors.error,  // accent-allowlist: error state
                       size: 22,
                     ),
                   ),
@@ -142,13 +143,13 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                         Icon(
                           category.icon,
                           size: 16,
-                          color: isSelected ? AppColors.error : textSecondary,
+                          color: isSelected ? AppColors.error : textSecondary,  // accent-allowlist: error state
                         ),
                         const SizedBox(width: 6),
                         Text(
                           category.label,
                           style: TextStyle(
-                            color: isSelected ? AppColors.error : textPrimary,
+                            color: isSelected ? AppColors.error : textPrimary,  // accent-allowlist: error state
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                           ),
                         ),
@@ -160,10 +161,10 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                         _selectedCategory = selected ? category : null;
                       });
                     },
-                    selectedColor: AppColors.error.withOpacity(0.15),
-                    checkmarkColor: AppColors.error,
+                    selectedColor: AppColors.error.withOpacity(0.15),  // accent-allowlist: error state
+                    checkmarkColor: AppColors.error,  // accent-allowlist: error state
                     side: BorderSide(
-                      color: isSelected ? AppColors.error.withOpacity(0.5) : cardBorder,
+                      color: isSelected ? AppColors.error.withOpacity(0.5) : cardBorder,  // accent-allowlist: error state
                     ),
                     backgroundColor: isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
                     showCheckmark: false,
@@ -204,7 +205,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.cyan, width: 2),
+                    borderSide: BorderSide(color: context.accentColor, width: 2),
                   ),
                   contentPadding: const EdgeInsets.all(16),
                   counterStyle: TextStyle(color: textSecondary),
@@ -248,8 +249,8 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
                           ? null
                           : _handleSubmit,
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.error,
-                        disabledBackgroundColor: AppColors.error.withOpacity(0.3),
+                        backgroundColor: AppColors.error,  // accent-allowlist: error state
+                        disabledBackgroundColor: AppColors.error.withOpacity(0.3),  // accent-allowlist: error state
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -318,7 +319,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
               Text(AppLocalizations.of(context).reportMessageReportSubmittedThankYou),
             ],
           ),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success state
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -339,7 +340,7 @@ class _ReportMessageSheetState extends ConsumerState<ReportMessageSheet> {
               Expanded(child: Text('Failed to submit report: $e')),
             ],
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error state
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),

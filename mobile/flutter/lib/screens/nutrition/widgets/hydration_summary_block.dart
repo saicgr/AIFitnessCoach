@@ -34,8 +34,8 @@ class HydrationSummaryBlock extends ConsumerWidget {
 
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final electricBlue = isDark
-        ? AppColors.waterBlue
-        : AppColorsLight.waterBlue;
+        ? AppColors.waterBlue  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
+        : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
     final textPrimary = isDark
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;

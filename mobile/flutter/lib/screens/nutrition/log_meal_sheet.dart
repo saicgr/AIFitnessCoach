@@ -35,6 +35,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/providers/meal_logged_ghost_provider.dart';
 import '../../widgets/common/last_used_badge.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/fading_chip_row.dart';
 import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
@@ -488,7 +489,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = context.accentColor;
 
     final elapsedHours = activeFast.elapsedMinutes ~/ 60;
     final elapsedMins = activeFast.elapsedMinutes % 60;
@@ -561,11 +562,11 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Macro colors
-    final caloriesColor = isDark ? AppColors.coral : AppColorsLight.coral;
-    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
-    final fiberColor = isDark ? AppColors.green : AppColorsLight.green;
+    final caloriesColor = isDark ? AppColors.coral : AppColorsLight.coral; // accent-allowlist: calorie identity colour, paired with the macro trio below
+    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: macro identity
+    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs; // accent-allowlist: macro identity
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat; // accent-allowlist: macro identity
+    final fiberColor = isDark ? AppColors.green : AppColorsLight.green; // accent-allowlist: nutrient legend colour (fiber), paired with the macro identity colours above
 
     // Portion multiplier state
     double portionMultiplier = 1.0;
@@ -1102,13 +1103,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   Row(
                     children: [
                       Icon(Icons.warning_amber_rounded,
-                          size: 16, color: Colors.orange),
+                          size: 16, color: Colors.orange), // accent-allowlist: warning severity — allergen flag
                       const SizedBox(width: 6),
                       Text(AppLocalizations.of(context).nutritionSettingsScreenAllergens,
                           style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: Colors.orange)),
+                              color: Colors.orange)), // accent-allowlist: warning severity — allergen flag
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -1119,13 +1120,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.12),
+                          color: Colors.orange.withValues(alpha: 0.12), // accent-allowlist: warning severity — allergen flag
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                          border: Border.all(color: Colors.orange.withValues(alpha: 0.3)), // accent-allowlist: warning severity — allergen flag
                         ),
                         child: Text(
                           allergen,
-                          style: const TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500),
+                          style: const TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500), // accent-allowlist: warning severity — allergen flag
                         ),
                       ),
                     ).toList(),
@@ -1258,23 +1259,23 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: (isDark ? AppColors.error : AppColorsLight.error).withValues(alpha: 0.1),
+                        color: (isDark ? AppColors.error : AppColorsLight.error).withValues(alpha: 0.1), // accent-allowlist: error state
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: isDark ? AppColors.error : AppColorsLight.error),
+                        border: Border.all(color: isDark ? AppColors.error : AppColorsLight.error), // accent-allowlist: error state
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: isDark ? AppColors.error : AppColorsLight.error, size: 18),
+                          Icon(Icons.error_outline, color: isDark ? AppColors.error : AppColorsLight.error, size: 18), // accent-allowlist: error state
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _error!,
-                              style: TextStyle(color: isDark ? AppColors.error : AppColorsLight.error, fontSize: 12),
+                              style: TextStyle(color: isDark ? AppColors.error : AppColorsLight.error, fontSize: 12), // accent-allowlist: error state
                             ),
                           ),
                           GestureDetector(
                             onTap: () => setState(() => _error = null),
-                            child: Icon(Icons.close, size: 16, color: isDark ? AppColors.error : AppColorsLight.error),
+                            child: Icon(Icons.close, size: 16, color: isDark ? AppColors.error : AppColorsLight.error), // accent-allowlist: error state
                           ),
                         ],
                       ),
@@ -1398,7 +1399,7 @@ class _BarcodeMicronutrientsSectionState extends State<_BarcodeMicronutrientsSec
               padding: const EdgeInsets.all(10),
               child: Row(
                 children: [
-                  Icon(Icons.science_outlined, size: 16, color: AppColors.purple),
+                  Icon(Icons.science_outlined, size: 16, color: context.accentColor),
                   const SizedBox(width: 8),
                   Expanded(child: Text(AppLocalizations.of(context).micronutrientsVitaminsMinerals, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textPrimary))),
                   Icon(_isExpanded ? Icons.expand_less : Icons.expand_more, size: 18, color: textMuted),
@@ -1483,9 +1484,9 @@ class _ScorePill extends StatelessWidget {
 
   Color _color() {
     final effective = positiveIsHigh ? score : (11 - score);
-    if (effective >= 8) return const Color(0xFF2ECC71); // green
-    if (effective >= 5) return const Color(0xFFF5A623); // amber
-    return const Color(0xFFE74C3C); // red
+    if (effective >= 8) return const Color(0xFF2ECC71); // accent-allowlist: score severity scale — good
+    if (effective >= 5) return const Color(0xFFF5A623); // accent-allowlist: score severity scale — average
+    return const Color(0xFFE74C3C); // accent-allowlist: score severity scale — poor
   }
 
   @override

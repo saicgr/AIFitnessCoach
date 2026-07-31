@@ -731,12 +731,13 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
             // clip its inner text at 1.2x+; clamped so it stays compact.
             height: (54 * MediaQuery.textScalerOf(context).scale(1.0))
                 .clamp(54.0, 72.0),
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: pills.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) =>
-                  _buildSmartPill(isDark, pills[i], busy),
+            // E2E register #148: this is the "Quick lo…" row that sliced its
+            // rightmost pill mid-word with no fade/gutter — FadingChipRow
+            // fixes it.
+            child: FadingChipRow(
+              children: [
+                for (final p in pills) _buildSmartPill(isDark, p, busy),
+              ],
             ),
           ),
         ],
@@ -823,7 +824,7 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
     final expiring = pill.kind == _SmartPillKind.leftover &&
         (pill.leftover?.isExpiringSoon ?? false);
     final edge = expiring
-        ? (isDark ? AppColors.warning : AppColorsLight.warning)
+        ? (isDark ? AppColors.warning : AppColorsLight.warning)  // accent-allowlist: warning severity
         : pill.isExact
             ? accent.withValues(alpha: 0.45)
             : cardBorder;
@@ -870,7 +871,7 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
                       overflow: TextOverflow.ellipsis,
                       style: ZType.lbl(9.5,
                           color: expiring
-                              ? (isDark ? AppColors.warning : AppColorsLight.warning)
+                              ? (isDark ? AppColors.warning : AppColorsLight.warning)  // accent-allowlist: warning severity
                               : textMuted,
                           letterSpacing: 0.8),
                     ),

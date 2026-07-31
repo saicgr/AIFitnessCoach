@@ -882,7 +882,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             SnackBar(
               content: Text(AppLocalizations.of(context)
                   .logMealSheetFailedToSaveError(e.toString())),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red, // accent-allowlist: error state
             ),
           );
         }
@@ -1187,7 +1187,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     required String noun,
     required int count,
   }) async {
-    final amber = const Color(0xFFF59E0B);
+    final amber = const Color(0xFFF59E0B); // accent-allowlist: matches AppColors.warning value — secondary-action tint in the Add-another/Done chooser
     final promptCtrl = TextEditingController();
     try {
       return await showGlassSheet<_AddAnotherResult>(
@@ -1269,7 +1269,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     _GlassMenuOption(
                       icon: Icons.check_circle_outline,
                       label: 'Done — Analyze $count $noun${count == 1 ? '' : 's'}', // TODO(i18n): noun is a runtime-injected English word; migrate at call-site with ICU plural
-                      color: const Color(0xFF16A34A),
+                      color: const Color(0xFF16A34A), // accent-allowlist: matches AppColorsLight.success value — confirm/done action
                       isDark: isDark,
                       onTap: () => Navigator.pop(
                         ctx,
@@ -1296,7 +1296,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// supports multi-image on both sources (camera capture loop + gallery
   /// multi-pick). Wired from the home-grid "Scan Food" quick-action.
   Future<void> _pickFoodImagesWithSourceChoice() async {
-    final green = const Color(0xFF16A34A);
+    final green = context.accentColor;
     final source = await showGlassSheet<ImageSource>(
       context: context,
       builder: (ctx) {
@@ -1391,7 +1391,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       updateSavedMenuId = _pendingMenuRescanId;
       _pendingMenuRescanId = null;
     }
-    final amber = const Color(0xFFF59E0B);
+    final amber = context.accentColor;
     final source = await showGlassSheet<ImageSource>(
       context: context,
       builder: (ctx) {
@@ -1548,7 +1548,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
     if (!mounted) return const [];
 
-    final amber = const Color(0xFFF59E0B);
+    final amber = context.accentColor;
     final source = await _pickScanImageSource('Add menu pages', amber);
     if (source == null || !mounted) return const [];
 
@@ -1641,7 +1641,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// routes through the direct `/nutrition/scan-*` endpoint into THIS sheet's
   /// standard result card for review/edit before logging.
   Future<void> _openImportScanSheet() async {
-    final cyan = const Color(0xFF06B6D4);
+    final cyan = context.accentColor;
     final choice = await showGlassSheet<String>(
       context: context,
       builder: (ctx) {
@@ -1781,7 +1781,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
 
     final source =
-        await _pickScanImageSource('Scan Nutrition Label', const Color(0xFF06B6D4));
+        await _pickScanImageSource('Scan Nutrition Label', context.accentColor);
     if (source == null || !mounted) return;
 
     final picker = ImagePicker();
@@ -1857,7 +1857,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     if (add != true || !mounted) return null;
 
     final source = await _pickScanImageSource(
-        'Add label photo', const Color(0xFF06B6D4));
+        'Add label photo', context.accentColor);
     if (source == null || !mounted) return null;
     final picker = ImagePicker();
     final shot = await picker.pickImage(
@@ -1889,7 +1889,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
 
     final source = await _pickScanImageSource(
-        'Scan App Screenshot', const Color(0xFF06B6D4));
+        'Scan App Screenshot', context.accentColor);
     if (source == null || !mounted) return;
 
     final picker = ImagePicker();
@@ -1913,7 +1913,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   Future<double?> _askServingsConsumed() async {
     final colors = ThemeColors.of(context);
     final isDark = colors.isDark;
-    final cyan = const Color(0xFF06B6D4);
+    final cyan = context.accentColor;
     final customCtrl = TextEditingController();
     try {
       return await showGlassSheet<double>(

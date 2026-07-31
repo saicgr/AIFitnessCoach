@@ -327,21 +327,21 @@ class RecipeDetailScreen extends StatelessWidget {
       chips.add(_MacroChip(
         label: 'Protein',
         value: '${_trimNumber(protein)}g',
-        color: AppColors.macroProtein,
+        color: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
       ));
     }
     if (carbs != null) {
       chips.add(_MacroChip(
         label: 'Carbs',
         value: '${_trimNumber(carbs)}g',
-        color: AppColors.macroCarbs,
+        color: AppColors.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
       ));
     }
     if (fat != null) {
       chips.add(_MacroChip(
         label: 'Fat',
         value: '${_trimNumber(fat)}g',
-        color: AppColors.macroFat,
+        color: AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
       ));
     }
     if (chips.isEmpty) return const SizedBox.shrink();

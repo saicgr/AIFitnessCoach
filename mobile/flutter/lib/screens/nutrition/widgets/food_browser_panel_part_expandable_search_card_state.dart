@@ -404,7 +404,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
               child: Row(
                 children: [
                   Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
-                  Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
+                  Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),  // accent-allowlist: calorie-delta warning (over target)
                   Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
                 ],
               ),
@@ -429,7 +429,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
                   ),
                   const SizedBox(width: 6),
                   Expanded(child: Text(mod.displayLabel ?? mod.phrase, style: TextStyle(fontSize: 12, color: textPrimary))),
-                  Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),
+                  Text('$calDelta', style: TextStyle(fontSize: 11, color: Colors.orange, fontWeight: FontWeight.w500)),  // accent-allowlist: calorie-delta warning (over target)
                   Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
                 ],
               ),
@@ -536,7 +536,7 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
       return Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: teal)));
     }
     if (widget.logState == _LogState.done) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);  // accent-allowlist: success state
     }
     return Icon(Icons.add_circle, color: teal, size: 24);
   }
@@ -546,10 +546,10 @@ class _ExpandableSearchCardState extends State<_ExpandableSearchCard> {
       return Center(child: SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: teal)));
     }
     if (widget.logState == _LogState.done) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);  // accent-allowlist: success state
     }
     if (widget.isSelected) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 24);
+      return Icon(Icons.check_circle, color: Colors.green, size: 24);  // accent-allowlist: success state
     }
     return Icon(Icons.add_circle_outline, color: teal, size: 24);
   }
@@ -754,6 +754,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
             baseWeightG: result.servingWeightG ?? result.weightPerUnitG ?? 100.0,
             isDark: widget.isDark,
             goalTags: _buildGoalTags(
+              context,
               goals: widget.userGoals,
               calories: result.calories,
               protein: result.protein ?? 0,
@@ -791,7 +792,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
           color: elevated,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? Colors.green.withValues(alpha: 0.5) : cardBorder,
+            color: isSelected ? Colors.green.withValues(alpha: 0.5) : cardBorder,  // accent-allowlist: success state
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -849,10 +850,10 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
       return Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.5, color: teal)));
     }
     if (logState == _LogState.done) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 20);
+      return Icon(Icons.check_circle, color: Colors.green, size: 20);  // accent-allowlist: success state
     }
     if (isSelected) {
-      return Icon(Icons.check_circle, color: Colors.green, size: 20);
+      return Icon(Icons.check_circle, color: Colors.green, size: 20);  // accent-allowlist: success state
     }
     return Icon(Icons.add_circle_outline, color: teal, size: 20);
   }
@@ -871,6 +872,7 @@ class _SearchResultsPageViewState extends State<_SearchResultsPageView> {
       baseWeightG: result.servingWeightG ?? result.weightPerUnitG ?? 100.0,
       isDark: widget.isDark,
       goalTags: _buildGoalTags(
+        context,
         goals: widget.userGoals,
         calories: result.calories,
         protein: result.protein ?? 0,

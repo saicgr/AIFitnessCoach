@@ -159,7 +159,7 @@ class _CompactNutrientChip extends StatelessWidget {
     // regardless of the nutrient's normal color so the warning is unmistakable.
     final isOverCeilingPin = nutrient.pinReason == 'over_ceiling';
     final color = isOverCeilingPin
-        ? (isDark ? AppColors.warning : AppColorsLight.warning)
+        ? (isDark ? AppColors.warning : AppColorsLight.warning)  // accent-allowlist: warning severity
         : Color(int.parse(nutrient.progressColor.replaceFirst('#', '0xFF')));
     final percentage = nutrient.percentage.clamp(0.0, 100.0);
 

@@ -83,9 +83,27 @@ class CoachRefreshCoordinator {
   int? _lastSleepMinutes;
 
   void _wire() {
-    // Nutrition — any change to today's calories refreshes the numbers; the
-    // FIRST meal of the day (0 → >0) is a completion-class event → regenerate
-    // text so the body can acknowledge the day has started.
+    // Nutrition — a real meal log is a completion-class event → regenerate the
+    // TEXT, not just the numbers.
+    //
+    // E2E register row 131: this used to regenerate text ONLY on the first meal
+    // of the day (`prevCal == 0 && cal > 0`) and take the numbers-only path for
+    // every later log. The numbers path deliberately reuses the server's cached
+    // AI prose, so the coach body kept asserting a macro figure the numbers had
+    // already contradicted — the reported case read "You have logged 0g of
+    // protein today" against 601 g logged eight minutes earlier, and then
+    // recommended more protein. A card that coaches you toward the exact macro
+    // you have massively over-consumed is worse than a stale card; it is a
+    // wrong one, and the user cannot tell the difference.
+    //
+    // Cost is already bounded and did not need a new mechanism: `_runText` is
+    // debounced by `_kTextDebounce` (so a burst of logs collapses into one) and
+    // throttled by `_kTextMinGap` (10 min), and when throttled it FALLS BACK to
+    // `_runNumbers()` — so the worst case is unchanged behaviour, not an extra
+    // Gemini call. A typical day of 3-4 meals costs 3-4 regenerates.
+    //
+    // Still ignored: `cal == prevCal` (a no-op reload) and the unresolved
+    // cold-start state. Painting Home is still not an event.
     _ref.listen(dailyNutritionProvider(todayNutritionKey()), (prev, next) {
       // Unresolved: no summary yet (cold start / in-flight first load).
       final summary = next.summary;
@@ -94,11 +112,7 @@ class CoachRefreshCoordinator {
       final prevCal = _lastCalories;
       _lastCalories = cal;
       if (prevCal == null || cal == prevCal) return;
-      if (prevCal == 0 && cal > 0) {
-        bumpText();
-      } else {
-        bumpNumbers();
-      }
+      bumpText();
     }, fireImmediately: true);
 
     // Workout — completion (a completedWorkout appears) regenerates text; any

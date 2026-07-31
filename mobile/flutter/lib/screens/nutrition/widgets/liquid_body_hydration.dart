@@ -122,7 +122,7 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
   @override
   Widget build(BuildContext context) {
     final waterColor =
-        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
+        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;  // accent-allowlist: hydration identity colour, consistent across water tracking surfaces
     final bodyOutlineColor =
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textColor =

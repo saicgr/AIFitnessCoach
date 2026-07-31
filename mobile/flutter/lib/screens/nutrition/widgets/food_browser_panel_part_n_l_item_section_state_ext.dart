@@ -173,7 +173,7 @@ extension __NLItemSectionStateExt on _NLItemSectionState {
           Row(
             children: [
               Expanded(child: Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500))),
-              Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),
+              Text('${calDelta >= 0 ? "+" : ""}$calDelta', style: TextStyle(fontSize: 11, color: calDelta >= 0 ? teal : Colors.orange, fontWeight: FontWeight.w600)),  // accent-allowlist: calorie-delta warning (over target)
               Text(AppLocalizations.of(context).unifiedHomeWidgetsKcal, style: TextStyle(fontSize: 10, color: textMuted)),
             ],
           ),

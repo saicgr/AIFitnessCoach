@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/nutrition.dart';
@@ -238,7 +239,7 @@ class FoodDetailSheet extends StatelessWidget {
                       _MacroDot(
                         value: meal.proteinG,
                         label: 'Protein',
-                        color: AppColors.macroProtein,
+                        color: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                         muted: c.textMuted,
                         primary: c.textPrimary,
                       ),
@@ -246,7 +247,7 @@ class FoodDetailSheet extends StatelessWidget {
                       _MacroDot(
                         value: meal.carbsG,
                         label: 'Carbs',
-                        color: AppColors.macroCarbs,
+                        color: AppColors.macroCarbs,  // accent-allowlist: macro identity — carbs is always this colour
                         muted: c.textMuted,
                         primary: c.textPrimary,
                       ),
@@ -254,7 +255,7 @@ class FoodDetailSheet extends StatelessWidget {
                       _MacroDot(
                         value: meal.fatG,
                         label: 'Fat',
-                        color: AppColors.macroFat,
+                        color: AppColors.macroFat,  // accent-allowlist: macro identity — fat is always this colour
                         muted: c.textMuted,
                         primary: c.textPrimary,
                       ),
@@ -424,16 +425,16 @@ class FoodDetailSheet extends StatelessWidget {
   }
 
   Color _healthColor(int score) {
-    if (score >= 7) return AppColors.success;
-    if (score >= 4) return AppColors.orange;
-    return AppColors.error;
+    if (score >= 7) return AppColors.success;  // accent-allowlist: health-score severity scale
+    if (score >= 4) return AppColors.orange; // accent-allowlist: health-score severity scale — medium tier
+    return AppColors.error;  // accent-allowlist: health-score severity scale
   }
 
   Color _inflammationColor(int score) {
-    if (score <= 3) return AppColors.success;
-    if (score <= 5) return AppColors.info;
-    if (score <= 7) return AppColors.orange;
-    return AppColors.error;
+    if (score <= 3) return AppColors.success;  // accent-allowlist: inflammation severity scale
+    if (score <= 5) return AppColors.info;  // accent-allowlist: inflammation severity scale
+    if (score <= 7) return AppColors.orange; // accent-allowlist: inflammation severity scale
+    return AppColors.error;  // accent-allowlist: inflammation severity scale
   }
 }
 
@@ -756,8 +757,8 @@ class _ActionGrid extends StatelessWidget {
               child: _FdBtn(
                 icon: Icons.delete_outline_rounded,
                 label: 'Remove',
-                border: AppColors.error.withValues(alpha: 0.3),
-                fg: AppColors.error,
+                border: AppColors.error.withValues(alpha: 0.3),  // accent-allowlist: error state
+                fg: AppColors.error,  // accent-allowlist: error state
                 onTap: onRemove,
               ),
             ),

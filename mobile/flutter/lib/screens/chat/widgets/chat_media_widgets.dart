@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/workout_studio_providers.dart';
@@ -264,13 +265,13 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.green.withValues(alpha: 0.12),
+                  color: AppColors.green.withValues(alpha: 0.12),  // accent-allowlist: success/positive state (logged, synced, completed)
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.restaurant_rounded,
                   size: 16,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
                 ),
               ),
               const SizedBox(width: 10),
@@ -294,7 +295,7 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.coral,
+                  color: AppColors.coral,  // accent-allowlist: calorie identity colour / over-limit warning, consistent across nutrition surfaces
                 ),
               ),
               const SizedBox(width: 8),
@@ -303,7 +304,7 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.macroProtein,
+                  color: AppColors.macroProtein,  // accent-allowlist: macro identity — protein is always this colour
                 ),
               ),
             ],
@@ -320,7 +321,7 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
                 AppLocalizations.of(context).chatMediaWidgetsViewAllLog,
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
@@ -1228,7 +1229,7 @@ class ViewRecipeButton extends StatelessWidget {
     return _InlineGoToPill(
       icon: Icons.menu_book_outlined,
       label: 'View recipe',
-      color: AppColors.green,
+      color: AppColors.green,  // accent-allowlist: success/positive state (logged, synced, completed)
       onTap: () => context.push('/recipe-detail', extra: recipe),
     );
   }

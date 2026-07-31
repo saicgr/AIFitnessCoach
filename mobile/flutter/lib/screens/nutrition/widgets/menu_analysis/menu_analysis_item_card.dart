@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/allergen.dart';
 import '../../../../data/models/menu_item.dart';
+import '../../../../widgets/fading_chip_row.dart';
 import '../../../chat/widgets/fullscreen_image_viewer.dart';
 import '../health_breakdown_sheet.dart';
 import '../score_explain_sheet.dart';
@@ -79,6 +81,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final selectedAccent = context.accentColor;
 
     // Match allergens against the dish's REAL printed description when we
     // have one — "Iceberg Wedge Salad" says nothing about blue cheese, its
@@ -102,14 +105,12 @@ class MenuAnalysisItemCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(8, 10, 12, 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                  .withValues(alpha: isDark ? 0.08 : 0.10)
+              ? selectedAccent.withValues(alpha: isDark ? 0.08 : 0.10)
               : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade50),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                    .withValues(alpha: 0.4)
+                ? selectedAccent.withValues(alpha: 0.4)
                 : (isDark ? AppColors.cardBorder : Colors.grey.shade200),
           ),
         ),
@@ -193,7 +194,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
                                 : item.description!,
                             isNote: pinnedNote != null && pinnedNote!.isNotEmpty,
                             color: textSecondary,
-                            accent: isDark ? AppColors.orange : AppColorsLight.orange,
+                            accent: selectedAccent,
                           ),
                         ),
                       if (item.includedChoices != null)
@@ -204,9 +205,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
                             children: [
                               Icon(Icons.add_circle_outline,
                                   size: 12,
-                                  color: isDark
-                                      ? AppColors.orange
-                                      : AppColorsLight.orange),
+                                  color: selectedAccent),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -214,9 +213,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: isDark
-                                        ? AppColors.orange
-                                        : AppColorsLight.orange,
+                                    color: selectedAccent,
                                   ),
                                 ),
                               ),
@@ -249,7 +246,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.auto_awesome, size: 12, color: AppColors.orange),
+                            Icon(Icons.auto_awesome, size: 12, color: selectedAccent),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -334,7 +331,7 @@ class _DishThumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
     final url = item.dishImageUrl;
 
     Widget shell(Widget child, {VoidCallback? onTap}) {
@@ -512,7 +509,7 @@ class _IconAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return Tooltip(
       message: tooltip,
@@ -541,7 +538,7 @@ class _AdjustPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
     final textMuted =
         isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final adjusted = summary != null && summary!.isNotEmpty;
@@ -639,20 +636,17 @@ class _HealthStrip extends StatelessWidget {
       return _AllCleanBadge(onTap: () => _openBreakdown(context));
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
+    // E2E register #148: a bare SingleChildScrollView sliced the trailing
+    // pill mid-word with no fade/gutter — FadingChipRow fixes it.
+    return FadingChipRow(
+      spacing: 6,
       physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: [
-          for (final p in pills) ...[
-            p.widget,
-            const SizedBox(width: 6),
-          ],
-          // Trailing "Full breakdown →" opens the all-signals sheet. Kept
-          // at the end so horizontal scroll reveals it naturally.
-          _BreakdownPill(onTap: () => _openBreakdown(context)),
-        ],
-      ),
+      children: [
+        for (final p in pills) p.widget,
+        // Trailing "Full breakdown →" opens the all-signals sheet. Kept
+        // at the end so horizontal scroll reveals it naturally.
+        _BreakdownPill(onTap: () => _openBreakdown(context)),
+      ],
     );
   }
 
@@ -869,9 +863,9 @@ class _HealthPill extends StatelessWidget {
 
   static Color _severityColor(_PillSeverity s) {
     switch (s) {
-      case _PillSeverity.good: return AppColors.success;
-      case _PillSeverity.mid: return AppColors.orange;
-      case _PillSeverity.bad: return AppColors.error;
+      case _PillSeverity.good: return AppColors.success; // accent-allowlist: health-signal severity scale
+      case _PillSeverity.mid: return AppColors.orange; // accent-allowlist: health-signal severity scale
+      case _PillSeverity.bad: return AppColors.error; // accent-allowlist: health-signal severity scale
     }
   }
 }
@@ -939,10 +933,10 @@ class _AllCleanBadge extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.12),
+            color: AppColors.success.withValues(alpha: 0.12), // accent-allowlist: success state — all health scores clean
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.success.withValues(alpha: 0.4),
+              color: AppColors.success.withValues(alpha: 0.4), // accent-allowlist: success state
               width: 0.8,
             ),
           ),
@@ -956,12 +950,12 @@ class _AllCleanBadge extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.success,
+                  color: AppColors.success, // accent-allowlist: success state
                 ),
               ),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right,
-                  size: 14, color: AppColors.success.withValues(alpha: 0.7)),
+                  size: 14, color: AppColors.success.withValues(alpha: 0.7)), // accent-allowlist: success state
             ],
           ),
         ),
@@ -1012,10 +1006,10 @@ class _MacroLine extends StatelessWidget {
       spacing: 10,
       runSpacing: 2,
       children: [
-        _macro(item.scaledCalories, 'cal', AppColors.coral),
-        _macro(item.scaledProteinG, 'g P', AppColors.macroProtein),
-        _macro(item.scaledCarbsG, 'g C', AppColors.macroCarbs),
-        _macro(item.scaledFatG, 'g F', AppColors.macroFat),
+        _macro(item.scaledCalories, 'cal', AppColors.coral), // accent-allowlist: calorie identity colour, paired with the macro trio below
+        _macro(item.scaledProteinG, 'g P', AppColors.macroProtein), // accent-allowlist: macro identity
+        _macro(item.scaledCarbsG, 'g C', AppColors.macroCarbs), // accent-allowlist: macro identity
+        _macro(item.scaledFatG, 'g F', AppColors.macroFat), // accent-allowlist: macro identity
         if (item.price != null)
           Text(
             _formatPrice(item.price!, item.currency),
@@ -1079,15 +1073,15 @@ class _RatingPill extends StatelessWidget {
     String label;
     switch (rating) {
       case 'green':
-        color = AppColors.success;
+        color = AppColors.success; // accent-allowlist: dish rating severity scale
         label = 'Good';
         break;
       case 'yellow':
-        color = AppColors.orange;
+        color = AppColors.orange; // accent-allowlist: dish rating severity scale
         label = 'Moderate';
         break;
       case 'red':
-        color = AppColors.error;
+        color = AppColors.error; // accent-allowlist: dish rating severity scale
         // "Skip" matches the AI recommendation copy ("Skip; contains...")
         // already rendered in the card body. "Limit" was ambiguous — could
         // be read as "eat a small amount" when the intent here is "avoid".
@@ -1139,20 +1133,20 @@ class _AllergenWarning extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: AppColors.error.withValues(alpha: 0.1), // accent-allowlist: allergen warning
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 0.8),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4), width: 0.8), // accent-allowlist: allergen warning
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.warning_rounded, size: 14, color: AppColors.error),
+          Icon(Icons.warning_rounded, size: 14, color: AppColors.error), // accent-allowlist: allergen warning
           const SizedBox(width: 6),
           Flexible(
             child: Text(
               'Contains ${matches.join(' · ')}',
               style: TextStyle(
-                fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.error,
+                fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.error, // accent-allowlist: allergen warning
               ),
             ),
           ),
@@ -1185,6 +1179,8 @@ class _PortionStepperState extends State<_PortionStepper> {
   bool _editing = false;
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+
+  Color get _accent => context.accentColor;
 
   @override
   void dispose() {
@@ -1270,21 +1266,21 @@ class _PortionStepperState extends State<_PortionStepper> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: AppColors.orange.withValues(alpha: 0.12),
+            color: _accent.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.orange.withValues(alpha: 0.35), width: 0.7),
+            border: Border.all(color: _accent.withValues(alpha: 0.35), width: 0.7),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 '$grams g',
-                style: const TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.orange,
+                style: TextStyle(
+                  fontSize: 11, fontWeight: FontWeight.w800, color: _accent,
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.edit_outlined, size: 11, color: AppColors.orange.withValues(alpha: 0.8)),
+              Icon(Icons.edit_outlined, size: 11, color: _accent.withValues(alpha: 0.8)),
             ],
           ),
         ),
@@ -1296,9 +1292,9 @@ class _PortionStepperState extends State<_PortionStepper> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.12),
+        color: _accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.orange, width: 1),
+        border: Border.all(color: _accent, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1311,28 +1307,28 @@ class _PortionStepperState extends State<_PortionStepper> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               textAlign: TextAlign.center,
               onSubmitted: (_) => _saveEdit(),
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.orange),
-              decoration: const InputDecoration(
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _accent),
+              decoration: InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 2),
+                contentPadding: const EdgeInsets.symmetric(vertical: 2),
                 border: InputBorder.none,
                 suffixText: 'g',
-                suffixStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.orange),
+                suffixStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: _accent),
               ),
             ),
           ),
           InkWell(
             onTap: _cancelEdit,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2),
-              child: Icon(Icons.close, size: 14, color: AppColors.orange),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(Icons.close, size: 14, color: _accent),
             ),
           ),
           InkWell(
             onTap: _saveEdit,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 2),
-              child: Icon(Icons.check, size: 14, color: AppColors.orange),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Icon(Icons.check, size: 14, color: _accent),
             ),
           ),
         ],
@@ -1358,10 +1354,10 @@ class _PortionStepperState extends State<_PortionStepper> {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: AppColors.orange.withValues(alpha: 0.15),
+          color: _accent.withValues(alpha: 0.15),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 14, color: AppColors.orange),
+        child: Icon(icon, size: 14, color: _accent),
       ),
     );
   }

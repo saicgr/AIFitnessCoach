@@ -59,7 +59,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('That was your last free ${gateName.toLowerCase()} for this period.'),
-            backgroundColor: AppColors.warning,
+            backgroundColor: AppColors.warning,  // accent-allowlist: warning severity
           ),
         );
       }
@@ -68,7 +68,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send media: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -129,7 +129,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('That was your last free ${gateName.toLowerCase()} for this period.'),
-            backgroundColor: AppColors.warning,
+            backgroundColor: AppColors.warning,  // accent-allowlist: warning severity
           ),
         );
       }
@@ -138,7 +138,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send media: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -281,7 +281,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send message: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -368,7 +368,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                         AppLocalizations.of(context).chatScreenExtUnlimitedAccessWithPremium,
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success state
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -393,9 +393,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
                         'ai_meal_plan': 'Meal Plans',
                       };
 
-                      Color barColor = AppColors.cyan;
-                      if (isExhausted) barColor = AppColors.error;
-                      else if (isLow) barColor = AppColors.warning;
+                      Color barColor = context.accentColor;
+                      if (isExhausted) barColor = AppColors.error;  // accent-allowlist: error state
+                      else if (isLow) barColor = AppColors.warning;  // accent-allowlist: warning severity
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -418,9 +418,9 @@ extension __ChatScreenStateExt on _ChatScreenState {
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                     color: isExhausted
-                                        ? AppColors.error
+                                        ? AppColors.error  // accent-allowlist: error state
                                         : isLow
-                                            ? AppColors.warning
+                                            ? AppColors.warning  // accent-allowlist: warning severity
                                             : (isDark ? Colors.white : Colors.black),
                                   ),
                                 ),
@@ -458,13 +458,13 @@ extension __ChatScreenStateExt on _ChatScreenState {
                               featureKey: _kAiChatMessages, featureName: 'AI Coach');
                         },
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.cyan),
+                          side: BorderSide(color: context.accentColor),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text(
                           AppLocalizations.of(context).chatScreenExtUpgradeForUnlimited,
-                          style: TextStyle(color: AppColors.cyan, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: context.accentColor, fontWeight: FontWeight.w600),
                         ),
                       ),
                     ),
@@ -498,7 +498,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.headset_mic, color: AppColors.cyan),
+                leading: Icon(Icons.headset_mic, color: context.accentColor),
                 title: Text(AppLocalizations.of(context).chatScreenExtTalkToHuman),
                 subtitle: Text(
                   AppLocalizations.of(context).chatScreenExtConnectWithAReal,
@@ -511,7 +511,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.bug_report, color: AppColors.orange),
+                leading: Icon(Icons.bug_report, color: context.accentColor),
                 title: Text(AppLocalizations.of(context).chatScreenExtReportAProblem),
                 subtitle: Text(
                   AppLocalizations.of(context).chatScreenExtEmailOurSupportTeam,
@@ -524,7 +524,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.lightbulb_outline, color: AppColors.purple),
+                leading: Icon(Icons.lightbulb_outline, color: context.accentColor),
                 title: Text(AppLocalizations.of(context).chatScreenExtChatTips),
                 subtitle: Text(
                   AppLocalizations.of(context).chatScreenExtSeeWhatYourAi,
@@ -566,10 +566,10 @@ extension __ChatScreenStateExt on _ChatScreenState {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: action.color.withOpacity(0.12),
+                        color: context.accentColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(action.icon, size: 18, color: action.color),
+                      child: Icon(action.icon, size: 18, color: context.accentColor),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -589,7 +589,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                   ctx: ctx,
                   icon: isVideo ? Icons.videocam_outlined : Icons.camera_alt_outlined,
                   label: isVideo ? AppLocalizations.of(context).mediaPickerHelperRecordVideo : AppLocalizations.of(context).progressTakePhoto,
-                  color: action.color,
+                  color: context.accentColor,
                   onTap: () {
                     Navigator.pop(ctx);
                     HapticService.selection();
@@ -604,7 +604,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                   ctx: ctx,
                   icon: isVideo ? Icons.video_library_outlined : Icons.photo_library_outlined,
                   label: isVideo ? AppLocalizations.of(context).mediaPickerHelperChooseVideo : AppLocalizations.of(context).mediaPickerHelperChoosePhoto,
-                  color: action.color,
+                  color: context.accentColor,
                   onTap: () {
                     Navigator.pop(ctx);
                     HapticService.selection();
@@ -620,7 +620,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                     ctx: ctx,
                     icon: Icons.collections_outlined,
                     label: AppLocalizations.of(context).mediaPickerHelperChooseMultiplePhotos,
-                    color: action.color,
+                    color: context.accentColor,
                     onTap: () {
                       Navigator.pop(ctx);
                       HapticService.selection();
@@ -696,7 +696,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.message),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error state
           ),
         );
       }
@@ -713,7 +713,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             mainAxisSize: MainAxisSize.min,
             children: [
             ListTile(
-              leading: const Icon(Icons.add_comment_outlined, color: AppColors.cyan),
+              leading: Icon(Icons.add_comment_outlined, color: context.accentColor),
               title: const Text('New chat'),
               subtitle: Text(
                 'Start a fresh conversation',
@@ -727,7 +727,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
-              leading: const Icon(Icons.bug_report_outlined, color: AppColors.orange),
+              leading: Icon(Icons.bug_report_outlined, color: context.accentColor),
               title: Text(AppLocalizations.of(context).chatScreenExtReportAProblem),
               subtitle: Text(
                 AppLocalizations.of(context).chatScreenExtEmailOurSupportTeam,
@@ -741,7 +741,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
-              leading: const Icon(Icons.swap_horiz, color: AppColors.purple),
+              leading: Icon(Icons.swap_horiz, color: context.accentColor),
               title: Text(AppLocalizations.of(context).coachSelectionScreenChangeCoach),
               subtitle: Text(
                 AppLocalizations.of(context).chatScreenExtSwitchToADifferent,
@@ -755,7 +755,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),
             ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppColors.error),
+              leading: const Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error state
               title: Text(AppLocalizations.of(context).chatScreenExtClearChatHistory),
               onTap: () {
                 Navigator.pop(context);
