@@ -21,7 +21,15 @@ Endpoints:
 """
 
 from .scores_models import *  # noqa: F401, F403
-from .scores_endpoints import router as _endpoints_router
+# `generate_ai_readiness_insight` is scheduled via background_tasks.add_task in
+# submit_readiness_checkin below. It MUST be imported explicitly — the star-import
+# above only covers scores_models, so without this the call site raises NameError
+# at request time (a 500 that no import-time check catches), *after* the readiness
+# row has already been written.
+from .scores_endpoints import (
+    router as _endpoints_router,
+    generate_ai_readiness_insight,
+)
 
 
 from datetime import datetime, date, timedelta, timezone
