@@ -586,7 +586,7 @@ class _ExerciseInstructionsScreenState
     // light-yellow background with theme `textPrimary` rendered near-white text
     // on near-white video → invisible. Use a dark scrim + fixed near-white text
     // with amber emphasis so it's guaranteed legible in every theme/media state.
-    const amber = Color(0xFFFCD34D);
+    const amber = Color(0xFFFCD34D);  // accent-allowlist: deliberate fixed amber for legibility over unpredictable video brightness (see comment above)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(

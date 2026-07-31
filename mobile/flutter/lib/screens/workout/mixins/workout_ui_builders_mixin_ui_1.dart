@@ -22,7 +22,7 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: AppColors.orange),
+            CircularProgressIndicator(color: context.accentColor),
             const SizedBox(height: 20),
             Text(
               AppLocalizations.of(context).workoutUiBuildersPreparingWarmup,

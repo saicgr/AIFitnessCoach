@@ -14,6 +14,7 @@ import '../../../core/utils/weight_utils.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATA MODELS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -405,7 +406,7 @@ class _ExerciseHeader extends StatelessWidget {
                     children: [
                       // PR gold star
                       if (hasPrs) ...[
-                        const Icon(Icons.star, size: 16, color: Color(0xFFEAB308)),
+                        const Icon(Icons.star, size: 16, color: Color(0xFFEAB308)),  // accent-allowlist: PR gold star, see comment above
                         const SizedBox(width: 4),
                       ],
                       Flexible(
@@ -443,14 +444,14 @@ class _ExerciseHeader extends StatelessWidget {
                       if (exercise.isSkipped)
                         _BadgeChip(
                           label: AppLocalizations.of(context).summaryExerciseTableSkipped,
-                          color: isDark ? AppColors.error : AppColorsLight.error,
+                          color: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive — must stay red
                           isDark: isDark,
                         ),
                       if (e1rm != null && !exercise.isSkipped)
                         _BadgeChip(
                           label:
                               'e1RM ${e1rm.toStringAsFixed(0)} ${useKg ? 'kg' : 'lb'}',
-                          color: isDark ? AppColors.purple : AppColorsLight.purple,
+                          color: context.accentColor,
                           isDark: isDark,
                         ),
                       if (exercise.equipment != null &&

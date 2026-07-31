@@ -44,6 +44,49 @@ class PreviewNotOwnedException implements Exception {
   String toString() => 'PreviewNotOwnedException($previewId): $message';
 }
 
+/// Thrown when a swap/add is blocked because the exercise the user picked
+/// isn't safe for one of their active injuries. Raised on HTTP 409 with
+/// backend error code `EXERCISE_UNSAFE_FOR_INJURY`
+/// (`injury_block_response()` in `api/v1/workouts/workout_operations.py`).
+///
+/// This is an EXPLICIT refusal, not a silent substitution — the backend has
+/// no override/bypass parameter for this gate, so there is no "add anyway"
+/// path. [message] is the backend's human-readable, injury-specific copy
+/// ("Barbell Back Squat isn't safe to program around your knee injury right
+/// now…") and is meant to be shown to the user directly, never replaced with
+/// a generic "failed to add exercise" fallback (E2E #114 — this guard fires
+/// correctly server-side but was previously discarded into generic copy).
+class ExerciseUnsafeForInjuryException implements Exception {
+  final String exerciseName;
+  final String message;
+  final List<String> injuries;
+  ExerciseUnsafeForInjuryException(
+    this.exerciseName,
+    this.message, {
+    this.injuries = const [],
+  });
+  @override
+  String toString() =>
+      'ExerciseUnsafeForInjuryException($exerciseName): $message';
+}
+
+/// User-facing copy for a swap/add failure, for callers that only need a
+/// string (e.g. a SnackBar) and don't need to branch on the exception type.
+/// Every typed exception raised by swap/add carries its own real message —
+/// never replaced with a generic fallback, since (like
+/// [ExerciseUnsafeForInjuryException]) it may name the specific
+/// injury/joint and the exercise, which a generic string would silently drop.
+String swapOrAddExceptionMessage(Object error) {
+  if (error is ExerciseUnsafeForInjuryException) return error.message;
+  if (error is PreviewExpiredException) {
+    return 'This suggestion has expired. Please regenerate and try again.';
+  }
+  if (error is PreviewNotOwnedException) {
+    return 'This preview is no longer valid. Please regenerate and try again.';
+  }
+  return 'Something went wrong. Please try again.';
+}
+
 /// Extension on WorkoutRepository for streaming generation, regeneration,
 /// and program management methods.
 extension WorkoutRepositoryGeneration on WorkoutRepository {

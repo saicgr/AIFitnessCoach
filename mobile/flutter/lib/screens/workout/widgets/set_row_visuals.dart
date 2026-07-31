@@ -36,6 +36,10 @@ class SetRowVisuals {
     required String metric, // 'weight' | 'reps' | 'time'
     required double targetWeightDisplay,
     required int targetReps,
+    // Optional: this helper is deliberately callable with no BuildContext
+    // (see class doc). When present, the deload colour follows the user's
+    // accent; when absent, it falls back to the system default accent.
+    BuildContext? context,
     int? durationSeconds,
     double? previousSetTargetWeightDisplay,
     int? previousSetTargetReps,
@@ -108,13 +112,13 @@ class SetRowVisuals {
     Color color;
     IconData? icon;
     if (isDeload && direction <= 0) {
-      color = AppColors.purple;
+      color = context?.accentColor ?? AppColors.orange;  // accent-allowlist: no BuildContext available at this optional-context call site (see class doc); falls back to the system default accent
       icon = Icons.bedtime_outlined;
     } else if (direction > 0) {
-      color = AppColors.success;
+      color = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       icon = Icons.arrow_upward;
     } else if (direction < 0) {
-      color = AppColors.error;
+      color = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       icon = Icons.arrow_downward;
     } else {
       color = AppColors.textMuted;
@@ -149,20 +153,21 @@ class SetRowVisuals {
   /// Small "Edited" chip rendered next to the trend pill when the user
   /// manually overrode the planned target. Returns null when not edited.
   // TODO(i18n): 'Edited' chip text is in a static method with no BuildContext — cannot use AppLocalizations here
-  static Widget? buildEditedChip({required bool isEdited}) {
+  static Widget? buildEditedChip({required bool isEdited, BuildContext? context}) {
     if (!isEdited) return null;
+    final accent = context?.accentColor ?? AppColors.orange;  // accent-allowlist: no BuildContext available at this optional-context call site (see class doc); falls back to the system default accent
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.15),
+        color: accent.withOpacity(0.15),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Text(
+      child: Text(
         'Edited',
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,
-          color: AppColors.orange,
+          color: accent,
         ),
       ),
     );
@@ -217,10 +222,10 @@ class SetRowVisuals {
     );
 
     if (targetLabel != null) {
-      // "Push to failure" gets the orange treatment so it visually reads as a
-      // higher-intensity instruction than a routine RIR target.
-      final pushToFailure = targetLabel == 'Push to failure';
-      final pillColor = pushToFailure ? AppColors.orange : AppColors.cyan;
+      // Both the "Push to failure" and routine RIR-target pills now read the
+      // single app accent — the label text (not a second competing brand
+      // colour) is what marks "Push to failure" as higher intensity.
+      final pillColor = context?.accentColor ?? AppColors.orange;  // accent-allowlist: no BuildContext available at this optional-context call site (see class doc); falls back to the system default accent
       final pill = _rirPill(
         label: targetLabel,
         filled: false,
@@ -248,7 +253,7 @@ class SetRowVisuals {
       widgets.add(_rirPill(
         label: 'Logged RIR $actualRir',
         filled: true,
-        color: AppColors.cyan,
+        color: context?.accentColor ?? AppColors.orange,  // accent-allowlist: no BuildContext available at this optional-context call site (see class doc); falls back to the system default accent
       ));
     }
 

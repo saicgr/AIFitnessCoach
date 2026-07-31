@@ -245,7 +245,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
       case 'warmup':
         return AppColors.glowOrange;
       case 'failure':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
         return AppColors.glowCyan;
     }

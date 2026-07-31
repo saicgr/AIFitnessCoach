@@ -30,6 +30,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import '../../../data/services/image_url_cache.dart';
 import 'equipment_snap_flow.dart';
 import 'snapped_equipment_section.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 
 part 'exercise_add_sheet_part_exercise_add_sheet_state.dart';
@@ -81,6 +82,8 @@ Future<Workout?> showExerciseAddSheet(
   /// deeplink when there's no equivalent exercise to swap.
   String? preselectedExerciseId,
   String? preselectedExerciseName,
+  /// 'main' (default when null), 'warmup', or 'stretches'.
+  String? section,
 }) async {
   return await showGlassSheet<Workout>(
     context: context,
@@ -93,6 +96,7 @@ Future<Workout?> showExerciseAddSheet(
         previewId: previewId,
         preselectedExerciseId: preselectedExerciseId,
         preselectedExerciseName: preselectedExerciseName,
+        section: section,
       ),
     ),
   );
@@ -118,6 +122,12 @@ class _ExerciseAddSheet extends ConsumerStatefulWidget {
   /// Optional preselect target — see [showExerciseAddSheet].
   final String? preselectedExerciseId;
   final String? preselectedExerciseName;
+  /// 'main' (default), 'warmup', or 'stretches' — forwarded to
+  /// [WorkoutRepository.addExercise]. E2E #125: the warm-up "+ Add move"
+  /// affordance reuses this SAME sheet with `section: 'warmup'` so an added
+  /// warm-up move gets the identical injury-screened resolution a main-list
+  /// add already gets.
+  final String? section;
 
   const _ExerciseAddSheet({
     required this.workoutId,
@@ -126,6 +136,7 @@ class _ExerciseAddSheet extends ConsumerStatefulWidget {
     this.previewId,
     this.preselectedExerciseId,
     this.preselectedExerciseName,
+    this.section,
   });
 
   @override

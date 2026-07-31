@@ -438,7 +438,12 @@ class EasyFocalColumn extends StatelessWidget {
                   'easytimed_${exerciseName}_${state.completedCount}_${state.durationSeconds}'),
               durationSeconds: state.durationSeconds,
               exerciseName: exerciseName,
-              setNumber: state.completedCount + 1,
+              // Clamp: `completedCount + 1` points one PAST the plan the
+              // moment the last set logs (same class as the "SET 3 OF 2"
+              // header bug) — never hand the timer an impossible index.
+              setNumber: (state.completedCount + 1) > state.totalSets
+                  ? state.totalSets
+                  : state.completedCount + 1,
               totalSets: state.totalSets,
               autoStart: false,
               onComplete: () => HapticService.instance.success(),

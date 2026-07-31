@@ -12,6 +12,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'exercise_analytics_page.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Show exercise history bottom sheet
 void showExerciseHistorySheet({
   required BuildContext context,
@@ -76,7 +77,7 @@ void showExerciseHistorySheet({
             const SizedBox(height: 16),
             _buildHistoryItem(
               label: AppLocalizations.of(context).setTrackingSheetsPersonalRecord, value: prDisplay,
-              color: AppColors.success, isDark: isDark,
+              color: AppColors.success, isDark: isDark,  // accent-allowlist: success/positive state — must stay green regardless of accent
               textPrimary: textPrimary, textMuted: textMuted,
               showTrophy: prData != null,
             ),
@@ -183,7 +184,7 @@ void showWeightIncrementSheet({
           children: [
             Row(
               children: [
-                Icon(Icons.tune_rounded, color: AppColors.orange, size: 24),
+                Icon(Icons.tune_rounded, color: context.accentColor, size: 24),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -226,12 +227,12 @@ void showWeightIncrementSheet({
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.orange.withOpacity(0.2)
+                          ? context.accentColor.withOpacity(0.2)
                           : (isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05)),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.orange
+                            ? context.accentColor
                             : (isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.1)),
                         width: isSelected ? 2 : 1,
                       ),
@@ -242,7 +243,7 @@ void showWeightIncrementSheet({
                         fontSize: 16,
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                         color: isSelected
-                            ? AppColors.orange
+                            ? context.accentColor
                             : (isDark ? Colors.white : Colors.black),
                       ),
                     ),
@@ -285,11 +286,11 @@ void showRpeInfoSheet(BuildContext context) {
               ),
             ),
             const SizedBox(height: 16),
-            _buildRpeScaleRow('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),
-            _buildRpeScaleRow('5-6', 'Moderate effort', AppColors.cyan, isDark),
-            _buildRpeScaleRow('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),
-            _buildRpeScaleRow('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),
-            _buildRpeScaleRow('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),
+            _buildRpeScaleRow('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),  // accent-allowlist: RPE effort scale — lowest band is always this green
+            _buildRpeScaleRow('5-6', 'Moderate effort', AppColors.cyan, isDark),  // accent-allowlist: RPE effort scale — moderate band is always this cyan
+            _buildRpeScaleRow('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),  // accent-allowlist: RPE effort scale — hard band is always this orange
+            _buildRpeScaleRow('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),  // accent-allowlist: RPE effort scale — very-hard band is always this orange
+            _buildRpeScaleRow('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),  // accent-allowlist: RPE effort scale — maximum band is always this red
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -364,19 +365,19 @@ void showSetTypeInfoSheet(BuildContext context) {
             _buildSetTypeInfoRow(
               icon: Icons.whatshot_outlined, tag: 'W', title: AppLocalizations.of(context).workoutSummaryAdvancedWarmup,
               description: AppLocalizations.of(context).setTrackingSheetsLightWeightToPrepare,
-              color: AppColors.orange, isDark: isDark,
+              color: AppColors.orange, isDark: isDark,  // accent-allowlist: set-type legend — this sheet explains the badge colours, so warm-up must show its actual (always-orange) badge colour
             ),
             const SizedBox(height: 16),
             _buildSetTypeInfoRow(
               icon: Icons.trending_down_rounded, tag: 'D', title: AppLocalizations.of(context).setTrackingSheetsDropSet,
               description: AppLocalizations.of(context).setTrackingSheetsImmediatelyReduceWeightAfte,
-              color: AppColors.purple, isDark: isDark,
+              color: AppColors.purple, isDark: isDark,  // accent-allowlist: set-type legend — this sheet explains the badge colours, so drop set must show its actual (always-purple) badge colour
             ),
             const SizedBox(height: 16),
             _buildSetTypeInfoRow(
               icon: Icons.fitness_center_rounded, tag: 'F', title: AppLocalizations.of(context).rpeFailure,
               description: AppLocalizations.of(context).setTrackingSheetsMarkWhenYouCouldn,
-              color: AppColors.error, isDark: isDark,
+              color: AppColors.error, isDark: isDark,  // accent-allowlist: error/destructive — must stay red
             ),
             SizedBox(height: MediaQuery.of(ctx).padding.bottom + 16),
           ],
@@ -564,7 +565,7 @@ void showTargetEditSheet({
                     HapticFeedback.mediumImpact();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.purple,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -583,11 +584,13 @@ void showTargetEditSheet({
   );
 }
 
+// RIR scale — top-level function (no BuildContext), each band needs its
+// own colour so the ramp reads as escalating intensity.
 Color _getTargetRirColor(int rir) {
-  if (rir <= 0) return const Color(0xFFEF4444);
-  if (rir == 1) return const Color(0xFFF97316);
-  if (rir == 2) return const Color(0xFFEAB308);
-  return const Color(0xFF22C55E);
+  if (rir <= 0) return const Color(0xFFEF4444);  // accent-allowlist: RIR scale — went-to-failure band is always this red
+  if (rir == 1) return const Color(0xFFF97316);  // accent-allowlist: RIR scale — solid-intensity band is always this orange
+  if (rir == 2) return const Color(0xFFEAB308);  // accent-allowlist: RIR scale — ideal band is always this yellow
+  return const Color(0xFF22C55E);  // accent-allowlist: RIR scale — plenty-left band is always this green
 }
 
 Color _getTargetRirTextColor(int rir) {

@@ -5,6 +5,7 @@ import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Mixin providing exercise management functionality for workout screens.
 /// This includes reordering, skipping, swapping, and superset management.
 mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
@@ -108,7 +109,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
               icon: Icons.play_circle_outline,
               title: AppLocalizations.of(context).exerciseManagementMixinStartThisExercise,
               subtitle: AppLocalizations.of(context).exerciseManagementMixinMakeThisTheActive,
-              color: AppColors.cyan,
+              color: context.accentColor,
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(ctx);
@@ -123,7 +124,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
               icon: Icons.swap_horiz,
               title: AppLocalizations.of(context).exerciseManagementMixinReplaceExercise,
               subtitle: AppLocalizations.of(context).exerciseManagementMixinAiPoweredAlternatives,
-              color: AppColors.purple,
+              color: context.accentColor,
               onTap: () async {
                 Navigator.pop(context);
                 final replacement = await showSwapSheet(ctx, exercise);
@@ -145,7 +146,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
               icon: Icons.skip_next,
               title: AppLocalizations.of(context).futuristicSetCardSkipExercise,
               subtitle: AppLocalizations.of(context).exerciseManagementMixinRemoveFromThisWorkout,
-              color: AppColors.orange,
+              color: context.accentColor,
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pop(ctx);
@@ -161,7 +162,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
                 icon: Icons.link_off,
                 title: AppLocalizations.of(context).exerciseManagementMixinRemoveFromSuperset,
                 subtitle: AppLocalizations.of(context).exerciseManagementMixinBreakTheSupersetPair,
-                color: AppColors.error,
+                color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                 onTap: () async {
                   Navigator.pop(context);
                   Navigator.pop(ctx);
@@ -174,7 +175,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
                   icon: Icons.link,
                   title: AppLocalizations.of(context).exerciseManagementMixinPairWithNextExercise,
                   subtitle: AppLocalizations.of(context)!.exerciseManagementMixinCreateSupersetWith(exercises[index + 1].name),
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   onTap: () async {
                     Navigator.pop(context);
                     Navigator.pop(ctx);
@@ -186,7 +187,7 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
                 icon: Icons.add_link,
                 title: AppLocalizations.of(context).workoutSheetsMixinCreateSuperset,
                 subtitle: AppLocalizations.of(context).exerciseManagementMixinChooseExerciseToPair,
-                color: AppColors.purple,
+                color: context.accentColor,
                 onTap: () async {
                   Navigator.pop(context);
                   Navigator.pop(ctx);

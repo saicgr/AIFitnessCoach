@@ -273,7 +273,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
             },
             child: Text(
               AppLocalizations.of(context).buttonDelete,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive — must stay red
             ),
           ),
         ],
@@ -541,7 +541,7 @@ class _EditSetSheetState extends State<EditSetSheet> {
                     icon: Icon(
                       Icons.delete_outline,
                       size: 18,
-                      color: AppColors.error.withValues(alpha: 0.8),
+                      color: AppColors.error.withValues(alpha: 0.8),  // accent-allowlist: error/destructive — must stay red
                     ),
                     padding: EdgeInsets.zero,
                     constraints:
@@ -614,13 +614,13 @@ class _EditSetSheetState extends State<EditSetSheet> {
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(
-            color: AppColors.error.withValues(alpha: 0.6),
+            color: AppColors.error.withValues(alpha: 0.6),  // accent-allowlist: error/destructive — must stay red
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(
-            color: AppColors.error,
+            color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             width: 1.5,
           ),
         ),

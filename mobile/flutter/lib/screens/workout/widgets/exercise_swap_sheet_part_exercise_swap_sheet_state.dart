@@ -260,7 +260,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Speech recognition not available'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ),
       );
       return;
@@ -627,16 +627,27 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       {String source = 'ai_suggestion'}) async {
     setState(() => _isSwapping = true);
 
-    final repo = ref.read(workoutRepositoryProvider);
-    final (updatedWorkout, errorMessage) = await repo.swapExercise(
-      workoutId: widget.workoutId,
-      oldExerciseName: widget.exercise.name,
-      newExerciseName: newExerciseName,
-      reason: _selectedReason,
-      swapSource: source,
-      previewId: widget.previewId,
-      applyToFuture: _applyToFuture,
-    );
+    Workout? updatedWorkout;
+    String? errorMessage;
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      (updatedWorkout, errorMessage) = await repo.swapExercise(
+        workoutId: widget.workoutId,
+        oldExerciseName: widget.exercise.name,
+        newExerciseName: newExerciseName,
+        reason: _selectedReason,
+        swapSource: source,
+        previewId: widget.previewId,
+        applyToFuture: _applyToFuture,
+      );
+    } catch (e) {
+      // ExerciseUnsafeForInjuryException / PreviewExpiredException /
+      // PreviewNotOwnedException — typed exceptions thrown by swapExercise
+      // instead of returned in the tuple. Route through the same
+      // user-visible SnackBar path as a tuple error (E2E #114 — this guard
+      // must never be silently discarded).
+      errorMessage = swapOrAddExceptionMessage(e);
+    }
 
     setState(() => _isSwapping = false);
 
@@ -654,14 +665,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.exerciseSwapSheetPartExerciseSwapSheetStateSwappedTo(newExerciseName)),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage ?? 'Failed to swap exercise'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -781,7 +792,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.swap_horiz, color: AppColors.cyan),
+                        Icon(Icons.swap_horiz, color: context.accentColor),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -815,15 +826,15 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                               }
                             }
                           },
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.auto_awesome_outlined,
                             size: 16,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                           label: Text(
                             l.exerciseSwapSheetImport,
-                            style: const TextStyle(
-                              color: AppColors.cyan,
+                            style: TextStyle(
+                              color: context.accentColor,
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
                             ),
@@ -917,7 +928,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                                     ),
                                   ),
                                   selected: _selectedReason == reason,
-                                  selectedColor: AppColors.cyan,
+                                  selectedColor: context.accentColor,
                                   backgroundColor: cardBackground,
                                   onSelected: (selected) {
                                     setState(() {
@@ -961,7 +972,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                           ),
                           Switch(
                             value: _applyToFuture,
-                            activeThumbColor: AppColors.cyan,
+                            activeThumbColor: context.accentColor,
                             onChanged: (v) =>
                                 setState(() => _applyToFuture = v),
                           ),
@@ -1009,14 +1020,20 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                         final oldName = widget.exercise.name;
                         if (name.isEmpty || oldName.isEmpty) return null;
                         final repo = ref.read(workoutRepositoryProvider);
-                        final (workout, err) = await repo.swapExercise(
-                          workoutId: widget.workoutId,
-                          oldExerciseName: oldName,
-                          newExerciseName: name,
-                          swapSource: 'equipment_snap_history',
-                          previewId: widget.previewId,
-                          applyToFuture: _applyToFuture,
-                        );
+                        Workout? workout;
+                        String? err;
+                        try {
+                          (workout, err) = await repo.swapExercise(
+                            workoutId: widget.workoutId,
+                            oldExerciseName: oldName,
+                            newExerciseName: name,
+                            swapSource: 'equipment_snap_history',
+                            previewId: widget.previewId,
+                            applyToFuture: _applyToFuture,
+                          );
+                        } catch (e) {
+                          err = swapOrAddExceptionMessage(e);
+                        }
                         if (!mounted) return null;
                         if (err != null) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1049,8 +1066,8 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
               if (_isSwapping)
                 Container(
                   color: Colors.black54,
-                  child: const Center(
-                    child: CircularProgressIndicator(color: AppColors.cyan),
+                  child: Center(
+                    child: CircularProgressIndicator(color: context.accentColor),
                   ),
                 ),
             ],
@@ -1064,7 +1081,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: AppColors.cyan),
+            CircularProgressIndicator(color: context.accentColor),
             const SizedBox(height: 16),
             Text(
               'Finding similar exercises...',
@@ -1076,7 +1093,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     }
 
     if (_similarExercises.isEmpty) {
-      const accentColor = AppColors.cyan;
+      final accentColor = context.accentColor;
       // Branch on the typed reason from /suggest-fast so the user sees
       // what actually happened. The previous one-size-fits-all "No
       // exercises match this muscle group" was the wrong reason in two
@@ -1110,7 +1127,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                 color: accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.swap_horiz_rounded, size: 40, color: accentColor),
+              child: Icon(Icons.swap_horiz_rounded, size: 40, color: accentColor),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1141,7 +1158,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             const SizedBox(height: 8),
             TextButton(
               onPressed: () => _tabController.animateTo(5),
-              child: const Text('Try AI Suggestions', style: TextStyle(color: accentColor)),
+              child: Text('Try AI Suggestions', style: TextStyle(color: accentColor)),
             ),
           ],
         ),
@@ -1183,16 +1200,16 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         Color badgeColor;
         if (isCustom) {
           badge = 'YOURS';
-          badgeColor = AppColors.orange;
+          badgeColor = context.accentColor;
         } else if (rank == 1) {
           badge = 'Best Match';
-          badgeColor = AppColors.success;
+          badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
         } else if (rank <= 3) {
           badge = 'Top Pick';
-          badgeColor = AppColors.cyan;
+          badgeColor = context.accentColor;
         } else {
           badge = equipment.isNotEmpty ? equipment : 'Alternative';
-          badgeColor = AppColors.purple;
+          badgeColor = context.accentColor;
         }
 
         return _ExerciseOptionCard(
@@ -1220,7 +1237,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: AppColors.cyan),
+            CircularProgressIndicator(color: context.accentColor),
             const SizedBox(height: 16),
             Text(
               'Finding muscle-matched alternatives...',
@@ -1232,7 +1249,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     }
 
     if (_anyEquipmentSuggestions.isEmpty) {
-      const accentColor = AppColors.cyan;
+      final accentColor = context.accentColor;
       final body = _anyEquipmentEmptyReason == 'exercise_not_found'
           ? "We couldn't find this exercise in our library. Try AI Picks for a creative substitute."
           : "No muscle-similar alternatives in our library yet. Try AI Picks for a creative suggestion.";
@@ -1246,7 +1263,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                 color: accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(Icons.fitness_center_rounded,
+              child: Icon(Icons.fitness_center_rounded,
                   size: 40, color: accentColor),
             ),
             const SizedBox(height: 16),
@@ -1327,7 +1344,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         final badge = owns
             ? 'In your gym'
             : (equipment.isNotEmpty ? equipment : 'Alternative');
-        final badgeColor = owns ? AppColors.success : AppColors.purple;
+        final badgeColor = owns ? AppColors.success : context.accentColor;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
         return _ExerciseOptionCard(
           name: name,
@@ -1350,7 +1367,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: AppColors.cyan),
+            CircularProgressIndicator(color: context.accentColor),
             const SizedBox(height: 16),
             Text(
               'Loading recent exercises...',
@@ -1412,13 +1429,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         Color badgeColor;
         if (swapCount > 3) {
           badge = 'Frequently Used';
-          badgeColor = AppColors.success;
+          badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
         } else if (swapCount > 1) {
           badge = 'Used $swapCount times';
-          badgeColor = AppColors.orange;
+          badgeColor = context.accentColor;
         } else {
           badge = 'Recently Used';
-          badgeColor = AppColors.orange;
+          badgeColor = context.accentColor;
         }
 
         return _ExerciseOptionCard(
@@ -1532,7 +1549,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       imageUrl: exercise.imageUrl,
       subtitle: exercise.targetMuscle ?? exercise.bodyPart ?? '',
       badge: isCustom ? 'CUSTOM' : (exercise.equipment ?? 'Bodyweight'),
-      badgeColor: isCustom ? AppColors.orange : AppColors.purple,
+      badgeColor: isCustom ? context.accentColor : context.accentColor,
       onTap: () => _showExercisePreviewAndSwap(
         name: exercise.name,
         targetMuscle: exercise.targetMuscle,
@@ -1580,8 +1597,8 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         // Results
         Expanded(
           child: _isLoadingLibrary
-              ? const Center(
-                  child: CircularProgressIndicator(color: AppColors.cyan))
+              ? Center(
+                  child: CircularProgressIndicator(color: context.accentColor))
               : _libraryExercises.isEmpty
                   ? Center(
                       child: Text(

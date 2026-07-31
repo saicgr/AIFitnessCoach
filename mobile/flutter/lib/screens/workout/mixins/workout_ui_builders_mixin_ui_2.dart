@@ -251,8 +251,8 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                       return const SizedBox.shrink();
                                     }
                                     final color = connState == BleHrConnectionState.connected
-                                        ? Colors.green
-                                        : Colors.orange;
+                                        ? Colors.green  // accent-allowlist: success/positive state — must stay green regardless of accent
+                                        : Colors.orange;  // accent-allowlist: warning severity
                                     return Padding(
                                       padding: const EdgeInsets.only(left: 4),
                                       child: Icon(

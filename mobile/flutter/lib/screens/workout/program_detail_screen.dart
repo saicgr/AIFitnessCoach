@@ -17,6 +17,7 @@ import '../../widgets/signature/signature.dart';
 import 'exercise_browse.dart';
 import 'program_library_screen.dart' show ProgramLibraryStartFlow;
 import 'widgets/variant_picker.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Route metadata for the full-screen program detail page (mockup #14).
 /// Kept here so callers reference one path constant without a circular import.
@@ -385,8 +386,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   );
                 }
                 if (!snapshot.hasData) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: AppColors.orange),
+                  return Center(
+                    child: CircularProgressIndicator(color: context.accentColor),
                   );
                 }
                 return _buildBody(snapshot.data!.card);
@@ -518,7 +519,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 child: Icon(
                   fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                   size: 22,
-                  color: fav ? AppColors.orange : AppColors.textPrimary,
+                  color: fav ? context.accentColor : AppColors.textPrimary,
                 ),
               ),
             );
@@ -714,9 +715,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         controller: _tabController,
         isScrollable: true,
         tabAlignment: TabAlignment.start,
-        labelColor: AppColors.orange,
+        labelColor: context.accentColor,
         unselectedLabelColor: AppColors.textMuted,
-        indicatorColor: AppColors.orange,
+        indicatorColor: context.accentColor,
         indicatorWeight: 2.5,
         indicatorSize: TabBarIndicatorSize.label,
         labelPadding: const EdgeInsets.only(right: 24),
@@ -777,28 +778,28 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         if ((card.whoFor ?? '').trim().isNotEmpty)
           _OverviewNote(
             icon: Icons.check_circle_outline_rounded,
-            tint: const Color(0xFF2ECC71),
+            tint: const Color(0xFF2ECC71),  // accent-allowlist: note-type legend — 'who it is for' (positive) is always this green
             label: 'WHO IT IS FOR',
             body: card.whoFor!.trim(),
           ),
         if ((card.whoNotFor ?? '').trim().isNotEmpty)
           _OverviewNote(
             icon: Icons.do_not_disturb_on_outlined,
-            tint: const Color(0xFFEF4444),
+            tint: const Color(0xFFEF4444),  // accent-allowlist: error/destructive — must stay red
             label: 'WHO IT IS NOT FOR',
             body: card.whoNotFor!.trim(),
           ),
         if ((card.progressionNote ?? '').trim().isNotEmpty)
           _OverviewNote(
             icon: Icons.trending_up_rounded,
-            tint: const Color(0xFF38BDF8),
+            tint: const Color(0xFF38BDF8),  // accent-allowlist: note-type legend — 'how it progresses' (info) is always this blue
             label: 'HOW IT PROGRESSES',
             body: card.progressionNote!.trim(),
           ),
         if ((card.equipmentSummary ?? '').trim().isNotEmpty)
           _OverviewNote(
             icon: Icons.fitness_center_rounded,
-            tint: AppColors.orange,
+            tint: context.accentColor,
             label: 'EQUIPMENT',
             body: card.equipmentSummary!.trim(),
           ),
@@ -836,7 +837,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
             VoidCallback? onTap;
             if (cov.isCovered) {
               icon = Icons.check_circle_rounded;
-              tint = AppColors.success;
+              tint = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
               text = 'Fits your gym';
             } else if (cov.isUnknown) {
               icon = Icons.fitness_center_rounded;
@@ -845,7 +846,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               onTap = () => context.push('/settings/equipment');
             } else {
               icon = Icons.handyman_rounded;
-              tint = AppColors.warning;
+              tint = AppColors.warning;  // accent-allowlist: warning severity
               final n = cov.swappableCount;
               text =
                   'Needs ${_humanizeEquipmentSlugs(cov.missingEquipment)}'
@@ -886,7 +887,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                           'Add →',
                           style: ZType.sans(
                             12,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             weight: FontWeight.w700,
                           ),
                         ),
@@ -935,8 +936,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               programScheduleProvider(scheduleKey),
             );
             return scheduleAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.orange),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: context.accentColor),
               ),
               error: (err, _) => _DetailError(
                 onRetry: () {
@@ -1012,12 +1013,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.orange.withValues(alpha: 0.18)
+                          ? context.accentColor.withValues(alpha: 0.18)
                           : AppColors.surface2,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.orange
+                            ? context.accentColor
                             : AppColors.cardBorder,
                       ),
                     ),
@@ -1026,7 +1027,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                       style: ZType.lbl(
                         12,
                         color: isSelected
-                            ? AppColors.orange
+                            ? context.accentColor
                             : AppColors.textSecondary,
                         letterSpacing: 1.0,
                       ),
@@ -1065,8 +1066,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           return _DetailError(onRetry: _retry, onBack: null);
         }
         if (!snapshot.hasData) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.orange),
+          return Center(
+            child: CircularProgressIndicator(color: context.accentColor),
           );
         }
         final template = snapshot.data!.sampleWeek;
@@ -1160,7 +1161,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               Expanded(
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: context.accentColor,
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1285,11 +1286,11 @@ class _StatTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
         color: accented
-            ? AppColors.orange.withValues(alpha: 0.14)
+            ? context.accentColor.withValues(alpha: 0.14)
             : AppColors.surface2,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: accented ? AppColors.orange : AppColors.cardBorder,
+          color: accented ? context.accentColor : AppColors.cardBorder,
         ),
       ),
       child: Column(
@@ -1298,7 +1299,7 @@ class _StatTile extends StatelessWidget {
             value,
             style: ZType.disp(
               28,
-              color: accented ? AppColors.orange : AppColors.textPrimary,
+              color: accented ? context.accentColor : AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -1411,7 +1412,7 @@ class _PhaseBlock extends StatelessWidget {
           children: [
             Text(
               phase.index.toString().padLeft(2, '0'),
-              style: ZType.disp(26, color: AppColors.orange),
+              style: ZType.disp(26, color: context.accentColor),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1446,10 +1447,10 @@ class _PhaseBlock extends StatelessWidget {
             ),
             // Chevron is now meaningful — tapping navigates to that phase's
             // first week in the Schedule tab.
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               size: 20,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ],
         ),
@@ -1537,7 +1538,7 @@ class _WeekPhaseHeader extends StatelessWidget {
         if ((week.phase?.trim().isNotEmpty ?? false))
           Text(
             week.phase!.trim().toUpperCase(),
-            style: ZType.lbl(12, color: AppColors.orange, letterSpacing: 1.5),
+            style: ZType.lbl(12, color: context.accentColor, letterSpacing: 1.5),
           ),
         if ((week.focus?.trim().isNotEmpty ?? false)) ...[
           const SizedBox(height: 2),
@@ -1870,8 +1871,8 @@ class _DetailError extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.orange,
-                side: const BorderSide(color: AppColors.orange),
+                foregroundColor: context.accentColor,
+                side: BorderSide(color: context.accentColor),
               ),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: const Text('Retry'),

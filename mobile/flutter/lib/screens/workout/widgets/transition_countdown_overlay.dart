@@ -15,6 +15,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Transition countdown overlay displayed before moving to next exercise
 class TransitionCountdownOverlay extends StatefulWidget {
   /// Current countdown seconds remaining
@@ -130,13 +131,13 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppColors.cyan,
+            color: context.accentColor,
             letterSpacing: 4,
           ),
         ).animate(onPlay: (controller) => controller.repeat()).shimmer(
               delay: 500.ms,
               duration: 1500.ms,
-              color: AppColors.cyan.withOpacity(0.3),
+              color: context.accentColor.withOpacity(0.3),
             ),
         const SizedBox(height: 8),
         Text(
@@ -187,8 +188,8 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
                           ? Colors.white.withOpacity(0.1)
                           : Colors.black.withOpacity(0.1),
                       progressColor: widget.secondsRemaining <= 3
-                          ? AppColors.orange
-                          : AppColors.cyan,
+                          ? context.accentColor
+                          : context.accentColor,
                     ),
                   ),
                 ),
@@ -203,7 +204,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
                         fontSize: 72,
                         fontWeight: FontWeight.bold,
                         color: widget.secondsRemaining <= 3
-                            ? AppColors.orange
+                            ? context.accentColor
                             : textColor,
                         height: 1,
                       ),
@@ -252,12 +253,12 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
         color: cardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
+          color: context.accentColor.withOpacity(0.3),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.cyan.withOpacity(0.1),
+            color: context.accentColor.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -274,7 +275,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.cyan.withOpacity(0.2),
+                  color: context.accentColor.withOpacity(0.2),
                   width: 2,
                 ),
               ),
@@ -294,7 +295,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
                     child: Center(
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+                        valueColor: AlwaysStoppedAnimation(context.accentColor),
                       ),
                     ),
                   ),
@@ -304,7 +305,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
                         : Colors.black.withOpacity(0.1),
                     child: Icon(
                       Icons.fitness_center,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 40,
                     ),
                   ),
@@ -319,7 +320,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -327,7 +328,7 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 letterSpacing: 2,
               ),
             ),
@@ -449,11 +450,11 @@ class _TransitionCountdownOverlayState extends State<TransitionCountdownOverlay>
           borderRadius: BorderRadius.circular(14),
         ),
       ),
-      icon: Icon(Icons.skip_next, color: AppColors.cyan, size: 22),
+      icon: Icon(Icons.skip_next, color: context.accentColor, size: 22),
       label: Text(
         AppLocalizations.of(context).transitionCountdownOverlayStartNow,
         style: TextStyle(
-          color: AppColors.cyan,
+          color: context.accentColor,
           fontWeight: FontWeight.w700,
           fontSize: 16,
         ),

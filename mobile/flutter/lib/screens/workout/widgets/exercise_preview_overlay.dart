@@ -22,6 +22,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Shows the exercise preview overlay before starting an exercise
 /// Returns true if dismissed naturally (countdown finished), false if tapped early
 Future<bool> showExercisePreview({
@@ -262,7 +263,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
               Icon(
                 Icons.sports_mma,
                 size: 16,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -286,7 +287,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.15),
+                color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -295,7 +296,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
                   Icon(
                     Icons.check_circle,
                     size: 14,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -303,7 +304,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ),
                   ),
                 ],
@@ -340,7 +341,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
                       gradient: LinearGradient(
                         colors: [
                           AppColors.electricBlue,
-                          AppColors.purple,
+                          context.accentColor,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(3),

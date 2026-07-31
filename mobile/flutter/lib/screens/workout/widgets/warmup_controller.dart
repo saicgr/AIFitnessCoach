@@ -3,9 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Controller for warmup phase logic
+///
+/// NOTE (E2E #125 audit): this class is not currently instantiated anywhere
+/// in the app — the live legacy/Advanced warm-up path is
+/// `widgets/warmup_phase_screen.dart`'s own `_WarmupPhaseScreenState`
+/// (mounted from `active_workout_screen_refactored.dart:1870`), which has
+/// its own `PhaseTimerController`-based rest/duration handling, not this
+/// class. Kept in parity with the ask anyway (grep found zero call sites for
+/// `WarmupController(`, so this can't regress anything live).
 class WarmupController {
   Timer? _timer;
   int _currentIndex = 0;
@@ -14,6 +23,12 @@ class WarmupController {
   final VoidCallback onStateChanged;
   final VoidCallback onComplete;
   final List<Map<String, dynamic>> exercises;
+
+  /// E2E #125 ask #2 — rest between moves. True while a rest countdown (not
+  /// an exercise hold) is running; `onStateChanged` fires for both so a
+  /// single listener can drive one UI.
+  bool _isResting = false;
+  static const int _defaultRestSeconds = 10; // matches the backend default
 
   WarmupController({
     required this.exercises,
@@ -24,9 +39,35 @@ class WarmupController {
   int get currentIndex => _currentIndex;
   int get secondsRemaining => _secondsRemaining;
   bool get isRunning => _isRunning;
+  bool get isResting => _isResting;
   Map<String, dynamic> get currentExercise => exercises[_currentIndex];
   double get progress => (_currentIndex + 1) / exercises.length;
   bool get isLastExercise => _currentIndex >= exercises.length - 1;
+
+  int _durationOf(int index) {
+    final v = exercises[index]['duration'];
+    return v is num ? v.toInt() : 30;
+  }
+
+  int _restOf(int index) {
+    final v = exercises[index]['rest_seconds'];
+    return v is num ? v.toInt() : _defaultRestSeconds;
+  }
+
+  /// E2E #125 ask #2 — nudge the CURRENT move's hold duration. Mutates the
+  /// exercise map in place (the list is a mutable `List<Map>`, so this is
+  /// the whole warm-up's own source of truth — no separate override store
+  /// needed). If the timer is already counting down, the remaining time
+  /// shifts by the same delta so the change is felt immediately.
+  void adjustCurrentDuration(int deltaSeconds) {
+    final base = _durationOf(_currentIndex);
+    final next = (base + deltaSeconds).clamp(5, 300);
+    exercises[_currentIndex]['duration'] = next;
+    if (_isRunning || (_secondsRemaining > 0 && !_isResting)) {
+      _secondsRemaining = (_secondsRemaining + deltaSeconds).clamp(0, next);
+    }
+    onStateChanged();
+  }
 
   void startTimer() {
     final duration = (exercises[_currentIndex]['duration'] as num).toInt();
@@ -47,6 +88,34 @@ class WarmupController {
         nextExercise();
       }
     });
+  }
+
+  /// E2E #125 ask #2 — rest before the NEXT move (there was previously no
+  /// rest concept at all; every move ran back-to-back). Reads
+  /// `rest_seconds` off the move JUST FINISHED (index BEFORE the increment
+  /// below), falling back to the backend's own default.
+  void _startRest(int seconds) {
+    _timer?.cancel();
+    _isRunning = false;
+    _isResting = true;
+    _secondsRemaining = seconds;
+    onStateChanged();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_secondsRemaining > 0) {
+        _secondsRemaining--;
+        onStateChanged();
+      } else {
+        skipRest();
+      }
+    });
+  }
+
+  /// Skip the active rest and move straight to the next exercise.
+  void skipRest() {
+    _timer?.cancel();
+    _isResting = false;
+    HapticFeedback.mediumImpact();
+    _advanceIndex();
   }
 
   void pauseTimer() {
@@ -75,18 +144,30 @@ class WarmupController {
     HapticFeedback.mediumImpact();
 
     if (_currentIndex < exercises.length - 1) {
-      _currentIndex++;
-      _isRunning = false;
-      _secondsRemaining = 0;
-      onStateChanged();
-
-      // Auto-start timer for next exercise
-      Future.delayed(const Duration(milliseconds: 300), () {
-        startTimer();
-      });
+      final restSeconds = _restOf(_currentIndex);
+      if (restSeconds > 0) {
+        _startRest(restSeconds);
+        return;
+      }
+      _advanceIndex();
     } else {
       finish();
     }
+  }
+
+  /// Bump `_currentIndex` and auto-start the next move's timer. Split out
+  /// of [nextExercise] so both the rest-complete path ([skipRest]) and the
+  /// no-rest-configured path converge here.
+  void _advanceIndex() {
+    _currentIndex++;
+    _isRunning = false;
+    _secondsRemaining = 0;
+    onStateChanged();
+
+    // Auto-start timer for next exercise
+    Future.delayed(const Duration(milliseconds: 300), () {
+      startTimer();
+    });
   }
 
   void skip() {
@@ -151,11 +232,11 @@ class WarmupPhaseScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Progress bar
-                _buildProgressBar(elevatedColor),
+                _buildProgressBar(context, elevatedColor),
                 const Spacer(),
 
                 // Current exercise
-                _buildCurrentExercise(currentWarmup, textPrimary, textSecondary),
+                _buildCurrentExercise(context, currentWarmup, textPrimary, textSecondary),
                 const Spacer(),
 
                 // Upcoming exercises
@@ -189,7 +270,7 @@ class WarmupPhaseScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.timer, size: 16, color: AppColors.cyan),
+              Icon(Icons.timer, size: 16, color: context.accentColor),
               const SizedBox(width: 6),
               Text(
                 formatTime(workoutSeconds),
@@ -205,8 +286,8 @@ class WarmupPhaseScreen extends StatelessWidget {
           onPressed: controller.skip,
           child: Text(
             l.warmupControllerSkipWarmup,
-            style: const TextStyle(
-              color: AppColors.orange,
+            style: TextStyle(
+              color: context.accentColor,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -222,12 +303,12 @@ class WarmupPhaseScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.orange.withOpacity(0.2),
+            color: context.accentColor.withOpacity(0.2),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.whatshot,
-            color: AppColors.orange,
+            color: context.accentColor,
             size: 28,
           ),
         ),
@@ -237,10 +318,10 @@ class WarmupPhaseScreen extends StatelessWidget {
           children: [
             Text(
               l.warmupControllerWarmUp,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.orange,
+                color: context.accentColor,
                 letterSpacing: 1.5,
               ),
             ),
@@ -258,19 +339,20 @@ class WarmupPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar(Color elevatedColor) {
+  Widget _buildProgressBar(BuildContext context, Color elevatedColor) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
         value: controller.progress,
         backgroundColor: elevatedColor,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.orange),
+        valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
         minHeight: 6,
       ),
     );
   }
 
   Widget _buildCurrentExercise(
+    BuildContext context,
     Map<String, dynamic> currentWarmup,
     Color textPrimary,
     Color textSecondary,
@@ -281,13 +363,13 @@ class WarmupPhaseScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               currentWarmup['icon'] as IconData,
               size: 64,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ).animate()
             .fadeIn(duration: 300.ms)
@@ -307,13 +389,13 @@ class WarmupPhaseScreen extends StatelessWidget {
           if (controller.isRunning || controller.secondsRemaining > 0)
             Text(
               formatTime(controller.secondsRemaining),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 64,
                 fontWeight: FontWeight.w300,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
             ).animate(onPlay: (c) => c.repeat())
-              .shimmer(duration: 2000.ms, color: AppColors.orange.withOpacity(0.3))
+              .shimmer(duration: 2000.ms, color: context.accentColor.withOpacity(0.3))
           else
             Text(
               '${currentWarmup['duration']} sec',
@@ -399,10 +481,10 @@ class WarmupPhaseScreen extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: controller.isRunning
-                  ? AppColors.orange.withOpacity(0.3)
-                  : AppColors.orange,
+                  ? context.accentColor.withOpacity(0.3)
+                  : context.accentColor,
               foregroundColor: controller.isRunning
-                  ? AppColors.orange
+                  ? context.accentColor
                   : Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -430,7 +512,7 @@ class WarmupPhaseScreen extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: controller.nextExercise,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

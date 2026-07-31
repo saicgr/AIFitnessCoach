@@ -143,12 +143,12 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.tune,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 24,
                     ),
                   ),
@@ -199,7 +199,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                     child: _QuickActionButton(
                       icon: Icons.add,
                       label: AppLocalizations.of(context).setAdjustmentSheet1Set,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       onTap: () => _addSet(),
                     ),
                   ),
@@ -210,7 +210,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       child: _QuickActionButton(
                         icon: Icons.remove,
                         label: AppLocalizations.of(context).setAdjustmentSheet1Set2,
-                        color: AppColors.orange,
+                        color: context.accentColor,
                         onTap: _removeSet,
                       ),
                     ),
@@ -221,7 +221,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       child: _QuickActionButton(
                         icon: Icons.content_copy,
                         label: AppLocalizations.of(context).setAdjustmentSheetCopyLast,
-                        color: AppColors.purple,
+                        color: context.accentColor,
                         onTap: () => _addSet(copyLast: true),
                       ),
                     ),
@@ -237,20 +237,20 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: context.accentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle, size: 14, color: AppColors.success),
+                        Icon(Icons.check_circle, size: 14, color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         const SizedBox(width: 4),
                         Text(
                           AppLocalizations.of(context)!.setAdjustmentSheetPartInWorkoutSetEditingSheetStateDone(completedCount),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.success,
+                            color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                           ),
                         ),
                       ],
@@ -278,8 +278,8 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: _sets.length < widget.originalSetCount
-                            ? AppColors.orange.withOpacity(0.1)
-                            : AppColors.cyan.withOpacity(0.1),
+                            ? context.accentColor.withOpacity(0.1)
+                            : context.accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -290,8 +290,8 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: _sets.length < widget.originalSetCount
-                              ? AppColors.orange
-                              : AppColors.cyan,
+                              ? context.accentColor
+                              : context.accentColor,
                         ),
                       ),
                     ),
@@ -319,16 +319,16 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? AppColors.success.withOpacity(0.1)
+                          ? AppColors.success.withOpacity(0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
                           : isCurrent
-                              ? AppColors.cyan.withOpacity(0.1)
+                              ? context.accentColor.withOpacity(0.1)
                               : cardBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isCompleted
-                            ? AppColors.success.withOpacity(0.3)
+                            ? AppColors.success.withOpacity(0.3)  // accent-allowlist: success/positive state — must stay green regardless of accent
                             : isCurrent
-                                ? AppColors.cyan.withOpacity(0.5)
+                                ? context.accentColor.withOpacity(0.5)
                                 : isDark
                                     ? AppColors.cardBorder
                                     : AppColorsLight.cardBorder,
@@ -344,20 +344,20 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isCompleted
-                                ? AppColors.success.withOpacity(0.2)
+                                ? AppColors.success.withOpacity(0.2)  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 : isCurrent
-                                    ? AppColors.cyan.withOpacity(0.2)
+                                    ? context.accentColor.withOpacity(0.2)
                                     : textMuted.withOpacity(0.1),
                           ),
                           child: Center(
                             child: isCompleted
-                                ? const Icon(Icons.check, size: 16, color: AppColors.success)
+                                ? const Icon(Icons.check, size: 16, color: AppColors.success)  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 : Text(
                                     '${index + 1}',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
-                                      color: isCurrent ? AppColors.cyan : textSecondary,
+                                      color: isCurrent ? context.accentColor : textSecondary,
                                     ),
                                   ),
                           ),
@@ -432,12 +432,12 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.orange.withOpacity(0.15)
+                                  ? context.accentColor.withOpacity(0.15)
                                   : cardBg,
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.orange
+                                    ? context.accentColor
                                     : isDark
                                         ? AppColors.cardBorder
                                         : AppColorsLight.cardBorder,
@@ -451,7 +451,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                                   reason.icon,
                                   size: 16,
                                   color: isSelected
-                                      ? AppColors.orange
+                                      ? context.accentColor
                                       : textSecondary,
                                 ),
                                 const SizedBox(width: 6),
@@ -463,7 +463,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                                         ? FontWeight.w600
                                         : FontWeight.w500,
                                     color: isSelected
-                                        ? AppColors.orange
+                                        ? context.accentColor
                                         : textPrimary,
                                   ),
                                 ),
@@ -533,7 +533,7 @@ class _InWorkoutSetEditingSheetState extends State<InWorkoutSetEditingSheet> {
                     child: ElevatedButton(
                       onPressed: _canConfirm ? _handleConfirm : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: isDark
                             ? AppColors.elevated

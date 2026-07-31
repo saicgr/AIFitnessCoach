@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Timer widget for timed exercises (planks, wall sits, holds, etc.)
 /// Supports pause/resume functionality to allow users to rest mid-exercise.
 class TimedExerciseTimer extends StatefulWidget {
@@ -153,9 +154,9 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
   double get _progress => 1 - (_remainingSeconds / widget.durationSeconds);
 
   Color get _progressColor {
-    if (_isComplete) return AppColors.success;
-    if (_progress > 0.75) return AppColors.orange;
-    return AppColors.cyan;
+    if (_isComplete) return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (_progress > 0.75) return context.accentColor;
+    return context.accentColor;
   }
 
   @override
@@ -168,10 +169,10 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _isComplete
-              ? AppColors.success
+              ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
               : _isPaused
                   ? AppColors.cardBorder
-                  : AppColors.cyan,
+                  : context.accentColor,
           width: 2,
         ),
       ),
@@ -194,20 +195,20 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.2),
+                    color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                      Icon(Icons.check_circle, size: 16, color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
                       SizedBox(width: 4),
                       Text(
                         AppLocalizations.of(context).timedExerciseTimerComplete,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ),
                     ],
@@ -218,20 +219,20 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.2),
+                    color: context.accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.pause_circle, size: 16, color: AppColors.orange),
+                      Icon(Icons.pause_circle, size: 16, color: context.accentColor),
                       SizedBox(width: 4),
                       Text(
                         AppLocalizations.of(context).workoutTopOverlayPaused,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ],
@@ -271,29 +272,50 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                     strokeCap: StrokeCap.round,
                   ),
                 ),
-                // Time display
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatTime(_remainingSeconds),
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        color: _isComplete
-                            ? AppColors.success
-                            : AppColors.textPrimary,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
+                // Time display. E2E #134 — a Stack gives its non-positioned
+                // children LOOSE (not bounded) constraints and sizes ITSELF
+                // to the union of their natural sizes — so this Column,
+                // unconstrained, was free to grow past 140px at a large
+                // textScaler and dragged the whole ring+Stack taller with
+                // it, blowing out the fixed-height budget the timer sits in
+                // (the reported "clipped from the bottom" — the overflow
+                // actually surfaced one level up, wherever this widget is
+                // embedded with a bounded height). A bare FittedBox doesn't
+                // fix this alone — with nothing bounding IT either, it has
+                // no target box to fit into and passes the natural size
+                // straight through. The SizedBox(140,140) gives FittedBox an
+                // actual target matching the two ring circles, so the
+                // countdown scales down to fit at any text scale instead of
+                // inflating the Stack.
+                SizedBox(
+                  width: 140,
+                  height: 140,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatTime(_remainingSeconds),
+                          style: TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: _isComplete
+                                ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+                                : AppColors.textPrimary,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        Text(
+                          _remainingSeconds == 1 ? 'second' : 'seconds',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      _remainingSeconds == 1 ? 'second' : 'seconds',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -325,12 +347,12 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                     height: 72,
                     decoration: BoxDecoration(
                       color: _isPaused
-                          ? AppColors.cyan
-                          : AppColors.orange.withOpacity(0.9),
+                          ? context.accentColor
+                          : context.accentColor.withOpacity(0.9),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: (_isPaused ? AppColors.cyan : AppColors.orange)
+                          color: (_isPaused ? context.accentColor : context.accentColor)
                               .withOpacity(0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
@@ -355,11 +377,11 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.success.withOpacity(0.3),
+                          color: AppColors.success.withOpacity(0.3),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -533,16 +555,16 @@ class _TimedSetRowState extends State<TimedSetRow> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: widget.isCurrentSet && !widget.isCompleted
-            ? AppColors.cyan.withOpacity(0.1)
+            ? context.accentColor.withOpacity(0.1)
             : widget.isCompleted
-                ? AppColors.success.withOpacity(0.1)
+                ? AppColors.success.withOpacity(0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
                 : AppColors.glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: widget.isCurrentSet && !widget.isCompleted
-              ? AppColors.cyan
+              ? context.accentColor
               : widget.isCompleted
-                  ? AppColors.success
+                  ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                   : AppColors.cardBorder,
           width: widget.isCurrentSet ? 2 : 1,
         ),
@@ -555,8 +577,8 @@ class _TimedSetRowState extends State<TimedSetRow> {
             height: 32,
             decoration: BoxDecoration(
               color: widget.isCompleted
-                  ? AppColors.success
-                  : AppColors.cyan.withOpacity(0.2),
+                  ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+                  : context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -569,7 +591,7 @@ class _TimedSetRowState extends State<TimedSetRow> {
                         fontWeight: FontWeight.bold,
                         color: widget.isCompleted
                             ? Colors.white
-                            : AppColors.cyan,
+                            : context.accentColor,
                       ),
                     ),
             ),
@@ -593,7 +615,7 @@ class _TimedSetRowState extends State<TimedSetRow> {
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: widget.isCompleted
-                            ? AppColors.success
+                            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                             : AppColors.textPrimary,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
@@ -605,8 +627,8 @@ class _TimedSetRowState extends State<TimedSetRow> {
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: _isPaused
-                              ? AppColors.orange
-                              : AppColors.success,
+                              ? context.accentColor
+                              : AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ),
                   ],
@@ -619,8 +641,8 @@ class _TimedSetRowState extends State<TimedSetRow> {
                     value: widget.isCompleted ? 1.0 : progress,
                     backgroundColor: AppColors.cardBorder,
                     color: widget.isCompleted
-                        ? AppColors.success
-                        : AppColors.cyan,
+                        ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+                        : context.accentColor,
                     minHeight: 6,
                   ),
                 ),
@@ -639,8 +661,8 @@ class _TimedSetRowState extends State<TimedSetRow> {
                 height: 44,
                 decoration: BoxDecoration(
                   color: _isPaused
-                      ? AppColors.cyan
-                      : AppColors.orange,
+                      ? context.accentColor
+                      : context.accentColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -655,7 +677,7 @@ class _TimedSetRowState extends State<TimedSetRow> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(

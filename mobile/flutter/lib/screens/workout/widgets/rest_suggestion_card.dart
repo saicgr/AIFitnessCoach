@@ -13,6 +13,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/rest_suggestion.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Glassmorphic card displaying AI rest time suggestion
 class RestSuggestionCard extends StatelessWidget {
@@ -105,7 +106,7 @@ class RestSuggestionCard extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context, bool isDark, Color accentColor) {
     final l = AppLocalizations.of(context)!;
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.2 : 0.15;
     return Row(
       children: [
@@ -424,17 +425,19 @@ class RestSuggestionCard extends StatelessWidget {
     );
   }
 
+  // Rest-length scale — no BuildContext on this method, and each band needs
+  // its own colour so short/moderate/long/extended stay visually ordered.
   Color _getCategoryColor(RestCategory category, bool isDark) {
     Color baseColor;
     switch (category) {
       case RestCategory.short:
-        baseColor = AppColors.cyan;
+        baseColor = AppColors.cyan;  // accent-allowlist: rest-length scale — short is always this cyan
       case RestCategory.moderate:
-        baseColor = AppColors.success;
+        baseColor = AppColors.success;  // accent-allowlist: rest-length scale — moderate is always this green
       case RestCategory.long:
-        baseColor = AppColors.orange;
+        baseColor = AppColors.orange;  // accent-allowlist: rest-length scale — long is always this orange
       case RestCategory.extended:
-        baseColor = AppColors.purple;
+        baseColor = AppColors.purple;  // accent-allowlist: rest-length scale — extended is always this purple
     }
     return isDark ? baseColor : _darkenColor(baseColor);
   }
@@ -465,7 +468,7 @@ class RestSuggestionLoadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final l = AppLocalizations.of(context)!;
-    final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+    final cyan = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.2 : 0.15;
     final borderOpacity = isDark ? 0.3 : 0.4;
 

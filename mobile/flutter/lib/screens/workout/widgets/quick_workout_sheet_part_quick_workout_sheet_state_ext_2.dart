@@ -8,7 +8,7 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = context.accentColor;
 
     showGlassSheet(
       context: context,

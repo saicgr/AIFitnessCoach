@@ -50,11 +50,13 @@ import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 import '../widgets/change_equipment_helper.dart';
 import '../widgets/enhanced_notes_sheet.dart';
+import '../widgets/exercise_add_sheet.dart';
 import '../widgets/exercise_swap_sheet.dart';
 import '../widgets/form_analysis_sheet.dart';
 import '../widgets/how_did_i_do_pill.dart';
 import '../widgets/metric_picker_sheet.dart';
 import '../widgets/report_pain_sheet.dart';
+import '../widgets/stale_checkpoint_dialog.dart';
 import 'easy_active_workout_screen.dart';
 import '../providers/active_workout_session_provider.dart';
 import '../providers/active_workout_live_provider.dart';
@@ -67,6 +69,7 @@ import 'easy_sheet_helpers.dart';
 import 'score_target_service.dart';
 import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_exercise_header.dart' show showEasyExerciseHistorySheet;
+import 'widgets/warmup_rest_overlay.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/services/workout_tour_steps.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart' show AppTourState;
@@ -143,6 +146,14 @@ class EasyActiveWorkoutScreenState
   int _warmupIndex = 0;
   bool _warmupPhase = false;
 
+  /// E2E #134 — the rest overlay is a transparent-barrier ROUTE pushed on
+  /// top of this screen (see `_startRest`/`startEasyRest`), so nothing
+  /// below it reserves height and the bottom-docked rest strip overlapped
+  /// the set ledger / "Ask coach" pill underneath. True for the duration
+  /// the overlay is up; `EasyActiveWorkoutView` uses it to add matching
+  /// bottom clearance so the content lifts clear of the strip.
+  bool _isResting = false;
+
   /// Completed warm-up moves accumulated for the single `/warmup-logs` POST
   /// fired when the warm-up ends (finished OR skipped).
   final Map<String, List<Map<String, dynamic>>> _warmupCompleted = {};
@@ -185,12 +196,32 @@ class EasyActiveWorkoutScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       session.start(widget.workout.id);
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (!mounted) return;
+
+      // E2E #136 — a checkpoint with real progress older than the prompt
+      // threshold must NOT rehydrate silently (that's how a freshly-started
+      // workout opened already 23m37s / 161 kcal / 666 kg into a session the
+      // user never started this time). Ask before adopting it.
+      final age = await session.peekStaleCheckpoint(
+        workoutId: widget.workout.id,
+        userId: userId,
+      );
+      if (age != null &&
+          age > kCheckpointStalePromptThreshold &&
+          mounted) {
+        final resume = await showStaleCheckpointDialog(context, age: age);
+        if (resume != true) {
+          await session.discardOnDiskCheckpoint();
+          return; // start fresh — nothing to rehydrate
+        }
+      }
+      if (!mounted) return;
+
       // WF4 — rehydrate the crash-safe checkpoint from SharedPreferences. If
       // the app was killed mid-workout, this restores the logged sets +
       // current exercise + elapsed timer for THIS workout. restoreCheckpoint
       // also adopts the restored state as the live in-memory session.
-      final userId = await ref.read(apiClientProvider).getUserId();
-      if (!mounted) return;
       await session.restoreCheckpoint(
         workoutId: widget.workout.id,
         userId: userId,
@@ -293,12 +324,24 @@ class EasyActiveWorkoutScreenState
       _finishWarmupPhase();
       return;
     }
+    final workoutId = widget.workout.id!;
     try {
-      final res = await ref
-          .read(workoutRepositoryProvider)
-          .fetchWarmupAndStretches(widget.workout.id!);
+      final repo = ref.read(workoutRepositoryProvider);
+      // E2E #125 ask #3 — prefer the user's SAVED warm-up template (their
+      // past add/remove/swap/duration/rest edits) over a fresh AI-generated
+      // one. `applyWarmupTemplate` seeds THIS workout's own `warmups` row
+      // from it server-side, so the per-workout persist in
+      // `_persistWarmupList` above keeps working normally on top of it. A
+      // miss (nothing saved yet) or any failure falls straight through to
+      // the normal per-workout read below — never a fabricated warm-up.
+      List<Map<String, dynamic>>? warm;
+      try {
+        warm = await repo.applyWarmupTemplate(workoutId);
+      } catch (e) {
+        debugPrint('⚠️ [EasyWorkout] warm-up template apply failed: $e');
+      }
+      warm ??= (await repo.fetchWarmupAndStretches(workoutId)).warmup;
       if (!mounted) return;
-      final warm = res.warmup;
       if (warm != null && warm.isNotEmpty) {
         final built = [for (final m in warm) _warmupExerciseFrom(m)];
         setState(() {
@@ -348,10 +391,22 @@ class EasyActiveWorkoutScreenState
       return 30;
     }
 
+    int restOf() {
+      final v = m['rest_seconds'] ?? m['restSeconds'];
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 10;
+      return 10; // matches the backend WarmupExercise schema's default
+    }
+
     return WorkoutExercise(
       nameValue: m['name']?.toString() ?? 'Warm-up',
       exerciseId: m['exercise_id']?.toString() ?? m['exerciseId']?.toString(),
       holdSeconds: durationOf(),
+      // E2E #125: carried through so a customized rest/duration round-trips
+      // to `_warmupItemToJson` on the next persist — without this, an edit
+      // followed immediately by ANOTHER edit (or a reorder) would silently
+      // revert the first edit's rest value back to the server default.
+      restSeconds: restOf(),
       isTimed: true,
       section: 'warmup',
       gifUrl: m['gif_url']?.toString() ?? m['gifUrl']?.toString(),
@@ -361,7 +416,199 @@ class EasyActiveWorkoutScreenState
       instructions: m['instructions']?.toString(),
       equipment: m['equipment']?.toString(),
       bodyPart: m['body_part']?.toString() ?? m['bodyPart']?.toString(),
+      muscleGroup: m['muscle_group']?.toString() ?? m['muscleGroup']?.toString(),
     );
+  }
+
+  /// Serialize one warm-up move back to the raw shape the backend's
+  /// `WarmupExercise` schema expects for `PUT /{id}/warmup/exercises`
+  /// (`WorkoutRepository.saveWarmupStretchOrder`). `duration_seconds` is read
+  /// from the LIVE per-move state (the user's ±5s nudges) when available, so
+  /// an in-memory-only edit (E2E #125's core complaint) actually persists.
+  Map<String, dynamic> _warmupItemToJson(int idx, WorkoutExercise ex) {
+    final liveDuration = _warmupStates[idx]?.durationSeconds;
+    return {
+      'name': ex.name,
+      'sets': 1,
+      'duration_seconds': liveDuration ?? ex.holdSeconds ?? 30,
+      'rest_seconds': ex.restSeconds ?? 10,
+      'equipment': (ex.equipment == null || ex.equipment!.isEmpty)
+          ? 'none'
+          : ex.equipment,
+      // Required, non-nullable server-side — 'general' is the same fallback
+      // the backend itself uses when a resolved exercise carries none.
+      'muscle_group': (ex.muscleGroup == null || ex.muscleGroup!.isEmpty)
+          ? 'general'
+          : ex.muscleGroup,
+      if (ex.instructions != null) 'notes': ex.instructions,
+    };
+  }
+
+  /// Persist the CURRENT `_warmupExercises` order/durations/rest to the
+  /// server so a customized warm-up survives to the next run. Two writes:
+  ///   1. THIS workout's `warmups` row (`saveWarmupStretchOrder`) — covers
+  ///      re-entering the SAME workout (tier-swap, app restart mid-workout).
+  ///   2. The user's SAVED warm-up template (`saveWarmupTemplate`,
+  ///      `backend/api/v1/workouts/warmup_templates.py`, scoped by
+  ///      `workout.type`) — the actual E2E #125 ask #3: carrying the edit
+  ///      into the NEXT workout, which (1) alone does not do (a fresh
+  ///      workout's `warmups` row is unrelated to a past one's). Read back
+  ///      by `_resolveWarmupPhase` via `applyWarmupTemplate`.
+  /// Both are best-effort — a failed persist doesn't block the workout; the
+  /// next successful edit (or app session) retries with the latest state.
+  Future<void> _persistWarmupList() async {
+    final id = widget.workout.id;
+    if (id == null || id.isEmpty || _warmupExercises.isEmpty) return;
+    final list = [
+      for (int i = 0; i < _warmupExercises.length; i++)
+        _warmupItemToJson(i, _warmupExercises[i]),
+    ];
+    final repo = ref.read(workoutRepositoryProvider);
+    try {
+      await repo.saveWarmupStretchOrder(id, 'warmup', list);
+    } catch (e) {
+      debugPrint('⚠️ [EasyWorkout] warm-up persist failed: $e');
+    }
+    try {
+      await repo.saveWarmupTemplate(
+        workoutType: widget.workout.type,
+        exercises: list,
+      );
+    } catch (e) {
+      debugPrint('⚠️ [EasyWorkout] warm-up template save failed: $e');
+    }
+  }
+
+  /// Re-seed `_warmupExercises`/`_warmupStates` from a freshly-fetched (or
+  /// locally-composed) raw item list, preserving each move's session
+  /// progress where the name still matches so an add/swap/remove mid-warm-up
+  /// doesn't reset moves the user already completed.
+  void _rebuildWarmupFrom(List<Map<String, dynamic>> raw, {int? focusIndex}) {
+    final built = [for (final m in raw) _warmupExerciseFrom(m)];
+    final newStates = <int, EasyExerciseState>{};
+    for (int i = 0; i < built.length; i++) {
+      newStates[i] = EasyExerciseState(
+        displayWeight: 0,
+        reps: 0,
+        targetReps: 0,
+        targetWeightKg: 0,
+        totalSets: 1,
+        isTimed: true,
+        isBodyweight: true,
+        durationSeconds: built[i].holdSeconds ?? 30,
+      );
+    }
+    setState(() {
+      _warmupExercises = built;
+      _warmupStates
+        ..clear()
+        ..addAll(newStates);
+      _warmupIndex = (focusIndex ?? _warmupIndex)
+          .clamp(0, built.isEmpty ? 0 : built.length - 1);
+    });
+  }
+
+  /// E2E #125 ask #1 — "+ Add a move". Reuses the SAME injury-screened,
+  /// library-resolved add sheet the working-set list already uses
+  /// (`section: 'warmup'` routes the backend write to the `warmups` table
+  /// instead of `exercises_json` — see `add_exercise_to_workout` in
+  /// `api/v1/workouts/workout_operations.py`). Appends, then re-fetches so
+  /// the new move carries its server-resolved media/equipment.
+  Future<void> _addWarmupMove() async {
+    final id = widget.workout.id;
+    if (id == null) return;
+    final repo = ref.read(workoutRepositoryProvider);
+    final result = await showExerciseAddSheet(
+      context,
+      ref,
+      workoutId: id,
+      workoutType: widget.workout.type ?? 'strength',
+      section: 'warmup',
+    );
+    if (result == null || !mounted) return;
+    HapticService.instance.success();
+    final res = await repo.fetchWarmupAndStretches(id, forceRefresh: true);
+    if (!mounted || res.warmup == null) return;
+    _rebuildWarmupFrom(res.warmup!, focusIndex: res.warmup!.length - 1);
+  }
+
+  /// E2E #125 ask #1 — "Swap this move". There is no injury-screened
+  /// warmup-swap endpoint (`POST /swap-exercise`'s `section` field is
+  /// accepted but never actually branched on server-side — see report),
+  /// so this composes swap from two EXISTING, already-safe primitives: the
+  /// injury-screened `section: 'warmup'` ADD (appends the replacement),
+  /// then a local splice + `saveWarmupStretchOrder` puts it where the old
+  /// move was and drops the old move — one extra round-trip, zero new
+  /// backend surface, and the replacement is screened exactly like a fresh
+  /// add would be.
+  Future<void> _swapWarmupMove(int idx) async {
+    final id = widget.workout.id;
+    if (id == null || idx < 0 || idx >= _warmupExercises.length) return;
+    final repo = ref.read(workoutRepositoryProvider);
+    final oldName = _warmupExercises[idx].name;
+    final result = await showExerciseAddSheet(
+      context,
+      ref,
+      workoutId: id,
+      workoutType: widget.workout.type ?? 'strength',
+      section: 'warmup',
+    );
+    if (result == null || !mounted) return;
+    final res = await repo.fetchWarmupAndStretches(id, forceRefresh: true);
+    if (!mounted || res.warmup == null || res.warmup!.isEmpty) return;
+    // The add just appended — the new move is the last entry not matching
+    // the pre-swap name at this position (append-only semantics of the
+    // warmup add endpoint make "last item" the reliable signal).
+    final withAppend = List<Map<String, dynamic>>.from(res.warmup!);
+    final added = withAppend.removeLast();
+    if (idx < withAppend.length) {
+      withAppend[idx] = added; // replace the old move in place
+    } else {
+      withAppend.add(added);
+    }
+    HapticService.instance.success();
+    _rebuildWarmupFrom(withAppend, focusIndex: idx);
+    unawaited(_persistWarmupList());
+    debugPrint('🔍 [EasyWorkout] swapped warm-up move "$oldName" → "${added['name']}"');
+  }
+
+  /// E2E #125 ask #1 — "Remove this move". Uses the general-purpose
+  /// `PUT /{id}/warmup/exercises` (already backend-supported; no new
+  /// endpoint needed) with the item spliced out.
+  Future<void> _removeWarmupMove(int idx) async {
+    if (idx < 0 || idx >= _warmupExercises.length) return;
+    if (_warmupExercises.length == 1) {
+      // Nothing left to warm up with — same as skipping the whole thing.
+      _finishWarmupPhase();
+      return;
+    }
+    HapticService.instance.tap();
+    final list = [
+      for (int i = 0; i < _warmupExercises.length; i++)
+        if (i != idx) _warmupItemToJson(i, _warmupExercises[i]),
+    ];
+    final newFocus = idx >= list.length ? list.length - 1 : idx;
+    _rebuildWarmupFrom(list, focusIndex: newFocus);
+    unawaited(_persistWarmupList());
+  }
+
+  /// E2E #125 ask #2 — per-move rest, editable via the actions sheet.
+  /// Cycles a common-preset ladder (the sheet closes on every tap, so a
+  /// stepper the user nudges repeatedly would mean reopening it each time
+  /// anyway — a cycle reaches every useful value in at most 5 taps).
+  static const List<int> _kWarmupRestPresets = [0, 10, 20, 30, 45, 60];
+  void _cycleWarmupRest(int idx) {
+    if (idx < 0 || idx >= _warmupExercises.length) return;
+    final ex = _warmupExercises[idx];
+    final current = ex.restSeconds ?? 10;
+    final i = _kWarmupRestPresets.indexOf(current);
+    final next = _kWarmupRestPresets[
+        i == -1 ? 0 : (i + 1) % _kWarmupRestPresets.length];
+    setState(() {
+      _warmupExercises[idx] = ex.copyWith(restSeconds: next);
+    });
+    HapticService.instance.tick();
+    unawaited(_persistWarmupList());
   }
 
   /// "Log set" on a warm-up move → record the hold and advance. Warm-up holds
@@ -378,13 +625,69 @@ class EasyActiveWorkoutScreenState
     _advanceWarmup();
   }
 
-  /// Move to the next warm-up move, or hand off to the working sets.
+  /// Move to the next warm-up move (via a rest interval when the finishing
+  /// move has one configured — E2E #125 ask #2), or hand off to the working
+  /// sets. Also persists the just-edited duration/rest/order (E2E #125 ask
+  /// #3) — this is the point every warm-up flow (log/skip/skip-whole) passes
+  /// through before leaving a move, so it's the natural save point.
   void _advanceWarmup() {
+    unawaited(_persistWarmupList());
+    final isLastMove = _warmupIndex + 1 >= _warmupExercises.length;
+    final restSecs = _warmupExercises[_warmupIndex].restSeconds ?? 0;
+    if (!isLastMove && restSecs > 0) {
+      _startWarmupRest(restSecs);
+      return;
+    }
+    _advanceWarmupIndexNow();
+  }
+
+  void _advanceWarmupIndexNow() {
     if (_warmupIndex + 1 >= _warmupExercises.length) {
       _finishWarmupPhase();
       return;
     }
     setState(() => _warmupIndex++);
+  }
+
+  /// E2E #125 ask #2 — an actual rest pause between warm-up moves (there was
+  /// previously NO rest concept at all; every move ran back-to-back). A
+  /// lightweight local countdown — not the shared working-set rest overlay,
+  /// which is built around a weight×reps target the warm-up doesn't have.
+  bool _warmupResting = false;
+  int _warmupRestRemaining = 0;
+  // The duration this countdown STARTED at — `WarmupRestOverlay`'s draining
+  // progress bar needs it alongside the ticking `_warmupRestRemaining`, so the
+  // remaining number has a scale rather than being a bare "8s".
+  int _warmupRestTotal = 0;
+  Timer? _warmupRestTimer;
+
+  void _startWarmupRest(int seconds) {
+    _warmupRestTimer?.cancel();
+    setState(() {
+      _warmupResting = true;
+      _warmupRestRemaining = seconds;
+      _warmupRestTotal = seconds;
+    });
+    _warmupRestTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (_warmupRestRemaining <= 1) {
+        t.cancel();
+        setState(() => _warmupResting = false);
+        _advanceWarmupIndexNow();
+      } else {
+        setState(() => _warmupRestRemaining--);
+      }
+    });
+  }
+
+  void _skipWarmupRest() {
+    HapticService.instance.tap();
+    _warmupRestTimer?.cancel();
+    setState(() => _warmupResting = false);
+    _advanceWarmupIndexNow();
   }
 
   void _skipWarmupMove() {
@@ -430,13 +733,17 @@ class EasyActiveWorkoutScreenState
     }());
   }
 
-  /// The ⋯ actions available on a warm-up move. Deliberately a subset of the
-  /// working-set sheet: a warm-up move has no swap/increment/pain-swap
-  /// semantics, but skipping, video, water, complete and quit all still apply.
+  /// The ⋯ actions available on a warm-up move.
+  ///
+  /// E2E #125 — the warm-up used to be completely non-editable: every
+  /// callback into `EasyActiveWorkoutView` was nulled out (see the file's
+  /// class doc), so this sheet was the ONLY affordance — skip/quit/video/
+  /// water. Add/Swap/Remove + a Rest stepper now live here too.
   void _showWarmupActions() {
     if (_warmupExercises.isEmpty) return;
-    final ex = _warmupExercises[_warmupIndex];
-    final isLast = _warmupIndex >= _warmupExercises.length - 1;
+    final idx = _warmupIndex;
+    final ex = _warmupExercises[idx];
+    final isLast = idx >= _warmupExercises.length - 1;
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
@@ -445,6 +752,29 @@ class EasyActiveWorkoutScreenState
           exerciseName: ex.name,
           actions: [
             EasyExerciseAction(
+              icon: Icons.swap_horiz_rounded,
+              label: 'Swap this move',
+              onTap: () => unawaited(_swapWarmupMove(idx)),
+            ),
+            EasyExerciseAction(
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Add a move',
+              onTap: () => unawaited(_addWarmupMove()),
+            ),
+            if (_warmupExercises.length > 1)
+              EasyExerciseAction(
+                icon: Icons.remove_circle_outline_rounded,
+                label: 'Remove this move',
+                onTap: () => unawaited(_removeWarmupMove(idx)),
+                destructive: true,
+              ),
+            EasyExerciseAction(
+              icon: Icons.timer_outlined,
+              label: 'Rest after this move: ${ex.restSeconds ?? 10}s',
+              subtitle: 'Tap to cycle 0 / 10 / 20 / 30 / 45 / 60s',
+              onTap: () => _cycleWarmupRest(idx),
+            ),
+            EasyExerciseAction(
               icon: Icons.skip_next_rounded,
               label: isLast ? 'Start working sets' : 'Skip this move',
               onTap: _advanceWarmup,
@@ -452,7 +782,7 @@ class EasyActiveWorkoutScreenState
             EasyExerciseAction(
               icon: Icons.fast_forward_rounded,
               label: 'Skip the whole warm-up',
-              subtitle: '${_warmupExercises.length - _warmupIndex} moves left',
+              subtitle: '${_warmupExercises.length - idx} moves left',
               onTap: _finishWarmupPhase,
             ),
             EasyExerciseAction(
@@ -463,7 +793,7 @@ class EasyActiveWorkoutScreenState
                 ex,
                 ref: ref,
                 playlist: _warmupExercises,
-                playlistIndex: _warmupIndex,
+                playlistIndex: idx,
               ),
             ),
             EasyExerciseAction(
@@ -516,6 +846,11 @@ class EasyActiveWorkoutScreenState
     _tourSeenSub?.close();
     _timer.dispose();
     _restBroadcaster?.dispose();
+    // E2E register row 125: the warm-up rest countdown is a Timer.periodic. It
+    // guards on `mounted` inside the tick, but an uncancelled timer still keeps
+    // firing (and holding this State alive) after the screen is gone — cancel
+    // it here rather than relying on the guard.
+    _warmupRestTimer?.cancel();
     super.dispose();
   }
 
@@ -1098,6 +1433,7 @@ class EasyActiveWorkoutScreenState
       exercises: _exercises,
       perExercise: _perExercise,
     );
+    if (mounted) setState(() => _isResting = true);
     _restBroadcaster = startEasyRest(
       context: context,
       timer: _timer,
@@ -1109,6 +1445,7 @@ class EasyActiveWorkoutScreenState
   }
 
   void _handleRestComplete() {
+    if (mounted) setState(() => _isResting = false);
     if (mounted && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     }
@@ -1533,7 +1870,7 @@ class EasyActiveWorkoutScreenState
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent), // accent-allowlist: destructive Quit-workout confirmation action — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).easyActiveWorkoutQuit),
           ),
         ],
@@ -1810,6 +2147,7 @@ class EasyActiveWorkoutScreenState
       onQuitWorkout: _quitWorkout,
       onCompleteWorkoutNow: _completeWorkoutNow,
       allCompletedSets: [for (final s in _perExercise.values) ...s.completed],
+      isResting: _isResting,
       ),
     );
   }
@@ -1821,6 +2159,36 @@ class EasyActiveWorkoutScreenState
   Widget _buildWarmupView(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
+
+    final hasMoreWarmup = _warmupIndex + 1 < _warmupExercises.length;
+    // "Next:" points at the following warm-up move, or — on the last one — at
+    // the first working exercise, so the hand-off is never a surprise.
+    final nextName = hasMoreWarmup
+        ? _warmupExercises[_warmupIndex + 1].name
+        : (_exercises.isNotEmpty ? _exercises.first.name : null);
+
+    // E2E #125 ask #2 — the render surface for `_startWarmupRest`'s
+    // countdown. Replaces the whole warm-up screen (rather than a slot
+    // inside `EasyActiveWorkoutView`, which has no rest concept) while
+    // `_warmupResting` is true; `_skipWarmupRest` is now a REAL control
+    // instead of dead code.
+    if (_warmupResting) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _quitWorkout();
+        },
+        child: WarmupRestOverlay(
+          secondsRemaining: _warmupRestRemaining,
+          totalSeconds: _warmupRestTotal,
+          nextMoveName: nextName,
+          onSkip: _skipWarmupRest,
+          isDark: isDark,
+          accent: accent,
+        ),
+      );
+    }
+
     final useKg = ref.watch(useKgForWorkoutProvider);
     final mq = MediaQuery.of(context);
     final safeAreaH = mq.size.height - mq.padding.top - mq.padding.bottom;
@@ -1828,12 +2196,6 @@ class EasyActiveWorkoutScreenState
 
     final exercise = _warmupExercises[_warmupIndex];
     final state = _warmupStates[_warmupIndex]!;
-    final hasMoreWarmup = _warmupIndex + 1 < _warmupExercises.length;
-    // "Next:" points at the following warm-up move, or — on the last one — at
-    // the first working exercise, so the hand-off is never a surprise.
-    final nextName = hasMoreWarmup
-        ? _warmupExercises[_warmupIndex + 1].name
-        : (_exercises.isNotEmpty ? _exercises.first.name : null);
 
     return PopScope(
       canPop: false,
@@ -1906,6 +2268,8 @@ class EasyActiveWorkoutScreenState
         onHowDidIDo: null,
         lastSet: null,
         scoreTarget: null,
+        // Rest is handled by the WarmupRestOverlay early-return above, so this
+        // branch only ever runs while NOT resting.
         onSkipToNext: hasMoreWarmup ? _skipWarmupMove : _skipWholeWarmup,
         onShowHistory: () =>
             showEasyExerciseHistorySheet(context, ref, exercise.name),

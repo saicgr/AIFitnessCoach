@@ -755,7 +755,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                   ),
                   const Spacer(),
                   if (preset.isFavorite)
-                    Icon(Icons.favorite, size: 12, color: Colors.red.shade300),
+                    Icon(Icons.favorite, size: 12, color: Colors.red.shade300),  // accent-allowlist: error/destructive — must stay red
                   if (preset.isAiGenerated && !preset.isFavorite)
                     Icon(Icons.auto_awesome, size: 12, color: presetColor.withOpacity(0.7)),
                 ],
@@ -887,7 +887,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
               ListTile(
                 leading: Icon(
                   preset.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: preset.isFavorite ? Colors.red : null,
+                  color: preset.isFavorite ? Colors.red : null,  // accent-allowlist: error/destructive — must stay red
                 ),
                 title: Text(preset.isFavorite ? AppLocalizations.of(context)!.quickWorkoutUnfavorite : AppLocalizations.of(context)!.quickWorkoutFavorite),
                 onTap: () async {
@@ -898,8 +898,8 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
-                title: Text(AppLocalizations.of(context)!.commonDelete, style: const TextStyle(color: Colors.red)),
+                leading: const Icon(Icons.delete_outline, color: Colors.red),  // accent-allowlist: error/destructive — must stay red
+                title: Text(AppLocalizations.of(context)!.commonDelete, style: const TextStyle(color: Colors.red)),  // accent-allowlist: error/destructive — must stay red
                 onTap: () async {
                   Navigator.pop(ctx);
                   final db = ref.read(appDatabaseProvider);

@@ -6,6 +6,7 @@ import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Data class for quit workout result
 class QuitWorkoutResult {
   final String reason;
@@ -81,7 +82,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                   children: [
                     Icon(
                       Icons.exit_to_app,
-                      color: isDark ? AppColors.orange : AppColorsLight.orange,
+                      color: context.accentColor,
                       size: 28,
                     ),
                     const SizedBox(width: 12),
@@ -125,8 +126,8 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                     child: Container(
                       decoration: BoxDecoration(
                         color: progressPercent >= 50
-                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
-                            : (isDark ? AppColors.orange : AppColorsLight.orange),
+                            ? (context.accentColor)
+                            : (context.accentColor),
                         borderRadius: BorderRadius.circular(3),
                       ),
                     ),
@@ -237,7 +238,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(ctx),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF22C55E), // Green - always
+                          backgroundColor: const Color(0xFF22C55E), // Green - always  // accent-allowlist: success/positive state — must stay green regardless of accent
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -268,7 +269,7 @@ Future<QuitWorkoutResult?> showQuitWorkoutDialog({
                           });
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF4444), // Red - always
+                          backgroundColor: const Color(0xFFEF4444), // Red - always  // accent-allowlist: error/destructive — must stay red
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -311,7 +312,7 @@ class _ReasonChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accentColor = context.accentColor;
     final bgColor = isSelected
         ? accentColor.withValues(alpha: 0.15)
         : (isDark ? AppColors.elevated : AppColorsLight.elevated);

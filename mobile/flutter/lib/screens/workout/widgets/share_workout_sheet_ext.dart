@@ -343,7 +343,7 @@ class _GalleryTile extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: const Color(0xFFF97316),
+                          color: context.accentColor,
                           width: 2,
                         ),
                       ),
@@ -365,7 +365,7 @@ class _GalleryTile extends StatelessWidget {
                           isFavorite ? Icons.star : Icons.star_border,
                           size: 16,
                           color: isFavorite
-                              ? const Color(0xFFFFC107)
+                              ? const Color(0xFFFFC107)  // accent-allowlist: filled favorite star gold, matches the universal star convention
                               : Colors.white,
                         ),
                       ),
@@ -386,7 +386,7 @@ class _GalleryTile extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               color: isSelected
-                  ? const Color(0xFFF97316)
+                  ? context.accentColor
                   : Colors.white.withValues(alpha: 0.7),
               fontWeight: FontWeight.w700,
               letterSpacing: 0.3,

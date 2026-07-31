@@ -5,6 +5,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'edit_weights_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Equipment categories and their items
 const Map<String, List<String>> equipmentCategories = {
   'Free Weights': [
@@ -234,7 +235,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
 
     return Column(
         children: [

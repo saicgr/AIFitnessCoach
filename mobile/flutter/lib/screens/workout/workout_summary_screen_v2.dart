@@ -477,7 +477,7 @@ class _SummaryHeaderActionsState extends ConsumerState<_SummaryHeaderActions> {
               : Icons.favorite_border_rounded,
           tooltip: 'Favorite',
           isDark: isDark,
-          color: _isFavorite ? const Color(0xFFFF4D6D) : null,
+          color: _isFavorite ? const Color(0xFFFF4D6D) : null,  // accent-allowlist: filled favorite heart — always this pink/red, matches the universal favorite convention
           onTap: _toggleFavorite,
         ),
         const SizedBox(width: 8),

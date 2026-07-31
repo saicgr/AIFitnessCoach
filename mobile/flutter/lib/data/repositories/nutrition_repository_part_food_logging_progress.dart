@@ -1556,6 +1556,12 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     );
     state = state.copyWith(logs: updatedLogs, summary: newSummary);
     unawaited(_NutritionDiskCache.write(userId, _dateKey, newSummary));
+    // E2E #131: this is a CREATE path (recipe logging, browser-panel relog,
+    // and — via spliceMenuItem — menu/buffet item logging). The coach
+    // recap/briefing cache has a 12h TTL and bakes today's macros into cached
+    // prose; without busting it here, the next Coach open paints stale
+    // pre-log numbers (observed: "0g protein logged" right after a 601g log).
+    unawaited(_bustCoachInsightCaches(userId));
   }
 
   /// Instantly add a newly logged meal to local state so the UI updates
@@ -1655,6 +1661,11 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     unawaited(_ref
         .read(nutritionMetaProvider.notifier)
         .refreshPendingMealCount(userId));
+
+    // E2E #131: this is the direct/photo/text log CREATE path. Bust the
+    // coach-insight cache here too — see the matching comment in
+    // spliceRawLog for why (12h TTL, stale prose otherwise).
+    unawaited(_bustCoachInsightCaches(userId));
 
     // (WR1) Hand the optimistic row back so callers can roll it back by id.
     return newLog;
@@ -1842,6 +1853,14 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       // network write so the server still gets the edit.
       try {
         await networkUpdate();
+        // E2E #131: an edit can change the day's macro totals just like a
+        // create can — bust the coach-insight cache here too. The row isn't
+        // available here to read userId off, so fall back to the notifier's
+        // last-loaded user (set by `load()`/`loadLogs()`).
+        final uid = _lastLoadedUserId;
+        if (uid != null && uid.isNotEmpty) {
+          unawaited(_bustCoachInsightCaches(uid));
+        }
       } catch (e) {
         if (!mounted) return;
         state = state.copyWith(error: e.toString());
@@ -1850,6 +1869,12 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     }
     try {
       await networkUpdate();
+      // The edited row carries its own userId — more reliable than the
+      // notifier's last-loaded user when viewing another user's shared date
+      // (not a real case today, but cheap to get right).
+      if (original.userId.isNotEmpty) {
+        unawaited(_bustCoachInsightCaches(original.userId));
+      }
     } catch (e) {
       if (!mounted) return;
       // Roll back to the pre-edit row so the UI never shows an edit the

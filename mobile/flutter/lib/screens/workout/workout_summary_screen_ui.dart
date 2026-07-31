@@ -138,7 +138,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: (isPositive == true ? AppColors.success : AppColors.error)
+                    color: (isPositive == true ? AppColors.success : AppColors.error)  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive — must stay red
                         .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -147,7 +147,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isPositive == true ? AppColors.success : AppColors.error,
+                      color: isPositive == true ? AppColors.success : AppColors.error,  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive — must stay red
                     ),
                   ),
                 ),
@@ -295,7 +295,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                 if (comparison.improvedCount > 0)
                   _buildCountChip(
                       '${comparison.improvedCount} improved',
-                      AppColors.success,
+                      AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                       isDark),
                 if (comparison.maintainedCount > 0)
                   _buildCountChip(
@@ -305,12 +305,12 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                 if (comparison.declinedCount > 0)
                   _buildCountChip(
                       '${comparison.declinedCount} declined',
-                      AppColors.error,
+                      AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       isDark),
                 if (comparison.firstTimeCount > 0)
                   _buildCountChip(
                       '${comparison.firstTimeCount} new',
-                      AppColors.info,
+                      AppColors.info,  // accent-allowlist: informational
                       isDark),
               ],
             ),
@@ -336,8 +336,8 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.warning.withValues(alpha: 0.06)
-            : AppColors.warning.withValues(alpha: 0.04),
+            ? AppColors.warning.withValues(alpha: 0.06)  // accent-allowlist: warning severity
+            : AppColors.warning.withValues(alpha: 0.04),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -360,7 +360,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.15),
+                    color: AppColors.warning.withValues(alpha: 0.15),  // accent-allowlist: warning severity
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -368,7 +368,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.warning,
+                      color: AppColors.warning,  // accent-allowlist: warning severity
                     ),
                   ),
                 ),
@@ -389,7 +389,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             ),
           ],
@@ -470,14 +470,14 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
           if (review.highlights.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.thumb_up_outlined, size: 14, color: AppColors.success),
+                Icon(Icons.thumb_up_outlined, size: 14, color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context).workoutSummaryScreenHighlights,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ),
                 ),
               ],
@@ -509,14 +509,14 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
           if (review.areasToImprove.isNotEmpty) ...[
             Row(
               children: [
-                Icon(Icons.flag_outlined, size: 14, color: AppColors.warning),
+                Icon(Icons.flag_outlined, size: 14, color: AppColors.warning),  // accent-allowlist: warning severity
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context).workoutSummaryScreenAreasToWatch,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.warning,
+                    color: AppColors.warning,  // accent-allowlist: warning severity
                   ),
                 ),
               ],

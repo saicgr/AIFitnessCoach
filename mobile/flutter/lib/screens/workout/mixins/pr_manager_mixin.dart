@@ -238,11 +238,11 @@ class _ProgressionChipOverlayState extends State<_ProgressionChipOverlay>
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.95),
+                    color: AppColors.success.withOpacity(0.95),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     borderRadius: BorderRadius.circular(999),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.success.withOpacity(0.35),
+                        color: AppColors.success.withOpacity(0.35),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         blurRadius: 14,
                         offset: const Offset(0, 4),
                       ),

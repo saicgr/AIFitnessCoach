@@ -24,6 +24,7 @@ import 'exercise_info_sheet.dart';
 import 'exercise_strength_score_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'expanded_exercise_card_ui_1.dart';
 part 'expanded_exercise_card_ui_2.dart';
 
@@ -508,7 +509,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
           _buildSummaryChip(
             Icons.timer_outlined,
             _formatRestTime(restSeconds),
-            AppColors.orange,
+            context.accentColor,
           ),
           const Spacer(),
           // Expand button
@@ -779,10 +780,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withOpacity(0.1),
+                      color: AppColors.green.withOpacity(0.1),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.air, color: AppColors.green, size: 24),
+                    child: Icon(Icons.air, color: AppColors.green, size: 24),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -824,7 +825,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                 icon: Icons.arrow_upward_rounded,
                 title: breathingPattern['exhale']!['phase']!,
                 description: breathingPattern['exhale']!['action']!,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
 
               const SizedBox(height: 24),
@@ -840,7 +841,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                   children: [
                     Icon(
                       Icons.lightbulb_outline,
-                      color: AppColors.yellow,
+                      color: AppColors.yellow,  // accent-allowlist: tip/lightbulb icon — conventionally yellow, semantic not accent
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -1057,12 +1058,12 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   Color _getSetTypeColor(String setType, Color accentColor) {
     switch (setType.toLowerCase()) {
       case 'warmup':
-        return AppColors.orange;
+        return context.accentColor;
       case 'drop':
         return accentColor;
       case 'failure':
       case 'amrap':
-        return Colors.red;
+        return Colors.red;  // accent-allowlist: error/destructive — must stay red
       default:
         return accentColor; // working
     }

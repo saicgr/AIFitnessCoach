@@ -34,6 +34,30 @@ const int _kCheckpointSchemaVersion = 1;
 /// checkpoint for a *different* workout is ignored on restore.
 const String _kCheckpointPrefix = 'workout_checkpoint';
 
+/// E2E #136 — a freshly re-entered workout used to rehydrate a checkpoint
+/// SILENTLY no matter how old it was: `save()` wrote `saved_at_ms` but
+/// `load()` never read it back, so abandoning a session by backing out
+/// (which leaves the blob on disk — `clear()` is the only delete call site)
+/// and later re-starting the SAME workoutId rehydrated elapsedSeconds /
+/// completedSets / currentExerciseIndex with no prompt, no banner, nothing —
+/// a brand-new "Start Workout" tap opened already 23m37s / 161 kcal / 666 kg
+/// into a session the user never actually started this time.
+///
+/// Two thresholds:
+///  - Beyond [kCheckpointHardTtl] the checkpoint is auto-expired — treated as
+///    if it never existed. Nobody wants a "resume from 5 hours ago" prompt.
+///  - Between [kCheckpointStalePromptThreshold] and the hard TTL, the
+///    checkpoint is still valid but old enough that silently inflating the
+///    session's duration/kcal would be wrong — the caller must show an
+///    explicit Resume / Start Fresh choice (see `easy_active_workout_state.dart`
+///    / `active_workout_screen_refactored.dart`) instead of auto-adopting it.
+///  - Under the prompt threshold (e.g. app briefly backgrounded and
+///    reopened, or a genuine crash a few seconds after logging a set) the
+///    checkpoint auto-resumes exactly as before — no added friction for the
+///    common case this feature exists for.
+const Duration kCheckpointStalePromptThreshold = Duration(minutes: 10);
+const Duration kCheckpointHardTtl = Duration(hours: 6);
+
 class ActiveWorkoutSessionState {
   final String? workoutId;
   final Map<int, List<SetLog>> completedSets;
@@ -44,11 +68,18 @@ class ActiveWorkoutSessionState {
   /// only the value that gets persisted so a relaunch can restore the clock.
   final int elapsedSeconds;
 
+  /// When this state came from an on-disk checkpoint, the wall-clock time
+  /// (epoch ms) it was written — null for a live, non-restored session.
+  /// E2E #136: the sole purpose of carrying this into memory is so a caller
+  /// can decide whether adopting it silently is safe, or whether to prompt.
+  final int? savedAtMs;
+
   const ActiveWorkoutSessionState({
     this.workoutId,
     this.completedSets = const {},
     this.currentExerciseIndex = 0,
     this.elapsedSeconds = 0,
+    this.savedAtMs,
   });
 
   ActiveWorkoutSessionState copyWith({
@@ -56,12 +87,14 @@ class ActiveWorkoutSessionState {
     Map<int, List<SetLog>>? completedSets,
     int? currentExerciseIndex,
     int? elapsedSeconds,
+    int? savedAtMs,
   }) {
     return ActiveWorkoutSessionState(
       workoutId: workoutId ?? this.workoutId,
       completedSets: completedSets ?? this.completedSets,
       currentExerciseIndex: currentExerciseIndex ?? this.currentExerciseIndex,
       elapsedSeconds: elapsedSeconds ?? this.elapsedSeconds,
+      savedAtMs: savedAtMs ?? this.savedAtMs,
     );
   }
 }
@@ -122,6 +155,15 @@ class _WorkoutCheckpointStore {
       if (expectedWorkoutId != null && workoutId != expectedWorkoutId) {
         return null;
       }
+      // E2E #136 — `saved_at_ms` was written but never read. A checkpoint
+      // older than the hard TTL is auto-expired (never even worth asking
+      // about); a missing timestamp (pre-#136 blob) is treated as
+      // maximally stale rather than trusted.
+      final savedAtMs = (decoded['saved_at_ms'] as num?)?.toInt();
+      final ageMs = savedAtMs == null
+          ? kCheckpointHardTtl.inMilliseconds + 1
+          : DateTime.now().millisecondsSinceEpoch - savedAtMs;
+      if (ageMs > kCheckpointHardTtl.inMilliseconds) return null;
       final completedRaw = decoded['completed_sets'];
       final completed = <int, List<SetLog>>{};
       if (completedRaw is Map) {
@@ -140,6 +182,7 @@ class _WorkoutCheckpointStore {
         currentExerciseIndex:
             (decoded['current_exercise_index'] as num?)?.toInt() ?? 0,
         elapsedSeconds: (decoded['elapsed_seconds'] as num?)?.toInt() ?? 0,
+        savedAtMs: savedAtMs,
       );
     } catch (e) {
       debugPrint('⚠️ [WorkoutCheckpoint] load failed: $e');
@@ -213,6 +256,48 @@ class ActiveWorkoutSessionNotifier
     if (workoutId == null) return;
     if (state.workoutId == workoutId) return; // same workout — keep state
     state = ActiveWorkoutSessionState(workoutId: workoutId);
+  }
+
+  /// E2E #136 — peek the on-disk checkpoint's AGE without adopting it into
+  /// the live session, so the caller can decide whether silently rehydrating
+  /// is safe or whether to show a "Resume / Start fresh" prompt first.
+  ///
+  /// Returns null when there's no checkpoint for [workoutId] (including an
+  /// expired one — `_WorkoutCheckpointStore.load` already drops anything
+  /// past [kCheckpointHardTtl]) or when it's genuinely empty (no logged
+  /// sets — nothing to lose, always safe to silently continue). Otherwise
+  /// returns the checkpoint's age; the caller compares it against
+  /// [kCheckpointStalePromptThreshold] to decide whether to prompt.
+  Future<Duration?> peekStaleCheckpoint({
+    required String? workoutId,
+    String? userId,
+  }) async {
+    if (workoutId == null) return null;
+    bindUser(userId);
+    final uid = _userId;
+    if (uid == null) return null;
+    final restored = await _WorkoutCheckpointStore.load(
+      userId: uid,
+      expectedWorkoutId: workoutId,
+    );
+    if (restored == null || restored.completedSets.values.every((l) => l.isEmpty)) {
+      return null;
+    }
+    final savedAtMs = restored.savedAtMs;
+    if (savedAtMs == null) return kCheckpointHardTtl; // treat as maximally stale
+    final ageMs = DateTime.now().millisecondsSinceEpoch - savedAtMs;
+    return Duration(milliseconds: ageMs < 0 ? 0 : ageMs);
+  }
+
+  /// Delete the on-disk checkpoint for the CURRENTLY-BOUND user without
+  /// touching the live in-memory session (unlike [clear], which also wipes
+  /// `state` — the caller has typically already called `start(workoutId)`
+  /// for a fresh session by the time it decides to discard). Used when the
+  /// user picks "Start fresh" on the #136 stale-checkpoint prompt.
+  Future<void> discardOnDiskCheckpoint() async {
+    final uid = _userId;
+    if (uid == null) return;
+    await _WorkoutCheckpointStore.delete(uid);
   }
 
   /// WF4: rehydrate this session from the on-disk checkpoint for [workoutId].

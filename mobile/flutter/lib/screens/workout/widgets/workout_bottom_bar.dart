@@ -12,6 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Bottom bar for workout actions - streamlined layout with exercise name centered
 class WorkoutBottomBar extends StatelessWidget {
@@ -152,7 +153,7 @@ class WorkoutBottomBar extends StatelessWidget {
               // Breathe button
               _buildSmallActionButton(
                 icon: Icons.air_rounded,
-                color: AppColors.purple,
+                color: context.accentColor,
                 isDark: isDark,
                 onTap: () {
                   HapticFeedback.selectionClick();
@@ -275,10 +276,10 @@ class WorkoutBottomBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.orange.withOpacity(0.12),
+          color: context.accentColor.withOpacity(0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.orange.withOpacity(0.3),
+            color: context.accentColor.withOpacity(0.3),
             width: 1.5,
           ),
         ),
@@ -290,13 +291,13 @@ class WorkoutBottomBar extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
             ),
             const SizedBox(width: 4),
             Icon(
               Icons.skip_next_rounded,
-              color: AppColors.orange,
+              color: context.accentColor,
               size: 20,
             ),
           ],
@@ -455,8 +456,8 @@ class _ExerciseStripItem extends StatelessWidget {
       borderColor = AppColors.electricBlue;
       bgColor = AppColors.electricBlue.withOpacity(0.15);
     } else if (isCompleted || allSetsComplete) {
-      borderColor = AppColors.success.withOpacity(0.6);
-      bgColor = AppColors.success.withOpacity(0.1);
+      borderColor = AppColors.success.withOpacity(0.6);  // accent-allowlist: success/positive state — must stay green regardless of accent
+      bgColor = AppColors.success.withOpacity(0.1);  // accent-allowlist: success/positive state — must stay green regardless of accent
     } else {
       borderColor = isDark
           ? Colors.white.withOpacity(0.15)
@@ -512,7 +513,7 @@ class _ExerciseStripItem extends StatelessWidget {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isDark ? AppColors.nearBlack : Colors.white,
@@ -569,7 +570,7 @@ class _ExerciseStripItem extends StatelessWidget {
               color: isCurrent
                   ? AppColors.electricBlue
                   : (isCompleted
-                      ? AppColors.success
+                      ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                       : (isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
             ),
           ),
@@ -586,7 +587,7 @@ class _ExerciseStripItem extends StatelessWidget {
         color: isCurrent
             ? AppColors.electricBlue
             : (isCompleted
-                ? AppColors.success
+                ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                 : AppColors.textMuted.withOpacity(0.5)),
       ),
     );
@@ -636,7 +637,7 @@ class SetDotsIndicator extends StatelessWidget {
               height: 12,
               decoration: BoxDecoration(
                 color: isCompleted
-                    ? AppColors.success
+                    ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                     : isCurrent
                         ? AppColors.electricBlue
                         : (isDark

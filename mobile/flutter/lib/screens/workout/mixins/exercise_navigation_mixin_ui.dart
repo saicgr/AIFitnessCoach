@@ -132,7 +132,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
           value: 'swap',
           child: Row(
             children: [
-              Icon(Icons.swap_horiz, size: 20, color: Colors.orange.shade600),
+              Icon(Icons.swap_horiz, size: 20, color: Colors.orange.shade600),  // accent-allowlist: warning severity
               const SizedBox(width: 12),
               Text(AppLocalizations.of(context).expandedExerciseCardSwapExercise, style: TextStyle(
                 color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
@@ -145,7 +145,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
           value: 'equipment',
           child: Row(
             children: [
-              Icon(Icons.warehouse_outlined, size: 20, color: Colors.blue.shade600),
+              Icon(Icons.warehouse_outlined, size: 20, color: Colors.blue.shade600),  // accent-allowlist: informational
               const SizedBox(width: 12),
               Text(AppLocalizations.of(context).exerciseNavigationMixinMyGym, style: TextStyle(
                 color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
@@ -158,7 +158,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
           value: 'history',
           child: Row(
             children: [
-              Icon(Icons.history, size: 20, color: Colors.purple.shade400),
+              Icon(Icons.history, size: 20, color: context.accentColor),
               const SizedBox(width: 12),
               Text(AppLocalizations.of(context).workoutHistory, style: TextStyle(
                 color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade900,
@@ -176,7 +176,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
                 Icons.fitness_center_rounded,
                 size: 20,
                 color: isBarbell(exercise.equipment, exerciseName: exercise.name)
-                    ? Colors.teal.shade500
+                    ? context.accentColor
                     : (isDark ? WorkoutDesign.textSecondary.withValues(alpha: 0.3) : Colors.grey.shade400),
               ),
               const SizedBox(width: 12),
@@ -194,10 +194,10 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
           value: 'end_workout',
           child: Row(
             children: [
-              Icon(Icons.stop_circle_outlined, size: 20, color: Colors.red.shade600),
+              Icon(Icons.stop_circle_outlined, size: 20, color: Colors.red.shade600),  // accent-allowlist: error/destructive — must stay red
               const SizedBox(width: 12),
               Text(AppLocalizations.of(context).workoutMiniPlayerEndWorkout2, style: TextStyle(
-                color: Colors.red.shade600,
+                color: Colors.red.shade600,  // accent-allowlist: error/destructive — must stay red
                 fontWeight: FontWeight.w500,
               )),
             ],
@@ -333,7 +333,7 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
               ),
             ],
           ),
-          backgroundColor: Colors.purple,
+          backgroundColor: context.accentColor,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           dismissDirection: DismissDirection.horizontal,

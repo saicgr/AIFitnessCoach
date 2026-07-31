@@ -805,12 +805,34 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                 children: [
                   // Secondary action — ghost (hairline outline), keeps the
                   // reserved accent for the single primary CTA.
+                  //
+                  // E2E #141: a `flex: 1` vs `flex: 2` split of this Row's
+                  // width is rarely an integer pixel count (and a translated
+                  // "Share" label can run longer than English), so
+                  // ZealovaButton's internal Row (uppercase label + 8px gap +
+                  // icon, unwrapped in Flexible — a shared design-system
+                  // widget outside this screen's ownership) needs marginally
+                  // more than the exact slot it's handed, producing a
+                  // RenderFlex overflow ("0.243 PIXELS" on the reporting
+                  // device). LayoutBuilder + OverflowBox hands the button a
+                  // few px of internal slack to lay out into WITHOUT
+                  // changing the size it reports to this Expanded/Row — the
+                  // overflow genuinely never occurs (not just visually
+                  // clipped), and the slack is imperceptible against a
+                  // button this wide.
                   Expanded(
-                    child: ZealovaButton(
-                      label: AppLocalizations.of(context).commonShare,
-                      onTap: _showShareSheet,
-                      variant: ZealovaButtonVariant.ghost,
-                      trailingIcon: Icons.share_rounded,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => OverflowBox(
+                        alignment: Alignment.center,
+                        minWidth: constraints.maxWidth,
+                        maxWidth: constraints.maxWidth + 16,
+                        child: ZealovaButton(
+                          label: AppLocalizations.of(context).commonShare,
+                          onTap: _showShareSheet,
+                          variant: ZealovaButtonVariant.ghost,
+                          trailingIcon: Icons.share_rounded,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1181,7 +1203,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                                 Icon(
                                   Icons.water_drop_rounded,
                                   size: 18,
-                                  color: AppColors.waterBlue,
+                                  color: AppColors.waterBlue,  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
@@ -1199,7 +1221,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                                 Icon(
                                   Icons.insights_outlined,
                                   size: 18,
-                                  color: AppColors.cyan,
+                                  color: context.accentColor,
                                 ),
                                 const SizedBox(width: 10),
                                 Text(
@@ -1299,7 +1321,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           icon: Icons.sentiment_very_satisfied,
                           isSelected: _difficulty == 'too_easy',
                           onTap: () => setState(() => _difficulty = 'too_easy'),
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                         const SizedBox(width: 8),
                         DifficultyOption(
@@ -1310,7 +1332,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           isSelected: _difficulty == 'just_right',
                           onTap: () =>
                               setState(() => _difficulty = 'just_right'),
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                         const SizedBox(width: 8),
                         DifficultyOption(
@@ -1320,7 +1342,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           icon: Icons.sentiment_dissatisfied,
                           isSelected: _difficulty == 'too_hard',
                           onTap: () => setState(() => _difficulty = 'too_hard'),
-                          color: AppColors.error,
+                          color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                         ),
                       ],
                     ),
@@ -1364,12 +1386,12 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               numberOfParticles: 20,
               gravity: 0.2,
               shouldLoop: false,
-              colors: const [
-                AppColors.orange,
-                AppColors.purple,
-                Color(0xFFFFD700), // Gold
-                AppColors.green,
-                AppColors.pink,
+              colors: [
+                context.accentColor,
+                context.accentColor,
+                Color(0xFFFFD700), // Gold  // accent-allowlist: medal/rarity tier — gold
+                AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                AppColors.pink,  // accent-allowlist: celebration confetti burst — decorative colour variety, not a competing primary accent
               ],
             ),
           ),

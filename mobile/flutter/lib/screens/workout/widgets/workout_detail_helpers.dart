@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────
 // String Extension
@@ -138,7 +139,9 @@ class AnimatedFireIcon extends StatefulWidget {
   const AnimatedFireIcon({
     super.key,
     this.size = 24,
-    this.color = const Color(0xFFF97316),
+    // const constructor default has no BuildContext; callers with a context
+    // pass `color: context.accentColor` explicitly (see workout_detail_screen.dart).
+    this.color = const Color(0xFFF97316),  // accent-allowlist: const-constructor default has no BuildContext
   });
 
   @override
@@ -220,9 +223,9 @@ class _AnimatedFireIconState extends State<AnimatedFireIcon>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.yellow.withValues(alpha: _flickerAnimation.value),
+                    Colors.yellow.withValues(alpha: _flickerAnimation.value),  // accent-allowlist: fire gradient (yellow-to-red flame), semantic not accent
                     widget.color,
-                    const Color(0xFFDC2626).withValues(alpha: 0.9),
+                    const Color(0xFFDC2626).withValues(alpha: 0.9),  // accent-allowlist: fire gradient (yellow-to-red flame), semantic not accent
                   ],
                   stops: const [0.0, 0.45, 1.0],
                 ).createShader(bounds);
@@ -262,7 +265,7 @@ class AnimatedHellBadge extends StatefulWidget {
 
 class _AnimatedHellBadgeState extends State<AnimatedHellBadge>
     with TickerProviderStateMixin {
-  static const Color hellRed = Color(0xFFEF4444);
+  static const Color hellRed = Color(0xFFEF4444);  // accent-allowlist: error/destructive — must stay red
 
   late AnimationController _glowController;
   late AnimationController _fireController;
@@ -357,12 +360,12 @@ class _AnimatedHellBadgeState extends State<AnimatedHellBadge>
                     scale: _fireScaleAnimation.value,
                     child: ShaderMask(
                       shaderCallback: (bounds) {
-                        return const LinearGradient(
+                        return LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.yellow,
-                            Color(0xFFF97316),
+                            Colors.yellow,  // accent-allowlist: fire gradient (yellow-to-red flame), semantic not accent
+                            context.accentColor,
                             hellRed,
                           ],
                           stops: [0.0, 0.4, 1.0],

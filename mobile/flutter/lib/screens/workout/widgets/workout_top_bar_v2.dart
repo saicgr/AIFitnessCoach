@@ -24,6 +24,7 @@ import '../controllers/workout_timer_controller.dart';
 import '../shared/unit_chip.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../shared/tier_toggle_persistence.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// MacroFactor-style workout top bar
 class WorkoutTopBarV2 extends ConsumerWidget {
@@ -181,7 +182,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                       icon: isFavorite ? Icons.favorite : Icons.favorite_border,
                       onTap: onFavoriteTap!,
                       isDark: isDark,
-                      iconColor: isFavorite ? Colors.red : null,
+                      iconColor: isFavorite ? Colors.red : null,  // accent-allowlist: error/destructive — must stay red
                     ),
 
                   // Unit chip removed from Advanced top bar — Advanced
@@ -268,7 +269,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                                 value: 'limitations',
                                 child: Row(children: [
                                   const Icon(Icons.healing_rounded,
-                                      size: 18, color: AppColors.error),
+                                      size: 18, color: AppColors.error),  // accent-allowlist: error/destructive — must stay red
                                   const SizedBox(width: 10),
                                   Text(l.editableFitnessCardInjuries),
                                 ]),
@@ -281,7 +282,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                                 value: 'complete_now',
                                 child: Row(children: [
                                   Icon(Icons.check_circle_rounded,
-                                      size: 18, color: AppColors.cyan),
+                                      size: 18, color: context.accentColor),
                                   const SizedBox(width: 10),
                                   Text(l.workoutTopBarCompleteWorkout,
                                       style: const TextStyle(

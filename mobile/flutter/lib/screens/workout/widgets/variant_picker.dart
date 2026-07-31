@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/program_template.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 // ===========================================================================
 // Shared program-variant picker — the single implementation used by BOTH the
@@ -378,7 +379,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
                     Navigator.of(sheetContext).pop();
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.orange,
+                    foregroundColor: context.accentColor,
                   ),
                   icon: const Icon(Icons.restart_alt_rounded, size: 18),
                   label: const Text('Reset to default'),
@@ -468,10 +469,10 @@ class _DropdownControl extends StatelessWidget {
                 ],
                 const Spacer(),
                 if (interactive)
-                  const Icon(
+                  Icon(
                     Icons.keyboard_arrow_down_rounded,
                     size: 22,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
               ],
             ),
@@ -516,11 +517,11 @@ class _PickerRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
           color: option.isSelected
-              ? AppColors.orange.withValues(alpha: 0.12)
+              ? context.accentColor.withValues(alpha: 0.12)
               : AppColors.surface2,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: option.isSelected ? AppColors.orange : AppColors.cardBorder,
+            color: option.isSelected ? context.accentColor : AppColors.cardBorder,
           ),
         ),
         child: Row(
@@ -539,14 +540,14 @@ class _PickerRow extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.16),
+                  color: context.accentColor.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   '✓ Recommended',
                   style: ZType.lbl(
                     9,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: 0.8,
                   ),
                 ),
@@ -558,7 +559,7 @@ class _PickerRow extends StatelessWidget {
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_unchecked_rounded,
               size: 20,
-              color: option.isSelected ? AppColors.orange : AppColors.textMuted,
+              color: option.isSelected ? context.accentColor : AppColors.textMuted,
             ),
           ],
         ),
@@ -606,11 +607,11 @@ class _IntensityChipRow extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.orange.withValues(alpha: 0.18)
+                      ? context.accentColor.withValues(alpha: 0.18)
                       : AppColors.surface2,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? AppColors.orange : AppColors.cardBorder,
+                    color: isSelected ? context.accentColor : AppColors.cardBorder,
                   ),
                 ),
                 child: Text(
@@ -618,7 +619,7 @@ class _IntensityChipRow extends StatelessWidget {
                   style: ZType.sans(
                     12,
                     color: isSelected
-                        ? AppColors.orange
+                        ? context.accentColor
                         : AppColors.textSecondary,
                     weight: FontWeight.w600,
                   ),

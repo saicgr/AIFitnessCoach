@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Progress Template - Shows workout progression and milestone achievements
 /// Great for celebrating fitness journey milestones
@@ -99,7 +100,7 @@ class ProgressTemplate extends StatelessWidget {
             // Background pattern
             Positioned.fill(
               child: CustomPaint(
-                painter: _ProgressPatternPainter(),
+                painter: _ProgressPatternPainter(accent: context.accentColor),
               ),
             ),
 
@@ -117,22 +118,22 @@ class ProgressTemplate extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         // Milestone badge at top
-                        _buildMilestoneBadge(),
+                        _buildMilestoneBadge(context),
 
                         const SizedBox(height: 10),
 
                         // Big number - total workouts
-                        _buildTotalWorkoutsDisplay(),
+                        _buildTotalWorkoutsDisplay(context),
 
                         const SizedBox(height: 10),
 
                         // Progress stats grid - fixed height
-                        _buildProgressGrid(),
+                        _buildProgressGrid(context),
 
                         const SizedBox(height: 8),
 
                         // Today's workout
-                        _buildTodaysWorkout(),
+                        _buildTodaysWorkout(context),
 
                         if (showWatermark) ...[
                           const SizedBox(height: 10),
@@ -151,19 +152,19 @@ class ProgressTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildMilestoneBadge() {
+  Widget _buildMilestoneBadge(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withValues(alpha: 0.3),
-            AppColors.purple.withValues(alpha: 0.3),
+            context.accentColor.withValues(alpha: 0.3),
+            context.accentColor.withValues(alpha: 0.15),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.4),
+          color: context.accentColor.withValues(alpha: 0.4),
         ),
       ),
       child: Text(
@@ -178,12 +179,12 @@ class ProgressTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildTotalWorkoutsDisplay() {
+  Widget _buildTotalWorkoutsDisplay(BuildContext context) {
     return Column(
       children: [
         ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [AppColors.cyan, AppColors.purple],
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [context.accentColor, context.accentColor.withValues(alpha: 0.7)],
           ).createShader(bounds),
           child: Text(
             '${totalWorkouts ?? 1}',
@@ -209,7 +210,7 @@ class ProgressTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressGrid() {
+  Widget _buildProgressGrid(BuildContext context) {
     return SizedBox(
       height: 120,
       child: Row(
@@ -221,14 +222,14 @@ class ProgressTemplate extends StatelessWidget {
                   icon: Icons.local_fire_department_rounded,
                   value: '${currentStreak ?? 0}',
                   label: 'Day Streak',
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 )),
                 const SizedBox(height: 6),
                 Expanded(child: _buildStatCard(
                   icon: Icons.calendar_month_rounded,
                   value: '${weeklyWorkouts ?? 0}',
                   label: 'This Week',
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 )),
               ],
             ),
@@ -241,14 +242,14 @@ class ProgressTemplate extends StatelessWidget {
                   icon: Icons.trending_up_rounded,
                   value: '${prsThisMonth ?? 0}',
                   label: 'PRs This Month',
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 )),
                 const SizedBox(height: 6),
                 Expanded(child: _buildStatCard(
                   icon: Icons.scale_rounded,
                   value: _formattedTotalVolume,
                   label: 'Total Lifted',
-                  color: AppColors.purple,
+                  color: context.accentColor,
                 )),
               ],
             ),
@@ -308,15 +309,15 @@ class ProgressTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildTodaysWorkout() {
+  Widget _buildTodaysWorkout(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withValues(alpha: 0.1),
+        color: context.accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -324,7 +325,7 @@ class ProgressTemplate extends StatelessWidget {
           Icon(
             Icons.check_circle_rounded,
             size: 18,
-            color: AppColors.success,
+            color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -343,7 +344,7 @@ class ProgressTemplate extends StatelessWidget {
           Text(
             _formattedDuration,
             style: TextStyle(
-              color: AppColors.cyan,
+              color: context.accentColor,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -356,6 +357,10 @@ class ProgressTemplate extends StatelessWidget {
 
 /// Custom painter for progress template background
 class _ProgressPatternPainter extends CustomPainter {
+  final Color accent;
+
+  _ProgressPatternPainter({required this.accent});
+
   @override
   void paint(Canvas canvas, Size size) {
     // Gradient circles for depth
@@ -364,7 +369,7 @@ class _ProgressPatternPainter extends CustomPainter {
         center: const Alignment(-0.5, -0.8),
         radius: 0.8,
         colors: [
-          AppColors.cyan.withValues(alpha: 0.1),
+          accent.withValues(alpha: 0.1),
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -380,7 +385,7 @@ class _ProgressPatternPainter extends CustomPainter {
         center: const Alignment(0.8, 0.5),
         radius: 0.6,
         colors: [
-          AppColors.purple.withValues(alpha: 0.08),
+          accent.withValues(alpha: 0.08),
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -406,5 +411,6 @@ class _ProgressPatternPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _ProgressPatternPainter oldDelegate) =>
+      oldDelegate.accent != accent;
 }

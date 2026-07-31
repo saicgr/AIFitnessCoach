@@ -7,6 +7,7 @@ import '../../../data/models/exercise_progression.dart';
 import '../../../data/providers/exercise_progression_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A card that displays exercise progression suggestions after workout completion.
 ///
 /// Shows when the user has completed exercises with "too easy" feedback,
@@ -132,12 +133,12 @@ class _ProgressionSuggestionCardState
         color: elevated,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.success.withOpacity(0.3),
+          color: AppColors.success.withOpacity(0.3),  // accent-allowlist: success/positive state — must stay green regardless of accent
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.success.withOpacity(0.1),
+            color: AppColors.success.withOpacity(0.1),  // accent-allowlist: success/positive state — must stay green regardless of accent
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -152,8 +153,8 @@ class _ProgressionSuggestionCardState
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.success.withOpacity(0.15),
-                  AppColors.cyan.withOpacity(0.1),
+                  AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
+                  context.accentColor.withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -176,13 +177,13 @@ class _ProgressionSuggestionCardState
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: _isAnimatingUnlock
-                              ? AppColors.success.withOpacity(0.3)
-                              : AppColors.success.withOpacity(0.2),
+                              ? AppColors.success.withOpacity(0.3)  // accent-allowlist: success/positive state — must stay green regardless of accent
+                              : AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           shape: BoxShape.circle,
                           boxShadow: _isAnimatingUnlock
                               ? [
                                   BoxShadow(
-                                    color: AppColors.success.withOpacity(0.4),
+                                    color: AppColors.success.withOpacity(0.4),  // accent-allowlist: success/positive state — must stay green regardless of accent
                                     blurRadius: 20 * _unlockAnimation.value,
                                     spreadRadius: 5 * _unlockAnimation.value,
                                   ),
@@ -191,7 +192,7 @@ class _ProgressionSuggestionCardState
                         ),
                         child: Icon(
                           _isAnimatingUnlock ? Icons.lock_open : Icons.trending_up,
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                           size: 24,
                         ),
                       ),
@@ -210,7 +211,7 @@ class _ProgressionSuggestionCardState
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -237,7 +238,7 @@ class _ProgressionSuggestionCardState
                         margin: const EdgeInsets.only(left: 4),
                         decoration: BoxDecoration(
                           color: index == _currentIndex
-                              ? AppColors.success
+                              ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                               : textMuted.withOpacity(0.3),
                           shape: BoxShape.circle,
                         ),
@@ -272,7 +273,7 @@ class _ProgressionSuggestionCardState
                         children: [
                           Icon(
                             Icons.arrow_forward,
-                            color: AppColors.success,
+                            color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                             size: 28,
                           )
                               .animate(
@@ -280,7 +281,7 @@ class _ProgressionSuggestionCardState
                               )
                               .shimmer(
                                 duration: 1500.ms,
-                                color: AppColors.success.withOpacity(0.5),
+                                color: AppColors.success.withOpacity(0.5),  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                           const SizedBox(height: 4),
                           Container(
@@ -289,7 +290,7 @@ class _ProgressionSuggestionCardState
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.success.withOpacity(0.2),
+                              color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -297,7 +298,7 @@ class _ProgressionSuggestionCardState
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.success,
+                                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                             ),
                           ),
@@ -338,7 +339,7 @@ class _ProgressionSuggestionCardState
                           Icon(
                             Icons.lightbulb_outline,
                             size: 16,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -346,7 +347,7 @@ class _ProgressionSuggestionCardState
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -429,7 +430,7 @@ class _ProgressionSuggestionCardState
                             ? null
                             : () => _handleAccept(suggestion),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.success,
+                          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -493,12 +494,14 @@ class _ExerciseBox extends StatelessWidget {
     this.isUnlocking = false,
   });
 
+  // Difficulty scale — no BuildContext on this method, and each band needs
+  // its own colour so the 5-step ramp (Beginner..Expert) stays legible.
   Color _getDifficultyColor() {
-    if (difficultyLevel <= 2) return AppColors.success;
-    if (difficultyLevel <= 4) return AppColors.cyan;
-    if (difficultyLevel <= 6) return AppColors.orange;
-    if (difficultyLevel <= 8) return AppColors.coral;
-    return AppColors.purple;
+    if (difficultyLevel <= 2) return AppColors.success;  // accent-allowlist: difficulty scale — Beginner is always this green
+    if (difficultyLevel <= 4) return AppColors.cyan;  // accent-allowlist: difficulty scale — Easy is always this cyan
+    if (difficultyLevel <= 6) return AppColors.orange;  // accent-allowlist: difficulty scale — Medium is always this orange
+    if (difficultyLevel <= 8) return AppColors.coral;  // accent-allowlist: difficulty scale — Hard is always this coral
+    return AppColors.purple;  // accent-allowlist: difficulty scale — Expert is always this purple
   }
 
   String _getDifficultyLabel() {
@@ -585,7 +588,7 @@ class _ExerciseBox extends StatelessWidget {
           )
           .shimmer(
             duration: 800.ms,
-            color: AppColors.success.withOpacity(0.3),
+            color: AppColors.success.withOpacity(0.3),  // accent-allowlist: success/positive state — must stay green regardless of accent
           )
           .scale(
             begin: const Offset(1.0, 1.0),
@@ -626,7 +629,7 @@ class ProgressionSuggestionTile extends ConsumerWidget {
           color: elevated,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.success.withOpacity(0.2),
+            color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
         ),
         child: Row(
@@ -635,12 +638,12 @@ class ProgressionSuggestionTile extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.15),
+                color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 Icons.trending_up,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 size: 20,
               ),
             ),
@@ -677,7 +680,7 @@ class ProgressionSuggestionTile extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.15),
+                color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -685,7 +688,7 @@ class ProgressionSuggestionTile extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
             ),

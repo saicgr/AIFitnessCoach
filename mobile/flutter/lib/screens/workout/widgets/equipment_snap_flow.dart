@@ -578,13 +578,19 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         _setError('Cannot swap without a workout context.');
         return;
       }
-      final (workout, err) = await repo.swapExercise(
-        workoutId: widget.workoutId!,
-        oldExerciseName: widget.replacingExerciseName!,
-        newExerciseName: exerciseName,
-        swapSource: 'equipment_snap',
-        previewId: widget.previewId,
-      );
+      Workout? workout;
+      String? err;
+      try {
+        (workout, err) = await repo.swapExercise(
+          workoutId: widget.workoutId!,
+          oldExerciseName: widget.replacingExerciseName!,
+          newExerciseName: exerciseName,
+          swapSource: 'equipment_snap',
+          previewId: widget.previewId,
+        );
+      } catch (e) {
+        err = swapOrAddExceptionMessage(e);
+      }
       if (err != null) {
         _setError(err);
         return;
@@ -596,12 +602,22 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
         _setError('Cannot add without a workout context.');
         return;
       }
-      final workout = await repo.addExercise(
-        workoutId: widget.workoutId!,
-        exerciseName: exerciseName,
-        exerciseId: exerciseId.isNotEmpty ? exerciseId : null,
-        previewId: widget.previewId,
-      );
+      Workout? workout;
+      String? err;
+      try {
+        (workout, err) = await repo.addExercise(
+          workoutId: widget.workoutId!,
+          exerciseName: exerciseName,
+          exerciseId: exerciseId.isNotEmpty ? exerciseId : null,
+          previewId: widget.previewId,
+        );
+      } catch (e) {
+        err = swapOrAddExceptionMessage(e);
+      }
+      if (err != null) {
+        _setError(err);
+        return;
+      }
       if (!mounted) return;
       Navigator.of(context).pop(workout);
     } else {
@@ -797,7 +813,7 @@ class _EquipmentSnapFlowState extends ConsumerState<EquipmentSnapFlow>
                   },
                   size: 20,
                   color: item.status == 'identified'
-                      ? const Color(0xFF22C55E)
+                      ? const Color(0xFF22C55E)  // accent-allowlist: success/positive state — must stay green regardless of accent
                       : Colors.grey,
                 ),
               ],
@@ -1253,13 +1269,13 @@ class _SetTimerPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.15),
+        color: Colors.orange.withValues(alpha: 0.15),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         'Set: $m:$s',
         style: const TextStyle(
-          color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w700,
+          color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w700,  // accent-allowlist: warning severity
         ),
       ),
     );

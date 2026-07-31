@@ -15,6 +15,7 @@ import '../../../data/providers/subjective_feedback_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Pre-workout check-in widget displayed before the workout begins.
 /// Quick, skippable - designed to take less than 5 seconds.
 class PreWorkoutCheckin extends ConsumerStatefulWidget {
@@ -116,7 +117,7 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
                       : null,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     disabledBackgroundColor: isDark
                         ? Colors.grey[800]
                         : Colors.grey[300],
@@ -310,11 +311,11 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
                 height: 50,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.orange.withValues(alpha: 0.2)
+                      ? context.accentColor.withValues(alpha: 0.2)
                       : elevated,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? AppColors.orange : Colors.transparent,
+                    color: isSelected ? context.accentColor : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -376,11 +377,11 @@ class _PreWorkoutCheckinState extends ConsumerState<PreWorkoutCheckin> {
                 height: 50,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.purple.withValues(alpha: 0.2)
+                      ? context.accentColor.withValues(alpha: 0.2)
                       : elevated,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? AppColors.purple : Colors.transparent,
+                    color: isSelected ? context.accentColor : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -564,7 +565,7 @@ class _PreWorkoutCheckinSheetState extends ConsumerState<PreWorkoutCheckinSheet>
                           : null,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                       ),
                       child: _isSubmitting
                           ? const SizedBox(

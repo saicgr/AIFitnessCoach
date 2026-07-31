@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A glassmorphic floating pill toggle for switching between
 /// workout summary views (Plan / Summary).
@@ -85,7 +86,7 @@ class SummaryFloatingPill extends StatelessWidget {
                         width: segmentWidth,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             borderRadius:
                                 BorderRadius.circular(_borderRadius - 4),
                           ),

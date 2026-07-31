@@ -71,17 +71,17 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.orange.withOpacity(0.15),
+                            color: context.accentColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             widget.viewingExerciseIndex < widget.currentExerciseIndex
                                 ? 'DONE'
                                 : 'UPCOMING',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -230,7 +230,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.purple.withOpacity(0.9),
+                color: context.accentColor.withOpacity(0.9),
                 letterSpacing: 0.3,
               ),
               textAlign: TextAlign.center,
@@ -329,11 +329,11 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
             const SizedBox(width: 8),
           ],
           // Tag buttons
-          _buildSetTypeTag('W', 'Warmup', AppColors.orange, isDark, textMuted, isCompact),
+          _buildSetTypeTag('W', 'Warmup', AppColors.orange, isDark, textMuted, isCompact),  // accent-allowlist: set-type legend — warm-up sets are always this orange
           SizedBox(width: isCompact ? 4 : 6),
-          _buildSetTypeTag('D', 'Drop Set', AppColors.purple, isDark, textMuted, isCompact),
+          _buildSetTypeTag('D', 'Drop Set', AppColors.purple, isDark, textMuted, isCompact),  // accent-allowlist: set-type legend — drop sets are always this purple
           SizedBox(width: isCompact ? 4 : 6),
-          _buildSetTypeTag('F', 'Failure', AppColors.error, isDark, textMuted, isCompact),
+          _buildSetTypeTag('F', 'Failure', AppColors.error, isDark, textMuted, isCompact),  // accent-allowlist: error/destructive — must stay red
 
           SizedBox(width: isCompact ? 4 : 8),
 
@@ -515,7 +515,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
             Icon(
               Icons.sticky_note_2_outlined,
               size: 18,
-              color: hasNotes ? AppColors.purple : textMuted.withOpacity(0.6),
+              color: hasNotes ? context.accentColor : textMuted.withOpacity(0.6),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -565,8 +565,8 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: isDark
-                ? AppColors.orange.withOpacity(0.06)
-                : AppColors.orange.withOpacity(0.04),
+                ? context.accentColor.withOpacity(0.06)
+                : context.accentColor.withOpacity(0.04),
             border: Border(
               bottom: BorderSide(
                 color: isDark
@@ -585,15 +585,15 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                   height: 26,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.orange.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Text(
                       'W',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.orange,
+                        color: context.accentColor,
                       ),
                     ),
                   ),
@@ -621,7 +621,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.orange.withOpacity(0.8),
+                    color: context.accentColor.withOpacity(0.8),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -659,7 +659,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                 child: Icon(
                   Icons.whatshot_outlined,
                   size: 16,
-                  color: AppColors.orange.withOpacity(0.5),
+                  color: context.accentColor.withOpacity(0.5),
                 ),
               ),
             ],

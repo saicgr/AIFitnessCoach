@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'superset_exercise_picker.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 part 'superset_pair_sheet_part_superset_pair_sheet.dart';
 part 'superset_pair_sheet_part_superset_pair_sheet_state.dart';
@@ -59,14 +60,16 @@ extension SupersetTypeExtension on SupersetType {
     }
   }
 
+  // Superset-type legend — extension getter on an enum (no BuildContext),
+  // and each of the 4 types needs its own colour so the picker stays legible.
   Color get color {
     switch (this) {
       case SupersetType.antagonist:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: superset-type legend — antagonist is always this cyan
       case SupersetType.compound:
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: superset-type legend — compound is always this purple
       case SupersetType.preExhaust:
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: superset-type legend — pre-exhaust is always this orange
       case SupersetType.custom:
         return AppColors.teal;
     }

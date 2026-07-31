@@ -85,12 +85,17 @@ Future<String?> persistEasySet({
       }
     }
 
-    // A set with a distance or an extra metric (SkiErg, a logged box-jump
-    // height, etc.) is REAL even with zero reps/weight — only the truly empty
-    // "Complete workout now" padding rows are placeholders.
+    // A set with a distance, a DURATION (a pure timed hold — plank, wall
+    // sit — legitimately has reps<=0 && weight<=0), or an extra metric
+    // (SkiErg, a logged box-jump height, etc.) is REAL even with zero
+    // reps/weight — only the truly empty "Complete workout now" padding
+    // rows are placeholders. Missing `durationSeconds` from this predicate
+    // meant a genuine timed hold matched every clause and `is_completed`
+    // ended up true only by accident (neighbour of E2E #75).
     final isPlaceholder = log.reps <= 0 &&
         log.weight <= 0 &&
         (log.distanceMeters == null || log.distanceMeters! <= 0) &&
+        (log.durationSeconds == null || log.durationSeconds! <= 0) &&
         log.extraMetrics.isEmpty;
     await repo.logSetPerformance(
       workoutLogId: logId,
@@ -357,7 +362,6 @@ Future<void> runEasyBackgroundSave({
   String? workoutLogId,
 }) async {
   try {
-    final repo = ref.read(workoutRepositoryProvider);
     final metadata = <String, dynamic>{
       'sets_json': aggregates.setsJsonList,
       'logging_mode': 'easy',
@@ -365,33 +369,21 @@ Future<void> runEasyBackgroundSave({
       'drink_events': const <Map<String, dynamic>>[],
     };
 
-    // 1) Backfill (or create) the workout_log row with the full session.
-    if (workoutLogId != null) {
-      await repo.updateWorkoutLog(
-        logId: workoutLogId,
-        setsJson: aggregates.setsJson,
-        totalTimeSeconds: totalTimeSeconds,
-        metadata: metadata,
-      );
-    } else if (workout.id != null) {
-      final userId = await repo.getCurrentUserId();
-      if (userId != null) {
-        // Per-gym progress tracking: prefer the workout's own gym (stable
-        // provenance), fall back to the active gym. Server re-derives the
-        // authoritative value. NULL → combined bucket.
-        final String? gymProfileId =
-            workout.gymProfileId ?? ref.read(activeGymProfileIdProvider);
-        final created = await repo.createWorkoutLog(
-          workoutId: workout.id!,
-          userId: userId,
-          setsJson: aggregates.setsJson,
-          totalTimeSeconds: totalTimeSeconds,
-          metadata: jsonEncode(metadata),
-          gymProfileId: gymProfileId,
-        );
-        workoutLogId = created?['id'] as String?;
-      }
-    }
+    // 1) Backfill (or create) the workout_log row with the full session —
+    // routed through the same offline-queue-with-retry pattern step (2)
+    // already uses (E2E #1). This is the finalize write that fills
+    // sets_json and flips the parent log's derived status; unlike step (2)
+    // it used to have NO queue and NO retry, so a failed/offline finalize
+    // permanently stranded the log at `sets_json='[]'` (in_progress,
+    // post-migration-2390) even though every individual set persisted fine.
+    await _easyFinalizeWithOfflineFallback(
+      ref: ref,
+      workout: workout,
+      workoutLogId: workoutLogId,
+      setsJson: aggregates.setsJson,
+      totalTimeSeconds: totalTimeSeconds,
+      metadata: metadata,
+    );
 
     // 2) Fire /complete with offline fallback.
     if (workout.id != null) {
@@ -414,6 +406,140 @@ Future<void> runEasyBackgroundSave({
   } catch (e) {
     debugPrint('❌ [EasyWorkout] background save failed: $e');
   }
+}
+
+/// E2E #1 — offline queue for the Easy-tier FINALIZE write (the
+/// create/update of the `workout_log` row that fills `sets_json` +
+/// `metadata` + final `total_time_seconds`). Separate feature namespace
+/// from [_easyCompletionQueue] (step 2, `/complete`) — the two writes are
+/// independent and must not share a queue slot or a partial flush of one
+/// could be mistaken for the other.
+final OfflineWriteQueue _easyFinalizeQueue =
+    OfflineWriteQueue(feature: 'workout_finalize_easy');
+
+/// Backfill (or create) the `workout_log` row; on failure — offline, 5xx,
+/// timeout, or any thrown exception — enqueue for replay instead of
+/// silently dropping the logged sets. Never throws.
+///
+/// Before this, `runEasyBackgroundSave` called `updateWorkoutLog`/
+/// `createWorkoutLog` directly with no queue and no retry — both swallow
+/// every failure and return `null` (see their own `catch` blocks in
+/// `workout_repository_performance.dart`). The Easy tier creates the parent
+/// log on the FIRST set with `sets_json = '[]'`, so a device offline at
+/// Finish permanently stranded that row at `in_progress` (post-migration
+/// 2390: empty sets_json ⇒ in_progress) even though every individual set
+/// had already persisted via `logSetPerformance`.
+Future<void> _easyFinalizeWithOfflineFallback({
+  required WidgetRef ref,
+  required Workout workout,
+  required String? workoutLogId,
+  required String setsJson,
+  required int totalTimeSeconds,
+  required Map<String, dynamic> metadata,
+}) async {
+  final repo = ref.read(workoutRepositoryProvider);
+  try {
+    if (workoutLogId != null) {
+      final result = await repo.updateWorkoutLog(
+        logId: workoutLogId,
+        setsJson: setsJson,
+        totalTimeSeconds: totalTimeSeconds,
+        metadata: metadata,
+      );
+      if (result != null) {
+        debugPrint('✅ [EasyWorkout] finalize (update) succeeded');
+        return;
+      }
+    } else if (workout.id != null) {
+      final userId = await repo.getCurrentUserId();
+      if (userId != null) {
+        // Per-gym progress tracking: prefer the workout's own gym (stable
+        // provenance), fall back to the active gym. Server re-derives the
+        // authoritative value. NULL → combined bucket.
+        final String? gymProfileId =
+            workout.gymProfileId ?? ref.read(activeGymProfileIdProvider);
+        final created = await repo.createWorkoutLog(
+          workoutId: workout.id!,
+          userId: userId,
+          setsJson: setsJson,
+          totalTimeSeconds: totalTimeSeconds,
+          metadata: jsonEncode(metadata),
+          gymProfileId: gymProfileId,
+        );
+        if (created != null) {
+          debugPrint('✅ [EasyWorkout] finalize (create) succeeded');
+          return;
+        }
+      }
+    } else {
+      return; // no workout id at all — nothing meaningful to queue
+    }
+    debugPrint('⚠️ [EasyWorkout] finalize returned null — enqueueing');
+  } catch (e) {
+    debugPrint('⚠️ [EasyWorkout] finalize failed ($e) — enqueueing');
+  }
+
+  final userId = await repo.getCurrentUserId();
+  if (userId == null || workout.id == null) {
+    return; // can't scope the queue — nothing else to do
+  }
+  final body = <String, dynamic>{
+    'mode': workoutLogId != null ? 'update' : 'create',
+    'workout_id': workout.id,
+    'log_id': workoutLogId,
+    'sets_json': setsJson,
+    'total_time_seconds': totalTimeSeconds,
+    'metadata': metadata,
+    'gym_profile_id': workout.gymProfileId,
+    // Stable per-workout key — matches createWorkoutLog's own default
+    // (`wklog_$workoutId`) so a replay after a partial success (request
+    // sent, response lost) can never duplicate the row; the server returns
+    // the existing one instead.
+    'idempotency_key': workoutLogId == null
+        ? 'wklog_${workout.id}'
+        : OfflineWriteQueue.idempotencyKey('wkfin'),
+  };
+  await _easyFinalizeQueue.enqueue(userId: userId, body: body);
+  _easyFinalizeQueue.bindConnectivity(
+    userId: userId,
+    sender: (queuedBody) async {
+      try {
+        final mode = queuedBody['mode'] as String?;
+        final rawMetadata = queuedBody['metadata'];
+        final metaMap = rawMetadata is Map
+            ? Map<String, dynamic>.from(rawMetadata)
+            : <String, dynamic>{};
+        if (mode == 'update') {
+          final logId = queuedBody['log_id'] as String?;
+          if (logId == null) return true; // poison item — drop
+          final r = await repo.updateWorkoutLog(
+            logId: logId,
+            setsJson: queuedBody['sets_json'] as String?,
+            totalTimeSeconds: (queuedBody['total_time_seconds'] as num?)?.toInt(),
+            metadata: metaMap,
+          );
+          return r != null;
+        }
+        final wid = queuedBody['workout_id'] as String?;
+        if (wid == null) return true; // poison item — drop
+        final uid = await repo.getCurrentUserId();
+        if (uid == null) return false; // transient — logged out momentarily
+        final r = await repo.createWorkoutLog(
+          workoutId: wid,
+          userId: uid,
+          setsJson: queuedBody['sets_json'] as String? ?? '[]',
+          totalTimeSeconds:
+              (queuedBody['total_time_seconds'] as num?)?.toInt() ?? 0,
+          metadata: jsonEncode(metaMap),
+          gymProfileId: queuedBody['gym_profile_id'] as String?,
+          idempotencyKey: queuedBody['idempotency_key'] as String?,
+        );
+        return r != null;
+      } catch (_) {
+        return false; // transient — keep queued, stop the flush
+      }
+    },
+  );
 }
 
 /// Fire `POST /workouts/{id}/complete`; on failure persist to the offline
@@ -500,7 +626,14 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
     final total = (ex.setTargets != null && ex.setTargets!.isNotEmpty)
         ? ex.setTargets!.length
         : (ex.sets ?? 3);
-    final timed = metric.isTime || ex.isTimedExercise;
+    // Trust the classifier ALONE. `ex.isTimedExercise` is a raw-flag OR
+    // (`isTimed` / `durationSeconds>0` / `holdSeconds>0`) that used to be
+    // OR'd in here too — that bypassed the classifier's rep-count precedence
+    // entirely: a LIBRARY `is_timed=true` (e.g. Bird Dog) still forced a
+    // timer even after the classifier correctly said "this has an authored
+    // rep count, it's not timed" (E2E #133 — 5 reps rendered as a 5s timer
+    // and logged reps_completed=0).
+    final timed = metric.isTime;
     final defaultDuration = ex.holdSeconds ??
         (firstTarget?.targetHoldSeconds) ??
         ex.durationSeconds ??

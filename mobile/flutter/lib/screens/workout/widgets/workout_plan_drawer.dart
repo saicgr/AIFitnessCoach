@@ -12,6 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Show the workout plan drawer as a bottom sheet
 Future<void> showWorkoutPlanDrawer({
@@ -112,7 +113,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
               children: [
                 Icon(
                   Icons.list_alt_rounded,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 28,
                 ),
                 const SizedBox(width: 12),
@@ -167,7 +168,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
                     return Material(
                       elevation: elevation,
                       color: Colors.transparent,
-                      shadowColor: AppColors.cyan.withOpacity(0.3),
+                      shadowColor: context.accentColor.withOpacity(0.3),
                       child: child,
                     );
                   },
@@ -233,7 +234,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
                   icon: const Icon(Icons.add_rounded),
                   label: Text(l.exerciseAddSheetAddExercise),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -296,7 +297,7 @@ class _WorkoutPlanDrawerState extends State<WorkoutPlanDrawer> {
             },
             child: Text(
               l.workoutPlanDrawerRemove,
-              style: const TextStyle(color: AppColors.error),
+              style: const TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive — must stay red
             ),
           ),
         ],
@@ -348,8 +349,8 @@ class _ExerciseRow extends StatelessWidget {
       borderColor = AppColors.electricBlue;
       bgColor = AppColors.electricBlue.withOpacity(0.08);
     } else if (isCompleted) {
-      borderColor = AppColors.success.withOpacity(0.5);
-      bgColor = AppColors.success.withOpacity(0.05);
+      borderColor = AppColors.success.withOpacity(0.5);  // accent-allowlist: success/positive state — must stay green regardless of accent
+      bgColor = AppColors.success.withOpacity(0.05);  // accent-allowlist: success/positive state — must stay green regardless of accent
     } else {
       borderColor = Colors.transparent;
       bgColor = Colors.transparent;
@@ -369,7 +370,7 @@ class _ExerciseRow extends StatelessWidget {
         padding: const EdgeInsetsDirectional.only(end: 24),
         margin: EdgeInsets.symmetric(horizontal: isCompact ? 8 : 16, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.error,
+          color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           borderRadius: BorderRadius.circular(14),
         ),
         child: const Icon(
@@ -434,7 +435,7 @@ class _ExerciseRow extends StatelessWidget {
                     // Completed overlay
                     if (isCompleted)
                       Container(
-                        color: AppColors.success.withOpacity(0.8),
+                        color: AppColors.success.withOpacity(0.8),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         child: Icon(
                           Icons.check_rounded,
                           color: Colors.white,
@@ -499,7 +500,7 @@ class _ExerciseRow extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isCompact ? 11 : 13,
                         color: isCompleted
-                            ? AppColors.success
+                            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                             : (isDark
                                 ? AppColors.textMuted
                                 : AppColorsLight.textMuted),
@@ -525,7 +526,7 @@ class _ExerciseRow extends StatelessWidget {
                     icon: Icon(
                       Icons.swap_horiz_rounded,
                       size: isCompact ? 18 : 20,
-                      color: AppColors.purple,
+                      color: context.accentColor,
                     ),
                     tooltip: l.workoutPlanDrawerSwapExercise,
                   ),
@@ -539,7 +540,7 @@ class _ExerciseRow extends StatelessWidget {
                     icon: Icon(
                       Icons.delete_outline_rounded,
                       size: isCompact ? 18 : 20,
-                      color: AppColors.error.withOpacity(0.7),
+                      color: AppColors.error.withOpacity(0.7),  // accent-allowlist: error/destructive — must stay red
                     ),
                     tooltip: l.workoutPlanDrawerRemoveExerciseTooltip,
                   ),

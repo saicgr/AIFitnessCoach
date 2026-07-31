@@ -30,7 +30,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
     required this.textPrimary,
     required this.textMuted,
     this.actionIcon = Icons.add_circle,
-    this.actionColor = AppColors.success,
+    this.actionColor = AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
     this.highlighted = false,
   });
 
@@ -51,18 +51,18 @@ class _ExerciseOptionCard extends ConsumerWidget {
         boxShadow: highlighted
             ? [
                 BoxShadow(
-                  color: AppColors.cyan.withValues(alpha: 0.55),
+                  color: context.accentColor.withValues(alpha: 0.55),
                   blurRadius: 18,
                   spreadRadius: 1.5,
                 ),
               ]
             : const [],
         border: highlighted
-            ? Border.all(color: AppColors.cyan, width: 2)
+            ? Border.all(color: context.accentColor, width: 2)
             : (isRecommended
                 ? const Border(
                     left: BorderSide(
-                      color: Color(0xFFD4A017),
+                      color: Color(0xFFD4A017),  // accent-allowlist: recommended-tier gold, matches 'Top Picks' section title
                       width: 2.5,
                     ),
                   )

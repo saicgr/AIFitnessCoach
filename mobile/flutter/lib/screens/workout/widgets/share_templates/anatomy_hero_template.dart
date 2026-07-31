@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
 import '_anatomy_painter.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Anatomy Hero — the signature share template. Front + back body
 /// silhouettes with trained muscles filled teal→cyan, sidebar lists
@@ -74,7 +75,10 @@ class AnatomyHeroTemplate extends StatelessWidget {
                   flex: 3,
                   child: CustomPaint(
                     size: Size.infinite,
-                    painter: AnatomyPainter(musclesWorked: musclesWorked),
+                    painter: AnatomyPainter(
+                      musclesWorked: musclesWorked,
+                      fillEnd: context.accentColor,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -98,7 +102,7 @@ class AnatomyHeroTemplate extends StatelessWidget {
                                     width: 5,
                                     height: 5,
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFFF59E0B),
+                                      color: Color(0xFFF59E0B),  // accent-allowlist: warning severity
                                       shape: BoxShape.circle,
                                     ),
                                   ),

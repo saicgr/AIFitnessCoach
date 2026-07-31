@@ -7,6 +7,7 @@ import '../../../data/models/program_template.dart';
 import '../../../data/providers/program_favorites_provider.dart';
 import '../../../data/repositories/program_template_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A designed, image-free category card for the program library (plan B.3.2).
 ///
@@ -371,7 +372,7 @@ class _CardFavoriteHeartState extends ConsumerState<_CardFavoriteHeart> {
         child: Icon(
           fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
           size: 16,
-          color: fav ? AppColors.orange : Colors.white,
+          color: fav ? context.accentColor : Colors.white,
         ),
       ),
     );
@@ -447,47 +448,47 @@ class _ProgramCategoryTheme {
     final key = (category ?? '').toLowerCase().trim();
     if (key.contains('celebrity')) {
       return const _ProgramCategoryTheme(
-          Color(0xFFEC4899), Color(0xFF8B5CF6), Icons.movie_rounded);
+          Color(0xFFEC4899), Color(0xFF8B5CF6), Icons.movie_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('sport')) {
       return const _ProgramCategoryTheme(
-          Color(0xFF06B6D4), Color(0xFF2563EB), Icons.sports_basketball_rounded);
+          Color(0xFF06B6D4), Color(0xFF2563EB), Icons.sports_basketball_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('goal')) {
       return const _ProgramCategoryTheme(
-          Color(0xFFF97316), Color(0xFFE11D48), Icons.flag_rounded);
+          Color(0xFFF97316), Color(0xFFE11D48), Icons.flag_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('special')) {
       return const _ProgramCategoryTheme(
-          Color(0xFF8B5CF6), Color(0xFF4338CA), Icons.auto_awesome_rounded);
+          Color(0xFF8B5CF6), Color(0xFF4338CA), Icons.auto_awesome_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('yoga')) {
       return const _ProgramCategoryTheme(
-          Color(0xFF22C55E), Color(0xFF0D9488), Icons.self_improvement_rounded);
+          Color(0xFF22C55E), Color(0xFF0D9488), Icons.self_improvement_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('stretch')) {
       return const _ProgramCategoryTheme(
-          Color(0xFF14B8A6), Color(0xFF0891B2), Icons.accessibility_new_rounded);
+          Color(0xFF14B8A6), Color(0xFF0891B2), Icons.accessibility_new_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('pain')) {
       return const _ProgramCategoryTheme(
-          Color(0xFF38BDF8), Color(0xFF1D4ED8), Icons.healing_rounded);
+          Color(0xFF38BDF8), Color(0xFF1D4ED8), Icons.healing_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('women') || key.contains('men') || key.contains('health')) {
       return const _ProgramCategoryTheme(
-          Color(0xFFF472B6), Color(0xFF9333EA), Icons.favorite_rounded);
+          Color(0xFFF472B6), Color(0xFF9333EA), Icons.favorite_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('cardio')) {
       return const _ProgramCategoryTheme(
-          Color(0xFFEF4444), Color(0xFFB91C1C), Icons.directions_run_rounded);
+          Color(0xFFEF4444), Color(0xFFB91C1C), Icons.directions_run_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     if (key.contains('strength')) {
       return const _ProgramCategoryTheme(
-          Color(0xFFF59E0B), Color(0xFFB45309), Icons.fitness_center_rounded);
+          Color(0xFFF59E0B), Color(0xFFB45309), Icons.fitness_center_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
     }
     // Authored / parsed / duplicated / unknown — neutral accent gradient.
     return const _ProgramCategoryTheme(
-        Color(0xFF6366F1), Color(0xFF312E81), Icons.list_alt_rounded);
+        Color(0xFF6366F1), Color(0xFF312E81), Icons.list_alt_rounded);  // accent-allowlist: program-category legend — each category (celebrity/sport/goal/special/yoga/stretch/pain/women-men-health/cardio/strength/default) keeps its own gradient so cards stay distinguishable in the library grid
   }
 
   /// Convenience for callers that only have a saved [ProgramTemplate] — wraps

@@ -475,7 +475,7 @@ class ExerciseDetailsSheetContentState
                   icon: Icons.check_circle_outline,
                   title: l.exerciseDetailsFormCues,
                   content: _aiInsights!.formCues!,
-                  color: const Color(0xFF22C55E), // Green for success
+                  color: const Color(0xFF22C55E), // Green for success  // accent-allowlist: success/positive state — must stay green regardless of accent
                   isDark: isDark,
                   textPrimary: textPrimary,
                 ),
@@ -488,7 +488,7 @@ class ExerciseDetailsSheetContentState
                   icon: Icons.warning_amber_outlined,
                   title: l.exerciseDetailsWatchOutFor,
                   content: _aiInsights!.commonMistakes!,
-                  color: const Color(0xFFF59E0B), // Amber for warnings
+                  color: const Color(0xFFF59E0B), // Amber for warnings  // accent-allowlist: warning severity
                   isDark: isDark,
                   textPrimary: textPrimary,
                 ),

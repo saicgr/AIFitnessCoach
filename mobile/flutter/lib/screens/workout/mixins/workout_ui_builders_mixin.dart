@@ -722,8 +722,8 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
             onTap: showHydrationDialogImpl,
             isDark: isDark,
             chipBackground: chipBackground,
-            textColor: AppColors.quickActionWater,
-            iconColor: AppColors.quickActionWater,
+            textColor: AppColors.quickActionWater,  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
+            iconColor: AppColors.quickActionWater,  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
           ),
           buildLandscapeMiniChip(
             icon: Icons.sticky_note_2_outlined,
@@ -731,8 +731,8 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
             onTap: () => showNotesSheet(exercises[viewingExerciseIndex]),
             isDark: isDark,
             chipBackground: chipBackground,
-            textColor: const Color(0xFFF59E0B),
-            iconColor: const Color(0xFFF59E0B),
+            textColor: const Color(0xFFF59E0B),  // accent-allowlist: warning severity
+            iconColor: const Color(0xFFF59E0B),  // accent-allowlist: warning severity
           ),
         ],
       ),
@@ -809,7 +809,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                   child: _DragActionZone(
                     icon: Icons.delete_outline_rounded,
                     label: AppLocalizations.of(context).buttonDelete,
-                    color: Colors.red,
+                    color: Colors.red,  // accent-allowlist: error/destructive — must stay red
                     isDark: isDark,
                     onAccept: (draggedIndex) {
                       setState(() {
@@ -826,7 +826,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                   child: _DragActionZone(
                     icon: Icons.swap_horiz_rounded,
                     label: AppLocalizations.of(context).workoutUiBuildersSwap,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     isDark: isDark,
                     onAccept: (draggedIndex) {
                       setState(() {
@@ -860,7 +860,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
           width: 20,
           height: 20,
           decoration: BoxDecoration(
-            color: Colors.purple,
+            color: Colors.purple,  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -1019,7 +1019,7 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: Colors.red,  // accent-allowlist: error/destructive — must stay red
                   shape: BoxShape.circle,
                   border: Border.all(color: isDark ? AppColors.pureBlack : Colors.white, width: 2),
                 ),

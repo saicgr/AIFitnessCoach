@@ -43,7 +43,7 @@ class SupersetIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = color ?? AppColors.purple;
+    final themeColor = color ?? context.accentColor;
 
     if (isHeader) {
       return _buildHeader(context, themeColor);
@@ -153,7 +153,7 @@ class SupersetConnector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeColor = color ?? AppColors.purple;
+    final themeColor = color ?? context.accentColor;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
@@ -484,7 +484,7 @@ class CreateSupersetFab extends StatelessWidget {
 
     return FloatingActionButton.extended(
       onPressed: onPressed,
-      backgroundColor: AppColors.purple,
+      backgroundColor: context.accentColor,
       icon: const Icon(Icons.link, color: Colors.white),
       label: Text(
         AppLocalizations.of(context).workoutSheetsMixinCreateSuperset,
@@ -559,12 +559,12 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withOpacity(0.1),
+                  color: context.accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.link_rounded,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   size: 20,
                 ),
               ),
@@ -600,17 +600,17 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.1),
+              color: context.accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.cyan.withOpacity(0.3),
+                color: context.accentColor.withOpacity(0.3),
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.info_outline,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 18,
                 ),
                 const SizedBox(width: 10),
@@ -621,9 +621,9 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                         : _secondSelection == null
                             ? 'Now tap the second exercise'
                             : 'Tap "Create" to confirm',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   ),
                 ),
@@ -669,12 +669,12 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.purple.withOpacity(0.15)
+                          ? context.accentColor.withOpacity(0.15)
                           : AppColors.elevated,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.purple.withOpacity(0.5)
+                            ? context.accentColor.withOpacity(0.5)
                             : AppColors.cardBorder,
                         width: isSelected ? 2 : 1,
                       ),
@@ -687,7 +687,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                           height: 28,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.purple
+                                ? context.accentColor
                                 : AppColors.glassSurface,
                             shape: BoxShape.circle,
                           ),
@@ -723,9 +723,9 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                           ),
                         ),
                         if (isSelected)
-                          const Icon(
+                          Icon(
                             Icons.check_circle,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                             size: 22,
                           ),
                       ],
@@ -752,7 +752,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.purple,
+                backgroundColor: context.accentColor,
                 disabledBackgroundColor: AppColors.glassSurface,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(

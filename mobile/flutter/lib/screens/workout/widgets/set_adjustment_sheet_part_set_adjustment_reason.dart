@@ -150,12 +150,12 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withValues(alpha: 0.15),
+                          color: context.accentColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.skip_next_rounded,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           size: 26,
                         ),
                       ),
@@ -206,7 +206,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                             Icon(
                               Icons.check_circle,
                               size: 18,
-                              color: AppColors.success,
+                              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -214,7 +214,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.success,
+                                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                             ),
                           ],
@@ -235,15 +235,15 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                     height: 50,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.orange.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                     ),
                     child: Center(
                       child: Text(
                         '-$remainingSets',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -285,12 +285,12 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.orange.withOpacity(0.15)
+                              ? context.accentColor.withOpacity(0.15)
                               : cardBg,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.orange
+                                ? context.accentColor
                                 : isDark
                                     ? AppColors.cardBorder
                                     : AppColorsLight.cardBorder,
@@ -304,7 +304,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                               height: 36,
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.orange.withOpacity(0.2)
+                                    ? context.accentColor.withOpacity(0.2)
                                     : textMuted.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -312,7 +312,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                                 reason.icon,
                                 size: 20,
                                 color: isSelected
-                                    ? AppColors.orange
+                                    ? context.accentColor
                                     : textSecondary,
                               ),
                             ),
@@ -329,7 +329,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                                           ? FontWeight.w600
                                           : FontWeight.w500,
                                       color: isSelected
-                                          ? AppColors.orange
+                                          ? context.accentColor
                                           : textPrimary,
                                     ),
                                   ),
@@ -344,9 +344,9 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                               ),
                             ),
                             if (isSelected)
-                              const Icon(
+                              Icon(
                                 Icons.check_circle,
-                                color: AppColors.orange,
+                                color: context.accentColor,
                                 size: 22,
                               ),
                           ],
@@ -424,7 +424,7 @@ class _SkipRemainingSetsSheetState extends State<SkipRemainingSetsSheet> {
                     child: ElevatedButton(
                       onPressed: _selectedReason != null ? _handleConfirm : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: isDark
                             ? AppColors.elevated

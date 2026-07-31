@@ -122,23 +122,23 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
         setNumberDisplay = typeLabel; // W, D, F, A
         if (setTarget.isWarmup) {
           setTypeLabel = 'WARMUP';
-          setTypeLabelColor = AppColors.orange;
+          setTypeLabelColor = AppColors.orange;  // accent-allowlist: set-type legend — warm-up sets are always this orange
         } else if (setTarget.isDropSet) {
           setTypeLabel = 'DROP SET';
-          setTypeLabelColor = AppColors.purple;
+          setTypeLabelColor = AppColors.purple;  // accent-allowlist: set-type legend — drop sets are always this purple
         } else if (setTarget.isFailure) {
           setTypeLabel = 'FAILURE';
-          setTypeLabelColor = AppColors.error;
+          setTypeLabelColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
         }
       }
     } else {
       // Fallback to exercise-level flags
       if (widget.exercise.isDropSet == true && isLastSet) {
         setTypeLabel = 'DROP SET';
-        setTypeLabelColor = AppColors.purple;
+        setTypeLabelColor = AppColors.purple;  // accent-allowlist: set-type legend — drop sets are always this purple
       } else if (widget.exercise.isFailureSet == true && isLastSet) {
         setTypeLabel = 'FAILURE';
-        setTypeLabelColor = AppColors.error;
+        setTypeLabelColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       }
     }
 
@@ -168,15 +168,15 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: (isCurrent || isEditing) ? 14 : 10),
       decoration: BoxDecoration(
         color: isEditing
-            ? AppColors.orange.withOpacity(0.15)
+            ? context.accentColor.withOpacity(0.15)
             : isCurrent
                 ? AppColors.electricBlue.withOpacity(0.15)
                 : isCompleted
-                    ? AppColors.success.withOpacity(0.05)
+                    ? AppColors.success.withOpacity(0.05)  // accent-allowlist: success/positive state — must stay green regardless of accent
                     : Colors.transparent,
         border: isEditing
             ? Border.all(
-                color: AppColors.orange.withOpacity(0.5),
+                color: context.accentColor.withOpacity(0.5),
                 width: 2,
               )
             : isCurrent
@@ -224,7 +224,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
@@ -243,14 +243,14 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                           height: 28,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.orange.withOpacity(0.2),
-                            border: Border.all(color: AppColors.orange, width: 2),
+                            color: context.accentColor.withOpacity(0.2),
+                            border: Border.all(color: context.accentColor, width: 2),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Icon(
                               Icons.check_rounded,
                               size: 16,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                           ),
                         ),
@@ -305,8 +305,8 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                               height: 28,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.success.withOpacity(0.2),
-                                border: Border.all(color: AppColors.success, width: 2),
+                                color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
+                                border: Border.all(color: AppColors.success, width: 2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                               child: Center(
                                 child: Text(
@@ -314,7 +314,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.success,
+                                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   ),
                                 ),
                               ),
@@ -396,9 +396,9 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                 padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                 decoration: isCurrent && (targetDisplay == '—' || targetDisplay.isEmpty)
                     ? BoxDecoration(
-                        color: AppColors.purple.withOpacity(0.1),
+                        color: context.accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.purple.withOpacity(0.3)),
+                        border: Border.all(color: context.accentColor.withOpacity(0.3)),
                       )
                     : null,
                 child: Text(
@@ -408,10 +408,10 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                   style: TextStyle(
                     fontSize: 12,
                     color: isCurrent
-                        ? AppColors.purple
+                        ? context.accentColor
                         : isPending
-                            ? AppColors.purple.withOpacity(0.4)
-                            : AppColors.purple.withOpacity(0.8),
+                            ? context.accentColor.withOpacity(0.4)
+                            : context.accentColor.withOpacity(0.8),
                     fontWeight: FontWeight.w500,
                   ),
                   textAlign: TextAlign.center,
@@ -429,7 +429,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                     isDecimal: true,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    accentColor: isEditing ? AppColors.orange : AppColors.electricBlue,
+                    accentColor: isEditing ? context.accentColor : AppColors.electricBlue,
                   )
                 : GestureDetector(
                     onTap: isCompleted
@@ -452,7 +452,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                           fontSize: 14,
                           fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
                           color: isCompleted
-                              ? AppColors.success
+                              ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                               : textMuted.withOpacity(0.4),
                         ),
                         textAlign: TextAlign.center,
@@ -470,7 +470,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                     isDecimal: false,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    accentColor: isEditing ? AppColors.orange : AppColors.electricBlue,
+                    accentColor: isEditing ? context.accentColor : AppColors.electricBlue,
                   )
                 : GestureDetector(
                     onTap: isCompleted
@@ -487,7 +487,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                           fontSize: 14,
                           fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
                           color: isCompleted
-                              ? AppColors.success
+                              ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                               : textMuted.withOpacity(0.4),
                         ),
                         textAlign: TextAlign.center,
@@ -578,19 +578,19 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
         secondaryBackground: Container(
           alignment: AlignmentDirectional.centerEnd,
           padding: const EdgeInsetsDirectional.only(end: 24),
-          color: AppColors.error.withOpacity(0.15),
+          color: AppColors.error.withOpacity(0.15),  // accent-allowlist: error/destructive — must stay red
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               Text(
                 AppLocalizations.of(context).buttonDelete,
                 style: TextStyle(
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                   fontWeight: FontWeight.w600,
                 ),
               ),
               SizedBox(width: 8),
-              Icon(Icons.delete_outline, color: AppColors.error, size: 20),
+              Icon(Icons.delete_outline, color: AppColors.error, size: 20),  // accent-allowlist: error/destructive — must stay red
             ],
           ),
         ),
@@ -646,7 +646,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
             height: 36,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.success, width: 2),
+              border: Border.all(color: AppColors.success, width: 2),  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           )
               .animate()
@@ -662,7 +662,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.success.withOpacity(0.2),
+              color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           )
               .animate()
@@ -681,13 +681,13 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
           height: 28,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.success.withOpacity(0.15),
+            color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
           child: isJustCompleted
               ? const Icon(
                   Icons.check_rounded,
                   size: 18,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 )
                   .animate()
                   .scale(
@@ -703,7 +703,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
               : const Icon(
                   Icons.check_rounded,
                   size: 18,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
         ),
       ],

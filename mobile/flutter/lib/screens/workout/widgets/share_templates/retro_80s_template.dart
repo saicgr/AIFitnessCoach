@@ -39,7 +39,7 @@ class Retro80sTemplate extends StatelessWidget {
               ShareTrackedCaps(
                 'MAX EFFORT',
                 size: 11,
-                color: const Color(0xFFFF71CE),
+                color: const Color(0xFFFF71CE),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
                 letterSpacing: 5,
               ),
               const SizedBox(height: 14),
@@ -50,8 +50,8 @@ class Retro80sTemplate extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Color(0xFFFFEEFF),
-                    Color(0xFFFF71CE),
-                    Color(0xFF7B3FB3),
+                    Color(0xFFFF71CE),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
+                    Color(0xFF7B3FB3),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
                   ],
                   stops: [0, 0.55, 1],
                 ).createShader(rect),
@@ -77,7 +77,7 @@ class Retro80sTemplate extends StatelessWidget {
                       value: totalVolumeKg == null
                           ? '—'
                           : formatShareWeightCompact(totalVolumeKg, useKg: useKg),
-                      color: const Color(0xFFFF71CE),
+                      color: const Color(0xFFFF71CE),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -85,7 +85,7 @@ class Retro80sTemplate extends StatelessWidget {
                     child: _NeonBox(
                       label: 'SETS',
                       value: '$totalSets',
-                      color: const Color(0xFF01CDFE),
+                      color: const Color(0xFF01CDFE),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
                     ),
                   ),
                 ],
@@ -97,7 +97,7 @@ class Retro80sTemplate extends StatelessWidget {
                     child: _NeonBox(
                       label: 'TIME',
                       value: formatShareDurationLong(durationSeconds),
-                      color: const Color(0xFF01CDFE),
+                      color: const Color(0xFF01CDFE),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -105,7 +105,7 @@ class Retro80sTemplate extends StatelessWidget {
                     child: _NeonBox(
                       label: AppLocalizations.of(context).retro80sTemplateCalories,
                       value: calories == null ? '—' : '$calories',
-                      color: const Color(0xFFFF71CE),
+                      color: const Color(0xFFFF71CE),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
                     ),
                   ),
                 ],
@@ -212,7 +212,7 @@ class _SynthwavePainter extends CustomPainter {
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFEEFF), Color(0xFFFF71CE), Color(0xFF7B3FB3)],
+          colors: [Color(0xFFFFEEFF), Color(0xFFFF71CE), Color(0xFF7B3FB3)],  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
         ).createShader(sunRect),
     );
     // Sun horizontal stripes (negative space)
@@ -226,7 +226,7 @@ class _SynthwavePainter extends CustomPainter {
     }
     // Grid floor
     final floorPaint = Paint()
-      ..color = const Color(0xFF01CDFE).withValues(alpha: 0.55)
+      ..color = const Color(0xFF01CDFE).withValues(alpha: 0.55)  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
       ..strokeWidth = 1.0;
     final horizonY = size.height * 0.58;
     // Vertical lines receding
@@ -245,7 +245,7 @@ class _SynthwavePainter extends CustomPainter {
       canvas.drawLine(
         Offset(0, y),
         Offset(size.width, y),
-        floorPaint..color = const Color(0xFF01CDFE).withValues(alpha: 0.35 + t * 0.3),
+        floorPaint..color = const Color(0xFF01CDFE).withValues(alpha: 0.35 + t * 0.3),  // accent-allowlist: Retro 80s share-template identity — fixed synthwave magenta/cyan palette, one of several named templates in the share gallery, each with its own fixed look
       );
     }
   }

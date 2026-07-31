@@ -5,6 +5,7 @@ import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Shows a picker to select an exercise from the current workout exercises
 Future<WorkoutExercise?> showSupersetExercisePicker(
   BuildContext context, {
@@ -86,7 +87,7 @@ class _SupersetExercisePickerState extends State<_SupersetExercisePicker> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(Icons.fitness_center, color: AppColors.purple),
+                Icon(Icons.fitness_center, color: context.accentColor),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -272,7 +273,7 @@ class _ExercisePickerCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.purple.withOpacity(0.15),
+                                color: context.accentColor.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -280,7 +281,7 @@ class _ExercisePickerCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.purple,
+                                  color: context.accentColor,
                                 ),
                               ),
                             ),
@@ -303,12 +304,12 @@ class _ExercisePickerCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.1),
+                    color: context.accentColor.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.add,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     size: 20,
                   ),
                 ),

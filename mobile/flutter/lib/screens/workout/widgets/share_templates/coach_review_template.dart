@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/coach_persona.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Coach Review Template - Shows the AI coach's review/opinion of the workout
 /// Features the selected coach persona with their feedback
@@ -108,8 +109,8 @@ class CoachReviewTemplate extends StatelessWidget {
     }
   }
 
-  Color get _coachColor => coach?.primaryColor ?? AppColors.cyan;
-  Color get _coachAccent => coach?.accentColor ?? AppColors.purple;
+  Color _coachColor(BuildContext context) => coach?.primaryColor ?? context.accentColor;
+  Color _coachAccent(BuildContext context) => coach?.accentColor ?? context.accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +126,7 @@ class CoachReviewTemplate extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _coachColor.withValues(alpha: 0.2),
+            _coachColor(context).withValues(alpha: 0.2),
             const Color(0xFF1A1A1A),
             const Color(0xFF0D0D0D),
           ],
@@ -140,7 +141,7 @@ class CoachReviewTemplate extends StatelessWidget {
             // Background pattern
             Positioned.fill(
               child: CustomPaint(
-                painter: _CoachPatternPainter(color: _coachColor),
+                painter: _CoachPatternPainter(color: _coachColor(context)),
               ),
             ),
 
@@ -159,7 +160,7 @@ class CoachReviewTemplate extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Coach header
-                        _buildCoachHeader(l),
+                        _buildCoachHeader(context, l),
 
                         const SizedBox(height: 10),
 
@@ -179,12 +180,12 @@ class CoachReviewTemplate extends StatelessWidget {
                         const SizedBox(height: 4),
 
                         // Quick stats
-                        _buildQuickStats(),
+                        _buildQuickStats(context),
 
                         const SizedBox(height: 10),
 
                         // Coach review - no Expanded wrapper
-                        _buildReviewSection(),
+                        _buildReviewSection(context),
 
                         if (showWatermark) ...[
                           const SizedBox(height: 10),
@@ -203,7 +204,7 @@ class CoachReviewTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildCoachHeader(AppLocalizations l) {
+  Widget _buildCoachHeader(BuildContext context, AppLocalizations l) {
     final coachName = coach?.name ?? 'AI Coach';
     final coachEmoji = coach?.emoji ?? '🤖';
     final coachImage = coach?.imagePath;
@@ -216,12 +217,12 @@ class CoachReviewTemplate extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [_coachColor, _coachAccent],
+              colors: [_coachColor(context), _coachAccent(context)],
             ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: _coachColor.withValues(alpha: 0.4),
+                color: _coachColor(context).withValues(alpha: 0.4),
                 blurRadius: 12,
                 spreadRadius: 2,
               ),
@@ -253,7 +254,7 @@ class CoachReviewTemplate extends StatelessWidget {
               Text(
                 coachName,
                 style: TextStyle(
-                  color: _coachColor,
+                  color: _coachColor(context),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -273,22 +274,22 @@ class CoachReviewTemplate extends StatelessWidget {
         ),
 
         // Rating badge
-        if (performanceRating != null) _buildRatingBadge(),
+        if (performanceRating != null) _buildRatingBadge(context),
       ],
     );
   }
 
-  Widget _buildRatingBadge() {
+  Widget _buildRatingBadge(BuildContext context) {
     final rating = performanceRating ?? 0.8;
     final stars = (rating * 5).round();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: _coachColor.withValues(alpha: 0.2),
+        color: _coachColor(context).withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _coachColor.withValues(alpha: 0.4),
+          color: _coachColor(context).withValues(alpha: 0.4),
         ),
       ),
       child: Row(
@@ -297,14 +298,14 @@ class CoachReviewTemplate extends StatelessWidget {
           return Icon(
             index < stars ? Icons.star_rounded : Icons.star_outline_rounded,
             size: 14,
-            color: index < stars ? _coachColor : Colors.white.withValues(alpha: 0.3),
+            color: index < stars ? _coachColor(context) : Colors.white.withValues(alpha: 0.3),
           );
         }),
       ),
     );
   }
 
-  Widget _buildQuickStats() {
+  Widget _buildQuickStats(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -317,23 +318,23 @@ class CoachReviewTemplate extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem(Icons.timer_outlined, _formattedDuration),
-          _buildDivider(),
-          _buildStatItem(Icons.fitness_center, '$exercisesCount ex'),
+          _buildStatItem(context, Icons.timer_outlined, _formattedDuration),
+          _buildDivider(context),
+          _buildStatItem(context, Icons.fitness_center, '$exercisesCount ex'),
           if (totalVolumeKg != null) ...[
-            _buildDivider(),
-            _buildStatItem(Icons.scale_outlined, '${totalVolumeKg!.toStringAsFixed(0)}$weightUnit'),
+            _buildDivider(context),
+            _buildStatItem(context, Icons.scale_outlined, '${totalVolumeKg!.toStringAsFixed(0)}$weightUnit'),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value) {
+  Widget _buildStatItem(BuildContext context, IconData icon, String value) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: _coachColor),
+        Icon(icon, size: 14, color: _coachColor(context)),
         const SizedBox(width: 4),
         Text(
           value,
@@ -347,7 +348,7 @@ class CoachReviewTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(BuildContext context) {
     return Container(
       height: 16,
       width: 1,
@@ -355,14 +356,14 @@ class CoachReviewTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildReviewSection() {
+  Widget _buildReviewSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: _coachColor.withValues(alpha: 0.2),
+          color: _coachColor(context).withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -374,13 +375,13 @@ class CoachReviewTemplate extends StatelessWidget {
               Icon(
                 Icons.format_quote_rounded,
                 size: 16,
-                color: _coachColor.withValues(alpha: 0.7),
+                color: _coachColor(context).withValues(alpha: 0.7),
               ),
               const SizedBox(width: 6),
               Text(
                 "Coach's Review",
                 style: TextStyle(
-                  color: _coachColor,
+                  color: _coachColor(context),
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,

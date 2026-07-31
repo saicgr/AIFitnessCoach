@@ -37,7 +37,7 @@ Future<SaunaDialogResult?> showSaunaDialog({
           final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
           final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-          const accentColor = Color(0xFFE65100); // Deep orange for sauna/heat
+          const accentColor = Color(0xFFE65100); // Deep orange for sauna/heat  // accent-allowlist: deliberate deep-orange heat theme for sauna, see comment
 
           return Padding(
             padding: const EdgeInsets.all(20),

@@ -177,12 +177,12 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.link,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -246,7 +246,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                             height: 16,
                             decoration: BoxDecoration(
                               color: _exercise1 != null && _exercise2 != null
-                                  ? AppColors.purple
+                                  ? context.accentColor
                                   : textMuted.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(1),
                             ),
@@ -255,7 +255,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: _exercise1 != null && _exercise2 != null
-                                  ? AppColors.purple.withOpacity(0.15)
+                                  ? context.accentColor.withOpacity(0.15)
                                   : glassSurface,
                               shape: BoxShape.circle,
                             ),
@@ -263,7 +263,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                               Icons.link,
                               size: 20,
                               color: _exercise1 != null && _exercise2 != null
-                                  ? AppColors.purple
+                                  ? context.accentColor
                                   : textMuted,
                             ),
                           ),
@@ -272,7 +272,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                             height: 16,
                             decoration: BoxDecoration(
                               color: _exercise1 != null && _exercise2 != null
-                                  ? AppColors.purple
+                                  ? context.accentColor
                                   : textMuted.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(1),
                             ),
@@ -321,7 +321,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                         Icon(
                           Icons.auto_awesome,
                           size: 18,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -400,7 +400,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                       children: [
                         Icon(
                           _saveToFavorites ? Icons.favorite : Icons.favorite_border,
-                          color: _saveToFavorites ? AppColors.coral : textMuted,
+                          color: _saveToFavorites ? context.accentColor : textMuted,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
@@ -428,7 +428,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                         Switch(
                           value: _saveToFavorites,
                           onChanged: (value) => setState(() => _saveToFavorites = value),
-                          activeThumbColor: AppColors.coral,
+                          activeThumbColor: context.accentColor,
                         ),
                       ],
                     ),
@@ -471,7 +471,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                     child: ElevatedButton(
                       onPressed: canCreate ? _createSuperset : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.purple,
+                        backgroundColor: context.accentColor,
                         disabledBackgroundColor: glassSurface,
                         foregroundColor: Colors.white,
                         disabledForegroundColor: textMuted,
@@ -533,7 +533,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                 height: 28,
                 decoration: BoxDecoration(
                   color: exercise != null
-                      ? AppColors.purple.withOpacity(0.15)
+                      ? context.accentColor.withOpacity(0.15)
                       : glassSurface,
                   shape: BoxShape.circle,
                 ),
@@ -542,7 +542,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                     '$index',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: exercise != null ? AppColors.purple : textMuted,
+                      color: exercise != null ? context.accentColor : textMuted,
                       fontSize: 14,
                     ),
                   ),
@@ -601,7 +601,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                 ),
                 Icon(
                   Icons.check_circle,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   size: 24,
                 ),
               ] else ...[
@@ -889,7 +889,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -897,7 +897,7 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                   ),
                 ),
               ),
@@ -906,10 +906,10 @@ class _SupersetPairSheetState extends ConsumerState<_SupersetPairSheet> {
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.purple,
+              activeTrackColor: context.accentColor,
               inactiveTrackColor: textMuted.withOpacity(0.2),
-              thumbColor: AppColors.purple,
-              overlayColor: AppColors.purple.withOpacity(0.2),
+              thumbColor: context.accentColor,
+              overlayColor: context.accentColor.withOpacity(0.2),
               trackHeight: 4,
             ),
             child: Slider(

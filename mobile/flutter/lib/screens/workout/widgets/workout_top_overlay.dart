@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../controllers/workout_timer_controller.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Top overlay with workout controls - simplified design
 class WorkoutTopOverlay extends StatelessWidget {
@@ -84,7 +85,7 @@ class WorkoutTopOverlay extends StatelessWidget {
                   const Spacer(),
 
                   // Timer - centered and prominent
-                  _buildTimer(isDark, l),
+                  _buildTimer(context, isDark, l),
 
                   const Spacer(),
 
@@ -109,7 +110,7 @@ class WorkoutTopOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildTimer(bool isDark, AppLocalizations l) {
+  Widget _buildTimer(BuildContext context, bool isDark, AppLocalizations l) {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -124,7 +125,7 @@ class WorkoutTopOverlay extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isPaused
-                ? AppColors.orange.withOpacity(0.5)
+                ? context.accentColor.withOpacity(0.5)
                 : (isDark
                     ? Colors.white.withOpacity(0.15)
                     : Colors.black.withOpacity(0.08)),
@@ -145,7 +146,7 @@ class WorkoutTopOverlay extends StatelessWidget {
               isPaused ? Icons.pause : Icons.timer_outlined,
               size: 20,
               color: isPaused
-                  ? AppColors.orange
+                  ? context.accentColor
                   : (isDark ? Colors.white : AppColorsLight.textPrimary),
             ),
             const SizedBox(width: 10),
@@ -157,7 +158,7 @@ class WorkoutTopOverlay extends StatelessWidget {
                 fontFamily: 'monospace',
                 letterSpacing: 1,
                 color: isPaused
-                    ? AppColors.orange
+                    ? context.accentColor
                     : (isDark ? Colors.white : AppColorsLight.textPrimary),
               ),
             ),
@@ -166,15 +167,15 @@ class WorkoutTopOverlay extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   l.workoutTopOverlayPaused,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -247,7 +248,7 @@ class _GlassButton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgColor = isHighlighted
-        ? AppColors.orange.withOpacity(0.2)
+        ? context.accentColor.withOpacity(0.2)
         : isSubdued
             ? (isDark
                 ? AppColors.pureBlack.withOpacity(0.4)
@@ -257,7 +258,7 @@ class _GlassButton extends StatelessWidget {
                 : Colors.white.withOpacity(0.9));
 
     final borderColor = isHighlighted
-        ? AppColors.orange.withOpacity(0.5)
+        ? context.accentColor.withOpacity(0.5)
         : isSubdued
             ? (isDark
                 ? Colors.white.withOpacity(0.1)
@@ -267,7 +268,7 @@ class _GlassButton extends StatelessWidget {
                 : Colors.black.withOpacity(0.1));
 
     final iconColor = isHighlighted
-        ? AppColors.orange
+        ? context.accentColor
         : isSubdued
             ? (isDark ? Colors.white.withOpacity(0.6) : AppColorsLight.textMuted)
             : (isDark ? Colors.white : AppColorsLight.textPrimary);

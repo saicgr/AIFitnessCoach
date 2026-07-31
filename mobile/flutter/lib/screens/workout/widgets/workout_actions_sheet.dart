@@ -18,6 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Shows a bottom sheet with workout actions.
 ///
@@ -111,7 +112,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = context.accentColor;
     final cardBorder = isDark
         ? AppColors.cardBorder
         : AppColorsLight.cardBorder;
@@ -389,8 +390,8 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.cyan,
+            colorScheme: ColorScheme.dark(
+              primary: context.accentColor,
               surface: AppColors.nearBlack,
             ),
           ),
@@ -437,7 +438,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
             ..showSnackBar(
               SnackBar(
                 content: Text(okMessage),
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -447,7 +448,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
             ..showSnackBar(
               SnackBar(
                 content: Text(failMessage),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -553,7 +554,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${progress.message}'),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
               ),
             );
           }
@@ -586,7 +587,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
               content: Text(
                 AppLocalizations.of(context).workoutActionsWorkoutRegenerated,
               ),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           );
         } else {
@@ -597,7 +598,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                   context,
                 ).workoutActionsFailedToRegenerateWorkout,
               ),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             ),
           );
         }
@@ -669,7 +670,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           content: Text(
             AppLocalizations.of(context).workoutActionsFailedToGenerateWarmup,
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ),
       );
     }
@@ -711,7 +712,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
               context,
             ).workoutActionsFailedToGenerateStretches,
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ),
       );
     }
@@ -748,7 +749,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
               content: Text(
                 AppLocalizations.of(context).workoutActionsWorkoutDeleted,
               ),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           );
         }
@@ -801,7 +802,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Logged as done'),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         ),
       );
     } catch (e) {
@@ -810,7 +811,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not log workout: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -835,7 +836,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Shuffled in fresh exercises'),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         ),
       );
     } catch (e) {
@@ -844,7 +845,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not shuffle: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -889,7 +890,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
             content: Text(
               AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout,
             ),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -901,7 +902,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
             content: Text(
               AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout,
             ),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -964,8 +965,8 @@ class _ActionTile extends StatelessWidget {
     final textSecondary = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final errorColor = isDark ? AppColors.error : AppColorsLight.error;
+    final accentColor = context.accentColor;
+    final errorColor = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive — must stay red
 
     final iconColor = isDestructive ? errorColor : accentColor;
     final titleColor = isDestructive ? errorColor : textPrimary;
@@ -1055,7 +1056,7 @@ class _VersionHistorySheet extends ConsumerWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                const Icon(Icons.history, color: AppColors.cyan),
+                Icon(Icons.history, color: context.accentColor),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -1115,7 +1116,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                           height: 40,
                           decoration: BoxDecoration(
                             color: isCurrent
-                                ? AppColors.cyan.withOpacity(0.2)
+                                ? context.accentColor.withOpacity(0.2)
                                 : AppColors.elevated,
                             shape: BoxShape.circle,
                           ),
@@ -1124,7 +1125,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                               'v$versionNum',
                               style: TextStyle(
                                 color: isCurrent
-                                    ? AppColors.cyan
+                                    ? context.accentColor
                                     : AppColors.textMuted,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
@@ -1144,7 +1145,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.success.withOpacity(0.2),
+                                  color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -1154,7 +1155,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.success,
+                                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   ),
                                 ),
                               )
@@ -1249,7 +1250,7 @@ class _WarmupStretchesSheet extends StatelessWidget {
                   title.contains('Warmup')
                       ? Icons.directions_run
                       : Icons.self_improvement,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1297,14 +1298,14 @@ class _WarmupStretchesSheet extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
                           child: Text(
                             '${index + 1}',
-                            style: const TextStyle(
-                              color: AppColors.orange,
+                            style: TextStyle(
+                              color: context.accentColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

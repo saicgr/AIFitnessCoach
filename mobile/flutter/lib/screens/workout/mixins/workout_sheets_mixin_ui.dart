@@ -415,7 +415,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
 
                         final iconBuilder = info['icon'] as Widget Function(Color);
                         final iconColor = isSelected
-                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                            ? (context.accentColor)
                             : (isDark ? Colors.white38 : Colors.black26);
 
                         return Padding(
@@ -467,7 +467,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                             ),
                             selected: isSelected,
                             selectedTileColor: isDark
-                                ? AppColors.cyan.withValues(alpha: 0.1)
+                                ? context.accentColor.withValues(alpha: 0.1)
                                 : AppColorsLight.cyan.withValues(alpha: 0.08),
                             onTap: () {
                               final oldBarType = exerciseBarType[viewingExerciseIndex]
@@ -551,10 +551,10 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withValues(alpha: 0.15),
+                          color: Colors.purple.withValues(alpha: 0.15),  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.link, color: Colors.purple, size: 24),
+                        child: const Icon(Icons.link, color: Colors.purple, size: 24),  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -612,7 +612,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                     icon: const Icon(Icons.link_off),
                     label: Text(AppLocalizations.of(context).workoutSheetsMixinBreakSuperset),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade400,
+                      backgroundColor: Colors.red.shade400,  // accent-allowlist: error/destructive — must stay red
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -658,10 +658,10 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withValues(alpha: 0.15),
+                          color: Colors.purple.withValues(alpha: 0.15),  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.link, color: Colors.purple, size: 24),
+                        child: const Icon(Icons.link, color: Colors.purple, size: 24),  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
                       ),
                       const SizedBox(width: 12),
                       Text(
@@ -679,9 +679,9 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withValues(alpha: 0.08),
+                    color: Colors.purple.withValues(alpha: 0.08),  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                    border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

@@ -38,7 +38,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
             child: Text(
               AppLocalizations.of(context).commonShare,
               style: TextStyle(
-                color: AppColors.cyan,
+                color: context.accentColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -75,7 +75,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                 // Brightness slider
                 Row(
                   children: [
-                    Icon(Icons.brightness_6_rounded, color: AppColors.cyan),
+                    Icon(Icons.brightness_6_rounded, color: context.accentColor),
                     const SizedBox(width: 12),
                     Text(AppLocalizations.of(context).shareWorkoutSheetBrightness),
                     const Spacer(),
@@ -87,7 +87,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                   min: -0.5,
                   max: 0.5,
                   onChanged: (value) => setState(() => _brightness = value),
-                  activeColor: AppColors.cyan,
+                  activeColor: context.accentColor,
                 ),
 
                 const SizedBox(height: 16),
@@ -95,7 +95,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                 // Contrast slider
                 Row(
                   children: [
-                    Icon(Icons.contrast_rounded, color: AppColors.purple),
+                    Icon(Icons.contrast_rounded, color: context.accentColor),
                     const SizedBox(width: 12),
                     Text(AppLocalizations.of(context).shareWorkoutSheetContrast),
                     const Spacer(),
@@ -107,7 +107,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
                   min: 0.5,
                   max: 1.5,
                   onChanged: (value) => setState(() => _contrast = value),
-                  activeColor: AppColors.purple,
+                  activeColor: context.accentColor,
                 ),
 
                 const SizedBox(height: 16),
@@ -166,7 +166,7 @@ class _SimplePhotoEditorState extends State<_SimplePhotoEditor> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to share: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }

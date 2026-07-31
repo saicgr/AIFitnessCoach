@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Stats Template - Shows workout duration, exercises, volume, calories
 /// Dark gradient background with bold stats display
@@ -157,7 +158,7 @@ class StatsTemplate extends StatelessWidget {
                         Text(
                           l.shareStatsWorkoutComplete,
                           style: TextStyle(
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 2,
@@ -167,7 +168,7 @@ class StatsTemplate extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Stats grid
-                        _buildStatsGrid(l),
+                        _buildStatsGrid(context, l),
 
                         if (showWatermark) ...[
                           const SizedBox(height: 12),
@@ -186,7 +187,7 @@ class StatsTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid(AppLocalizations l) {
+  Widget _buildStatsGrid(BuildContext context, AppLocalizations l) {
     return Column(
       children: [
         Row(
@@ -196,7 +197,7 @@ class StatsTemplate extends StatelessWidget {
                 icon: Icons.timer_outlined,
                 value: _formattedDuration,
                 label: l.shareStatsDuration,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
             ),
             const SizedBox(width: 10),
@@ -205,7 +206,7 @@ class StatsTemplate extends StatelessWidget {
                 icon: Icons.fitness_center,
                 value: '$exercisesCount',
                 label: l.shareStatsExercises,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ),
           ],
@@ -218,7 +219,7 @@ class StatsTemplate extends StatelessWidget {
                 icon: Icons.scale_outlined,
                 value: _formattedVolume,
                 label: l.shareStatsVolume,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
             ),
             const SizedBox(width: 10),
@@ -227,7 +228,7 @@ class StatsTemplate extends StatelessWidget {
                 icon: Icons.local_fire_department_outlined,
                 value: calories != null ? '$calories' : '--',
                 label: l.shareStatsCalories,
-                color: AppColors.coral,
+                color: context.accentColor,
               ),
             ),
           ],

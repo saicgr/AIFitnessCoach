@@ -108,6 +108,8 @@ class ExerciseTrackingMetric {
   /// [trackingTypeHint] is the backend `tracking_type` string (preferred).
   /// [distanceMeters] is the backend `distance_meters` target (a strong
   /// distance signal). [repsSpec] is the raw unit-bearing target string.
+  /// [targetReps] is the typed authored rep count (preferred over parsing
+  /// [repsSpec]) — see the rep-count precedence rule below.
   static TrackingMetric resolve({
     required String name,
     String? equipment,
@@ -117,6 +119,7 @@ class ExerciseTrackingMetric {
     String? trackingTypeHint,
     num? distanceMeters,
     String? repsSpec,
+    int? targetReps,
   }) {
     // 1. Trust the backend hint when it's a known value.
     final hint = _fromHint(trackingTypeHint);
@@ -139,11 +142,26 @@ class ExerciseTrackingMetric {
     }
 
     // 3. Time: holds / durations / a time-unit target.
-    if (isTimed ||
-        (holdSeconds != null && holdSeconds > 0) ||
-        (durationSeconds != null && durationSeconds > 0) ||
-        specMetric == TrackingMetric.time ||
-        _matchesAny(n, _timeFragments)) {
+    //
+    // PRECEDENCE RULE (kept in sync with the backend mirror,
+    // backend/services/exercise_tracking_metric.py — see that module's
+    // docstring): an authored rep count >= 2 always wins over a TIME hint
+    // sourced from `isTimed` / `holdSeconds` / `durationSeconds` — those can
+    // come from the LIBRARY (e.g. Bird Dog's `is_timed=true`) rather than
+    // this specific program entry, and without this gate a library time hint
+    // silently overrode an authored `target_reps=5`, presenting a rep move
+    // as a 5-second timer and logging `reps_completed=0`. An EXPLICIT
+    // time-unit target string (`specMetric == time`) or a name-lexicon match
+    // (plank, wall sit, …) still wins unconditionally — those can't be a
+    // rep-count false positive.
+    final hasRealReps = (targetReps != null && targetReps >= 2) ||
+        _hasRealRepCount(repsSpec, specMetric);
+    if (specMetric == TrackingMetric.time ||
+        _matchesAny(n, _timeFragments) ||
+        (!hasRealReps &&
+            (isTimed ||
+                (holdSeconds != null && holdSeconds > 0) ||
+                (durationSeconds != null && durationSeconds > 0)))) {
       return TrackingMetric.time;
     }
 
@@ -177,6 +195,22 @@ class ExerciseTrackingMetric {
       default:
         return null;
     }
+  }
+
+  /// True when [repsSpec] carries a real authored rep count (>= 2). Mirrors
+  /// the backend's `_rep_count` / `has_real_reps` (see the docstring above
+  /// `resolve`) — only meaningful when the target string ISN'T itself a
+  /// distance/time value (a leading "5" in "5 km" is not a rep count).
+  static bool _hasRealRepCount(String? repsSpec, TrackingMetric? specMetric) {
+    if (repsSpec == null) return false;
+    if (specMetric == TrackingMetric.time ||
+        specMetric == TrackingMetric.distance) {
+      return false;
+    }
+    final m = RegExp(r'^\s*(\d+)').firstMatch(repsSpec);
+    if (m == null) return false;
+    final count = int.tryParse(m.group(1)!);
+    return count != null && count >= 2;
   }
 
   static bool _matchesAny(String haystack, List<String> fragments) {
@@ -273,6 +307,7 @@ class ExerciseTrackingMetric {
     String? trackingTypeHint,
     num? distanceMeters,
     String? repsSpec,
+    int? targetReps,
     List<String>? explicitKeys,
   }) {
     if (explicitKeys != null && explicitKeys.isNotEmpty) {
@@ -290,6 +325,7 @@ class ExerciseTrackingMetric {
       trackingTypeHint: trackingTypeHint,
       distanceMeters: distanceMeters,
       repsSpec: repsSpec,
+      targetReps: targetReps,
     );
     final keys = <String>[];
     switch (metric) {

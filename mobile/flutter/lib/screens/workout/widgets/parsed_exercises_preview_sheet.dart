@@ -425,7 +425,7 @@ class _ExercisePreviewTile extends StatelessWidget {
                             Icon(
                               Icons.warning_amber_rounded,
                               size: 16,
-                              color: AppColors.yellow,
+                              color: AppColors.yellow,  // accent-allowlist: warning severity (low-confidence warning icon)
                             ),
                           ],
                         ],

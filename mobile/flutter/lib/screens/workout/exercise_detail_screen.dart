@@ -32,6 +32,7 @@ import 'widgets/form_analysis_gauge_card.dart';
 import 'widgets/form_analysis_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'exercise_detail_screen_part_previous_set_data.dart';
 part 'exercise_detail_screen_part_cue_item.dart';
 
@@ -1415,12 +1416,14 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     return '${weight.toInt()} × $reps';
   }
 
-  /// Get RIR color based on value (matching WorkoutDesign colors)
+  /// Get RIR color based on value (matching WorkoutDesign colors). RIR
+  /// scale — each band needs its own colour so the ramp reads as
+  /// escalating intensity.
   Color _getRirColor(int rir) {
-    if (rir <= 0) return const Color(0xFFEF4444); // Red - failure
-    if (rir == 1) return const Color(0xFFF97316); // Orange
-    if (rir == 2) return const Color(0xFFEAB308); // Yellow
-    return const Color(0xFF22C55E); // Green for 3+
+    if (rir <= 0) return const Color(0xFFEF4444); // Red - failure  // accent-allowlist: error/destructive — must stay red
+    if (rir == 1) return const Color(0xFFF97316); // Orange  // accent-allowlist: RIR scale — solid-intensity band is always this orange
+    if (rir == 2) return const Color(0xFFEAB308); // Yellow  // accent-allowlist: RIR scale — ideal band is always this yellow
+    return const Color(0xFF22C55E); // Green for 3+  // accent-allowlist: success/positive state — must stay green regardless of accent
   }
 
   /// Get RIR text color for contrast

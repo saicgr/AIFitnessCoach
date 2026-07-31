@@ -319,7 +319,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
             },
             isDark: isDark,
             textPrimary: textPrimary,
-            iconColor: widget.isFavorite ? Colors.redAccent : null,
+            iconColor: widget.isFavorite ? Colors.redAccent : null,  // accent-allowlist: error/destructive — must stay red
           )
         else
           Consumer(
@@ -342,7 +342,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                 },
                 isDark: isDark,
                 textPrimary: textPrimary,
-                iconColor: isFav ? Colors.redAccent : null,
+                iconColor: isFav ? Colors.redAccent : null,  // accent-allowlist: error/destructive — must stay red
               );
             },
           ),
@@ -504,7 +504,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
     bool showChevron = false,
     Color? iconColor,
   }) {
-    final color = isDestructive ? AppColors.error : textPrimary;
+    final color = isDestructive ? AppColors.error : textPrimary;  // accent-allowlist: error/destructive — must stay red
 
     return Material(
       color: Colors.transparent,

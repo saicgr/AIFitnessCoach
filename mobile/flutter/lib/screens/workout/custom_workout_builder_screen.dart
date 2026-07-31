@@ -17,6 +17,7 @@ import '../../widgets/glass_sheet.dart';
 import '../custom_exercises/widgets/create_exercise_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Custom Workout Builder Screen
 ///
 /// Addresses the complaint: "It's much better to just use the Daily Strength app
@@ -117,7 +118,7 @@ class _CustomWorkoutBuilderScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.customWorkoutBuilderScreenIsAlreadyInYour(exercise.name)),
-          backgroundColor: AppColors.warning,
+          backgroundColor: AppColors.warning,  // accent-allowlist: warning severity
         ),
       );
       return;
@@ -263,7 +264,7 @@ class _CustomWorkoutBuilderScreenState
               SnackBar(
                 content: Text(
                     'Added ${w.exercises.length} exercises — edit, then Create or Save'),
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             );
           }
@@ -282,7 +283,7 @@ class _CustomWorkoutBuilderScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('AI generate failed: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -345,9 +346,9 @@ class _CustomWorkoutBuilderScreenState
                               value: e.value / maxCount,
                               minHeight: 8,
                               backgroundColor:
-                                  AppColors.cyan.withValues(alpha: 0.12),
-                              valueColor: const AlwaysStoppedAnimation(
-                                  AppColors.cyan),
+                                  context.accentColor.withValues(alpha: 0.12),
+                              valueColor: AlwaysStoppedAnimation(
+                                  context.accentColor),
                             ),
                           ),
                         ),
@@ -361,11 +362,11 @@ class _CustomWorkoutBuilderScreenState
               const SizedBox(height: 6),
               if (missing.isEmpty)
                 Text('Well-rounded — every major group is covered. 💪',
-                    style: TextStyle(color: AppColors.success, fontSize: 13))
+                    style: TextStyle(color: AppColors.success, fontSize: 13))  // accent-allowlist: success/positive state — must stay green regardless of accent
               else
                 Text('Consider adding: ${missing.join(' · ')}',
                     style: TextStyle(
-                        color: AppColors.warning,
+                        color: AppColors.warning,  // accent-allowlist: warning severity
                         fontSize: 13,
                         fontWeight: FontWeight.w600)),
             ],
@@ -512,7 +513,7 @@ class _CustomWorkoutBuilderScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).customWorkoutBuilderCustomWorkoutCreated),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           );
           // Start the workout in the active-workout PLAYER. Must be
@@ -529,7 +530,7 @@ class _CustomWorkoutBuilderScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).customWorkoutBuilderFailedToCreateWorkout),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             ),
           );
         }
@@ -541,7 +542,7 @@ class _CustomWorkoutBuilderScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -601,7 +602,7 @@ class _CustomWorkoutBuilderScreenState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: const Text('Saved to My Workouts'),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ));
           // Open the detail screen (AI Insights = the review). Real UUID, so
           // the summary/insight endpoints resolve correctly.
@@ -614,7 +615,7 @@ class _CustomWorkoutBuilderScreenState
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(AppLocalizations.of(context).customWorkoutBuilderFailedToCreateWorkout),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ));
       }
     } catch (e) {
@@ -622,7 +623,7 @@ class _CustomWorkoutBuilderScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Error: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ));
       }
     }
@@ -712,7 +713,7 @@ class _CustomWorkoutBuilderScreenState
                   height: 52,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -779,21 +780,21 @@ class _CustomWorkoutBuilderScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.10),
+                color: context.accentColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.35)),
+                border: Border.all(color: context.accentColor.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.auto_awesome, color: AppColors.cyan, size: 20),
+                  Icon(Icons.auto_awesome, color: context.accentColor, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _isGenerating
                           ? (_genStatus.isEmpty ? 'Generating…' : _genStatus)
                           : 'Ask AI to build it',
-                      style: const TextStyle(
-                        color: AppColors.cyan,
+                      style: TextStyle(
+                        color: context.accentColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -804,7 +805,7 @@ class _CustomWorkoutBuilderScreenState
                         width: 18, height: 18, child: LottieLoading(size: 18))
                   else
                     Icon(_showAiPrompt ? Icons.expand_less : Icons.expand_more,
-                        color: AppColors.cyan),
+                        color: context.accentColor),
                 ],
               ),
             ),
@@ -833,7 +834,7 @@ class _CustomWorkoutBuilderScreenState
               child: ElevatedButton.icon(
                 onPressed: _generateWithAi,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -915,7 +916,7 @@ class _CustomWorkoutBuilderScreenState
               child: Row(
                 children: [
                   Icon(Icons.calendar_month_rounded,
-                      size: 20, color: AppColors.cyan),
+                      size: 20, color: context.accentColor),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -944,7 +945,7 @@ class _CustomWorkoutBuilderScreenState
             ),
             child: Row(
               children: [
-                const Icon(Icons.whatshot_rounded, size: 20, color: AppColors.orange),
+                Icon(Icons.whatshot_rounded, size: 20, color: context.accentColor),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -958,7 +959,7 @@ class _CustomWorkoutBuilderScreenState
                 ),
                 Switch(
                   value: _addWarmupStretch,
-                  activeThumbColor: AppColors.cyan,
+                  activeThumbColor: context.accentColor,
                   onChanged: (v) => setState(() => _addWarmupStretch = v),
                 ),
               ],
@@ -987,12 +988,12 @@ class _CustomWorkoutBuilderScreenState
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.auto_awesome,
-                              size: 15, color: AppColors.cyan),
+                          Icon(Icons.auto_awesome,
+                              size: 15, color: context.accentColor),
                           const SizedBox(width: 4),
                           Text('Analyze',
                               style: TextStyle(
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               )),
@@ -1078,11 +1079,11 @@ class _CustomWorkoutBuilderScreenState
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.cyan : AppColors.surface,
+            color: isSelected ? context.accentColor : AppColors.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? AppColors.cyan
+                  ? context.accentColor
                   : AppColors.textSecondary.withValues(alpha: 0.2),
             ),
           ),
@@ -1112,12 +1113,12 @@ class _CustomWorkoutBuilderScreenState
   Widget _buildDifficultyChip(String value, String label) {
     final isSelected = _difficulty == value;
     final color = value == 'easy'
-        ? AppColors.success
+        ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
         : (value == 'medium'
-            ? AppColors.warning
+            ? AppColors.warning  // accent-allowlist: warning severity
             : (value == 'hell'
-                ? const Color(0xFF8B1FB0) // distinct from hard's red
-                : AppColors.error));
+                ? const Color(0xFF8B1FB0) // distinct from hard's red  // accent-allowlist: difficulty scale — 'hell' tier is always this distinct purple, separate from hard's red
+                : AppColors.error));  // accent-allowlist: error/destructive — must stay red
 
     return Expanded(
       child: GestureDetector(
@@ -1213,12 +1214,12 @@ class _CustomWorkoutBuilderScreenState
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withValues(alpha: 0.15),
+                            color: context.accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('SUPERSET',
+                          child: Text('SUPERSET',
                               style: TextStyle(
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: 1,
@@ -1235,14 +1236,14 @@ class _CustomWorkoutBuilderScreenState
                       exercise['superset_group'] != null
                           ? Icons.link_off_rounded
                           : Icons.link_rounded,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                     tooltip: 'Superset with next',
                     onPressed: () => _toggleSupersetWithNext(index),
                   ),
                 IconButton(
                   icon: const Icon(Icons.delete_outline,
-                      color: AppColors.error),
+                      color: AppColors.error),  // accent-allowlist: error/destructive — must stay red
                   onPressed: () => _removeExercise(index),
                 ),
               ],
@@ -1411,7 +1412,7 @@ class _CustomWorkoutBuilderScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: active ? AppColors.cyan : Colors.transparent,
+                color: active ? context.accentColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
@@ -1511,8 +1512,8 @@ class _CustomWorkoutBuilderScreenState
                     });
                     _searchExercises(_searchQuery);
                   },
-                  selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-                  checkmarkColor: AppColors.cyan,
+                  selectedColor: context.accentColor.withValues(alpha: 0.2),
+                  checkmarkColor: context.accentColor,
                 ),
               );
             },
@@ -1529,18 +1530,18 @@ class _CustomWorkoutBuilderScreenState
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.10),
+                color: context.accentColor.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.35)),
+                border: Border.all(color: context.accentColor.withValues(alpha: 0.35)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.add_circle_outline, color: AppColors.cyan, size: 20),
+                  Icon(Icons.add_circle_outline, color: context.accentColor, size: 20),
                   const SizedBox(width: 10),
                   Text(
                     'Create custom exercise',
                     style: TextStyle(
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
@@ -1618,10 +1619,10 @@ class _CustomWorkoutBuilderScreenState
                             style: TextStyle(color: textSecondary, fontSize: 12),
                           ),
                           trailing: isAdded
-                              ? const Icon(Icons.check, color: AppColors.success)
+                              ? const Icon(Icons.check, color: AppColors.success)  // accent-allowlist: success/positive state — must stay green regardless of accent
                               : IconButton(
-                                  icon: const Icon(Icons.add_circle_outline,
-                                      color: AppColors.cyan),
+                                  icon: Icon(Icons.add_circle_outline,
+                                      color: context.accentColor),
                                   onPressed: () => _addExercise(exercise),
                                 ),
                           onTap: isAdded ? null : () => _addExercise(exercise),

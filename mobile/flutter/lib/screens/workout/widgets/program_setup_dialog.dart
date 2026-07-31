@@ -23,6 +23,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/program_template.dart' show ProgramParseException;
 import '../../../data/repositories/program_template_repository.dart'
     show AssignResult;
+import '../../../core/theme/accent_color_provider.dart';
 
 enum _Phase { working, success, error }
 
@@ -135,13 +136,13 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'SETTING UP',
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.8,
-            color: AppColors.orange,
+            color: context.accentColor,
           ),
         ),
         const SizedBox(height: 6),
@@ -188,11 +189,11 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.green.withValues(alpha: 0.15),
+            color: AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(Icons.check_rounded,
-              color: AppColors.green, size: 28),
+              color: AppColors.green, size: 28),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
         ),
         const SizedBox(height: 14),
         Text(
@@ -230,7 +231,7 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
                       ? Icons.auto_awesome
                       : Icons.info_outline_rounded,
                   size: 16,
-                  color: cs.isApplied ? AppColors.orange : AppColors.textMuted,
+                  color: cs.isApplied ? context.accentColor : AppColors.textMuted,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -273,7 +274,7 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
                   router.push('/schedule');
                 },
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                   shape: RoundedRectangleBorder(
@@ -301,11 +302,11 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.error.withValues(alpha: 0.15),
+            color: AppColors.error.withValues(alpha: 0.15),  // accent-allowlist: error/destructive — must stay red
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 28),
+              color: AppColors.error, size: 28),  // accent-allowlist: error/destructive — must stay red
         ),
         const SizedBox(height: 14),
         const Text(
@@ -357,12 +358,12 @@ class _StepRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final Widget leading = switch (state) {
       _StepState.done => const Icon(Icons.check_circle_rounded,
-          size: 18, color: AppColors.green),
-      _StepState.active => const SizedBox(
+          size: 18, color: AppColors.green),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+      _StepState.active => SizedBox(
           width: 18,
           height: 18,
           child: CircularProgressIndicator(
-              strokeWidth: 2, color: AppColors.orange),
+              strokeWidth: 2, color: context.accentColor),
         ),
       _StepState.pending => Icon(Icons.circle_outlined,
           size: 18, color: AppColors.textMuted.withValues(alpha: 0.5)),

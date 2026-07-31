@@ -62,7 +62,7 @@ class WrappedTemplate extends StatelessWidget {
                 index: '01',
                 label: 'TIME',
                 value: formatShareDurationLong(durationSeconds),
-                color: const Color(0xFFFF006E),
+                color: const Color(0xFFFF006E),  // accent-allowlist: Wrapped share-template identity — fixed Spotify-Wrapped-style palette, one of several named templates in the share gallery, each with its own fixed look
               ),
               const SizedBox(height: 18),
               _WrappedBlock(
@@ -71,14 +71,14 @@ class WrappedTemplate extends StatelessWidget {
                 value: totalVolumeKg == null
                     ? '—'
                     : formatShareWeightCompact(totalVolumeKg, useKg: useKg),
-                color: const Color(0xFF3A86FF),
+                color: const Color(0xFF3A86FF),  // accent-allowlist: Wrapped share-template identity — fixed Spotify-Wrapped-style palette, one of several named templates in the share gallery, each with its own fixed look
               ),
               const SizedBox(height: 18),
               _WrappedBlock(
                 index: '03',
                 label: AppLocalizations.of(context)!.wrappedTemplateSets(workoutName.toUpperCase()),
                 value: '$totalSets',
-                color: const Color(0xFFFB5607),
+                color: const Color(0xFFFB5607),  // accent-allowlist: Wrapped share-template identity — fixed Spotify-Wrapped-style palette, one of several named templates in the share gallery, each with its own fixed look
               ),
               const Spacer(),
               Row(
@@ -177,9 +177,9 @@ class _WrappedBgPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFF0C0010));
     // Diagonal neon bands
     final bands = [
-      (const Color(0xFFFF006E), 0.12),
-      (const Color(0xFF3A86FF), 0.09),
-      (const Color(0xFFFB5607), 0.1),
+      (const Color(0xFFFF006E), 0.12),  // accent-allowlist: Wrapped share-template identity — fixed Spotify-Wrapped-style palette, one of several named templates in the share gallery, each with its own fixed look
+      (const Color(0xFF3A86FF), 0.09),  // accent-allowlist: Wrapped share-template identity — fixed Spotify-Wrapped-style palette, one of several named templates in the share gallery, each with its own fixed look
+      (const Color(0xFFFB5607), 0.1),  // accent-allowlist: Wrapped share-template identity — fixed Spotify-Wrapped-style palette, one of several named templates in the share gallery, each with its own fixed look
     ];
     for (int i = 0; i < bands.length; i++) {
       final color = bands[i].$1.withValues(alpha: bands[i].$2);

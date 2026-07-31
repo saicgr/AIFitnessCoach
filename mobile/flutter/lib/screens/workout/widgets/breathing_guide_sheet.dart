@@ -15,6 +15,7 @@ import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Breathing pattern types
 enum BreathingPattern {
   push, // Press/push exercises - exhale on effort (pushing up)
@@ -173,7 +174,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
             children: [
               Icon(
                 Icons.air_rounded,
-                color: AppColors.purple,
+                color: context.accentColor,
                 size: 28,
               ),
               const SizedBox(width: 12),
@@ -212,14 +213,14 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      (_isInhaling ? AppColors.cyan : AppColors.purple)
+                      (_isInhaling ? context.accentColor : context.accentColor)
                           .withOpacity(0.3),
-                      (_isInhaling ? AppColors.cyan : AppColors.purple)
+                      (_isInhaling ? context.accentColor : context.accentColor)
                           .withOpacity(0.1),
                     ],
                   ),
                   border: Border.all(
-                    color: _isInhaling ? AppColors.cyan : AppColors.purple,
+                    color: _isInhaling ? context.accentColor : context.accentColor,
                     width: 3,
                   ),
                 ),
@@ -233,7 +234,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
                           _isInhaling
                               ? Icons.arrow_downward_rounded
                               : Icons.arrow_upward_rounded,
-                          color: _isInhaling ? AppColors.cyan : AppColors.purple,
+                          color: _isInhaling ? context.accentColor : context.accentColor,
                           size: 40,
                         ),
                         const SizedBox(height: 8),
@@ -243,7 +244,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color:
-                                _isInhaling ? AppColors.cyan : AppColors.purple,
+                                _isInhaling ? context.accentColor : context.accentColor,
                             letterSpacing: 2,
                           ),
                         ),
@@ -276,7 +277,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
                   icon: Icons.arrow_downward_rounded,
                   phase: patternInfo.downPhase,
                   instruction: patternInfo.downInstruction,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   isDark: isDark,
                 ),
                 const SizedBox(height: 16),
@@ -284,7 +285,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
                   icon: Icons.arrow_upward_rounded,
                   phase: patternInfo.upPhase,
                   instruction: patternInfo.upInstruction,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   isDark: isDark,
                 ),
               ],
@@ -296,17 +297,17 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.1),
+              color: context.accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.orange.withOpacity(0.3),
+                color: context.accentColor.withOpacity(0.3),
               ),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.lightbulb_outline_rounded,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   size: 24,
                 ),
                 const SizedBox(width: 12),

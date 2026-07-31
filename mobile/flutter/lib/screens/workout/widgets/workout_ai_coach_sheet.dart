@@ -23,6 +23,7 @@ import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Show AI coach sheet during workout
 Future<void> showWorkoutAICoachSheet({
   required BuildContext context,
@@ -107,19 +108,19 @@ class _WorkoutAICoachSheetState extends ConsumerState<WorkoutAICoachSheet> {
       label: AppLocalizations.of(context).workoutAiCoachForm,
       prompt: AppLocalizations.of(context)!.workoutAiCoachSheetWhatAreTheKey(widget.currentExercise.name),
       icon: Icons.sports_gymnastics,
-      color: AppColors.cyan,
+      color: context.accentColor,
     ),
     QuickPrompt(
       label: AppLocalizations.of(context).workoutAiCoachSwaps,
       prompt: AppLocalizations.of(context)!.workoutAiCoachSheetWhatAreSomeAlternative(widget.currentExercise.name),
       icon: Icons.swap_horiz,
-      color: AppColors.purple,
+      color: context.accentColor,
     ),
     QuickPrompt(
       label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
       prompt: AppLocalizations.of(context)!.workoutAiCoachSheetHowLongShouldI(widget.currentExercise.name),
       icon: Icons.timer_outlined,
-      color: AppColors.orange,
+      color: context.accentColor,
     ),
     QuickPrompt(
       label: AppLocalizations.of(context).workoutSummaryGeneralSets,
@@ -203,7 +204,7 @@ User question: $message
     } on MediaValidationException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive — must stay red
         );
       }
     }
@@ -221,7 +222,7 @@ User question: $message
     } on MediaValidationException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive — must stay red
         );
       }
     }
@@ -293,9 +294,9 @@ User question: $message
           Expanded(
             child: chatState.when(
               data: (messages) => _buildMessageList(messages, isDark, coach),
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
               error: (e, _) => Center(
@@ -791,8 +792,8 @@ User question: $message
                 Container(
                   decoration: BoxDecoration(
                     gradient: canSend
-                        ? const LinearGradient(
-                            colors: [AppColors.cyan, AppColors.purple],
+                        ? LinearGradient(
+                            colors: [context.accentColor, context.accentColor],
                           )
                         : null,
                     color: canSend

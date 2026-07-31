@@ -11,6 +11,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Show the exercise options info sheet
 Future<void> showExerciseOptionsInfoSheet({
   required BuildContext context,
@@ -77,7 +78,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.favorite,
-                  iconColor: AppColors.error,
+                  iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                   title: AppLocalizations.of(context).recipeDetailFavorite,
                   description: AppLocalizations.of(context).exerciseOptionsInfoSaveExercisesYouLove,
                   isDark: isDark,
@@ -88,7 +89,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.playlist_add,
-                  iconColor: AppColors.cyan,
+                  iconColor: context.accentColor,
                   title: AppLocalizations.of(context).expandedExerciseCardRepeatNextTime,
                   description: AppLocalizations.of(context).exerciseOptionsInfoQueueThisExerciseTo,
                   isDark: isDark,
@@ -99,7 +100,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.push_pin,
-                  iconColor: AppColors.purple,
+                  iconColor: context.accentColor,
                   title: AppLocalizations.of(context).exerciseOptionsInfoStapleExercise,
                   description: AppLocalizations.of(context).exerciseOptionsInfoMarkAsACore,
                   isDark: isDark,
@@ -147,7 +148,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.delete_outline,
-                  iconColor: AppColors.error,
+                  iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                   title: AppLocalizations.of(context).expandedExerciseCardRemoveFromWorkout,
                   description: AppLocalizations.of(context).exerciseOptionsInfoRemoveThisExerciseFrom,
                   isDark: isDark,
@@ -158,7 +159,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.block_rounded,
-                  iconColor: AppColors.error,
+                  iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                   title: AppLocalizations.of(context).workoutDetailScreenNeverRecommend,
                   description: AppLocalizations.of(context).exerciseOptionsInfoPermanentlyBlockThisExercis,
                   isDark: isDark,

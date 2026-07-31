@@ -9,6 +9,7 @@ import '../../../data/models/cardio_pr.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../cardio/cardio_pr_history_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Shows a bottom sheet displaying trophies and achievements earned from the workout.
 ///
@@ -86,14 +87,14 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                       height: 48,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.orange, AppColors.purple],
+                          colors: [context.accentColor, context.accentColor],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.orange.withOpacity(0.3),
+                            color: context.accentColor.withOpacity(0.3),
                             blurRadius: 12,
                             spreadRadius: 2,
                           ),
@@ -162,7 +163,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                           icon: Icons.trending_up_rounded,
                           title: l.trophiesEarnedPersonalRecords,
                           subtitle: l.trophiesEarnedNewPRs(newPRs.length),
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                         const SizedBox(height: 12),
                         ...newPRs.asMap().entries.map((entry) {
@@ -184,7 +185,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                           icon: Icons.directions_run_rounded,
                           title: l.trophiesEarnedCardioAchievements,
                           subtitle: l.trophiesEarnedNewCardioPRs(cardioPrs!.length),
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                         const SizedBox(height: 12),
                         ...cardioPrs!.asMap().entries.map((entry) {
@@ -214,11 +215,11 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                               });
                             },
                             icon: Icon(Icons.timeline_rounded,
-                                size: 18, color: AppColors.cyan),
+                                size: 18, color: context.accentColor),
                             label: Text(
                               l.trophiesEarnedViewAllCardioPRs,
                               style: TextStyle(
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -234,7 +235,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                           icon: Icons.military_tech_rounded,
                           title: l.trophiesEarnedAchievementsUnlocked,
                           subtitle: l.trophiesEarnedNewBadges(newAchievements.length),
-                          color: AppColors.purple,
+                          color: context.accentColor,
                         ),
                         const SizedBox(height: 12),
                         ...newAchievements.asMap().entries.map((entry) {
@@ -254,7 +255,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                         icon: Icons.flag_rounded,
                         title: l.trophiesEarnedMilestones,
                         subtitle: l.trophiesEarnedYourFitnessJourney,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                       const SizedBox(height: 12),
                       _buildMilestonesGrid(context, elevated, cardBorder)
@@ -304,7 +305,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
           : 'New personal record';
       badges.add(_BadgeData(
         emoji: '🏆',
-        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],
+        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],  // accent-allowlist: PR trophy gold gradient
         title: name,
         subtitle: desc,
       ));
@@ -427,14 +428,14 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.orange.withOpacity(0.15),
-            AppColors.orange.withOpacity(0.05),
+            context.accentColor.withOpacity(0.15),
+            context.accentColor.withOpacity(0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+        border: Border.all(color: context.accentColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -444,14 +445,14 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
             height: 48,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFB8860B)],
+                colors: [Color(0xFFFFD700), Color(0xFFB8860B)],  // accent-allowlist: PR trophy gold gradient
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withOpacity(0.3),
+                  color: const Color(0xFFFFD700).withOpacity(0.3),  // accent-allowlist: medal/rarity tier — gold
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),
@@ -487,7 +488,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -495,7 +496,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -513,7 +514,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.orange,
+                        color: context.accentColor,
                       ),
                     ),
                     if (reps != null) ...[
@@ -530,19 +531,19 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.green.withOpacity(0.15),
+                          color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.arrow_upward, size: 12, color: AppColors.green),
+                            Icon(Icons.arrow_upward, size: 12, color: AppColors.green),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                             Text(
                               '+${WeightUtils.formatWorkoutWeight((improvement as num).toDouble(), useKg: useKg, space: false)}',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.green,
+                                color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                               ),
                             ),
                           ],
@@ -631,7 +632,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -639,7 +640,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -679,20 +680,20 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.green.withOpacity(0.15),
+                          color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.arrow_upward, size: 12, color: AppColors.green),
+                            Icon(Icons.arrow_upward, size: 12, color: AppColors.green),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                             const SizedBox(width: 2),
                             Text(
                               delta,
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.green,
+                                color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                               ),
                             ),
                           ],
@@ -743,22 +744,24 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
     }
   }
 
+  // Cardio-sport legend — each sport needs its own colour so the trophy
+  // cabinet's sport icons stay visually distinct.
   Color _cardioSportColor(String sport) {
     switch (sport) {
       case 'running':
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: cardio-sport legend — running is always this orange
       case 'cycling':
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: cardio-sport legend — cycling is always this cyan
       case 'walking':
-        return AppColors.green;
+        return AppColors.green;  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
       case 'hiking':
         return const Color(0xFF8D6E63);
       case 'rowing':
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: cardio-sport legend — rowing is always this purple
       case 'swimming':
-        return const Color(0xFF26C6DA);
+        return const Color(0xFF26C6DA);  // accent-allowlist: cardio-sport legend — swimming is always this cyan-teal
       default:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: cardio-sport legend — default is always this cyan
     }
   }
 
@@ -906,12 +909,12 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.fitness_center_rounded,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 22,
                   ),
                 ),
@@ -951,12 +954,12 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.local_fire_department_rounded,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     size: 22,
                   ),
                 ),
@@ -1021,7 +1024,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.flag_rounded, size: 20, color: AppColors.orange),
+              Icon(Icons.flag_rounded, size: 20, color: context.accentColor),
               const SizedBox(width: 8),
               Text(
                 l.trophiesEarnedNextMilestones,
@@ -1042,7 +1045,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
           if (nextWorkoutMilestone != null)
             _MilestoneProgressRow(
               icon: Icons.fitness_center,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               label: '$nextWorkoutMilestone-Workout Badge',
               current: totalWorkouts,
               target: nextWorkoutMilestone,
@@ -1056,7 +1059,7 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
           if (nextStreakMilestone != null)
             _MilestoneProgressRow(
               icon: Icons.local_fire_department,
-              iconColor: AppColors.orange,
+              iconColor: context.accentColor,
               label: '$nextStreakMilestone-Day Streak',
               current: streak,
               target: nextStreakMilestone,
@@ -1081,15 +1084,15 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
   Color _getTierColor(String tier) {
     switch (tier.toLowerCase()) {
       case 'gold':
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700);  // accent-allowlist: medal/rarity tier — gold
       case 'silver':
         return const Color(0xFFC0C0C0);
       case 'platinum':
         return const Color(0xFFE5E4E2);
       case 'diamond':
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: medal/rarity tier — diamond is always this cyan
       default:
-        return const Color(0xFFCD7F32); // Bronze
+        return const Color(0xFFCD7F32); // Bronze  // accent-allowlist: medal/rarity tier — bronze
     }
   }
 

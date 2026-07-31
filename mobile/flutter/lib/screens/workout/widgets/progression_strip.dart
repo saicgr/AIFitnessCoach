@@ -364,8 +364,8 @@ class ProgressionStrip extends StatelessWidget {
 
   Color _trendColor(_Trend t) {
     switch (t) {
-      case _Trend.up:    return const Color(0xFF10B981); // green
-      case _Trend.down:  return const Color(0xFFF59E0B); // amber
+      case _Trend.up:    return const Color(0xFF10B981); // green  // accent-allowlist: trend scale — up is always this green, matches the down/amber branch below
+      case _Trend.down:  return const Color(0xFFF59E0B); // amber  // accent-allowlist: warning severity
       case _Trend.flat:  return Colors.white.withValues(alpha: 0.4);
       case _Trend.first: return Colors.transparent;
     }

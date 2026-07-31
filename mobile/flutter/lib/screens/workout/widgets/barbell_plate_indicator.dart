@@ -25,20 +25,20 @@ class _PlateStyle {
 
 /// Maps plate weight (lbs) to visual style.
 final _plateStylesLbs = <double, _PlateStyle>{
-  45.0: const _PlateStyle(height: 42, width: 9, color: Color(0xFFD32F2F), borderColor: Color(0xFFB71C1C)),
-  35.0: const _PlateStyle(height: 38, width: 8, color: Color(0xFFF9A825), borderColor: Color(0xFFF57F17)),
-  25.0: const _PlateStyle(height: 34, width: 7, color: Color(0xFF388E3C), borderColor: Color(0xFF1B5E20)),
-  10.0: const _PlateStyle(height: 26, width: 6, color: Color(0xFF1976D2), borderColor: Color(0xFF0D47A1)),
+  45.0: const _PlateStyle(height: 42, width: 9, color: Color(0xFFD32F2F), borderColor: Color(0xFFB71C1C)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
+  35.0: const _PlateStyle(height: 38, width: 8, color: Color(0xFFF9A825), borderColor: Color(0xFFF57F17)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
+  25.0: const _PlateStyle(height: 34, width: 7, color: Color(0xFF388E3C), borderColor: Color(0xFF1B5E20)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
+  10.0: const _PlateStyle(height: 26, width: 6, color: Color(0xFF1976D2), borderColor: Color(0xFF0D47A1)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
   5.0:  const _PlateStyle(height: 20, width: 5, color: Color(0xFFBDBDBD), borderColor: Color(0xFF9E9E9E)),
   2.5:  const _PlateStyle(height: 16, width: 4, color: Color(0xFF757575), borderColor: Color(0xFF616161)),
 };
 
 /// Maps plate weight (kg) to visual style.
 final _plateStylesKg = <double, _PlateStyle>{
-  20.0:  const _PlateStyle(height: 42, width: 9, color: Color(0xFFD32F2F), borderColor: Color(0xFFB71C1C)),
-  15.0:  const _PlateStyle(height: 38, width: 8, color: Color(0xFFF9A825), borderColor: Color(0xFFF57F17)),
-  10.0:  const _PlateStyle(height: 34, width: 7, color: Color(0xFF388E3C), borderColor: Color(0xFF1B5E20)),
-  5.0:   const _PlateStyle(height: 26, width: 6, color: Color(0xFF1976D2), borderColor: Color(0xFF0D47A1)),
+  20.0:  const _PlateStyle(height: 42, width: 9, color: Color(0xFFD32F2F), borderColor: Color(0xFFB71C1C)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
+  15.0:  const _PlateStyle(height: 38, width: 8, color: Color(0xFFF9A825), borderColor: Color(0xFFF57F17)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
+  10.0:  const _PlateStyle(height: 34, width: 7, color: Color(0xFF388E3C), borderColor: Color(0xFF1B5E20)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
+  5.0:   const _PlateStyle(height: 26, width: 6, color: Color(0xFF1976D2), borderColor: Color(0xFF0D47A1)),  // accent-allowlist: standard IWF/powerlifting barbell-plate colour code (red=45lb/20kg, yellow=35lb/15kg, green=25lb/10kg, blue=10lb/5kg) — universally recognized, must not follow the app accent
   2.5:   const _PlateStyle(height: 20, width: 5, color: Color(0xFFBDBDBD), borderColor: Color(0xFF9E9E9E)),
   1.25:  const _PlateStyle(height: 16, width: 4, color: Color(0xFF757575), borderColor: Color(0xFF616161)),
 };
@@ -420,7 +420,7 @@ class BarbellPlateIndicator extends StatelessWidget {
                   'Try a nearby weight.',
                   style: TextStyle(
                     fontSize: 10,
-                    color: const Color(0xFFF9A825),
+                    color: const Color(0xFFF9A825),  // accent-allowlist: matches the standard 35lb/15kg plate colour (yellow) used in the plate legend above
                     fontWeight: FontWeight.w500,
                   ),
                   maxLines: 2,

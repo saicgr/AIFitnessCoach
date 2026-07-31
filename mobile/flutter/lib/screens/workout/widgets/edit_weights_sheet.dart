@@ -9,6 +9,7 @@ import '../../../models/equipment_item.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../home/widgets/gym_equipment_sheet.dart'
     show stackMachineEquipment;
+import '../../../core/theme/accent_color_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────
 // Per-equipment weight tables.
@@ -442,7 +443,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                 Navigator.pop(context, qty);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: isDark ? Colors.black : Colors.white,
               ),
               child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet),
@@ -596,7 +597,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
     final accentColor =
-        widget.accentColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan);
+        widget.accentColor ?? (context.accentColor);
 
     // No own surface, radius, or drag handle — every call site wraps this
     // sheet in a GlassSheet, which supplies the glass background AND the
@@ -716,7 +717,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
                       AppLocalizations.of(context).foodSearchBarClearAll,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.red[400],
+                        color: Colors.red[400],  // accent-allowlist: error/destructive — must stay red
                       ),
                     ),
                   ),
@@ -1043,7 +1044,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
     items.add(const PopupMenuDivider());
     items.add(PopupMenuItem(
       value: _Preset.clearAll,
-      child: Text(AppLocalizations.of(context).settingsCardPartClearAll, style: TextStyle(color: Colors.redAccent)),
+      child: Text(AppLocalizations.of(context).settingsCardPartClearAll, style: TextStyle(color: Colors.redAccent)),  // accent-allowlist: error/destructive — must stay red
     ));
     return items;
   }
@@ -1175,7 +1176,7 @@ class _EditWeightsSheetState extends ConsumerState<EditWeightsSheet> {
 
   Widget _buildUnitButton(String unit, bool isDark) {
     final isSelected = _weightUnit == unit;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = context.accentColor;
 
     return GestureDetector(
       onTap: () => _onUnitChanged(unit),

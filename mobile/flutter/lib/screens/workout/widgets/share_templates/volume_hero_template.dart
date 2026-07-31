@@ -63,7 +63,7 @@ class VolumeHeroTemplate extends StatelessWidget {
           ShareTrackedCaps(
             'TOTAL VOLUME',
             size: 9,
-            color: const Color(0xFFF59E0B),
+            color: const Color(0xFFF59E0B),  // accent-allowlist: warning severity
             letterSpacing: 4,
           ),
           const Spacer(),
@@ -78,7 +78,7 @@ class VolumeHeroTemplate extends StatelessWidget {
             AppLocalizations.of(context)!.volumeHeroTemplateThatS(comparison),
             style: TextStyle(
               fontSize: 13,
-              color: const Color(0xFFF59E0B).withValues(alpha: 0.9),
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.9),  // accent-allowlist: warning severity
               fontStyle: FontStyle.italic,
               fontWeight: FontWeight.w500,
             ),

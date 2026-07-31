@@ -143,7 +143,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                   center: Alignment.center,
                   radius: 1.5,
                   colors: [
-                    const Color(0xFFFFD700).withOpacity(0.2),
+                    const Color(0xFFFFD700).withOpacity(0.2),  // accent-allowlist: medal/rarity tier — gold
                     Colors.black.withOpacity(0.95),
                   ],
                 ),
@@ -193,7 +193,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                       letterSpacing: 2,
                     ),
                     textAlign: TextAlign.center,
@@ -223,7 +223,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                         color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: const Color(0xFFFFD700).withOpacity(0.2),
+                          color: const Color(0xFFFFD700).withOpacity(0.2),  // accent-allowlist: medal/rarity tier — gold
                         ),
                       ),
                       child: Column(
@@ -234,7 +234,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                               Icon(
                                 Icons.show_chart,
                                 size: 14,
-                                color: Color(0xFFFFD700),
+                                color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                               ),
                               SizedBox(width: 6),
                               Text(
@@ -242,7 +242,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFFFFD700),
+                                  color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                                   letterSpacing: 1.2,
                                 ),
                               ),
@@ -278,7 +278,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                             icon: const Icon(Icons.share),
                             label: Text(AppLocalizations.of(context).prFullCelebrationShareYourAchievement),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFFFD700),
+                              backgroundColor: const Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
@@ -338,14 +338,14 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
                 colors: [
-                  Color(0xFFFFD700),
-                  Color(0xFFFFA500),
+                  Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
+                  Color(0xFFFFA500),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withOpacity(0.6),
+                  color: const Color(0xFFFFD700).withOpacity(0.6),  // accent-allowlist: medal/rarity tier — gold
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),
@@ -370,7 +370,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
         color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFFFD700).withOpacity(0.3),
+          color: const Color(0xFFFFD700).withOpacity(0.3),  // accent-allowlist: medal/rarity tier — gold
           width: 2,
         ),
       ),
@@ -400,7 +400,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                 style: const TextStyle(
                   fontSize: 64,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFFD700),
+                  color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                   height: 1,
                 ),
               ),
@@ -437,7 +437,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.2),
+                color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -445,7 +445,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                 children: [
                   const Icon(
                     Icons.trending_up,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -454,7 +454,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -462,7 +462,7 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                     AppLocalizations.of(context)!.prFullCelebrationValue(widget.pr.improvementPercent.toStringAsFixed(1)),
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.success.withOpacity(0.8),
+                      color: AppColors.success.withOpacity(0.8),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ),
                   ),
                 ],
@@ -544,8 +544,8 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFFFF6B6B).withOpacity(0.2),
-                    const Color(0xFFFFD93D).withOpacity(0.1),
+                    const Color(0xFFFF6B6B).withOpacity(0.2),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
+                    const Color(0xFFFFD93D).withOpacity(0.1),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                     Colors.black.withOpacity(0.95),
                   ],
                 ),
@@ -582,14 +582,14 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [
-                        Color(0xFFFF6B6B),
-                        Color(0xFFFFD93D),
+                        Color(0xFFFF6B6B),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
+                        Color(0xFFFFD93D),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                       ],
                     ),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFFFD93D).withOpacity(0.5),
+                        color: const Color(0xFFFFD93D).withOpacity(0.5),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                         blurRadius: 30,
                         spreadRadius: 5,
                       ),
@@ -616,7 +616,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFFD93D),
+                    color: Color(0xFFFFD93D),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                     letterSpacing: 2,
                   ),
                 ),
@@ -647,7 +647,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                         height: 12,
                         decoration: BoxDecoration(
                           color: isActive
-                              ? const Color(0xFFFFD93D)
+                              ? const Color(0xFFFFD93D)  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                               : Colors.white.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -671,7 +671,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFFD93D),
+                        backgroundColor: const Color(0xFFFFD93D),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -706,7 +706,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
         color: Colors.white.withOpacity(0.08),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFFFD93D).withOpacity(0.3),
+          color: const Color(0xFFFFD93D).withOpacity(0.3),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
         ),
       ),
       child: Column(
@@ -715,7 +715,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFD93D).withOpacity(0.2),
+              color: const Color(0xFFFFD93D).withOpacity(0.2),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -723,7 +723,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFFFD93D),
+                color: Color(0xFFFFD93D),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
                 letterSpacing: 1,
               ),
             ),
@@ -750,7 +750,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
             style: const TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFFD93D),
+              color: Color(0xFFFFD93D),  // accent-allowlist: PR celebration gold/fire theme — medal/rarity tier colours for the full-screen personal-record moment
             ),
           ),
 
@@ -760,7 +760,7 @@ class _MultiPRCelebrationScreenState extends State<MultiPRCelebrationScreen> {
               pr.formattedImprovement,
               style: const TextStyle(
                 fontSize: 16,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 fontWeight: FontWeight.w600,
               ),
             ),

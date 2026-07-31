@@ -484,7 +484,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               decoration: BoxDecoration(
                 color: isTracked
                     ? accentColor.withValues(alpha: 0.15)
-                    : AppColors.warning.withValues(alpha: 0.15),
+                    : AppColors.warning.withValues(alpha: 0.15),  // accent-allowlist: warning severity
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -492,7 +492,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isTracked ? accentColor : AppColors.warning,
+                  color: isTracked ? accentColor : AppColors.warning,  // accent-allowlist: warning severity
                 ),
               ),
             ),
@@ -573,8 +573,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     final color = percent == null
         ? (isDark ? AppColors.textSecondary : Colors.grey.shade600)
         : isPositive
-            ? AppColors.success
-            : AppColors.error;
+            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+            : AppColors.error;  // accent-allowlist: error/destructive — must stay red
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,7 +631,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.2),
+          color: AppColors.warning.withValues(alpha: 0.2),  // accent-allowlist: warning severity
         ),
       ),
       child: Column(
@@ -639,7 +639,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.emoji_events, size: 20, color: AppColors.warning),
+              Icon(Icons.emoji_events, size: 20, color: AppColors.warning),  // accent-allowlist: warning severity
               const SizedBox(width: 6),
               _buildSectionTitle('Personal Records', isDark),
             ],
@@ -700,7 +700,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       StrengthScoreData m, bool isDark, Color accentColor) {
     final change = m.scoreChange ?? 0;
     final up = change > 0;
-    final Color moverColor = up ? AppColors.success : AppColors.textSecondary;
+    final Color moverColor = up ? AppColors.success : AppColors.textSecondary;  // accent-allowlist: success/positive state — must stay green regardless of accent
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -797,9 +797,9 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
   }
 
   Color _ratingColor(int rating) {
-    if (rating >= 8) return AppColors.success;
-    if (rating >= 6) return AppColors.warning;
-    return AppColors.error;
+    if (rating >= 8) return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (rating >= 6) return AppColors.warning;  // accent-allowlist: warning severity
+    return AppColors.error;  // accent-allowlist: error/destructive — must stay red
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -815,15 +815,15 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.08),
+        color: AppColors.warning.withValues(alpha: 0.08),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.warning.withValues(alpha: 0.15),
+          color: AppColors.warning.withValues(alpha: 0.15),  // accent-allowlist: warning severity
         ),
       ),
       child: Row(
         children: [
-          Icon(Icons.schedule, size: 16, color: AppColors.warning),
+          Icon(Icons.schedule, size: 16, color: AppColors.warning),  // accent-allowlist: warning severity
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -943,7 +943,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
             ? AppLocalizations.of(context).workoutSummaryReverting
             : AppLocalizations.of(context).workoutSummaryRevertMarkAsNot),
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.error.withValues(alpha: 0.9),
+          backgroundColor: AppColors.error.withValues(alpha: 0.9),  // accent-allowlist: error/destructive — must stay red
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape:
@@ -1334,13 +1334,13 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
   Color _statusColor(String status, bool isDark) {
     switch (status) {
       case 'improved':
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'maintained':
         return isDark ? AppColors.textSecondary : Colors.grey;
       case 'declined':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       case 'first_time':
-        return AppColors.info;
+        return AppColors.info;  // accent-allowlist: informational
       default:
         return isDark ? AppColors.textSecondary : Colors.grey;
     }

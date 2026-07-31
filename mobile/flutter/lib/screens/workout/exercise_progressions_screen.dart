@@ -113,7 +113,7 @@ class _ExerciseProgressionsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(resp.message),
-          backgroundColor: AppColors.green,
+          backgroundColor: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           duration: const Duration(seconds: 3),
         ),
       );
@@ -123,7 +123,7 @@ class _ExerciseProgressionsScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Could not advance: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ),
       );
     }
@@ -553,9 +553,9 @@ class _TissueHeatCardState extends ConsumerState<_TissueHeatCard> {
   }
 
   Color _heatColor(num heat) {
-    if (heat >= 85) return const Color(0xFFEF4444); // red
-    if (heat >= 65) return const Color(0xFFF59E0B); // amber
-    return const Color(0xFF14B8A6); // teal — cooling
+    if (heat >= 85) return const Color(0xFFEF4444); // red  // accent-allowlist: error/destructive — must stay red
+    if (heat >= 65) return const Color(0xFFF59E0B); // amber  // accent-allowlist: warning severity
+    return const Color(0xFF14B8A6); // teal — cooling  // accent-allowlist: tissue-heat scale — cooling/low band is always this teal
   }
 
   @override
@@ -800,19 +800,19 @@ class _ReadyCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.green.withValues(alpha: isDark ? 0.22 : 0.14),
-            AppColors.green.withValues(alpha: isDark ? 0.08 : 0.05),
+            AppColors.green.withValues(alpha: isDark ? 0.22 : 0.14),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+            AppColors.green.withValues(alpha: isDark ? 0.08 : 0.05),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.green.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.green.withValues(alpha: 0.4)),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.bolt_rounded, color: AppColors.green, size: 18),
+              Icon(Icons.bolt_rounded, color: AppColors.green, size: 18),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -823,7 +823,7 @@ class _ReadyCard extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.3,
-                    color: AppColors.green,
+                    color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                   ),
                 ),
               ),
@@ -858,7 +858,7 @@ class _ReadyCard extends StatelessWidget {
                 difficultyLevel: suggestion.suggestedDifficultyLevel,
                 isDark: isDark,
                 highlighted: true,
-                accent: AppColors.green,
+                accent: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               ),
             ],
           ),
@@ -881,7 +881,7 @@ class _ReadyCard extends StatelessWidget {
               icon: const Icon(Icons.trending_up_rounded, size: 18),
               label: Text('Advance to ${suggestion.suggestedExercise}'),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.green,
+                backgroundColor: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
@@ -1067,13 +1067,13 @@ class _ChainCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.green.withValues(alpha: 0.14),
+                color: AppColors.green.withValues(alpha: 0.14),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 children: [
                   Icon(Icons.arrow_circle_up_rounded,
-                      size: 16, color: AppColors.green),
+                      size: 16, color: AppColors.green),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -1082,7 +1082,7 @@ class _ChainCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.green,
+                        color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                       ),
                     ),
                   ),
@@ -1107,16 +1107,18 @@ class _ChainCard extends StatelessWidget {
     );
   }
 
+  // Mastery-progression legend — static (no BuildContext) and each status
+  // needs its own colour so the 4 states stay visually distinct at a glance.
   static Color _statusColor(ProgressionMasteryStatus status) {
     switch (status) {
       case ProgressionMasteryStatus.learning:
-        return AppColors.waterBlue;
+        return AppColors.waterBlue;  // accent-allowlist: mastery-progression legend — "learning" is always this blue
       case ProgressionMasteryStatus.proficient:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: mastery-progression legend — "proficient" is always this cyan
       case ProgressionMasteryStatus.mastered:
-        return AppColors.green;
+        return AppColors.green;  // accent-allowlist: mastery-progression legend — "mastered" is always this green
       case ProgressionMasteryStatus.progressed:
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: mastery-progression legend — "progressed" is always this purple
     }
   }
 }
@@ -1247,7 +1249,7 @@ class _MasteryBar extends StatelessWidget {
     final progress = ready
         ? 1.0
         : (consecutiveEasy / _target).clamp(0.0, 1.0);
-    final barColor = ready ? AppColors.green : accent;
+    final barColor = ready ? AppColors.green : accent;  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
     final track =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
@@ -1262,7 +1264,7 @@ class _MasteryBar extends StatelessWidget {
                 fontSize: 11.5,
                 fontWeight: FontWeight.w600,
                 color: ready
-                    ? AppColors.green
+                    ? AppColors.green  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                     : (isDark
                         ? AppColors.textSecondary
                         : AppColorsLight.textSecondary),
@@ -1377,7 +1379,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off_rounded, size: 52, color: AppColors.error),
+            Icon(Icons.cloud_off_rounded, size: 52, color: AppColors.error),  // accent-allowlist: error/destructive — must stay red
             const SizedBox(height: 16),
             Text(
               message,

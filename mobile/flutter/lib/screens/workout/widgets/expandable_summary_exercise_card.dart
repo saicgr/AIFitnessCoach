@@ -6,6 +6,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 class ExpandableSummaryExerciseCard extends StatefulWidget {
   final WorkoutExercise exercise;
   final ExerciseComparisonInfo? comparison;
@@ -208,13 +209,13 @@ class _ExpandableSummaryExerciseCardState
     String label;
 
     if (comparison.isImproved) {
-      badgeColor = AppColors.success;
+      badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       icon = Icons.trending_up;
       label = comparison.formattedPercentDiff.isNotEmpty
           ? comparison.formattedPercentDiff
           : 'Improved';
     } else if (comparison.isDeclined) {
-      badgeColor = AppColors.error;
+      badgeColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       icon = Icons.trending_down;
       label = comparison.formattedPercentDiff.isNotEmpty
           ? comparison.formattedPercentDiff
@@ -574,18 +575,18 @@ class _ExpandableSummaryExerciseCardState
       case 'warmup':
       case 'warm_up':
         return widget.isDark
-            ? AppColors.info.withValues(alpha: 0.08)
-            : AppColors.info.withValues(alpha: 0.06);
+            ? AppColors.info.withValues(alpha: 0.08)  // accent-allowlist: informational
+            : AppColors.info.withValues(alpha: 0.06);  // accent-allowlist: informational
       case 'drop':
       case 'drop_set':
         return widget.isDark
-            ? AppColors.orange.withValues(alpha: 0.08)
-            : AppColors.orange.withValues(alpha: 0.06);
+            ? context.accentColor.withValues(alpha: 0.08)
+            : context.accentColor.withValues(alpha: 0.06);
       case 'failure':
       case 'amrap':
         return widget.isDark
-            ? AppColors.error.withValues(alpha: 0.08)
-            : AppColors.error.withValues(alpha: 0.06);
+            ? AppColors.error.withValues(alpha: 0.08)  // accent-allowlist: error/destructive — must stay red
+            : AppColors.error.withValues(alpha: 0.06);  // accent-allowlist: error/destructive — must stay red
       default:
         return Colors.transparent;
     }
@@ -597,17 +598,17 @@ class _ExpandableSummaryExerciseCardState
     switch (setType) {
       case 'warmup':
       case 'warm_up':
-        color = AppColors.info;
+        color = AppColors.info;  // accent-allowlist: informational
         letter = 'W';
         break;
       case 'drop':
       case 'drop_set':
-        color = AppColors.orange;
+        color = context.accentColor;
         letter = 'D';
         break;
       case 'failure':
       case 'amrap':
-        color = AppColors.error;
+        color = AppColors.error;  // accent-allowlist: error/destructive — must stay red
         letter = 'F';
         break;
       default:
@@ -798,8 +799,8 @@ class _ExpandableSummaryExerciseCardState
         widget.comparison!.timeDiffSeconds != 0) {
       deltaText = widget.comparison!.formattedTimeDiff;
       deltaColor = widget.comparison!.timeDiffSeconds! < 0
-          ? AppColors.success
-          : AppColors.warning;
+          ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+          : AppColors.warning;  // accent-allowlist: warning severity
     }
 
     return Padding(
@@ -954,10 +955,10 @@ class _ExpandableSummaryExerciseCardState
       arrowColor = widget.isDark ? AppColors.textMuted : Colors.grey.shade500;
       arrowIcon = Icons.remove;
     } else if (diffKg > 0) {
-      arrowColor = AppColors.success;
+      arrowColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       arrowIcon = Icons.arrow_upward;
     } else {
-      arrowColor = AppColors.error;
+      arrowColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       arrowIcon = Icons.arrow_downward;
     }
 

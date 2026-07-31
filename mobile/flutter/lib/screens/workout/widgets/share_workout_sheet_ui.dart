@@ -44,7 +44,7 @@ extension _ShareWorkoutSheetStateUI on _ShareWorkoutSheetState {
       return ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
+          backgroundColor: context.accentColor,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -77,8 +77,8 @@ extension _ShareWorkoutSheetStateUI on _ShareWorkoutSheetState {
     return OutlinedButton(
       onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.cyan,
-        side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+        foregroundColor: context.accentColor,
+        side: BorderSide(color: context.accentColor.withValues(alpha: 0.5)),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -90,7 +90,7 @@ extension _ShareWorkoutSheetStateUI on _ShareWorkoutSheetState {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation(context.accentColor),
               ),
             )
           : Row(

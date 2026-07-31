@@ -12,6 +12,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Show full-screen trophy celebration overlay
 Future<void> showTrophyCelebration({
   required BuildContext context,
@@ -144,8 +145,8 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
                     center: Alignment.center,
                     radius: 1.5,
                     colors: [
-                      AppColors.orange.withValues(alpha: 0.3),
-                      AppColors.purple.withValues(alpha: 0.15),
+                      context.accentColor.withValues(alpha: 0.3),
+                      context.accentColor.withValues(alpha: 0.15),
                       Colors.black.withValues(alpha: 0.95),
                     ],
                   ),
@@ -182,7 +183,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
                   if (_showContent)
                     ShaderMask(
                       shaderCallback: (bounds) => LinearGradient(
-                        colors: [AppColors.orange, AppColors.purple],
+                        colors: [context.accentColor, context.accentColor],
                       ).createShader(bounds),
                       child: Text(
                         AppLocalizations.of(context).trophyCelebrationOverlayTrophiesEarned,
@@ -222,13 +223,13 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.orange.withValues(alpha: 0.3),
-                            AppColors.purple.withValues(alpha: 0.3),
+                            context.accentColor.withValues(alpha: 0.3),
+                            context.accentColor.withValues(alpha: 0.3),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
-                          color: AppColors.orange.withValues(alpha: 0.5),
+                          color: context.accentColor.withValues(alpha: 0.5),
                         ),
                       ),
                       child: Text(
@@ -269,19 +270,19 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppColors.orange,
-                  AppColors.purple,
+                  context.accentColor,
+                  context.accentColor,
                 ],
               ),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.orange.withValues(alpha: 0.6),
+                  color: context.accentColor.withValues(alpha: 0.6),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),
                 BoxShadow(
-                  color: AppColors.purple.withValues(alpha: 0.4),
+                  color: context.accentColor.withValues(alpha: 0.4),
                   blurRadius: 60,
                   spreadRadius: 20,
                 ),
@@ -314,7 +315,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
           if (widget.newPRs.isNotEmpty)
             _buildTrophyRow(
               icon: Icons.military_tech,
-              iconColor: const Color(0xFFFFD700), // Gold
+              iconColor: const Color(0xFFFFD700), // Gold  // accent-allowlist: medal/rarity tier — gold
               label: '${widget.newPRs.length} Personal ${widget.newPRs.length == 1 ? 'Record' : 'Records'}',
               subtitle: widget.newPRs.take(2).map((pr) => pr['exercise_name'] ?? 'Exercise').join(', '),
               delay: 300,
@@ -324,7 +325,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
           if (widget.newAchievements != null && widget.newAchievements!.isNotEmpty)
             _buildTrophyRow(
               icon: Icons.workspace_premium,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               label: '${widget.newAchievements!.length} ${widget.newAchievements!.length == 1 ? 'Achievement' : 'Achievements'}',
               subtitle: widget.newAchievements!.take(2).map((a) => a['name'] ?? 'Achievement').join(', '),
               delay: 450,
@@ -334,7 +335,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
           if (widget.workoutMilestone != null)
             _buildTrophyRow(
               icon: Icons.flag,
-              iconColor: AppColors.orange,
+              iconColor: context.accentColor,
               label: AppLocalizations.of(context).trophyCelebrationOverlayMilestoneReached,
               subtitle: '${widget.workoutMilestone} Workouts Completed',
               delay: 600,
@@ -344,7 +345,7 @@ class _TrophyCelebrationOverlayState extends State<TrophyCelebrationOverlay>
           if (widget.currentStreak != null && widget.currentStreak! >= 3)
             _buildTrophyRow(
               icon: Icons.local_fire_department,
-              iconColor: const Color(0xFFFF6B35),
+              iconColor: const Color(0xFFFF6B35),  // accent-allowlist: streak-fire icon, matches the fire/streak theme
               label: '${widget.currentStreak} Day Streak!',
               subtitle: AppLocalizations.of(context).trophyCelebrationOverlayKeepTheMomentumGoing,
               delay: 750,

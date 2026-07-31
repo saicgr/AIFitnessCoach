@@ -7,6 +7,7 @@ import '../../../widgets/lottie_animations.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Compact AI Coach report card for the workout complete screen.
 /// Shows AI insight, muscles worked with images, and quick performance stats.
 class AiCoachReportCard extends StatelessWidget {
@@ -55,14 +56,14 @@ class AiCoachReportCard extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.orange.withOpacity(0.08),
-              AppColors.purple.withOpacity(0.05),
+              context.accentColor.withOpacity(0.08),
+              context.accentColor.withOpacity(0.05),
             ],
             begin: AlignmentDirectional.topStart,
             end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+          border: Border.all(color: context.accentColor.withOpacity(0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,7 +263,10 @@ class _AiInsightSection extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.orange, AppColors.purple],
+              colors: [
+                context.accentColor,
+                context.accentColor.withValues(alpha: 0.7),
+              ],
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
@@ -273,10 +277,10 @@ class _AiInsightSection extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: isLoading
-              ? const SizedBox(
+              ? SizedBox(
                   height: 32,
                   child: Center(
-                    child: LottieLoading(size: 20, color: AppColors.orange),
+                    child: LottieLoading(size: 20, color: context.accentColor),
                   ),
                 )
               : Text(
@@ -350,8 +354,8 @@ class _MuscleChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final borderColor = muscle.isPrimary
-        ? AppColors.orange.withOpacity(0.6)
-        : AppColors.purple.withOpacity(0.3);
+        ? context.accentColor.withOpacity(0.6)
+        : context.accentColor.withOpacity(0.3);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -400,7 +404,7 @@ class _MuscleChip extends StatelessWidget {
             AppLocalizations.of(context)!.aiCoachReportCardS(muscle.sets),
             style: TextStyle(
               fontSize: 8,
-              color: muscle.isPrimary ? AppColors.orange : textMuted,
+              color: muscle.isPrimary ? context.accentColor : textMuted,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -453,8 +457,8 @@ class _QuickStatsRow extends StatelessWidget {
                 : '${displayVolume.toStringAsFixed(0)}$unit',
             label: volumePercent != null ? AppLocalizations.of(context).aiCoachReportVsLast : AppLocalizations.of(context).workoutSummaryAdvancedVolume,
             color: volumePercent != null
-                ? (volumePercent >= 0 ? AppColors.green : Colors.redAccent)
-                : AppColors.green,
+                ? (volumePercent >= 0 ? AppColors.green : Colors.redAccent)  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent; error/destructive — must stay red
+                : AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           ),
         ),
         const SizedBox(width: 6),
@@ -464,7 +468,7 @@ class _QuickStatsRow extends StatelessWidget {
             icon: Icons.speed,
             value: displayWorkRate.toStringAsFixed(0),
             label: AppLocalizations.of(context)!.aiCoachReportCardMin(unit),
-            color: AppColors.purple,
+            color: context.accentColor,
           ),
         ),
         const SizedBox(width: 6),
@@ -475,13 +479,13 @@ class _QuickStatsRow extends StatelessWidget {
                   icon: Icons.emoji_events,
                   value: '$prCount',
                   label: prCount == 1 ? AppLocalizations.of(context).aiCoachReportPr : AppLocalizations.of(context).weeklyWrappedPrs,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 )
               : _MiniStat(
                   icon: Icons.fitness_center,
                   value: displayAvgPerSet.toStringAsFixed(1),
                   label: AppLocalizations.of(context)!.aiCoachReportCardSet(unit),
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
         ),
       ],

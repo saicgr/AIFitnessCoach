@@ -19,6 +19,7 @@ import '../../../../data/services/pr_detection_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// PR Share card widget
 class PRShareCard extends StatelessWidget {
   final DetectedPR pr;
@@ -62,7 +63,7 @@ class PRShareCard extends StatelessWidget {
                   center: Alignment.topCenter,
                   radius: 1.2,
                   colors: [
-                    const Color(0xFFFFD700).withOpacity(0.15),
+                    const Color(0xFFFFD700).withOpacity(0.15),  // accent-allowlist: medal/rarity tier — gold
                     backgroundColor,
                   ],
                 ),
@@ -88,7 +89,7 @@ class PRShareCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFFFD700),
+                    color: const Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                     letterSpacing: 4,
                   ),
                   textAlign: TextAlign.center,
@@ -127,7 +128,7 @@ class PRShareCard extends StatelessWidget {
                 const SizedBox(height: 60),
 
                 // Watermark
-                if (showWatermark) _buildWatermark(subtitleColor),
+                if (showWatermark) _buildWatermark(context, subtitleColor),
 
                 const SizedBox(height: 40),
               ],
@@ -147,14 +148,14 @@ class PRShareCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFFFD700),
-            Color(0xFFFFA500),
+            Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
+            Color(0xFFFFA500),  // accent-allowlist: PR trophy gold gradient
           ],
         ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withOpacity(0.5),
+            color: const Color(0xFFFFD700).withOpacity(0.5),  // accent-allowlist: medal/rarity tier — gold
             blurRadius: 60,
             spreadRadius: 20,
           ),
@@ -178,7 +179,7 @@ class PRShareCard extends StatelessWidget {
             : Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(32),
         border: Border.all(
-          color: const Color(0xFFFFD700).withOpacity(0.3),
+          color: const Color(0xFFFFD700).withOpacity(0.3),  // accent-allowlist: medal/rarity tier — gold
           width: 2,
         ),
       ),
@@ -208,7 +209,7 @@ class PRShareCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 96,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFFD700),
+                  color: const Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                   height: 1,
                 ),
               ),
@@ -246,7 +247,7 @@ class PRShareCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF4CAF50).withOpacity(0.2),
+                color: const Color(0xFF4CAF50).withOpacity(0.2),  // accent-allowlist: improvement/positive semantic green
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -254,7 +255,7 @@ class PRShareCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF4CAF50),
+                  color: Color(0xFF4CAF50),  // accent-allowlist: improvement/positive semantic green
                 ),
               ),
             ),
@@ -298,26 +299,26 @@ class PRShareCard extends StatelessWidget {
         painter: ProgressChartPainter(
           data: data,
           maxWeight: maxWeight * 1.1,
-          lineColor: const Color(0xFFFFD700),
+          lineColor: const Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
           isDark: isDarkTheme,
         ),
       ),
     );
   }
 
-  Widget _buildWatermark(Color subtitleColor) {
+  Widget _buildWatermark(BuildContext context, Color subtitleColor) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withOpacity(0.15),
+            color: context.accentColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.fitness_center,
-            color: AppColors.cyan,
+            color: context.accentColor,
             size: 28,
           ),
         ),
@@ -584,7 +585,7 @@ class _PRShareSheetState extends State<PRShareSheet> {
                     icon: const Icon(Icons.share),
                     label: Text(AppLocalizations.of(context).prShareCardShareImage),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -622,7 +623,7 @@ class _PRShareSheetState extends State<PRShareSheet> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: AppColors.cyan,
+            activeColor: context.accentColor,
           ),
         ],
       ),

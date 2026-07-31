@@ -244,10 +244,7 @@ class _LedgerPill extends StatelessWidget {
           ),
           if (valueLabel != null) ...[
             const SizedBox(width: 6),
-            Text(
-              valueLabel!,
-              style: ZType.data(13, color: valColor, weight: FontWeight.w600),
-            ),
+            _ValueLabelText(label: valueLabel!, color: valColor),
           ],
           if (state == _PillState.done) ...[
             const SizedBox(width: 5),
@@ -262,6 +259,41 @@ class _LedgerPill extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(15),
       child: pill,
+    );
+  }
+}
+
+/// Renders a pill's value token ("60×10", "BW×10", "10 reps") in
+/// `ZType.data` (Space Mono — tabular figures for weight/reps alignment)
+/// EXCEPT the "BW" bodyweight abbreviation, which renders in `ZType.sans`.
+/// E2E #134: Space Mono is a monospace face tuned for digit columns, and its
+/// fixed-width glyph boxes gave "BW" visibly broken/uneven letter spacing —
+/// a 2-glyph word has no tabular-alignment need, so it gets the sans face
+/// the rest of the app's short labels use.
+class _ValueLabelText extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _ValueLabelText({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!label.startsWith('BW')) {
+      return Text(label,
+          style: ZType.data(13, color: color, weight: FontWeight.w600));
+    }
+    final rest = label.substring(2); // e.g. "×10", or "" for a bare "BW"
+    return Text.rich(
+      TextSpan(children: [
+        TextSpan(
+          text: 'BW',
+          style: ZType.sans(13, color: color, weight: FontWeight.w700),
+        ),
+        if (rest.isNotEmpty)
+          TextSpan(
+            text: rest,
+            style: ZType.data(13, color: color, weight: FontWeight.w600),
+          ),
+      ]),
     );
   }
 }

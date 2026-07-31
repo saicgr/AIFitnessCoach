@@ -253,7 +253,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             children: [
               Icon(
                 Icons.warning_amber_rounded,
-                color: Colors.orange.shade700,
+                color: Colors.orange.shade700,  // accent-allowlist: warning severity
                 size: 24,
               ),
               const SizedBox(width: 8),
@@ -304,10 +304,10 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                                 : Icons.cancel,
                             size: 18,
                             color: isComplete
-                                ? Colors.green
+                                ? Colors.green  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 : isPartial
-                                ? Colors.orange
-                                : Colors.red.shade400,
+                                ? Colors.orange  // accent-allowlist: warning severity
+                                : Colors.red.shade400,  // accent-allowlist: error/destructive — must stay red
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -334,10 +334,10 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                               color: isComplete
-                                  ? Colors.green
+                                  ? Colors.green  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   : isPartial
-                                  ? Colors.orange
-                                  : Colors.red.shade400,
+                                  ? Colors.orange  // accent-allowlist: warning severity
+                                  : Colors.red.shade400,  // accent-allowlist: error/destructive — must stay red
                             ),
                           ),
                         ],
@@ -551,7 +551,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                 ),
               );
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),  // accent-allowlist: error/destructive — must stay red
             child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
@@ -826,7 +826,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
               content: Text(
                 'Added $addedCount exercise${addedCount == 1 ? '' : 's'}',
               ),
-              backgroundColor: AppColors.green,
+              backgroundColor: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),
@@ -841,7 +841,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to add exercises: $e'),
-            backgroundColor: AppColors.red,
+            backgroundColor: AppColors.red,  // accent-allowlist: error/destructive — same value as AppColors.error, must stay red
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
           ),
@@ -911,7 +911,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
               content: Text(
                 'Added $addedCount exercise${addedCount == 1 ? '' : 's'}',
               ),
-              backgroundColor: AppColors.green,
+              backgroundColor: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
             ),
@@ -926,7 +926,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to add exercises: $e'),
-            backgroundColor: AppColors.red,
+            backgroundColor: AppColors.red,  // accent-allowlist: error/destructive — same value as AppColors.error, must stay red
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
           ),
@@ -1337,7 +1337,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         ),
         duration: const Duration(milliseconds: 1500),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.purple,
+        backgroundColor: context.accentColor,
       ),
     );
   }

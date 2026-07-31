@@ -228,14 +228,14 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.cyan.withOpacity(0.1),
-                AppColors.purple.withOpacity(0.05),
+                context.accentColor.withOpacity(0.1),
+                context.accentColor.withOpacity(0.05),
               ],
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+            border: Border.all(color: context.accentColor.withOpacity(0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,13 +255,13 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.cyan.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.mood,
                           size: 20,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -274,7 +274,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                               ),
                             ),
                             Text(
@@ -391,11 +391,11 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                               height: 52,
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.orange.withOpacity(0.2)
+                                    ? context.accentColor.withOpacity(0.2)
                                     : elevated,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: isSelected ? AppColors.orange : cardBorder,
+                                  color: isSelected ? context.accentColor : cardBorder,
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -414,10 +414,10 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                         Center(
                           child: Text(
                             _energyAfter!.energyLabel,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                           ),
                         ),
@@ -436,12 +436,12 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: _feelingStronger
-                                ? AppColors.success.withOpacity(0.15)
+                                ? AppColors.success.withOpacity(0.15)  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 : elevated,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: _feelingStronger
-                                  ? AppColors.success
+                                  ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   : cardBorder,
                               width: _feelingStronger ? 2 : 1,
                             ),
@@ -454,12 +454,12 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                                 height: 24,
                                 decoration: BoxDecoration(
                                   color: _feelingStronger
-                                      ? AppColors.success
+                                      ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(6),
                                   border: Border.all(
                                     color: _feelingStronger
-                                        ? AppColors.success
+                                        ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                                         : textSecondary,
                                     width: 2,
                                   ),
@@ -483,7 +483,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                                         fontSize: 15,
                                         fontWeight: FontWeight.w600,
                                         color: _feelingStronger
-                                            ? AppColors.success
+                                            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                                             : textPrimary,
                                       ),
                                     ),
@@ -552,13 +552,13 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.fitness_center,
                           size: 16,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -571,7 +571,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.orange,
+                                color: context.accentColor,
                               ),
                             ),
                             Text(
@@ -667,7 +667,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                           starValue <= rating ? Icons.star : Icons.star_border,
                           size: 24,
                           color: starValue <= rating
-                              ? AppColors.orange
+                              ? context.accentColor
                               : textSecondary,
                         ),
                       ),
@@ -678,7 +678,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                   MiniDifficultyButton(
                     label: 'Easy',
                     isSelected: difficulty == 'too_easy',
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     onTap: () {
                       setState(() {
                         _exerciseDifficulties[index] = 'too_easy';
@@ -689,7 +689,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                   MiniDifficultyButton(
                     label: AppLocalizations.of(context).healthSyncOk,
                     isSelected: difficulty == 'just_right',
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     onTap: () {
                       setState(() {
                         _exerciseDifficulties[index] = 'just_right';
@@ -700,7 +700,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                   MiniDifficultyButton(
                     label: AppLocalizations.of(context).workoutCompleteScreenHard,
                     isSelected: difficulty == 'too_hard',
-                    color: AppColors.error,
+                    color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                     onTap: () {
                       setState(() {
                         _exerciseDifficulties[index] = 'too_hard';
@@ -752,13 +752,13 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.purple.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.show_chart,
                           size: 16,
-                          color: AppColors.purple,
+                          color: context.accentColor,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -768,7 +768,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                           ),
                         ),
                       ),

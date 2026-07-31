@@ -338,11 +338,11 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
     final isQueued = queueState.isQueued(name);
     final isAvoided = avoidState.isAvoided(name);
 
-    final red = isDark ? AppColors.error : AppColorsLight.error;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final red = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive — must stay red
+    final cyan = context.accentColor;
     // Signature v2 orange-once: the screen's single orange is the focal PR
     // point on the History chart, so the "queued" state uses green instead.
-    final queuedColor = isDark ? AppColors.green : AppColorsLight.green;
+    final queuedColor = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent; success/positive state — same value as AppColorsLight.success, must stay green regardless of accent
 
     Widget actionButton({
       required IconData icon,

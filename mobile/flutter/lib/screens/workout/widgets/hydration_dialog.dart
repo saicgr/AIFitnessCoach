@@ -58,19 +58,21 @@ Future<HydrationDialogResult?> showHydrationDialog({
         final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
         final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
+        // Drink-type legend — each type keeps its own colour so the picker's
+        // chips stay visually distinct (water is special-cased below).
         Color getDrinkColor(DrinkType type) {
           switch (type) {
             case DrinkType.water:
               // Use waterBlue (always blue) instead of AppColors.teal, which
               // resolves to silver/gray under the monochrome theme and made
               // the "Log Water" button look disabled.
-              return AppColors.waterBlue;
+              return AppColors.waterBlue;  // accent-allowlist: drink-type legend — water is always this blue
             case DrinkType.proteinShake:
-              return AppColors.purple;
+              return AppColors.purple;  // accent-allowlist: drink-type legend — protein shake is always this purple
             case DrinkType.sportsDrink:
-              return AppColors.orange;
+              return AppColors.orange;  // accent-allowlist: drink-type legend — sports drink is always this orange
             case DrinkType.coffee:
-              return const Color(0xFF8B4513);
+              return const Color(0xFF8B4513);  // accent-allowlist: drink-type legend — coffee is always this brown
             case DrinkType.other:
               return textMuted;
           }

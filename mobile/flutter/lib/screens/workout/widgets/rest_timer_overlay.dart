@@ -20,6 +20,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../widgets/coach_avatar.dart';
 import 'rest_suggestion_card.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 part 'rest_timer_overlay_ui.dart';
 
@@ -181,7 +182,7 @@ class RestTimerOverlay extends StatelessWidget {
                   const SizedBox(height: 8),
                   _buildTimer(context, textColor),
                   const SizedBox(height: 12),
-                  _buildProgressBar(isDark),
+                  _buildProgressBar(context, isDark),
                   SizedBox(height: isCompactScreen ? 12 : 20),
                 ],
               ),
@@ -224,7 +225,7 @@ class RestTimerOverlay extends StatelessWidget {
                     // Weight suggestion section (loading or card)
                     if (isRestBetweenSets) ...[
                       if (isLoadingWeightSuggestion)
-                        _buildLoadingWeightSuggestion(cardBg, textColor, subtitleColor, isDark)
+                        _buildLoadingWeightSuggestion(context, cardBg, textColor, subtitleColor, isDark)
                       else if (weightSuggestion != null)
                         _buildWeightSuggestionCard(cardBg, textColor, subtitleColor, isDark, isCompactScreen),
                     ],
@@ -238,7 +239,7 @@ class RestTimerOverlay extends StatelessWidget {
                     // Coach Review section
                     if ((currentRpe != null || currentRir != null) && lastSetReps != null) ...[
                       SizedBox(height: isCompactScreen ? 10 : 16),
-                      _buildCoachReviewSection(cardBg, textColor, subtitleColor, isDark),
+                      _buildCoachReviewSection(context, cardBg, textColor, subtitleColor, isDark),
                     ],
 
                     // AI Coach encouragement message
@@ -247,7 +248,7 @@ class RestTimerOverlay extends StatelessWidget {
                         !isLoadingWeightSuggestion &&
                         restSuggestion == null &&
                         !isLoadingRestSuggestion)
-                      _buildEncouragementMessage(cardBg, textColor, isDark),
+                      _buildEncouragementMessage(context, cardBg, textColor, isDark),
 
                     SizedBox(height: isCompactScreen ? 12 : 20),
 
@@ -258,7 +259,7 @@ class RestTimerOverlay extends StatelessWidget {
 
                     // Log 1RM button
                     if (onLog1RM != null)
-                      _build1RMPrompt(cardBg, textColor, subtitleColor, isDark),
+                      _build1RMPrompt(context, cardBg, textColor, subtitleColor, isDark),
 
                     // Ask AI Coach button
                     if (onAskAICoach != null) ...[
@@ -286,7 +287,7 @@ class RestTimerOverlay extends StatelessWidget {
 
   Widget _buildRestLabel(BuildContext context, bool isDark) {
     final l = AppLocalizations.of(context)!;
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     return Text(
       l.restTimerRest,
       style: TextStyle(
@@ -310,8 +311,8 @@ class RestTimerOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar(bool isDark) {
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+  Widget _buildProgressBar(BuildContext context, bool isDark) {
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     return LayoutBuilder(
       builder: (context, constraints) {
         // Use responsive width: max 200px or 60% of available width
@@ -346,8 +347,8 @@ class RestTimerOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildEncouragementMessage(Color cardBg, Color textColor, bool isDark) {
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+  Widget _buildEncouragementMessage(BuildContext context, Color cardBg, Color textColor, bool isDark) {
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.2 : 0.15;
     final borderOpacity = isDark ? 0.3 : 0.4;
     return Container(
@@ -427,12 +428,12 @@ class RestTimerOverlay extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
+              color: Colors.green.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.skip_next,
-              color: Colors.green,
+              color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
               size: 22,
             ),
           ),
@@ -446,7 +447,7 @@ class RestTimerOverlay extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Colors.green.withOpacity(0.8),
+                    color: Colors.green.withOpacity(0.8),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     letterSpacing: 1,
                   ),
                 ),
@@ -482,12 +483,13 @@ class RestTimerOverlay extends StatelessWidget {
   }
 
   Widget _build1RMPrompt(
+    BuildContext context,
     Color cardBg,
     Color textColor,
     Color subtitleColor,
     bool isDark,
   ) {
-    final orange = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+    final orange = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.2 : 0.15;
     final borderOpacity = isDark ? 0.3 : 0.4;
     return GestureDetector(
@@ -563,7 +565,7 @@ class RestTimerOverlay extends StatelessWidget {
   ) {
     // Get coach name and colors
     final coachName = _getCoachShortName(coachPersona);
-    final coachColor = coachPersona?.primaryColor ?? AppColors.purple;
+    final coachColor = coachPersona?.primaryColor ?? context.accentColor;
     final coach = coachPersona ?? CoachPersona.defaultCoach;
 
     return GestureDetector(
@@ -654,12 +656,13 @@ class RestTimerOverlay extends StatelessWidget {
 
   /// Loading state for AI weight suggestion
   Widget _buildLoadingWeightSuggestion(
+    BuildContext context,
     Color cardBg,
     Color textColor,
     Color subtitleColor,
     bool isDark,
   ) {
-    final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+    final cyan = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.2 : 0.15;
     final borderOpacity = isDark ? 0.3 : 0.4;
     return Container(
@@ -721,7 +724,7 @@ class RestTimerOverlay extends StatelessWidget {
 
   Widget _buildSkipButton(BuildContext context, bool isDark) {
     final l = AppLocalizations.of(context)!;
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     // Glassmorphic pill: frosted blur + translucent tint + subtle border +
     // hairline purple glow so the CTA reads against the video/image strip
     // sitting underneath, without hiding it.
@@ -782,7 +785,7 @@ class RestTimerOverlay extends StatelessWidget {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final subtitleColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     showDialog(
       context: context,
@@ -842,20 +845,22 @@ class RestTimerOverlay extends StatelessWidget {
     );
   }
 
-  /// Get color for RPE value (5-10 scale)
+  /// Get color for RPE value (5-10 scale). RPE effort scale — no
+  /// BuildContext on this method, and each band needs its own colour.
   Color _getRpeColor(int rpe) {
-    if (rpe <= 6) return AppColors.success;
-    if (rpe <= 7) return AppColors.cyan;
-    if (rpe <= 8) return AppColors.orange;
-    return AppColors.coral;
+    if (rpe <= 6) return AppColors.success;  // accent-allowlist: RPE effort scale — easy band is always this green
+    if (rpe <= 7) return AppColors.cyan;  // accent-allowlist: RPE effort scale — moderate band is always this cyan
+    if (rpe <= 8) return AppColors.orange;  // accent-allowlist: RPE effort scale — hard band is always this orange
+    return AppColors.coral;  // accent-allowlist: RPE effort scale — max-effort band is always this coral
   }
 
-  /// Get color for RIR value (0-5 scale)
+  /// Get color for RIR value (0-5 scale). RIR scale — no BuildContext on
+  /// this method, and each band needs its own colour.
   Color _getRirColor(int rir) {
-    if (rir >= 4) return AppColors.success;
-    if (rir >= 2) return AppColors.cyan;
-    if (rir >= 1) return AppColors.orange;
-    return AppColors.coral;
+    if (rir >= 4) return AppColors.success;  // accent-allowlist: RIR scale — plenty-left band is always this green
+    if (rir >= 2) return AppColors.cyan;  // accent-allowlist: RIR scale — ideal band is always this cyan
+    if (rir >= 1) return AppColors.orange;  // accent-allowlist: RIR scale — solid-intensity band is always this orange
+    return AppColors.coral;  // accent-allowlist: RIR scale — went-to-failure band is always this coral
   }
 
   /// Darken a color for better visibility in light mode

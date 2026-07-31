@@ -178,6 +178,84 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     _warmupStretchCache.remove(workoutId);
   }
 
+  /// Read the user's SAVED warm-up template (E2E #125) — the customization
+  /// that CARRIES FORWARD across workouts, distinct from the per-workout
+  /// `warmups` row `fetchWarmupAndStretches` reads. Returns null on a 404
+  /// (nothing saved yet for this workout type) or any other failure, so the
+  /// caller falls back to normal generation — never a fabricated warm-up.
+  Future<List<Map<String, dynamic>>?> fetchWarmupTemplate({
+    String? workoutType,
+  }) async {
+    try {
+      final response = await apiClient.get(
+        '${ApiConstants.workouts}/warmup-template',
+        queryParameters:
+            workoutType != null ? {'workout_type': workoutType} : null,
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
+      }
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null; // nothing saved yet
+      debugPrint('❌ [Workout] fetchWarmupTemplate failed: $e');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] fetchWarmupTemplate failed: $e');
+      return null;
+    }
+  }
+
+  /// Persist the CUSTOMIZED warm-up (add/remove/swap/duration/rest edits) so
+  /// the NEXT workout of this type starts from it instead of a fresh AI
+  /// generation every time. Fire this only when the user actually changed
+  /// something this run. Throws on failure so the caller can log it instead
+  /// of silently dropping the save.
+  Future<void> saveWarmupTemplate({
+    String? workoutType,
+    required List<Map<String, dynamic>> exercises,
+  }) async {
+    await apiClient.put(
+      '${ApiConstants.workouts}/warmup-template',
+      data: {
+        'workout_type': workoutType,
+        'exercises': exercises,
+      },
+    );
+  }
+
+  /// Seed a brand-new workout's `warmups` row from the user's saved
+  /// template. Returns the applied exercise list, or null when the user has
+  /// no saved template (404) — the caller falls back to
+  /// `fetchWarmupAndStretches`. Any other failure also resolves to null
+  /// (never blocks workout start on a template-apply hiccup).
+  Future<List<Map<String, dynamic>>?> applyWarmupTemplate(
+    String workoutId,
+  ) async {
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/warmup/apply-template',
+      );
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+        // The per-workout row now reflects the applied template — drop the
+        // read cache so a subsequent fetchWarmupAndStretches (e.g. the
+        // legacy Advanced path) sees it instead of a stale/empty entry.
+        _warmupStretchCache.remove(workoutId);
+        return List<Map<String, dynamic>>.from(data['exercises'] ?? []);
+      }
+      return null;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) return null; // no saved template
+      debugPrint('❌ [Workout] applyWarmupTemplate failed: $e');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Workout] applyWarmupTemplate failed: $e');
+      return null;
+    }
+  }
+
   /// Get AI exercise swap suggestions.
   ///
   /// Pass a known chip label in [reason] ("Too difficult", "Too easy", ...)
@@ -376,19 +454,49 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       return (null, 'Server error (${response.statusCode}). Please try again.');
     } on DioException catch (e, stackTrace) {
       debugPrint('❌ [Workout] Error swapping exercise: $e\n$stackTrace');
+      // FastAPI's HTTPException handler wraps every error body under a
+      // top-level `detail` key (`content={"detail": exc.detail}` in
+      // main.py's http_exception_handler) — the machine-readable code lives
+      // at `detail.error`, NOT a top-level `error_code` (that key never
+      // existed in any response this endpoint sends). Reading the wrong
+      // shape meant NEITHER of the two typed exceptions below, nor the new
+      // injury one, ever actually fired — every 404/403/409 silently fell
+      // through to the generic "Failed to swap exercise" message.
+      final body = e.response?.data;
+      final detail = body is Map ? body['detail'] : null;
+      final errorCode = detail is Map ? detail['error'] as String? : null;
+      final serverMessage = detail is Map ? detail['message'] as String? : null;
+      final status = e.response?.statusCode;
+      // The injury-safety guard applies to BOTH the preview cache AND a
+      // committed workout — a user can swap into an unsafe exercise on
+      // either path, so this check is intentionally UNGATED by previewId
+      // (unlike the two preview-lifecycle exceptions below, which are only
+      // meaningful for the short-lived preview flow).
+      if (status == 409 && errorCode == 'EXERCISE_UNSAFE_FOR_INJURY') {
+        final injuries = detail is Map && detail['injuries'] is List
+            ? (detail['injuries'] as List).whereType<String>().toList()
+            : const <String>[];
+        throw ExerciseUnsafeForInjuryException(
+          (detail is Map ? detail['exercise'] as String? : null) ??
+              newExerciseName,
+          serverMessage ??
+              '$newExerciseName isn\'t safe to program around an active '
+                  'injury right now. Pick a different exercise, or mark '
+                  'that injury healed first.',
+          injuries: injuries,
+        );
+      }
       // Typed exceptions for preview-specific error codes — callers (e.g. the
       // review sheet) can catch these distinctly and surface targeted copy.
       if (previewId != null) {
-        final status = e.response?.statusCode;
-        final errorCode = (e.response?.data as Map<String, dynamic>?)?['error_code'] as String?;
         if (status == 404 && errorCode == 'PREVIEW_EXPIRED') {
-          throw PreviewExpiredException(previewId, e.message ?? 'Preview expired during swap');
+          throw PreviewExpiredException(previewId, serverMessage ?? e.message ?? 'Preview expired during swap');
         }
         if (status == 403 && errorCode == 'PREVIEW_NOT_OWNED') {
-          throw PreviewNotOwnedException(previewId, e.message ?? 'Preview not owned');
+          throw PreviewNotOwnedException(previewId, serverMessage ?? e.message ?? 'Preview not owned');
         }
       }
-      if (e.response?.statusCode == 429) {
+      if (status == 429) {
         return (null, 'Too many swaps. Please wait a moment and try again.');
       }
       if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
@@ -396,6 +504,10 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       }
       return (null, 'Failed to swap exercise. Please try again.');
     } catch (e, stackTrace) {
+      // Non-Dio errors only (e.g. a JSON decode failure on a 200 response) —
+      // the typed exceptions above are thrown FROM the `on DioException`
+      // clause and propagate straight to the caller without re-entering this
+      // generic clause.
       debugPrint('❌ [Workout] Error swapping exercise: $e\n$stackTrace');
       return (null, 'Failed to swap exercise. Please try again.');
     }
@@ -466,17 +578,24 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     }
   }
 
-  /// Add a new exercise to a workout.
+  /// Add a new exercise to a workout. Returns `(workout, errorMessage)` —
+  /// same shape as [swapExercise] — so a non-exception failure (server
+  /// error, timeout) still reaches the caller with real copy instead of a
+  /// bare null that collapses into a flat "Failed to add exercise".
   ///
   /// When [previewId] is non-null, the add is applied to the regeneration
   /// preview cache via `POST /api/v1/workouts/preview/add-exercise` instead of
   /// the committed-workout endpoint. Backend returns the updated preview payload
-  /// with the same shape as a committed Workout. Typed exceptions are thrown for
-  /// preview-specific error codes:
-  ///   - [PreviewExpiredException] on 404 `PREVIEW_EXPIRED`
-  ///   - [PreviewNotOwnedException] on 403 `PREVIEW_NOT_OWNED`
+  /// with the same shape as a committed Workout. Typed exceptions are THROWN
+  /// (not returned in the tuple) so callers that want to branch on them can —
+  /// see [swapOrAddExceptionMessage] for a ready-made string for callers that
+  /// just need copy:
+  ///   - [ExerciseUnsafeForInjuryException] on 409 `EXERCISE_UNSAFE_FOR_INJURY`
+  ///     (ungated by previewId — a committed-workout add can hit this too)
+  ///   - [PreviewExpiredException] on 404 `PREVIEW_EXPIRED` (preview only)
+  ///   - [PreviewNotOwnedException] on 403 `PREVIEW_NOT_OWNED` (preview only)
   /// See Phase 1C/1D of the regenerate safety plan.
-  Future<Workout?> addExercise({
+  Future<(Workout?, String?)> addExercise({
     required String workoutId,
     required String exerciseName,
     String? exerciseId,
@@ -511,26 +630,52 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       );
       if (response.statusCode == 200) {
         debugPrint('✅ [Workout] Exercise added successfully');
-        return Workout.fromJson(response.data as Map<String, dynamic>);
+        return (Workout.fromJson(response.data as Map<String, dynamic>), null);
       }
-      return null;
+      debugPrint('❌ [Workout] Add failed with status ${response.statusCode}: ${response.data}');
+      return (null, 'Server error (${response.statusCode}). Please try again.');
     } on DioException catch (e, stackTrace) {
       debugPrint('❌ [Workout] Error adding exercise: $e\n$stackTrace');
+      // See swapExercise's identical comment: the error code lives at
+      // `detail.error`, never a top-level `error_code`.
+      final body = e.response?.data;
+      final detail = body is Map ? body['detail'] : null;
+      final errorCode = detail is Map ? detail['error'] as String? : null;
+      final serverMessage = detail is Map ? detail['message'] as String? : null;
+      final status = e.response?.statusCode;
+      if (status == 409 && errorCode == 'EXERCISE_UNSAFE_FOR_INJURY') {
+        final injuries = detail is Map && detail['injuries'] is List
+            ? (detail['injuries'] as List).whereType<String>().toList()
+            : const <String>[];
+        throw ExerciseUnsafeForInjuryException(
+          (detail is Map ? detail['exercise'] as String? : null) ??
+              exerciseName,
+          serverMessage ??
+              '$exerciseName isn\'t safe to program around an active '
+                  'injury right now. Pick a different exercise, or mark '
+                  'that injury healed first.',
+          injuries: injuries,
+        );
+      }
       // Surface typed exceptions for preview-specific error codes.
       if (previewId != null) {
-        final status = e.response?.statusCode;
-        final errorCode = (e.response?.data as Map<String, dynamic>?)?['error_code'] as String?;
         if (status == 404 && errorCode == 'PREVIEW_EXPIRED') {
-          throw PreviewExpiredException(previewId, e.message ?? 'Preview expired during add');
+          throw PreviewExpiredException(previewId, serverMessage ?? e.message ?? 'Preview expired during add');
         }
         if (status == 403 && errorCode == 'PREVIEW_NOT_OWNED') {
-          throw PreviewNotOwnedException(previewId, e.message ?? 'Preview not owned');
+          throw PreviewNotOwnedException(previewId, serverMessage ?? e.message ?? 'Preview not owned');
         }
       }
-      return null;
+      if (status == 429) {
+        return (null, 'Too many additions. Please wait a moment and try again.');
+      }
+      if (e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout) {
+        return (null, 'Request timed out. Please try again.');
+      }
+      return (null, 'Failed to add exercise. Please try again.');
     } catch (e, stackTrace) {
       debugPrint('❌ [Workout] Error adding exercise: $e\n$stackTrace');
-      return null;
+      return (null, 'Failed to add exercise. Please try again.');
     }
   }
 

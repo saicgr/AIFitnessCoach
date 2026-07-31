@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Quick action buttons for the active workout screen (instructions + video + hydration + note)
 class HydrationQuickActions extends StatelessWidget {
   /// Callback when the hydration button is tapped
@@ -75,7 +76,7 @@ class HydrationQuickActions extends StatelessWidget {
                 // TODO(i18n): in-workout chip label, matches action_chips_row.dart
                 icon: Icons.auto_awesome,
                 label: 'AI',
-                color: aiColor ?? const Color(0xFF8B5CF6),
+                color: aiColor ?? context.accentColor,
                 onTap: onAiTap!,
                 filled: aiActive,
               ),
@@ -87,18 +88,18 @@ class HydrationQuickActions extends StatelessWidget {
               _buildActionButton(
                 icon: Icons.menu_book_rounded,
                 label: AppLocalizations.of(context).workoutShowcaseInstructions,
-                color: const Color(0xFF10B981), // Vibrant emerald
+                color: const Color(0xFF10B981), // Vibrant emerald  // accent-allowlist: quick-action button palette — Instructions is always this emerald, distinct from the accent-following AI/Video buttons
                 onTap: onInstructionsTap!,
               ),
               const SizedBox(width: 10),
             ],
 
-            // Video button (if callback provided) - vibrant purple/accent
+            // Video button (if callback provided) - follows the app accent
             if (onVideoTap != null) ...[
               _buildActionButton(
                 icon: Icons.play_circle_outline,
                 label: AppLocalizations.of(context).workoutShowcaseVideo,
-                color: const Color(0xFF8B5CF6), // Vibrant purple
+                color: context.accentColor,
                 onTap: onVideoTap!,
               ),
               const SizedBox(width: 10),
@@ -108,7 +109,7 @@ class HydrationQuickActions extends StatelessWidget {
             _buildActionButton(
               icon: Icons.water_drop,
               label: AppLocalizations.of(context).workoutShowcaseLogDrink,
-              color: AppColors.quickActionWater, // Vibrant blue
+              color: AppColors.quickActionWater, // Vibrant blue  // accent-allowlist: hydration/water tracking colour — always blue like water, independent of accent
               onTap: onTap,
             ),
 
@@ -118,7 +119,7 @@ class HydrationQuickActions extends StatelessWidget {
               _buildActionButton(
                 icon: Icons.sticky_note_2_outlined,
                 label: AppLocalizations.of(context).workoutUiBuildersNote,
-                color: const Color(0xFFF59E0B), // Vibrant amber
+                color: const Color(0xFFF59E0B), // Vibrant amber  // accent-allowlist: warning severity
                 onTap: onNoteTap!,
               ),
             ],

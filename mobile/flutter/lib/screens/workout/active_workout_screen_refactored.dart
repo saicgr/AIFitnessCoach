@@ -70,6 +70,7 @@ import 'widgets/exercise_options_sheet.dart' show RepProgressionType;
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/fatigue_alert_modal.dart';
 import 'widgets/set_tracking_table.dart';
+import 'widgets/stale_checkpoint_dialog.dart';
 import 'widgets/rest_duration_policy.dart';
 import 'widgets/stretch_phase_screen.dart';
 import 'widgets/warmup_phase_screen.dart';
@@ -224,7 +225,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
         ),
         duration: const Duration(milliseconds: 1500),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.purple,
+        backgroundColor: context.accentColor,
       ),
     );
   }
@@ -990,6 +991,24 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
       final userId = await ref.read(apiClientProvider).getUserId();
       if (!mounted) return;
       final session = ref.read(activeWorkoutSessionProvider.notifier);
+
+      // E2E #136 — same guard as the Easy tier: don't silently rehydrate a
+      // checkpoint older than the prompt threshold (see
+      // active_workout_session_provider.dart's kCheckpointStalePromptThreshold
+      // doc comment for the full "23m37s / 161 kcal / 666 kg" incident).
+      final age = await session.peekStaleCheckpoint(
+        workoutId: widget.workout.id,
+        userId: userId,
+      );
+      if (age != null && age > kCheckpointStalePromptThreshold && mounted) {
+        final resume = await showStaleCheckpointDialog(context, age: age);
+        if (resume != true) {
+          await session.discardOnDiskCheckpoint();
+          return; // start fresh — nothing to rehydrate
+        }
+      }
+      if (!mounted) return;
+
       final restored = await session.restoreCheckpoint(
         workoutId: widget.workout.id,
         userId: userId,
@@ -1809,7 +1828,7 @@ class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
           content: Text(
             'Logged ${sets.length} set${sets.length == 1 ? '' : 's'} for ${exercise.name}',
           ),
-          backgroundColor: AppColors.green,
+          backgroundColor: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),

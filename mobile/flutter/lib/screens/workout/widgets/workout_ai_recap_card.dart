@@ -408,19 +408,19 @@ class _GlassShell extends StatelessWidget {
             gradient: LinearGradient(
               colors: isDark
                   ? [
-                      AppColors.purple.withValues(alpha: 0.10),
-                      AppColors.orange.withValues(alpha: 0.06),
+                      context.accentColor.withValues(alpha: 0.10),
+                      context.accentColor.withValues(alpha: 0.06),
                     ]
                   : [
-                      AppColors.purple.withValues(alpha: 0.06),
-                      AppColors.orange.withValues(alpha: 0.04),
+                      context.accentColor.withValues(alpha: 0.06),
+                      context.accentColor.withValues(alpha: 0.04),
                     ],
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: AppColors.purple.withValues(alpha: isDark ? 0.28 : 0.22),
+              color: context.accentColor.withValues(alpha: isDark ? 0.28 : 0.22),
             ),
           ),
           child: child,
@@ -447,9 +447,9 @@ class _RecapHeader extends StatelessWidget {
         Container(
           width: 26,
           height: 26,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.purple, AppColors.orange],
+              colors: [context.accentColor, context.accentColor],
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
@@ -653,7 +653,7 @@ class _RecapError extends StatelessWidget {
             icon: const Icon(Icons.refresh_rounded, size: 18),
             label: const Text('Try again'),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.orange,
+              foregroundColor: context.accentColor,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             ),
           ),
@@ -902,8 +902,8 @@ class _MuscleChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final borderColor = muscle.isPrimary
-        ? AppColors.orange.withValues(alpha: 0.6)
-        : AppColors.purple.withValues(alpha: 0.3);
+        ? context.accentColor.withValues(alpha: 0.6)
+        : context.accentColor.withValues(alpha: 0.3);
     return SizedBox(
       width: 56,
       child: Column(
@@ -946,7 +946,7 @@ class _MuscleChip extends StatelessWidget {
               '${muscle.sets}s',
               style: TextStyle(
                 fontSize: 8,
-                color: muscle.isPrimary ? AppColors.orange : textMuted,
+                color: muscle.isPrimary ? context.accentColor : textMuted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -998,8 +998,8 @@ class _MergedQuickPills extends StatelessWidget {
                 : '${displayVolume.toStringAsFixed(0)}$unit',
             label: volumePercent != null ? 'vs last' : 'Volume',
             color: volumePercent != null
-                ? (volumePercent >= 0 ? AppColors.green : Colors.redAccent)
-                : AppColors.green,
+                ? (volumePercent >= 0 ? AppColors.green : Colors.redAccent)  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent; error/destructive — must stay red
+                : AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           ),
         ),
         const SizedBox(width: 6),
@@ -1008,7 +1008,7 @@ class _MergedQuickPills extends StatelessWidget {
             icon: Icons.speed,
             value: displayWorkRate.toStringAsFixed(0),
             label: '$unit/min',
-            color: AppColors.purple,
+            color: context.accentColor,
           ),
         ),
         const SizedBox(width: 6),
@@ -1017,7 +1017,7 @@ class _MergedQuickPills extends StatelessWidget {
             icon: Icons.emoji_events,
             value: '$prCount',
             label: prCount == 1 ? 'PR' : 'PRs',
-            color: AppColors.orange,
+            color: context.accentColor,
           ),
         ),
       ],
@@ -1100,9 +1100,9 @@ class _VolumeChip extends StatelessWidget {
     final bool up = (delta ?? 0) >= 1;
     final bool down = (delta ?? 0) <= -1;
     final Color accent = up
-        ? AppColors.green
+        ? AppColors.green  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
         : (down
-              ? AppColors.orange
+              ? context.accentColor
               : (isDark
                     ? AppColors.textSecondary
                     : AppColorsLight.textSecondary));
@@ -1253,8 +1253,8 @@ class _BulletRow extends StatelessWidget {
             margin: const EdgeInsets.only(top: 6),
             width: 5,
             height: 5,
-            decoration: const BoxDecoration(
-              color: AppColors.purple,
+            decoration: BoxDecoration(
+              color: context.accentColor,
               shape: BoxShape.circle,
             ),
           ),
@@ -1319,14 +1319,14 @@ class _CoachingCue extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.10),
+        color: context.accentColor.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.28)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.28)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.bolt_rounded, size: 18, color: AppColors.orange),
+          Icon(Icons.bolt_rounded, size: 18, color: context.accentColor),
           const SizedBox(width: 9),
           Expanded(
             child: Column(
@@ -1338,7 +1338,7 @@ class _CoachingCue extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.8,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                 ),
                 const SizedBox(height: 3),

@@ -20,6 +20,7 @@ import 'widgets/exercise_add_sheet.dart';
 import 'widgets/exercise_set_tracker.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// List-based workout screen similar to Strong app
 class ListWorkoutScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -265,7 +266,7 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
         title: AppLocalizations.of(context).listWorkoutNoSetsCompleted,
         message: AppLocalizations.of(context).listWorkoutYouHavenTCompleted,
         confirmText: 'Finish Anyway',
-        confirmColor: AppColors.warning,
+        confirmColor: AppColors.warning,  // accent-allowlist: warning severity
         icon: Icons.warning_amber_rounded,
       );
       if (confirm != true) return;
@@ -486,10 +487,10 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
           // Timer
           Text(
             _formatDuration(_workoutSeconds),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
 
@@ -514,7 +515,7 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
           ElevatedButton(
             onPressed: _finishWorkout,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -556,12 +557,12 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, color: AppColors.cyan, size: 24),
+            Icon(Icons.add, color: context.accentColor, size: 24),
             SizedBox(width: 8),
             Text(
               AppLocalizations.of(context).workoutSummaryAddExercise,
               style: TextStyle(
-                color: AppColors.cyan,
+                color: context.accentColor,
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
               ),

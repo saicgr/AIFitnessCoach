@@ -356,7 +356,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).workoutDetailScreenCannotRemoveTheLast),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         ),
       );
       return;
@@ -396,14 +396,14 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${exercise.name} removed from workout'),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).workoutDetailScreenFailedToRemoveExercise),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             ),
           );
         }
@@ -413,7 +413,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to remove exercise: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -456,7 +456,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
                 Text('${exercise.name} will no longer be recommended'),
               ],
             ),
-            backgroundColor: AppColors.purple,
+            backgroundColor: context.accentColor,
           ),
         );
 
@@ -466,7 +466,7 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).workoutDetailScreenFailedToBlockExercise),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -928,7 +928,7 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
       required VoidCallback onTap,
       bool destructive = false,
     }) {
-      final color = destructive ? AppColors.error : accentColor;
+      final color = destructive ? AppColors.error : accentColor;  // accent-allowlist: error/destructive — must stay red
       return ListTile(
         leading: Container(
           padding: const EdgeInsets.all(9),
@@ -941,7 +941,7 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
         title: Text(
           title,
           style: ZType.sans(15.5,
-              color: destructive ? AppColors.error : textPrimary,
+              color: destructive ? AppColors.error : textPrimary,  // accent-allowlist: error/destructive — must stay red
               weight: FontWeight.w700),
         ),
         subtitle: Padding(
@@ -1307,7 +1307,7 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
                               color: textPrimary, weight: FontWeight.w600)),
                       trailing: isCurrent
                           ? Text('CURRENT',
-                              style: ZType.lbl(10, color: AppColors.success))
+                              style: ZType.lbl(10, color: AppColors.success))  // accent-allowlist: success/positive state — must stay green regardless of accent
                           : TextButton(
                               onPressed: () async {
                                 final ok = await AppDialog.confirm(
@@ -1384,7 +1384,7 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final color = isWarmup ? AppColors.orange : AppColors.purple;
+    final color = isWarmup ? context.accentColor : context.accentColor;
 
     await showGlassSheet(
       context: context,

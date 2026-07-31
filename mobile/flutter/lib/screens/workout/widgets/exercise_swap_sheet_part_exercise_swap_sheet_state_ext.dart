@@ -56,12 +56,12 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.cyan
+                        ? context.accentColor
                         : cardBackground,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.cyan
+                          ? context.accentColor
                           : textMuted.withValues(alpha: 0.25),
                       width: 1,
                     ),
@@ -124,7 +124,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: _isListening
-                        ? AppColors.cyan
+                        ? context.accentColor
                         : (_isSpeechAvailable
                             ? cardBackground
                             : cardBackground.withOpacity(0.5)),
@@ -132,7 +132,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     boxShadow: _isListening
                         ? [
                             BoxShadow(
-                              color: AppColors.cyan.withOpacity(0.4),
+                              color: context.accentColor.withOpacity(0.4),
                               blurRadius: 8,
                               spreadRadius: 2,
                             )
@@ -162,8 +162,8 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: _isLoadingAI
-                        ? AppColors.cyan.withOpacity(0.5)
-                        : AppColors.cyan,
+                        ? context.accentColor.withOpacity(0.5)
+                        : context.accentColor,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -188,11 +188,11 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.cyan.withOpacity(0.5),
+                        color: context.accentColor.withOpacity(0.5),
                         blurRadius: 4,
                       ),
                     ],
@@ -203,7 +203,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   l.exerciseSwapListeningNow,
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -242,8 +242,8 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                           shape: BoxShape.circle,
                           gradient: RadialGradient(
                             colors: [
-                              AppColors.cyan.withValues(alpha: 0.30),
-                              AppColors.cyan.withValues(alpha: 0.0),
+                              context.accentColor.withValues(alpha: 0.30),
+                              context.accentColor.withValues(alpha: 0.0),
                             ],
                           ),
                         ),
@@ -253,15 +253,15 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                           height: 56,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.cyan.withValues(alpha: 0.18),
+                            color: context.accentColor.withValues(alpha: 0.18),
                             border: Border.all(
-                              color: AppColors.cyan.withValues(alpha: 0.4),
+                              color: context.accentColor.withValues(alpha: 0.4),
                               width: 1,
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.auto_awesome,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             size: 26,
                           ),
                         ),
@@ -290,8 +290,8 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     SizedBox(
                       width: 120,
                       child: LinearProgressIndicator(
-                        backgroundColor: AppColors.cyan.withValues(alpha: 0.12),
-                        valueColor: const AlwaysStoppedAnimation(AppColors.cyan),
+                        backgroundColor: context.accentColor.withValues(alpha: 0.12),
+                        valueColor: AlwaysStoppedAnimation(context.accentColor),
                         minHeight: 3,
                       ),
                     ),
@@ -312,7 +312,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     Icon(
                       Icons.auto_awesome,
                       size: 48,
-                      color: AppColors.cyan.withOpacity(0.7),
+                      color: context.accentColor.withOpacity(0.7),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -340,7 +340,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                       icon: const Icon(Icons.auto_awesome, size: 18),
                       label: Text(l.exerciseSwapGetAiSuggestions),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
@@ -371,7 +371,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                           ? Icons.error_outline
                           : Icons.auto_awesome,
                       size: 48,
-                      color: _aiError != null ? AppColors.error : textMuted,
+                      color: _aiError != null ? AppColors.error : textMuted,  // accent-allowlist: error/destructive — must stay red
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -447,16 +447,16 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                 Color badgeColor;
                 if (isCustom) {
                   badge = 'YOURS';
-                  badgeColor = AppColors.orange;
+                  badgeColor = context.accentColor;
                 } else if (rank == 1) {
                   badge = l.exerciseSwapBadgeBestMatch;
-                  badgeColor = AppColors.success;
+                  badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
                 } else if (rank <= 3) {
                   badge = l.exerciseSwapBadgeTopPick;
-                  badgeColor = AppColors.cyan;
+                  badgeColor = context.accentColor;
                 } else {
                   badge = equipment.isNotEmpty ? equipment : 'Alternative';
-                  badgeColor = AppColors.purple;
+                  badgeColor = context.accentColor;
                 }
 
                 return _ExerciseOptionCard(
@@ -553,7 +553,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -561,7 +561,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -570,7 +570,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -578,7 +578,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.purple,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -605,15 +605,15 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.lightbulb_outline,
-                                  size: 16, color: AppColors.orange),
+                              Icon(Icons.lightbulb_outline,
+                                  size: 16, color: context.accentColor),
                               const SizedBox(width: 6),
                               Text(
                                 l.exerciseSwapInstructions,
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.orange,
+                                  color: context.accentColor,
                                 ),
                               ),
                             ],
@@ -655,7 +655,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

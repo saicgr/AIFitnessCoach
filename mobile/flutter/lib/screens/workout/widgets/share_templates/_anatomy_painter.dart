@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Hand-coded body anatomy renderer for the share gallery's signature
 /// template (Anatomy Hero). Draws stylized front + back silhouettes and
@@ -20,8 +21,11 @@ class AnatomyPainter extends CustomPainter {
 
   const AnatomyPainter({
     required this.musclesWorked,
-    this.fillStart = const Color(0xFF14B8A6), // teal
-    this.fillEnd = const Color(0xFF06B6D4),   // cyan
+    this.fillStart = const Color(0xFF14B8A6), // teal  // accent-allowlist: const-constructor default has no BuildContext (fillEnd is the accent one, threaded in by the caller); fillStart is a fixed teal to match the gradient look
+    // CustomPainter has no BuildContext, and a const constructor's default
+    // must be a compile-time constant — the accent is threaded in by the
+    // caller (which has a BuildContext) via this required-in-spirit param.
+    this.fillEnd = const Color(0xFF06B6D4),   // accent-allowlist: const-constructor default has no BuildContext; caller (anatomy_hero_template.dart) passes context.accentColor explicitly
     this.dimColor = const Color(0x22FFFFFF),
     this.outlineColor = const Color(0x55FFFFFF),
   });

@@ -285,7 +285,7 @@ class _TargetChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = recovered ? AppColors.success : textMuted;
+    final c = recovered ? AppColors.success : textMuted;  // accent-allowlist: success/positive state — must stay green regardless of accent
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

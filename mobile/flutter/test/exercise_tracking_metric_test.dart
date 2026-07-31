@@ -10,7 +10,8 @@ void main() {
             int? durationSeconds,
             String? hint,
             num? distanceMeters,
-            String? repsSpec}) =>
+            String? repsSpec,
+            int? targetReps}) =>
         ExerciseTrackingMetric.resolve(
           name: name,
           equipment: equipment,
@@ -20,6 +21,7 @@ void main() {
           trackingTypeHint: hint,
           distanceMeters: distanceMeters,
           repsSpec: repsSpec,
+          targetReps: targetReps,
         );
 
     test('backend hint wins', () {
@@ -67,6 +69,60 @@ void main() {
       expect(m('Dumbbell Goblet Squat', equipment: 'Dumbbells'),
           TrackingMetric.weight);
       expect(m('Wall Balls'), TrackingMetric.bodyweight); // med-ball reps, no load tracked
+    });
+
+    // E2E #133 — Bird Dog carried target_reps=5 but the LIBRARY'S
+    // `is_timed=true` (many floor/quadruped moves default to this) silently
+    // overrode it, presenting a 5-second timer and logging reps_completed=0.
+    // An authored rep count >= 2 must win over any time hint that isn't
+    // itself an explicit time-unit target string or a name-lexicon match.
+    group('rep-count precedence (#133)', () {
+      test('authored targetReps wins over library is_timed', () {
+        expect(
+          m('Bird Dog', isTimed: true, targetReps: 5, equipment: 'Bodyweight'),
+          TrackingMetric.bodyweight,
+        );
+      });
+
+      test('authored targetReps wins over holdSeconds / durationSeconds hints', () {
+        expect(
+          m('Bird Dog', holdSeconds: 30, targetReps: 5, equipment: 'Bodyweight'),
+          TrackingMetric.bodyweight,
+        );
+        expect(
+          m('Bird Dog',
+              durationSeconds: 30, targetReps: 5, equipment: 'Bodyweight'),
+          TrackingMetric.bodyweight,
+        );
+      });
+
+      test('a real timed hold with NO rep count still resolves to time', () {
+        expect(m('Bird Dog', isTimed: true, equipment: 'Bodyweight'),
+            TrackingMetric.time);
+      });
+
+      test('a rep count of 1 (not a real rep target) does not suppress time', () {
+        expect(
+          m('Bird Dog', isTimed: true, targetReps: 1, equipment: 'Bodyweight'),
+          TrackingMetric.time,
+        );
+      });
+
+      test('an explicit time-unit target string wins even with a rep count present', () {
+        expect(m('Mystery Move', repsSpec: '30s', targetReps: 5),
+            TrackingMetric.time);
+      });
+
+      test('a name-lexicon time match wins regardless of rep count', () {
+        expect(m('Plank Hold', targetReps: 5), TrackingMetric.time);
+      });
+
+      test('repsSpec-only rep count (no typed targetReps) also wins', () {
+        expect(
+          m('Bird Dog', isTimed: true, repsSpec: '5', equipment: 'Bodyweight'),
+          TrackingMetric.bodyweight,
+        );
+      });
     });
   });
 

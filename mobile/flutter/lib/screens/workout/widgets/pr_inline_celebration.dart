@@ -16,6 +16,7 @@ import '../../../data/services/pr_detection_service.dart';
 import 'pr_details_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Shows inline PR celebration banner
 ///
 /// Returns when the banner is dismissed
@@ -104,19 +105,19 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
                   end: AlignmentDirectional.bottomEnd,
                   colors: isEpic
                       ? [
-                          const Color(0xFFFFD700), // Gold
-                          const Color(0xFFFFA500), // Orange
-                          const Color(0xFFFF6B35), // Coral
+                          const Color(0xFFFFD700), // Gold  // accent-allowlist: medal/rarity tier — gold
+                          const Color(0xFFFFA500), // Orange  // accent-allowlist: PR celebration gold/fire theme (epic-PR gradient)
+                          const Color(0xFFFF6B35), // Coral  // accent-allowlist: PR celebration gold/fire theme (epic-PR gradient)
                         ]
                       : [
-                          AppColors.cyan,
+                          context.accentColor,
                           AppColors.electricBlue,
                         ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: (isEpic ? const Color(0xFFFFD700) : AppColors.cyan)
+                    color: (isEpic ? const Color(0xFFFFD700) : context.accentColor)  // accent-allowlist: medal/rarity tier — gold
                         .withOpacity(0.4),
                     blurRadius: 20,
                     spreadRadius: 2,
@@ -304,15 +305,15 @@ class _MultiPRInlineCelebrationState extends State<MultiPRInlineCelebration> {
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
                 colors: [
-                  Color(0xFFFF6B6B), // Red
-                  Color(0xFFFFD93D), // Yellow
-                  Color(0xFF6BCB77), // Green
+                  Color(0xFFFF6B6B), // Red  // accent-allowlist: PR celebration festive gradient (see comment: Red/Yellow/Green)
+                  Color(0xFFFFD93D), // Yellow  // accent-allowlist: PR celebration festive gradient (see comment: Red/Yellow/Green)
+                  Color(0xFF6BCB77), // Green  // accent-allowlist: PR celebration festive gradient (see comment: Red/Yellow/Green)
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD93D).withOpacity(0.4),
+                  color: const Color(0xFFFFD93D).withOpacity(0.4),  // accent-allowlist: PR celebration festive gradient — matches the gold tone in the gradient above
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),

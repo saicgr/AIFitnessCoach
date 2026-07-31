@@ -10,6 +10,7 @@ import '../../../widgets/number_stepper.dart';
 import 'set_dial.dart';
 import 'set_row_visuals.dart';
 import 'voice_set_logging.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 
 part 'set_row_part_weight_increments.dart';
@@ -176,14 +177,16 @@ class _SetRowState extends State<SetRow> {
     widget.onDataChanged(next);
   }
 
+  // Set-type legend — warm-up/working/failure sets need distinct colours so
+  // the type reads at a glance, independent of the app accent.
   Color get _setTypeColor {
     switch (widget.setData.setType) {
       case 'warmup':
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: set-type legend — warm-up sets are always this orange
       case 'failure':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: set-type legend — working sets are always this cyan
     }
   }
 
@@ -215,7 +218,7 @@ class _SetRowState extends State<SetRow> {
 
   // Thin wrappers that delegate to [SetRowVisuals] so the same visuals are
   // reused by `set_tracking_table.dart` (canonical active-workout renderer).
-  Widget? _buildTrendPill() {
+  Widget? _buildTrendPill(BuildContext context) {
     final data = widget.setData;
     return SetRowVisuals.buildTrendPill(
       progressiveOverloadEnabled: data.progressiveOverloadEnabled,
@@ -232,11 +235,12 @@ class _SetRowState extends State<SetRow> {
       // unit the caller declared. Was hardcoded 'lb' here while the weight
       // field's suffix said 'kg' — the same widget contradicted itself.
       unitLabel: _unitLabel,
+      context: context,
     );
   }
 
-  Widget? _buildEditedChip() {
-    return SetRowVisuals.buildEditedChip(isEdited: widget.setData.isEdited);
+  Widget? _buildEditedChip(BuildContext context) {
+    return SetRowVisuals.buildEditedChip(isEdited: widget.setData.isEdited, context: context);
   }
 
   /// [sheetContext] is the live BuildContext from the enclosing [Builder] —
@@ -263,14 +267,16 @@ class _SetRowState extends State<SetRow> {
     final actualPercent = widget.setData.actualPercentOfMax ?? 0;
     final isOnTarget = widget.setData.isOnTarget;
 
-    // Determine color based on how close to target
+    // Determine color based on how close to target. Heavier/lighter keep
+    // distinct colours (not error/success — neither direction is "wrong")
+    // so the two directions read differently from the on-target state.
     Color percentColor;
     if (isOnTarget) {
-      percentColor = AppColors.success;
+      percentColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
     } else if (actualPercent > targetPercent) {
-      percentColor = AppColors.orange; // Going heavier than target
+      percentColor = AppColors.orange; // accent-allowlist: on-target scale — going heavier than target is always this orange
     } else {
-      percentColor = AppColors.cyan; // Going lighter than target
+      percentColor = AppColors.cyan; // accent-allowlist: on-target scale — going lighter than target is always this cyan
     }
 
     return Row(
@@ -323,16 +329,16 @@ class _SetRowState extends State<SetRow> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: widget.isCurrentSet && !isCompleted
-            ? AppColors.cyan.withOpacity(0.1)
+            ? context.accentColor.withOpacity(0.1)
             : isCompleted
-                ? AppColors.success.withOpacity(0.1)
+                ? AppColors.success.withOpacity(0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
                 : AppColors.glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: widget.isCurrentSet && !isCompleted
-              ? AppColors.cyan
+              ? context.accentColor
               : isCompleted
-                  ? AppColors.success
+                  ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                   : AppColors.cardBorder,
           width: widget.isCurrentSet ? 2 : 1,
         ),
@@ -351,11 +357,11 @@ class _SetRowState extends State<SetRow> {
               height: 32,
               decoration: BoxDecoration(
                 color: isCompleted
-                    ? AppColors.success
+                    ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                     : _setTypeColor.withOpacity(0.2),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isCompleted ? AppColors.success : _setTypeColor,
+                  color: isCompleted ? AppColors.success : _setTypeColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
               child: Center(
@@ -406,7 +412,7 @@ class _SetRowState extends State<SetRow> {
                         if (!isCompleted) ...[
                           const SizedBox(width: 3),
                           Icon(Icons.replay_rounded,
-                              size: 10, color: AppColors.cyan.withOpacity(0.8)),
+                              size: 10, color: context.accentColor.withOpacity(0.8)),
                         ],
                       ],
                     ),
@@ -415,8 +421,8 @@ class _SetRowState extends State<SetRow> {
                 // chip live on the same line so they stay anchored to the
                 // TARGET column even on narrow rows.
                 Builder(builder: (context) {
-                  final trend = _buildTrendPill();
-                  final edited = _buildEditedChip();
+                  final trend = _buildTrendPill(context);
+                  final edited = _buildEditedChip(context);
                   if (trend == null && edited == null) {
                     return const SizedBox.shrink();
                   }
@@ -595,7 +601,7 @@ class _SetRowState extends State<SetRow> {
             IconButton(
               onPressed: widget.onComplete,
               icon: const Icon(Icons.check_circle_outline),
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               iconSize: 28,
             )
           else
@@ -603,7 +609,7 @@ class _SetRowState extends State<SetRow> {
               width: 44,
               child: Icon(
                 Icons.check_circle,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 size: 28,
               ),
             ),
@@ -693,7 +699,7 @@ class _SetRowState extends State<SetRow> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.trending_up_rounded,
-              size: 12, color: AppColors.cyan.withOpacity(0.9)),
+              size: 12, color: context.accentColor.withOpacity(0.9)),
           const SizedBox(width: 4),
           Expanded(
             child: Text(

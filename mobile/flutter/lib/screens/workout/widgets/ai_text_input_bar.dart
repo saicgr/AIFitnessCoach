@@ -241,7 +241,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
           children: [
             Icon(
               Icons.auto_awesome,
-              color: isDark ? AppColors.orange : AppColors.orange,
+              color: isDark ? context.accentColor : context.accentColor,
               size: 24,
             ),
             const SizedBox(width: 10),
@@ -332,7 +332,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
             child: Text(
               AppLocalizations.of(context).weightIncrementsGotIt,
               style: TextStyle(
-                color: isDark ? AppColors.orange : AppColors.orange,
+                color: isDark ? context.accentColor : context.accentColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -351,7 +351,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.orange : AppColors.orange,
+              color: isDark ? context.accentColor : context.accentColor,
               shape: BoxShape.circle,
             ),
           ),
@@ -787,7 +787,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
             Text(
               _errorMessage!,
               style: TextStyle(
-                color: AppColors.red,
+                color: AppColors.red,  // accent-allowlist: error/destructive — same value as AppColors.error, must stay red
                 fontSize: 12,
               ),
             ),
@@ -820,7 +820,7 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
                 onTap: _isLoading ? null : _toggleVoiceInput,
                 isDark: isDark,
                 isActive: _isListening,
-                activeColor: AppColors.red,
+                activeColor: AppColors.red,  // accent-allowlist: error/destructive — same value as AppColors.error, must stay red
               ),
 
               const Spacer(),
@@ -880,10 +880,10 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bgColor = isActive
-        ? (activeColor ?? AppColors.orange).withOpacity(0.2)
+        ? (activeColor ?? context.accentColor).withOpacity(0.2)
         : (isDark ? AppColors.nearBlack : Colors.grey.shade200);
     final iconColor = isActive
-        ? (activeColor ?? AppColors.orange)
+        ? (activeColor ?? context.accentColor)
         : (isDark ? AppColors.textMuted : Colors.grey.shade600);
 
     return GestureDetector(

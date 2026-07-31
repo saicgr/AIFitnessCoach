@@ -51,16 +51,16 @@ class _GapDropTargetState extends State<_GapDropTarget> {
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
             color: isActive
-                ? Colors.blue.withValues(alpha: 0.4)
+                ? Colors.blue.withValues(alpha: 0.4)  // accent-allowlist: informational
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(4),
             border: isActive
-                ? Border.all(color: Colors.blue, width: 2)
+                ? Border.all(color: Colors.blue, width: 2)  // accent-allowlist: informational
                 : null,
           ),
           child: isActive
               ? const Center(
-                  child: Icon(Icons.arrow_downward, color: Colors.blue, size: 16),
+                  child: Icon(Icons.arrow_downward, color: Colors.blue, size: 16),  // accent-allowlist: informational
                 )
               : null,
         );
@@ -88,8 +88,8 @@ class _SupersetGroupContainer extends StatelessWidget {
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.purple, width: 2.5),
-        color: Colors.purple.withValues(alpha: 0.08),
+        border: Border.all(color: Colors.purple, width: 2.5),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
+        color: Colors.purple.withValues(alpha: 0.08),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -100,7 +100,7 @@ class _SupersetGroupContainer extends StatelessWidget {
             height: 18,
             margin: const EdgeInsetsDirectional.only(end: 4),
             decoration: BoxDecoration(
-              color: Colors.purple,
+              color: Colors.purple,  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
               borderRadius: BorderRadius.circular(4),
             ),
             child: const Icon(Icons.link, color: Colors.white, size: 12),
@@ -380,7 +380,7 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
             if (isSupersetTarget)
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: 0.5),
+                  color: Colors.purple.withValues(alpha: 0.5),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Center(
@@ -413,11 +413,11 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
                 endAngle: angle + 2 * 3.14159,
                 colors: usesPurple
                     ? [
-                        Colors.purple,
-                        Colors.purple.shade300,
-                        Colors.purple.shade100,
-                        Colors.purple.shade300,
-                        Colors.purple,
+                        Colors.purple,  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
+                        Colors.purple.shade300,  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
+                        Colors.purple.shade100,  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
+                        Colors.purple.shade300,  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
+                        Colors.purple,  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
                       ]
                     : [
                         accentColor,
@@ -442,10 +442,10 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
         padding: const EdgeInsets.all(2.5),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.purple, width: 2.5),
+          border: Border.all(color: Colors.purple, width: 2.5),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
           boxShadow: [
             BoxShadow(
-              color: Colors.purple.withValues(alpha: 0.5),
+              color: Colors.purple.withValues(alpha: 0.5),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
               blurRadius: 12,
               spreadRadius: 2,
             ),
@@ -474,7 +474,7 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
         height: _height + 8,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.purple, width: 2),
+          border: Border.all(color: Colors.purple, width: 2),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(6),
@@ -496,7 +496,7 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
                 ),
               // Tint overlay
               Container(
-                color: Colors.purple.withValues(alpha: 0.2),
+                color: Colors.purple.withValues(alpha: 0.2),  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
               ),
             ],
           ),
@@ -733,12 +733,12 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
 
     if (widget.isActive) {
       // Use purple animated border if in superset group, otherwise use accent color
-      final borderColor = usesPurpleActive ? Colors.purple : accentColor;
+      final borderColor = usesPurpleActive ? Colors.purple : accentColor;  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
       final borderLighter = usesPurpleActive
-          ? Colors.purple.shade300
+          ? Colors.purple.shade300  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
           : lighterAccent;
       final borderLightest = usesPurpleActive
-          ? Colors.purple.shade200
+          ? Colors.purple.shade200  // accent-allowlist: superset feature colour — distinguishes superset-grouped exercises from the regular accent highlight, matches the SupersetType legend in superset_pair_sheet.dart
           : lightestAccent;
 
       thumbnailContent = AnimatedBuilder(

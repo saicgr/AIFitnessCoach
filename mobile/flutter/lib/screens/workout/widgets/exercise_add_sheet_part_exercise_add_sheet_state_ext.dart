@@ -101,7 +101,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                       _buildMineSectionHeader(
                         l.exerciseAddSectionCustom,
                         Icons.fitness_center,
-                        AppColors.orange,
+                        context.accentColor,
                         customExercises.length,
                         textPrimary,
                         textMuted,
@@ -112,7 +112,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                             subtitle:
                                 '${_capitalize(ce.primaryMuscle)} · ${_capitalize(ce.equipment)}',
                             badge: l.exerciseAddBadgeCustom,
-                            badgeColor: AppColors.orange,
+                            badgeColor: context.accentColor,
                             textPrimary: textPrimary,
                             textMuted: textMuted,
                             isDark: isDark,
@@ -125,7 +125,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                       _buildMineSectionHeader(
                         l.exerciseAddSectionFavorites,
                         Icons.favorite,
-                        AppColors.coral,
+                        context.accentColor,
                         favorites.length,
                         textPrimary,
                         textMuted,
@@ -135,7 +135,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                             name: f.exerciseName,
                             subtitle: '',
                             badge: l.exerciseAddBadgeFav,
-                            badgeColor: AppColors.coral,
+                            badgeColor: context.accentColor,
                             textPrimary: textPrimary,
                             textMuted: textMuted,
                             isDark: isDark,
@@ -148,7 +148,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                       _buildMineSectionHeader(
                         l.exerciseAddSectionStaples,
                         Icons.push_pin,
-                        AppColors.purple,
+                        context.accentColor,
                         staples.length,
                         textPrimary,
                         textMuted,
@@ -158,7 +158,7 @@ extension __ExerciseAddSheetStateExt on _ExerciseAddSheetState {
                             name: s.exerciseName,
                             subtitle: s.muscleGroup ?? '',
                             badge: l.exerciseAddBadgeStaple,
-                            badgeColor: AppColors.purple,
+                            badgeColor: context.accentColor,
                             textPrimary: textPrimary,
                             textMuted: textMuted,
                             isDark: isDark,

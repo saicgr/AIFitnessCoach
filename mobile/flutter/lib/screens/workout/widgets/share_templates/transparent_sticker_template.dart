@@ -81,7 +81,7 @@ class TransparentStickerTemplate extends StatelessWidget {
                   ShareTrackedCaps(
                     'VOLUME',
                     size: 9,
-                    color: const Color(0xFFF59E0B),
+                    color: const Color(0xFFF59E0B),  // accent-allowlist: warning severity
                     letterSpacing: 3,
                   ),
                   Container(

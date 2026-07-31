@@ -81,7 +81,7 @@ class PrsTemplate extends StatelessWidget {
                         const Text(
                           'NEW PERSONAL RECORDS',
                           style: TextStyle(
-                            color: Color(0xFFFFD700),
+                            color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 2,
@@ -137,15 +137,15 @@ class PrsTemplate extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFFFD700),
-            Color(0xFFDAA520),
-            Color(0xFFB8860B),
+            Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
+            Color(0xFFDAA520),  // accent-allowlist: PR trophy gold gradient
+            Color(0xFFB8860B),  // accent-allowlist: PR trophy gold gradient
           ],
         ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+            color: const Color(0xFFFFD700).withValues(alpha: 0.4),  // accent-allowlist: medal/rarity tier — gold
             blurRadius: 20,
             spreadRadius: 3,
           ),
@@ -223,13 +223,13 @@ class PrsTemplate extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFFFFD700).withValues(alpha: 0.15),
-            const Color(0xFFFFD700).withValues(alpha: 0.05),
+            const Color(0xFFFFD700).withValues(alpha: 0.15),  // accent-allowlist: medal/rarity tier — gold
+            const Color(0xFFFFD700).withValues(alpha: 0.05),  // accent-allowlist: medal/rarity tier — gold
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+          color: const Color(0xFFFFD700).withValues(alpha: 0.3),  // accent-allowlist: medal/rarity tier — gold
         ),
       ),
       child: Row(
@@ -240,7 +240,7 @@ class PrsTemplate extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFB8860B)],
+                colors: [Color(0xFFFFD700), Color(0xFFB8860B)],  // accent-allowlist: PR trophy gold gradient
               ),
               borderRadius: BorderRadius.circular(12),
             ),
@@ -274,7 +274,7 @@ class PrsTemplate extends StatelessWidget {
                     Text(
                       '${weight?.toStringAsFixed(1) ?? '--'} $unit',
                       style: const TextStyle(
-                        color: Color(0xFFFFD700),
+                        color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier — gold
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -287,13 +287,13 @@ class PrsTemplate extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.2),
+                          color: AppColors.success.withValues(alpha: 0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           '+${improvement.toStringAsFixed(1)} $unit',
                           style: TextStyle(
-                            color: AppColors.success,
+                            color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -350,7 +350,7 @@ class _GoldShimmerPainter extends CustomPainter {
         center: const Alignment(-0.5, -0.5),
         radius: 1.2,
         colors: [
-          const Color(0xFFFFD700).withValues(alpha: 0.15),
+          const Color(0xFFFFD700).withValues(alpha: 0.15),  // accent-allowlist: medal/rarity tier — gold
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
@@ -363,7 +363,7 @@ class _GoldShimmerPainter extends CustomPainter {
         center: const Alignment(0.8, 0.3),
         radius: 0.5,
         colors: [
-          const Color(0xFFFFD700).withValues(alpha: 0.08),
+          const Color(0xFFFFD700).withValues(alpha: 0.08),  // accent-allowlist: medal/rarity tier — gold
           Colors.transparent,
         ],
       ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));

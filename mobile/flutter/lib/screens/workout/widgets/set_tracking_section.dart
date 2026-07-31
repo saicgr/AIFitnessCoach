@@ -15,6 +15,7 @@ import '../../../data/models/smart_weight_suggestion.dart';
 import 'futuristic_set_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Data for a completed set
 class CompletedSetData {
   final int reps;
@@ -293,7 +294,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: widget.isCurrentExercise ? AppColors.cyan : textPrimary,
+                      color: widget.isCurrentExercise ? context.accentColor : textPrimary,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -313,7 +314,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                       'Set ${widget.currentSetNumber}/${widget.totalSets} • Tap to expand',
                       style: TextStyle(
                         fontSize: 10,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     ),
                   ],
@@ -349,12 +350,12 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
         height: 36,
         decoration: BoxDecoration(
           color: _isMinimized
-              ? AppColors.cyan.withOpacity(0.2)
+              ? context.accentColor.withOpacity(0.2)
               : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05)),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: _isMinimized
-                ? AppColors.cyan.withOpacity(0.5)
+                ? context.accentColor.withOpacity(0.5)
                 : (isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
           ),
         ),
@@ -363,7 +364,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
           duration: const Duration(milliseconds: 200),
           child: Icon(
             Icons.keyboard_arrow_down,
-            color: _isMinimized ? AppColors.cyan : textMuted,
+            color: _isMinimized ? context.accentColor : textMuted,
             size: 22,
           ),
         ),
@@ -389,13 +390,13 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: enabled ? AppColors.cyan.withOpacity(0.2) : Colors.transparent,
+          color: enabled ? context.accentColor.withOpacity(0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(
           icon,
           size: 24,
-          color: enabled ? AppColors.cyan : textMuted.withOpacity(0.3),
+          color: enabled ? context.accentColor : textMuted.withOpacity(0.3),
         ),
       ),
     );
@@ -409,7 +410,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
           Icon(
             Icons.check_circle,
             size: 16,
-            color: AppColors.success,
+            color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -428,11 +429,11 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: set.isEdited
-                            ? AppColors.orange.withOpacity(0.15)
-                            : AppColors.success.withOpacity(0.1),
+                            ? context.accentColor.withOpacity(0.15)
+                            : AppColors.success.withOpacity(0.1),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         borderRadius: BorderRadius.circular(6),
                         border: isJustCompleted
-                            ? Border.all(color: AppColors.success, width: 1.5)
+                            ? Border.all(color: AppColors.success, width: 1.5)  // accent-allowlist: success/positive state — must stay green regardless of accent
                             : null,
                       ),
                       child: Text(
@@ -440,7 +441,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: set.isEdited ? AppColors.orange : AppColors.success,
+                          color: set.isEdited ? context.accentColor : AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ),
                     ),
@@ -472,10 +473,10 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.cyan, width: 1.5),
-                        color: AppColors.cyan.withOpacity(0.1),
+                        border: Border.all(color: context.accentColor, width: 1.5),
+                        color: context.accentColor.withOpacity(0.1),
                       ),
-                      child: const Icon(Icons.add, size: 16, color: AppColors.cyan),
+                      child: Icon(Icons.add, size: 16, color: context.accentColor),
                     ),
                   ),
               ],
@@ -496,13 +497,13 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
             height: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.success.withOpacity(0.2),
-              border: Border.all(color: AppColors.success, width: 2),
+              color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
+              border: Border.all(color: AppColors.success, width: 2),  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
             child: const Icon(
               Icons.check,
               size: 32,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           )
               .animate()
@@ -521,7 +522,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
             '${widget.completedSets.length} sets completed',
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           ),
         ],
@@ -549,7 +550,7 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withOpacity(0.05),
+        color: context.accentColor.withOpacity(0.05),
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
         border: Border(
           top: BorderSide(
@@ -580,10 +581,10 @@ class _SetTrackingSectionState extends State<SetTrackingSection> {
           Expanded(
             child: Text(
               widget.nextExercise!.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

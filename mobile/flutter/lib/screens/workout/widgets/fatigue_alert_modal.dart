@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 // Conversion factor: 1 kg = 2.20462 lb. Used to reconcile a backend payload
 // that ships in kg when the user's `workout_weight_unit` is lbs (B1 fix).
@@ -107,19 +108,21 @@ class FatigueAlertData {
     }
   }
 
-  /// Get severity color
+  /// Get severity color. Fatigue-severity scale — plain data class (no
+  /// BuildContext) and each of the 5 bands needs its own colour so the ramp
+  /// reads as escalating severity, not identical rows.
   Color get severityColor {
     switch (severity) {
       case FatigueSeverity.critical:
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: fatigue-severity scale — critical is always this red
       case FatigueSeverity.high:
-        return AppColors.coral;
+        return AppColors.coral;  // accent-allowlist: fatigue-severity scale — high is always this coral
       case FatigueSeverity.moderate:
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: fatigue-severity scale — moderate is always this orange
       case FatigueSeverity.low:
-        return AppColors.warning;
+        return AppColors.warning;  // accent-allowlist: fatigue-severity scale — low is always this amber
       case FatigueSeverity.none:
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: fatigue-severity scale — none is always this green
     }
   }
 
@@ -539,7 +542,7 @@ class FatigueAlertModal extends ConsumerWidget {
             : Colors.black.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -549,7 +552,7 @@ class FatigueAlertModal extends ConsumerWidget {
             children: [
               Icon(
                 Icons.fitness_center,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: isSmallScreen ? 20 : 24,
               ),
               const SizedBox(width: 10),
@@ -558,7 +561,7 @@ class FatigueAlertModal extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: isSmallScreen ? 10 : 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   letterSpacing: 1,
                 ),
               ),
@@ -595,7 +598,7 @@ class FatigueAlertModal extends ConsumerWidget {
                   children: [
                     Icon(
                       Icons.arrow_forward,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: isSmallScreen ? 24 : 28,
                     ),
                     Text(
@@ -617,7 +620,7 @@ class FatigueAlertModal extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: isSmallScreen ? 28 : 32,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   ),
                   Text(
@@ -651,7 +654,7 @@ class FatigueAlertModal extends ConsumerWidget {
         .shimmer(
           delay: 500.ms,
           duration: 1000.ms,
-          color: AppColors.cyan.withValues(alpha: 0.2),
+          color: context.accentColor.withValues(alpha: 0.2),
         );
   }
 
@@ -675,7 +678,7 @@ class FatigueAlertModal extends ConsumerWidget {
             : Colors.black.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -683,14 +686,14 @@ class FatigueAlertModal extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.repeat, color: AppColors.cyan, size: isSmallScreen ? 20 : 24),
+              Icon(Icons.repeat, color: context.accentColor, size: isSmallScreen ? 20 : 24),
               const SizedBox(width: 10),
               Text(
                 'SUGGESTED REP TARGET',
                 style: TextStyle(
                   fontSize: isSmallScreen ? 10 : 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   letterSpacing: 1,
                 ),
               ),
@@ -702,7 +705,7 @@ class FatigueAlertModal extends ConsumerWidget {
             style: TextStyle(
               fontSize: isSmallScreen ? 28 : 32,
               fontWeight: FontWeight.bold,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
           SizedBox(height: isSmallScreen ? 8 : 12),
@@ -734,7 +737,7 @@ class FatigueAlertModal extends ConsumerWidget {
               onAcceptSuggestion();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.black,
               padding: EdgeInsets.symmetric(
                 vertical: isSmallScreen ? 14 : 16,
@@ -802,7 +805,7 @@ class FatigueAlertModal extends ConsumerWidget {
                 onStopExercise!();
               },
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.error,
+                foregroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                 padding: EdgeInsets.symmetric(
                   vertical: isSmallScreen ? 14 : 16,
                 ),

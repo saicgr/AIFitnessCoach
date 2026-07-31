@@ -284,7 +284,7 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final color = Colors.orange;
+    final color = Colors.orange;  // accent-allowlist: warning severity
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -467,7 +467,7 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
     // them a brief highlight the first time they render. This makes the
     // instant-insert feel intentional rather than ghostly.
     final bool isJustAdded = item['just_added'] == 'true';
-    final Color highlightColor = AppColors.cyan;
+    final Color highlightColor = context.accentColor;
 
     final tile = Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),

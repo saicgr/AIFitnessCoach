@@ -500,14 +500,14 @@ class _ExerciseDetailsSheetContentState
             icon: Icons.check_circle_outline,
             title: AppLocalizations.of(context).exerciseDetailsSheetFormCues,
             content: _aiInsights!.formCues!,
-            color: const Color(0xFF22C55E),
+            color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
         if (_aiInsights!.commonMistakes != null)
           insightSection(
             icon: Icons.warning_amber_outlined,
             title: AppLocalizations.of(context).exerciseDetailsSheetWatchOutFor,
             content: _aiInsights!.commonMistakes!,
-            color: const Color(0xFFF59E0B),
+            color: const Color(0xFFF59E0B),  // accent-allowlist: warning severity
           ),
         if (_aiInsights!.proTip != null)
           insightSection(

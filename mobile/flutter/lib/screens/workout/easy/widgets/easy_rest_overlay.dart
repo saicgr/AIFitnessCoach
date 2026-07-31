@@ -106,6 +106,16 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
     return v % 1 == 0 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
   }
 
+  // `nextSetNumber` is derived from `completed.length + 1` by the resolver
+  // (easy_rest_controller.dart) and can point one PAST the plan for the
+  // same reason the header hit "SET 3 OF 2" — clamp the displayed number so
+  // this surface, which is visible for the whole rest window, never shows
+  // an impossible set index.
+  int get _displaySetNumber =>
+      widget.nextSetNumber > widget.totalSets
+          ? widget.totalSets
+          : widget.nextSetNumber;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -299,7 +309,7 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerRight,
                           child: Text(
-                            'SET ${widget.nextSetNumber}/${widget.totalSets}'
+                            'SET $_displaySetNumber/${widget.totalSets}'
                             ' · ${_fmtWeight(widget.nextTargetWeightKg)} $unit'
                             ' × ${widget.nextTargetReps}',
                             maxLines: 1,

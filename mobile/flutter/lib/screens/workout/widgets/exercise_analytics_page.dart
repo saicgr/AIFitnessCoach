@@ -20,6 +20,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Exercise Analytics Page - full page with My Analytics and Friends tabs
 class ExerciseAnalyticsPage extends StatefulWidget {
   final WorkoutExercise exercise;
@@ -120,7 +121,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
         _buildChartCard(
           title: AppLocalizations.of(context).volumeHistoryTotalVolume,
           icon: Icons.bar_chart_rounded,
-          color: AppColors.purple,
+          color: context.accentColor,
           isDark: isDark,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -152,13 +153,13 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.purple.withOpacity(0.15),
+                color: context.accentColor.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.people_outline_rounded,
                 size: 48,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ),
             const SizedBox(height: 24),
@@ -190,8 +191,8 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
               icon: const Icon(Icons.person_add_outlined),
               label: Text(AppLocalizations.of(context).referralsInviteFriends),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.purple,
-                side: BorderSide(color: AppColors.purple),
+                foregroundColor: context.accentColor,
+                side: BorderSide(color: context.accentColor),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -228,15 +229,15 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.success.withOpacity(0.15),
-            AppColors.success.withOpacity(0.05),
+            AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
+            AppColors.success.withOpacity(0.05),  // accent-allowlist: success/positive state — must stay green regardless of accent
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.success.withOpacity(0.3),
+          color: AppColors.success.withOpacity(0.3),  // accent-allowlist: success/positive state — must stay green regardless of accent
         ),
       ),
       child: Row(
@@ -245,12 +246,12 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.2),
+              color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               Icons.emoji_events_rounded,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               size: 28,
             ),
           ),
@@ -273,7 +274,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ),
                 ),
                 Text(
@@ -478,7 +479,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             Icon(
               Icons.bar_chart_rounded,
               size: 40,
-              color: AppColors.purple.withOpacity(0.5),
+              color: context.accentColor.withOpacity(0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -520,7 +521,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart_outline_rounded, color: AppColors.orange, size: 20),
+              Icon(Icons.pie_chart_outline_rounded, color: context.accentColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).workoutSummaryAdvancedSetTypeDistribution,
@@ -549,7 +550,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildSetTypeItem(
                   label: AppLocalizations.of(context).workoutSummaryAdvancedWarmup,
                   count: 0,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
@@ -559,7 +560,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildSetTypeItem(
                   label: AppLocalizations.of(context).exerciseAnalyticsDrop,
                   count: 0,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
@@ -569,7 +570,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildSetTypeItem(
                   label: AppLocalizations.of(context).rpeFailure,
                   count: 0,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
@@ -641,7 +642,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
         children: [
           Row(
             children: [
-              Icon(Icons.insights_rounded, color: AppColors.cyan, size: 20),
+              Icon(Icons.insights_rounded, color: context.accentColor, size: 20),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).exerciseAnalyticsQuickStats,
@@ -670,7 +671,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildStatItem(
                   label: AppLocalizations.of(context).muscleDetailTotalSets,
                   value: '0',
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
@@ -680,7 +681,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildStatItem(
                   label: AppLocalizations.of(context).volumeHistoryTotalVolume,
                   value: AppLocalizations.of(context)!.exerciseAnalyticsPageValue(_unit),
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,

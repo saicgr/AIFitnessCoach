@@ -31,16 +31,16 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
     {'value': 'upper_body', 'label': 'Upper Body', 'icon': Icons.sports_martial_arts, 'color': null},
     {'value': 'lower_body', 'label': 'Lower Body', 'icon': Icons.directions_walk, 'color': null},
     {'value': 'core', 'label': 'Core', 'icon': Icons.circle_outlined, 'color': null},
-    {'value': 'emom', 'label': 'EMOM', 'icon': Icons.timer, 'color': Colors.purple},
-    {'value': 'amrap', 'label': 'AMRAP', 'icon': Icons.repeat, 'color': Colors.teal},
+    {'value': 'emom', 'label': 'EMOM', 'icon': Icons.timer, 'color': Colors.purple},  // accent-allowlist: workout-focus-type legend — each focus option keeps its own icon colour
+    {'value': 'amrap', 'label': 'AMRAP', 'icon': Icons.repeat, 'color': Colors.teal},  // accent-allowlist: workout-focus-type legend — each focus option keeps its own icon colour
   ];
 
   final List<Map<String, dynamic>> _moodOptions = [
-    {'value': 'energized', 'label': 'Energized', 'icon': Icons.bolt, 'color': Colors.orange},
-    {'value': 'tired', 'label': 'Tired', 'icon': Icons.bedtime_outlined, 'color': Colors.indigo},
-    {'value': 'stressed', 'label': 'Stressed', 'icon': Icons.psychology_outlined, 'color': Colors.red},
-    {'value': 'chill', 'label': 'Chill', 'icon': Icons.spa_outlined, 'color': Colors.teal},
-    {'value': 'motivated', 'label': 'Fired Up', 'icon': Icons.local_fire_department, 'color': Colors.deepOrange},
+    {'value': 'energized', 'label': 'Energized', 'icon': Icons.bolt, 'color': Colors.orange},  // accent-allowlist: warning severity
+    {'value': 'tired', 'label': 'Tired', 'icon': Icons.bedtime_outlined, 'color': Colors.indigo},  // accent-allowlist: mood-picker legend — each mood option keeps its own icon colour
+    {'value': 'stressed', 'label': 'Stressed', 'icon': Icons.psychology_outlined, 'color': Colors.red},  // accent-allowlist: error/destructive — must stay red
+    {'value': 'chill', 'label': 'Chill', 'icon': Icons.spa_outlined, 'color': Colors.teal},  // accent-allowlist: mood-picker legend — each mood option keeps its own icon colour
+    {'value': 'motivated', 'label': 'Fired Up', 'icon': Icons.local_fire_department, 'color': Colors.deepOrange},  // accent-allowlist: mood-picker legend — each mood option keeps its own icon colour
     {'value': 'low_energy', 'label': 'Low Energy', 'icon': Icons.battery_2_bar, 'color': Colors.blueGrey},
   ];
 
@@ -60,7 +60,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     // Theme-aware accent color (AppColors.cyan is light gray for dark theme — invisible in light mode)
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = context.accentColor;
     final chipBorder = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.08);
 
     return Column(
@@ -512,7 +512,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                       return _ToggleChip(
                         label: injury,
                         isSelected: isSelected,
-                        color: AppColors.error,
+                        color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                         chipBorder: chipBorder,
                         onTap: () {
                           HapticService.light();
@@ -609,10 +609,10 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      {'value': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': Colors.red},
-                      {'value': 'hypertrophy', 'label': 'Hypertrophy', 'icon': Icons.accessibility_new, 'color': Colors.blue},
-                      {'value': 'endurance', 'label': 'Endurance', 'icon': Icons.directions_run, 'color': Colors.green},
-                      {'value': 'power', 'label': 'Power', 'icon': Icons.bolt, 'color': Colors.orange},
+                      {'value': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': Colors.red},  // accent-allowlist: error/destructive — must stay red
+                      {'value': 'hypertrophy', 'label': 'Hypertrophy', 'icon': Icons.accessibility_new, 'color': Colors.blue},  // accent-allowlist: informational
+                      {'value': 'endurance', 'label': 'Endurance', 'icon': Icons.directions_run, 'color': Colors.green},  // accent-allowlist: success/positive state — must stay green regardless of accent
+                      {'value': 'power', 'label': 'Power', 'icon': Icons.bolt, 'color': Colors.orange},  // accent-allowlist: warning severity
                     ].asMap().entries.map((entry) {
                       final option = entry.value;
                       final isSelected = _selectedGoal == option['value'];
@@ -836,12 +836,12 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         decoration: BoxDecoration(
                           color: _mesocycleContext!.isDeload
-                              ? Colors.green.withOpacity(0.1)
+                              ? Colors.green.withOpacity(0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
                               : accentColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: _mesocycleContext!.isDeload
-                                ? Colors.green.withOpacity(0.3)
+                                ? Colors.green.withOpacity(0.3)  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 : accentColor.withOpacity(0.3),
                           ),
                         ),
@@ -853,7 +853,7 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                                   : Icons.trending_up,
                               size: 18,
                               color: _mesocycleContext!.isDeload
-                                  ? Colors.green
+                                  ? Colors.green  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   : accentColor,
                             ),
                             const SizedBox(width: 8),
@@ -1001,17 +1001,17 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withOpacity(0.1),  // accent-allowlist: error/destructive — must stay red
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.error_outline, color: AppColors.error, size: 20),
+                  Icon(Icons.error_outline, color: AppColors.error, size: 20),  // accent-allowlist: error/destructive — must stay red
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       state.error!,
-                      style: TextStyle(color: AppColors.error, fontSize: 13),
+                      style: TextStyle(color: AppColors.error, fontSize: 13),  // accent-allowlist: error/destructive — must stay red
                     ),
                   ),
                 ],

@@ -4,17 +4,22 @@
 /// Supports interval logging for cardio exercises (treadmill, bike, etc.)
 library;
 
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/repositories/workout_repository.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Warmup phase screen displayed before the main workout
-class WarmupPhaseScreen extends StatefulWidget {
+class WarmupPhaseScreen extends ConsumerStatefulWidget {
   /// Total workout time in seconds (continues counting during warmup)
   final int workoutSeconds;
 
@@ -33,6 +38,20 @@ class WarmupPhaseScreen extends StatefulWidget {
   /// Callback with logged interval data per exercise (exerciseName -> intervals)
   final void Function(Map<String, List<WarmupInterval>> logs)? onIntervalsLogged;
 
+  /// E2E #125 — optional. `WarmupExerciseData` carries no exercise_id/media
+  /// fields (see the model in `models/workout_state.dart`, not owned by
+  /// this change), so a duration customization can only be persisted
+  /// (`PUT .../warmup/exercises` + the saved-template endpoint) when the
+  /// caller supplies the workout it belongs to. Null (the mounting screen,
+  /// `active_workout_screen_refactored.dart`, does not currently pass this)
+  /// means edits stay session-local — never silently dropped data, just an
+  /// honest capability gap until that call site is updated to wire it.
+  final String? workoutId;
+
+  /// Paired with [workoutId] — scopes the saved template so a leg day and a
+  /// mobility day don't share one warm-up. Null saves the generic default.
+  final String? workoutType;
+
   const WarmupPhaseScreen({
     super.key,
     required this.workoutSeconds,
@@ -41,15 +60,26 @@ class WarmupPhaseScreen extends StatefulWidget {
     required this.onQuitRequested,
     required this.exercises,
     this.onIntervalsLogged,
+    this.workoutId,
+    this.workoutType,
   });
 
   @override
-  State<WarmupPhaseScreen> createState() => _WarmupPhaseScreenState();
+  ConsumerState<WarmupPhaseScreen> createState() => _WarmupPhaseScreenState();
 }
 
-class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
+class _WarmupPhaseScreenState extends ConsumerState<WarmupPhaseScreen> {
   int _currentExerciseIndex = 0;
   late PhaseTimerController _timerController;
+
+  // E2E #125 ask #2 — rest between moves (there was previously none; every
+  // move ran back-to-back) + per-move editable hold duration.
+  late PhaseTimerController _restTimerController;
+  bool _isResting = false;
+  static const int _kWarmupRestSeconds = 10; // matches the backend's default
+  // Exercise index -> user-adjusted hold seconds. `WarmupExerciseData` is
+  // `const`/immutable, so overrides live here rather than mutating it.
+  final Map<int, int> _durationOverrides = {};
 
   // Interval logging state
   final Map<String, List<WarmupInterval>> _allIntervalLogs = {};
@@ -67,6 +97,15 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
       setState(() {});
     };
     _timerController.onComplete = _handleTimerComplete;
+    _restTimerController = PhaseTimerController();
+    _restTimerController.onTick = (_) {
+      setState(() {});
+    };
+    _restTimerController.onComplete = () {
+      if (!mounted) return;
+      setState(() => _isResting = false);
+      _advanceToNextExercise();
+    };
 
     // Initialize cardio fields from first exercise
     _initCardioFields(widget.exercises[0]);
@@ -82,6 +121,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   @override
   void dispose() {
     _timerController.dispose();
+    _restTimerController.dispose();
     _speedController.dispose();
     _inclineController.dispose();
     super.dispose();
@@ -104,9 +144,28 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
   }
 
   void _startCurrentExerciseTimer() {
-    final duration = widget.exercises[_currentExerciseIndex].duration;
+    final duration = _durationOverrides[_currentExerciseIndex] ??
+        widget.exercises[_currentExerciseIndex].duration;
     _timerController.start(duration);
     setState(() {});
+  }
+
+  /// E2E #125 ask #2 — nudge the CURRENT move's hold duration by
+  /// [deltaSeconds]. If the timer is already counting down, the remaining
+  /// time is shifted by the same delta (restart-with-adjusted-remaining —
+  /// `PhaseTimerController` has no in-place adjust) so the change is felt
+  /// immediately instead of only applying next time this move runs.
+  void _adjustCurrentDuration(int deltaSeconds) {
+    final base = _durationOverrides[_currentExerciseIndex] ??
+        widget.exercises[_currentExerciseIndex].duration;
+    final next = (base + deltaSeconds).clamp(5, 300);
+    setState(() => _durationOverrides[_currentExerciseIndex] = next);
+    if (_timerController.isRunning || _timerController.secondsRemaining > 0) {
+      final newRemaining =
+          (_timerController.secondsRemaining + deltaSeconds).clamp(0, next);
+      _timerController.start(newRemaining);
+    }
+    HapticFeedback.lightImpact();
   }
 
   void _handleTimerComplete() {
@@ -150,24 +209,89 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
     _finalizeCurrentExerciseIntervals();
 
     if (_currentExerciseIndex < widget.exercises.length - 1) {
-      setState(() {
-        _currentExerciseIndex++;
-      });
-      _initCardioFields(widget.exercises[_currentExerciseIndex]);
-      // Auto-start timer for next exercise
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          _startCurrentExerciseTimer();
-        }
-      });
+      // E2E #125 ask #2 — rest before the NEXT move instead of jumping
+      // straight into it.
+      if (_kWarmupRestSeconds > 0) {
+        setState(() => _isResting = true);
+        _restTimerController.start(_kWarmupRestSeconds);
+        return;
+      }
+      _advanceToNextExercise();
     } else {
-      // Warmup complete — emit logged intervals
+      // Warmup complete — emit logged intervals + any duration customization.
       HapticFeedback.heavyImpact();
       if (_allIntervalLogs.isNotEmpty) {
         widget.onIntervalsLogged?.call(_allIntervalLogs);
       }
+      _persistCustomization();
       widget.onWarmupComplete();
     }
+  }
+
+  void _advanceToNextExercise() {
+    setState(() {
+      _currentExerciseIndex++;
+    });
+    _initCardioFields(widget.exercises[_currentExerciseIndex]);
+    // Auto-start timer for next exercise
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        _startCurrentExerciseTimer();
+      }
+    });
+  }
+
+  void _skipRest() {
+    HapticFeedback.lightImpact();
+    _restTimerController.stop();
+    setState(() => _isResting = false);
+    _advanceToNextExercise();
+  }
+
+  /// ±10s during an active rest. Restart-with-adjusted-remaining, same
+  /// technique as [_adjustCurrentDuration] (no in-place adjust on
+  /// `PhaseTimerController`).
+  void _adjustRest(int deltaSeconds) {
+    final next = (_restTimerController.secondsRemaining + deltaSeconds);
+    if (next <= 0) {
+      _skipRest();
+      return;
+    }
+    _restTimerController.start(next.clamp(0, 300));
+    HapticFeedback.lightImpact();
+  }
+
+  /// E2E #125 ask #3 — best-effort. Fires only when the user actually
+  /// changed a duration this run, and only when the (not-owned) mounting
+  /// screen has supplied [WarmupPhaseScreen.workoutId] — see that field's
+  /// doc for why a fuller, media-aware save isn't possible from here.
+  /// Never blocks finishing the warm-up.
+  void _persistCustomization() {
+    final id = widget.workoutId;
+    if (id == null || id.isEmpty || _durationOverrides.isEmpty) return;
+    final list = [
+      for (int i = 0; i < widget.exercises.length; i++)
+        {
+          'name': widget.exercises[i].name,
+          'duration_seconds':
+              _durationOverrides[i] ?? widget.exercises[i].duration,
+          'rest_seconds': _kWarmupRestSeconds,
+          'equipment': widget.exercises[i].equipment ?? 'none',
+          'muscle_group': 'general',
+        },
+    ];
+    unawaited(() async {
+      try {
+        final repo = ref.read(workoutRepositoryProvider);
+        await repo.saveWarmupStretchOrder(id, 'warmup', list);
+        await repo.saveWarmupTemplate(
+          workoutType: widget.workoutType,
+          exercises: list,
+        );
+      } catch (e) {
+        debugPrint('⚠️ [WarmupPhaseScreen] customization persist failed: $e');
+      }
+    }());
   }
 
   void _toggleTimer() {
@@ -244,12 +368,18 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
 
                         const SizedBox(height: 16),
 
-                        // Current warmup exercise
-                        _buildCurrentExercise(
-                          currentExercise,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                        ),
+                        // Current warmup exercise — or the rest countdown
+                        // (E2E #125 ask #2) between moves.
+                        _isResting
+                            ? _buildRestCard(
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              )
+                            : _buildCurrentExercise(
+                                currentExercise,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                              ),
 
                         // Cardio speed/incline input fields
                         if (currentExercise.isCardioEquipment &&
@@ -286,8 +416,10 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                   ),
                 ),
 
-                // Action buttons (pinned below the scroll)
-                _buildActionButtons(),
+                // Action buttons (pinned below the scroll) — the rest card
+                // owns its own skip/±10s controls, so this row hides while
+                // resting instead of offering two competing sets of controls.
+                if (!_isResting) _buildActionButtons(),
               ],
             ),
           ),
@@ -320,8 +452,8 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.timer_outlined,
-                  size: 16, color: AppColors.orange),
+              Icon(Icons.timer_outlined,
+                  size: 16, color: context.accentColor),
               const SizedBox(width: 4),
               Text(
                 WorkoutTimerController.formatTime(widget.workoutSeconds),
@@ -348,7 +480,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           child: Text(
             AppLocalizations.of(context).warmupPhaseSkipWarmup,
             style: TextStyle(
-              color: AppColors.orange,
+              color: context.accentColor,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -364,12 +496,12 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.orange.withOpacity(0.15),
+            color: context.accentColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.local_fire_department,
-            color: AppColors.orange,
+            color: context.accentColor,
             size: 24,
           ),
         ),
@@ -384,7 +516,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.orange,
+                color: context.accentColor,
                 letterSpacing: 1,
               ),
             ),
@@ -407,8 +539,91 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
       child: LinearProgressIndicator(
         value: progress,
         backgroundColor: elevatedColor,
-        color: AppColors.orange,
+        color: context.accentColor,
         minHeight: 4,
+      ),
+    );
+  }
+
+  /// E2E #125 ask #2 — the rest countdown shown BETWEEN warm-up moves.
+  /// Mirrors `_buildCurrentExercise`'s layout (same icon-circle + big
+  /// countdown shape) so swapping between the two doesn't jar, but in cyan
+  /// (not orange) so "resting" reads visually distinct from "working".
+  Widget _buildRestCard({
+    required Color textPrimary,
+    required Color textSecondary,
+  }) {
+    final nextExercise = _currentExerciseIndex + 1 < widget.exercises.length
+        ? widget.exercises[_currentExerciseIndex + 1]
+        : null;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: context.accentColor.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.self_improvement_rounded,
+              size: 64,
+              color: context.accentColor,
+            ),
+          ).animate().fadeIn(duration: 300.ms).scale(begin: const Offset(0.8, 0.8)),
+          const SizedBox(height: 24),
+          Text(
+            AppLocalizations.of(context).workoutSummaryAdvancedRest.toUpperCase(),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: context.accentColor,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            WorkoutTimerController.formatTime(
+                _restTimerController.secondsRemaining),
+            style: TextStyle(
+              fontSize: 56,
+              fontWeight: FontWeight.w300,
+              color: context.accentColor,
+            ),
+          ),
+          if (nextExercise != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              'Next: ${nextExercise.name}',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _DurationAdjustChip(label: '−10s', onTap: () => _adjustRest(-10)),
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: _skipRest,
+                child: Text(
+                  AppLocalizations.of(context).easyRestOverlaySkipRest,
+                  style: TextStyle(
+                    color: context.accentColor,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              _DurationAdjustChip(label: '+10s', onTap: () => _adjustRest(10)),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -426,13 +641,13 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               exercise.icon,
               size: 64,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           )
               .animate()
@@ -460,24 +675,45 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             Text(
               WorkoutTimerController.formatTime(
                   _timerController.secondsRemaining),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 64,
                 fontWeight: FontWeight.w300,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
             )
                 .animate(onPlay: (controller) => controller.repeat())
                 .shimmer(
                     duration: 2000.ms,
-                    color: AppColors.orange.withOpacity(0.3))
+                    color: context.accentColor.withOpacity(0.3))
           else
             Text(
-              AppLocalizations.of(context)!.warmupPhaseScreenSec(exercise.duration),
+              AppLocalizations.of(context)!.warmupPhaseScreenSec(
+                _durationOverrides[_currentExerciseIndex] ?? exercise.duration,
+              ),
               style: TextStyle(
                 fontSize: 24,
                 color: textSecondary,
               ),
             ),
+
+          const SizedBox(height: 12),
+          // E2E #125 ask #2 — editable hold duration. Works whether the
+          // timer is idle or already counting down (see
+          // `_adjustCurrentDuration`).
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _DurationAdjustChip(
+                label: '−10s',
+                onTap: () => _adjustCurrentDuration(-10),
+              ),
+              const SizedBox(width: 10),
+              _DurationAdjustChip(
+                label: '+10s',
+                onTap: () => _adjustCurrentDuration(10),
+              ),
+            ],
+          ),
 
           // Cardio params display (non-cardio exercises only - cardio gets the editable fields below)
           if (exercise.isCardioEquipment && exercise.speedMph == null && exercise.inclinePercent == null) ...[
@@ -485,9 +721,9 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.1),
+                color: context.accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+                border: Border.all(color: context.accentColor.withOpacity(0.3)),
               ),
               child: Text(
                 exercise.cardioParamsDisplay,
@@ -544,11 +780,11 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.15),
+                color: context.accentColor.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.orange.withOpacity(0.4)),
+                border: Border.all(color: context.accentColor.withOpacity(0.4)),
               ),
-              child: const Icon(Icons.add, color: AppColors.orange, size: 22),
+              child: Icon(Icons.add, color: context.accentColor, size: 22),
             ),
           ),
         ],
@@ -636,7 +872,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
-                          color: isActive ? AppColors.orange : textPrimary,
+                          color: isActive ? context.accentColor : textPrimary,
                         ),
                       ),
                     ],
@@ -682,7 +918,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.orange),
+          borderSide: BorderSide(color: context.accentColor),
         ),
       ),
     );
@@ -775,9 +1011,9 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
             onPressed: _toggleTimer,
             style: ElevatedButton.styleFrom(
               backgroundColor: isTimerRunning
-                  ? AppColors.orange.withOpacity(0.3)
-                  : AppColors.orange,
-              foregroundColor: isTimerRunning ? AppColors.orange : Colors.white,
+                  ? context.accentColor.withOpacity(0.3)
+                  : context.accentColor,
+              foregroundColor: isTimerRunning ? context.accentColor : Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -807,7 +1043,7 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           child: ElevatedButton.icon(
             onPressed: _nextExercise,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -825,6 +1061,39 @@ class _WarmupPhaseScreenState extends State<WarmupPhaseScreen> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A small pill button for the ±10s duration/rest nudges (E2E #125 ask #2).
+class _DurationAdjustChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _DurationAdjustChip({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final border = (isDark ? Colors.white : Colors.black).withOpacity(0.22);
+    final fg = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: border),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: fg,
+          ),
+        ),
+      ),
     );
   }
 }

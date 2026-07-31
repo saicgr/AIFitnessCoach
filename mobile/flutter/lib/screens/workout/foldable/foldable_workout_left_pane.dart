@@ -347,12 +347,12 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? (isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50)
+                          ? (isDark ? Colors.green.withValues(alpha: 0.15) : Colors.green.shade50)  // accent-allowlist: success/positive state — must stay green regardless of accent
                           : (isDark ? WorkoutDesign.surface : Colors.grey.shade100),
                       borderRadius: BorderRadius.circular(WorkoutDesign.radiusRound),
                       border: Border.all(
                         color: isCompleted
-                            ? Colors.green.withValues(alpha: 0.3)
+                            ? Colors.green.withValues(alpha: 0.3)  // accent-allowlist: success/positive state — must stay green regardless of accent
                             : (isDark ? WorkoutDesign.border : WorkoutDesign.borderLight),
                         width: 0.5,
                       ),
@@ -361,7 +361,7 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (isCompleted) ...[
-                          Icon(Icons.check, size: 14, color: Colors.green.shade400),
+                          Icon(Icons.check, size: 14, color: Colors.green.shade400),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           const SizedBox(width: 4),
                         ],
                         Text(
@@ -369,7 +369,7 @@ class FoldableWorkoutLeftPane extends StatelessWidget {
                           style: WorkoutDesign.chipStyle.copyWith(
                             fontSize: 12,
                             color: isCompleted
-                                ? Colors.green.shade400
+                                ? Colors.green.shade400  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 : (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700),
                           ),
                           maxLines: 1,

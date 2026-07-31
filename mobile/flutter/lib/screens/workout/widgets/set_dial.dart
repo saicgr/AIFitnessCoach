@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 class SetDial extends StatelessWidget {
   final double current;
@@ -28,8 +29,8 @@ class SetDial extends StatelessWidget {
     this.bandMax,
   });
 
-  static const _goalColor = Color(0xFFF5C518); // yellow
-  static const _lastColor = Color(0xFF3B9EFF); // blue
+  static const _goalColor = Color(0xFFF5C518); // yellow  // accent-allowlist: goal-vs-last legend — goal is always this yellow
+  static const _lastColor = Color(0xFF3B9EFF); // blue  // accent-allowlist: goal-vs-last legend — last value is always this blue
 
   @override
   Widget build(BuildContext context) {
@@ -108,10 +109,10 @@ class SetDial extends StatelessWidget {
                         width: (x(bandMax!) - x(bandMin!)).clamp(2.0, w),
                         height: 8,
                         decoration: BoxDecoration(
-                          color: AppColors.cyan.withOpacity(0.18),
+                          color: context.accentColor.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(3),
                           border: Border.all(
-                              color: AppColors.cyan.withOpacity(0.5),
+                              color: context.accentColor.withOpacity(0.5),
                               width: 0.6),
                         ),
                       ),
@@ -128,7 +129,7 @@ class SetDial extends StatelessWidget {
                       width: 10,
                       height: 10,
                       decoration: BoxDecoration(
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         shape: BoxShape.circle,
                         border: Border.all(
                             color: isDark ? Colors.black : Colors.white,

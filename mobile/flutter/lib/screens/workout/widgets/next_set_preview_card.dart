@@ -15,6 +15,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Data class for next set preview from the backend
 class NextSetPreviewData {
@@ -138,8 +139,8 @@ class NextSetPreviewCard extends ConsumerWidget {
             ],
           ),
           child: isCompact
-              ? _buildCompactContent(isDark, isSmallScreen, l, useKg)
-              : _buildFullContent(isDark, isSmallScreen, l, useKg),
+              ? _buildCompactContent(context, isDark, isSmallScreen, l, useKg)
+              : _buildFullContent(context, isDark, isSmallScreen, l, useKg),
         ),
       ),
     )
@@ -148,7 +149,7 @@ class NextSetPreviewCard extends ConsumerWidget {
         .slideY(begin: 0.1, end: 0, duration: 300.ms);
   }
 
-  Widget _buildCompactContent(bool isDark, bool isSmallScreen, AppLocalizations l, bool useKg) {
+  Widget _buildCompactContent(BuildContext context, bool isDark, bool isSmallScreen, AppLocalizations l, bool useKg) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -200,7 +201,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.purple.withValues(alpha: 0.2),
+                          color: context.accentColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -208,7 +209,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                           ),
                         ),
                       ),
@@ -235,8 +236,8 @@ class NextSetPreviewCard extends ConsumerWidget {
                         ),
                         decoration: BoxDecoration(
                           color: weightDelta > 0
-                              ? AppColors.success.withValues(alpha: 0.2)
-                              : AppColors.orange.withValues(alpha: 0.2),
+                              ? AppColors.success.withValues(alpha: 0.2)  // accent-allowlist: weight-delta scale — increase is always this green
+                              : AppColors.orange.withValues(alpha: 0.2),  // accent-allowlist: weight-delta scale — decrease is always this orange
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -245,8 +246,8 @@ class NextSetPreviewCard extends ConsumerWidget {
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: weightDelta > 0
-                                ? AppColors.success
-                                : AppColors.orange,
+                                ? AppColors.success  // accent-allowlist: weight-delta scale — increase is always this green
+                                : AppColors.orange,  // accent-allowlist: weight-delta scale — decrease is always this orange
                           ),
                         ),
                       ),
@@ -296,7 +297,7 @@ class NextSetPreviewCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildFullContent(bool isDark, bool isSmallScreen, AppLocalizations l, bool useKg) {
+  Widget _buildFullContent(BuildContext context, bool isDark, bool isSmallScreen, AppLocalizations l, bool useKg) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -360,7 +361,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.purple.withValues(alpha: 0.2),
+                            color: context.accentColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -368,7 +369,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
+                              color: context.accentColor,
                             ),
                           ),
                         ),
@@ -457,8 +458,8 @@ class NextSetPreviewCard extends ConsumerWidget {
                           ),
                           decoration: BoxDecoration(
                             color: weightDelta > 0
-                                ? AppColors.success.withValues(alpha: 0.15)
-                                : AppColors.orange.withValues(alpha: 0.15),
+                                ? AppColors.success.withValues(alpha: 0.15)  // accent-allowlist: weight-delta scale — increase is always this green
+                                : AppColors.orange.withValues(alpha: 0.15),  // accent-allowlist: weight-delta scale — decrease is always this orange
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -470,8 +471,8 @@ class NextSetPreviewCard extends ConsumerWidget {
                                     : Icons.trending_down,
                                 size: 14,
                                 color: weightDelta > 0
-                                    ? AppColors.success
-                                    : AppColors.orange,
+                                    ? AppColors.success  // accent-allowlist: weight-delta scale — increase is always this green
+                                    : AppColors.orange,  // accent-allowlist: weight-delta scale — decrease is always this orange
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -480,8 +481,8 @@ class NextSetPreviewCard extends ConsumerWidget {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: weightDelta > 0
-                                      ? AppColors.success
-                                      : AppColors.orange,
+                                      ? AppColors.success  // accent-allowlist: weight-delta scale — increase is always this green
+                                      : AppColors.orange,  // accent-allowlist: weight-delta scale — decrease is always this orange
                                 ),
                               ),
                             ],
@@ -549,10 +550,10 @@ class NextSetPreviewCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.purple.withValues(alpha: 0.1),
+              color: context.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.purple.withValues(alpha: 0.2),
+                color: context.accentColor.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -561,7 +562,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                 Icon(
                   Icons.lightbulb_outline,
                   size: 16,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 8),
                 Expanded(

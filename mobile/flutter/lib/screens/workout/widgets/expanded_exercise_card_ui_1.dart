@@ -54,7 +54,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         _buildSetGroupHeader(
           label: warmups.length == 1 ? 'Warmup set' : 'Warmup sets',
           count: warmups.length,
-          color: AppColors.orange,
+          color: context.accentColor,
           textMuted: textMuted,
           glassSurface: glassSurface,
           cardBorder: cardBorder,
@@ -277,9 +277,18 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     );
   }
 
-  /// Small glowing hexagon score chip for the header chip-row (Surface 2).
-  /// Renders nothing until the score loads AND has data, so the header stays
-  /// quiet for brand-new exercises and never shows a "0" placeholder.
+  /// Strength-score chip for the header chip-row (Surface 2). Renders nothing
+  /// until the score loads AND has data, so the header stays quiet for
+  /// brand-new exercises and never shows a "0" placeholder.
+  ///
+  /// A bare [HexagonBadge] (no unit, no scale, no label) reads as broken or a
+  /// 1-10 rating in this small header context — the badge's own docstring
+  /// says its design assumes 3-digit values ("the '232' / '252' chip"), which
+  /// this per-exercise score (typically single/double digit) never reaches.
+  /// Matches the row's sibling chips (_buildFinisherChip,
+  /// _buildMovementCategoryChip) — a labeled pill, not a bare glyph — and
+  /// surfaces `score.levelDisplay` (the same "Elite"/"Advanced" label the
+  /// full ExerciseStrengthScoreCard already shows) so the number has scale.
   Widget _buildStrengthScoreChip(Color accentColor) {
     return Consumer(
       builder: (context, ref, _) {
@@ -292,11 +301,31 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         }
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final color = isDark ? accentColor : _darkenColor(accentColor);
-        return HexagonBadge(
-          value: '${score.score}',
-          color: color,
-          size: 34,
-          numberSize: 14,
+        final level = score.levelDisplay;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withOpacity(isDark ? 0.12 : 0.15),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: color.withOpacity(0.4), width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.bolt_rounded, size: 12, color: color),
+              const SizedBox(width: 4),
+              Text(
+                level.isEmpty
+                    ? 'STR ${score.score}'
+                    : 'STR ${score.score} · $level',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -921,11 +950,11 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                   _sheetTile(
                     context: ctx,
                     icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-                    iconColor: isFavorite ? AppColors.error : textPrimary,
+                    iconColor: isFavorite ? AppColors.error : textPrimary,  // accent-allowlist: error/destructive — must stay red
                     label: isFavorite
                         ? l.exerciseMenuRemoveFromFavorites
                         : l.exerciseMenuAddToFavorites,
-                    trailingCheck: isFavorite ? AppColors.error : null,
+                    trailingCheck: isFavorite ? AppColors.error : null,  // accent-allowlist: error/destructive — must stay red
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'favorite'),
                   ),
@@ -934,22 +963,22 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     icon: isQueued
                         ? Icons.playlist_add_check
                         : Icons.playlist_add,
-                    iconColor: isQueued ? AppColors.cyan : textPrimary,
+                    iconColor: isQueued ? context.accentColor : textPrimary,
                     label: isQueued
                         ? l.exerciseMenuRemoveFromQueue
                         : l.exerciseMenuRepeatNextTime,
-                    trailingCheck: isQueued ? AppColors.cyan : null,
+                    trailingCheck: isQueued ? context.accentColor : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'queue'),
                   ),
                   _sheetTile(
                     context: ctx,
                     icon: isStaple ? Icons.push_pin : Icons.push_pin_outlined,
-                    iconColor: isStaple ? AppColors.purple : textPrimary,
+                    iconColor: isStaple ? context.accentColor : textPrimary,
                     label: isStaple
                         ? l.exerciseMenuRemoveAsStaple
                         : l.exerciseMenuMarkAsStaple,
-                    trailingCheck: isStaple ? AppColors.purple : null,
+                    trailingCheck: isStaple ? context.accentColor : null,
                     textPrimary: textPrimary,
                     onTap: () => _handleSheetAction(sheetCtx, 'staple'),
                   ),
@@ -992,9 +1021,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     _sheetTile(
                       context: ctx,
                       icon: Icons.delete_outline,
-                      iconColor: AppColors.error,
+                      iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       label: l.exerciseMenuRemoveFromWorkout,
-                      labelColor: AppColors.error,
+                      labelColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       textPrimary: textPrimary,
                       onTap: () => _handleSheetAction(sheetCtx, 'remove'),
                     ),
@@ -1002,9 +1031,9 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     _sheetTile(
                       context: ctx,
                       icon: Icons.block_rounded,
-                      iconColor: AppColors.error,
+                      iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       label: l.exerciseMenuNeverRecommend,
-                      labelColor: AppColors.error,
+                      labelColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       textPrimary: textPrimary,
                       onTap: () =>
                           _handleSheetAction(sheetCtx, 'never_recommend'),
@@ -1095,7 +1124,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           text: newState
               ? AppLocalizations.of(context)!.exerciseMenuAddedToFavorites
               : AppLocalizations.of(context)!.exerciseMenuRemovedFromFavorites,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         );
         break;
 
@@ -1114,7 +1143,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           text: newState
               ? AppLocalizations.of(context)!.exerciseMenuQueuedForNext
               : AppLocalizations.of(context)!.exerciseMenuRemovedFromQueue,
-          color: AppColors.cyan,
+          color: context.accentColor,
         );
         break;
 
@@ -1133,7 +1162,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           text: newState
               ? AppLocalizations.of(context)!.exerciseMenuMarkedAsStaple
               : AppLocalizations.of(context)!.exerciseMenuRemovedFromStaples,
-          color: AppColors.purple,
+          color: context.accentColor,
         );
         break;
 
@@ -1305,7 +1334,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
         runSpacing: 4,
         children: [
           if (isPerDb) _buildColumnTag('PER DB', accentColor),
-          if (isPerArm) _buildColumnTag('PER ARM', AppColors.orange),
+          if (isPerArm) _buildColumnTag('PER ARM', context.accentColor),
         ],
       ),
     );
@@ -1339,7 +1368,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
   /// accent-colored muscle/equipment chips so it reads as a label, not a stat.
   Widget _buildFinisherChip() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const color = Colors.amber;
+    const color = Colors.amber;  // accent-allowlist: warning severity
     final displayColor = isDark ? color : _darkenColor(color);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1377,16 +1406,16 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     switch (category.toUpperCase()) {
       case 'SKILL':
         icon = Icons.auto_awesome;
-        color = const Color(0xFF7C6CF4); // indigo
+        color = const Color(0xFF7C6CF4); // indigo  // accent-allowlist: movement-category legend — SKILL is always this indigo (see doc comment above)
         break;
       case 'PREHAB':
         icon = Icons.healing;
-        color = const Color(0xFF14B8A6); // teal
+        color = const Color(0xFF14B8A6); // teal  // accent-allowlist: movement-category legend — PREHAB is always this teal (see doc comment above)
         break;
       case 'STRENGTH':
       default:
         icon = Icons.fitness_center;
-        color = const Color(0xFFEF5777); // rose
+        color = const Color(0xFFEF5777); // rose  // accent-allowlist: movement-category legend — STRENGTH/default is always this rose (see doc comment above)
         break;
     }
     final displayColor = isDark ? color : _darkenColor(color);
@@ -1454,15 +1483,15 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgOpacity = isDark ? 0.1 : 0.15;
     final displayColor = isDark
-        ? AppColors.green
-        : _darkenColor(AppColors.green);
+        ? AppColors.green  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+        : _darkenColor(AppColors.green);  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
 
     return GestureDetector(
       onTap: () => _showBreathingGuidance(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: AppColors.green.withOpacity(bgOpacity),
+          color: AppColors.green.withOpacity(bgOpacity),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           borderRadius: BorderRadius.circular(6),
           border: isDark
               ? null

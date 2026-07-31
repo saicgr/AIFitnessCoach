@@ -14,6 +14,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Inline rest row that appears between sets during rest period
 class InlineRestRow extends StatefulWidget {
   /// Initial rest duration in seconds
@@ -352,7 +353,7 @@ class _InlineRestRowState extends State<InlineRestRow>
   }
 
   Widget _buildAchievementPrompt(bool isDark, Color textPrimary) {
-    final goldColor = Colors.amber.shade600;
+    final goldColor = Colors.amber.shade600;  // accent-allowlist: warning severity
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -371,7 +372,7 @@ class _InlineRestRowState extends State<InlineRestRow>
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? goldColor : Colors.amber.shade800,
+                color: isDark ? goldColor : Colors.amber.shade800,  // accent-allowlist: warning severity
               ),
             ),
           ),
@@ -403,7 +404,7 @@ class _InlineRestRowState extends State<InlineRestRow>
 
     switch (feedback.type) {
       case AdaptationFeedbackType.weightTooLight:
-        chipColor = isDark ? AppColors.orange : Colors.orange.shade700;
+        chipColor = isDark ? context.accentColor : Colors.orange.shade700;  // accent-allowlist: warning severity
         icon = '\u26A1'; // lightning
         message = pickVariant([
           'Weight too light \u2014 bump +$deltaStr $unit next',
@@ -421,7 +422,7 @@ class _InlineRestRowState extends State<InlineRestRow>
           'Next set +$deltaStr $unit \u2014 keep the form',
         ]);
       case AdaptationFeedbackType.fatigueDetected:
-        chipColor = isDark ? AppColors.coral : Colors.red.shade600;
+        chipColor = isDark ? context.accentColor : Colors.red.shade600;  // accent-allowlist: error/destructive — must stay red
         icon = '\u26A0\uFE0F';
         message = absDelta > 0
             ? pickVariant([
@@ -432,7 +433,7 @@ class _InlineRestRowState extends State<InlineRestRow>
               ])
             : 'Fatigue detected \u2014 reducing weight';
       case AdaptationFeedbackType.weightDecreased:
-        chipColor = isDark ? AppColors.coral : Colors.red.shade600;
+        chipColor = isDark ? context.accentColor : Colors.red.shade600;  // accent-allowlist: error/destructive — must stay red
         icon = '\u2198';
         // Conflict tie-break: if RIR signaled "increase" but reps were below
         // target, progressive_overload already chose the rep-based decrease.
@@ -601,8 +602,8 @@ class _InlineRestRowState extends State<InlineRestRow>
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isDark
-            ? AppColors.purple.withValues(alpha: 0.1)
-            : AppColors.purple.withValues(alpha: 0.08),
+            ? context.accentColor.withValues(alpha: 0.1)
+            : context.accentColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -619,7 +620,7 @@ class _InlineRestRowState extends State<InlineRestRow>
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor:
-                              AlwaysStoppedAnimation<Color>(AppColors.purple),
+                              AlwaysStoppedAnimation<Color>(context.accentColor),
                         ),
                       ),
                       const SizedBox(width: 8),

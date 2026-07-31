@@ -212,7 +212,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error completing challenge: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive — must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -261,7 +261,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.completeUnableToChallenge),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive — must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -289,7 +289,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.completeNoFriendsYet),
-              backgroundColor: AppColors.orange,
+              backgroundColor: context.accentColor,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -324,7 +324,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive — must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -672,7 +672,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
                   ),
                 ],
               ),
-              backgroundColor: result.hasNewPrs ? AppColors.orange : AppColors.success,
+              backgroundColor: result.hasNewPrs ? context.accentColor : AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               behavior: SnackBarBehavior.floating,
               duration: const Duration(seconds: 4),
               action: SnackBarAction(
@@ -733,7 +733,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
             content: Text(
               'Great! ${suggestion.suggestedNextVariant} will be included in future workouts.',
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -747,7 +747,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1027,7 +1027,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
                   ),
                 )
               : const Icon(Icons.directions_run, size: 18,
-                  color: Color(0xFFFC4C02)),
+                  color: Color(0xFFFC4C02)),  // accent-allowlist: Strava brand colour — third-party brand mark, legally fixed
           label: Text(
             _sharingToStrava ? 'Sharing to Strava…' : 'Share to Strava',
             style: ZType.lbl(13, color: tc.textPrimary),
@@ -1089,7 +1089,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Couldn\'t share to Strava: ${_humanizeStravaError(e)}'),
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: Colors.red.shade700,  // accent-allowlist: error/destructive — must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1243,7 +1243,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       ],
       currentStreak: streak,
       userDisplayName: name,
-      accentColor: const Color(0xFFD8FF3A),
+      accentColor: context.accentColor,
     );
 
     if (!mounted) return;
@@ -1297,7 +1297,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.completeUnableToExtend),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
         setState(() => _isExtendingWorkout = false);
@@ -1321,7 +1321,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Added ${extendedWorkout.exercises.length - widget.workout.exercises.length} more exercises!'),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           );
           // Navigate to active workout with the extended workout
@@ -1332,7 +1332,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.completeExtendFailed),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             ),
           );
         }
@@ -1344,7 +1344,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }

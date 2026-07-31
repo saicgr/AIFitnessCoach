@@ -395,10 +395,10 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.yellow.withOpacity(0.1),
+                  color: AppColors.yellow.withOpacity(0.1),  // accent-allowlist: warning severity (paired with a warning icon)
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: AppColors.yellow.withOpacity(0.3),
+                    color: AppColors.yellow.withOpacity(0.3),  // accent-allowlist: warning severity (paired with a warning icon)
                   ),
                 ),
                 child: Row(
@@ -406,7 +406,7 @@ class _AIInputPreviewSheetState extends ConsumerState<_AIInputPreviewSheet> {
                     Icon(
                       Icons.warning_amber_rounded,
                       size: 18,
-                      color: AppColors.yellow,
+                      color: AppColors.yellow,  // accent-allowlist: warning severity (paired with a warning icon)
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -786,13 +786,13 @@ class _SetPreviewTile extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.2),
+                                color: Colors.orange.withOpacity(0.2),  // accent-allowlist: warning severity
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 AppLocalizations.of(context).aiInputPreviewWarmup,
                                 style: TextStyle(
-                                  color: Colors.orange.shade700,
+                                  color: Colors.orange.shade700,  // accent-allowlist: warning severity
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -955,7 +955,7 @@ class _ExercisePreviewTile extends StatelessWidget {
                             Icon(
                               Icons.warning_amber_rounded,
                               size: 16,
-                              color: AppColors.yellow,
+                              color: AppColors.yellow,  // accent-allowlist: warning severity (paired with a warning icon)
                             ),
                           ],
                         ],

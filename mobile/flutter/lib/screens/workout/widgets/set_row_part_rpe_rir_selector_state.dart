@@ -39,7 +39,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
           // Title
           Row(
             children: [
-              const Icon(Icons.psychology, color: AppColors.purple, size: 28),
+              Icon(Icons.psychology, color: context.accentColor, size: 28),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -104,7 +104,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
               child: ElevatedButton(
                 onPressed: widget.onDone,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.purple,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -162,7 +162,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.purple.withValues(alpha: 0.15),
+              color: context.accentColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -171,16 +171,16 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                 Icon(
                   showHelp ? Icons.expand_less : Icons.help_outline,
                   size: 16,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 4),
                 // TODO(i18n): _buildSectionHeader has no BuildContext — 'Hide'/'What\'s this?' cannot be localized without refactor
                 Text(
                   showHelp ? 'Hide' : 'What\'s this?',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                   ),
                 ),
               ],
@@ -198,7 +198,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -267,7 +267,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -287,16 +287,16 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withValues(alpha: 0.2),
+                        color: context.accentColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Center(
                         child: Text(
                           '${level.value}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                         ),
                       ),
@@ -432,12 +432,12 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.cyan.withValues(alpha: 0.15)
+                  ? context.accentColor.withValues(alpha: 0.15)
                   : cardBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
-                    ? AppColors.cyan
+                    ? context.accentColor
                     : mutedColor.withValues(alpha: 0.2),
                 width: isSelected ? 2 : 1,
               ),
@@ -451,7 +451,7 @@ class _RpeRirSelectorState extends State<RpeRirSelector> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isSelected ? AppColors.cyan : textColor,
+                    color: isSelected ? context.accentColor : textColor,
                   ),
                 ),
                 Text(

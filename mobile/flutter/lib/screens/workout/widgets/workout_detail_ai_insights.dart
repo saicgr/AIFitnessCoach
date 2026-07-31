@@ -13,6 +13,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'workout_detail_helpers.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Mixin providing AI insights, reasoning, and parameters modal functionality
 /// for the WorkoutDetailScreen.
 mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
@@ -38,9 +39,9 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
       case 'purple':
         return accentColor;
       case 'orange':
-        return AppColors.orange;
+        return context.accentColor;
       case 'green':
-        return AppColors.green;
+        return AppColors.green;  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
       default:
         return accentColor;
     }
@@ -498,7 +499,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppColors.green.withValues(alpha: 0.15),
+                    AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                     accentColor.withValues(alpha: 0.1),
                   ],
                 ),
@@ -508,17 +509,17 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                   bottomLeft: Radius.circular(isExpanded ? 0 : 12),
                   bottomRight: Radius.circular(isExpanded ? 0 : 12),
                 ),
-                border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.green.withValues(alpha: 0.3)),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withValues(alpha: 0.2),
+                      color: AppColors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.psychology, color: AppColors.green, size: 18),
+                    child: const Icon(Icons.psychology, color: AppColors.green, size: 18),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -538,7 +539,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                   ),
                   Icon(isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: AppColors.green, size: 22),
+                    color: AppColors.green, size: 22),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                 ],
               ),
             ),
@@ -627,17 +628,17 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withValues(alpha: 0.1),
+                          color: context.accentColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+                          border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.tune, color: AppColors.orange, size: 18),
+                            Icon(Icons.tune, color: context.accentColor, size: 18),
                             const SizedBox(width: 8),
                             Text(AppLocalizations.of(context).workoutDetailAiViewAllParametersSent,
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.orange)),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: context.accentColor)),
                           ],
                         ),
                       ),
@@ -680,12 +681,12 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [
-                          AppColors.orange.withValues(alpha: 0.3),
+                          context.accentColor.withValues(alpha: 0.3),
                           accentColor.withValues(alpha: 0.2),
                         ]),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.tune, color: AppColors.orange, size: 22),
+                      child: Icon(Icons.tune, color: context.accentColor, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -745,7 +746,7 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
                     ),
                     const SizedBox(height: 16),
                     _buildParamsSection(
-                      title: AppLocalizations.of(context).workoutDetailAiWorkoutSpecifics, icon: Icons.fitness_center, color: AppColors.green,
+                      title: AppLocalizations.of(context).workoutDetailAiWorkoutSpecifics, icon: Icons.fitness_center, color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                       items: [
                         ParamItem('Workout Name', params.workoutName ?? 'N/A'),
                         ParamItem('Type', (params.workoutType ?? 'N/A').capitalize()),

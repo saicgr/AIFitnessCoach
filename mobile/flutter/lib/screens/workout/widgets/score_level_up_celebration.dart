@@ -185,7 +185,7 @@ class _ScoreLevelUpCelebrationState
         gradient: LinearGradient(
           colors: [
             accent.withValues(alpha: isDark ? 0.28 : 0.18),
-            AppColors.purple.withValues(alpha: isDark ? 0.18 : 0.10),
+            accent.withValues(alpha: isDark ? 0.18 : 0.10),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -207,7 +207,7 @@ class _ScoreLevelUpCelebrationState
                 height: 46,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [accent, AppColors.purple],
+                    colors: [accent, accent.withValues(alpha: 0.75)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -233,7 +233,7 @@ class _ScoreLevelUpCelebrationState
               children: [
                 ShaderMask(
                   shaderCallback: (b) => LinearGradient(
-                    colors: [accent, AppColors.purple],
+                    colors: [accent, accent.withValues(alpha: 0.75)],
                   ).createShader(b),
                   child: Text(
                     // The gradient already supplies emphasis; strip the
@@ -337,8 +337,8 @@ class _ScoreLevelUpCelebrationState
               gravity: 0.25,
               colors: [
                 accent,
-                AppColors.purple,
-                AppColors.orange,
+                accent.withValues(alpha: 0.75),
+                accent.withValues(alpha: 0.5),
                 Colors.white,
               ],
             ),

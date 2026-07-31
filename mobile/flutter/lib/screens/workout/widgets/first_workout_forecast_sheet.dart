@@ -210,7 +210,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                 const SizedBox(height: 10),
                 _forecastCard(
                   icon: '🔥',
-                  color: Colors.deepOrange,
+                  color: Colors.deepOrange,  // accent-allowlist: 30-day forecast stat-card palette — each stat (volume/calories/strength/time) keeps its own colour like a dashboard
                   primary: '${ForecastMath.formatCompact(projected30dCalories)} cal',
                   label: AppLocalizations.of(context).pillarDetailCaloriesBurned,
                   subtitle: caloriesComparison.isNotEmpty ? 'That\'s $caloriesComparison' : null,
@@ -222,7 +222,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                 const SizedBox(height: 10),
                 _forecastCard(
                   icon: '💪',
-                  color: Colors.purple,
+                  color: Colors.purple,  // accent-allowlist: 30-day forecast stat-card palette — each stat (volume/calories/strength/time) keeps its own colour like a dashboard
                   primary: '+$projectedStrengthPercent%',
                   label: AppLocalizations.of(context).firstWorkoutForecastProjectedStrengthGainOn,
                   subtitle: 'Estimate based on $effectiveSessions sessions/week',
@@ -234,7 +234,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                 const SizedBox(height: 10),
                 _forecastCard(
                   icon: '⏱️',
-                  color: Colors.teal,
+                  color: Colors.teal,  // accent-allowlist: 30-day forecast stat-card palette — each stat (volume/calories/strength/time) keeps its own colour like a dashboard
                   primary: '${ForecastMath.formatCompact(projected30dMinutes)} min',
                   label: AppLocalizations.of(context).firstWorkoutForecastTotalTimeTrained,
                   subtitle: 'Across ~${(effectiveSessions * ForecastMath.weeksInMonth).round()} sessions',

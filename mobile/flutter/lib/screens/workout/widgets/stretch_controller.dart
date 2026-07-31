@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Controller for stretch phase logic
 class StretchController {
@@ -155,11 +156,11 @@ class StretchPhaseScreen extends StatelessWidget {
                 const SizedBox(height: 16),
 
                 // Progress bar
-                _buildProgressBar(elevatedColor),
+                _buildProgressBar(context, elevatedColor),
                 const Spacer(),
 
                 // Current exercise
-                _buildCurrentExercise(currentStretch, textPrimary, textSecondary),
+                _buildCurrentExercise(context, currentStretch, textPrimary, textSecondary),
                 const Spacer(),
 
                 // Upcoming exercises
@@ -193,7 +194,7 @@ class StretchPhaseScreen extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.timer, size: 16, color: AppColors.cyan),
+              Icon(Icons.timer, size: 16, color: context.accentColor),
               const SizedBox(width: 6),
               Text(
                 formatTime(workoutSeconds),
@@ -209,8 +210,8 @@ class StretchPhaseScreen extends StatelessWidget {
           onPressed: controller.skipAll,
           child: Text(
             l.stretchControllerSkipAll,
-            style: const TextStyle(
-              color: AppColors.purple,
+            style: TextStyle(
+              color: context.accentColor,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -226,12 +227,12 @@ class StretchPhaseScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.purple.withOpacity(0.2),
+            color: context.accentColor.withOpacity(0.2),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.self_improvement,
-            color: AppColors.purple,
+            color: context.accentColor,
             size: 28,
           ),
         ),
@@ -241,10 +242,10 @@ class StretchPhaseScreen extends StatelessWidget {
           children: [
             Text(
               l.stretchControllerCoolDown,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.purple,
+                color: context.accentColor,
                 letterSpacing: 1.5,
               ),
             ),
@@ -262,19 +263,20 @@ class StretchPhaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar(Color elevatedColor) {
+  Widget _buildProgressBar(BuildContext context, Color elevatedColor) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
         value: controller.progress,
         backgroundColor: elevatedColor,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.purple),
+        valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
         minHeight: 6,
       ),
     );
   }
 
   Widget _buildCurrentExercise(
+    BuildContext context,
     Map<String, dynamic> currentStretch,
     Color textPrimary,
     Color textSecondary,
@@ -285,13 +287,13 @@ class StretchPhaseScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               currentStretch['icon'] as IconData,
               size: 64,
-              color: AppColors.purple,
+              color: context.accentColor,
             ),
           ).animate()
             .fadeIn(duration: 300.ms)
@@ -322,13 +324,13 @@ class StretchPhaseScreen extends StatelessWidget {
           if (controller.isRunning || controller.secondsRemaining > 0)
             Text(
               formatTime(controller.secondsRemaining),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 64,
                 fontWeight: FontWeight.w300,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ).animate(onPlay: (c) => c.repeat())
-              .shimmer(duration: 2000.ms, color: AppColors.purple.withOpacity(0.3))
+              .shimmer(duration: 2000.ms, color: context.accentColor.withOpacity(0.3))
           else
             Text(
               '${currentStretch['duration']} sec',
@@ -414,10 +416,10 @@ class StretchPhaseScreen extends StatelessWidget {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: controller.isRunning
-                  ? AppColors.purple.withOpacity(0.3)
-                  : AppColors.purple,
+                  ? context.accentColor.withOpacity(0.3)
+                  : context.accentColor,
               foregroundColor: controller.isRunning
-                  ? AppColors.purple
+                  ? context.accentColor
                   : Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -445,7 +447,7 @@ class StretchPhaseScreen extends StatelessWidget {
           child: ElevatedButton.icon(
             onPressed: controller.nextExercise,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

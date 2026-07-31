@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Photo Overlay Template - User's photo with workout stats overlay
 /// Stats displayed at bottom with gradient overlay
@@ -73,7 +74,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             // User photo or placeholder
-            _buildPhotoBackground(),
+            _buildPhotoBackground(context),
 
             // Gradient overlay
             Positioned.fill(
@@ -130,7 +131,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
                   Text(
                     l.shareStatsWorkoutComplete,
                     style: TextStyle(
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2,
@@ -154,7 +155,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   // Stats row
-                  _buildStatsRow(),
+                  _buildStatsRow(context),
 
                   if (showWatermark) ...[
                     const SizedBox(height: 16),
@@ -171,7 +172,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
   }
 
   // TODO(i18n): _buildPlaceholder, _buildStatsRow use strings without BuildContext — refactor to accept AppLocalizations
-  Widget _buildPhotoBackground() {
+  Widget _buildPhotoBackground(BuildContext context) {
     if (userPhotoBytes != null) {
       return Image.memory(
         userPhotoBytes!,
@@ -183,22 +184,22 @@ class PhotoOverlayTemplate extends StatelessWidget {
       return Image.network(
         userPhotoUrl!,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _buildPlaceholder(),
+        errorBuilder: (_, __, ___) => _buildPlaceholder(context),
       );
     }
 
-    return _buildPlaceholder();
+    return _buildPlaceholder(context);
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.purple.withValues(alpha: 0.3),
-            AppColors.cyan.withValues(alpha: 0.3),
+            context.accentColor.withValues(alpha: 0.3),
+            context.accentColor.withValues(alpha: 0.15),
           ],
         ),
       ),
@@ -260,7 +261,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow() {
+  Widget _buildStatsRow(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -276,18 +277,21 @@ class PhotoOverlayTemplate extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _buildStatItem(
+              context: context,
               icon: Icons.timer_outlined,
               value: _formattedDuration,
               label: 'Time',
             ),
             const SizedBox(width: 16),
             _buildStatItem(
+              context: context,
               icon: Icons.fitness_center,
               value: '$exercisesCount',
               label: 'Exercises',
             ),
             const SizedBox(width: 16),
             _buildStatItem(
+              context: context,
               icon: Icons.scale_outlined,
               value: _formattedVolume,
               label: 'Volume',
@@ -299,6 +303,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
   }
 
   Widget _buildStatItem({
+    required BuildContext context,
     required IconData icon,
     required String value,
     required String label,
@@ -308,7 +313,7 @@ class PhotoOverlayTemplate extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: AppColors.cyan,
+          color: context.accentColor,
           size: 20,
         ),
         const SizedBox(height: 4),

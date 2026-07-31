@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Read-only summary view for workouts imported from Apple Health,
 /// Health Connect, Garmin, or Fitbit.
 ///
@@ -143,7 +144,7 @@ class SyncedSummaryView extends StatelessWidget {
               color: cardBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.cyan.withValues(alpha: 0.35),
+                color: context.accentColor.withValues(alpha: 0.35),
                 width: 1,
               ),
             ),
@@ -153,7 +154,7 @@ class SyncedSummaryView extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.sync_rounded,
-                        color: AppColors.cyan, size: 20),
+                        color: context.accentColor, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       AppLocalizations.of(context).syncedSummarySyncedActivity,
@@ -256,19 +257,19 @@ class _SyncedPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withValues(alpha: 0.18),
+        color: context.accentColor.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.5)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.sync_rounded, size: 12, color: AppColors.cyan),
+          Icon(Icons.sync_rounded, size: 12, color: context.accentColor),
           const SizedBox(width: 4),
           Text(
             'Synced from $platform',
             style: TextStyle(
-              color: AppColors.cyan,
+              color: context.accentColor,
               fontSize: 11,
               fontWeight: FontWeight.w700,
             ),
@@ -292,7 +293,7 @@ class _StatTile {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.cyan),
+        Icon(icon, size: 18, color: context.accentColor),
         const SizedBox(height: 6),
         Text(
           value,

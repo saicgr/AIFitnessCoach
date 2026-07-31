@@ -82,7 +82,7 @@ class PostWorkoutHrGraph extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.favorite_rounded, size: 18, color: Color(0xFFEF4444)),
+              const Icon(Icons.favorite_rounded, size: 18, color: Color(0xFFEF4444)),  // accent-allowlist: error/destructive — must stay red
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.of(context).ringCatalogHeartRate,
@@ -118,22 +118,22 @@ class PostWorkoutHrGraph extends ConsumerWidget {
                     HorizontalRangeAnnotation(
                       y1: hrMax * 0.6,
                       y2: hrMax * 0.7,
-                      color: const Color(0xFF3B82F6).withOpacity(0.10),
+                      color: const Color(0xFF3B82F6).withOpacity(0.10),  // accent-allowlist: informational
                     ),
                     HorizontalRangeAnnotation(
                       y1: hrMax * 0.7,
                       y2: hrMax * 0.8,
-                      color: const Color(0xFF10B981).withOpacity(0.10),
+                      color: const Color(0xFF10B981).withOpacity(0.10),  // accent-allowlist: heart-rate zone chart — each zone band keeps its own fixed colour
                     ),
                     HorizontalRangeAnnotation(
                       y1: hrMax * 0.8,
                       y2: hrMax * 0.9,
-                      color: const Color(0xFFF59E0B).withOpacity(0.12),
+                      color: const Color(0xFFF59E0B).withOpacity(0.12),  // accent-allowlist: warning severity
                     ),
                     HorizontalRangeAnnotation(
                       y1: hrMax * 0.9,
                       y2: hrMax.toDouble(),
-                      color: const Color(0xFFEF4444).withOpacity(0.14),
+                      color: const Color(0xFFEF4444).withOpacity(0.14),  // accent-allowlist: error/destructive — must stay red
                     ),
                   ],
                 ),
@@ -157,7 +157,7 @@ class PostWorkoutHrGraph extends ConsumerWidget {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
-                    color: const Color(0xFFEF4444),
+                    color: const Color(0xFFEF4444),  // accent-allowlist: error/destructive — must stay red
                     barWidth: 2,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -165,7 +165,7 @@ class PostWorkoutHrGraph extends ConsumerWidget {
                       checkToShowDot: (spot, _) => spot.y == peak.toDouble(),
                       getDotPainter: (s, p, b, i) => FlDotCirclePainter(
                         radius: 4,
-                        color: const Color(0xFFEF4444),
+                        color: const Color(0xFFEF4444),  // accent-allowlist: error/destructive — must stay red
                         strokeColor: Colors.white,
                         strokeWidth: 2,
                       ),
@@ -176,8 +176,8 @@ class PostWorkoutHrGraph extends ConsumerWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          const Color(0xFFEF4444).withOpacity(0.25),
-                          const Color(0xFFEF4444).withOpacity(0.0),
+                          const Color(0xFFEF4444).withOpacity(0.25),  // accent-allowlist: error/destructive — must stay red
+                          const Color(0xFFEF4444).withOpacity(0.0),  // accent-allowlist: error/destructive — must stay red
                         ],
                       ),
                     ),
@@ -224,10 +224,10 @@ class PostWorkoutHrGraph extends ConsumerWidget {
 
   static const _zoneColors = [
     Color(0xFF94A3B8),
-    Color(0xFF3B82F6),
-    Color(0xFF10B981),
-    Color(0xFFF59E0B),
-    Color(0xFFEF4444),
+    Color(0xFF3B82F6),  // accent-allowlist: informational
+    Color(0xFF10B981),  // accent-allowlist: heart-rate zone chart — each zone band keeps its own fixed colour
+    Color(0xFFF59E0B),  // accent-allowlist: warning severity
+    Color(0xFFEF4444),  // accent-allowlist: error/destructive — must stay red
   ];
 
   int _zoneFor(int bpm, int hrMax) {
@@ -279,7 +279,7 @@ class _EmptyState extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.watch_outlined, color: Color(0xFFEF4444)),
+          const Icon(Icons.watch_outlined, color: Color(0xFFEF4444)),  // accent-allowlist: error/destructive — must stay red
           const SizedBox(width: 8),
           Expanded(
             child: Text(

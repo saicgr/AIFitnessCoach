@@ -13,6 +13,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Enhanced Exercise Notes Sheet with audio, photo, and expandable text input
 class EnhancedNotesSheet extends StatefulWidget {
   final String? initialNotes;
@@ -338,7 +339,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = AppColors.purple;
+    final accentColor = context.accentColor;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -382,7 +383,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.error,
+                                color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                               ),
                             ),
                           ),
@@ -513,7 +514,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             label: _isListening ? AppLocalizations.of(context).quickLogFabListening : AppLocalizations.of(context).enhancedNotesDictate,
             onTap: _toggleListening,
             isActive: _isListening,
-            activeColor: AppColors.cyan,
+            activeColor: context.accentColor,
             isDark: isDark,
             textMuted: textMuted,
             accentColor: accentColor,
@@ -526,7 +527,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             label: _isRecording ? AppLocalizations.of(context).hearInsightButtonStop : AppLocalizations.of(context).enhancedNotesRecord,
             onTap: _toggleRecording,
             isActive: _isRecording,
-            activeColor: AppColors.error,
+            activeColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             isDark: isDark,
             textMuted: textMuted,
             accentColor: accentColor,
@@ -606,9 +607,9 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withValues(alpha: 0.1),
+        color: context.accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -621,7 +622,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: value),
+                  color: context.accentColor.withValues(alpha: value),
                   shape: BoxShape.circle,
                 ),
               );
@@ -634,7 +635,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
           const Spacer(),
@@ -642,7 +643,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             onTap: _toggleListening,
             child: Icon(
               Icons.close,
-              color: AppColors.cyan,
+              color: context.accentColor,
               size: 20,
             ),
           ),
@@ -656,9 +657,9 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error/destructive — must stay red
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),  // accent-allowlist: error/destructive — must stay red
       ),
       child: Row(
         children: [
@@ -671,7 +672,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
                 width: 12,
                 height: 12,
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: value),
+                  color: AppColors.error.withValues(alpha: value),  // accent-allowlist: error/destructive — must stay red
                   shape: BoxShape.circle,
                 ),
               );
@@ -684,7 +685,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             ),
           ),
           const Spacer(),
@@ -693,7 +694,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             ),
           ),
         ],
@@ -770,7 +771,7 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             onTap: _deleteAudio,
             child: Icon(
               Icons.delete_outline,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
               size: 22,
             ),
           ),

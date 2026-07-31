@@ -265,7 +265,7 @@ class _ProgramTemplateBuilderScreenState
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.12),
+                    color: AppColors.error.withValues(alpha: 0.12),  // accent-allowlist: error/destructive — must stay red
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -274,7 +274,7 @@ class _ProgramTemplateBuilderScreenState
                       const Icon(
                         Icons.error_outline_rounded,
                         size: 16,
-                        color: AppColors.error,
+                        color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -282,7 +282,7 @@ class _ProgramTemplateBuilderScreenState
                           _parseError!,
                           style: const TextStyle(
                             fontSize: 12.5,
-                            color: AppColors.error,
+                            color: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                           ),
                         ),
                       ),
@@ -579,7 +579,7 @@ class _ProgramTemplateBuilderScreenState
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.info.withValues(alpha: 0.12),
+        color: AppColors.info.withValues(alpha: 0.12),  // accent-allowlist: informational
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -588,7 +588,7 @@ class _ProgramTemplateBuilderScreenState
           const Icon(
             Icons.info_outline_rounded,
             size: 16,
-            color: AppColors.info,
+            color: AppColors.info,  // accent-allowlist: informational
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -600,7 +600,7 @@ class _ProgramTemplateBuilderScreenState
               style: const TextStyle(
                 fontSize: 12,
                 height: 1.35,
-                color: AppColors.info,
+                color: AppColors.info,  // accent-allowlist: informational
               ),
             ),
           ),
@@ -614,7 +614,7 @@ class _ProgramTemplateBuilderScreenState
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.14),
+        color: AppColors.warning.withValues(alpha: 0.14),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -623,7 +623,7 @@ class _ProgramTemplateBuilderScreenState
           const Icon(
             Icons.help_outline_rounded,
             size: 16,
-            color: AppColors.warning,
+            color: AppColors.warning,  // accent-allowlist: warning severity
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -634,7 +634,7 @@ class _ProgramTemplateBuilderScreenState
               style: const TextStyle(
                 fontSize: 12,
                 height: 1.35,
-                color: AppColors.warning,
+                color: AppColors.warning,  // accent-allowlist: warning severity
               ),
             ),
           ),
@@ -1510,7 +1510,7 @@ class _ExerciseRow extends StatelessWidget {
                       const Icon(
                         Icons.help_outline_rounded,
                         size: 14,
-                        color: AppColors.warning,
+                        color: AppColors.warning,  // accent-allowlist: warning severity
                       ),
                       const SizedBox(width: 4),
                     ],
@@ -1520,7 +1520,7 @@ class _ExerciseRow extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           color: exercise.unresolved
-                              ? AppColors.warning
+                              ? AppColors.warning  // accent-allowlist: warning severity
                               : textPrimary,
                         ),
                         maxLines: 1,
@@ -2248,9 +2248,9 @@ class _SupersetSheet extends StatelessWidget {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
+                      foregroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
                       side: BorderSide(
-                        color: AppColors.error.withValues(alpha: 0.5),
+                        color: AppColors.error.withValues(alpha: 0.5),  // accent-allowlist: error/destructive — must stay red
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 11),
                     ),

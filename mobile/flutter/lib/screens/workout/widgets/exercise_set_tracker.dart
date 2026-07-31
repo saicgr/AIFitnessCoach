@@ -6,6 +6,7 @@ import '../../../core/utils/default_weights.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/exercise.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Represents a single set's data (current session)
 class SetData {
@@ -261,10 +262,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
               children: [
                 Text(
                   widget.exercise.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
                 if (widget.exercise.muscleGroup != null &&
@@ -298,7 +299,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
         color: AppColors.elevated,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Icon(Icons.fitness_center, color: AppColors.cyan, size: 24),
+      child: Icon(Icons.fitness_center, color: context.accentColor, size: 24),
     );
   }
 
@@ -313,19 +314,19 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          Icon(Icons.timer_outlined, size: 16, color: AppColors.cyan.withAlpha(180)),
+          Icon(Icons.timer_outlined, size: 16, color: context.accentColor.withAlpha(180)),
           const SizedBox(width: 6),
           Text(
             'Rest target: ${_formatRestSeconds(seconds)}',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppColors.cyan.withAlpha(180),
+              color: context.accentColor.withAlpha(180),
             ),
           ),
           if (tappable) ...[
             const SizedBox(width: 4),
-            Icon(Icons.edit_outlined, size: 13, color: AppColors.cyan.withAlpha(140)),
+            Icon(Icons.edit_outlined, size: 13, color: context.accentColor.withAlpha(140)),
           ],
         ],
       ),
@@ -410,10 +411,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                       _RestStepButton(label: '−15s', onTap: () => bump(-15)),
                       Text(
                         _formatRestSeconds(draft),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                       _RestStepButton(label: '+15s', onTap: () => bump(15)),
@@ -444,7 +445,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                         child: ElevatedButton(
                           onPressed: () => Navigator.of(sheetCtx).pop(draft),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.cyan,
+                            backgroundColor: context.accentColor,
                             foregroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
@@ -595,20 +596,22 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     return '$rir RIR';
   }
 
-  /// Get color for set type indicator
+  /// Get color for set type indicator. Set-type legend — warm-up/failure/
+  /// drop-set need distinct colours so the type reads at a glance.
   Color _getSetTypeColor(SetData set) {
-    if (set.isWarmup || set.setType == 'warmup') return AppColors.orange;
-    if (set.isFailureSet) return Colors.red;
-    if (set.isDropSet) return Colors.purple;
+    if (set.isWarmup || set.setType == 'warmup') return AppColors.orange;  // accent-allowlist: set-type legend — warm-up sets are always this orange
+    if (set.isFailureSet) return Colors.red;  // accent-allowlist: error/destructive — must stay red
+    if (set.isDropSet) return Colors.purple;  // accent-allowlist: set-type legend — drop sets are always this purple
     return AppColors.textPrimary;
   }
 
-  /// Get RIR chip color based on intensity
+  /// Get RIR chip color based on intensity. RIR scale — each band needs
+  /// its own colour so the ramp reads as escalating intensity.
   Color _getRirColor(int rir) {
-    if (rir >= 3) return AppColors.success; // Easy - green
-    if (rir == 2) return AppColors.yellow; // Moderate - yellow/gold
-    if (rir == 1) return AppColors.orange; // Hard - orange
-    return Colors.red; // RIR 0 = failure - red
+    if (rir >= 3) return AppColors.success; // Easy - green  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (rir == 2) return AppColors.yellow; // Moderate - yellow/gold  // accent-allowlist: RIR scale — moderate band is always this yellow
+    if (rir == 1) return AppColors.orange; // Hard - orange  // accent-allowlist: RIR scale — hard band is always this orange
+    return Colors.red; // RIR 0 = failure - red  // accent-allowlist: error/destructive — must stay red
   }
 
   /// Build compact RIR chip
@@ -644,7 +647,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: set.isCompleted ? AppColors.cyan.withAlpha(20) : Colors.transparent,
+        color: set.isCompleted ? context.accentColor.withAlpha(20) : Colors.transparent,
         border: Border(
           bottom: BorderSide(color: AppColors.cardBorder.withAlpha(50)),
         ),
@@ -739,10 +742,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: set.isCompleted ? AppColors.cyan : AppColors.elevated,
+                  color: set.isCompleted ? context.accentColor : AppColors.elevated,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: set.isCompleted ? AppColors.cyan : AppColors.cardBorder,
+                    color: set.isCompleted ? context.accentColor : AppColors.cardBorder,
                     width: 2,
                   ),
                 ),
@@ -852,7 +855,7 @@ class _EditableCellState extends State<_EditableCell> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: widget.isCompleted ? AppColors.cyan : AppColors.textPrimary,
+                  color: widget.isCompleted ? context.accentColor : AppColors.textPrimary,
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
@@ -874,7 +877,7 @@ class _EditableCellState extends State<_EditableCell> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: widget.isCompleted ? AppColors.cyan : AppColors.textPrimary,
+                  color: widget.isCompleted ? context.accentColor : AppColors.textPrimary,
                 ),
               ),
       ),
@@ -896,16 +899,16 @@ class _RestStepButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.cyan.withAlpha(40),
+          color: context.accentColor.withAlpha(40),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.cyan.withAlpha(120)),
+          border: Border.all(color: context.accentColor.withAlpha(120)),
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,
-            color: AppColors.cyan,
+            color: context.accentColor,
           ),
         ),
       ),
@@ -933,12 +936,12 @@ class _RestPresetChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withAlpha(60)
+              ? context.accentColor.withAlpha(60)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected
-                ? AppColors.cyan
+                ? context.accentColor
                 : AppColors.cardBorder,
           ),
         ),
@@ -947,7 +950,7 @@ class _RestPresetChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+            color: isSelected ? context.accentColor : AppColors.textSecondary,
           ),
         ),
       ),

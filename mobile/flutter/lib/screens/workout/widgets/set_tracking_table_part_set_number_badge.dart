@@ -214,9 +214,9 @@ class _AutoTargetCell extends StatelessWidget {
                     _buildRirCircle('1', WorkoutDesign.rir1, isDarkTheme),
                     _buildRirCircle('2', WorkoutDesign.rir2, isDarkTheme),
                     _buildRirCircle('3', WorkoutDesign.rir3, isDarkTheme),
-                    _buildRirCircle('4', const Color(0xFF3B82F6), isDarkTheme), // Blue
-                    _buildRirCircle('5', const Color(0xFF3B82F6), isDarkTheme),
-                    _buildRirCircle('6+', const Color(0xFF3B82F6), isDarkTheme),
+                    _buildRirCircle('4', const Color(0xFF3B82F6), isDarkTheme), // Blue  // accent-allowlist: informational
+                    _buildRirCircle('5', const Color(0xFF3B82F6), isDarkTheme),  // accent-allowlist: informational
+                    _buildRirCircle('6+', const Color(0xFF3B82F6), isDarkTheme),  // accent-allowlist: informational
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -290,7 +290,7 @@ class _AutoTargetCell extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildRirFactorRow(
                   icon: Icons.track_changes,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   title: AppLocalizations.of(context).setTrackingTableTrainingGoalExerciseType,
                   description: AppLocalizations.of(context).setTrackingTableCompoundLiftsSquatsPresse,
                   isDark: isDarkTheme,
@@ -298,7 +298,7 @@ class _AutoTargetCell extends StatelessWidget {
                 const SizedBox(height: 10),
                 _buildRirFactorRow(
                   icon: Icons.fitness_center,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   title: AppLocalizations.of(context).setTrackingTableEquipmentSafety,
                   description: AppLocalizations.of(context).setTrackingTableMachinesCablesAreSafer,
                   isDark: isDarkTheme,
@@ -306,7 +306,7 @@ class _AutoTargetCell extends StatelessWidget {
                 const SizedBox(height: 10),
                 _buildRirFactorRow(
                   icon: Icons.trending_up,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                   title: AppLocalizations.of(context).setTrackingTableYourFitnessLevel,
                   description: AppLocalizations.of(context).setTrackingTableBeginnersGetExtraBuffer,
                   isDark: isDarkTheme,
@@ -316,11 +316,11 @@ class _AutoTargetCell extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDarkTheme
-                        ? AppColors.orange.withOpacity(0.1)
-                        : AppColors.orange.withOpacity(0.06),
+                        ? context.accentColor.withOpacity(0.1)
+                        : context.accentColor.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: AppColors.orange.withOpacity(0.2),
+                      color: context.accentColor.withOpacity(0.2),
                     ),
                   ),
                   child: Row(
@@ -328,7 +328,7 @@ class _AutoTargetCell extends StatelessWidget {
                       Icon(
                         Icons.lightbulb_outline,
                         size: 16,
-                        color: AppColors.orange,
+                        color: context.accentColor,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -522,8 +522,9 @@ class _AutoTargetCell extends StatelessWidget {
       previousSetTargetReps: previousSetTargetReps,
       previousSetTargetSeconds: previousSetTargetSeconds,
       unitLabel: useKg ? 'kg' : 'lb',
+      context: context,
     );
-    final editedChip = SetRowVisuals.buildEditedChip(isEdited: isEdited);
+    final editedChip = SetRowVisuals.buildEditedChip(isEdited: isEdited, context: context);
 
     return ClipRect(
       child: Padding(
@@ -843,7 +844,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   const SizedBox(height: 12),
                   _AutoTargetCell._buildRirFactorRow(
                     icon: Icons.track_changes,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     title: AppLocalizations.of(context).setTrackingTableTrainingGoalExerciseType,
                     description: AppLocalizations.of(context).setTrackingTableCompoundLiftsSquatsPresse,
                     isDark: isDarkTheme,
@@ -851,7 +852,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   const SizedBox(height: 10),
                   _AutoTargetCell._buildRirFactorRow(
                     icon: Icons.fitness_center,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     title: AppLocalizations.of(context).setTrackingTableEquipmentSafety,
                     description: AppLocalizations.of(context).setTrackingTableMachinesCablesAreSafer,
                     isDark: isDarkTheme,
@@ -859,7 +860,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                   const SizedBox(height: 10),
                   _AutoTargetCell._buildRirFactorRow(
                     icon: Icons.trending_up,
-                    color: AppColors.green,
+                    color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                     title: AppLocalizations.of(context).setTrackingTableYourFitnessLevel,
                     description: AppLocalizations.of(context).setTrackingTableBeginnersGetExtraBuffer,
                     isDark: isDarkTheme,
@@ -869,11 +870,11 @@ class _PreviousCellWithRir extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: isDarkTheme
-                          ? AppColors.orange.withOpacity(0.1)
-                          : AppColors.orange.withOpacity(0.06),
+                          ? context.accentColor.withOpacity(0.1)
+                          : context.accentColor.withOpacity(0.06),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: AppColors.orange.withOpacity(0.2),
+                        color: context.accentColor.withOpacity(0.2),
                       ),
                     ),
                     child: Row(
@@ -881,7 +882,7 @@ class _PreviousCellWithRir extends StatelessWidget {
                         Icon(
                           Icons.lightbulb_outline,
                           size: 16,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -1171,7 +1172,7 @@ class _CompletionCheckbox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Signature done-check uses the green status color (.ck #5BE49B).
-    const doneGreen = Color(0xFF5BE49B);
+    const doneGreen = Color(0xFF5BE49B);  // accent-allowlist: signature 'done' status green, see comment above
     return GestureDetector(
       onTap: onTap,
       child: Container(

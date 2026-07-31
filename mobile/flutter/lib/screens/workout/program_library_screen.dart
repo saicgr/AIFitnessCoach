@@ -39,6 +39,7 @@ import 'widgets/variant_picker.dart';
 import 'your_programs_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Route metadata for the program library — kept here so the builder and the
 /// router reference one path constant without a circular import.
@@ -700,15 +701,15 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   total != null ? 'SEE ALL $total' : 'SEE ALL',
                   style: ZType.lbl(
                     12,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: 1.2,
                   ),
                 ),
                 const SizedBox(width: 2),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   size: 16,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               ],
             ),
@@ -749,7 +750,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   color: AppColors.textPrimary,
                   weight: FontWeight.w500,
                 ),
-                cursorColor: AppColors.orange,
+                cursorColor: context.accentColor,
                 textInputAction: TextInputAction.search,
                 onSubmitted: (v) {
                   _search = v.trim();
@@ -797,7 +798,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 padding: const EdgeInsets.only(left: 2, right: 2),
                 child: Icon(
                   _listening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                  color: _listening ? AppColors.orange : AppColors.textMuted,
+                  color: _listening ? context.accentColor : AppColors.textMuted,
                   size: 18,
                 ),
               ),
@@ -819,7 +820,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: count > 0 ? AppColors.orange : AppColors.cardBorder,
+            color: count > 0 ? context.accentColor : AppColors.cardBorder,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -829,14 +830,14 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             Icon(
               Icons.tune_rounded,
               size: 15,
-              color: count > 0 ? AppColors.orange : AppColors.textPrimary,
+              color: count > 0 ? context.accentColor : AppColors.textPrimary,
             ),
             const SizedBox(width: 7),
             Text(
               'FILTER',
               style: ZType.lbl(
                 11,
-                color: count > 0 ? AppColors.orange : AppColors.textPrimary,
+                color: count > 0 ? context.accentColor : AppColors.textPrimary,
                 letterSpacing: 1.5,
               ),
             ),
@@ -851,7 +852,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 5),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: Text(
@@ -1155,7 +1156,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 AppLocalizations.of(context).programsClearFilters,
                 style: ZType.lbl(
                   11,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   letterSpacing: 1.4,
                 ),
               ),
@@ -1491,7 +1492,7 @@ class _CategoryHubTile extends StatelessWidget {
                     border: Border.all(color: AppColors.cardBorder),
                   ),
                   alignment: Alignment.center,
-                  child: Icon(theme.icon, size: 17, color: AppColors.orange),
+                  child: Icon(theme.icon, size: 17, color: context.accentColor),
                 ),
                 Text(
                   category.toUpperCase(),
@@ -1572,8 +1573,8 @@ class _ErrorState extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onRetry,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.orange,
-                side: const BorderSide(color: AppColors.orange),
+                foregroundColor: context.accentColor,
+                side: BorderSide(color: context.accentColor),
               ),
               icon: const Icon(Icons.refresh_rounded, size: 18),
               label: Text(AppLocalizations.of(context).buttonRetry),
@@ -1623,8 +1624,8 @@ class _EmptyState extends StatelessWidget {
               OutlinedButton(
                 onPressed: onClear,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.orange,
-                  side: const BorderSide(color: AppColors.orange),
+                  foregroundColor: context.accentColor,
+                  side: BorderSide(color: context.accentColor),
                 ),
                 child: Text(AppLocalizations.of(context).programsClearFilters),
               ),
@@ -1874,7 +1875,7 @@ class _ProgramFilterSheetState extends ConsumerState<_ProgramFilterSheet> {
                     width: double.infinity,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: context.accentColor,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -1977,17 +1978,17 @@ class _HeaderActionButton extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: accent
-                    ? AppColors.orange.withValues(alpha: 0.16)
+                    ? context.accentColor.withValues(alpha: 0.16)
                     : AppColors.surface,
                 borderRadius: BorderRadius.circular(11),
                 border: Border.all(
-                  color: accent ? AppColors.orange : AppColors.cardBorder,
+                  color: accent ? context.accentColor : AppColors.cardBorder,
                 ),
               ),
               child: Icon(
                 icon,
                 size: 19,
-                color: accent ? AppColors.orange : AppColors.textPrimary,
+                color: accent ? context.accentColor : AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 3),
@@ -1995,7 +1996,7 @@ class _HeaderActionButton extends StatelessWidget {
               label,
               style: ZType.lbl(
                 9,
-                color: accent ? AppColors.orange : AppColors.textSecondary,
+                color: accent ? context.accentColor : AppColors.textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -2370,8 +2371,8 @@ class _StartProgramFlowSheetState
       lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.orange,
+          colorScheme: ColorScheme.dark(
+            primary: context.accentColor,
             surface: AppColors.surface,
           ),
         ),
@@ -2546,10 +2547,10 @@ class _StartProgramFlowSheetState
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.event_rounded,
                               size: 18,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                             const SizedBox(width: 10),
                             Text(
@@ -2630,7 +2631,7 @@ class _StartProgramFlowSheetState
                       width: double.infinity,
                       child: FilledButton.icon(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.orange,
+                          backgroundColor: context.accentColor,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -2683,10 +2684,10 @@ class _StartProgramFlowSheetState
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.event_repeat_rounded,
             size: 18,
-            color: AppColors.orange,
+            color: context.accentColor,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -2727,12 +2728,12 @@ class _StartProgramFlowSheetState
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: _days.contains(i)
-                        ? AppColors.orange
+                        ? context.accentColor
                         : AppColors.surface2,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: _days.contains(i)
-                          ? AppColors.orange
+                          ? context.accentColor
                           : AppColors.cardBorder,
                     ),
                   ),
@@ -2760,7 +2761,7 @@ class _StartProgramFlowSheetState
               11.5,
               color: _days.length == target
                   ? AppColors.textMuted
-                  : AppColors.orange,
+                  : context.accentColor,
               weight: FontWeight.w500,
             ),
           ),
@@ -2854,10 +2855,10 @@ class _StartProgramFlowSheetState
     if (parts.isEmpty) return const SizedBox.shrink();
     return Row(
       children: [
-        const Icon(
+        Icon(
           Icons.calendar_view_week_rounded,
           size: 15,
-          color: AppColors.orange,
+          color: context.accentColor,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -2971,15 +2972,15 @@ class _StartProgramFlowSheetState
                     'Open full schedule',
                     style: ZType.lbl(
                       11,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       letterSpacing: 0.4,
                     ),
                   ),
                   const SizedBox(width: 2),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_rounded,
                     size: 13,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                 ],
               ),
@@ -3140,7 +3141,7 @@ class _StartProgramFlowSheetState
                       text: '✓ free',
                       style: ZType.sans(
                         12.5,
-                        color: AppColors.green,
+                        color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -3178,9 +3179,9 @@ class _StartProgramFlowSheetState
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
         decoration: BoxDecoration(
-          color: AppColors.warning.withValues(alpha: 0.06),
+          color: AppColors.warning.withValues(alpha: 0.06),  // accent-allowlist: warning severity
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.30)),  // accent-allowlist: warning severity
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3195,7 +3196,7 @@ class _StartProgramFlowSheetState
                         : '⚠ already has a workout',
                     style: ZType.sans(
                       12.5,
-                      color: AppColors.warning,
+                      color: AppColors.warning,  // accent-allowlist: warning severity
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -3418,11 +3419,11 @@ class _StartProgramFlowSheetState
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.orange.withValues(alpha: 0.16)
+              ? context.accentColor.withValues(alpha: 0.16)
               : AppColors.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.orange : AppColors.cardBorder,
+            color: selected ? context.accentColor : AppColors.cardBorder,
           ),
         ),
         child: Row(
@@ -3433,7 +3434,7 @@ class _StartProgramFlowSheetState
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_unchecked_rounded,
               size: 15,
-              color: selected ? AppColors.orange : AppColors.textMuted,
+              color: selected ? context.accentColor : AppColors.textMuted,
             ),
             const SizedBox(width: 7),
             Flexible(
@@ -3461,9 +3462,9 @@ class _StartProgramFlowSheetState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.12),
+        color: AppColors.warning.withValues(alpha: 0.12),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),  // accent-allowlist: warning severity
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3471,7 +3472,7 @@ class _StartProgramFlowSheetState
           const Icon(
             Icons.warning_amber_rounded,
             size: 15,
-            color: AppColors.warning,
+            color: AppColors.warning,  // accent-allowlist: warning severity
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -3480,7 +3481,7 @@ class _StartProgramFlowSheetState
               'recover, or spread these across the week.',
               style: ZType.sans(
                 11,
-                color: AppColors.warning,
+                color: AppColors.warning,  // accent-allowlist: warning severity
                 weight: FontWeight.w500,
                 height: 1.35,
               ),
@@ -3554,7 +3555,7 @@ class _StartProgramFlowSheetState
                 'RETRY',
                 style: ZType.lbl(
                   11,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -3581,26 +3582,26 @@ class _StartProgramFlowSheetState
       width: double.infinity,
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.06),
+        color: context.accentColor.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.35)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.auto_awesome_rounded,
                 size: 16,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
               const SizedBox(width: 8),
               Text(
                 'COACH REVIEW',
                 style: ZType.lbl(
                   11,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   letterSpacing: 1.6,
                 ),
               ),
@@ -3648,11 +3649,11 @@ class _StartProgramFlowSheetState
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _impactPill('${i.replaceCount} replace', AppColors.orange),
+              _impactPill('${i.replaceCount} replace', context.accentColor),
               _impactDot(),
-              _impactPill('${i.stackCount} stack', AppColors.info),
+              _impactPill('${i.stackCount} stack', AppColors.info),  // accent-allowlist: informational
               _impactDot(),
-              _impactPill('${i.newCount} new', AppColors.green),
+              _impactPill('${i.newCount} new', AppColors.green),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
             ],
           ),
         ],
@@ -3722,14 +3723,14 @@ class _StartProgramFlowSheetState
             const Icon(
               Icons.check_circle_rounded,
               size: 16,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
             const SizedBox(width: 6),
             Text(
               profileName == null ? 'Fits your gym' : 'Fits your $profileName',
               style: ZType.sans(
                 12,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 weight: FontWeight.w600,
               ),
             ),
@@ -3776,7 +3777,7 @@ class _StartProgramFlowSheetState
                   'Add →',
                   style: ZType.sans(
                     11.5,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     weight: FontWeight.w700,
                   ),
                 ),
@@ -3796,9 +3797,9 @@ class _StartProgramFlowSheetState
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         decoration: BoxDecoration(
-          color: AppColors.warning.withValues(alpha: 0.08),
+          color: AppColors.warning.withValues(alpha: 0.08),  // accent-allowlist: warning severity
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.warning.withValues(alpha: 0.45)),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.45)),  // accent-allowlist: warning severity
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3809,7 +3810,7 @@ class _StartProgramFlowSheetState
                 const Icon(
                   Icons.handyman_rounded,
                   size: 17,
-                  color: AppColors.warning,
+                  color: AppColors.warning,  // accent-allowlist: warning severity
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -3873,7 +3874,7 @@ class _StartProgramFlowSheetState
         color: AppColors.surface2,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _aiTailor ? AppColors.orange : AppColors.cardBorder,
+          color: _aiTailor ? context.accentColor : AppColors.cardBorder,
         ),
       ),
       child: Column(
@@ -3882,15 +3883,15 @@ class _StartProgramFlowSheetState
             contentPadding: EdgeInsets.zero,
             dense: true,
             value: _aiTailor,
-            activeThumbColor: AppColors.orange,
+            activeThumbColor: context.accentColor,
             onChanged: (v) {
               setState(() => _aiTailor = v);
               _schedulePreview(); // refresh the live tailoring estimate
             },
-            secondary: const Icon(
+            secondary: Icon(
               Icons.auto_awesome_rounded,
               size: 18,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
             title: Text(
               'Let AI tailor it to me',
@@ -4019,7 +4020,7 @@ class _StartProgramFlowSheetState
                             ' · $actionLabel →',
                             style: ZType.sans(
                               10.5,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               weight: FontWeight.w600,
                             ),
                           ),
@@ -4033,7 +4034,7 @@ class _StartProgramFlowSheetState
           const SizedBox(width: 8),
           Checkbox(
             value: value,
-            activeColor: AppColors.orange,
+            activeColor: context.accentColor,
             visualDensity: VisualDensity.compact,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             onChanged: (v) => onChanged(v ?? false),
@@ -4077,7 +4078,7 @@ class _StartProgramFlowSheetState
     if (cs.isFailed) {
       return _tailorImpactRow(
         Icons.error_outline_rounded,
-        AppColors.orange,
+        context.accentColor,
         "Couldn't preview tailoring — it'll still run on Start.",
       );
     }
@@ -4085,7 +4086,7 @@ class _StartProgramFlowSheetState
       final weeks = _preview?.durationWeeks ?? 0;
       return _tailorImpactRow(
         Icons.check_circle_outline_rounded,
-        AppColors.green,
+        AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
         cs.humanPhrase,
         caption: weeks > 1
             ? 'Estimated from week 1 · applied across all $weeks weeks on Start'
@@ -4096,7 +4097,7 @@ class _StartProgramFlowSheetState
     // it as the good outcome it is, not an implied failure ("nothing happened").
     return _tailorImpactRow(
       Icons.verified_outlined,
-      AppColors.green,
+      AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
       'Your plan already fits your level and gear — no changes needed.',
     );
   }
@@ -4420,10 +4421,10 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.auto_awesome_rounded,
                           size: 22,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -4454,7 +4455,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                         weight: FontWeight.w500,
                         height: 1.4,
                       ),
-                      cursorColor: AppColors.orange,
+                      cursorColor: context.accentColor,
                       decoration: InputDecoration(
                         hintText:
                             'e.g. An 8-week upper/lower split, 4 days a week, '
@@ -4482,7 +4483,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.orange),
+                          borderSide: BorderSide(color: context.accentColor),
                         ),
                       ),
                     ),
@@ -4491,7 +4492,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                       width: double.infinity,
                       child: FilledButton.icon(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.orange,
+                          backgroundColor: context.accentColor,
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -4551,12 +4552,12 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
         children: [
           Row(
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               ),
               const SizedBox(width: 10),
@@ -4609,7 +4610,7 @@ class _SourceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.orange, size: 22),
+      leading: Icon(icon, color: context.accentColor, size: 22),
       title: Text(
         label,
         style: ZType.sans(
@@ -4653,10 +4654,10 @@ class _AiEntryRow extends StatelessWidget {
                 height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.14),
+                  color: context.accentColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppColors.orange, size: 22),
+                child: Icon(icon, color: context.accentColor, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -4867,7 +4868,7 @@ class _BigHeroCard extends StatelessWidget {
               flex: 3,
               child: FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: context.accentColor,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -4940,7 +4941,7 @@ class _HeroRibbon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.orange,
+        color: context.accentColor,
         borderRadius: BorderRadius.circular(7),
       ),
       child: Text(

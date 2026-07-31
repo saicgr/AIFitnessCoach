@@ -523,17 +523,17 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       case AutoregAction.reduceWeight:
         snackColor = suggestion.adjustedWeight != null &&
                 suggestion.adjustedWeight! > (double.tryParse(weightController.text) ?? 0)
-            ? AppColors.success
-            : AppColors.warning;
+            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+            : AppColors.warning;  // accent-allowlist: warning severity
         snackIcon = suggestion.adjustedWeight != null &&
                 suggestion.adjustedWeight! > (double.tryParse(weightController.text) ?? 0)
             ? Icons.trending_up
             : Icons.trending_down;
       case AutoregAction.reduceSets:
-        snackColor = AppColors.warning;
+        snackColor = AppColors.warning;  // accent-allowlist: warning severity
         snackIcon = Icons.remove_circle_outline;
       case AutoregAction.swapExercise:
-        snackColor = AppColors.error;
+        snackColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
         snackIcon = Icons.swap_horiz;
       case AutoregAction.proceed:
         return;
@@ -704,11 +704,13 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
             ),
             const SizedBox(height: 16),
 
-            buildRpeScaleRowV2('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),
-            buildRpeScaleRowV2('5-6', 'Moderate effort', AppColors.cyan, isDark),
-            buildRpeScaleRowV2('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),
-            buildRpeScaleRowV2('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),
-            buildRpeScaleRowV2('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),
+            // RPE effort scale — each band needs its own colour so the 1-10
+            // ramp reads as an escalating scale, not five identical rows.
+            buildRpeScaleRowV2('1-4', 'Very easy, lots left in tank', AppColors.success, isDark),  // accent-allowlist: RPE effort scale — lowest band is always this green
+            buildRpeScaleRowV2('5-6', 'Moderate effort', AppColors.cyan, isDark),  // accent-allowlist: RPE effort scale — moderate band is always this cyan
+            buildRpeScaleRowV2('7-8', 'Hard, could do 2-3 more reps', AppColors.orange, isDark),  // accent-allowlist: RPE effort scale — hard band is always this orange
+            buildRpeScaleRowV2('9', 'Very hard, maybe 1 more rep', AppColors.orange, isDark),  // accent-allowlist: RPE effort scale — very-hard band is always this orange
+            buildRpeScaleRowV2('10', 'Maximum effort, couldn\'t do more', AppColors.error, isDark),  // accent-allowlist: RPE effort scale — maximum band is always this red
 
             const SizedBox(height: 24),
 

@@ -24,6 +24,7 @@ import 'number_input_widgets.dart';
 import 'set_tracking_sheets.dart' as sheets;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'set_tracking_overlay_ui_1.dart';
 part 'set_tracking_overlay_ui_2.dart';
 
@@ -462,7 +463,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
         ),
         child: Icon(
           Icons.list_alt_rounded,
-          color: AppColors.purple,
+          color: context.accentColor,
           size: 20,
         ),
       ),
@@ -516,7 +517,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               icon: Icons.analytics_outlined,
               label: AppLocalizations.of(context).setTrackingOverlayAnalytics,
               value: widget.prData != null ? AppLocalizations.of(context).setTrackingOverlayViewPr : AppLocalizations.of(context).setTrackingOverlayView,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               isDark: isDark,
               textMuted: textMuted,
               onTap: () => sheets.openExerciseAnalyticsPage(
@@ -535,7 +536,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
               icon: Icons.tune_rounded,
               label: AppLocalizations.of(context).setTrackingOverlayIncrement,
               value: '${_selectedIncrement.toStringAsFixed(_selectedIncrement % 1 == 0 ? 0 : 1)} $_unit',
-              color: AppColors.orange,
+              color: context.accentColor,
               isDark: isDark,
               textMuted: textMuted,
               onTap: () => sheets.showWeightIncrementSheet(
@@ -561,7 +562,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
                 icon: Icons.trending_up_rounded,
                 label: AppLocalizations.of(context).setTrackingOverlayProgression,
                 value: widget.currentProgressionType ?? AppLocalizations.of(context).setTrackingOverlayStraight,
-                color: AppColors.purple,
+                color: context.accentColor,
                 isDark: isDark,
                 textMuted: textMuted,
                 onTap: () {

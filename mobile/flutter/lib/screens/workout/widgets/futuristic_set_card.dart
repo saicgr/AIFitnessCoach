@@ -126,7 +126,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
       case 'warmup':
         return AppColors.glowOrange;
       case 'failure':
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
         return AppColors.glowCyan;
     }
@@ -263,6 +263,11 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
         final isSmallScreen = constraints.maxWidth < 300;
         final badgeSize = isSmallScreen ? 36.0 : 44.0;
         final badgeFontSize = isSmallScreen ? 14.0 : 18.0;
+        // `currentSetNumber` is 1-indexed and points one PAST the plan the
+        // moment the last set is logged (same class as easy_exercise_header's
+        // "SET 3 OF 2" bug) — guard here too instead of printing an
+        // impossible index.
+        final isAllDone = widget.currentSetNumber > widget.totalSets;
 
         return Row(
           children: [
@@ -291,18 +296,24 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                   ],
                 ),
                 child: Center(
-                  child: Text(
-                    widget.setType == 'warmup'
-                        ? 'W'
-                        : widget.setType == 'failure'
-                            ? 'F'
-                            : '${widget.currentSetNumber}',
-                    style: TextStyle(
-                      fontSize: badgeFontSize,
-                      fontWeight: FontWeight.bold,
-                      color: _setTypeColor,
-                    ),
-                  ),
+                  child: isAllDone
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: badgeFontSize,
+                          color: _setTypeColor,
+                        )
+                      : Text(
+                          widget.setType == 'warmup'
+                              ? 'W'
+                              : widget.setType == 'failure'
+                                  ? 'F'
+                                  : '${widget.currentSetNumber}',
+                          style: TextStyle(
+                            fontSize: badgeFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: _setTypeColor,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -315,7 +326,9 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                   Row(
                     children: [
                       Text(
-                        'SET ${widget.currentSetNumber} OF ${widget.totalSets}',
+                        isAllDone
+                            ? 'ALL ${widget.totalSets} ${widget.totalSets == 1 ? 'SET' : 'SETS'} DONE'
+                            : 'SET ${widget.currentSetNumber} OF ${widget.totalSets}',
                         style: TextStyle(
                           fontSize: isSmallScreen ? 10 : 12,
                           fontWeight: FontWeight.w700,
@@ -330,12 +343,12 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: widget.targetRir == 0
-                                ? AppColors.error.withOpacity(0.2)
+                                ? AppColors.error.withOpacity(0.2)  // accent-allowlist: error/destructive — must stay red
                                 : AppColors.glowOrange.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
                               color: widget.targetRir == 0
-                                  ? AppColors.error.withOpacity(0.5)
+                                  ? AppColors.error.withOpacity(0.5)  // accent-allowlist: error/destructive — must stay red
                                   : AppColors.glowOrange.withOpacity(0.5),
                             ),
                           ),
@@ -345,7 +358,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                               fontSize: isSmallScreen ? 8 : 9,
                               fontWeight: FontWeight.bold,
                               color: widget.targetRir == 0
-                                  ? AppColors.error
+                                  ? AppColors.error  // accent-allowlist: error/destructive — must stay red
                                   : AppColors.glowOrange,
                             ),
                           ),

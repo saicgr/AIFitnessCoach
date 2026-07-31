@@ -16,6 +16,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../achievements/achievements_screen.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Shows a bottom sheet with PR details
 Future<void> showPRDetailsSheet({
   required BuildContext context,
@@ -44,9 +45,9 @@ class PRDetailsSheet extends ConsumerWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final orange = context.accentColor;
+    final cyan = context.accentColor;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     final isMultiplePRs = prs.length > 1;
     final headerText =
@@ -68,8 +69,8 @@ class PRDetailsSheet extends ConsumerWidget {
                     gradient: LinearGradient(
                       colors: isMultiplePRs
                           ? [
-                              const Color(0xFFFF6B6B),
-                              const Color(0xFFFFD93D),
+                              const Color(0xFFFF6B6B),  // accent-allowlist: PR celebration fire theme (multiple-PRs header) — matches pr_full_celebration.dart's fire gradient
+                              const Color(0xFFFFD93D),  // accent-allowlist: PR celebration fire theme (multiple-PRs header) — matches pr_full_celebration.dart's fire gradient
                             ]
                           : [orange, orange.withValues(alpha: 0.7)],
                       begin: AlignmentDirectional.topStart,
@@ -199,16 +200,19 @@ class _PRDetailCard extends StatelessWidget {
     required this.success,
   });
 
+  // PR-type legend — weight keeps the sheet's overall accent (the default/
+  // primary PR type); reps/volume/oneRM get their own fixed colours so the
+  // 4 PR types stay visually distinct. No BuildContext on this getter.
   Color get _prTypeColor {
     switch (pr.type) {
       case PRType.weight:
         return orange;
       case PRType.reps:
-        return isDark ? AppColors.cyan : AppColorsLight.cyan;
+        return AppColors.cyan;  // accent-allowlist: PR-type legend — reps PR is always this cyan
       case PRType.volume:
-        return isDark ? AppColors.purple : AppColorsLight.purple;
+        return AppColors.purple;  // accent-allowlist: PR-type legend — volume PR is always this purple
       case PRType.oneRM:
-        return isDark ? AppColors.magenta : AppColorsLight.magenta;
+        return isDark ? AppColors.magenta : AppColorsLight.magenta;  // accent-allowlist: PR-type legend — oneRM PR is always this magenta
     }
   }
 

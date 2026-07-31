@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '_share_common.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Exercise Breakdown — numbered list of exercises with set × rep.
 /// Poster typography; graceful degradation when exercise list is empty.
@@ -86,7 +87,7 @@ class ExerciseBreakdownTemplate extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFFF97316)
+                                color: context.accentColor
                                     .withValues(alpha: 0.8),
                               ),
                             ),

@@ -119,13 +119,13 @@ class _MetricPickerSheetState extends ConsumerState<MetricPickerSheet> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 child: Row(children: [
-                  const Icon(Icons.add, size: 18, color: Color(0xFF7FD6A0)),
+                  const Icon(Icons.add, size: 18, color: Color(0xFF7FD6A0)),  // accent-allowlist: 'add new' affordance green, matches the create/add convention
                   const SizedBox(width: 10),
                   Text('Define custom metric…',
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFF7FD6A0))),
+                          color: const Color(0xFF7FD6A0))),  // accent-allowlist: 'add new' affordance green, matches the create/add convention
                 ]),
               ),
             ),

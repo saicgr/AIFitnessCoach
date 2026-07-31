@@ -183,7 +183,7 @@ class _SupersetEditSheetState extends ConsumerState<_SupersetEditSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final accentColor = ref.watch(accentColorProvider).getColor(isDark);
-    final errorColor = isDark ? AppColors.error : AppColorsLight.error;
+    final errorColor = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive — must stay red
 
     return Column(
             mainAxisSize: MainAxisSize.min,

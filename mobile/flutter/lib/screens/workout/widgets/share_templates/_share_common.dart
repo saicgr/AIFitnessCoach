@@ -146,11 +146,11 @@ ShareRarity rarityForVolume(double displayVolume, {required bool useKg}) {
 
 Color rarityColor(ShareRarity r) {
   switch (r) {
-    case ShareRarity.diamond: return const Color(0xFF7FF9FF);
+    case ShareRarity.diamond: return const Color(0xFF7FF9FF);  // accent-allowlist: medal/rarity tier — diamond
     case ShareRarity.platinum: return const Color(0xFFE5E4E2);
-    case ShareRarity.gold: return const Color(0xFFFFD700);
+    case ShareRarity.gold: return const Color(0xFFFFD700);  // accent-allowlist: medal/rarity tier — gold
     case ShareRarity.silver: return const Color(0xFFC0C0C0);
-    case ShareRarity.bronze: return const Color(0xFFCD7F32);
+    case ShareRarity.bronze: return const Color(0xFFCD7F32);  // accent-allowlist: medal/rarity tier — bronze
   }
 }
 

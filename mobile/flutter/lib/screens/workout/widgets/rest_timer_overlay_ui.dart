@@ -20,12 +20,12 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.2),
+              color: Colors.orange.withOpacity(0.2),  // accent-allowlist: warning severity
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.replay,
-              color: Colors.orange,
+              color: Colors.orange,  // accent-allowlist: warning severity
               size: 22,
             ),
           ),
@@ -40,7 +40,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Colors.orange.withOpacity(0.8),
+                    color: Colors.orange.withOpacity(0.8),  // accent-allowlist: warning severity
                     letterSpacing: 1,
                   ),
                 ),
@@ -145,19 +145,22 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
     String actionLabel;
     String actionDescription;
 
+    // Weight-suggestion legend — no BuildContext on this method, and each
+    // direction needs its own colour so increase/decrease/maintain stay
+    // visually distinct.
     switch (suggestion.type) {
       case SuggestionType.increase:
-        accentColor = AppColors.success;
+        accentColor = AppColors.success;  // accent-allowlist: weight-suggestion legend — increase is always this green
         icon = Icons.trending_up;
         actionLabel = 'Go heavier';
         actionDescription = 'You can handle more weight';
       case SuggestionType.decrease:
-        accentColor = AppColors.orange;
+        accentColor = AppColors.orange;  // accent-allowlist: weight-suggestion legend — decrease is always this orange
         icon = Icons.trending_down;
         actionLabel = 'Go lighter';
         actionDescription = 'Reduce to maintain good form';
       case SuggestionType.maintain:
-        accentColor = AppColors.cyan;
+        accentColor = AppColors.cyan;  // accent-allowlist: weight-suggestion legend — maintain is always this cyan
         icon = Icons.check_circle_outline;
         actionLabel = 'Perfect weight';
         actionDescription = 'This weight is working well';
@@ -261,7 +264,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
               // AI badge (small, subtle)
               if (suggestion.aiPowered)
                 Builder(builder: (context) {
-                  final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+                  final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
                   final badgeBgOpacity = isDark ? 0.15 : 0.12;
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -532,6 +535,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
 
   /// Coach Review section - provides AI feedback based on RPE/RIR
   Widget _buildCoachReviewSection(
+    BuildContext context,
     Color cardBg,
     Color textColor,
     Color subtitleColor,
@@ -546,51 +550,54 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
     final rir = currentRir;
     final rpe = currentRpe;
 
+    // RPE/RIR coaching-feedback scale — each effort band keeps its own
+    // colour (coral=too hard, cyan=ideal zone, orange=too easy) alongside
+    // the shared "good effort" green, so the ramp stays legible.
     if (rir != null) {
       if (rir == 0) {
         feedback = "You went to failure. Make sure you can recover for the next set.";
         feedbackIcon = Icons.warning_amber_rounded;
-        feedbackColor = isDark ? AppColors.coral : _darkenColor(AppColors.coral);
+        feedbackColor = isDark ? AppColors.coral : _darkenColor(AppColors.coral);  // accent-allowlist: RPE/RIR feedback scale — went-to-failure is always this coral
       } else if (rir == 1) {
         feedback = "Great effort! One rep left is solid intensity.";
         feedbackIcon = Icons.check_circle;
-        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);
+        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);  // accent-allowlist: success/positive state — must stay green regardless of accent
       } else if (rir == 2) {
         feedback = "Perfect zone! 2 RIR is ideal for hypertrophy.";
         feedbackIcon = Icons.star;
-        feedbackColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+        feedbackColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);  // accent-allowlist: RPE/RIR feedback scale — ideal zone is always this cyan
       } else if (rir == 3) {
         feedback = "Good effort. Consider adding weight next set.";
         feedbackIcon = Icons.trending_up;
-        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);
+        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);  // accent-allowlist: success/positive state — must stay green regardless of accent
       } else {
         feedback = "Plenty left in the tank. Try increasing the weight.";
         feedbackIcon = Icons.fitness_center;
-        feedbackColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+        feedbackColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);  // accent-allowlist: RPE/RIR feedback scale — too-easy is always this orange
       }
     } else if (rpe != null) {
       if (rpe >= 10) {
         feedback = "Max effort reached. Ensure adequate rest before the next set.";
         feedbackIcon = Icons.warning_amber_rounded;
-        feedbackColor = isDark ? AppColors.coral : _darkenColor(AppColors.coral);
+        feedbackColor = isDark ? AppColors.coral : _darkenColor(AppColors.coral);  // accent-allowlist: RPE/RIR feedback scale — max-effort is always this coral
       } else if (rpe >= 8) {
         feedback = "Great intensity! This is the ideal training zone.";
         feedbackIcon = Icons.star;
-        feedbackColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+        feedbackColor = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);  // accent-allowlist: RPE/RIR feedback scale — ideal zone is always this cyan
       } else if (rpe >= 7) {
         feedback = "Moderate effort. You can push a bit harder next set.";
         feedbackIcon = Icons.trending_up;
-        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);
+        feedbackColor = isDark ? AppColors.success : _darkenColor(AppColors.success);  // accent-allowlist: success/positive state — must stay green regardless of accent
       } else {
         feedback = "Light effort. Consider increasing weight or reps.";
         feedbackIcon = Icons.fitness_center;
-        feedbackColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+        feedbackColor = isDark ? AppColors.orange : _darkenColor(AppColors.orange);  // accent-allowlist: RPE/RIR feedback scale — light-effort is always this orange
       }
     } else {
       return const SizedBox.shrink();
     }
 
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.15 : 0.12;
     final borderOpacity = isDark ? 0.3 : 0.4;
 
@@ -673,7 +680,7 @@ extension _RestTimerOverlayExt on RestTimerOverlay {
     bool isDark,
     [bool isCompact = false]
   ) {
-    final orange = isDark ? AppColors.orange : _darkenColor(AppColors.orange);
+    final orange = isDark ? context.accentColor : _darkenColor(context.accentColor);
     final bgOpacity = isDark ? 0.2 : 0.15;
     final borderOpacity = isDark ? 0.3 : 0.4;
     return Container(

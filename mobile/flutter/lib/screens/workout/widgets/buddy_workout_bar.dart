@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/buddy_workout_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Phase 6 #15 — live buddy progress bar inside the active workout screen.
 ///
@@ -96,9 +97,9 @@ class _BuddyWorkoutBarState extends ConsumerState<BuddyWorkoutBar> {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF8B5CF6).withOpacity(0.12),
+        color: context.accentColor.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.5)),
+        border: Border.all(color: context.accentColor.withOpacity(0.5)),
       ),
       child: Row(
         children: [
@@ -106,7 +107,7 @@ class _BuddyWorkoutBarState extends ConsumerState<BuddyWorkoutBar> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: const Color(0xFF8B5CF6).withOpacity(0.25),
+              color: context.accentColor.withOpacity(0.25),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
@@ -220,7 +221,7 @@ class _LiveDotState extends State<_LiveDot>
         width: 7,
         height: 7,
         decoration: BoxDecoration(
-          color: const Color(0xFF22C55E).withOpacity(0.6 + 0.4 * _ctrl.value),
+          color: const Color(0xFF22C55E).withOpacity(0.6 + 0.4 * _ctrl.value),  // accent-allowlist: success/positive state — must stay green regardless of accent
           borderRadius: BorderRadius.circular(4),
         ),
       ),

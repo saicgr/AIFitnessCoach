@@ -6,13 +6,13 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgOpacity = isDark ? 0.1 : 0.15;
     final displayColor = isDark
-        ? AppColors.orange
-        : _darkenColor(AppColors.orange);
+        ? context.accentColor
+        : _darkenColor(context.accentColor);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(bgOpacity),
+        color: context.accentColor.withOpacity(bgOpacity),
         borderRadius: BorderRadius.circular(6),
         border: isDark
             ? null
@@ -47,13 +47,13 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     final isQueued = ref.watch(exerciseQueueProvider).isQueued(exerciseName);
 
     if (isStaple) {
-      final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
+      final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
       final bgOpacity = isDark ? 0.1 : 0.15;
       chips.add(
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: AppColors.purple.withOpacity(bgOpacity),
+            color: context.accentColor.withOpacity(bgOpacity),
             borderRadius: BorderRadius.circular(6),
             border: isDark
                 ? null
@@ -79,13 +79,13 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     }
 
     if (isFavorite) {
-      final red = isDark ? AppColors.error : _darkenColor(AppColors.error);
+      final red = isDark ? AppColors.error : _darkenColor(AppColors.error);  // accent-allowlist: error/destructive — must stay red
       final bgOpacity = isDark ? 0.1 : 0.15;
       chips.add(
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(bgOpacity),
+            color: AppColors.error.withOpacity(bgOpacity),  // accent-allowlist: error/destructive — must stay red
             borderRadius: BorderRadius.circular(6),
             border: isDark
                 ? null
@@ -111,13 +111,13 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
     }
 
     if (isQueued) {
-      final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+      final cyan = isDark ? context.accentColor : _darkenColor(context.accentColor);
       final bgOpacity = isDark ? 0.1 : 0.15;
       chips.add(
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withOpacity(bgOpacity),
+            color: context.accentColor.withOpacity(bgOpacity),
             borderRadius: BorderRadius.circular(6),
             border: isDark
                 ? null

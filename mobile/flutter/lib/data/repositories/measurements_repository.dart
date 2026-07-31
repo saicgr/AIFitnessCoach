@@ -968,13 +968,13 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
     String label;
     Color color;
     if (bmi < 18.5) {
-      label = 'Underweight'; color = const Color(0xFF3B82F6);
+      label = 'Underweight'; color = const Color(0xFF3B82F6);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     } else if (bmi < 25) {
-      label = 'Normal'; color = const Color(0xFF22C55E);
+      label = 'Normal'; color = const Color(0xFF22C55E);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     } else if (bmi < 30) {
-      label = 'Overweight'; color = const Color(0xFFF59E0B);
+      label = 'Overweight'; color = const Color(0xFFF59E0B);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     } else {
-      label = 'Obese'; color = const Color(0xFFEF4444);
+      label = 'Obese'; color = const Color(0xFFEF4444);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     }
     results[DerivedMetricType.bmi] = DerivedMetricResult(
       value: bmi, label: label, color: color,
@@ -986,13 +986,13 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
     String label;
     Color color;
     if (bmi < 18.5) {
-      label = 'Underweight'; color = const Color(0xFF3B82F6);
+      label = 'Underweight'; color = const Color(0xFF3B82F6);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     } else if (bmi < 25) {
-      label = 'Normal'; color = const Color(0xFF22C55E);
+      label = 'Normal'; color = const Color(0xFF22C55E);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     } else if (bmi < 30) {
-      label = 'Overweight'; color = const Color(0xFFF59E0B);
+      label = 'Overweight'; color = const Color(0xFFF59E0B);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     } else {
-      label = 'Obese'; color = const Color(0xFFEF4444);
+      label = 'Obese'; color = const Color(0xFFEF4444);  // accent-allowlist: BMI risk-tier band (underweight/normal/overweight/obese) — clinical severity colour, not the app accent
     }
     results[DerivedMetricType.bmi] = DerivedMetricResult(
       value: bmi, label: label, color: color,
@@ -1005,13 +1005,13 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
     final whr = summary.latestWaistToHipRatio!;
     String label; Color color;
     if (g == 'female') {
-      if (whr < 0.80) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
-      else if (whr < 0.85) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
-      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+      if (whr < 0.80) { label = 'Low Risk'; color = const Color(0xFF22C55E); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else if (whr < 0.85) { label = 'Moderate'; color = const Color(0xFFF59E0B); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
     } else {
-      if (whr < 0.90) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
-      else if (whr < 0.95) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
-      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+      if (whr < 0.90) { label = 'Low Risk'; color = const Color(0xFF22C55E); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else if (whr < 0.95) { label = 'Moderate'; color = const Color(0xFFF59E0B); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
     }
     results[DerivedMetricType.waistToHipRatio] = DerivedMetricResult(
       value: whr, label: label, color: color,
@@ -1021,13 +1021,13 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
     final whr = waistEntry.value / hipEntry.value;
     String label; Color color;
     if (g == 'female') {
-      if (whr < 0.80) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
-      else if (whr < 0.85) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
-      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+      if (whr < 0.80) { label = 'Low Risk'; color = const Color(0xFF22C55E); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else if (whr < 0.85) { label = 'Moderate'; color = const Color(0xFFF59E0B); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
     } else {
-      if (whr < 0.90) { label = 'Low Risk'; color = const Color(0xFF22C55E); }
-      else if (whr < 0.95) { label = 'Moderate'; color = const Color(0xFFF59E0B); }
-      else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+      if (whr < 0.90) { label = 'Low Risk'; color = const Color(0xFF22C55E); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else if (whr < 0.95) { label = 'Moderate'; color = const Color(0xFFF59E0B); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
+      else { label = 'High Risk'; color = const Color(0xFFEF4444); }  // accent-allowlist: waist-to-hip ratio risk-tier band (low/moderate/high risk) — clinical severity colour, not the app accent
     }
     results[DerivedMetricType.waistToHipRatio] = DerivedMetricResult(
       value: whr, label: label, color: color,
@@ -1039,9 +1039,9 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
   if (summary.latestWaistToHeightRatio != null) {
     final whtr = summary.latestWaistToHeightRatio!;
     String label; Color color;
-    if (whtr < 0.5) { label = 'Healthy'; color = const Color(0xFF22C55E); }
-    else if (whtr < 0.6) { label = 'At Risk'; color = const Color(0xFFF59E0B); }
-    else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    if (whtr < 0.5) { label = 'Healthy'; color = const Color(0xFF22C55E); }  // accent-allowlist: waist-to-height ratio risk-tier band (healthy/at-risk/high-risk) — clinical severity colour, not the app accent
+    else if (whtr < 0.6) { label = 'At Risk'; color = const Color(0xFFF59E0B); }  // accent-allowlist: waist-to-height ratio risk-tier band (healthy/at-risk/high-risk) — clinical severity colour, not the app accent
+    else { label = 'High Risk'; color = const Color(0xFFEF4444); }  // accent-allowlist: waist-to-height ratio risk-tier band (healthy/at-risk/high-risk) — clinical severity colour, not the app accent
     results[DerivedMetricType.waistToHeightRatio] = DerivedMetricResult(
       value: whtr, label: label, color: color,
       info: 'Waist-to-Height Ratio: waist circumference divided by height. A ratio below 0.5 is considered healthy regardless of gender. Simple and effective predictor of cardiovascular risk. Source: British Medical Journal.',
@@ -1049,9 +1049,9 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
   } else if (waistEntry != null && heightCm != null && heightCm > 0) {
     final whtr = waistEntry.value / heightCm;
     String label; Color color;
-    if (whtr < 0.5) { label = 'Healthy'; color = const Color(0xFF22C55E); }
-    else if (whtr < 0.6) { label = 'At Risk'; color = const Color(0xFFF59E0B); }
-    else { label = 'High Risk'; color = const Color(0xFFEF4444); }
+    if (whtr < 0.5) { label = 'Healthy'; color = const Color(0xFF22C55E); }  // accent-allowlist: waist-to-height ratio risk-tier band (healthy/at-risk/high-risk) — clinical severity colour, not the app accent
+    else if (whtr < 0.6) { label = 'At Risk'; color = const Color(0xFFF59E0B); }  // accent-allowlist: waist-to-height ratio risk-tier band (healthy/at-risk/high-risk) — clinical severity colour, not the app accent
+    else { label = 'High Risk'; color = const Color(0xFFEF4444); }  // accent-allowlist: waist-to-height ratio risk-tier band (healthy/at-risk/high-risk) — clinical severity colour, not the app accent
     results[DerivedMetricType.waistToHeightRatio] = DerivedMetricResult(
       value: whtr, label: label, color: color,
       info: 'Waist-to-Height Ratio: waist circumference divided by height. A ratio below 0.5 is considered healthy regardless of gender. Simple and effective predictor of cardiovascular risk. Source: British Medical Journal.',
@@ -1066,12 +1066,12 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
     final leanMass = weightKg * (1 - bf / 100);
     final ffmi = leanMass / (heightM * heightM) + 6.1 * (1.8 - heightM);
     String label; Color color;
-    if (ffmi < 18) { label = 'Below Average'; color = const Color(0xFF3B82F6); }
-    else if (ffmi < 20) { label = 'Average'; color = const Color(0xFF22C55E); }
-    else if (ffmi < 22) { label = 'Above Average'; color = const Color(0xFF06B6D4); }
-    else if (ffmi < 23) { label = 'Excellent'; color = const Color(0xFF8B5CF6); }
-    else if (ffmi < 25) { label = 'Near Limit'; color = const Color(0xFFF59E0B); }
-    else { label = 'Exceptional'; color = const Color(0xFFEF4444); }
+    if (ffmi < 18) { label = 'Below Average'; color = const Color(0xFF3B82F6); }  // accent-allowlist: FFMI ordinal tier scale (below-average→exceptional) — fixed 6-colour gradient encoding a metric tier, not the app accent
+    else if (ffmi < 20) { label = 'Average'; color = const Color(0xFF22C55E); }  // accent-allowlist: FFMI ordinal tier scale (below-average→exceptional) — fixed 6-colour gradient encoding a metric tier, not the app accent
+    else if (ffmi < 22) { label = 'Above Average'; color = const Color(0xFF06B6D4); }  // accent-allowlist: FFMI ordinal tier scale (below-average→exceptional) — fixed 6-colour gradient encoding a metric tier, not the app accent
+    else if (ffmi < 23) { label = 'Excellent'; color = const Color(0xFF8B5CF6); }  // accent-allowlist: FFMI ordinal tier scale (below-average→exceptional) — fixed 6-colour gradient encoding a metric tier, not the app accent
+    else if (ffmi < 25) { label = 'Near Limit'; color = const Color(0xFFF59E0B); }  // accent-allowlist: FFMI ordinal tier scale (below-average→exceptional) — fixed 6-colour gradient encoding a metric tier, not the app accent
+    else { label = 'Exceptional'; color = const Color(0xFFEF4444); }  // accent-allowlist: FFMI ordinal tier scale (below-average→exceptional) — fixed 6-colour gradient encoding a metric tier, not the app accent
     results[DerivedMetricType.ffmi] = DerivedMetricResult(
       value: ffmi, label: label, color: color,
       info: 'Fat-Free Mass Index measures lean body mass relative to height. Formula: lean_mass / height\u00B2 + 6.1 \u00D7 (1.8 - height). Normal 18-20, Above Avg 20-22, Excellent 22-23, Near Natural Limit 23-25. Values above 25 are rare without enhancement. Source: Kouri et al.',
@@ -1082,7 +1082,7 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
   if (weightEntry != null && bodyFatEntry != null) {
     final lbm = weightEntry.value * (1 - bodyFatEntry.value / 100);
     results[DerivedMetricType.leanBodyMass] = DerivedMetricResult(
-      value: lbm, label: '', color: const Color(0xFF22C55E),
+      value: lbm, label: '', color: const Color(0xFF22C55E),  // accent-allowlist: lean body mass indicator — positive/healthy metric colour, success semantic
       info: 'Lean Body Mass is your total weight minus fat mass. Formula: weight \u00D7 (1 - body_fat% / 100). Useful for tracking muscle gain during a cut or recomp.',
     );
   }
@@ -1091,10 +1091,10 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
   if (shoulderEntry != null && waistEntry != null && waistEntry.value > 0) {
     final swr = shoulderEntry.value / waistEntry.value;
     String label; Color color;
-    if (swr < 1.3) { label = 'Narrow'; color = const Color(0xFF3B82F6); }
-    else if (swr < 1.5) { label = 'Good'; color = const Color(0xFFF59E0B); }
-    else if (swr < 1.618) { label = 'Great'; color = const Color(0xFF22C55E); }
-    else { label = 'Golden Ratio'; color = const Color(0xFFEAB308); }
+    if (swr < 1.3) { label = 'Narrow'; color = const Color(0xFF3B82F6); }  // accent-allowlist: shoulder-to-waist ratio ordinal tier band (narrow→golden ratio) — fixed tier gradient, not the app accent
+    else if (swr < 1.5) { label = 'Good'; color = const Color(0xFFF59E0B); }  // accent-allowlist: shoulder-to-waist ratio ordinal tier band (narrow→golden ratio) — fixed tier gradient, not the app accent
+    else if (swr < 1.618) { label = 'Great'; color = const Color(0xFF22C55E); }  // accent-allowlist: shoulder-to-waist ratio ordinal tier band (narrow→golden ratio) — fixed tier gradient, not the app accent
+    else { label = 'Golden Ratio'; color = const Color(0xFFEAB308); }  // accent-allowlist: shoulder-to-waist ratio ordinal tier band (narrow→golden ratio) — fixed tier gradient, not the app accent
     results[DerivedMetricType.shoulderToWaistRatio] = DerivedMetricResult(
       value: swr, label: label, color: color,
       info: 'Shoulder-to-Waist Ratio indicates the V-taper physique. Formula: shoulder / waist circumference. The "golden ratio" of 1.618 is considered the aesthetic ideal. <1.3 narrow, 1.3-1.5 good, 1.5-1.618 great, \u22651.618 golden ratio.',
@@ -1105,10 +1105,10 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
   if (chestEntry != null && waistEntry != null && waistEntry.value > 0) {
     final cwr = chestEntry.value / waistEntry.value;
     String label; Color color;
-    if (cwr < 1.1) { label = 'Below Average'; color = const Color(0xFF3B82F6); }
-    else if (cwr < 1.2) { label = 'Average'; color = const Color(0xFFF59E0B); }
-    else if (cwr < 1.3) { label = 'Good'; color = const Color(0xFF22C55E); }
-    else { label = 'Excellent'; color = const Color(0xFF8B5CF6); }
+    if (cwr < 1.1) { label = 'Below Average'; color = const Color(0xFF3B82F6); }  // accent-allowlist: chest-to-waist ratio ordinal tier band (below-average→excellent) — fixed tier gradient, not the app accent
+    else if (cwr < 1.2) { label = 'Average'; color = const Color(0xFFF59E0B); }  // accent-allowlist: chest-to-waist ratio ordinal tier band (below-average→excellent) — fixed tier gradient, not the app accent
+    else if (cwr < 1.3) { label = 'Good'; color = const Color(0xFF22C55E); }  // accent-allowlist: chest-to-waist ratio ordinal tier band (below-average→excellent) — fixed tier gradient, not the app accent
+    else { label = 'Excellent'; color = const Color(0xFF8B5CF6); }  // accent-allowlist: chest-to-waist ratio ordinal tier band (below-average→excellent) — fixed tier gradient, not the app accent
     results[DerivedMetricType.chestToWaistRatio] = DerivedMetricResult(
       value: cwr, label: label, color: color,
       info: 'Chest-to-Waist Ratio indicates upper body development. Formula: chest / waist circumference. A higher ratio indicates a more developed chest relative to waist. <1.1 below avg, 1.1-1.2 average, 1.2-1.3 good, >1.3 excellent.',
@@ -1122,9 +1122,9 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
       final diff = (bicepsL.value - bicepsR.value).abs();
       final symmetry = diff / maxVal * 100;
       String label; Color color;
-      if (symmetry < 5) { label = 'Balanced'; color = const Color(0xFF22C55E); }
-      else if (symmetry < 10) { label = 'Minor Imbalance'; color = const Color(0xFFF59E0B); }
-      else { label = 'Significant'; color = const Color(0xFFEF4444); }
+      if (symmetry < 5) { label = 'Balanced'; color = const Color(0xFF22C55E); }  // accent-allowlist: left/right symmetry risk-tier band (balanced/minor/significant imbalance) — clinical severity colour, not the app accent
+      else if (symmetry < 10) { label = 'Minor Imbalance'; color = const Color(0xFFF59E0B); }  // accent-allowlist: left/right symmetry risk-tier band (balanced/minor/significant imbalance) — clinical severity colour, not the app accent
+      else { label = 'Significant'; color = const Color(0xFFEF4444); }  // accent-allowlist: left/right symmetry risk-tier band (balanced/minor/significant imbalance) — clinical severity colour, not the app accent
       results[DerivedMetricType.armSymmetry] = DerivedMetricResult(
         value: symmetry, label: label, color: color,
         info: 'Arm Symmetry measures the difference between left and right biceps. Formula: |left - right| / max \u00D7 100. <5% balanced, 5-10% minor imbalance, >10% significant imbalance. Consider unilateral exercises to correct.',
@@ -1139,9 +1139,9 @@ Map<DerivedMetricType, DerivedMetricResult> computeDerivedMetrics({
       final diff = (thighL.value - thighR.value).abs();
       final symmetry = diff / maxVal * 100;
       String label; Color color;
-      if (symmetry < 5) { label = 'Balanced'; color = const Color(0xFF22C55E); }
-      else if (symmetry < 10) { label = 'Minor Imbalance'; color = const Color(0xFFF59E0B); }
-      else { label = 'Significant'; color = const Color(0xFFEF4444); }
+      if (symmetry < 5) { label = 'Balanced'; color = const Color(0xFF22C55E); }  // accent-allowlist: left/right symmetry risk-tier band (balanced/minor/significant imbalance) — clinical severity colour, not the app accent
+      else if (symmetry < 10) { label = 'Minor Imbalance'; color = const Color(0xFFF59E0B); }  // accent-allowlist: left/right symmetry risk-tier band (balanced/minor/significant imbalance) — clinical severity colour, not the app accent
+      else { label = 'Significant'; color = const Color(0xFFEF4444); }  // accent-allowlist: left/right symmetry risk-tier band (balanced/minor/significant imbalance) — clinical severity colour, not the app accent
       results[DerivedMetricType.legSymmetry] = DerivedMetricResult(
         value: symmetry, label: label, color: color,
         info: 'Leg Symmetry measures the difference between left and right thighs. Formula: |left - right| / max \u00D7 100. <5% balanced, 5-10% minor imbalance, >10% significant imbalance. Consider unilateral exercises to correct.',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '_share_common.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Streak Calendar — month-grid heatmap of workout days with today
 /// highlighted + streak + total counter.
@@ -89,11 +90,11 @@ class StreakCalendarTemplate extends StatelessWidget {
                 Color? border;
                 Color textColor;
                 if (isToday) {
-                  fill = const Color(0xFFF97316);
-                  border = const Color(0xFFFFBA7E);
+                  fill = context.accentColor;
+                  border = context.accentColor.withValues(alpha: 0.6);
                   textColor = Colors.white;
                 } else if (hasWorkout) {
-                  fill = const Color(0xFFF97316).withValues(alpha: 0.55);
+                  fill = context.accentColor.withValues(alpha: 0.55);
                   border = null;
                   textColor = Colors.white;
                 } else {
@@ -112,7 +113,7 @@ class StreakCalendarTemplate extends StatelessWidget {
                     boxShadow: isToday
                         ? [
                             BoxShadow(
-                              color: const Color(0xFFF97316)
+                              color: context.accentColor
                                   .withValues(alpha: 0.4),
                               blurRadius: 14,
                             ),
@@ -141,7 +142,7 @@ class StreakCalendarTemplate extends StatelessWidget {
                   ShareHeroNumber(
                     value: '${currentStreak ?? 0}',
                     size: 44,
-                    color: const Color(0xFFF97316),
+                    color: context.accentColor,
                   ),
                   const SizedBox(height: 2),
                   ShareTrackedCaps(

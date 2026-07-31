@@ -310,17 +310,17 @@ class _QuickAdjustSheetState extends State<_QuickAdjustSheet> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/destructive — must stay red
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+                    border: Border.all(color: Colors.red.withValues(alpha: 0.4)),  // accent-allowlist: error/destructive — must stay red
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, size: 16, color: Colors.red),
+                      const Icon(Icons.error_outline, size: 16, color: Colors.red),  // accent-allowlist: error/destructive — must stay red
                       const SizedBox(width: 8),
                       Text(
                         _errorMessage!,
-                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                        style: const TextStyle(color: Colors.red, fontSize: 13),  // accent-allowlist: error/destructive — must stay red
                       ),
                     ],
                   ),

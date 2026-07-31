@@ -121,13 +121,13 @@ class _SetValueEditor extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: enabled
-                      ? AppColors.orange.withOpacity(0.15)
+                      ? context.accentColor.withOpacity(0.15)
                       : textMuted.withOpacity(0.1),
                 ),
                 child: Icon(
                   Icons.remove,
                   size: 16,
-                  color: enabled ? AppColors.orange : textMuted,
+                  color: enabled ? context.accentColor : textMuted,
                 ),
               ),
             ),
@@ -157,13 +157,13 @@ class _SetValueEditor extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: enabled
-                      ? AppColors.cyan.withOpacity(0.15)
+                      ? context.accentColor.withOpacity(0.15)
                       : textMuted.withOpacity(0.1),
                 ),
                 child: Icon(
                   Icons.add,
                   size: 16,
-                  color: enabled ? AppColors.cyan : textMuted,
+                  color: enabled ? context.accentColor : textMuted,
                 ),
               ),
             ),

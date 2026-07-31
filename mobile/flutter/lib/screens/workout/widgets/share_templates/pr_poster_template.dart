@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '_share_common.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// PR Poster — single giant PR weight with a delta chip. Renders the
 /// biggest-delta weight PR from [prsData]. Caller wraps it in a lock
@@ -67,7 +68,7 @@ class PrPosterTemplate extends StatelessWidget {
           ShareTrackedCaps(
             l.sharePrNewPr,
             size: 11,
-            color: const Color(0xFFF97316),
+            color: context.accentColor,
             letterSpacing: 4,
           ),
           const Spacer(),
@@ -93,12 +94,12 @@ class PrPosterTemplate extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFFF97316),
+                color: context.accentColor,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
                     color:
-                        const Color(0xFFF97316).withValues(alpha: 0.35),
+                        context.accentColor.withValues(alpha: 0.35),
                     blurRadius: 18,
                   ),
                 ],

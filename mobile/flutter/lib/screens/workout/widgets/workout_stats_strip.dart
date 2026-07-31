@@ -88,45 +88,73 @@ class WorkoutStatsStrip extends ConsumerWidget {
           bottom: BorderSide(color: divider, width: 0.5),
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _StatColumn(
-              label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
-              value: _formatDuration(workoutSeconds),
-              leadingDot: true,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-            ),
+      // E2E #134 — a bare Row of Expanded(_StatColumn) with zero gap or
+      // divider let two long centered values in adjacent narrow columns
+      // (e.g. "161 kcal" / "666 kg") run hard against each other at the
+      // column boundary. IntrinsicHeight + a hairline VerticalDivider
+      // between every column gives each stat clear separation.
+      child: IntrinsicHeight(
+        child: Row(
+          children: _statColumns(
+            context: context,
+            divider: divider,
+            liveHr: liveHr,
+            calories: calories,
+            totalVolumeKg: totalVolumeKg,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
           ),
-          if (showEffort)
-            Expanded(
-              child: _StatColumn(
-                label: 'EFFORT',
-                value: liveHr != null ? '$liveHr ♥' : '—',
-                textPrimary: textPrimary,
-                textMuted: textMuted,
-              ),
-            ),
-          Expanded(
-            child: _StatColumn(
-              label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-              value: AppLocalizations.of(context)!.workoutStatsStripKcal(calories),
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-            ),
-          ),
-          Expanded(
-            child: _StatColumn(
-              label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-              value: _formatVolume(totalVolumeKg, useKg: useKg),
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  List<Widget> _statColumns({
+    required BuildContext context,
+    required Color divider,
+    required int? liveHr,
+    required int calories,
+    required double totalVolumeKg,
+    required Color textPrimary,
+    required Color textMuted,
+  }) {
+    Widget sep() => VerticalDivider(color: divider, width: 17, thickness: 1);
+
+    final columns = <_StatColumn>[
+      _StatColumn(
+        label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
+        value: _formatDuration(workoutSeconds),
+        leadingDot: true,
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+      ),
+      if (showEffort)
+        _StatColumn(
+          label: 'EFFORT',
+          value: liveHr != null ? '$liveHr ♥' : '—',
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+        ),
+      _StatColumn(
+        label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
+        value: AppLocalizations.of(context)!.workoutStatsStripKcal(calories),
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+      ),
+      _StatColumn(
+        label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
+        value: _formatVolume(totalVolumeKg, useKg: useKg),
+        textPrimary: textPrimary,
+        textMuted: textMuted,
+      ),
+    ];
+
+    final row = <Widget>[];
+    for (var i = 0; i < columns.length; i++) {
+      row.add(Expanded(child: columns[i]));
+      if (i != columns.length - 1) row.add(sep());
+    }
+    return row;
   }
 
   /// Bodyweight "load" fraction used when a working set has no external load,
@@ -233,7 +261,7 @@ class _StatColumn extends StatelessWidget {
                 width: 6,
                 height: 6,
                 decoration: const BoxDecoration(
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   shape: BoxShape.circle,
                 ),
               ),

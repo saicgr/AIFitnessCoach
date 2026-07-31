@@ -18,6 +18,7 @@ import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Foldable-optimized warmup screen that splits content across the hinge.
 class FoldableWarmupLayout extends StatefulWidget {
   /// Window mode state for hinge bounds calculation
@@ -285,7 +286,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.timer, size: 16, color: AppColors.cyan),
+                Icon(Icons.timer, size: 16, color: context.accentColor),
                 const SizedBox(width: 6),
                 Text(
                   WorkoutTimerController.formatTime(widget.workoutSeconds),
@@ -302,7 +303,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
             child: Text(
               AppLocalizations.of(context).warmupPhaseSkipWarmup,
               style: TextStyle(
-                color: AppColors.orange,
+                color: context.accentColor,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -318,7 +319,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
       child: LinearProgressIndicator(
         value: progress,
         backgroundColor: backgroundColor,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.orange),
+        valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
         minHeight: 6,
       ),
     );
@@ -341,13 +342,13 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
             Container(
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.15),
+                color: context.accentColor.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 exercise.icon,
                 size: 56,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
             )
                 .animate()
@@ -375,16 +376,16 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
               Text(
                 WorkoutTimerController.formatTime(
                     _timerController.secondsRemaining),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 56,
                   fontWeight: FontWeight.w300,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               )
                   .animate(onPlay: (controller) => controller.repeat())
                   .shimmer(
                       duration: 2000.ms,
-                      color: AppColors.orange.withOpacity(0.3))
+                      color: context.accentColor.withOpacity(0.3))
             else
               Text(
                 AppLocalizations.of(context)!.foldableWarmupLayoutSec(exercise.duration),
@@ -401,10 +402,10 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withOpacity(0.1),
+                  color: context.accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                   border:
-                      Border.all(color: AppColors.orange.withOpacity(0.3)),
+                      Border.all(color: context.accentColor.withOpacity(0.3)),
                 ),
                 child: Text(
                   exercise.cardioParamsDisplay,
@@ -446,12 +447,12 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withOpacity(0.2),
+                  color: context.accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.whatshot,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   size: 24,
                 ),
               ),
@@ -464,7 +465,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -491,10 +492,10 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                   onPressed: _toggleTimer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isTimerRunning
-                        ? AppColors.orange.withOpacity(0.3)
-                        : AppColors.orange,
+                        ? context.accentColor.withOpacity(0.3)
+                        : context.accentColor,
                     foregroundColor:
-                        isTimerRunning ? AppColors.orange : Colors.white,
+                        isTimerRunning ? context.accentColor : Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -523,7 +524,7 @@ class _FoldableWarmupLayoutState extends State<FoldableWarmupLayout> {
                 child: ElevatedButton.icon(
                   onPressed: _nextExercise,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

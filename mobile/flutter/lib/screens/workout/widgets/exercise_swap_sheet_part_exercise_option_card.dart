@@ -47,14 +47,14 @@ class _ExerciseOptionCard extends ConsumerWidget {
         boxShadow: highlighted
             ? [
                 BoxShadow(
-                  color: AppColors.cyan.withValues(alpha: 0.55),
+                  color: context.accentColor.withValues(alpha: 0.55),
                   blurRadius: 18,
                   spreadRadius: 1.5,
                 ),
               ]
             : const [],
         border: highlighted
-            ? Border.all(color: AppColors.cyan, width: 2)
+            ? Border.all(color: context.accentColor, width: 2)
             : Border.all(color: Colors.transparent, width: 0),
       ),
       child: Material(
@@ -139,7 +139,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(

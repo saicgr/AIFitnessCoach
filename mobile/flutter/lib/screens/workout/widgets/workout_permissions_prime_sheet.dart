@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Soft pre-permission sheet shown at the start of the user's first workout.
 ///
 /// Voice (microphone) and Bluetooth (Nearby Devices on Android) system prompts
@@ -53,7 +54,7 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
 
     return SafeArea(
       top: false,

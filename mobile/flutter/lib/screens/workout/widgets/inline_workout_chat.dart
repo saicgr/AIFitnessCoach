@@ -24,6 +24,7 @@ import '../../../screens/chat/widgets/media_preview_strip.dart';
 import '../../../widgets/coach_avatar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Quick prompt for workout context
 class _QuickPrompt {
   final String label;
@@ -82,21 +83,21 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
           prompt:
               AppLocalizations.of(context)!.inlineWorkoutChatWhatAreTheKey(widget.currentExercise.name),
           icon: Icons.sports_gymnastics,
-          color: AppColors.cyan,
+          color: context.accentColor,
         ),
         _QuickPrompt(
           label: AppLocalizations.of(context).workoutAiCoachSwaps,
           prompt:
               AppLocalizations.of(context)!.inlineWorkoutChatWhatAreSomeAlternative(widget.currentExercise.name),
           icon: Icons.swap_horiz,
-          color: AppColors.purple,
+          color: context.accentColor,
         ),
         _QuickPrompt(
           label: AppLocalizations.of(context).workoutSummaryAdvancedRest,
           prompt:
               AppLocalizations.of(context)!.inlineWorkoutChatHowLongShouldI(widget.currentExercise.name),
           icon: Icons.timer_outlined,
-          color: AppColors.orange,
+          color: context.accentColor,
         ),
         _QuickPrompt(
           label: AppLocalizations.of(context).workoutSummaryGeneralSets,
@@ -114,7 +115,7 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
           label: AppLocalizations.of(context).sectionHeaderWhatSThis,
           prompt: AppLocalizations.of(context).inlineWorkoutChatIntentIdentifyEquipmentWh,
           icon: Icons.camera_alt_outlined,
-          color: AppColors.cyan,
+          color: context.accentColor,
         ),
       ];
 
@@ -205,7 +206,7 @@ User question: $message
     } on MediaValidationException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive — must stay red
         );
       }
     }
@@ -223,7 +224,7 @@ User question: $message
     } on MediaValidationException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+          SnackBar(content: Text(e.message), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive — must stay red
         );
       }
     }
@@ -302,9 +303,9 @@ User question: $message
             child: chatState.when(
               data: (messages) =>
                   _buildMessageList(messages, isDark, coach),
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
               error: (e, _) => Center(
@@ -750,8 +751,8 @@ User question: $message
                     height: 40,
                     decoration: BoxDecoration(
                       gradient: canSend
-                          ? const LinearGradient(
-                              colors: [AppColors.cyan, AppColors.electricBlue],
+                          ? LinearGradient(
+                              colors: [context.accentColor, AppColors.electricBlue],
                             )
                           : null,
                       color: canSend

@@ -990,7 +990,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: isError ? Colors.red[700] : null,
+          backgroundColor: isError ? Colors.red[700] : null,  // accent-allowlist: error/destructive — must stay red
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -1102,7 +1102,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),  // accent-allowlist: warning severity
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -1140,7 +1140,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final accentColor = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentColor = context.accentColor;
 
     // Count exercises in the existing superset
     final existingCount = _workout!.exercises

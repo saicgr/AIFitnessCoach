@@ -30,6 +30,7 @@ import 'share_templates/volume_hero_template.dart';
 import 'share_templates/wrapped_template.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'share_workout_sheet_part_simple_photo_editor.dart';
 
 part 'share_workout_sheet_ui.dart';
@@ -494,7 +495,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -505,7 +506,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -601,7 +602,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                   onPressed: _openPhotoEditor,
                   icon: Icon(
                     Icons.edit_rounded,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                   tooltip: AppLocalizations.of(context).shareWorkoutSheetEditImage,
                 ),
@@ -618,7 +619,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                 Icon(
                   Icons.branding_watermark_rounded,
                   size: 18,
-                  color: _showWatermark ? AppColors.cyan : Colors.grey,
+                  color: _showWatermark ? context.accentColor : Colors.grey,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -635,7 +636,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                     HapticFeedback.lightImpact();
                     setState(() => _showWatermark = value);
                   },
-                  activeTrackColor: AppColors.cyan,
+                  activeTrackColor: context.accentColor,
                   activeThumbColor: Colors.white,
                 ),
               ],
@@ -672,7 +673,7 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: isActive
-                            ? AppColors.cyan
+                            ? context.accentColor
                             : Colors.grey.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -707,9 +708,9 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
                   _userPhotoBytes != null ? AppLocalizations.of(context).shareWorkoutChangePhoto : AppLocalizations.of(context).shareWorkoutAddYourPhoto,
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.cyan,
+                  foregroundColor: context.accentColor,
                   side: BorderSide(
-                    color: AppColors.cyan.withValues(alpha: 0.5),
+                    color: context.accentColor.withValues(alpha: 0.5),
                   ),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,

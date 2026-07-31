@@ -32,8 +32,8 @@ class PreSetCoachingBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final borderColor = const Color(0xFFD4A24E).withOpacity(0.35);
-    final iconColor = const Color(0xFFD4A24E);
+    final borderColor = const Color(0xFFD4A24E).withOpacity(0.35);  // accent-allowlist: coaching-insight banner gold, matches the tip/lightbulb convention used elsewhere
+    final iconColor = const Color(0xFFD4A24E);  // accent-allowlist: coaching-insight banner gold, matches the tip/lightbulb convention used elsewhere
     final bg = isDark ? const Color(0xFF1F1B14) : const Color(0xFFFFF8E7);
     final textColor = isDark ? Colors.white : AppColors.pureBlack;
 

@@ -174,8 +174,8 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: tag == 'Strength'
-                              ? Colors.orange.withValues(alpha: 0.15)
-                              : Colors.blue.withValues(alpha: 0.15),
+                              ? Colors.orange.withValues(alpha: 0.15)  // accent-allowlist: warning severity
+                              : Colors.blue.withValues(alpha: 0.15),  // accent-allowlist: informational
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -184,8 +184,8 @@ class ProgressionSelectorSheetState extends State<ProgressionSelectorSheet> {
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: tag == 'Strength'
-                                ? Colors.orange.shade400
-                                : Colors.blue.shade400,
+                                ? Colors.orange.shade400  // accent-allowlist: warning severity
+                                : Colors.blue.shade400,  // accent-allowlist: informational
                           ),
                         ),
                       )),

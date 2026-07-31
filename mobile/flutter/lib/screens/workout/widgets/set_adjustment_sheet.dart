@@ -12,6 +12,7 @@ import '../../../widgets/glass_sheet.dart';
 
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'set_adjustment_sheet_part_set_adjustment_reason.dart';
 part 'set_adjustment_sheet_part_in_workout_set_editing_sheet_state.dart';
 part 'set_adjustment_sheet_part_quick_action_button.dart';
@@ -107,12 +108,12 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: AppColors.orange.withValues(alpha: 0.15),
+                              color: context.accentColor.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.edit_note,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               size: 22,
                             ),
                           ),
@@ -190,12 +191,12 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.orange.withOpacity(0.15)
+                                ? context.accentColor.withOpacity(0.15)
                                 : cardBg,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
-                                  ? AppColors.orange
+                                  ? context.accentColor
                                   : isDark
                                       ? AppColors.cardBorder
                                       : AppColorsLight.cardBorder,
@@ -209,7 +210,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                                 reason.icon,
                                 size: 18,
                                 color: isSelected
-                                    ? AppColors.orange
+                                    ? context.accentColor
                                     : textSecondary,
                               ),
                               const SizedBox(width: 8),
@@ -221,7 +222,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                                       ? FontWeight.w600
                                       : FontWeight.w500,
                                   color: isSelected
-                                      ? AppColors.orange
+                                      ? context.accentColor
                                       : textPrimary,
                                 ),
                               ),
@@ -286,8 +287,8 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.orange,
+                          borderSide: BorderSide(
+                            color: context.accentColor,
                             width: 2,
                           ),
                         ),
@@ -334,7 +335,7 @@ class _SetAdjustmentSheetState extends State<SetAdjustmentSheet> {
                     child: ElevatedButton(
                       onPressed: _selectedReason != null ? _handleConfirm : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         disabledBackgroundColor: isDark
                             ? AppColors.elevated

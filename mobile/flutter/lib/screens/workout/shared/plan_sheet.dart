@@ -144,7 +144,7 @@ class _PlanRow extends StatelessWidget {
                 ? '$doneSets / $totalSets'
                 : 'Up next';
     final statusColor = isDone
-        ? Colors.green
+        ? Colors.green  // accent-allowlist: success/positive state — must stay green regardless of accent
         : isCurrent
             ? accent
             : muted;

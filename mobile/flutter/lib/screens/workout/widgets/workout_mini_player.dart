@@ -14,6 +14,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../navigation/app_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Position options for the mini player
 enum MiniPlayerPosition {
   bottomLeft,
@@ -269,7 +270,7 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
   }
 
   Widget _buildTimerSection(WorkoutMiniPlayerState state, ThemeColors colors) {
-    final timerColor = state.isPaused ? AppColors.orange : colors.accent;
+    final timerColor = state.isPaused ? context.accentColor : colors.accent;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -286,7 +287,7 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
             fontSize: 16,
             fontWeight: FontWeight.bold,
             fontFamily: 'monospace',
-            color: state.isPaused ? AppColors.orange : colors.textPrimary,
+            color: state.isPaused ? context.accentColor : colors.textPrimary,
           ),
         ),
       ],
@@ -382,13 +383,13 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.red.withAlpha(25),
+          color: Colors.red.withAlpha(25),  // accent-allowlist: error/destructive — must stay red
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Icon(
           Icons.close_rounded,
           size: 20,
-          color: Colors.red,
+          color: Colors.red,  // accent-allowlist: error/destructive — must stay red
         ),
       ),
     );
@@ -434,7 +435,7 @@ class _WorkoutMiniPlayerState extends ConsumerState<WorkoutMiniPlayer>
             },
             child: Text(
               AppLocalizations.of(context).workoutMiniPlayerEndWorkout2,
-              style: TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.red),  // accent-allowlist: error/destructive — must stay red
             ),
           ),
         ],

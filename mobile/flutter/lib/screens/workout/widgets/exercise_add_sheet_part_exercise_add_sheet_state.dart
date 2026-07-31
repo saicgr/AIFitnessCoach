@@ -298,13 +298,24 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   Future<void> _addExercise(String exerciseName, {String? exerciseId}) async {
     setState(() => _isAdding = true);
 
-    final repo = ref.read(workoutRepositoryProvider);
-    final updatedWorkout = await repo.addExercise(
-      workoutId: widget.workoutId,
-      exerciseName: exerciseName,
-      exerciseId: exerciseId,
-      previewId: widget.previewId,
-    );
+    Workout? updatedWorkout;
+    String? errorMessage;
+    try {
+      final repo = ref.read(workoutRepositoryProvider);
+      (updatedWorkout, errorMessage) = await repo.addExercise(
+        workoutId: widget.workoutId,
+        exerciseName: exerciseName,
+        exerciseId: exerciseId,
+        previewId: widget.previewId,
+        section: widget.section,
+      );
+    } catch (e) {
+      // ExerciseUnsafeForInjuryException / PreviewExpiredException /
+      // PreviewNotOwnedException — E2E #114: this guard's real, human-
+      // readable copy must reach the user, never collapse into a flat
+      // "Failed to add exercise".
+      errorMessage = swapOrAddExceptionMessage(e);
+    }
 
     setState(() => _isAdding = false);
 
@@ -314,14 +325,14 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.exerciseAddSheetPartExerciseAddSheetStateAdded(exerciseName)),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to add exercise'),
-            backgroundColor: AppColors.error,
+          SnackBar(
+            content: Text(errorMessage ?? 'Failed to add exercise'),
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
           ),
         );
       }
@@ -351,7 +362,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           bottom: 16,
           child: FloatingActionButton.extended(
             heroTag: 'add_snap_fab',
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             icon: const Icon(Icons.camera_alt, color: Colors.black),
             label: const Text(
               'Snap equipment',
@@ -389,7 +400,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              const Icon(Icons.add_circle, color: AppColors.success),
+              const Icon(Icons.add_circle, color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -446,15 +457,28 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                   if (name.isEmpty) return null;
                   final exerciseId = match['id'] as String?;
                   final repo = ref.read(workoutRepositoryProvider);
-                  final workout = await repo.addExercise(
-                    workoutId: widget.workoutId,
-                    exerciseName: name,
-                    exerciseId: (exerciseId != null && exerciseId.isNotEmpty)
-                        ? exerciseId
-                        : null,
-                    previewId: widget.previewId,
-                  );
+                  Workout? workout;
+                  String? err;
+                  try {
+                    (workout, err) = await repo.addExercise(
+                      workoutId: widget.workoutId,
+                      exerciseName: name,
+                      exerciseId: (exerciseId != null && exerciseId.isNotEmpty)
+                          ? exerciseId
+                          : null,
+                      previewId: widget.previewId,
+                      section: widget.section,
+                    );
+                  } catch (e) {
+                    err = swapOrAddExceptionMessage(e);
+                  }
                   if (!mounted) return null;
+                  if (err != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(err)),
+                    );
+                    return null;
+                  }
                   if (workout != null) {
                     Navigator.of(context).pop(workout);
                   }
@@ -472,7 +496,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           Container(
             color: Colors.black54,
             child: const Center(
-              child: CircularProgressIndicator(color: AppColors.success),
+              child: CircularProgressIndicator(color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           ),
       ],
@@ -554,7 +578,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           child: _isLoadingLibrary
               ? const Center(
                   child:
-                      CircularProgressIndicator(color: AppColors.success))
+                      CircularProgressIndicator(color: AppColors.success))  // accent-allowlist: success/positive state — must stay green regardless of accent
               : _filteredExercises.isEmpty
                   ? Center(
                       child: Column(
@@ -651,7 +675,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: isTopPicks ? const Color(0xFFD4A017) : textMuted,
+          color: isTopPicks ? const Color(0xFFD4A017) : textMuted,  // accent-allowlist: 'Top Picks' recommended-tier gold
           letterSpacing: 0.3,
         ),
       ),
@@ -671,7 +695,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       name: ex.name ?? 'Exercise',
       subtitle: muscle,
       badge: equip,
-      badgeColor: AppColors.purple,
+      badgeColor: context.accentColor,
       isRecommended: isRecommended,
       onTap: () => context.push(
         '/exercise-detail',
@@ -690,7 +714,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       textPrimary: textPrimary,
       textMuted: textMuted,
       actionIcon: Icons.add_circle,
-      actionColor: AppColors.success,
+      actionColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
       highlighted: _isHighlighted(ex.name ?? ''),
     );
   }
@@ -706,7 +730,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   }) {
     final bgColor = isDark ? Colors.grey.shade900 : Colors.grey.shade100;
     final borderColor = isSelected
-        ? AppColors.success
+        ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
         : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
 
     return GestureDetector(
@@ -745,7 +769,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                     : Icon(
                         Icons.fitness_center,
                         size: 22,
-                        color: isSelected ? AppColors.success : textMuted,
+                        color: isSelected ? AppColors.success : textMuted,  // accent-allowlist: success/positive state — must stay green regardless of accent
                       ),
               ),
               const SizedBox(height: 4),
@@ -755,7 +779,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                   fontSize: 11,
                   fontWeight:
                       isSelected ? FontWeight.bold : FontWeight.w600,
-                  color: isSelected ? AppColors.success : textPrimary,
+                  color: isSelected ? AppColors.success : textPrimary,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -884,7 +908,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
                   ),
                 ),
                 Icon(Icons.add_circle_outline,
-                    color: AppColors.success, size: 24),
+                    color: AppColors.success, size: 24),  // accent-allowlist: success/positive state — must stay green regardless of accent
               ],
             ),
           ),
@@ -906,7 +930,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(color: AppColors.success),
+            const CircularProgressIndicator(color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
             const SizedBox(height: 16),
             Text(
               'Getting AI suggestions...',
@@ -963,13 +987,13 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         Color badgeColor;
         if (rank == 1) {
           badge = 'Recommended';
-          badgeColor = AppColors.success;
+          badgeColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
         } else if (rank <= 3) {
           badge = 'Great Choice';
-          badgeColor = AppColors.cyan;
+          badgeColor = context.accentColor;
         } else {
           badge = equipment.isNotEmpty ? equipment : 'Good Option';
-          badgeColor = AppColors.purple;
+          badgeColor = context.accentColor;
         }
 
         return _ExerciseOptionCard(
@@ -981,7 +1005,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           textPrimary: textPrimary,
           textMuted: textMuted,
           actionIcon: Icons.add_circle,
-          actionColor: AppColors.success,
+          actionColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           highlighted: _isHighlighted(name),
         );
       },

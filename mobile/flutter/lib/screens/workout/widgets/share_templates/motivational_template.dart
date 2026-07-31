@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import 'app_watermark.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Motivational Template - Workout name and streak with inspiring design
 /// Bold typography, dynamic colors, and streak celebration
@@ -44,24 +45,24 @@ class MotivationalTemplate extends StatelessWidget {
   List<Color> get _gradientColors {
     if (currentStreak != null && currentStreak! >= 30) {
       return [
-        const Color(0xFFFF6B6B),
-        const Color(0xFFFF8E53),
-        const Color(0xFFFFC93C),
+        const Color(0xFFFF6B6B),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
+        const Color(0xFFFF8E53),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
+        const Color(0xFFFFC93C),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
       ];
     } else if (currentStreak != null && currentStreak! >= 14) {
       return [
-        const Color(0xFFF093FB),
-        const Color(0xFFF5576C),
+        const Color(0xFFF093FB),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
+        const Color(0xFFF5576C),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
       ];
     } else if (currentStreak != null && currentStreak! >= 7) {
       return [
-        AppColors.cyan,
-        AppColors.purple,
+        AppColors.cyan,  // accent-allowlist: streak-milestone tier legend — the 7+ day tier is always this cyan-to-purple gradient, like the other fixed tier gradients above/below it
+        AppColors.purple,  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
       ];
     }
     return [
-      const Color(0xFF667EEA),
-      const Color(0xFF764BA2),
+      const Color(0xFF667EEA),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
+      const Color(0xFF764BA2),  // accent-allowlist: streak-milestone tier legend — each streak tier keeps its own fixed gradient
     ];
   }
 

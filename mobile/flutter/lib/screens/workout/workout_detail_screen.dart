@@ -52,6 +52,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/branding.dart';
 import '../../widgets/fasting_training_warning.dart';
 import '../../widgets/coach_avatar.dart';
+import '../../widgets/fading_chip_row.dart';
 import '../../models/equipment_item.dart';
 import '../../core/providers/environment_equipment_provider.dart';
 import 'widgets/edit_workout_equipment_sheet.dart';
@@ -63,6 +64,7 @@ import 'widgets/workout_detail_ai_insights.dart';
 import 'schedule_date_utils.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'workout_detail_screen_ui.dart';
 
 part 'workout_detail_screen_ui_1.dart';
@@ -224,7 +226,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                    const Icon(Icons.error_outline, color: AppColors.error, size: 48),  // accent-allowlist: error/destructive — must stay red
                     const SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context).workoutDetailFailedToLoadWorkout,
@@ -407,7 +409,13 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           letterSpacing: -0.5,
                           height: 0.98,
                         ),
-                        maxLines: 2,
+                        // E2E #123 — a realistic AI/curated workout name
+                        // ("Active Recovery & Mobility Day") ellipsized to
+                        // "Active Rec…" at maxLines:2 despite the masthead
+                        // having vertical room to spare (the eyebrow +
+                        // subtitle below it are short). A 3rd line gives it
+                        // that room instead of truncating.
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (_workoutMastheadSubtitle(workout) != null) ...[
@@ -438,7 +446,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                     child: Material(
-                      color: Colors.amber.withValues(alpha: 0.15),
+                      color: Colors.amber.withValues(alpha: 0.15),  // accent-allowlist: warning severity
                       borderRadius: BorderRadius.circular(12),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(12),
@@ -452,7 +460,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           child: Row(
                             children: [
                               const Icon(Icons.warning_amber_rounded,
-                                  size: 18, color: Colors.amber),
+                                  size: 18, color: Colors.amber),  // accent-allowlist: warning severity
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
@@ -489,65 +497,61 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                   ),
                 ),
 
-              // Type badges row - single line horizontal scroll
+              // Type badges row - single line horizontal scroll.
+              // E2E #123 (row 148's fix for this surface): a bare
+              // `SingleChildScrollView(horizontal) → Row` with no fade/peek
+              // sliced the rightmost chip (DIFFICULTY) at the screen edge —
+              // it read as a layout bug, not "scroll me". FadingChipRow adds
+              // the fade + trailing gutter and owns inter-chip spacing.
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        // Program provenance badge — which program this workout
-                        // belongs to (AI vs a curated/branded program like
-                        // HYROX), color-matched to the merged schedule.
-                        Builder(builder: (_) {
-                          final attr = workoutProgramAttribution(workout);
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _buildLabeledBadge(
-                              label: 'Program',
-                              value: attr.isAi ? 'AI' : attr.name,
-                              color: attr.color,
-                              backgroundColor:
-                                  attr.color.withValues(alpha: 0.15),
-                            ),
-                          );
-                        }),
-                        // Workout Type Badge - now with semantic color
+                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
+                  child: FadingChipRow(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    children: [
+                      // Program provenance badge — which program this workout
+                      // belongs to (AI vs a curated/branded program like
+                      // HYROX), color-matched to the merged schedule.
+                      Builder(builder: (_) {
+                        final attr = workoutProgramAttribution(workout);
+                        return _buildLabeledBadge(
+                          label: 'Program',
+                          value: attr.isAi ? 'AI' : attr.name,
+                          color: attr.color,
+                          backgroundColor: attr.color.withValues(alpha: 0.15),
+                        );
+                      }),
+                      // Workout Type Badge - now with semantic color
+                      _buildLabeledBadge(
+                        label: AppLocalizations.of(context).workoutDetailType,
+                        value: (workout.type ?? 'strength').capitalize(),
+                        color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
+                        backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withValues(alpha: 0.15),
+                      ),
+                      // Difficulty Badge - special animated version for Hell
+                      if ((workout.difficulty ?? 'medium').toLowerCase() == 'hell')
+                        const AnimatedHellBadge()
+                      else
                         _buildLabeledBadge(
-                          label: AppLocalizations.of(context).workoutDetailType,
-                          value: (workout.type ?? 'strength').capitalize(),
-                          color: AppColors.getWorkoutTypeColor(workout.type ?? 'strength'),
-                          backgroundColor: AppColors.getWorkoutTypeColor(workout.type ?? 'strength').withValues(alpha: 0.15),
+                          label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
+                          value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium', context),
+                          color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
+                          backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withValues(alpha: 0.15),
                         ),
-                        const SizedBox(width: 8),
-                        // Difficulty Badge - special animated version for Hell
-                        if ((workout.difficulty ?? 'medium').toLowerCase() == 'hell')
-                          const AnimatedHellBadge()
-                        else
-                          _buildLabeledBadge(
-                            label: AppLocalizations.of(context).workoutSummaryGeneralDifficulty,
-                            value: DifficultyUtils.getDisplayName(workout.difficulty ?? 'medium', context),
-                            color: DifficultyUtils.getColor(workout.difficulty ?? 'medium'),
-                            backgroundColor: DifficultyUtils.getColor(workout.difficulty ?? 'medium').withValues(alpha: 0.15),
-                          ),
-                        // Training Program Badge (only show if we have a valid program name)
-                        if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null) ...[
-                          const SizedBox(width: 8),
-                          _buildLabeledBadge(
-                            // Labeled "Split" (not "Program") — this chip's value
-                            // is the training split (e.g. "Full Body"), which read
-                            // as confusing next to the TYPE chip when both showed.
-                            // Literal string keeps it off the localized "Program"
-                            // key without an .arb change.
-                            label: 'Split',
-                            value: _getTrainingProgramName(_trainingSplit!)!,
-                            color: accentColor,
-                            backgroundColor: accentColor.withValues(alpha: 0.15),
-                          ),
-                        ],
-                      ],
-                    ),
+                      // Training Program Badge (only show if we have a valid program name)
+                      if (_trainingSplit != null && _getTrainingProgramName(_trainingSplit!) != null)
+                        _buildLabeledBadge(
+                          // Labeled "Split" (not "Program") — this chip's value
+                          // is the training split (e.g. "Full Body"), which read
+                          // as confusing next to the TYPE chip when both showed.
+                          // Literal string keeps it off the localized "Program"
+                          // key without an .arb change.
+                          label: 'Split',
+                          value: _getTrainingProgramName(_trainingSplit!)!,
+                          color: accentColor,
+                          backgroundColor: accentColor.withValues(alpha: 0.15),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -595,7 +599,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                             ? Icons.thumb_down_rounded
                             : Icons.thumb_down_outlined,
                         active: _thumbs == -1,
-                        activeColor: Colors.redAccent,
+                        activeColor: Colors.redAccent,  // accent-allowlist: error/destructive — must stay red
                         onTap: () => _onThumbs(workout, -1),
                       ),
                     ],
@@ -649,7 +653,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const AnimatedFireIcon(size: 18, color: Color(0xFFF97316)),
+                              AnimatedFireIcon(size: 18, color: context.accentColor),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: ZealovaStatTile(
@@ -705,7 +709,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                               AppLocalizations.of(context).workoutDetailRevert.toUpperCase(),
                               style: ZType.lbl(
                                 12,
-                                color: Colors.orange,
+                                color: Colors.orange,  // accent-allowlist: warning severity
                                 letterSpacing: 1.2,
                               ),
                             ),
@@ -815,7 +819,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         child: Row(
                           children: [
-                            const Icon(Icons.hot_tub_rounded, size: 20, color: Color(0xFFE65100)),
+                            const Icon(Icons.hot_tub_rounded, size: 20, color: Color(0xFFE65100)),  // accent-allowlist: deliberate deep-orange heat theme for sauna, matches sauna_dialog.dart
                             const SizedBox(width: 10),
                             Expanded(
                               child: Column(
@@ -857,7 +861,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         icon: const Icon(Icons.hot_tub_rounded, size: 18),
                         label: Text(AppLocalizations.of(context).workoutDetailAddSaunaTime),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFE65100),
+                          foregroundColor: const Color(0xFFE65100),  // accent-allowlist: deliberate deep-orange heat theme for sauna, matches sauna_dialog.dart
                         ),
                       ),
               ),
@@ -872,7 +876,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               child: _buildCollapsibleSectionHeader(
                 title: AppLocalizations.of(context).workoutDetailWarmUp,
                 icon: Icons.whatshot,
-                color: AppColors.orange,
+                color: context.accentColor,
                 isExpanded: _isWarmupExpanded,
                 onTap: () {
                   setState(() => _isWarmupExpanded = !_isWarmupExpanded);
@@ -894,7 +898,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
           if (_isWarmupExpanded)
             _buildWarmupStretchSliver(
               _getWarmupExercises(),
-              AppColors.orange,
+              context.accentColor,
               'No warm-up for this workout.',
               section: 'warmup',
             ),
@@ -1095,7 +1099,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                 child: _buildCollapsibleSectionHeader(
                   title: AppLocalizations.of(context).workoutDetailWantAChallenge,
                   icon: Icons.local_fire_department,
-                  color: Colors.orange,
+                  color: Colors.orange,  // accent-allowlist: warning severity
                   isExpanded: _isChallengeExpanded,
                   onTap: () => setState(() => _isChallengeExpanded = !_isChallengeExpanded),
                   itemCount: 1,
@@ -1121,7 +1125,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               child: _buildCollapsibleSectionHeader(
                 title: AppLocalizations.of(context).workoutDetailCoolDownStretches,
                 icon: Icons.self_improvement,
-                color: AppColors.purple,
+                color: context.accentColor,
                 isExpanded: _isStretchesExpanded,
                 onTap: () {
                   setState(() => _isStretchesExpanded = !_isStretchesExpanded);
@@ -1143,7 +1147,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
           if (_isStretchesExpanded)
             _buildWarmupStretchSliver(
               _getStretchExercises(),
-              AppColors.green,
+              AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               'No stretches for this workout.',
               section: 'stretches',
             ),
@@ -1385,7 +1389,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                   child: Icon(
                     _isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                     key: ValueKey(_isFavorite),
-                    color: _isFavorite ? Colors.redAccent : (isDark ? Colors.white : AppColorsLight.textPrimary),
+                    color: _isFavorite ? Colors.redAccent : (isDark ? Colors.white : AppColorsLight.textPrimary),  // accent-allowlist: error/destructive — must stay red
                     size: 22,
                   ),
                 ),

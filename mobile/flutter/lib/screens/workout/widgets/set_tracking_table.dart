@@ -1097,7 +1097,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                     : Icons.check_box_outline_blank,
                 size: 20,
                 color: widget.allSetsCompleted
-                    ? const Color(0xFF5BE49B)
+                    ? const Color(0xFF5BE49B)  // accent-allowlist: signature 'done' status green (matches set_tracking_table_part_set_number_badge.dart)
                     : headerColor,
               ),
             ),

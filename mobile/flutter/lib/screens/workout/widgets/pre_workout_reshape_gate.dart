@@ -24,6 +24,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../providers/active_workout_live_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Keys ("$workoutId|$yyyymmdd") for which the reshape gate already ran today.
 final preWorkoutReshapeDoneProvider =
@@ -344,10 +345,10 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
                                           (e) => e.value == _painPart)
                                       .key,
                               ].join(' · '),
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.cyan),
+                                  color: context.accentColor),
                             ),
                         ],
                       ),
@@ -374,7 +375,7 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
               const Spacer(),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
@@ -410,10 +411,10 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
                 style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.w600, color: text)),
             Text('${value.round()}/10',
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.cyan)),
+                    color: context.accentColor)),
           ],
         ),
         Slider(
@@ -421,7 +422,7 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
           min: 0,
           max: 10,
           divisions: 10,
-          activeColor: AppColors.cyan,
+          activeColor: context.accentColor,
           label: '${value.round()}',
           onChanged: onChanged,
         ),
@@ -468,10 +469,10 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
                   style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: text)),
               Text('${_painLevel.round()}/10',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.cyan)),
+                      color: context.accentColor)),
             ],
           ),
           Slider(
@@ -479,7 +480,7 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
             min: 0,
             max: 10,
             divisions: 10,
-            activeColor: AppColors.cyan,
+            activeColor: context.accentColor,
             onChanged: (v) => setState(() => _painLevel = v),
           ),
           Text(
@@ -502,12 +503,12 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.cyan.withOpacity(0.16)
+              ? context.accentColor.withOpacity(0.16)
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: selected
-                ? AppColors.cyan
+                ? context.accentColor
                 : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
             width: selected ? 1.4 : 0.8,
           ),
@@ -518,7 +519,7 @@ class _ReshapeCheckInSheetState extends State<_ReshapeCheckInSheet> {
             fontSize: 13,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             color: selected
-                ? AppColors.cyan
+                ? context.accentColor
                 : (isDark
                     ? AppColors.textPrimary
                     : AppColorsLight.textPrimary),
@@ -542,8 +543,8 @@ class _ReshapeDiffDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Row(
-        children: const [
-          Icon(Icons.auto_fix_high_rounded, size: 20, color: AppColors.cyan),
+        children: [
+          Icon(Icons.auto_fix_high_rounded, size: 20, color: context.accentColor),
           SizedBox(width: 8),
           Expanded(child: Text('Reshaped for today')),
         ],
@@ -558,10 +559,10 @@ class _ReshapeDiffDialog extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.only(top: 5, right: 8),
                     child: Icon(Icons.check_circle,
-                        size: 14, color: AppColors.cyan),
+                        size: 14, color: context.accentColor),
                   ),
                   Expanded(
                     child: Text(r, style: const TextStyle(fontSize: 13.5)),
@@ -602,7 +603,7 @@ class _ReshapeDiffDialog extends StatelessWidget {
           child: const Text('Reject'),
         ),
         FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: AppColors.cyan),
+          style: FilledButton.styleFrom(backgroundColor: context.accentColor),
           onPressed: () => Navigator.pop(context, true),
           child: const Text('Accept'),
         ),

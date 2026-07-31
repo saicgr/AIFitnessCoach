@@ -781,7 +781,7 @@ class _CustomizationStudioSheetState
             const SizedBox(height: 8),
             Text(
               _previewError!,
-              style: const TextStyle(fontSize: 12, color: Colors.redAccent),
+              style: const TextStyle(fontSize: 12, color: Colors.redAccent),  // accent-allowlist: error/destructive — must stay red
             ),
           ],
         ],

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Inline number input with +/- buttons
 class InlineNumberInput extends StatefulWidget {
@@ -759,7 +760,7 @@ class RepsPresetButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AppColors.purple;
+    final color = accentColor ?? context.accentColor;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -777,7 +778,7 @@ class RepsPresetButtons extends StatelessWidget {
         Flexible(
           child: _PresetButton(
             label: '-5',
-            color: AppColors.orange,
+            color: context.accentColor,
             onTap: () => _setReps(targetReps - 5),
           ),
         ),
@@ -785,7 +786,7 @@ class RepsPresetButtons extends StatelessWidget {
         Flexible(
           child: _PresetButton(
             label: '-2',
-            color: AppColors.orange,
+            color: context.accentColor,
             onTap: () => _setReps(targetReps - 2),
           ),
         ),
@@ -866,11 +867,11 @@ class CompletedRepsDisplay extends StatelessWidget {
     // Determine color based on performance
     Color repsColor;
     if (isEdited) {
-      repsColor = AppColors.orange;
+      repsColor = context.accentColor;
     } else if (differsFromTarget && !metTarget) {
-      repsColor = AppColors.orange;
+      repsColor = context.accentColor;
     } else {
-      repsColor = AppColors.success;
+      repsColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
     }
 
     return Row(
@@ -901,8 +902,8 @@ class CompletedRepsDisplay extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             decoration: BoxDecoration(
               color: metTarget
-                  ? AppColors.success.withOpacity(0.15)
-                  : AppColors.orange.withOpacity(0.15),
+                  ? AppColors.success.withOpacity(0.15)  // accent-allowlist: success/positive state — must stay green regardless of accent
+                  : context.accentColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -910,7 +911,7 @@ class CompletedRepsDisplay extends StatelessWidget {
               style: TextStyle(
                 fontSize: 8,
                 fontWeight: FontWeight.bold,
-                color: metTarget ? AppColors.success : AppColors.orange,
+                color: metTarget ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             ),
           ),
@@ -922,7 +923,7 @@ class CompletedRepsDisplay extends StatelessWidget {
             child: Icon(
               Icons.edit,
               size: 10,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ),
       ],
@@ -946,7 +947,7 @@ class TargetRepsLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labelColor = color ?? AppColors.purple;
+    final labelColor = color ?? context.accentColor;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

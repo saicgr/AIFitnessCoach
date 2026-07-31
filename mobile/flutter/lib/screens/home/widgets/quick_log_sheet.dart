@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/models/quick_action.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/hydration_repository.dart';
@@ -283,9 +284,14 @@ class _QuickTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = colors;
-    // Every action gets its own tint on a faintly color-washed chip so the
-    // grid scans as distinct surfaces.
-    final tint = action.color ?? c.textSecondary;
+    // E2E register row 15. These chips used to carry a PRIVATE per-action
+    // colour, so the grid rendered as a rainbow — the register's own example
+    // of "colour has stopped carrying meaning". The registry no longer assigns
+    // per-chip hues, so the tint follows the user's accent and the grid reads
+    // as one system. `action.color` is still honoured when an entry genuinely
+    // sets one (nothing in the registry does today), and the neutral
+    // textSecondary remains the last resort.
+    final tint = action.color ?? context.accentColor;
     return GestureDetector(
       onTap: () {
         HapticService.light();

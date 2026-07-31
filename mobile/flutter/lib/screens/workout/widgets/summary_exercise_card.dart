@@ -279,7 +279,7 @@ class _SummaryExerciseCardState extends ConsumerState<SummaryExerciseCard> {
                           children: [
                             if (hasPrs) ...[
                               const Icon(Icons.star,
-                                  size: 15, color: Color(0xFFEAB308)),
+                                  size: 15, color: Color(0xFFEAB308)),  // accent-allowlist: PR gold star, matches medal/rarity gold
                               const SizedBox(width: 4),
                             ],
                             Flexible(
@@ -503,7 +503,7 @@ class _AiPanel extends StatelessWidget {
     if (ctx == null) return const SizedBox.shrink();
     final chips = <Widget>[];
     if (ctx['is_pr'] == true) {
-      chips.add(_chip('🏆 New PR', const Color(0xFFEAB308)));
+      chips.add(_chip('🏆 New PR', const Color(0xFFEAB308)));  // accent-allowlist: PR gold star, matches medal/rarity gold
     } else if (ctx['is_near_pr'] == true) {
       chips.add(_chip('Near PR', accent));
     }
@@ -512,7 +512,7 @@ class _AiPanel extends StatelessWidget {
       chips.add(GestureDetector(
         onTap: onOpenForm,
         child: _chip('Form ${form.toStringAsFixed(0)}/10 ›',
-            const Color(0xFF22C55E)),
+            const Color(0xFF22C55E)),  // accent-allowlist: success/positive state — must stay green regardless of accent
       ));
     }
     if (chips.isEmpty) return const SizedBox.shrink();

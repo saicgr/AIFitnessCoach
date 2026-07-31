@@ -42,10 +42,10 @@ class RpePill extends StatelessWidget {
     final Color tint = !hasValue
         ? Colors.grey.withOpacity(0.4)
         : overshoot <= 0
-            ? const Color(0xFF22C55E)
+            ? const Color(0xFF22C55E)  // accent-allowlist: success/positive state — must stay green regardless of accent
             : overshoot <= 1
-                ? const Color(0xFFF59E0B)
-                : const Color(0xFFEF4444);
+                ? const Color(0xFFF59E0B)  // accent-allowlist: warning severity
+                : const Color(0xFFEF4444);  // accent-allowlist: error/destructive — must stay red
 
     return GestureDetector(
       onTap: () => _cycle(),

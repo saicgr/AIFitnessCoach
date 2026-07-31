@@ -16,22 +16,22 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
     switch (exComp.status) {
       case 'improved':
         statusIcon = Icons.trending_up;
-        statusColor = AppColors.success;
+        statusColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
         statusText = exComp.formattedPercentDiff;
         break;
       case 'declined':
         statusIcon = Icons.trending_down;
-        statusColor = AppColors.error;
+        statusColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
         statusText = exComp.formattedPercentDiff;
         break;
       case 'maintained':
         statusIcon = Icons.remove;
-        statusColor = AppColors.cyan;
+        statusColor = context.accentColor;
         statusText = 'Same';
         break;
       default: // first_time
         statusIcon = Icons.fiber_new;
-        statusColor = AppColors.purple;
+        statusColor = context.accentColor;
         statusText = 'New';
     }
 
@@ -226,19 +226,19 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
     Color? diffColor;
     if (diffPercent != null) {
       if (diffPercent > 1) {
-        diffColor = AppColors.success;
+        diffColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       } else if (diffPercent < -1) {
-        diffColor = AppColors.error;
+        diffColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       } else {
-        diffColor = AppColors.cyan;
+        diffColor = context.accentColor;
       }
     } else if (diff != null && diff.isNotEmpty) {
       if (diff.startsWith('+')) {
-        diffColor = AppColors.success;
+        diffColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       } else if (diff.startsWith('-')) {
-        diffColor = AppColors.error;
+        diffColor = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       } else {
-        diffColor = AppColors.cyan;
+        diffColor = context.accentColor;
       }
     }
 
@@ -312,7 +312,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
                       height: (60 * heightPercent).toDouble(),
                       width: double.infinity,
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withOpacity(0.7),
+                        color: context.accentColor.withOpacity(0.7),
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                       ),
                     ),

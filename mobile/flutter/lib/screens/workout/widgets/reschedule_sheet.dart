@@ -10,6 +10,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../schedule_date_utils.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Shows the reschedule sheet for a missed workout
 ///
 /// Returns true if successfully rescheduled, false/null otherwise
@@ -66,12 +67,12 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         Icons.calendar_today_rounded,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         size: 24,
                       ),
                     ),
@@ -166,7 +167,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                       ElevatedButton(
                         onPressed: _isLoading ? null : _handleConfirm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.cyan,
+                          backgroundColor: context.accentColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -212,7 +213,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
     bool isDark,
   ) {
     final isSelected = _selectedOption == suggestion.suggestionType;
-    final borderColor = isSelected ? AppColors.cyan : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
+    final borderColor = isSelected ? context.accentColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
 
     IconData icon;
     Color iconColor;
@@ -220,19 +221,19 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
     switch (suggestion.suggestionType) {
       case 'reschedule_today':
         icon = Icons.today_rounded;
-        iconColor = AppColors.success;
+        iconColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
         break;
       case 'reschedule_tomorrow':
         icon = Icons.event_rounded;
-        iconColor = AppColors.purple;
+        iconColor = context.accentColor;
         break;
       case 'swap':
         icon = Icons.swap_horiz_rounded;
-        iconColor = AppColors.orange;
+        iconColor = context.accentColor;
         break;
       default:
         icon = Icons.calendar_today_rounded;
-        iconColor = AppColors.cyan;
+        iconColor = context.accentColor;
     }
 
     return Padding(
@@ -306,14 +307,14 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.orange.withOpacity(0.1),
+                            color: context.accentColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             'Swaps with: ${suggestion.swapWorkoutName}',
                             style: TextStyle(
                               fontSize: 11,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -329,10 +330,10 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? AppColors.cyan : textSecondary.withOpacity(0.3),
+                      color: isSelected ? context.accentColor : textSecondary.withOpacity(0.3),
                       width: 2,
                     ),
-                    color: isSelected ? AppColors.cyan : Colors.transparent,
+                    color: isSelected ? context.accentColor : Colors.transparent,
                   ),
                   child: isSelected
                       ? const Icon(
@@ -358,7 +359,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
     bool isDark,
   ) {
     final isSelected = _selectedOption == 'custom';
-    final borderColor = isSelected ? AppColors.cyan : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
+    final borderColor = isSelected ? context.accentColor : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
 
     return Material(
       color: cardBg,
@@ -384,7 +385,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
               return Theme(
                 data: Theme.of(context).copyWith(
                   colorScheme: Theme.of(context).colorScheme.copyWith(
-                    primary: AppColors.cyan,
+                    primary: context.accentColor,
                     onPrimary: Colors.white,
                   ),
                 ),
@@ -417,12 +418,12 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.date_range_rounded,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   size: 20,
                 ),
               ),
@@ -446,7 +447,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
                           : 'Choose from calendar',
                       style: TextStyle(
                         fontSize: 13,
-                        color: isSelected ? AppColors.cyan : textSecondary,
+                        color: isSelected ? context.accentColor : textSecondary,
                         fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
                       ),
                     ),
@@ -519,7 +520,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
             ..showSnackBar(
               SnackBar(
                 content: Text(message),
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -527,7 +528,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).workoutActionsFailedToRescheduleWorkout),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -539,7 +540,7 @@ class _RescheduleSheetState extends ConsumerState<_RescheduleSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );

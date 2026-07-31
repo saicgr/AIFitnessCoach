@@ -12,6 +12,7 @@ import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Stretch phase screen displayed after the main workout
 class StretchPhaseScreen extends StatefulWidget {
   /// Total workout time in seconds
@@ -224,7 +225,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
           ),
           child: Row(
             children: [
-              const Icon(Icons.timer, size: 16, color: AppColors.cyan),
+              Icon(Icons.timer, size: 16, color: context.accentColor),
               const SizedBox(width: 6),
               Text(
                 WorkoutTimerController.formatTime(widget.workoutSeconds),
@@ -242,7 +243,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
           child: Text(
             AppLocalizations.of(context).stretchPhaseSkipAll,
             style: TextStyle(
-              color: AppColors.green,
+              color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -257,12 +258,12 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.green.withOpacity(0.2),
+            color: AppColors.green.withOpacity(0.2),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Icon(
             Icons.self_improvement,
-            color: AppColors.green,
+            color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
             size: 28,
           ),
         ),
@@ -275,7 +276,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.green,
+                color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                 letterSpacing: 1.5,
               ),
             ),
@@ -299,20 +300,20 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withOpacity(0.2),
-            AppColors.green.withOpacity(0.2),
+            context.accentColor.withOpacity(0.2),
+            AppColors.green.withOpacity(0.2),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
           ],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
+          color: context.accentColor.withOpacity(0.3),
         ),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.emoji_events,
-            color: AppColors.cyan,
+            color: context.accentColor,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -337,7 +338,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
       child: LinearProgressIndicator(
         value: progress,
         backgroundColor: backgroundColor,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.green),
+        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.green),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
         minHeight: 6,
       ),
     );
@@ -357,13 +358,13 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.green.withOpacity(0.15),
+                color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 exercise.icon,
                 size: 48,
-                color: AppColors.green,
+                color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               ),
             )
                 .animate()
@@ -396,12 +397,12 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
                   style: const TextStyle(
                     fontSize: 56,
                     fontWeight: FontWeight.w300,
-                    color: AppColors.green,
+                    color: AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
                   ),
                 )
                     .animate(onPlay: (controller) => controller.repeat())
                     .shimmer(
-                        duration: 2000.ms, color: AppColors.green.withOpacity(0.3)),
+                        duration: 2000.ms, color: AppColors.green.withOpacity(0.3)),  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               )
             else
               Text(
@@ -490,9 +491,9 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
             onPressed: _toggleTimer,
             style: ElevatedButton.styleFrom(
               backgroundColor: isTimerRunning
-                  ? AppColors.green.withOpacity(0.3)
-                  : AppColors.green,
-              foregroundColor: isTimerRunning ? AppColors.green : Colors.white,
+                  ? AppColors.green.withOpacity(0.3)  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+                  : AppColors.green,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
+              foregroundColor: isTimerRunning ? AppColors.green : Colors.white,  // accent-allowlist: success/positive state — same value as AppColors.success, must stay green regardless of accent
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -523,7 +524,7 @@ class _StretchPhaseScreenState extends State<StretchPhaseScreen> {
             onPressed:
                 isLastExercise ? widget.onStretchComplete : _skipCurrentStretch,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

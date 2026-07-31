@@ -159,7 +159,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
                   ? AppLocalizations.of(context)!.workoutSheetsMixinMlLogged(result.amountMl, result.drinkType.label)
                   : AppLocalizations.of(context)!.workoutSheetsMixinLoggedLocallySyncFailed(result.drinkType.label)),
               duration: const Duration(seconds: 2),
-              backgroundColor: success ? AppColors.success : AppColors.orange,
+              backgroundColor: success ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           );
         }
@@ -272,7 +272,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
             child: Text(
               AppLocalizations.of(context).workoutSheetsMixinHide,
               style: TextStyle(
-                color: AppColors.orange,
+                color: context.accentColor,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -922,7 +922,7 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
           width: 20,
           height: 20,
           decoration: BoxDecoration(
-            color: Colors.purple,
+            color: Colors.purple,  // accent-allowlist: superset feature colour — matches the SupersetType legend in superset_pair_sheet.dart, this UI is the 'create superset' sheet/instructions
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(

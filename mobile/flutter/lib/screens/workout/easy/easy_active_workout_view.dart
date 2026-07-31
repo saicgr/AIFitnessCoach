@@ -127,6 +127,13 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// that changes is the label.
   final String? phaseLabel;
 
+  /// E2E #134 — true while the rest overlay (a transparent-barrier ROUTE
+  /// pushed on top of this screen, see `easy_rest_controller.dart`) is up.
+  /// Nothing about that route resizes this screen, so it adds its own
+  /// matching bottom clearance here instead — otherwise the bottom-docked
+  /// rest strip overlaps the "Ask coach" pill / set ledger underneath.
+  final bool isResting;
+
   const EasyActiveWorkoutView({
     super.key,
     required this.exercise,
@@ -172,6 +179,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.onCompleteWorkoutNow,
     this.allCompletedSets = const [],
     this.phaseLabel,
+    this.isResting = false,
   });
 
   @override
@@ -296,6 +304,16 @@ class EasyActiveWorkoutView extends StatelessWidget {
                 totalSets: state.totalSets,
                 expand: true,
               ),
+            ),
+            // E2E #134 — matches the rest overlay's own visible height (its
+            // 12+12 internal padding + kicker/countdown row + progress bar +
+            // next-set ledger row + its own 14px outer margin) so the strip
+            // never overlaps this pill / the focal card above it. Animated so
+            // the lift reads as intentional, not a jump-cut.
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              height: isResting ? 118 : 0,
             ),
           ],
         ),

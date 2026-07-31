@@ -18,6 +18,7 @@ import 'widgets/ai_adaptive_plan_card.dart';
 import 'widgets/program_library_card.dart';
 import 'widgets/program_manage_sheet.dart';
 import 'widgets/program_schedule_sheet.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Route metadata for the Your Programs hub.
 class YourProgramsRoute {
@@ -355,7 +356,7 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),  // accent-allowlist: error/destructive — must stay red
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Delete'),
           ),
@@ -427,8 +428,8 @@ class _TemplateActionsSheet extends StatelessWidget {
           _actionTile(
             icon: Icons.delete_outline_rounded,
             label: 'Delete',
-            iconColor: AppColors.error,
-            labelColor: AppColors.error,
+            iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
+            labelColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
             onTap: onDelete,
           ),
         ],
@@ -614,9 +615,9 @@ class _ActiveProgramCard extends StatelessWidget {
             Row(
               children: [
                 if (assignment.isAddon)
-                  _slotPill('ADD-ON')
+                  _slotPill(context, 'ADD-ON')
                 else
-                  _slotPill('PRIMARY'),
+                  _slotPill(context, 'PRIMARY'),
               ],
             ),
             const SizedBox(height: 12),
@@ -641,7 +642,7 @@ class _ActiveProgramCard extends StatelessWidget {
                 minHeight: 5,
                 backgroundColor: AppColors.surface,
                 valueColor:
-                    const AlwaysStoppedAnimation<Color>(AppColors.orange),
+                    AlwaysStoppedAnimation<Color>(context.accentColor),
               ),
             ),
           ],
@@ -650,16 +651,16 @@ class _ActiveProgramCard extends StatelessWidget {
     );
   }
 
-  Widget _slotPill(String label) {
+  Widget _slotPill(BuildContext context, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.16),
+        color: context.accentColor.withValues(alpha: 0.16),
         borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.5)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.5)),
       ),
       child: Text(label,
-          style: ZType.lbl(9.5, color: AppColors.orange, letterSpacing: 1.2)),
+          style: ZType.lbl(9.5, color: context.accentColor, letterSpacing: 1.2)),
     );
   }
 }

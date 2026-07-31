@@ -192,7 +192,7 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tint = action.destructive ? Colors.redAccent : fg;
+    final tint = action.destructive ? Colors.redAccent : fg;  // accent-allowlist: error/destructive — must stay red
     return Material(
       color: Colors.transparent,
       child: InkWell(

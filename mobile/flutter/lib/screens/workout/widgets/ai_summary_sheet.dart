@@ -224,7 +224,7 @@ class _AiSummarySheetState extends ConsumerState<AiSummarySheet> {
                   height: 30,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [accent, AppColors.purple],
+                      colors: [accent, context.accentColor],
                       begin: AlignmentDirectional.topStart,
                       end: AlignmentDirectional.bottomEnd,
                     ),
