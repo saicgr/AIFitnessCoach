@@ -1,21 +1,24 @@
-"""Secondary endpoints for performance_db.  Sub-router included by main module.
+"""Secondary endpoints for performance_db. Sub-router included by main module.
 Performance logging API endpoints with Supabase.
 
+Mounted at /api/v1/performance (see api/v1/__init__.py) via performance_db.py's
+`router.include_router(_endpoints_router)` — NOT /api/v1/performance-db,
+despite the module name. Primary endpoints (logs, workout-logs,
+strength-records, weekly-volume, streak) are documented in performance_db.py.
+
 ENDPOINTS:
-- POST /api/v1/performance-db/logs - Create performance log
-- GET  /api/v1/performance-db/logs - List performance logs
-- POST /api/v1/performance-db/workout-logs - Create workout log
-- GET  /api/v1/performance-db/workout-logs - List workout logs
-- GET  /api/v1/performance-db/strength-records - Get strength records
-- GET  /api/v1/performance-db/weekly-volume - Get weekly volume
-- POST /api/v1/performance-db/workout-exit - Log workout exit/quit
-- GET  /api/v1/performance-db/workout-exits - List workout exits
-- POST /api/v1/performance-db/drink-intake - Log drink intake during workout
-- GET  /api/v1/performance-db/drink-intake - List drink intakes
-- GET  /api/v1/performance-db/drink-intake/summary/{workout_log_id} - Get drink summary
-- POST /api/v1/performance-db/rest-intervals - Log rest interval
-- GET  /api/v1/performance-db/rest-intervals - List rest intervals
-- GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
+- POST /api/v1/performance/workout-exit - Log workout exit/quit
+- GET  /api/v1/performance/workout-exits - List workout exits
+- POST /api/v1/performance/drink-intake - Log drink intake during workout
+- GET  /api/v1/performance/drink-intake - List drink intakes
+- GET  /api/v1/performance/drink-intake/summary/{workout_log_id} - Get drink summary
+- POST /api/v1/performance/rest-intervals - Log rest interval
+- GET  /api/v1/performance/rest-intervals - List rest intervals
+- GET  /api/v1/performance/rest-intervals/stats/{workout_log_id} - Get rest stats
+- GET  /api/v1/performance/exercise-stats/{user_id} - All exercise stats for a user
+- GET  /api/v1/performance/exercise-stats/{user_id}/{exercise_name} - Stats for one exercise
+- GET  /api/v1/performance/exercise-history/{user_id} - Exercise history
+- GET  /api/v1/performance/workout-logs/by-workout/{workout_id} - Workout log by workout id
 """
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query

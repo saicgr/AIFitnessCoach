@@ -632,12 +632,12 @@ export const saveOnboardingConversation = async (request: SaveConversationReques
 // ============================================
 
 export const createWorkoutLog = async (data: WorkoutLogCreate): Promise<WorkoutLog> => {
-  const { data: response } = await api.post<WorkoutLog>('/performance-db/workout-logs', data);
+  const { data: response } = await api.post<WorkoutLog>('/performance/workout-logs', data);
   return response;
 };
 
 export const getWorkoutLogs = async (userId: string): Promise<WorkoutLog[]> => {
-  const { data } = await api.get<WorkoutLog[]>(`/performance-db/workout-logs?user_id=${userId}`);
+  const { data } = await api.get<WorkoutLog[]>(`/performance/workout-logs?user_id=${userId}`);
   return data;
 };
 
@@ -646,7 +646,7 @@ export const getWorkoutLogs = async (userId: string): Promise<WorkoutLog[]> => {
 // ============================================
 
 export const createPerformanceLog = async (data: PerformanceLogCreate): Promise<PerformanceLogDetailed> => {
-  const { data: response } = await api.post<PerformanceLogDetailed>('/performance-db/logs', data);
+  const { data: response } = await api.post<PerformanceLogDetailed>('/performance/logs', data);
   return response;
 };
 
@@ -657,7 +657,7 @@ export const getPerformanceLogs = async (
   const params = new URLSearchParams();
   params.append('user_id', userId);
   if (exerciseId) params.append('exercise_id', exerciseId);
-  const { data } = await api.get<PerformanceLogDetailed[]>(`/performance-db/logs?${params.toString()}`);
+  const { data } = await api.get<PerformanceLogDetailed[]>(`/performance/logs?${params.toString()}`);
   return data;
 };
 
@@ -667,7 +667,7 @@ export const getExerciseHistory = async (
   limit: number = 5
 ): Promise<PerformanceLogDetailed[]> => {
   const { data } = await api.get<PerformanceLogDetailed[]>(
-    `/performance-db/logs?user_id=${userId}&exercise_id=${exerciseId}&limit=${limit}`
+    `/performance/logs?user_id=${userId}&exercise_id=${exerciseId}&limit=${limit}`
   );
   return data;
 };
@@ -685,12 +685,12 @@ export const getStrengthRecords = async (
   params.append('user_id', userId);
   if (exerciseId) params.append('exercise_id', exerciseId);
   if (prsOnly) params.append('prs_only', 'true');
-  const { data } = await api.get<StrengthRecord[]>(`/performance-db/strength-records?${params.toString()}`);
+  const { data } = await api.get<StrengthRecord[]>(`/performance/strength-records?${params.toString()}`);
   return data;
 };
 
 export const createStrengthRecord = async (data: StrengthRecordCreate): Promise<StrengthRecord> => {
-  const { data: response } = await api.post<StrengthRecord>('/performance-db/strength-records', data);
+  const { data: response } = await api.post<StrengthRecord>('/performance/strength-records', data);
   return response;
 };
 
@@ -707,7 +707,7 @@ export const getWeeklyVolumes = async (
   params.append('user_id', userId);
   if (week !== undefined) params.append('week_number', week.toString());
   if (year !== undefined) params.append('year', year.toString());
-  const { data } = await api.get<WeeklyVolume[]>(`/performance-db/weekly-volume?${params.toString()}`);
+  const { data } = await api.get<WeeklyVolume[]>(`/performance/weekly-volume?${params.toString()}`);
   return data;
 };
 
@@ -720,7 +720,7 @@ export const updateWeeklyVolume = async (
   reps: number,
   volumeKg: number
 ): Promise<WeeklyVolume> => {
-  const { data } = await api.post<WeeklyVolume>('/performance-db/weekly-volume', {
+  const { data } = await api.post<WeeklyVolume>('/performance/weekly-volume', {
     user_id: userId,
     muscle_group: muscleGroup,
     week_number: weekNumber,
@@ -747,7 +747,7 @@ export interface StreakResponse {
 }
 
 export const getUserStreak = async (userId: string): Promise<StreakResponse> => {
-  const { data } = await api.get<StreakResponse>(`/performance-db/streak/${userId}`);
+  const { data } = await api.get<StreakResponse>(`/performance/streak/${userId}`);
   return data;
 };
 

@@ -1,21 +1,25 @@
 """
 Performance logging API endpoints with Supabase.
 
+Mounted at /api/v1/performance (see api/v1/__init__.py) — NOT
+/api/v1/performance-db, despite the module name. Also includes the
+performance_db_endpoints sub-router (see bottom of this file), whose routes
+are documented separately in that module.
+
 ENDPOINTS:
-- POST /api/v1/performance-db/logs - Create performance log
-- GET  /api/v1/performance-db/logs - List performance logs
-- POST /api/v1/performance-db/workout-logs - Create workout log
-- GET  /api/v1/performance-db/workout-logs - List workout logs
-- GET  /api/v1/performance-db/strength-records - Get strength records
-- GET  /api/v1/performance-db/weekly-volume - Get weekly volume
-- POST /api/v1/performance-db/workout-exit - Log workout exit/quit
-- GET  /api/v1/performance-db/workout-exits - List workout exits
-- POST /api/v1/performance-db/drink-intake - Log drink intake during workout
-- GET  /api/v1/performance-db/drink-intake - List drink intakes
-- GET  /api/v1/performance-db/drink-intake/summary/{workout_log_id} - Get drink summary
-- POST /api/v1/performance-db/rest-intervals - Log rest interval
-- GET  /api/v1/performance-db/rest-intervals - List rest intervals
-- GET  /api/v1/performance-db/rest-intervals/stats/{workout_log_id} - Get rest stats
+- POST  /api/v1/performance/logs - Create performance log
+- PATCH /api/v1/performance/logs/by-set - Update a performance log by set
+- POST  /api/v1/performance/logs/bulk - Bulk-create performance logs
+- GET   /api/v1/performance/logs - List performance logs
+- GET   /api/v1/performance/exercise-last-performance/{exercise_name} - Last performance for an exercise
+- POST  /api/v1/performance/workout-logs - Create workout log
+- PATCH /api/v1/performance/workout-logs/{log_id} - Update workout log
+- GET   /api/v1/performance/workout-logs - List workout logs
+- POST  /api/v1/performance/strength-records - Create strength record
+- GET   /api/v1/performance/strength-records - Get strength records
+- POST  /api/v1/performance/weekly-volume - Create weekly volume entry
+- GET   /api/v1/performance/weekly-volume - Get weekly volume
+- GET   /api/v1/performance/streak/{user_id} - Get workout streak
 """
 from core.db import get_supabase_db
 
