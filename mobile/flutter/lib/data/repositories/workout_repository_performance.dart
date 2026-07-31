@@ -381,9 +381,13 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     }
   }
 
-  /// Log drink intake during workout
+  /// Log drink intake during workout.
+  ///
+  /// [workoutLogId] must be a `workout_logs.id` (the parent SESSION row),
+  /// NOT a `workouts.id` — the backend's `workout_log_id` column is a
+  /// NOT NULL FK to `workout_logs(id)` and rejects the plan-template id.
   Future<Map<String, dynamic>?> logDrinkIntake({
-    required String workoutId,
+    required String workoutLogId,
     required String userId,
     required int amountMl,
     String drinkType = 'water',
@@ -393,11 +397,10 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
       final response = await apiClient.post(
         '/performance/drink-intake',
         data: {
-          'workout_id': workoutId,
+          'workout_log_id': workoutLogId,
           'user_id': userId,
           'amount_ml': amountMl,
           'drink_type': drinkType,
-          'logged_at': Tz.timestamp(),
         },
       );
       if (response.statusCode == 200) {

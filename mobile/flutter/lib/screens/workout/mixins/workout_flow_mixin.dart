@@ -405,12 +405,25 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
       final ancillaryFutures = <Future>[];
       if (totalDrinkIntakeMl > 0) {
-        ancillaryFutures.add(workoutRepo.logDrinkIntake(
-          workoutId: workout.id!,
-          userId: userId,
-          amountMl: totalDrinkIntakeMl,
-          drinkType: 'water',
-        ));
+        // `drink_intake_logs.workout_log_id` is a NOT NULL FK to
+        // `workout_logs(id)` — the session row, not `workout.id` (the plan
+        // template). That row doesn't exist yet at this point, so chain off
+        // createLogFuture (same id createLogFuture/setPerfsFuture resolve
+        // below) instead of firing in parallel with it.
+        ancillaryFutures.add(createLogFuture.then((workoutLog) {
+          final logId = (workoutLog?['id'] as String?) ?? existingLogId;
+          if (logId == null) {
+            debugPrint(
+                '❌ [Complete] Skipping drink-intake log: no workout_log_id available');
+            return null;
+          }
+          return workoutRepo.logDrinkIntake(
+            workoutLogId: logId,
+            userId: userId,
+            amountMl: totalDrinkIntakeMl,
+            drinkType: 'water',
+          );
+        }));
       }
       ancillaryFutures.add(workoutRepo.logWorkoutExit(
         workoutId: workout.id!,
