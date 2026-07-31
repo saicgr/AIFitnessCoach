@@ -13,6 +13,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/providers/workout_studio_providers.dart';
+import '../../../data/services/share_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -504,6 +505,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       await Share.share(
         '${widget.workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
         subject: '${Branding.appName} workout',
+        sharePositionOrigin: ShareService.defaultSharePositionOrigin(),
       );
     } catch (e) {
       if (!mounted) return;

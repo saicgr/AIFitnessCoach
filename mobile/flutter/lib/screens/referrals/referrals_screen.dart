@@ -10,6 +10,7 @@ import '../../data/models/referral_summary.dart';
 import '../../data/providers/referral_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/pending_referral_service.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/glass_back_button.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -221,11 +222,15 @@ class _CodeCard extends StatelessWidget {
     );
   }
 
-  void _share() {
+  void _share(BuildContext context) {
     HapticService.light();
     final msg = "Join me on ${Branding.appName} — use my code ${summary.referralCode} for a welcome bonus. "
         "Download: https://${Branding.marketingDomain}/invite/${summary.referralCode}";
-    Share.share(msg, subject: '${Branding.appName} invite');
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box != null
+        ? box.localToGlobal(Offset.zero) & box.size
+        : ShareService.defaultSharePositionOrigin();
+    Share.share(msg, subject: '${Branding.appName} invite', sharePositionOrigin: origin);
   }
 
   @override
@@ -286,7 +291,7 @@ class _CodeCard extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _share,
+              onPressed: () => _share(context),
               icon: const Icon(Icons.share, size: 18),
               label: Text(AppLocalizations.of(context).challengeCreateInviteFriends),
               style: ElevatedButton.styleFrom(

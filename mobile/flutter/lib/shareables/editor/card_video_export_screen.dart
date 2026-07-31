@@ -13,6 +13,7 @@ import 'package:video_player/video_player.dart';
 import '../doc/card_doc.dart';
 import '../doc/card_doc_renderer.dart';
 import '../shareable_data.dart';
+import '../../data/services/share_service.dart';
 
 /// Exports an editable share card ([CardDoc]) as a short animated MP4.
 ///
@@ -270,7 +271,11 @@ class _CardVideoExportScreenState extends State<CardVideoExportScreen> {
     final path = _videoPath;
     if (path == null) return;
     try {
-      await Share.shareXFiles([XFile(path)], text: widget.data.title);
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.shareXFiles([XFile(path)], text: widget.data.title, sharePositionOrigin: origin);
     } catch (e) {
       _toast('Share failed');
     }

@@ -26,6 +26,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../settings/dialogs/export_dialog.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/data/services/share_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';

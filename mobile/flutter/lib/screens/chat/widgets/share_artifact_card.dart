@@ -13,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/data/services/share_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class ShareArtifactCard extends StatelessWidget {
@@ -45,7 +46,15 @@ class ShareArtifactCard extends StatelessWidget {
     if (url == null) return;
     await Clipboard.setData(ClipboardData(text: url));
     if (!context.mounted) return;
-    await Share.share('$_label — ${Branding.appName}\n$url', subject: '${Branding.appName}');
+    final box = context.findRenderObject() as RenderBox?;
+    final origin = box != null
+        ? box.localToGlobal(Offset.zero) & box.size
+        : ShareService.defaultSharePositionOrigin();
+    await Share.share(
+      '$_label — ${Branding.appName}\n$url',
+      subject: '${Branding.appName}',
+      sharePositionOrigin: origin,
+    );
   }
 
   void _onOpenInApp(BuildContext context) {

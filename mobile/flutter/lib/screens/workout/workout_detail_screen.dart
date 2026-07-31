@@ -50,6 +50,7 @@ import 'widgets/superset_reorder_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/branding.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/fasting_training_warning.dart';
 import '../../widgets/coach_avatar.dart';
 import '../../widgets/fading_chip_row.dart';

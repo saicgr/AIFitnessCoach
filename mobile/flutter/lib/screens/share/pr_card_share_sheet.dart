@@ -15,6 +15,7 @@ import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/models/timeline_entry.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -113,6 +114,10 @@ class _PRCardShareSheetState extends State<PRCardShareSheet> {
       if (bytes == null) {
         throw Exception('Capture failed');
       }
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [
           XFile.fromData(
@@ -122,10 +127,16 @@ class _PRCardShareSheetState extends State<PRCardShareSheet> {
           ),
         ],
         text: '${widget.achievement.label} 💪 — Logged with Zealova',
+        sharePositionOrigin: origin,
       );
     } catch (_) {
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.share(
         '${widget.achievement.label} 💪 — Logged with Zealova',
+        sharePositionOrigin: origin,
       );
     } finally {
       if (mounted) setState(() => _sharing = false);

@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/cardio_export_repository.dart';
+import '../../data/services/share_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Tap-to-share button that downloads the cardio session as GPX / TCX /
@@ -49,9 +50,14 @@ class _ExportWorkoutButtonState extends ConsumerState<ExportWorkoutButton> {
       await file.writeAsBytes(result.bytes);
 
       if (!mounted) return;
+      final box = context.findRenderObject() as RenderBox?;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(file.path, mimeType: result.mime, name: result.filename)],
         text: 'Workout export from Zealova',
+        sharePositionOrigin: origin,
       );
     } catch (e) {
       if (!mounted) return;

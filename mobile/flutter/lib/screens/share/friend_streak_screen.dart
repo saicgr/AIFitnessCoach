@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/share_growth_repository.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/design_system/section_header.dart';
 import '../common/app_refresh_indicator.dart';
 
@@ -74,7 +75,11 @@ class _FriendStreakScreenState extends ConsumerState<FriendStreakScreen> {
       final msg = link.isNotEmpty
           ? "Let's keep a $kindLabel streak on Zealova — we both log daily: $link"
           : "Join my $kindLabel streak on Zealova with code $code";
-      await Share.share(msg);
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.share(msg, sharePositionOrigin: origin);
       await _load();
     } catch (e) {
       if (mounted) _toast("Couldn't create an invite. Please try again.");
@@ -284,11 +289,20 @@ class _FriendStreakScreenState extends ConsumerState<FriendStreakScreen> {
               ),
             ),
             if (s.status == 'pending' && s.inviteCode != null)
-              IconButton(
-                tooltip: 'Reshare invite',
-                icon: Icon(Icons.ios_share_rounded, color: c.textMuted),
-                onPressed: () => Share.share(
-                    'Join my Zealova streak with code ${s.inviteCode}'),
+              Builder(
+                builder: (btnContext) => IconButton(
+                  tooltip: 'Reshare invite',
+                  icon: Icon(Icons.ios_share_rounded, color: c.textMuted),
+                  onPressed: () {
+                    final box = btnContext.findRenderObject() as RenderBox?;
+                    final origin = box != null
+                        ? box.localToGlobal(Offset.zero) & box.size
+                        : ShareService.defaultSharePositionOrigin();
+                    Share.share(
+                        'Join my Zealova streak with code ${s.inviteCode}',
+                        sharePositionOrigin: origin);
+                  },
+                ),
               ),
           ],
         ),

@@ -13,6 +13,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/last_used_service.dart';
 import '../../data/services/plan_share_service.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/common/last_used_badge.dart';
 import '../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -113,6 +114,7 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
       await Share.share(
         '${option.label} — ${Branding.appName}\n${res.url}',
         subject: 'My ${Branding.appName} ${option.label.toLowerCase()}',
+        sharePositionOrigin: ShareService.defaultSharePositionOrigin(),
       );
       messenger.showSnackBar(
         SnackBar(content: Text('Share link ready: ${res.url}')),

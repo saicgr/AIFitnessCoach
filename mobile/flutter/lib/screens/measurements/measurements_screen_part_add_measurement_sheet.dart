@@ -862,6 +862,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
       await Share.shareXFiles(
         [XFile(file.path)],
         subject: '${Branding.appName} Measurements Export',
+        sharePositionOrigin: ShareService.defaultSharePositionOrigin(),
       );
     } catch (e) {
       // Dismiss loading

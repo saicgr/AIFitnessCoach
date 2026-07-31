@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'comparison_layouts.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/data/services/share_service.dart';
 
 /// Service for capturing, saving, and sharing comparison images
 class ComparisonExportService {
@@ -36,6 +37,7 @@ class ComparisonExportService {
     await Share.shareXFiles(
       [XFile(imageFile.path)],
       text: 'My fitness progress - ${Branding.appName}',
+      sharePositionOrigin: ShareService.defaultSharePositionOrigin(),
     );
   }
 

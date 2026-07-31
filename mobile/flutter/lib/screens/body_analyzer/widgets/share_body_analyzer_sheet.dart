@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/body_analyzer.dart';
+import 'package:fitwiz/data/services/share_service.dart';
 import 'body_analyzer_hero.dart';
 import 'score_ring.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -129,9 +130,15 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
           await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData == null) return;
       final bytes = byteData.buffer.asUint8List();
+      final box =
+          context.mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile.fromData(Uint8List.fromList(bytes), name: 'body-analyzer.png', mimeType: 'image/png')],
         text: 'My Body Analyzer snapshot',
+        sharePositionOrigin: origin,
       );
     } catch (_) {
       if (context.mounted) {

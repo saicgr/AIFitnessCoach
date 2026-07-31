@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 import '../local/database.dart';
 import '../local/database_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/data/services/share_service.dart';
 
 /// Service for monitoring sync health, exporting dead letter items,
 /// and triggering recovery actions.
@@ -121,6 +122,7 @@ class SyncFailureService {
     await Share.shareXFiles(
       [XFile(file.path)],
       subject: '${Branding.appName} Sync Export',
+      sharePositionOrigin: ShareService.defaultSharePositionOrigin(),
     );
   }
 

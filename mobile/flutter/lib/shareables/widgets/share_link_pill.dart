@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/data/services/share_service.dart';
 
 /// Pill-style row showing a public share URL with [Copy] / [Open] actions.
 /// Displayed in the unified share sheet for `ShareableKind.workoutComplete`.
@@ -116,9 +117,14 @@ class ShareLinkPill extends StatelessWidget {
             tooltip: 'Share link',
             onTap: () async {
               HapticFeedback.mediumImpact();
+              final box = context.findRenderObject() as RenderBox?;
+              final origin = box != null
+                  ? box.localToGlobal(Offset.zero) & box.size
+                  : ShareService.defaultSharePositionOrigin();
               await Share.share(
                 url!,
                 subject: '${Branding.appName} workout',
+                sharePositionOrigin: origin,
               );
             },
           ),

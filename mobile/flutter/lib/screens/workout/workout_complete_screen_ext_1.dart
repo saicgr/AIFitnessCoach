@@ -1071,9 +1071,14 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       // (b) Hand the captured photo to the Strava app via the OS share-sheet so
       //     the user can attach it to the just-pushed activity post.
       if (_capturedPhotoPath != null && File(_capturedPhotoPath!).existsSync()) {
+        final box = mounted ? context.findRenderObject() as RenderBox? : null;
+        final origin = box != null
+            ? box.localToGlobal(Offset.zero) & box.size
+            : ShareService.defaultSharePositionOrigin();
         await Share.shareXFiles(
           [XFile(_capturedPhotoPath!)],
           text: 'Shared from Zealova — ${widget.workout.name ?? 'Workout'}',
+          sharePositionOrigin: origin,
         );
       }
 

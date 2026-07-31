@@ -8,6 +8,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/export_categories.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/share_service.dart';
 import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -182,10 +183,15 @@ Future<void> _exportData(
       await file.writeAsBytes(response.data as List<int>);
 
       // Share the file
+      final box = context.mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(filePath)],
         subject: '${Branding.appName} Data Export',
         text: 'My fitness data exported on $timestamp',
+        sharePositionOrigin: origin,
       );
 
       scaffoldMessenger.showSnackBar(
@@ -342,10 +348,15 @@ Future<void> _exportDataAsText(
       await file.writeAsString(textContent);
 
       // Share the file
+      final box = context.mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(filePath)],
         subject: '${Branding.appName} Data Export',
         text: 'My fitness data exported on $timestamp',
+        sharePositionOrigin: origin,
       );
 
       scaffoldMessenger.showSnackBar(
@@ -524,10 +535,15 @@ Future<void> _exportDataWithFormat(
         await file.writeAsBytes(response.data as List<int>);
       }
 
+      final box = context.mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(filePath)],
         subject: '${Branding.appName} Data Export',
         text: 'My fitness data exported on $timestamp',
+        sharePositionOrigin: origin,
       );
 
       scaffoldMessenger.showSnackBar(

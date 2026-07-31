@@ -1477,9 +1477,14 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
       }
       await Clipboard.setData(ClipboardData(text: url));
       if (mounted) _showSnackBar('Link copied to clipboard');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.share(
         '${workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
         subject: '${Branding.appName} workout',
+        sharePositionOrigin: origin,
       );
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Share failed: $e');

@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/share_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -221,10 +222,15 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
       final tempFile = File(tempPath);
       await tempFile.writeAsBytes(bytes);
 
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(tempPath)],
         subject: '${Branding.appName} Export — ${fmt.displayName}',
         text: 'Your ${Branding.appName} training data (${fmt.displayName}).',
+        sharePositionOrigin: origin,
       );
 
       if (!mounted) return;

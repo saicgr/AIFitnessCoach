@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:video_player/video_player.dart';
 
 import '../shareable_data.dart';
+import '../../data/services/share_service.dart';
 import '../widgets/app_watermark.dart';
 import '../widgets/food_image.dart';
 import '../widgets/macro_viz.dart';
@@ -165,7 +166,11 @@ class _FoodMontageScreenState extends State<FoodMontageScreen> {
     final path = _videoPath;
     if (path == null) return;
     try {
-      await Share.shareXFiles([XFile(path)], text: 'My meals');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.shareXFiles([XFile(path)], text: 'My meals', sharePositionOrigin: origin);
     } catch (e) {
       _toast('Share failed');
     }

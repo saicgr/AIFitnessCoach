@@ -13,6 +13,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/repositories/slideshow_repository.dart';
+import '../../data/services/share_service.dart';
 import '../../shareables/widgets/food_image.dart';
 import '../../widgets/design_system/section_header.dart';
 
@@ -249,7 +250,11 @@ class _RevealBuilderScreenState extends ConsumerState<RevealBuilderScreen> {
     final path = _videoPath;
     if (path == null) return;
     try {
-      await Share.shareXFiles([XFile(path)], text: 'My reveal');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.shareXFiles([XFile(path)], text: 'My reveal', sharePositionOrigin: origin);
     } catch (_) {
       _toast('Share failed');
     }

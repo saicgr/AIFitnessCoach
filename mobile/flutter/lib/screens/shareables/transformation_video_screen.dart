@@ -10,6 +10,7 @@ import 'package:video_player/video_player.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/slideshow_repository.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/design_system/section_header.dart';
 
 /// Server-rendered transformation video — turns a span of the user's photos
@@ -176,7 +177,11 @@ class _TransformationVideoScreenState
     final path = _videoPath;
     if (path == null) return;
     try {
-      await Share.shareXFiles([XFile(path)], text: 'My transformation');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.shareXFiles([XFile(path)], text: 'My transformation', sharePositionOrigin: origin);
     } catch (_) {
       _toast('Share failed');
     }

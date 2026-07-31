@@ -17,6 +17,7 @@ import '../../../shareables/shareable_sheet.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
+import '../../../data/services/share_service.dart';
 import '../../settings/sections/social_privacy_section.dart'
     show publicShareLinksProvider;
 import '../../workout/widgets/exercise_add_sheet.dart';
@@ -346,7 +347,14 @@ Future<void> _shareDoMyWorkout(
     final url = link.webUrl.isNotEmpty ? link.webUrl : link.shareUrl;
     if (url.isEmpty) throw Exception('No link');
     final name = workout.name ?? 'my workout';
-    await Share.share('Try "$name" on Zealova — it scales to your level: $url');
+    final box = context.mounted ? context.findRenderObject() as RenderBox? : null;
+    final origin = box != null
+        ? box.localToGlobal(Offset.zero) & box.size
+        : ShareService.defaultSharePositionOrigin();
+    await Share.share(
+      'Try "$name" on Zealova — it scales to your level: $url',
+      sharePositionOrigin: origin,
+    );
   } catch (e) {
     if (context.mounted) {
       _snack(context, "Couldn't create a share link. Please try again.",

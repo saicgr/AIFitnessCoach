@@ -11,6 +11,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/recipe_share.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../data/services/share_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -105,9 +106,17 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
                         SnackBar(content: Text(AppLocalizations.of(context).recipeShareCopiedToClipboard)));
                   },
                 ),
-                IconButton(
-                  icon: Icon(Icons.share, size: 18, color: accent),
-                  onPressed: () => Share.share(_link!.url, subject: 'Recipe'),
+                Builder(
+                  builder: (btnContext) => IconButton(
+                    icon: Icon(Icons.share, size: 18, color: accent),
+                    onPressed: () {
+                      final box = btnContext.findRenderObject() as RenderBox?;
+                      final origin = box != null
+                          ? box.localToGlobal(Offset.zero) & box.size
+                          : ShareService.defaultSharePositionOrigin();
+                      Share.share(_link!.url, subject: 'Recipe', sharePositionOrigin: origin);
+                    },
+                  ),
                 ),
               ]),
             ),

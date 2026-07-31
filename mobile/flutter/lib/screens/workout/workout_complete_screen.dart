@@ -66,6 +66,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../data/repositories/workout_photos_repository.dart';
 import '../../data/repositories/strava_export_repository.dart';
+import '../../data/services/share_service.dart';
 import 'widgets/complete_screen_helper_widgets.dart';
 import '../../widgets/exercise_image.dart';
 import 'package:fitwiz/core/constants/branding.dart';

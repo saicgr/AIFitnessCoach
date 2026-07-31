@@ -12,6 +12,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../data/services/data_cache_service.dart';
+import '../../../data/services/share_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
@@ -144,7 +145,11 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
   Future<void> _export(String format) async {
     final txt = await ref.read(recipeRepositoryProvider).exportGroceryList(widget.listId, format: format);
     if (format == 'csv') {
-      await Share.share(txt, subject: '${_list?.name ?? "Grocery list"}.csv');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.share(txt, subject: '${_list?.name ?? "Grocery list"}.csv', sharePositionOrigin: origin);
     } else {
       await Clipboard.setData(ClipboardData(text: txt));
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(

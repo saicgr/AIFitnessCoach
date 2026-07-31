@@ -15,6 +15,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/services/share_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -183,19 +184,27 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             ),
             const SizedBox(height: 24),
             // Invite friends button
-            OutlinedButton.icon(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                Share.share('Join me on ${Branding.appName} and let\'s compare our lifts! 💪 https://${Branding.marketingDomain}');
-              },
-              icon: const Icon(Icons.person_add_outlined),
-              label: Text(AppLocalizations.of(context).referralsInviteFriends),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: context.accentColor,
-                side: BorderSide(color: context.accentColor),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            Builder(
+              builder: (btnContext) => OutlinedButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  final box = btnContext.findRenderObject() as RenderBox?;
+                  final origin = box != null
+                      ? box.localToGlobal(Offset.zero) & box.size
+                      : ShareService.defaultSharePositionOrigin();
+                  Share.share(
+                      'Join me on ${Branding.appName} and let\'s compare our lifts! 💪 https://${Branding.marketingDomain}',
+                      sharePositionOrigin: origin);
+                },
+                icon: const Icon(Icons.person_add_outlined),
+                label: Text(AppLocalizations.of(context).referralsInviteFriends),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: context.accentColor,
+                  side: BorderSide(color: context.accentColor),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),

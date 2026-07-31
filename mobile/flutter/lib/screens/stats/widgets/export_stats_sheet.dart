@@ -12,6 +12,7 @@ import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/pdf_export_service.dart';
+import '../../../data/services/share_service.dart';
 import '../../../utils/tz.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../settings/dialogs/export_dialog.dart';
@@ -178,10 +179,15 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
       await file.writeAsBytes(pdfBytes);
 
       // Share the file
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(filePath)],
         subject: '${Branding.appName} Stats Report',
         text: 'My fitness stats from ${Branding.appName}',
+        sharePositionOrigin: origin,
       );
 
       if (mounted) {
@@ -232,9 +238,14 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
       );
 
       // Share the text
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.share(
         textSummary,
         subject: 'My ${Branding.appName} Stats',
+        sharePositionOrigin: origin,
       );
 
       if (mounted) {

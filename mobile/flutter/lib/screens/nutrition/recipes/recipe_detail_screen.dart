@@ -22,6 +22,7 @@ import '../../../data/services/data_cache_service.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../data/repositories/share_growth_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/services/share_service.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../../../data/models/grocery_list.dart';
@@ -749,7 +750,11 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           await ref.read(shareGrowthRepositoryProvider).recipeLink(widget.recipeId);
       final url = link.webUrl.isNotEmpty ? link.webUrl : link.shareUrl;
       if (url.isEmpty) throw Exception('No link');
-      await Share.share('Try "${r.name}" on Zealova: $url');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
+      await Share.share('Try "${r.name}" on Zealova: $url', sharePositionOrigin: origin);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

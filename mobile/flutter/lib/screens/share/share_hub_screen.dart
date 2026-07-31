@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/share_growth_repository.dart';
 import '../../data/repositories/slideshow_repository.dart';
+import '../../data/services/share_service.dart';
 import '../../shareables/adapters/day_in_proof_adapter.dart';
 import '../../shareables/adapters/zealova_score_adapter.dart';
 import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
@@ -96,8 +97,13 @@ class _ShareHubScreenState extends ConsumerState<ShareHubScreen> {
           ? referral.link.webUrl
           : referral.link.shareUrl;
       if (url.isEmpty) throw Exception('No referral link');
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.share(
-          "I've been training with Zealova — join me and we both get a perk: $url");
+          "I've been training with Zealova — join me and we both get a perk: $url",
+          sharePositionOrigin: origin);
     } catch (e) {
       if (mounted) _toast("Couldn't create your invite link. Please try again.");
     } finally {

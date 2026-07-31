@@ -16,6 +16,7 @@ import 'dart:io';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/pr_detection_service.dart';
+import '../../../../data/services/share_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
@@ -671,9 +672,14 @@ ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
       final file = File('${tempDir.path}/pr_card_${DateTime.now().millisecondsSinceEpoch}.png');
       await file.writeAsBytes(imageBytes);
 
+      final box = mounted ? context.findRenderObject() as RenderBox? : null;
+      final origin = box != null
+          ? box.localToGlobal(Offset.zero) & box.size
+          : ShareService.defaultSharePositionOrigin();
       await Share.shareXFiles(
         [XFile(file.path)],
         text: 'New PR! 💪',
+        sharePositionOrigin: origin,
       );
 
       if (mounted) Navigator.pop(context);
