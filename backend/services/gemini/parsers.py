@@ -805,15 +805,127 @@ def derive_meal_totals(
     return result
 
 
+# ---------------------------------------------------------------------------
+# Meal-level plausibility ceiling (L4)
+# ---------------------------------------------------------------------------
+# L1 (FoodItemSchema bounds) through L3 (apply_tripwires) all reason about ONE
+# ITEM at a time. A photo of a shared/display spread can produce items that
+# each individually pass every per-item check — a real food name, a weight
+# under the 5000g single-item cap, a kcal/g density inside its category window
+# — while the model has assigned WHOLE-SERVING-TRAY portions instead of a
+# single serving. Nothing sums the meal, so nothing catches it.
+#
+# 2026-07-30 (E2E register #130): a photo of a food spread logged 4,591 kcal /
+# 601 g protein as ONE dinner (6 items; worst offender "roasted whole turkey",
+# 2,505 kcal / 435 g protein — about 1.4-1.5kg of turkey meat). 601g of
+# protein in one sitting is roughly 8x an entire day's intake for a large
+# adult. The per-item arithmetic was internally consistent throughout, so this
+# is a MEAL-level invariant that per-item checks structurally cannot express.
+#
+# Thresholds are deliberately conservative "physically implausible for a
+# single sitting" ceilings, not personalized ones — 3,000 kcal in one meal is
+# already ~1.5x an average adult's entire daily maintenance energy, and 250g
+# of protein in one sitting is far beyond a realistic single serving (a hefty
+# 300g cooked steak is ~65g protein; three of those in one meal is already an
+# outlier). Either breach flags the WHOLE MEAL for user confirmation — this
+# never discards or silently clamps a number, it only asks. It does not scale
+# by the user's own calorie/protein target: that target lives in per-user
+# nutrition preferences resolved by the API layer, not in this parser, so
+# scaling it in here would require plumbing a per-user value through every
+# caller of `enforce_macro_integrity` — a larger, separately-scoped change.
+MEAL_CALORIE_PLAUSIBILITY_CEILING = 3000
+MEAL_PROTEIN_PLAUSIBILITY_CEILING_G = 250
+
+
+def apply_meal_plausibility_ceiling(
+    result: Optional[Dict], source_label: str = "analysis"
+) -> Optional[Dict]:
+    """L4: flag (never discard/clamp) a meal whose SUMMED totals are
+    physically implausible for a single sitting, even when every item
+    individually passed L1-L3.
+
+    Sets `requires_user_confirmation=True` on EVERY item in the meal — the
+    same, already-wired mechanism L3 tripwires use (surfaced by the client as
+    a per-item 1-tap confirm; see `logged_meals_section.dart`) — rather than
+    only a meal-level key nothing downstream is guaranteed to read. Also sets
+    meal-level `requires_user_confirmation` / `meal_plausibility_flag` /
+    `_meal_tripwire_reasons` for any caller that inspects the whole payload.
+
+    Mutates and returns `result`. Safe to call more than once (idempotent —
+    re-summing the same items yields the same reasons, and setting an
+    already-True flag is a no-op).
+    """
+    if not isinstance(result, dict):
+        return result
+    items = result.get('food_items')
+    if not isinstance(items, list) or not items:
+        return result
+
+    cal_sum = sum(
+        _as_float(it.get('calories')) or 0.0
+        for it in items if isinstance(it, dict)
+    )
+    protein_sum = sum(
+        _as_float(it.get('protein_g')) or 0.0
+        for it in items if isinstance(it, dict)
+    )
+
+    reasons: List[str] = []
+    if cal_sum > MEAL_CALORIE_PLAUSIBILITY_CEILING:
+        reasons.append(
+            f"meal totals {cal_sum:.0f} kcal exceed the "
+            f"{MEAL_CALORIE_PLAUSIBILITY_CEILING} kcal single-sitting "
+            "plausibility ceiling"
+        )
+    if protein_sum > MEAL_PROTEIN_PLAUSIBILITY_CEILING_G:
+        reasons.append(
+            f"meal totals {protein_sum:.0f}g protein exceed the "
+            f"{MEAL_PROTEIN_PLAUSIBILITY_CEILING_G}g single-sitting "
+            "plausibility ceiling"
+        )
+
+    if not reasons:
+        return result
+
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        it['requires_user_confirmation'] = True
+        if it.get('confidence') != 'low':
+            it['confidence'] = 'low'
+        it_reasons = list(it.get('_tripwire_reasons') or [])
+        for r in reasons:
+            if r not in it_reasons:
+                it_reasons.append(r)
+        it['_tripwire_reasons'] = it_reasons
+
+    result['requires_user_confirmation'] = True
+    result['meal_plausibility_flag'] = True
+    existing = list(result.get('_meal_tripwire_reasons') or [])
+    for r in reasons:
+        if r not in existing:
+            existing.append(r)
+    result['_meal_tripwire_reasons'] = existing
+    try:
+        logger.warning(f"[{source_label}] L4 MEAL-PLAUSIBILITY: {'; '.join(reasons)}")
+    except Exception:
+        pass
+    return result
+
+
 def enforce_macro_integrity(
     result: Optional[Dict], source_label: str = "analysis"
 ) -> Optional[Dict]:
     """THE single chokepoint every food-analysis payload passes through before
     it is streamed to the client or written to `food_logs`.
 
-    1. Every item with calories but no protein/carbs/fat (and no ethanol
+    1. L4 meal-plausibility ceiling: a meal whose summed totals are
+       implausible for a single sitting (see `apply_meal_plausibility_ceiling`)
+       is flagged for user confirmation on every item, regardless of whether
+       any individual item's macros are otherwise "known".
+    2. Every item with calories but no protein/carbs/fat (and no ethanol
        explanation) has its zeros erased and is flagged `macros_unknown`.
-    2. The MEAL totals are then recomputed honestly: a total that includes an
+    3. The MEAL totals are then recomputed honestly: a total that includes an
        unknown-macro item is itself unknown (`None`), never a silent
        under-count. `macros_known_subtotal` carries the sum over the items we
        DO know, explicitly labelled as a partial figure.
@@ -825,6 +937,8 @@ def enforce_macro_integrity(
     items = result.get('food_items')
     if not isinstance(items, list) or not items:
         return result
+
+    apply_meal_plausibility_ceiling(result, source_label)
 
     unknown_names: List[str] = []
     for item in items:

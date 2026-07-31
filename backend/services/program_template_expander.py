@@ -658,6 +658,15 @@ def expand_template(
         else []
     )
 
+    # E2E #146: resolve the user's weight ONCE for the whole expansion so
+    # every session's estimated_calories uses the same input the /generate
+    # MET formula would. See workout_duration_energy.py for why this matters.
+    from api.v1.workouts.workout_duration_energy import (
+        derive_duration_and_calories,
+        resolve_user_weight_kg,
+    )
+    _weight_kg = resolve_user_weight_kg(get_supabase(), user_id)
+
     rows_to_insert: List[Dict[str, Any]] = []
 
     for p in planned:
@@ -719,6 +728,7 @@ def expand_template(
         if program_slot:
             row["program_slot"] = program_slot
 
+        _final_exercises = exercises_json
         if apply_staples and staples:
             injected = _inject_staples(day.get("exercises") or [], staples)
             if injected["warmup"]:
@@ -734,6 +744,16 @@ def expand_template(
                 for idx, ex in enumerate(merged):
                     ex["order"] = idx + 1
                 row["exercises_json"] = psycopg2.extras.Json(merged)
+                _final_exercises = merged
+
+        # E2E #146: derive duration/calories from the FINAL exercise list
+        # (post-staples) so program-expanded sessions never ship with a null
+        # estimated_calories — see workout_duration_energy.py.
+        _duration, _calories = derive_duration_and_calories(
+            _final_exercises, workout_type, difficulty, _weight_kg,
+        )
+        row["duration_minutes"] = _duration
+        row["estimated_calories"] = _calories
 
         rows_to_insert.append(row)
 
@@ -987,6 +1007,14 @@ def expand_variant_weeks(
         else []
     )
 
+    # E2E #146: same duration/energy chokepoint as expand_template — see
+    # workout_duration_energy.py.
+    from api.v1.workouts.workout_duration_energy import (
+        derive_duration_and_calories,
+        resolve_user_weight_kg,
+    )
+    _weight_kg = resolve_user_weight_kg(get_supabase(), user_id)
+
     rows_to_insert: List[Dict[str, Any]] = []
     for p in planned:
         sess = p["session"]
@@ -1032,6 +1060,7 @@ def expand_variant_weeks(
         if program_slot:
             row["program_slot"] = program_slot
 
+        _final_exercises = exercises_json
         if apply_staples and staples:
             injected = _inject_staples(day["exercises"], staples)
             if injected["warmup"]:
@@ -1043,6 +1072,19 @@ def expand_variant_weeks(
                 for idx, ex in enumerate(merged):
                     ex["order"] = idx + 1
                 row["exercises_json"] = psycopg2.extras.Json(merged)
+                _final_exercises = merged
+
+        # E2E #146: prefer an authored session duration when the curated
+        # content carries one; otherwise derive from the final exercise list.
+        _duration, _calories = derive_duration_and_calories(
+            _final_exercises,
+            day["workout_type"],
+            row["difficulty"],
+            _weight_kg,
+            duration_minutes=sess.get("duration_minutes"),
+        )
+        row["duration_minutes"] = _duration
+        row["estimated_calories"] = _calories
 
         rows_to_insert.append(row)
 
@@ -1199,9 +1241,18 @@ def reschedule_assignment_days(
     Returns {"workouts_moved", "workouts_kept", "workouts_considered",
     "slot_updated"}.
     """
-    today = today or date.today()
-    now_naive = datetime.combine(today, time(0, 0)).isoformat()
     db = get_supabase()
+    if today is None:
+        # E2E #121: was `date.today()` — the server's UTC calendar. The sole
+        # caller (api/v1/program_templates.py `_reschedule_assignment`) now
+        # always resolves the user's timezone and passes `today` explicitly,
+        # so this only fires for a caller that doesn't (e.g. a direct/test
+        # call) — resolve the user's own local day from `users.timezone`
+        # rather than defaulting to UTC.
+        from core.timezone_utils import resolve_timezone, get_user_today
+        _tz = resolve_timezone(None, db, user_id)
+        today = date.fromisoformat(get_user_today(_tz))
+    now_naive = datetime.combine(today, time(0, 0)).isoformat()
     resp = (
         db.client.table("workouts")
         .select("id, template_week, template_day_index, scheduled_date, "

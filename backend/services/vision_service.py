@@ -1256,6 +1256,8 @@ Current time suggests this is likely {suggested_meal}, but override based on the
 
 {f'User says: "{user_context}"' if user_context else ''}
 
+If this image shows a SHARED/DISPLAY spread rather than one person's plate — a buffet line, a holiday table, a whole roasted turkey/ham, a family-size tray or pot meant to feed several people — every item's weight_g must be what ONE diner would actually take, never the weight of the whole container. A whole roasted turkey is not a single serving.
+
 For COUNTABLE items (breadsticks, samosas, eggs, nuggets, cookies, sushi rolls, dumplings, pizza slices, tacos, wings, meatballs, falafel, etc.) ALWAYS set count = number of pieces visible AND weight_per_unit_g = grams per piece, with weight_g = count × weight_per_unit_g. For non-countable items (rice, soup, pasta heap, salad) leave count=null and weight_per_unit_g=null.
 
 Estimate all micronutrients (vitamins A/C/D/E/K/B1-B12, minerals like calcium/iron/magnesium/zinc/potassium/sodium, omega-3/6) based on the identified foods. Use the plate analysis JSON schema from your cached reference. Return valid JSON."""
@@ -1266,6 +1268,8 @@ Estimate all micronutrients (vitamins A/C/D/E/K/B1-B12, minerals like calcium/ir
 Current time suggests this is likely {suggested_meal}, but override based on the food if it clearly indicates otherwise (e.g., pancakes are breakfast even at dinner time).
 
 {f'User says: "{user_context}"' if user_context else ''}
+
+If this image shows a SHARED/DISPLAY spread rather than one person's plate — a buffet line, a holiday table, a whole roasted turkey/ham, a family-size tray or pot meant to feed several people — every item's weight_g must be what ONE diner would actually take, never the weight of the whole container. A whole roasted turkey is not a single serving.
 
 Return ONLY valid JSON with this exact structure:
 {{
@@ -2188,7 +2192,7 @@ Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not
 
 CRITICAL RULES:
 1. Derive calories from realistic portion weight (weight_g × kcal/g) and report your BEST estimate. Do NOT force numbers to be artificially precise or artificially round — the same dish must produce the same figure every time, so estimate from the food itself.
-2. ALWAYS include weight_g — your best estimate of the single-serving weight in grams.
+2. ALWAYS include weight_g — your best estimate of the SINGLE-SERVING weight in grams, i.e. what ONE diner would actually take, NEVER the weight of the whole shared dish. A buffet/spread photo shows a CONTAINER meant to feed many people — a whole roasted turkey, a full lasagna tray, a large stockpot of chili, a family-size casserole — and weight_g must be a plausible one-person portion cut FROM it (protein entrées ~150-300g, starches/sides ~100-250g), never the tray/pot/whole-bird weight. If the photo instead clearly shows an already-portioned individual plate, weight_g is that plate's serving.
 3. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame".
 
 REQUIRED per dish (NEVER omit any field below):
@@ -2222,7 +2226,7 @@ COMPLETENESS CONTRACT (read first):
 
 CRITICAL RULES:
 1. Derive calories from realistic portion weight (weight_g × kcal/g) and report your BEST estimate. Do NOT force numbers to be artificially precise or artificially round — the same dish must produce the same figure every time, so estimate from the food itself, not from a desire to avoid round numbers.
-2. ALWAYS include weight_g — your best estimate of the dish's serving weight in grams (typical restaurant portions: naan 80-100g, curry bowl 200-300g, rice 150-250g, entrée protein 150-250g, salad 150-250g, soup 240-300g).
+2. ALWAYS include weight_g — your best estimate of the dish's serving weight in grams (typical restaurant portions: naan 80-100g, curry bowl 200-300g, rice 150-250g, entrée protein 150-250g, salad 150-250g, soup 240-300g). A menu item explicitly billed as a SHARED/family-style dish ("Whole Rotisserie Chicken", "Family-Style Lasagna", "Rack of Ribs for the Table") is priced per the WHOLE dish as printed, but weight_g must still be the realistic weight of that whole printed dish — never inflate it further, and never substitute a single-diner weight for a dish the menu itself sells as a whole item.
 3. NORMALIZE section_name to ONE of: "breakfast" | "appetizers" | "mains" | "sides" | "addons" | "desserts" | "drinks" | "specials" | "uncategorized". Map restaurant labels like "Starters" → "appetizers", "Entrées" → "mains", "Beverages" → "drinks", and "Sauces" / "Enhancements" / "Extras" / "Add-Ons" / "Toppings" → "addons".
 4. EXTRACT price as a number when visible on the menu (keep the currency in a "currency" string like "USD" / "INR" / "EUR"). Return null ONLY if truly not shown.
 5. DETECT allergens per FDA Big 9 — fill detected_allergens as an array using any of: "milk", "egg", "fish", "crustacean_shellfish", "tree_nuts", "wheat", "peanuts", "soybeans", "sesame". Infer from the dish name AND its printed description (e.g. "Shrimp Pad Thai" → ["crustacean_shellfish", "peanuts", "soybeans"]).
@@ -2279,6 +2283,8 @@ showing the format — never echo them):
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
 Identify EVERY distinct food/drink item across all images. Each visually distinct dish, side, sauce, garnish, or beverage is its own food_item — do NOT collapse multiple foods into one entry. If two images show different dishes, return separate items for each.
 
+If the photo shows a SHARED/DISPLAY spread rather than one person's plate — a buffet line, a holiday table, a whole roasted turkey/ham, a family-size tray or pot meant to feed several people — each dish's weight_g is what ONE diner would actually take from it, never the weight of the whole container. A whole roasted turkey is not a single serving; estimate the realistic plateful a person eats.
+
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}{instruction_block}
 
@@ -2288,7 +2294,7 @@ When the user supplied an instruction above, also return a top-level
 (or null if it changed nothing).
 
 REQUIRED per food_item (NEVER omit):
-- name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g
+- name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g (single-serving weight — see the shared/display spread rule above)
 - For COUNTABLE items (discrete pieces: breadsticks, samosas, eggs, nuggets, cookies, sushi rolls, dumplings, slices of pizza, tacos, wings, meatballs, falafel, etc.) ALWAYS set count = number of pieces visible AND weight_per_unit_g = grams per piece. weight_g must equal count × weight_per_unit_g. Example: 3 breadsticks → count=3, weight_per_unit_g=40, weight_g=120. For NON-COUNTABLE items (rice, soup, pasta heap, salad, fries pile) leave count=null and weight_per_unit_g=null.
 - inflammation_score (1-10, 10 = most inflammatory) — NEVER null.
 - inflammation_triggers: array of 1-3 short tags naming the drivers. NEVER empty. Pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish (free-form accepted).
@@ -2304,6 +2310,8 @@ Return valid JSON."""
                 else:
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
 Identify EVERY distinct food/drink item across all images. Each visually distinct dish, side, sauce, garnish, or beverage gets its own food_item entry — do NOT merge multiple foods into one. If two images show different dishes, return separate items for each.
+
+If the photo shows a SHARED/DISPLAY spread rather than one person's plate — a buffet line, a holiday table, a whole roasted turkey/ham, a family-size tray or pot meant to feed several people — each dish's weight_g must be what ONE diner would actually take from it, never the weight of the whole container. A whole roasted turkey is not a single serving; estimate the realistic plateful a person eats.
 
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}{instruction_block}

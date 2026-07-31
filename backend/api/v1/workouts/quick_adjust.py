@@ -80,20 +80,13 @@ QuickAdjustResponse.model_rebuild()
 
 # ── Time estimation ────────────────────────────────────────────────────────
 
-# Rough per-exercise time estimate when we don't have per-exercise durations
-# in the payload. Accounts for: sets × (work + rest). Keep coarse — precision
-# isn't the point, direction is.
-_AVG_SECONDS_PER_SET = 90  # 30s work + 60s rest
-_TRANSITION_SECONDS_PER_EXERCISE = 30
-
-
-def _estimate_minutes(exercises: List[Dict]) -> int:
-    """Rough total time in minutes for the given exercise list."""
-    total_seconds = 0
-    for ex in exercises:
-        sets = int(ex.get("sets") or 3)
-        total_seconds += sets * _AVG_SECONDS_PER_SET + _TRANSITION_SECONDS_PER_EXERCISE
-    return max(1, total_seconds // 60)
+# E2E #146: this used to be a FOURTH divergent duration formula
+# (sets * 90s + 30s/exercise, ignoring each exercise's own rest_seconds) —
+# never persisted, but still a number the user could see disagree with the
+# stored workout's duration_minutes / the reshape endpoint's estimate. Now
+# delegates to the same chokepoint program expansion and reshape use. See
+# workout_duration_energy.py for the full class writeup.
+from .workout_duration_energy import estimate_duration_minutes as _estimate_minutes
 
 
 # ── Compound vs accessory classification ───────────────────────────────────

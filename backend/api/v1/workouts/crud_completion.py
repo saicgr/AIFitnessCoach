@@ -146,6 +146,32 @@ async def complete_workout(
 
         logger.info(f"Workout completed: id={workout_id}")
 
+        # E2E register row 80: bust the cached coach insight now that the day's
+        # training state has changed.
+        #
+        # `coach_daily_insights` rows only rotated when the COARSE time phase
+        # flipped (morning/day/evening — at most twice a day), so the Home coach
+        # card kept telling a user who had just finished their workout to
+        # "Generate today's workout or log a meal". `invalidate_daily_insight_cache`
+        # has existed since the cache was added but had exactly ONE caller in the
+        # whole backend (nutrition/summaries.py) — nothing in the workout domain
+        # ever busted it. A cache-busting helper nobody calls is not a cache
+        # policy, it is dead code.
+        #
+        # Deliberately fail-soft and AFTER the completion flip: a stale coach
+        # card is a cosmetic problem, whereas letting this raise would fail a
+        # /complete the client would then re-queue. The insight regenerates
+        # lazily on the next read, so the worst case is the pre-existing
+        # behaviour.
+        try:
+            from api.v1.coach.daily_insight import invalidate_daily_insight_cache
+            await invalidate_daily_insight_cache(user_id)
+        except Exception as insight_err:
+            logger.warning(
+                f"[CompletionFlip] coach-insight cache bust failed for "
+                f"user_id={user_id}: {insight_err}"
+            )
+
         # Close any still-open workout_logs session row for this workout.
         #
         # The Easy tier creates the session row on the user's FIRST set with

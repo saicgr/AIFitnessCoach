@@ -195,10 +195,19 @@ _NON_WORKOUT_TABLES = {
 # does not fail on them, so it fails only on NEW findings — same design as
 # scripts/audit_timezone_usage.py's baseline diff. DELETE an entry the moment
 # its site is fixed; the gate then guarantees it cannot come back.
-_KNOWN_OUTSTANDING = {
-    ("api/v1/watch_sync.py", "datetime.utcnow().date().isoformat()"),  # tz-allowlist: baseline STRING naming the offending expression, not a call
-    ("api/v1/coach/daily_insight.py", "today_utc"),
-}
+#
+# EMPTY as of 2026-07-31 (E2E register row 7 residual, wave 3). Both entries
+# that used to live here are fixed and their entries deleted, per the rule
+# above:
+#   * api/v1/watch_sync.py:321        — was `datetime.utcnow().date()`
+#   * api/v1/coach/daily_insight.py   — was `today_utc` in injury_action()
+# both now route through anchor_today(tz) / anchor_scheduled_date(value, tz)
+# with the timezone resolved via resolve_timezone(...).
+#
+# Keeping this set empty is the point: with nothing grandfathered, ANY raw
+# `workouts.scheduled_date` write is a NEW finding and fails the gate outright.
+# Do not re-add an entry to make a red gate green — fix the writer instead.
+_KNOWN_OUTSTANDING: set = set()
 
 # Calls that persist a dict. `.update(` is also a plain dict method, so the
 # table check below is what keeps the noise down.

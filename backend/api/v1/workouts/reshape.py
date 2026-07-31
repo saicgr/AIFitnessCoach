@@ -78,7 +78,7 @@ class ReshapeResponse(BaseModel):
 # Pain at/above this 0–10 level moves from "monitor" to "swap zone" (#3).
 _PAIN_SWAP_THRESHOLD = 4
 
-_SOURCE_SELECT = "id, user_id, exercises_json, duration_minutes"
+_SOURCE_SELECT = "id, user_id, exercises_json, duration_minutes, type, difficulty"
 
 
 def _readiness_0_100(req: ReshapeRequest) -> Optional[int]:
@@ -122,25 +122,16 @@ def _persist_checkin_gauges(sb, user_id: str, req: ReshapeRequest) -> None:
         logger.warning(f"[reshape] check-in gauge persist skipped: {e}")
 
 
-def _estimate_minutes(exercises: List[Dict[str, Any]]) -> float:
-    """Rough wall-clock estimate: per exercise ≈ sets × (work + rest)."""
-    total = 0.0
-    for ex in exercises:
-        if not isinstance(ex, dict):
-            continue
-        sets = ex.get("sets") or 3
-        rest = ex.get("rest_seconds") or 60
-        try:
-            sets = int(sets)
-        except (TypeError, ValueError):
-            sets = 3
-        try:
-            rest = int(rest)
-        except (TypeError, ValueError):
-            rest = 60
-        # ~40s of work per set + the prescribed rest, in minutes.
-        total += sets * (40 + rest) / 60.0
-    return total
+# E2E #146: the duration estimator used to be defined locally here (and
+# diverged from program expansion's silence and quick_adjust.py's own
+# formula). Moved to the shared chokepoint — see workout_duration_energy.py
+# for the full class writeup. Aliased to the old name so every call site
+# below is unchanged.
+from .workout_duration_energy import (
+    estimate_duration_minutes as _estimate_minutes,
+    estimate_workout_calories,
+    resolve_user_weight_kg,
+)
 
 
 def _priority_rank(ex: Dict[str, Any]) -> int:
@@ -357,8 +348,25 @@ async def reshape_for_readiness(
     if did_reshape and req.apply:
         try:
             new_minutes = round(_estimate_minutes(reshaped))
+            # E2E #146: rewriting duration WITHOUT rewriting energy is exactly
+            # the bug — the client re-derived calories from the new duration
+            # via its own MET fallback, so the calorie headline moved in
+            # lockstep with duration alone (same implied MET). Recompute
+            # through the SAME chokepoint program expansion now uses.
+            _weight_kg = resolve_user_weight_kg(sb, user_id)
+            new_calories = estimate_workout_calories(
+                reshaped,
+                row.data.get("type"),
+                row.data.get("difficulty"),
+                new_minutes,
+                _weight_kg,
+            )
             sb.client.table("workouts").update(
-                {"exercises_json": reshaped, "duration_minutes": new_minutes}
+                {
+                    "exercises_json": reshaped,
+                    "duration_minutes": new_minutes,
+                    "estimated_calories": new_calories,
+                }
             ).eq("id", workout_id).eq("user_id", user_id).execute()
             applied = True
         except Exception as e:

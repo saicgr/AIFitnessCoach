@@ -10,6 +10,16 @@ and never computes a score. Three separate aggregations summed the raw column:
                                                             by `except Exception`
                                                             -> silent data loss
   * workouts/crud_background_tasks.py post-workout recalc -> TypeError swallowed
+                                                            by the function's own
+                                                            outer `except Exception`
+                                                            -> recalculate_user_
+                                                            fitness_score() did
+                                                            NOTHING for any user
+                                                            who ever used the
+                                                            check-in. Fixed —
+                                                            routed through the
+                                                            same chokepoint as
+                                                            the other two sites.
 
 Part 1 pins the behaviour of the shared chokepoint
 (`api.v1.scores_endpoints.average_readiness_rows`).
@@ -97,11 +107,10 @@ class TestReadinessChokepoint:
 # ---------------------------------------------------------------------------
 
 # Files whose aggregation is still unfiltered. This set must SHRINK to empty.
-# Owned by the workouts domain, not the scores domain — see the cross-domain
-# request filed with register row 9.
-KNOWN_OPEN = {
-    "api/v1/workouts/crud_background_tasks.py",
-}
+# All three known sites (see module docstring) are now routed through the
+# chokepoint, so this is empty — it stays here as the shape the gate expects
+# if a new site is ever discovered.
+KNOWN_OPEN = set()
 
 # The chokepoint itself is allowed to read the raw column.
 CHOKEPOINT_FUNCTIONS = {"average_readiness_rows"}
@@ -192,6 +201,32 @@ def test_scores_endpoints_has_no_unfiltered_readiness_aggregation():
     path = os.path.join(BACKEND_ROOT, "api/v1/scores_endpoints.py")
     tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
     assert list(_unfiltered_readiness_comprehensions(tree)) == []
+
+
+def test_crud_background_tasks_has_no_unfiltered_readiness_aggregation():
+    """The third site (E2E row 9, instance 3): the post-workout background
+    fitness recalc used to `sum([r["readiness_score"] for r in rows])` raw,
+    which raised on the first NULL-scored check-in row and was swallowed by
+    `recalculate_user_fitness_score`'s own outer `except Exception` — the
+    whole recalc silently did nothing for any user who ever used the
+    mid-workout check-in.
+    """
+    path = os.path.join(BACKEND_ROOT, "api/v1/workouts/crud_background_tasks.py")
+    tree = ast.parse(open(path, encoding="utf-8").read(), filename=path)
+    assert list(_unfiltered_readiness_comprehensions(tree)) == []
+
+
+def test_crud_background_tasks_routes_through_the_chokepoint():
+    """Pins the fix itself, not just the absence of the old pattern — the
+    function must call `readiness_window_from_response` and fall back to
+    `NEUTRAL_READINESS_BASELINE`, mirroring the two scores_endpoints.py sites.
+    """
+    import inspect
+    import api.v1.workouts.crud_background_tasks as cbt
+
+    src = inspect.getsource(cbt.recalculate_user_fitness_score)
+    assert "readiness_window_from_response" in src
+    assert "NEUTRAL_READINESS_BASELINE" in src
 
 
 def test_overview_readiness_average_is_not_wrapped_in_a_blanket_except():

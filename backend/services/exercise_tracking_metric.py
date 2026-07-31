@@ -23,6 +23,17 @@ program's reps / reps_spec string + the exercise name. This mirrors the
 fail-open, name-classifier philosophy of ``_attach_movement_meta`` in
 ``api/v1/workouts/today.py``: an unknown exercise yields ``tracking_type=None``
 (the frontend has its own classifier), never a wrong default.
+
+PRECEDENCE RULE: an authored rep count >= 2 (``target_reps`` / a leading
+integer in ``reps``/``reps_spec``) always wins over a TIME hint, whether that
+hint comes from the program's own timer switch (``tracking_type:"time"``,
+``is_timed:true``, a positive ``duration_seconds``) or from the LIBRARY
+(``exercise_library.is_timed`` / ``default_hold_seconds``) — both are gated
+on ``not has_real_reps``. Without this a library-sourced time hint (e.g. Bird
+Dog's ``is_timed=true``) silently overrode an authored ``target_reps=5`` and
+the set logged ``reps_completed=0``. This precedence must stay in sync with
+the Flutter mirror at
+``mobile/flutter/lib/core/utils/exercise_tracking_metric.dart``.
 """
 from __future__ import annotations
 
@@ -343,7 +354,6 @@ def _derive_core(
 
     # --- 2) TIME (isometric holds / duration-based) --------------------------
     name_is_time = _name_matches(name, _TIME_NAME_HINTS)
-    has_hold = bool(hold_seconds) or bool(is_timed)
     # An EXPLICIT authored duration (e.g. a 30s timed-circuit interval: High Knees,
     # Skater Hops in a conditioning program) must win over the name lexicon, which
     # would otherwise reclassify these to bodyweight reps and drop the timer.
@@ -358,6 +368,14 @@ def _derive_core(
         if _m:
             _rep_count = int(_m.group(1))
     has_real_reps = _rep_count is not None and _rep_count >= 2
+    # PRECEDENCE RULE (kept in sync with the Flutter mirror,
+    # mobile/flutter/lib/core/utils/exercise_tracking_metric.dart — see this
+    # module's docstring): an authored rep count >= 2 wins over a LIBRARY time
+    # hint (`is_timed` / `default_hold_seconds`) exactly like it already won
+    # over the program's own timer switch below. Without this gate, a
+    # library-sourced `is_timed=true` (e.g. Bird Dog) silently overrode an
+    # authored `target_reps=5` and the set logged `reps_completed=0`.
+    has_hold = (not has_real_reps) and (bool(hold_seconds) or bool(is_timed))
     # The PROGRAM's explicit timer switch: a program/circuit can force a timer for
     # ANY move (even one the name lexicon would call reps) by authoring on the
     # exercise any of `tracking_type:"time"`, `is_timed:true`, or a positive

@@ -174,6 +174,29 @@ async def bulk_sync(
             )
             failure_count += 1
 
+    # E2E register row 80: the offline-replay path changes the same day-state
+    # the coach card narrates, so it must bust the cached insight too.
+    #
+    # This is the sibling of the bust in workouts/crud_completion.py. A session
+    # finished offline reaches the server HERE, not through /complete — and
+    # migration 2390's trigger flips `workouts.is_completed` off the replayed
+    # `workout_logs` row, so the training state genuinely changes without
+    # /complete ever running. Without this, a user who trains offline sees a
+    # coach card still telling them to start the workout they already finished.
+    #
+    # Gated on something actually landing (a bare no-op drain must not spend a
+    # write), and fail-soft for the same reason as the /complete sibling: a
+    # stale card must never fail a replay the client would then re-queue.
+    if success_count and (workout_log_upsert_ids or workout_completion_ids or fallback_items):
+        try:
+            from api.v1.coach.daily_insight import invalidate_daily_insight_cache
+            await invalidate_daily_insight_cache(user_id)
+        except Exception as insight_err:
+            logger.warning(
+                f"[BulkSync] coach-insight cache bust failed for "
+                f"user_id={user_id}: {insight_err}"
+            )
+
     return SyncBulkResponse(
         results=results,
         success_count=success_count,

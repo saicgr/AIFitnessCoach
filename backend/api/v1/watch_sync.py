@@ -308,6 +308,17 @@ async def _resolve_watch_workout_log(db, user_id: str, session_id: str, device_s
     if existing.data:
         return existing.data[0]["id"]
     try:
+        # E2E #7 residual: `datetime.utcnow().date().isoformat()` writes a
+        # bare date, which Postgres casts to midnight UTC — 7pm the PREVIOUS
+        # local day for a US user (see scheduled_date_anchor.py's module
+        # docstring for the full convention). Route through the noon-anchor
+        # chokepoint, resolving the user's timezone (falls back to UTC when
+        # unset, same as before, but now day-correct for everyone with a
+        # timezone on file).
+        from api.v1.workouts.scheduled_date_anchor import anchor_today
+        from core.timezone_utils import resolve_timezone
+        _tz = resolve_timezone(None, db, user_id)
+
         # workout_logs.workout_id is NOT NULL, and a watch session may be
         # freestyle (no scheduled workout) — back it with a real workouts
         # row, mirroring the manual-activity-log pattern. is_current=False
@@ -318,7 +329,7 @@ async def _resolve_watch_workout_log(db, user_id: str, session_id: str, device_s
             "type": "strength",
             "difficulty": "medium",
             "exercises_json": [],
-            "scheduled_date": datetime.utcnow().date().isoformat(),
+            "scheduled_date": anchor_today(_tz),
             # workouts_status_check has no in-progress state — the placeholder
             # sits at "scheduled" until completion flips it to "completed".
             "status": "scheduled",

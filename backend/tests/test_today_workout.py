@@ -424,6 +424,96 @@ class TestGetTodayWorkout:
         assert data["today_workout"]["primary_muscles"] == []
 
 
+class TestNextWorkoutsList:
+    """E2E register #65: `/today` must not collapse every upcoming scheduled
+    workout down to a single `next_workout`. A user with a schedule gap
+    (e.g. Wed missing, Fri already generated, Sun already generated) needs
+    the FULL near-term picture, not just the earliest existing row.
+
+    These patch `_get_active_gym_profile_id` directly to None — the shared
+    `mock_supabase_db` MagicMock leaks a MagicMock through the gym-profile
+    lookup and fails `TodayWorkoutResponse.gym_profile_id` validation
+    (pre-existing harness issue affecting the whole `TestGetTodayWorkout`
+    class, unrelated to this fix — see the E2E backend report).
+    """
+
+    def test_multiple_future_workouts_all_surfaced(
+        self, mock_supabase_db, mock_user_context_service, sample_user_id
+    ):
+        friday = (date.today() + timedelta(days=2)).isoformat()
+        sunday = (date.today() + timedelta(days=4)).isoformat()
+
+        def _row(name, scheduled_date):
+            return {
+                "id": str(uuid.uuid4()),
+                "name": name,
+                "type": "strength",
+                "difficulty": "medium",
+                "duration_minutes": 40,
+                "scheduled_date": scheduled_date,
+                "is_completed": False,
+                "exercises": [{"name": "Squat", "sets": 3, "reps": 10}],
+            }
+
+        friday_row = _row("Friday Session", friday)
+        sunday_row = _row("Sunday Session", sunday)
+
+        # gather() order: today_rows, future_rows, completed_today_rows.
+        mock_supabase_db.list_workouts.side_effect = [
+            [],
+            [friday_row, sunday_row],  # DB returns ascending by scheduled_date
+            [],
+        ]
+
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+
+        # Old-client compatibility: next_workout is still the earliest.
+        assert data["next_workout"] is not None
+        assert data["next_workout"]["name"] == "Friday Session"
+
+        # New: BOTH upcoming workouts are surfaced, not just the first.
+        assert "next_workouts" in data
+        assert [w["name"] for w in data["next_workouts"]] == [
+            "Friday Session",
+            "Sunday Session",
+        ]
+        assert data["next_workouts"][0] == data["next_workout"]
+
+    def test_single_future_workout_still_populates_the_list(
+        self, mock_supabase_db, mock_user_context_service, sample_user_id, future_workout_row
+    ):
+        mock_supabase_db.list_workouts.side_effect = [
+            [],
+            [future_workout_row],
+            [],
+        ]
+
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data["next_workouts"]) == 1
+        assert data["next_workouts"][0]["name"] == "Lower Body Power"
+
+    def test_no_upcoming_workouts_yields_empty_list(
+        self, mock_supabase_db, mock_user_context_service, sample_user_id
+    ):
+        mock_supabase_db.list_workouts.side_effect = [[], [], []]
+
+        with patch("api.v1.workouts.today._get_active_gym_profile_id", return_value=None):
+            response = client.get(f"/api/v1/workouts/today?user_id={sample_user_id}")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["next_workouts"] == []
+        assert data["next_workout"] is None
+
+
 # ============================================================
 # POST /api/v1/workouts/today/start TESTS
 # ============================================================

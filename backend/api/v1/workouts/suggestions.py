@@ -34,6 +34,31 @@ def _valid_workout_uuid(workout_id: str) -> bool:
     except (ValueError, TypeError, AttributeError):
         return False
 
+
+def _count_completed_workouts_for_milestone(db, user_id: str, assignment_id: Optional[str]) -> int:
+    """Completed-workout count feeding the "~workout #{n+1}" milestone copy
+    (workout_insights/nodes.py profile_bits).
+
+    E2E #147: counting LIFETIME completions greeted Day 1 of a brand-new
+    program as "workout number two" whenever the user had completed even one
+    workout on a PRIOR program (or carried a corrupted historical
+    ``is_completed`` row). Scope to the current program ASSIGNMENT when this
+    workout belongs to one; only fall back to the lifetime count for
+    standalone/ad-hoc workouts that have no assignment_id.
+
+    Fail-open: any DB error yields 0 (same as before this fix).
+    """
+    try:
+        query = db.client.table("workouts").select(
+            "id", count="exact"
+        ).eq("user_id", user_id).eq("is_completed", True)
+        if assignment_id:
+            query = query.eq("assignment_id", assignment_id)
+        result = query.limit(1).execute()
+        return result.count or 0
+    except Exception:
+        return 0
+
 router = APIRouter()
 logger = get_logger(__name__)
 
@@ -396,13 +421,9 @@ async def get_workout_ai_summary(workout_id: str, force_regenerate: bool = False
                 "pain_flagged_exercises": _inj.pain_flagged_exercises,
             }
 
-            try:
-                _cnt = db.client.table("workouts").select(
-                    "id", count="exact"
-                ).eq("user_id", user_id).eq("is_completed", True).limit(1).execute()
-                total_workouts_completed = _cnt.count or 0
-            except Exception:
-                total_workouts_completed = 0
+            total_workouts_completed = _count_completed_workouts_for_milestone(
+                db, user_id, workout_data.get("assignment_id")
+            )
 
             _lower_names = {n.lower() for n in _names}
             try:

@@ -710,15 +710,32 @@ def _collect_snapshot(
 
     # --- Today's scheduled workout (Train pillar) -----------------------
     # Schema reality: workouts has no `scheduled_time` column. Drop it.
+    #
+    # `scheduled_date` is a timestamptz stored at NOON local (project
+    # convention, api/v1/workouts/scheduled_date_anchor.py). This block used
+    # to compare it with `.eq("scheduled_date", local_date_iso)` -- a bare
+    # "2026-07-30" can never equal "2026-07-30 12:00:00+00", so the query
+    # ALWAYS returned empty, `reach_met` was permanently False, and a
+    # just-completed workout could never move the lifecycle off "new" (E2E
+    # #80). Use the half-open local-day window instead, same chokepoint as
+    # every other timestamptz-by-user-day query in this file.
     next_workout: Optional[Dict[str, Any]] = None
     try:
+        _train_day_start, _train_day_end = local_day_bounds(local_date_iso, tz)
         tw = sb.client.table("workouts").select(
             "id, name, scheduled_date, completed_at, duration_minutes"
-        ).eq("user_id", user_id).eq(
-            "scheduled_date", local_date_iso
-        ).limit(1).execute()
-        if tw.data:
-            row = tw.data[0]
+        ).eq("user_id", user_id).gte(
+            "scheduled_date", _train_day_start
+        ).lt(
+            "scheduled_date", _train_day_end
+        ).execute()
+        rows = tw.data or []
+        if rows:
+            # Prefer a COMPLETED session if one exists among today's rows —
+            # reach_met asks "did the user finish today's training", and a
+            # completed row answers that even if a second (e.g. rehab/quick)
+            # workout is also scheduled today.
+            row = next((r for r in rows if r.get("completed_at")), rows[0])
             next_workout = {
                 "name": row.get("name"),
                 "completed": row.get("completed_at") is not None,
@@ -783,6 +800,25 @@ def _collect_snapshot(
     except Exception as e:
         logger.warning(f"[daily_insight] daily_activity lookup failed: {e}")
 
+    # --- Move pillar: gate on a connected Health source (E2E #132c) --------
+    # `move.applicable` defaulted True unconditionally, so an account with NO
+    # Health integration still "opened" the Move pillar (steps read as 0 vs
+    # a hardcoded 10,000 target below) — the coach nudged "stack a few more
+    # steps" for a goal that literally cannot exist while Home still shows
+    # "Connect Health to see steps, sleep & readiness". There is no
+    # `users.health_connected` column; the honest backend-only proxy is
+    # whether daily_activity has EVER synced a row for this user (a wearable
+    # sync writes rows only when connected — one query, best-effort, not
+    # date-scoped so a quiet-but-connected day still reads as connected).
+    try:
+        hc = sb.client.table("daily_activity").select("id").eq(
+            "user_id", user_id
+        ).limit(1).execute()
+        if not (hc and hc.data):
+            snapshot["move"]["applicable"] = False
+    except Exception as e:
+        logger.debug(f"[daily_insight] health-connection check skipped: {e}")
+
     # --- User goal --------------------------------------------------------
     # Schema reality: users.daily_calorie_target / daily_protein_target_g
     # (not the non-prefixed versions). No step_goal or sleep_goal_hours
@@ -809,7 +845,13 @@ def _collect_snapshot(
                 except Exception:
                     pass
         # Defaults matched to the client (lib/data/services/health_goals_service.dart).
-        snapshot["move"]["step_target"] = 10000
+        # step_target is only meaningful when Move is applicable (E2E #132c) —
+        # for a disconnected user it removed the LAST grounded number an
+        # unconnected-user snapshot could cite for steps, so the number
+        # guardrail (_validate_insight_numbers) rejects any "10,000 steps"
+        # line Gemini invents instead of silently confirming it.
+        if snapshot["move"].get("applicable"):
+            snapshot["move"]["step_target"] = 10000
         snapshot["sleep"]["target_hours"] = 8.0
     except Exception as e:
         logger.warning(f"[daily_insight] users lookup failed: {e}")
@@ -1083,14 +1125,20 @@ def _collect_snapshot(
             or (snapshot["move"].get("steps") or 0) > 0
             or snapshot["train"].get("reach_met")
         )
-        if onboarded is False:
+        # E2E #80: real activity must win regardless of the onboarding flag.
+        # A user who finished today's workout (or logged food/steps) is not
+        # "new", even if `onboarding_completed` is still False (the coach
+        # welcome-screen check does not gate on a fully-finished onboarding
+        # flow, and a user can complete a workout via a deep link/demo before
+        # onboarding is marked done). Check activity FIRST.
+        if today_active or recently_active:
+            lifecycle = "active"
+        elif onboarded is False:
             lifecycle = "new"
-        elif not recently_active and not today_active:
+        else:
             # Onboarded but silent across the whole 7-day window. A young account
             # is still "new" (never really started); an older one is "returning".
             lifecycle = "new" if (age is not None and age < 3) else "returning"
-        else:
-            lifecycle = "active"
         snapshot["lifecycle"] = lifecycle
     except Exception as e:
         logger.debug(f"[daily_insight] lifecycle calc skipped: {e}")
@@ -1257,7 +1305,11 @@ def _pick_fallback_pillar(snapshot: Dict[str, Any]) -> str:
     nourish_open = (nourish.get("calorie_target") or 0) > 0 and (
         (nourish.get("calories_logged") or 0) < (nourish.get("calorie_target") or 0) * 0.5
     )
-    move_open = (move.get("step_target") or 0) > 0 and (
+    # E2E #132c: gate on `applicable` — a disconnected-Health account has no
+    # step_target either now (see _collect_snapshot), but this is a second,
+    # explicit line of defense against ever leading with "walk more" for a
+    # user who has no way to log a step.
+    move_open = move.get("applicable") and (move.get("step_target") or 0) > 0 and (
         (move.get("steps") or 0) < (move.get("step_target") or 0) * 0.5
     )
     sleep_open = (sleep.get("target_hours") or 0) > 0 and (
@@ -1905,7 +1957,14 @@ async def daily_insight(
 
         def _home_blocks(pillar: Optional[str]) -> Optional[List[Dict[str, Any]]]:
             """Up to _HOME_BLOCK_COUNT glance graphs for the home card, led by the
-            tip's pillar. Best-effort — never fatal."""
+            tip's pillar. Best-effort — never fatal.
+
+            strict=True (E2E #132a): never substitute an unrelated chart for a
+            pillar that has none of its own — e.g. a "Stack a few more steps"
+            headline must not render a protein chart underneath it. Suppress
+            entirely (self-hides client-side) rather than show something that
+            visually argues against the headline above it.
+            """
             try:
                 from services.coach.chat_blocks import build_briefing_blocks
                 return build_briefing_blocks(
@@ -1913,6 +1972,7 @@ async def daily_insight(
                     leading_pillar=pillar,
                     max_blocks=_HOME_BLOCK_COUNT,
                     bypass_cache=_blocks_bypass,
+                    strict=True,
                 ) or None
             except Exception as e:
                 logger.warning(f"[daily_insight] home block build failed: {e}")
@@ -2437,6 +2497,7 @@ def _find_active_injury(active: list, *, body_part: Optional[str], injury_id: Op
 @router.post("/injury-action", response_model=InjuryActionResponse)
 async def injury_action(
     payload: InjuryActionRequest,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Execute a recovery check-in chip action (All better / Still sore / Do a
@@ -2619,13 +2680,19 @@ async def injury_action(
 
         part_label = bp.replace("_", " ")
         workout_name = f"{part_label.title()} Rehab ({rehab_phase})"
-        today_utc = datetime.now(timezone.utc).date().isoformat()
+        # E2E #7 (residual sibling writer): a bare server-UTC calendar date is
+        # midnight UTC, which is 7pm the PREVIOUS local day for a US user —
+        # the exact class scheduled_date_anchor.py exists to close. Anchor to
+        # the user's own local day at noon UTC-safe instead of the server's.
+        from api.v1.workouts.scheduled_date_anchor import anchor_today
+        _rehab_tz = resolve_timezone(request, sb, user_id)
+        scheduled_at_noon = anchor_today(_rehab_tz)
         created = sb.create_workout({
             "user_id": user_id,
             "name": workout_name,
             "type": "rehab",
             "difficulty": "light",
-            "scheduled_date": today_utc,
+            "scheduled_date": scheduled_at_noon,
             "exercises_json": exercises,
             "duration_minutes": 12,
             "is_completed": False,

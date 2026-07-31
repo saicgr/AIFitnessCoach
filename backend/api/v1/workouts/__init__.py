@@ -51,6 +51,7 @@ from .swap_variant import router as swap_variant_router
 from .reshape import router as reshape_router
 from .milestones_progress import router as milestones_progress_router
 from .studio import router as studio_router
+from .warmup_templates import router as warmup_templates_router
 
 # Create the combined router
 router = APIRouter()
@@ -93,6 +94,13 @@ router.include_router(milestones_progress_router)
 # /shuffle, /feedback). Registered BEFORE crud_router so the dynamic
 # `/{workout_id}` CRUD handlers don't shadow these sub-paths.
 router.include_router(studio_router)
+
+# Saved warm-up templates (E2E #125) — static `/warmup-template` path plus
+# `/{workout_id}/warmup/apply-template`. Registered BEFORE crud_router for
+# the same `/{workout_id}` precedence reason as card_context/swap_variant
+# above (a static top-level path would otherwise be swallowed as a
+# workout_id by crud's dynamic `/{workout_id}` route).
+router.include_router(warmup_templates_router)
 
 # CRUD operations (basic CRUD) - has /{workout_id} which would match "today" and "quick"
 router.include_router(crud_router)

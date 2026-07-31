@@ -786,6 +786,7 @@ def build_briefing_blocks(
     leading_pillar: Optional[str] = None,
     max_blocks: int = 3,
     bypass_cache: bool = False,
+    strict: bool = False,
 ) -> List[Dict[str, Any]]:
     """Grounded glance graphs for a daily briefing (morning/evening) or the home
     coach card. Leads with the [leading_pillar]'s topic when that topic has data,
@@ -799,6 +800,17 @@ def build_briefing_blocks(
     so a per-process bust would be unreliable; recomputing reads the source of
     truth regardless of which worker serves the request). The recomputed map is
     still written back to the memo so the next non-bypass call is cheap.
+
+    [strict] (E2E #132a): when a [leading_pillar] with a real chartable topic
+    (nourish/move/sleep — see _PILLAR_TO_TOPIC_KEY) is given but that topic has
+    NO data, the default behaviour silently substitutes the next topic in
+    _BRIEFING_TOPIC_PRIORITY — which is how a headline about steps ("Stack a
+    few more steps") shipped over a protein chart: two different metrics, no
+    relationship to each other. strict=True suppresses ALL blocks in that
+    case instead of substituting an unrelated one, so the card either shows a
+    chart that agrees with its own headline or shows none. Pillars with no
+    chartable topic at all (e.g. "train") are unaffected — that fallback to
+    the default priority is the existing, intentional design, not this bug.
     """
     now = time.monotonic()
     hit = _by_topic_cache.get(user_id)
@@ -812,8 +824,10 @@ def build_briefing_blocks(
 
     # Cheap reorder: leading-pillar topic first (when it has data), then the
     # default priority. De-duped, never the same topic twice.
-    order: List[str] = []
     lead_key = _PILLAR_TO_TOPIC_KEY.get((leading_pillar or "").lower())
+    if strict and lead_key and lead_key not in by_topic:
+        return []
+    order: List[str] = []
     if lead_key and lead_key in by_topic:
         order.append(lead_key)
     for k in _BRIEFING_TOPIC_PRIORITY:

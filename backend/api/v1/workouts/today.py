@@ -90,6 +90,13 @@ _active_background_generations: Set[str] = set()
 _last_bg_gen_schedule: dict = {}
 _BG_GEN_SCHEDULE_COOLDOWN = 30  # seconds
 
+# E2E #65: how many upcoming scheduled workouts `next_workouts` surfaces.
+# Was hard-limited to 1 (`future_rows` query below), so a schedule gap (a
+# missing day before a day that WAS generated) silently dropped the missing
+# day entirely. 14 matches the proactive background-generation horizon used
+# elsewhere in this file (`max_dates=14`).
+_NEXT_WORKOUTS_LIMIT = 14
+
 # Bounded parallelism for the home-carousel batch backfill. Each /generate
 # call hits Gemini, so we cap to avoid burning per-user RPM (15/min) or the
 # project quota. 3 in flight × ~12s = ~4 dates/min — well under the 15/min
@@ -288,6 +295,16 @@ class TodayWorkoutResponse(BaseModel):
     has_workout_today: bool
     today_workout: Optional[TodayWorkoutSummary] = None
     next_workout: Optional[TodayWorkoutSummary] = None
+    # E2E #65: `next_workout` can only ever surface ONE upcoming day (the
+    # future_rows query below was `limit=1`), so a user with a gap in their
+    # schedule (e.g. Mon/Wed/Fri/Sun with Wed missing but Fri generated) saw
+    # "FRI, JUL 31" while Wednesday silently vanished from every reader.
+    # ADDITIVE field carrying every upcoming scheduled workout found within
+    # the query window, earliest first (`next_workout` is always
+    # `next_workouts[0]` when non-empty, kept for old-client compatibility —
+    # same pattern as `degraded_reason`). Old clients that don't know this
+    # field simply ignore it.
+    next_workouts: List[TodayWorkoutSummary] = []
     days_until_next: Optional[int] = None
     # Extra today workouts (quick workouts coexisting with scheduled workout)
     extra_today_workouts: List[TodayWorkoutSummary] = []
@@ -1327,7 +1344,7 @@ async def get_today_workout(
                     _run_with_timeout(
                         loop.run_in_executor(_db_executor, lambda: db.list_workouts(
                             user_id=user_id, from_date=tomorrow_utc_start, to_date=future_utc_end,
-                            is_completed=False, limit=1, order_asc=True,
+                            is_completed=False, limit=_NEXT_WORKOUTS_LIMIT, order_asc=True,
                         )),
                         label="future_rows",
                     ),
@@ -1473,12 +1490,20 @@ async def get_today_workout(
         if _demoted_rows:
             _candidate_future.extend(_demoted_rows)
             _candidate_future.sort(key=lambda r: str(r.get("scheduled_date") or ""))
+        next_workouts: List[TodayWorkoutSummary] = []
         if _candidate_future:
-            next_workout = _row_to_summary(_candidate_future[0], user_today_str=today_str, locale=_display_locale, db_client=db, assignment_meta=assignment_meta)
+            next_workouts = [
+                _row_to_summary(row, user_today_str=today_str, locale=_display_locale, db_client=db, assignment_meta=assignment_meta)
+                for row in _candidate_future
+            ]
+            next_workout = next_workouts[0]
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
             user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
             days_until_next = (next_date - user_today_date).days
-            logger.debug(f"[TODAY DEBUG] Found next workout: {next_workout.name}, in {days_until_next} days")
+            logger.debug(
+                f"[TODAY DEBUG] Found {len(next_workouts)} upcoming workout(s); "
+                f"next: {next_workout.name}, in {days_until_next} days"
+            )
 
         has_completed_workout_today = len(completed_today_rows) > 0
 
@@ -1587,6 +1612,7 @@ async def get_today_workout(
             has_workout_today=has_workout_today,
             today_workout=today_workout,
             next_workout=next_workout,
+            next_workouts=next_workouts,
             days_until_next=days_until_next,
             extra_today_workouts=extra_today_workouts,
             completed_today=has_completed_workout_today,

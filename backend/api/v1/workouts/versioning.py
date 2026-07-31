@@ -177,6 +177,130 @@ def _is_compound_exercise(exercise: dict) -> bool:
     return False
 
 
+def _derive_focus_areas_from_exercises(exercises: list) -> List[str]:
+    """Best-effort focus area(s) from a workout's own exercise list.
+
+    E2E #110: both regenerate paths derived focus SOLELY from
+    ``ex.get("target_muscles")`` — but library-sourced exercises (the ones
+    RAG hands to Gemini, and the ones persisted back) carry their muscle on
+    ``muscle_group`` (a single string), not ``target_muscles`` (see
+    ``generate_workout_from_library``'s exercise_list formatting and its
+    output shape). The old check therefore silently found nothing for the
+    overwhelming majority of real workouts, so a "legs" regenerate had no
+    focus signal at all and the request fell through to an unconstrained
+    full-body regeneration — which is how a legs day came back as an
+    all-stretch session. Checks ``target_muscles`` first (list or string) for
+    forward/back-compat, then falls back to ``muscle_group``.
+    """
+    muscles: set = set()
+    for ex in exercises or []:
+        if not isinstance(ex, dict):
+            continue
+        found = False
+        raw = ex.get("target_muscles")
+        if raw:
+            found = True
+            if isinstance(raw, list):
+                muscles.update(str(m) for m in raw if m)
+            elif isinstance(raw, str):
+                muscles.add(raw)
+        if not found:
+            mg = ex.get("muscle_group")
+            if isinstance(mg, str) and mg.strip():
+                muscles.add(mg.strip())
+            elif isinstance(mg, list):
+                muscles.update(str(m) for m in mg if m)
+    return list(muscles)[:2]  # Use up to 2 main muscles
+
+
+async def _apply_regen_focus_validation(
+    exercises: list,
+    focus_area: str,
+    workout_name: str,
+    equipment: list,
+    fitness_level: str,
+    fallback_pool: Optional[list],
+    log_prefix: str = "Regen",
+    min_focus_exercises: int = 3,
+) -> list:
+    """Focus-scoped candidate pool + deterministic post-filter, shared by
+    both ``/regenerate`` and ``/regenerate-stream`` — E2E #110.
+
+    ``/generate`` (generation_endpoints.py:1568) runs every generated
+    exercise through ``validate_and_filter_focus_mismatches`` with a
+    focus-scoped candidate pool so a mismatch (e.g. a stretch in a "legs"
+    workout) gets SWAPPED for a real focus-matching exercise from the pool.
+    Neither regenerate path did this — their terminal completeness stage
+    (A4 / ``ensure_complete_workout``) is a pure COUNT floor, so it happily
+    topped a mismatched session up to N exercises without ever checking they
+    belonged to the requested focus. This is exactly how a legs regenerate
+    came back as "Sleepy Wander Range Session" — 5 stretches, no leg work.
+
+    Call this BEFORE the completeness stage so anything it backfills is
+    already focus-correct. Returns ``exercises`` unchanged on any error or
+    when there isn't enough of a valid replacement (FAIL OPEN — a
+    regeneration is never blocked by this stage).
+    """
+    if not exercises or not focus_area:
+        return exercises
+    try:
+        from .focus_validation_utils import (
+            validate_and_filter_focus_mismatches,
+            build_library_pool,
+        )
+        try:
+            from services.exercise_library_service import get_exercise_library_service
+            lib_pool = build_library_pool(
+                get_exercise_library_service(),
+                focus_area=focus_area,
+                equipment=equipment if isinstance(equipment, list) else [],
+                count=max(15, len(exercises) * 3),
+                fitness_level=fitness_level or "intermediate",
+            )
+        except Exception as pool_err:  # noqa: BLE001
+            logger.warning(f"[{log_prefix}][FocusPool] library pool fetch failed: {pool_err}")
+            lib_pool = fallback_pool or []
+
+        result = await validate_and_filter_focus_mismatches(
+            exercises=exercises,
+            focus_area=focus_area,
+            workout_name=workout_name,
+            candidate_pool=lib_pool or fallback_pool,
+        )
+        missing_groups = result.get("missing_muscle_groups")
+        if missing_groups:
+            logger.error(
+                f"❌ [{log_prefix}][FocusValidation] Workout '{workout_name}' labeled "
+                f"full_body but MISSING: {missing_groups}."
+            )
+        if result["mismatch_count"] > 0:
+            logger.warning(
+                f"🚨 [{log_prefix}][FocusValidation] Found {result['mismatch_count']} "
+                f"mismatched exercise(s) in '{workout_name}' for focus '{focus_area}'. "
+                f"Mismatched: {[e.get('name') for e in result['mismatched_exercises']]}"
+            )
+            valid = result["valid_exercises"]
+            if len(valid) >= min_focus_exercises:
+                logger.info(
+                    f"✅ [{log_prefix}][FocusValidation] Filtering to {len(valid)} valid "
+                    f"exercises (removed {result['mismatch_count']} mismatched) for "
+                    f"focus='{focus_area}'"
+                )
+                return valid
+            logger.error(
+                f"❌ [{log_prefix}][FocusValidation] CRITICAL: only {len(valid)} valid "
+                f"exercises for focus='{focus_area}' (minimum required: "
+                f"{min_focus_exercises}). Keeping all {len(exercises)} exercises."
+            )
+        return exercises
+    except Exception as e:  # noqa: BLE001 — fail open
+        logger.warning(
+            f"[{log_prefix}][FocusValidation] stage raised, keeping pre-stage exercises: {e}",
+            exc_info=True,
+        )
+        return exercises
+
+
 def _rebuild_set_targets(
     num_sets: int,
     reps: int,
@@ -547,19 +671,9 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
         gemini_service = GeminiService()
         exercise_rag = get_exercise_rag_service()
         if not focus_areas:
-            # Try to determine focus from existing workout's target muscles
+            # Try to determine focus from the existing workout's own exercises.
             existing_exercises = parse_json_field(existing.get("exercises_json") or existing.get("exercises"), [])
-            if existing_exercises:
-                target_muscles = set()
-                for ex in existing_exercises:
-                    if isinstance(ex, dict) and ex.get("target_muscles"):
-                        muscles = ex.get("target_muscles")
-                        if isinstance(muscles, list):
-                            target_muscles.update(muscles)
-                        elif isinstance(muscles, str):
-                            target_muscles.add(muscles)
-                if target_muscles:
-                    focus_areas = list(target_muscles)[:2]  # Use up to 2 main muscles
+            focus_areas = _derive_focus_areas_from_exercises(existing_exercises)
 
         focus_area = focus_areas[0] if focus_areas else "full_body"
 
@@ -644,6 +758,19 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
             # Apply difficulty scaling to exercises (non-medium only)
             if user_difficulty and user_difficulty.lower() != "medium":
                 exercises = _apply_difficulty_scaling(exercises, user_difficulty)
+
+            # FOCUS AREA VALIDATION (regenerate, non-stream) — E2E #110. Run
+            # BEFORE the A4 completeness stage below so anything it backfills
+            # is already focus-correct. See _apply_regen_focus_validation.
+            exercises = await _apply_regen_focus_validation(
+                exercises=exercises,
+                focus_area=focus_area,
+                workout_name=workout_name,
+                equipment=equipment if isinstance(equipment, list) else [],
+                fitness_level=fitness_level,
+                fallback_pool=rag_exercises,
+                log_prefix="Regen",
+            )
 
             # ============================================================
             # A4 — UNIFORM COMPLETENESS ENFORCEMENT (regenerate, non-stream).
@@ -1191,18 +1318,9 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             exercise_rag = get_exercise_rag_service()
 
             if not focus_areas:
+                # Try to determine focus from the existing workout's own exercises.
                 existing_exercises = parse_json_field(existing.get("exercises_json") or existing.get("exercises"), [])
-                if existing_exercises:
-                    target_muscles = set()
-                    for ex in existing_exercises:
-                        if isinstance(ex, dict) and ex.get("target_muscles"):
-                            muscles = ex.get("target_muscles")
-                            if isinstance(muscles, list):
-                                target_muscles.update(muscles)
-                            elif isinstance(muscles, str):
-                                target_muscles.add(muscles)
-                    if target_muscles:
-                        focus_areas = list(target_muscles)[:2]
+                focus_areas = _derive_focus_areas_from_exercises(existing_exercises)
 
             # Multi-focus expansion: previously this collapsed to focus_areas[0]
             # which silently ignored every selection past the first — e.g. user
@@ -1477,6 +1595,21 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     f"[STREAM] Gemini returned {original_count} exercises, padded to "
                     f"{len(exercises)} from RAG tail to meet floor={_post_min}"
                 )
+
+            # FOCUS AREA VALIDATION (regenerate-stream) — E2E #110. Mirrors
+            # the non-stream /regenerate stage; run BEFORE the A4
+            # completeness stage below. `workout_name` isn't computed yet on
+            # this path (derived after A4) — use the prior workout's name for
+            # log messages only. See _apply_regen_focus_validation.
+            exercises = await _apply_regen_focus_validation(
+                exercises=exercises,
+                focus_area=focus_area,
+                workout_name=existing.get("name") or "Workout",
+                equipment=equipment if isinstance(equipment, list) else [],
+                fitness_level=fitness_level,
+                fallback_pool=rag_exercises,
+                log_prefix="STREAM",
+            )
 
             # ============================================================
             # A4 — UNIFORM COMPLETENESS ENFORCEMENT (regenerate-stream).

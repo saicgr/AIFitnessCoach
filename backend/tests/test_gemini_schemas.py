@@ -246,6 +246,7 @@ class TestFoodAnalysisSchemas:
             protein_g=31.0,
             carbs_g=0.0,
             fat_g=3.6,
+            weight_g=150.0,
             portion_basis="by_weight",
         )
         assert food.name == "Chicken Breast"
@@ -262,6 +263,24 @@ class TestFoodAnalysisSchemas:
                 protein_g=1.1,
                 carbs_g=21.0,
                 fat_g=0.5,
+                weight_g=148.0,
+            )
+
+        # weight_g is ALSO mandatory (2026-07-30, E2E #130): a buffet/spread
+        # photo shipped 4,591 kcal / 601 g protein as one dinner because the
+        # single largest item ("roasted whole turkey") had weight_g omitted —
+        # every other field satisfied the schema, so nothing caught it.
+        # Structured decoding follows the schema, so omitting weight_g must
+        # fail here the same way omitting portion_basis does above.
+        with pytest.raises(ValidationError):
+            FoodItemSchema(
+                name="Roasted Whole Turkey",
+                amount="1 whole turkey",
+                calories=2505,
+                protein_g=435.0,
+                carbs_g=0.0,
+                fat_g=90.0,
+                portion_basis="by_weight",
             )
 
     def test_food_analysis_response(self):
@@ -280,6 +299,7 @@ class TestFoodAnalysisSchemas:
                     protein_g=5.0,
                     carbs_g=57.0,
                     fat_g=0.6,
+                    weight_g=200.0,
                     portion_basis="by_weight",
                 ),
             ],

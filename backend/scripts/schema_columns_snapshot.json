@@ -8888,6 +8888,14 @@
   "updated_at",
   "user_id"
  ],
+ "user_warmup_templates": [
+  "created_at",
+  "exercises_json",
+  "id",
+  "updated_at",
+  "user_id",
+  "workout_type"
+ ],
  "user_workout_patterns": [
   "avg_reps_completed",
   "avg_sets_completed",

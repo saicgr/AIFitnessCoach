@@ -139,6 +139,33 @@ def test_bodyweight_equipment_rep_based():
     assert meta["tracking_type"] == TRACK_BODYWEIGHT
 
 
+def test_library_is_timed_does_not_override_authored_reps():
+    # E2E #133: Bird Dog carries exercise_library.is_timed=True (with a
+    # default_hold_seconds), but the PROGRAM authored a real target_reps=5.
+    # The authored rep count must win — the set should log reps, not render
+    # a timer with reps_completed stuck at 0.
+    meta = derive_tracking_metadata(
+        {"name": "Bird Dog", "reps": "5", "equipment": "bodyweight"},
+        library_meta={"is_timed": True, "default_hold_seconds": 30},
+    )
+    assert meta["tracking_type"] == TRACK_BODYWEIGHT
+    assert meta["duration_seconds"] is None
+    assert meta["hold_seconds"] is None
+
+
+def test_library_is_timed_still_wins_with_no_authored_reps():
+    # Sibling case: a genuinely time-only library exercise (no rep count
+    # anywhere) must still render as a timer — the gate only blocks the
+    # override when a REAL rep count is present.
+    meta = derive_tracking_metadata(
+        {"name": "Bird Dog"},
+        library_meta={"is_timed": True, "default_hold_seconds": 30},
+    )
+    assert meta["tracking_type"] == TRACK_TIME
+    assert meta["duration_seconds"] == 30
+    assert meta["hold_seconds"] == 30
+
+
 def test_library_meta_takes_precedence_for_carry_pattern():
     # Canonical metadata (movement_pattern=carry) classifies as distance even
     # when the name is unfamiliar.

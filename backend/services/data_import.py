@@ -101,8 +101,19 @@ def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
             else:
                 logger.warning("No _metadata.csv found, skipping version check")
 
-            # Import counts
-            counts = {}
+            # Import counts. Every `_import_*` helper below runs a per-row
+            # try/except (one bad row must not abort the whole restore), so
+            # `count` alone can silently under-report a ZIP without ever
+            # telling the caller anything was dropped. `_record` also writes a
+            # `<name>_failed` key whenever rows actually failed, so a GDPR
+            # restore response can say so instead of reporting `workout_logs:
+            # 47` with no sign that 3 of 50 rows never landed.
+            counts: Dict[str, int] = {}
+
+            def _record(name: str, count: int, failed: int) -> None:
+                counts[name] = count
+                if failed:
+                    counts[f"{name}_failed"] = failed
 
             # ID mapping for relationships (old_id -> new_id)
             workout_id_map = {}
@@ -118,44 +129,61 @@ def import_user_data(user_id: str, zip_content: bytes) -> Dict[str, int]:
             # 2. Import body metrics
             if "body_metrics.csv" in file_list:
                 metrics = _parse_csv(zip_file.read("body_metrics.csv").decode('utf-8'))
-                count = _import_body_metrics(db, user_id, metrics)
-                counts["body_metrics"] = count
+                count, failed = _import_body_metrics(db, user_id, metrics)
+                _record("body_metrics", count, failed)
 
             # 3. Import workouts (need to map IDs)
             if "workouts.csv" in file_list:
                 workouts = _parse_csv(zip_file.read("workouts.csv").decode('utf-8'))
-                count, workout_id_map = _import_workouts(db, user_id, workouts)
-                counts["workouts"] = count
+                count, workout_id_map, failed = _import_workouts(db, user_id, workouts)
+                _record("workouts", count, failed)
 
             # 4. Import workout logs (need to map workout IDs)
             if "workout_logs.csv" in file_list:
                 logs = _parse_csv(zip_file.read("workout_logs.csv").decode('utf-8'))
-                count, log_id_map = _import_workout_logs(db, user_id, logs, workout_id_map)
-                counts["workout_logs"] = count
+                # Pre-parse exercise_sets.csv (if present) just to learn, per
+                # OLD log_id, the set of distinct exercises it contains. The
+                # workout_logs export has no `exercises_completed` column of
+                # its own (see `_export_workout_logs` in data_export.py) — the
+                # per-set rows are the only place that ground truth lives.
+                # This is a read of the same bytes `_import_exercise_sets`
+                # reads again below to do the actual per-set insert; nothing
+                # is skipped either way.
+                exercises_by_old_log_id: Dict[str, set] = {}
+                if "exercise_sets.csv" in file_list:
+                    for s in _parse_csv(zip_file.read("exercise_sets.csv").decode('utf-8')):
+                        old_log_id = s.get("log_id")
+                        ex_name = (s.get("exercise_name") or "").strip()
+                        if old_log_id and ex_name:
+                            exercises_by_old_log_id.setdefault(old_log_id, set()).add(ex_name.lower())
+                count, log_id_map, failed = _import_workout_logs(
+                    db, user_id, logs, workout_id_map, exercises_by_old_log_id
+                )
+                _record("workout_logs", count, failed)
 
             # 5. Import exercise sets (need to map log IDs)
             if "exercise_sets.csv" in file_list:
                 sets = _parse_csv(zip_file.read("exercise_sets.csv").decode('utf-8'))
-                count = _import_exercise_sets(db, user_id, sets, log_id_map)
-                counts["exercise_sets"] = count
+                count, failed = _import_exercise_sets(db, user_id, sets, log_id_map)
+                _record("exercise_sets", count, failed)
 
             # 6. Import strength records
             if "strength_records.csv" in file_list:
                 records = _parse_csv(zip_file.read("strength_records.csv").decode('utf-8'))
-                count = _import_strength_records(db, user_id, records)
-                counts["strength_records"] = count
+                count, failed = _import_strength_records(db, user_id, records)
+                _record("strength_records", count, failed)
 
             # 7. Import achievements
             if "achievements.csv" in file_list:
                 achievements = _parse_csv(zip_file.read("achievements.csv").decode('utf-8'))
-                count = _import_achievements(db, user_id, achievements)
-                counts["achievements"] = count
+                count, failed = _import_achievements(db, user_id, achievements)
+                _record("achievements", count, failed)
 
             # 8. Import streaks
             if "streaks.csv" in file_list:
                 streaks = _parse_csv(zip_file.read("streaks.csv").decode('utf-8'))
-                count = _import_streaks(db, user_id, streaks)
-                counts["streaks"] = count
+                count, failed = _import_streaks(db, user_id, streaks)
+                _record("streaks", count, failed)
 
     except zipfile.BadZipFile:
         raise ValueError("Invalid ZIP file format")
@@ -251,9 +279,10 @@ def _import_profile(db, user_id: str, profile: Dict[str, str]) -> None:
         logger.debug(f"Updated profile: {list(update_data.keys())}")
 
 
-def _import_body_metrics(db, user_id: str, metrics: List[Dict[str, str]]) -> int:
-    """Import body metrics."""
+def _import_body_metrics(db, user_id: str, metrics: List[Dict[str, str]]) -> tuple:
+    """Import body metrics. Returns (count, failed)."""
     count = 0
+    failed = 0
     for m in metrics:
         try:
             data = {
@@ -276,14 +305,16 @@ def _import_body_metrics(db, user_id: str, metrics: List[Dict[str, str]]) -> int
             db.create_user_metrics(data)
             count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import metric: {e}", exc_info=True)
 
-    return count
+    return count, failed
 
 
 def _import_workouts(db, user_id: str, workouts: List[Dict[str, str]]) -> tuple:
-    """Import workouts and return ID mapping."""
+    """Import workouts. Returns (count, id_map, failed)."""
     count = 0
+    failed = 0
     id_map = {}
 
     for w in workouts:
@@ -326,15 +357,35 @@ def _import_workouts(db, user_id: str, workouts: List[Dict[str, str]]) -> tuple:
                     id_map[old_id] = new_id
                 count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import workout: {e}", exc_info=True)
 
-    return count, id_map
+    return count, id_map, failed
 
 
-def _import_workout_logs(db, user_id: str, logs: List[Dict[str, str]], workout_id_map: Dict[str, str]) -> tuple:
-    """Import workout logs and return ID mapping."""
+# Real `workout_logs.status` values (migration 137's CHECK constraint).
+_VALID_WORKOUT_LOG_STATUSES = {"completed", "in_progress", "abandoned", "paused"}
+
+
+def _import_workout_logs(
+    db,
+    user_id: str,
+    logs: List[Dict[str, str]],
+    workout_id_map: Dict[str, str],
+    exercises_by_old_log_id: Optional[Dict[str, set]] = None,
+) -> tuple:
+    """Import workout logs. Returns (count, id_map, failed).
+
+    `exercises_by_old_log_id` (optional) maps an OLD `log_id` from the export
+    to the set of distinct exercise names logged against it, pre-computed by
+    the caller from `exercise_sets.csv` — see `import_user_data`. Used to fill
+    `exercises_completed`, which (like `status` and `duration_minutes` below)
+    has no column of its own in the workout_logs CSV export.
+    """
     count = 0
+    failed = 0
     id_map = {}
+    exercises_by_old_log_id = exercises_by_old_log_id or {}
 
     for log in logs:
         try:
@@ -367,6 +418,55 @@ def _import_workout_logs(db, user_id: str, logs: List[Dict[str, str]], workout_i
                 except (ValueError, TypeError) as e:
                     logger.debug(f"Failed to parse total_time: {e}")
 
+            # `duration_minutes` is a real workout_logs column that the CSV
+            # export (`_export_workout_logs`) does not write directly — but
+            # `total_time_seconds`, the SAME session's duration, IS exported.
+            # Derive minutes from it rather than leaving the column unset. A
+            # future export that adds a genuine `duration_minutes` field wins
+            # if present.
+            if log.get("duration_minutes"):
+                try:
+                    data["duration_minutes"] = int(float(log["duration_minutes"]))
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse duration_minutes: {e}")
+            elif "total_time_seconds" in data:
+                data["duration_minutes"] = data["total_time_seconds"] // 60
+
+            # `exercises_completed` — same story: no column in the export, but
+            # the caller-supplied per-log exercise-name set (built from
+            # exercise_sets.csv, the ground truth for what was actually
+            # logged) tells us the real count.
+            if old_id in exercises_by_old_log_id:
+                data["exercises_completed"] = len(exercises_by_old_log_id[old_id])
+
+            # `status` — restoring a GDPR export must not silently downgrade
+            # every historical session to 'in_progress'. Migration 2390
+            # flipped the column DEFAULT from 'completed' to 'in_progress', so
+            # a writer that omits `status` (as this importer always has) now
+            # gets the OPPOSITE of the pre-2390 default — every restored log
+            # becomes invisible to every status='completed' reader (progress,
+            # streaks, PRs), defeating the entire point of a restore path.
+            # The export has no genuine `status` column either (honor one if
+            # a future export adds it); the closest available signal is
+            # `exit_reason`, which today always reads "completed" because
+            # `workout_logs` itself has no exit_reason column and
+            # `_export_workout_logs`'s `log.get("exit_reason", "completed")`
+            # always falls through to that default. A row that made it into
+            # the export at all completed the finish/finalize flow, so a
+            # missing/"completed" exit_reason means completed; any other
+            # value (an early-exit reason like "too_tired"/"out_of_time")
+            # means the session was abandoned, not left "in progress" forever.
+            raw_status = (log.get("status") or "").strip().lower()
+            if raw_status in _VALID_WORKOUT_LOG_STATUSES:
+                data["status"] = raw_status
+            else:
+                exit_reason = (log.get("exit_reason") or "").strip().lower()
+                data["status"] = (
+                    "completed"
+                    if exit_reason in ("", "completed", "complete", "finished")
+                    else "abandoned"
+                )
+
             result = db.create_workout_log(data)
             if result:
                 new_id = result["id"]
@@ -374,14 +474,16 @@ def _import_workout_logs(db, user_id: str, logs: List[Dict[str, str]], workout_i
                     id_map[old_id] = new_id
                 count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import workout log: {e}", exc_info=True)
 
-    return count, id_map
+    return count, id_map, failed
 
 
-def _import_exercise_sets(db, user_id: str, sets: List[Dict[str, str]], log_id_map: Dict[str, str]) -> int:
-    """Import exercise sets (performance logs)."""
+def _import_exercise_sets(db, user_id: str, sets: List[Dict[str, str]], log_id_map: Dict[str, str]) -> tuple:
+    """Import exercise sets (performance logs). Returns (count, failed)."""
     count = 0
+    failed = 0
 
     for s in sets:
         try:
@@ -433,14 +535,16 @@ def _import_exercise_sets(db, user_id: str, sets: List[Dict[str, str]], log_id_m
             db.create_performance_log(data)
             count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import exercise set: {e}", exc_info=True)
 
-    return count
+    return count, failed
 
 
-def _import_strength_records(db, user_id: str, records: List[Dict[str, str]]) -> int:
-    """Import strength records."""
+def _import_strength_records(db, user_id: str, records: List[Dict[str, str]]) -> tuple:
+    """Import strength records. Returns (count, failed)."""
     count = 0
+    failed = 0
 
     for r in records:
         try:
@@ -473,14 +577,16 @@ def _import_strength_records(db, user_id: str, records: List[Dict[str, str]]) ->
             db.create_strength_record(data)
             count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import strength record: {e}", exc_info=True)
 
-    return count
+    return count, failed
 
 
-def _import_achievements(db, user_id: str, achievements: List[Dict[str, str]]) -> int:
-    """Import achievements by looking up achievement types."""
+def _import_achievements(db, user_id: str, achievements: List[Dict[str, str]]) -> tuple:
+    """Import achievements by looking up achievement types. Returns (count, failed)."""
     count = 0
+    failed = 0
 
     for a in achievements:
         try:
@@ -520,14 +626,16 @@ def _import_achievements(db, user_id: str, achievements: List[Dict[str, str]]) -
             db.client.table("user_achievements").insert(data).execute()
             count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import achievement: {e}", exc_info=True)
 
-    return count
+    return count, failed
 
 
-def _import_streaks(db, user_id: str, streaks: List[Dict[str, str]]) -> int:
-    """Import streaks (upsert - update if exists)."""
+def _import_streaks(db, user_id: str, streaks: List[Dict[str, str]]) -> tuple:
+    """Import streaks (upsert - update if exists). Returns (count, failed)."""
     count = 0
+    failed = 0
 
     for s in streaks:
         try:
@@ -565,6 +673,7 @@ def _import_streaks(db, user_id: str, streaks: List[Dict[str, str]]) -> int:
 
             count += 1
         except Exception as e:
+            failed += 1
             logger.warning(f"Failed to import streak: {e}", exc_info=True)
 
-    return count
+    return count, failed

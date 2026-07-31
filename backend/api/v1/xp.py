@@ -1036,7 +1036,15 @@ FIRST_TIME_BONUSES = {
     "first_chat": 15,               # First Chat with AI Coach (reduced to prevent level inflation)
     "first_complete_profile": 0,    # Complete Profile (no XP - happens during onboarding)
     # Get Started Challenge (new-user onboarding checklist — see GetStartedChallengeCard)
-    "first_goal_set": 25,           # Set your goal (often already done in onboarding)
+    # E2E #66 (2026-07-31): zeroed. This fired on a MANDATORY onboarding field
+    # (every user sets a goal to finish onboarding), not a discrete
+    # accomplishment — one of four day-0 levers that stacked a brand-new
+    # account to Level 2 before a single workout or meal. Mirrors the
+    # first_complete_profile: 0 precedent above ("already happens during
+    # onboarding, not a separate reward"). Existing user_first_time_bonuses
+    # rows keep whatever they were awarded at the time — this only changes
+    # the amount for FUTURE claims.
+    "first_goal_set": 0,            # Set your goal (already required by onboarding)
     "first_plan_generated": 50,     # Generate your first workout plan
     "onboarding_complete": 100,     # Finish all Get Started Challenge items (+ reward crate)
     # First Meal Logs

@@ -319,8 +319,32 @@ async def recalculate_user_fitness_score(user_id: str, supabase, timezone_str: s
             "score_date", seven_days_ago
         ).execute()
 
-        readiness_scores = [r["readiness_score"] for r in (readiness_response.data or [])]
-        readiness_score = round(sum(readiness_scores) / len(readiness_scores)) if readiness_scores else 50
+        # E2E #9 (instance 3): `readiness_scores.readiness_score` is NULLABLE —
+        # the mid-workout quick check-in (reshape.py `_persist_checkin_gauges`)
+        # upserts gauges without a score. Summing the raw column directly
+        # (`sum(...) / len(...)`) hit `int + None -> TypeError` for any user
+        # who ever used the check-in, silently killing the WHOLE post-workout
+        # fitness recalc (swallowed by this function's outer except). Route
+        # through the same chokepoint the two scores_endpoints.py call sites
+        # already use so a NULL-score row can never reach the aggregation.
+        from api.v1.scores_endpoints import (
+            readiness_window_from_response,
+            NEUTRAL_READINESS_BASELINE,
+        )
+        readiness_window = readiness_window_from_response(readiness_response)
+        if readiness_window.has_signal:
+            readiness_score = round(readiness_window.average)
+        else:
+            # No scored row in the window — mirrors scores_endpoints.py: fall
+            # back to the scale midpoint rather than a fabricated number, and
+            # log the substitution so it's never invisible.
+            readiness_score = NEUTRAL_READINESS_BASELINE
+            logger.info(
+                f"Background fitness recalc for {user_id} has no readiness "
+                f"signal in the 7-day window (scored=0, unscored="
+                f"{readiness_window.unscored_rows}) — readiness component "
+                f"uses the neutral baseline {NEUTRAL_READINESS_BASELINE}"
+            )
 
         # 5. Get previous fitness score
         previous_response = supabase.table("fitness_scores").select(

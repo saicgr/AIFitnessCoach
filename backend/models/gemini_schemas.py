@@ -401,7 +401,18 @@ class FoodItemSchema(BaseModel):
             "then nulled and the meal totals report unknown rather than a fabricated 0."
         ),
     )
-    weight_g: Optional[float] = Field(default=None, ge=0.1, le=5000, description="Weight in grams (single item; nothing realistic exceeds 5kg)")
+    weight_g: float = Field(
+        ...,
+        ge=0.1,
+        le=5000,
+        description=(
+            "Weight in grams for THIS portion. REQUIRED — never omit, never null. "
+            "Nothing realistic exceeds 5kg for a single logged item. A shared/"
+            "display spread (buffet tray, whole roasted turkey, family-style "
+            "platter) must be portioned to ONE PERSON'S SERVING here, never the "
+            "weight of the whole container — see the prompt's serving-size rules."
+        ),
+    )
     unit: str = Field(default="g", description="Measurement unit")
     count: Optional[int] = Field(default=None, ge=1, le=200, description="Count for countable items")
     weight_per_unit_g: Optional[float] = Field(default=None, ge=0.1, le=2000, description="Weight per unit for countable items")
@@ -582,7 +593,21 @@ class MenuDishSchema(BaseModel):
     protein_g: float = Field(..., description="Protein grams per serving.")
     carbs_g: float = Field(..., description="Carb grams per serving.")
     fat_g: float = Field(..., description="Fat grams per serving.")
-    weight_g: Optional[float] = Field(default=None, description="Estimated serving weight in grams.")
+    weight_g: float = Field(
+        ...,
+        ge=0.1,
+        le=5000,
+        description=(
+            "Estimated weight in grams for ONE SINGLE SERVING. REQUIRED — never "
+            "omit, never null (the buffet/menu prompt already says 'ALWAYS "
+            "include weight_g'; this field makes that a structured-decoding "
+            "guarantee, not just a request the model can skip). Nothing "
+            "realistic exceeds 5kg for a single serving. A shared/display dish "
+            "(buffet tray, whole roasted turkey, family-style platter, a "
+            "communal pot) must be portioned to what ONE diner would take, "
+            "never the weight of the whole container."
+        ),
+    )
     serving_description: Optional[str] = Field(default=None, description="Human-readable portion description (e.g. '1 cup, heaping').")
     price: Optional[float] = Field(default=None, description="Listed menu price; null if not visible on the menu.")
     currency: Optional[str] = Field(default=None, description="ISO-ish currency code (USD/EUR/INR). Null if no price.")

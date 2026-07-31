@@ -110,6 +110,42 @@ def build_sets_json_from_performance_logs(
     return sets
 
 
+def _count_completed_exercises(sets: Any) -> int:
+    """Distinct-exercise count among completed sets, for ``exercises_completed``.
+
+    E2E #139: the column is real (migration 1880) but no writer ever set it —
+    the client posts its own count to a DIFFERENT table (``workout_exits``),
+    not here. Derive it from the same durable set list this module already
+    builds/uses, so ``exercises_completed`` reflects reality rather than
+    staying at its ``DEFAULT 0`` forever.
+
+    Prefers the stable ``exercise_id`` when present, falling back to
+    ``exercise_name``. Accepts either a list of set dicts or a JSON string
+    (the shapes ``_sets_json_is_empty`` already tolerates), so it works on
+    both a freshly rebuilt ``sets_json`` and whatever the row already
+    carried. A set explicitly marked ``is_completed: False`` doesn't count
+    toward the exercise it belongs to.
+    """
+    if isinstance(sets, str):
+        import json as _json
+        try:
+            sets = _json.loads(sets)
+        except (ValueError, TypeError):
+            sets = []
+    if not isinstance(sets, list):
+        return 0
+    seen: set = set()
+    for s in sets:
+        if not isinstance(s, dict):
+            continue
+        if s.get("is_completed") is False:
+            continue
+        key = s.get("exercise_id") or s.get("exercise_name")
+        if key:
+            seen.add(key)
+    return len(seen)
+
+
 def _sets_json_is_empty(value: Any) -> bool:
     """True when the stored sets_json holds no sets."""
     if value is None:
@@ -147,6 +183,14 @@ def finalize_workout_log_row(
         if rebuilt:
             update["sets_json"] = rebuilt
             sets_backfilled = len(rebuilt)
+
+    # E2E #139: derive exercises_completed from the same set list — rebuilt
+    # above when sets_json was empty, otherwise whatever the row already
+    # carried. This is the terminal close step for the session row, so it's
+    # the one place authoritative enough to always (re)write this column.
+    final_sets = update.get("sets_json", log_row.get("sets_json"))
+    exercises_completed = _count_completed_exercises(final_sets)
+    update["exercises_completed"] = exercises_completed
 
     status_written = False
     if (log_row.get("status") or "") != "completed":

@@ -43,6 +43,7 @@ from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.supabase_client import get_supabase
+from core.timezone_utils import resolve_timezone, get_user_today, utc_to_local_date
 
 from services.gemini_service import ResponseCache
 from services.program_library_importer import (
@@ -4277,6 +4278,13 @@ async def patch_assignment(
         # restores the hidden rows above so progress/week alignment is kept.)
         needs_reschedule = "assigned_days" in updates or "slot" in updates
         if needs_reschedule:
+            # E2E #121: no `request` param is available on this endpoint, but
+            # `resolve_timezone` explicitly tolerates `request=None` and falls
+            # back to `users.timezone` — `db` + `user_id` are already in
+            # scope. Threading this through replaces two UTC-naive server-
+            # calendar reads (_assignment_anchor_date + reschedule_assignment_
+            # days) with the user's local day.
+            _tz = resolve_timezone(None, db, user_id)
             await _reschedule_assignment(
                 db,
                 assignment_id=assignment_id,
@@ -4289,6 +4297,7 @@ async def patch_assignment(
                 template_id=(
                     str(row["template_id"]) if row.get("template_id") else None
                 ),
+                tz=_tz,
             )
 
         await _clear_today_cache(user_id)
@@ -4307,12 +4316,22 @@ async def patch_assignment(
 def _assignment_anchor_date(
     db, *, assignment_id: str, user_id: str,
     started_at: Any = None, template_id: Optional[str] = None,
+    tz: str = "UTC",
 ) -> date:
     """The program's WEEK-1 start date — week w occupies the calendar week
     beginning anchor + (w-1)*7. Resolved from the schedule row the expansion
     actually used, then the assignment's started_at, then the earliest workout
     it produced. Keeping this fixed is what stops an edit from restarting the
-    program at week 1 (#53)."""
+    program at week 1 (#53).
+
+    E2E #121: `start_date`/`scheduled_date` are DATE columns (bare, no tz
+    conversion needed — slicing is correct there), but `started_at` is a
+    `timestamptz`; slicing its UTC string (`str(started_at)[:10]`) buckets an
+    evening-local start onto the wrong day for a western-hemisphere user.
+    Bucket it into the user's LOCAL day via `utc_to_local_date` instead. The
+    final fallback previously used the server's bare UTC calendar day —
+    replaced with the user's own local today via `get_user_today`.
+    """
     if template_id:
         try:
             resp = (
@@ -4330,10 +4349,12 @@ def _assignment_anchor_date(
         except Exception as e:  # noqa: BLE001
             logger.debug("anchor: schedule lookup skipped: %s", e)
     if started_at:
-        try:
-            return date.fromisoformat(str(started_at)[:10])
-        except ValueError:
-            pass
+        local_str = utc_to_local_date(started_at, tz)
+        if local_str:
+            try:
+                return date.fromisoformat(local_str)
+            except ValueError:
+                pass
     try:
         resp = (
             db.client.table("workouts")
@@ -4349,7 +4370,7 @@ def _assignment_anchor_date(
             return date.fromisoformat(str(rows[0]["scheduled_date"])[:10])
     except Exception as e:  # noqa: BLE001
         logger.debug("anchor: first-workout lookup skipped: %s", e)
-    return date.today()
+    return date.fromisoformat(get_user_today(tz))
 
 
 async def _reschedule_assignment(
@@ -4361,6 +4382,7 @@ async def _reschedule_assignment(
     slot: str,
     started_at: Any = None,
     template_id: Optional[str] = None,
+    tz: str = "UTC",
 ) -> None:
     """MOVE this assignment's future, not-started workouts onto the new
     weekdays / slot (#53).
@@ -4377,13 +4399,19 @@ async def _reschedule_assignment(
         user_id=user_id,
         started_at=started_at,
         template_id=template_id,
+        tz=tz,
     )
+    # E2E #121: `reschedule_assignment_days` defaulted its own `today` to the
+    # server's UTC calendar (`date.today()` in program_template_expander.py)
+    # when not passed. Thread the user's LOCAL today through explicitly so a
+    # reschedule near midnight UTC can't move workouts against the wrong day.
     result = reschedule_assignment_days(
         assignment_id=assignment_id,
         user_id=user_id,
         assigned_days=list(assigned_days or []),
         anchor_date=anchor,
         slot=slot,
+        today=date.fromisoformat(get_user_today(tz)),
     )
     logger.info(
         "reschedule assignment %s: anchor=%s days=%s → %s",
