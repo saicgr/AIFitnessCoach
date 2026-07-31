@@ -347,9 +347,18 @@ def _import_workout_logs(db, user_id: str, logs: List[Dict[str, str]], workout_i
             data = {
                 "user_id": user_id,
                 "workout_id": new_workout_id,
-                "workout_name": log.get("workout_name", "Imported Workout"),
                 "completed_at": log.get("completed_at") or datetime.utcnow().isoformat(),
                 "sets_json": [],  # Will be populated from exercise_sets
+                # `workout_logs` has no `workout_name` column — writing it made
+                # PostgREST reject the ENTIRE insert (42703), so every imported
+                # workout log silently failed (the except below only warned).
+                # The name is still worth keeping for imported logs whose
+                # workout_id didn't map, so it goes in the metadata JSONB.
+                "metadata": {
+                    **(log.get("metadata") or {}),
+                    "workout_name": log.get("workout_name", "Imported Workout"),
+                    "imported": True,
+                },
             }
 
             if log.get("total_time_seconds"):

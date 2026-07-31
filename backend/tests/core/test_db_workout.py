@@ -319,9 +319,9 @@ class TestWorkoutDBExits:
 
     def test_create_workout_exit(self, workout_db):
         """Should create workout exit record."""
-        data = {"user_id": "user-123", "workout_id": "w1", "reason": "too tired"}
+        data = {"user_id": "user-123", "workout_id": "w1", "exit_reason": "too tired"}
         result = workout_db.create_workout_exit(data)
-        assert result["reason"] == "too tired"
+        assert result["exit_reason"] == "too tired"
 
     def test_list_workout_exits(self, mock_supabase_manager):
         """Should list workout exits for user."""

@@ -311,15 +311,15 @@ class TestUserDBInjuries:
         injury_data = {
             "user_id": "user-123",
             "body_part": "shoulder",
-            "description": "Rotator cuff strain",
-            "is_active": True,
+            "notes": "Rotator cuff strain",
+            "status": "active",
         }
         result = user_db.create_injury(injury_data)
         assert result["body_part"] == "shoulder"
 
     def test_update_injury(self, user_db):
         """Should update injury record."""
-        update_data = {"is_active": False}
+        update_data = {"status": "healed"}
         result = user_db.update_injury(1, update_data)
 
     def test_delete_injuries_by_user(self, user_db):
@@ -388,7 +388,7 @@ class TestUserDBMetrics:
 
     def test_create_user_metrics(self, user_db):
         """Should create user metrics record."""
-        data = {"user_id": "user-123", "weight_kg": 80.0, "body_fat_pct": 15.0}
+        data = {"user_id": "user-123", "weight_kg": 80.0, "body_fat_measured": 15.0}
         result = user_db.create_user_metrics(data)
         assert result["weight_kg"] == 80.0
 
@@ -428,9 +428,16 @@ class TestUserDBChatHistory:
 
     def test_create_chat_message(self, user_db):
         """Should create chat message."""
-        data = {"user_id": "user-123", "message": "Hello", "role": "user"}
+        # `chat_history` has no `message`/`role` columns — one row holds a
+        # full turn (`user_message` + `ai_response`), not a role-tagged
+        # message. See create_chat_message in api/v1/chat.py.
+        data = {
+            "user_id": "user-123",
+            "user_message": "Hello",
+            "ai_response": "Hi there! How can I help?",
+        }
         result = user_db.create_chat_message(data)
-        assert result["message"] == "Hello"
+        assert result["user_message"] == "Hello"
 
     def test_delete_chat_history_by_user(self, user_db):
         """Should delete all chat history for user."""

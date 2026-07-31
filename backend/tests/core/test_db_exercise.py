@@ -227,8 +227,8 @@ class TestExerciseDBPerformanceLogs:
             "user_id": "user-123",
             "exercise_name": "Bench Press",
             "weight_kg": 80,
-            "reps": 8,
-            "sets": 4,
+            "reps_completed": 8,
+            "set_number": 4,
         }
         result = exercise_db.create_performance_log(data)
         assert result["weight_kg"] == 80
@@ -279,11 +279,11 @@ class TestExerciseDBStrengthRecords:
         data = {
             "user_id": "user-123",
             "exercise_id": "ex-1",
-            "max_weight_kg": 100,
+            "weight_kg": 100,
             "is_pr": True,
         }
         result = exercise_db.create_strength_record(data)
-        assert result["max_weight_kg"] == 100
+        assert result["weight_kg"] == 100
 
     def test_delete_strength_records_by_user(self, exercise_db):
         """Should delete all records for user."""
@@ -332,12 +332,12 @@ class TestExerciseDBWeeklyVolumes:
         data = {
             "user_id": "user-123",
             "muscle_group": "chest",
-            "sets": 15,
+            "total_sets": 15,
             "week_number": 1,
             "year": 2024,
         }
         result = db.upsert_weekly_volume(data)
-        assert result["sets"] == 15
+        assert result["total_sets"] == 15
 
     def test_delete_weekly_volumes_by_user(self, exercise_db):
         """Should delete all volumes for user."""

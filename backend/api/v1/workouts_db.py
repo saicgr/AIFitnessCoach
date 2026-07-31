@@ -198,7 +198,10 @@ async def update_workout(workout_id: str, workout: WorkoutUpdate,
             update_data["is_completed"] = workout.is_completed
         if workout.exercises_json is not None:
             exercises = json.loads(workout.exercises_json) if isinstance(workout.exercises_json, str) else workout.exercises_json
-            update_data["exercises"] = exercises
+            # Column is `exercises_json`; there is no `exercises` column. One phantom
+            # key makes PostgREST reject the WHOLE update (42703), so this silently
+            # discarded scheduled_date/is_completed/name changes too.
+            update_data["exercises_json"] = exercises
         if workout.last_modified_method is not None:
             update_data["last_modified_method"] = workout.last_modified_method
 
