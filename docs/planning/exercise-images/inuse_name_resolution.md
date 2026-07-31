@@ -156,3 +156,105 @@ time thanks to the concurrent illustration pipeline). The remaining 39 =
 33 Bucket B (genuinely new exercises, need illustrations — feed into the
 missing-illustration pipeline) + 6 Bucket C (fix at the generator/data source,
 listed above with file:line evidence where a source was traceable).
+
+## 2026-07-31 pass — E2E register #122/#126/#127, scoped to the PUBLISHED PROGRAM SCHEDULE
+
+Different measurement surface than the pass above: that one audited the exercise
+*catalogue* + recent workout *logs*. This one audits every exercise occurrence in
+`program_variant_weeks.workouts[].exercises[]` across all 45 published programs /
+1,624 variants / 177,318 occurrences — the Schedule tab a user sees before ever
+starting a workout — via the new standing gate,
+`scripts/audit_program_exercise_media_resolution.py`, which replicates the app's
+real 4-tier resolver (`api/v1/program_templates.py`) tier for tier: position match
+→ name+week fallback → name-only fallback → by-id fallback.
+
+| Stage | Missing occurrences | Distinct names | Programs affected |
+|---|---|---|---|
+| E2E register baseline (2026-07-30) | 20,332 | 263 | 31 of 45 |
+| After migration 2391 applied (canonical self-alias backfill, #127) + migration 2395 (`exercise_name`-first resolver fix, #126) | 1,633 | 77 | 14 of 45 |
+| After migration 2396 (4 hand-verified aliases, below) | **1,039** | **73** | 14 of 45 |
+
+Migrations 2391 + 2395 alone cleared **94.9%** of the register baseline — almost
+entirely #127 (the self-alias backfill; 1,612 canonical rows got their own name
+registered) and #126 (the view was silently normalizing the display name instead
+of the library-matched name for every position-matched lookup).
+
+### Migration 2396 — the 4 names still worth aliasing at this volume
+
+All confirmed same-movement (word-order / one-arm↔single-arm / pace-qualifier
+variants), all confirmed to carry real `exercise_demos` media before aliasing —
+see the migration file for full per-row evidence:
+
+| In-use name | Occ. | → Canonical | Why safe |
+|---|---|---|---|
+| Romanian Deadlift Barbell | 470 | Barbell romanian deadlift | Word-order variant; equipment (Barbell) + target (Hamstrings, Glutes) match exactly. |
+| Dumbbell Single-Arm Lateral Raise | 83 | Dumbbell One Arm Lateral Raise | "single-arm"/"one-arm" synonym (same class as 2394's Sled Drag rows); equipment + target (Shoulders/Lateral Deltoids) match exactly. |
+| Dumbbell Single-Arm Snatch | 24 | Dumbbell One Arm Snatch | Same synonym pair; 3-muscle target list matches exactly. |
+| Treadmill Tempo Run | 17 | Treadmill Running | "Tempo" is a pacing instruction on the same gait, same reasoning as 2394's "5K Run" → "Running"; equipment + target match exactly. |
+
+### What's left (1,039 occurrences / 73 names / 14 programs) — not aliased, and why
+
+Investigated every name above ~10 occurrences individually (pg_trgm similarity
+against `exercise_canonical`, cross-checked equipment/target_muscle against
+`exercise_library_cleaned`); the long single-digit tail was triaged by pattern.
+None of the following got a Bucket-A alias:
+
+* **Already-known Bucket B from the pass above** — Treadmill Walking Lunge (338
+  occ) and Dumbbell Lying On Floor Chest Press (80 occ). No matching-equipment
+  canonical exists (Treadmill Walking Lunge: no plain/treadmill-context walking
+  lunge in canonical, only dumbbell/sandbag-loaded; Dumbbell Lying On Floor
+  Chest Press: only unilateral floor-press variants exist). Unchanged.
+* **The 91-exercise library→canonical bridging gap** (~74 occ) — Warrior II,
+  Pyramid Pose, Triangle Pose, Goddess Pose (yoga poses) and Thoracic Extension
+  Stretch, Thoracic Rotation Quadruped (~118 occ combined with the poses).
+  `exercise_library_cleaned` has every one of these with a real name/equipment/
+  target — some even have an `image_url` of their own — but **no
+  `exercise_canonical` row exists to alias onto**. This is not an alias gap;
+  it's the documented bridging gap
+  ([[project_program_variants_and_schedule_media]]). "Warrior Ii" specifically
+  is already tracked as Bucket C above (casing corruption at the source) and
+  independently confirmed to have zero canonical bridge even once fixed.
+  Fixing this class needs `scripts/bridge_library_exercises_to_canonical.py`
+  extended to create canonical rows (+ exercise_demos rows pointing at
+  `exercise_library_cleaned.image_url` where one exists) — a data-authoring
+  task, not a migration.
+* **Media genuinely missing, not a resolution bug** — Back Extension Machine
+  (12 occ). Already has a `canonical_self` alias (migration 2391) and a real
+  S3 *video*, but no *image*. No alias fixes a missing asset; feed into the
+  illustration-generation backlog.
+* **Movement/equipment difference material enough to withhold** — Banded
+  Clamshell (8 occ, equipment differs: `resistance band` vs canonical
+  Clamshell's bodyweight — the image would misrepresent the load, same caution
+  class as the doc's "Single-Leg Curl" example above), Spiderman Lunge With
+  Reach (6 occ, the "reach" adds a thoracic-rotation component the base
+  "Spiderman Lunge" canonical row doesn't target), Kneeling Plank (34 occ, no
+  plausible canonical candidate — "Plank Knee Tucks"/"Plank cross knee drive"
+  are dynamic knee-drive exercises, not a static on-knees plank regression).
+* **Rowing Machine Intervals** (11 occ here vs 7 in the pass above — more
+  occurrences surfaced because this pass scans the full published-program
+  schedule, not a workout-log sample) — already Bucket C, same generator-level
+  cardio-protocol issue documented above, not re-litigated.
+* **Session-type labels, not exercises** (~10 occ total: Deep Breathing,
+  Meditation, Complete Rest, Hydration, Sleep, Nutrition, Mobility, Stretching,
+  Yoga, Light Stretching) — stored in the same `exercises[]` array shape as real
+  movements on recovery-day sessions. Whether the Schedule UI should attempt
+  image resolution for these at all is a product call, not a data fix; flagged
+  here rather than aliased to something misleading.
+* **Long single-digit tail** (~380 occ across ~50 remaining names, 1-9
+  occurrences each) — spot-checked a representative sample against the same
+  evidence standard; all fell into one of the buckets above (bridging gap,
+  equipment/movement mismatch, or no plausible candidate). Not enumerated
+  individually here for space; re-run
+  `scripts/audit_program_exercise_media_resolution.py` (no flags) for the full
+  current list with occurrence counts.
+
+### Negative-tested regression gate
+
+`scripts/audit_program_exercise_media_resolution.py` — baseline-diff, same
+convention as `audit_exercise_naming.py`. `--check` exits 1 only on NEW
+findings vs `audit_program_exercise_media_resolution_baseline.json` (refreshed
+to 1,039 accepted findings at the end of this pass). Verified to actually
+fail: temporarily deleted the "Barbell romanian deadlift" self-alias, re-ran
+`--check`, confirmed a NEW finding for "Romanian Deadlift Barbell" (470
+occurrences) appeared and the script exited 1; restored the alias; re-ran
+`--check`, confirmed a clean pass (0 NEW) again.
