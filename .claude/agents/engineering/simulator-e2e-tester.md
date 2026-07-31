@@ -43,31 +43,54 @@ drift artefact.
 
 # Simulator control
 
-## Coordinate math (this is what the false findings came from)
+## Coordinate math — derive it, never hardcode it
 
-Screenshots are `1206 × 2622` px. When rendered for reading they appear at `920 × 2000`, so
-`original_px = displayed × 1.31`. The device is 3×, so `screen_pt = origin + original_px / 3`.
-The Simulator window is `402 × 926` with **52 pt of chrome** above the 874 pt screen content.
+Two things move underneath you, and BOTH have already caused wrong results:
 
-**The window MOVES.** It drifted from `(12,103)` to `(23,80)` mid-session and silently shifted every
-tap. So: **re-read the origin on every single tap. Never cache it.**
+1. **The window moves.** It drifted from `(12,103)` to `(23,80)` mid-session and silently shifted
+   every tap — that produced four false "this control is dead" findings.
+2. **The device changes.** The run started on an iPhone 17 Pro (`1206×2622` px, `402×926` window) and
+   later the app was on an iPhone 16e (`1170×2532`, `390×896`). A hardcoded scale silently
+   mis-aims every tap.
+
+So derive everything at tap time from the live window and the actual screenshot:
+
+```
+scale  = screenshot_px_width / window_width_pt        # 3.0 on all current devices
+chrome = window_height_pt - screenshot_px_height / scale   # ~52 pt of title bar
+screen_x = origin_x + px_x / scale
+screen_y = origin_y + chrome + px_y / scale
+```
+
+**Work in ORIGINAL screenshot pixels**, not the "displayed" size you read images at. When you read a
+screenshot you are told the multiplier (e.g. *"displayed at 924×2000, multiply by 1.27"*) — apply it
+yourself to get original px, then pass those to the helper. This removes per-device ambiguity.
+
+**Pin the device.** If more than one simulator is booted, `booted` is ambiguous and may target the
+wrong one. Resolve the UDID once (`xcrun simctl list devices booted`, and
+`xcrun simctl listapps <udid> | grep com.zealova.app` to find which one actually has the app) and use
+that UDID for every `simctl` call. Match the Simulator window by name, not `window 1`.
 
 ## The tap helper — write this first, use it for every tap
 
 ```zsh
 #!/bin/zsh
-# t.sh <displayed_x> <displayed_y> [label] [wait_secs]
-SS="$SCRATCH"           # your scratchpad dir
-DX=$1; DY=$2; LABEL=${3:-shot}; WAIT=${4:-5}
+# t.sh <original_px_x> <original_px_y> [label] [wait_secs]
+# Requires: DEV (device UDID), DEVNAME (window title prefix, e.g. "iPhone 16e"), SS (scratch dir)
+PX=$1; PY=$2; LABEL=${3:-shot}; WAIT=${4:-5}
 osascript -e 'tell application "Simulator" to activate' >/dev/null 2>&1
-GEO=$(osascript -e 'tell application "System Events" to tell process "Simulator" to get {position, size} of window 1' 2>/dev/null)
+GEO=$(osascript -e "tell application \"System Events\" to tell process \"Simulator\" to get {position, size} of (first window whose name starts with \"$DEVNAME\")" 2>/dev/null)
 OX=$(echo $GEO | cut -d, -f1 | tr -d ' '); OY=$(echo $GEO | cut -d, -f2 | tr -d ' ')
-X=$(python3 -c "print(round($OX + $DX*1.31/3))")
-Y=$(python3 -c "print(round($OY + 52 + $DY*1.31/3))")
-xcrun simctl io booted screenshot $SS/_before.png >/dev/null 2>&1
+WW=$(echo $GEO | cut -d, -f3 | tr -d ' '); WH=$(echo $GEO | cut -d, -f4 | tr -d ' ')
+xcrun simctl io "$DEV" screenshot $SS/_before.png >/dev/null 2>&1
+read X Y <<< $(python3 -c "
+from PIL import Image
+w,h = Image.open('$SS/_before.png').size
+s = w/$WW; chrome = $WH - h/s
+print(round($OX + $PX/s), round($OY + chrome + $PY/s))")
 cliclick m:$X,$Y w:250 dd:$X,$Y w:130 du:$X,$Y
 sleep $WAIT
-xcrun simctl io booted screenshot $SS/$LABEL.png >/dev/null 2>&1
+xcrun simctl io "$DEV" screenshot $SS/$LABEL.png >/dev/null 2>&1
 python3 - "$SS/_before.png" "$SS/$LABEL.png" "$X" "$Y" "$OX" "$OY" <<'EOF'
 from PIL import Image, ImageChops
 import sys
@@ -77,6 +100,10 @@ print(f"origin=({sys.argv[5]},{sys.argv[6]}) tap=({sys.argv[3]},{sys.argv[4]}) c
       ("CHANGED" if h>300 else ("minor" if h>0 else "NO CHANGE")))
 EOF
 ```
+
+**Sanity-check the mapping before trusting any result**: tap one control you are certain works (a tab
+bar item) and confirm it navigates. If it doesn't, the geometry is wrong — fix that before logging
+anything, because every "broken control" you find until then will be an artefact.
 
 ## Known simulator behaviours — do not log these as app bugs
 
