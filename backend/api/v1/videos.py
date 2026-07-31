@@ -10,6 +10,7 @@ S3 Bucket Structure:
         └── video3.mp4
 """
 from core.db import get_supabase_db
+from core.db_executor import run_db
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -442,7 +443,39 @@ async def get_video_by_exercise_name(exercise_name: str, gender: str = None,
                         f"(source={alias['source']}, confidence={alias['confidence']})"
                     )
 
-        # 3) RAG substitute (Gemini embedding + ChromaDB) — last resort.
+        # 3) Canonical/demos stack via resolve_exercise_demo_media() — the SAME
+        #    chokepoint the image endpoint uses (_canonical_demo_fallback), and the
+        #    one the program schedule resolves through. This endpoint never consulted
+        #    it, so every name that only exists in exercise_canonical (rather than
+        #    verbatim in exercise_library) fell through to the ~3s embedding+ChromaDB
+        #    search and usually still 404'd — e.g. "Bodyweight standing calf raise",
+        #    which has had a real video on S3 the whole time.
+        #    Exact normalized-alias match only → never a wrong-sibling video.
+        #    Placed BEFORE the RAG substitute: it is one indexed query, and unlike
+        #    the RAG path it returns the exercise's OWN video, not a lookalike.
+        if not found_result:
+            try:
+                rpc = db.client.rpc(
+                    "resolve_exercise_demo_media", {"p_name": exercise_name}
+                ).execute()
+                rows = rpc.data or []
+                vid = rows[0].get("video_s3_path") if rows else None
+                if vid:
+                    found_result = {
+                        "video_s3_path": vid,
+                        "exercise_name": rows[0].get("canonical_name") or exercise_name,
+                    }
+                    logger.info(
+                        f"[Video Canonical] '{exercise_name}' → "
+                        f"'{found_result['exercise_name']}' via resolve_exercise_demo_media"
+                    )
+            except Exception as _rpc_err:  # noqa: BLE001
+                logger.debug(
+                    "canonical demo video fallback failed for %s: %s",
+                    exercise_name, _rpc_err,
+                )
+
+        # 4) RAG substitute (Gemini embedding + ChromaDB) — last resort.
         if not found_result:
             substitute = await _find_substitute_video(db, exercise_name, user_id)
             if substitute is None:
@@ -828,6 +861,15 @@ async def get_image_by_exercise_name(
                 return (prefix_score, has_image, -((r.get("id") or 0) if isinstance(r.get("id"), int) else 0))
             return max(rows, key=score)
 
+        # A row whose `image_s3_path` is NULL is NOT an answer — it's a dead end.
+        # Keep it only as a last-resort carrier of the row id (so a 404 can still
+        # report `exercise_id`), but DO NOT let it stop the search: the alias and
+        # `exercise_library_cleaned` MV fallbacks below are exactly what resolve
+        # manual-only exercises, and a NULL-image base row used to shadow them.
+        # That asymmetry is why `?exercise_id=` returned 200 while the same
+        # exercise 404'd by name — Path 1 falls through to the MV (see above),
+        # Path 2 did not.
+        imageless_row = None
         for name in search_names:
             # ONLY exact (case-insensitive) match. No `name%` or `%name%`
             # substring queries — those are what served the wrong sibling row.
@@ -841,8 +883,12 @@ async def get_image_by_exercise_name(
                 .execute()
             )
             if result.data:
-                found_row = _pick_best(result.data) or result.data[0]
-                break
+                candidate = _pick_best(result.data) or result.data[0]
+                if candidate.get("image_s3_path"):
+                    found_row = candidate
+                    break
+                if imageless_row is None:
+                    imageless_row = candidate
 
         if not found_row:
             # ── Alias fallback ──────────────────────────────────────────
@@ -918,6 +964,16 @@ async def get_image_by_exercise_name(
             _fb = _canonical_demo_fallback()
             if _fb:
                 return _fb
+            if imageless_row is not None:
+                # The exercise exists in exercise_library but carries no image, and
+                # neither the alias table, the MV, nor the canonical/demos stack had
+                # one either. Report it as `no_image` (with the row id, so the client
+                # can surface a precise "missing illustration" state) rather than
+                # `exercise_not_found`, which would be a lie.
+                raise HTTPException(
+                    status_code=404,
+                    detail={"error": "no_image", "exercise_id": imageless_row["id"]},
+                )
             # No exercise by that name (and no alias). 404 — never fall back
             # to S3 fuzzy search or another exercise's image.
             raise HTTPException(
@@ -970,12 +1026,27 @@ async def batch_get_image_urls(request: BatchImageRequest,
     """
     Batch resolve exercise names to presigned image URLs.
 
-    Accepts up to 100 exercise names and returns a dict of {name: presigned_url}.
-    Uses exact name match on the cleaned exercise library view for speed.
+    Accepts up to 100 exercise names and returns a dict of {name: url}, keyed by
+    the name the CALLER asked for (not the canonical name) so the client can map
+    results back directly.
 
-    Names not found (case mismatch, typo) are silently omitted — the frontend
-    falls back to the individual GET /exercise-images/{name} endpoint which
-    does fuzzy matching.
+    Resolution is two-stage and mirrors the single-name endpoint:
+      1. Exact match on `exercise_library_cleaned` (fast path, one query).
+      2. `resolve_exercise_demo_media_batch()` for everything stage 1 missed —
+         one query, normalized matching (case, plurals, hyphens, apostrophes,
+         db/kb/bb abbreviations, parentheticals).
+
+    Stage 2 exists because stage 1's `.in_()` is exact AND case-sensitive: a
+    generator name like 'Bodyweight standing calf raise' never matched the stored
+    'Bodyweight Standing Calf Raise', so the batch silently dropped it and every
+    client degraded to a per-tile GET — which is how a few casing variants became
+    a 404 storm (2026-07-30).
+
+    Both stages are exact-normalized. Neither can serve a sibling exercise's
+    image (the lat-pulldown bug stays locked down).
+
+    `unresolved` is returned explicitly rather than leaving callers to diff the
+    keys — silent omission is what hid this bug.
     """
     try:
         db = get_supabase_db()
@@ -987,26 +1058,72 @@ async def batch_get_image_urls(request: BatchImageRequest,
         ]
 
         if not names:
-            return {"urls": {}}
+            return {"urls": {}, "resolved": 0, "requested": 0, "unresolved": []}
 
-        # Query cleaned view with exact name match (single DB call)
-        result = db.client.table("exercise_library_cleaned").select(
-            "name, image_url"
-        ).in_("name", names).execute()
-
-        # Generate permanent or presigned URLs for matching exercises
         from api.v1.library.utils import resolve_image_url
-        urls = {}
-        for row in (result.data or []):
-            name = row.get("name", "")
-            s3_path = row.get("image_url")
-            if not name or not s3_path or not s3_path.startswith("s3://"):
-                continue
-            url = resolve_image_url(s3_path)
-            if url:
-                urls[name] = url
+        urls: dict = {}
 
-        return {"urls": urls, "resolved": len(urls), "requested": len(names)}
+        # ---- Stage 1: exact match on the cleaned MV (single DB call) ---------
+        result = await run_db(
+            lambda: db.client.table("exercise_library_cleaned")
+            .select("name, image_url")
+            .in_("name", names)
+            .execute()
+        )
+        exact_by_name = {
+            r["name"]: r.get("image_url")
+            for r in (result.data or [])
+            if r.get("name")
+        }
+        for name in names:
+            s3_path = exact_by_name.get(name)
+            if s3_path and s3_path.startswith("s3://"):
+                url = resolve_image_url(s3_path)
+                if url:
+                    urls[name] = url
+
+        # ---- Stage 2: normalized resolution for the remainder ---------------
+        missing = [n for n in names if n not in urls]
+        if missing:
+            try:
+                rpc = await run_db(
+                    lambda: db.client.rpc(
+                        "resolve_exercise_demo_media_batch", {"p_names": missing}
+                    ).execute()
+                )
+                for row in (rpc.data or []):
+                    requested = row.get("requested_name")
+                    s3_path = row.get("image_s3_path")
+                    if not requested or not s3_path:
+                        continue
+                    url = resolve_image_url(s3_path)
+                    if url:
+                        urls[requested] = url
+            except Exception as _batch_err:  # noqa: BLE001
+                # Stage 2 is an enhancement over stage 1 — if the RPC is missing
+                # (pre-migration deploy) or errors, still return stage 1's hits
+                # rather than failing the whole batch and blanking every tile.
+                logger.warning(
+                    "batch canonical resolution failed for %d name(s): %s",
+                    len(missing), _batch_err,
+                )
+
+        unresolved = [n for n in names if n not in urls]
+        if unresolved:
+            # Visibility: these are the names that will fall through to per-tile
+            # GETs. A recurring name here means a generator is emitting something
+            # with no alias — fix it at the source, not with a client fallback.
+            logger.info(
+                "[batch-images] %d/%d unresolved: %s",
+                len(unresolved), len(names), unresolved[:10],
+            )
+
+        return {
+            "urls": urls,
+            "resolved": len(urls),
+            "requested": len(names),
+            "unresolved": unresolved,
+        }
 
     except Exception as e:
         raise safe_internal_error(e, "batch_image_resolve")
