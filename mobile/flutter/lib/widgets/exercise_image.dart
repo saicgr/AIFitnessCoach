@@ -287,7 +287,10 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   Widget _placeholder(Color fallbackIconColor) {
     return Center(
       child: Icon(
-        _fallbackIconForEquipment(widget.equipmentHint, widget.exerciseName),
+        // Equipment icon only when the caller supplied a real equipment value;
+        // otherwise a neutral mark. Never inferred from the exercise name.
+        _fallbackIconForEquipment(widget.equipmentHint) ??
+            kExercisePlaceholderIcon,
         color: fallbackIconColor,
         size: widget.width.isFinite ? widget.width * 0.5 : 40,
       ),
@@ -364,37 +367,55 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
   }
 }
 
-/// Map an equipment hint (or exercise name keywords as fallback) to a
-/// Material icon that visually matches the gear. Used as the placeholder
-/// when `/exercise-images/{name}` 404s so we don't render a barbell
-/// movement as a dumbbell silhouette.
-IconData _fallbackIconForEquipment(String? equipmentHint, String exerciseName) {
-  final hint = (equipmentHint ?? '').toLowerCase();
-  final name = exerciseName.toLowerCase();
-  bool h(String token) => hint.contains(token) || name.contains(token);
+/// The neutral placeholder glyph for an exercise we have no illustration for.
+///
+/// Deliberately says "no picture here" and nothing about the movement. Used for
+/// every media-less exercise whose equipment we cannot state as fact.
+const IconData kExercisePlaceholderIcon = Icons.image_not_supported_outlined;
+
+/// Map a REAL equipment value to a Material icon for the media-less placeholder.
+///
+/// Returns `null` when the equipment is unknown — the caller then renders
+/// [kExercisePlaceholderIcon] instead of guessing.
+///
+/// WHY THIS NO LONGER READS THE EXERCISE NAME
+/// ------------------------------------------
+/// This used to match substrings of the exercise NAME as well as the equipment
+/// hint, and asserted a movement it had no evidence for:
+///
+///   `if (h('row')) return Icons.rowing;`
+///       -> "Barbell Row", "Seated Row Machine Rows", "Lawnmower Row" (a cable
+///          row) and "Inverted Row" all rendered a person in a ROWING BOAT.
+///   `if (h('kettlebell')) return Icons.sports_handball;`
+///       -> every kettlebell exercise rendered a figure mid-PUNCH/throw.
+///   `if (h('treadmill') || h('run')) return Icons.directions_run;`
+///       -> "Treadmill Walking Lunge" rendered a runner.
+///
+/// It bit hardest in the program exercise list (program_detail_screen.dart),
+/// which passes no `equipmentHint` at all — so the icon was guessed purely from
+/// the name, for exactly the exercises that still lack illustrations.
+///
+/// This is the same wrong-identity failure the backend deliberately locked down
+/// for images (api/v1/videos.py: "NEVER serves a sibling exercise's image",
+/// backend/tests/test_exercise_image_no_fuzzy.py), reintroduced as an icon. An
+/// icon that asserts the WRONG movement is worse than one that asserts nothing,
+/// so unknown now renders neutral rather than plausible-but-wrong.
+///
+/// The `equipmentHint` path is kept because that value comes from the library
+/// row (e.g. workout_complete_screen_ui_1.dart passes `meta?.equipment`) — it is
+/// a fact about the exercise, not an inference from its name. Icons here name
+/// only the GEAR, never an activity.
+IconData? _fallbackIconForEquipment(String? equipmentHint) {
+  final hint = (equipmentHint ?? '').trim().toLowerCase();
+  if (hint.isEmpty) return null;
+  bool h(String token) => hint.contains(token);
 
   if (h('barbell') || h('ez bar') || h('trap bar')) return Icons.straighten;
-  if (h('cable') || h('pulley') || h('lat pull')) return Icons.linear_scale;
-  if (h('kettlebell')) return Icons.sports_handball;
+  if (h('cable') || h('pulley')) return Icons.linear_scale;
   if (h('band') || h('resistance')) return Icons.adjust;
-  if (h('treadmill') || h('run')) return Icons.directions_run;
-  if (h('bike') || h('cycle')) return Icons.directions_bike;
-  if (h('row')) return Icons.rowing;
   if (h('plate')) return Icons.album;
-  if (h('bodyweight') ||
-      h('push-up') ||
-      h('pushup') ||
-      h('pull-up') ||
-      h('pullup') ||
-      h('squat') ||
-      h('plank') ||
-      h('lunge') ||
-      h('burpee')) {
-    return Icons.accessibility_new;
-  }
   if (h('dumbbell')) return Icons.fitness_center;
-  // Default — generic gym icon, never the dumbbell silhouette for
-  // ambiguous cases (avoids the original "every fallback is a dumbbell"
-  // problem).
-  return Icons.sports_gymnastics;
+  // Anything else (kettlebell, sled, machine, bodyweight, …) has no icon that
+  // states the gear without also implying a movement — stay neutral.
+  return null;
 }

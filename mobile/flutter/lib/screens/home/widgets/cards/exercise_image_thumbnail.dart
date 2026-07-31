@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/exercise.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/image_url_cache.dart';
+import '../../../../widgets/exercise_image.dart' show kExercisePlaceholderIcon;
 
 /// A thumbnail widget for displaying exercise images
 /// Loads images from the API and caches them for performance
@@ -112,10 +113,12 @@ class _ExerciseImageThumbnailState
     final name = widget.exercise.name;
     final initial = (name.isNotEmpty ? name[0] : '?').toUpperCase();
     // Tile size scales; below ~32px the initial gets unreadable so fall back
-    // to the dumbbell icon alone.
+    // to the neutral placeholder mark. NOT a dumbbell — that asserts equipment
+    // we haven't verified (and would show a dumbbell for bodyweight moves);
+    // same reasoning as _fallbackIconForEquipment in widgets/exercise_image.dart.
     if (widget.size < 32) {
       return Icon(
-        Icons.fitness_center,
+        kExercisePlaceholderIcon,
         color: AppColors.cyan.withOpacity(0.7),
         size: widget.size * 0.5,
       );
@@ -146,13 +149,12 @@ class _ExerciseImageThumbnailState
       );
     }
 
-    // If no image URL, show a clean fitness icon placeholder
+    // Resolved to no image — same neutral placeholder as the error path, so
+    // "no URL" and "URL failed" look identical to the user. Not a dumbbell:
+    // that asserts equipment we haven't verified (and is wrong for every
+    // bodyweight exercise). See widgets/exercise_image.dart.
     if (_imageUrl == null) {
-      return Icon(
-        Icons.fitness_center,
-        color: AppColors.cyan.withOpacity(0.7),
-        size: widget.size * 0.45,
-      );
+      return _buildPlaceholder();
     }
 
     return CachedNetworkImage(
