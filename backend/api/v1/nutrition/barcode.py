@@ -116,8 +116,18 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
     2. Calculates nutrition based on servings
     3. Creates a food log entry
     """
+    # SECURITY + CORRECTNESS: derive user_id from the authenticated session,
+    # never trust it from the body. A body-less caller (external prober) was
+    # getting a 422 "user_id Field required" before user_id became optional
+    # on LogBarcodeRequest; a malicious/stale body.user_id was also an IDOR
+    # (log food onto another user's account). Accept a body-supplied user_id
+    # only when it matches the caller; otherwise reject.
+    if request.user_id is not None and str(request.user_id) != str(current_user["id"]):
+        raise HTTPException(status_code=403, detail="Access denied")
+    request.user_id = str(current_user["id"])
+
     logger.info(f"Logging barcode {request.barcode} for user {request.user_id}")
-    
+
     try:
         # First, lookup the product
         service = get_food_database_service()

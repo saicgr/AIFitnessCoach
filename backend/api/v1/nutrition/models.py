@@ -236,7 +236,12 @@ class BarcodeProductResponse(BaseModel):
 
 class LogBarcodeRequest(BaseModel):
     """Request to log food from barcode."""
-    user_id: str
+    # Optional: the endpoint derives the authoritative user_id from the
+    # authenticated session (current_user), never from the body. Kept as an
+    # optional field only so a caller that still sends it gets IDOR-checked
+    # against the session rather than trusted outright — see
+    # log_food_from_barcode in barcode.py.
+    user_id: Optional[str] = None
     barcode: str = Field(..., max_length=100)
     meal_type: str = Field(..., max_length=20)
     servings: float = 1.0
@@ -247,7 +252,7 @@ class LogBarcodeRequest(BaseModel):
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
-        if not v or not v.strip():
+        if v is not None and not v.strip():
             raise ValueError('user_id cannot be empty')
         return v
 
