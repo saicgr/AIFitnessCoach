@@ -38,6 +38,7 @@ import 'data/services/widget_service.dart';
 // FlutterGemma import removed -- initialization deferred to OnDeviceGemmaService.ensureInitialized()
 // to avoid ANR from heavy native ML runtime setup during app startup.
 import 'core/services/analytics_service.dart';
+import 'core/services/auth_install_guard.dart';
 import 'core/services/posthog_service.dart';
 import 'core/services/sentry_service.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -110,6 +111,21 @@ void main() async {
     }),
   ]);
   logStartup('parallel init wait', startupClock.elapsedMilliseconds);
+
+  // E2E register #41: on iOS the Keychain (FlutterSecureStorage — where
+  // ApiClient keeps auth_token/user_id) survives app deletion even though
+  // SharedPreferences (where the Supabase session lives) does not, so a
+  // fresh install could resume as the previous user. Must run AFTER
+  // SharedPreferences.getInstance() + Supabase.initialize() (both awaited
+  // above) and BEFORE runApp() — see AuthInstallGuard's "Ordering contract"
+  // doc — so it can wipe any stale Keychain credentials before AuthNotifier
+  // ever reads them.
+  final installGuardSw = Stopwatch()..start();
+  final installGuardOutcome = await AuthInstallGuard.run();
+  logStartup(
+    'AuthInstallGuard.run (${installGuardOutcome.name})',
+    installGuardSw.elapsedMilliseconds,
+  );
 
   // Branded global error surface: replaces Flutter's default red/grey box for
   // any BUILD-phase error. Because Flutter substitutes this in place of the

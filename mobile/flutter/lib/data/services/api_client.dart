@@ -564,6 +564,13 @@ class ApiClient with WidgetsBindingObserver {
     if (hook != null) {
       return await hook().timeout(ApiConstants.tokenRefreshTimeout);
     }
+    return _rawSupabaseRefresh();
+  }
+
+  /// Refreshes the Supabase session directly against Supabase — never via
+  /// [onTokenRefresh]. Shared by [_refreshOnce]'s pre-hook-wiring fallback and
+  /// by [refreshSessionDirect].
+  Future<bool> _rawSupabaseRefresh() async {
     final refreshed = await Supabase.instance.client.auth
         .refreshSession()
         .timeout(ApiConstants.tokenRefreshTimeout);
@@ -572,6 +579,29 @@ class ApiClient with WidgetsBindingObserver {
     await _storage.write(key: _tokenKey, value: session.accessToken);
     _scheduleProactiveRefresh();
     return true;
+  }
+
+  /// Refreshes the Supabase session, coalesced onto the same
+  /// [_refreshInFlight] latch the 401 interceptor uses (so a concurrent
+  /// interceptor-driven refresh is never raced), but ALWAYS via a raw
+  /// Supabase `refreshSession()` call — deliberately bypassing
+  /// [onTokenRefresh].
+  ///
+  /// `onTokenRefresh` is wired to `AuthRepository.restoreSession()`
+  /// (auth_repository.dart). [restoreSession] is this method's only caller
+  /// (recovering a merely-idle, refreshable session on cold start — E2E
+  /// #82). Routing through the hook here would call `restoreSession()` from
+  /// inside `restoreSession()`; the nested call's own 401 would then try to
+  /// coalesce onto `_refreshInFlight` while the outer call is still awaiting
+  /// it — a self-deadlock that only resolves via the outer timeout. Going
+  /// straight to Supabase avoids the recursion entirely, and works
+  /// identically whether or not [onTokenRefresh] has been wired yet (it is
+  /// never consulted), so there is no window-dependent behavior to worry
+  /// about.
+  Future<bool> refreshSessionDirect() {
+    return _refreshInFlight ??= _rawSupabaseRefresh().whenComplete(
+      () => _refreshInFlight = null,
+    );
   }
 
   ApiClient(this._storage) {

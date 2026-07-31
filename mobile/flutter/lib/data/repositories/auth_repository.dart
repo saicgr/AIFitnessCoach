@@ -1086,95 +1086,16 @@ class AuthRepository {
         final authId = session.user.id;
         debugPrint('🔍 [Auth] Looking up user by auth_id: $authId');
 
-        int? lookupStatus;
-        try {
-          // 404 here is an EXPECTED state (auth row exists but public.users
-          // was deleted — orphan auth user). Whitelist it through
-          // validateStatus so Dio doesn't throw, which keeps the Sentry
-          // HTTP integration from reporting it as a production error.
-          final response = await _apiClient.get(
-            '${ApiConstants.users}/by-auth/$authId',
-            options: Options(
-              validateStatus: (s) => s != null && (s < 400 || s == 404),
-            ),
-          );
-          lookupStatus = response.statusCode;
-
-          if (response.statusCode == 200) {
-            final user = app_user.User.fromJson(
-              response.data as Map<String, dynamic>,
-            );
-
-            // NOW set the correct user ID (from users table, not auth)
-            await _apiClient.setUserId(user.id);
-            debugPrint(
-              '✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)',
-            );
-
-            // Cache user for faster app startup
-            await _cacheUser(user);
-
-            // Sync credentials to watch on session restore (Android only)
-            if (Platform.isAndroid) {
-              _syncCredentialsToWatch(
-                userId: user.id,
-                authToken: session.accessToken,
-                refreshToken: session.refreshToken,
-              );
-            }
-
-            return user;
-          }
-        } catch (e) {
-          // Dio throws on non-2xx by default — extract the status code.
-          final match = RegExp(
-            r'status code of (\d+)',
-          ).firstMatch(e.toString());
-          if (match != null) lookupStatus = int.tryParse(match.group(1) ?? '');
-          debugPrint(
-            '❌ [Auth] by-auth lookup failed (status=$lookupStatus): $e',
-          );
-        }
-
-        // 404 means the Supabase Auth account exists but the backend `users`
-        // row was deleted (or never created — orphan auth user). Clear the
-        // stale session so we don't hit the same 404 on every cold start.
-        if (lookupStatus == 404) {
-          debugPrint(
-            '⚠️ [Auth] No backend user for auth_id=$authId — clearing stale Supabase session',
-          );
-          try {
-            await _supabase.auth.signOut();
-          } catch (_) {}
-          await _apiClient.clearAuth();
-          // Account-deleted path. The backend `users` row is gone but
-          // local Drift rows, PostHog identity, FCM token, etc. all
-          // still point at the (now-orphaned) authId. Route through the
-          // same teardown the manual sign-out uses so the next user on
-          // this device starts from a clean slate. Wrapped because we
-          // must still return null even if cleanup partially fails —
-          // the caller (AuthNotifier._init) will route to the auth
-          // screen and the orphan auth row will be re-created on the
-          // next sign-in.
-          try {
-            await _clearThirdPartyIdentities();
-            await _clearLocalSideEffects();
-            // We never resolved a backend user id here — fall back to
-            // the Supabase auth id for the Drift wipe. Drift rows are
-            // keyed on users.id, so this is effectively a no-op for
-            // rows the deleted user owned (different id space), but
-            // running it keeps the orchestration identical to the
-            // manual path and surfaces any DAO regressions.
-            await _wipeDriftForUser(authId);
-            await DataCacheService.instance.clearAll();
-          } catch (e) {
-            debugPrint('⚠️ [Auth] Account-deleted cleanup partial-failure: $e');
-          }
-          return null;
-        }
-
-        // Any other error (500, network) — leave session alone, caller retries
-        return null;
+        // E2E #82: a cold start after an idle period can find a Supabase
+        // session object that's still LOCALLY present but carries an
+        // EXPIRED access token (the proactive-refresh timer only runs while
+        // the app is alive). That 401s the lookup below — retry it once
+        // after an explicit session refresh instead of declaring the user
+        // signed out on the first expired token we see.
+        return resolveAuthLookupWithOneRefreshRetry(
+          attemptLookup: () => _lookupUserByAuthId(authId),
+          refresh: () => _apiClient.refreshSessionDirect(),
+        );
       }
 
       // Fall back to stored token
@@ -1184,6 +1105,158 @@ class AuthRepository {
       return getCurrentUser();
     } catch (e) {
       debugPrint('❌ [Auth] Restore session error: $e');
+      return null;
+    }
+  }
+
+  /// One `/users/by-auth/:id` attempt. Returns the resolved user on 200, or
+  /// the failing status (null user) otherwise — the 404 branch performs its
+  /// own terminal cleanup inline since an orphan auth user must never be
+  /// retried, while 401 is left for the caller
+  /// ([resolveAuthLookupWithOneRefreshRetry]) to decide whether to refresh
+  /// and retry.
+  Future<({int? status, app_user.User? user})> _lookupUserByAuthId(
+    String authId,
+  ) async {
+    int? lookupStatus;
+    try {
+      // 404 here is an EXPECTED state (auth row exists but public.users
+      // was deleted — orphan auth user). Whitelist it through
+      // validateStatus so Dio doesn't throw, which keeps the Sentry
+      // HTTP integration from reporting it as a production error.
+      final response = await _apiClient.get(
+        '${ApiConstants.users}/by-auth/$authId',
+        options: Options(
+          validateStatus: (s) => s != null && (s < 400 || s == 404),
+        ),
+      );
+      lookupStatus = response.statusCode;
+
+      if (response.statusCode == 200) {
+        final user = app_user.User.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+
+        // NOW set the correct user ID (from users table, not auth)
+        await _apiClient.setUserId(user.id);
+        debugPrint(
+          '✅ [Auth] Set correct user ID: ${user.id} (auth_id was: $authId)',
+        );
+
+        // Cache user for faster app startup
+        await _cacheUser(user);
+
+        // Sync credentials to watch on session restore (Android only). Read
+        // the LIVE session (not a captured one) — a refresh retry may have
+        // minted a new access/refresh token pair since the call started.
+        if (Platform.isAndroid) {
+          final liveSession = _supabase.auth.currentSession;
+          if (liveSession != null) {
+            _syncCredentialsToWatch(
+              userId: user.id,
+              authToken: liveSession.accessToken,
+              refreshToken: liveSession.refreshToken,
+            );
+          }
+        }
+
+        return (status: 200, user: user);
+      }
+    } catch (e) {
+      // Dio throws on non-2xx by default — extract the status code.
+      final match = RegExp(r'status code of (\d+)').firstMatch(e.toString());
+      if (match != null) lookupStatus = int.tryParse(match.group(1) ?? '');
+      debugPrint('❌ [Auth] by-auth lookup failed (status=$lookupStatus): $e');
+    }
+
+    // 404 means the Supabase Auth account exists but the backend `users`
+    // row was deleted (or never created — orphan auth user). Clear the
+    // stale session so we don't hit the same 404 on every cold start.
+    if (lookupStatus == 404) {
+      debugPrint(
+        '⚠️ [Auth] No backend user for auth_id=$authId — clearing stale Supabase session',
+      );
+      try {
+        await _supabase.auth.signOut();
+      } catch (_) {}
+      await _apiClient.clearAuth();
+      // Account-deleted path. The backend `users` row is gone but
+      // local Drift rows, PostHog identity, FCM token, etc. all
+      // still point at the (now-orphaned) authId. Route through the
+      // same teardown the manual sign-out uses so the next user on
+      // this device starts from a clean slate. Wrapped because we
+      // must still return null even if cleanup partially fails —
+      // the caller (AuthNotifier._init) will route to the auth
+      // screen and the orphan auth row will be re-created on the
+      // next sign-in.
+      try {
+        await _clearThirdPartyIdentities();
+        await _clearLocalSideEffects();
+        // We never resolved a backend user id here — fall back to
+        // the Supabase auth id for the Drift wipe. Drift rows are
+        // keyed on users.id, so this is effectively a no-op for
+        // rows the deleted user owned (different id space), but
+        // running it keeps the orchestration identical to the
+        // manual path and surfaces any DAO regressions.
+        await _wipeDriftForUser(authId);
+        await DataCacheService.instance.clearAll();
+      } catch (e) {
+        debugPrint('⚠️ [Auth] Account-deleted cleanup partial-failure: $e');
+      }
+    }
+
+    return (status: lookupStatus, user: null);
+  }
+
+  /// State machine behind [restoreSession]'s idle-resume recovery (E2E #82),
+  /// split out with injected closures (no Dio/Supabase inside) so it's
+  /// directly unit-testable: given a sequence of lookup outcomes and a
+  /// refresh outcome, this returns exactly what [restoreSession] returns,
+  /// without a live network stack.
+  ///
+  ///  * `attemptLookup` performs one `/users/by-auth/:id` call and reports
+  ///    its HTTP status plus the parsed user (status==200) or null.
+  ///  * `refresh` performs exactly one session-refresh attempt (must be
+  ///    timeout-capped itself — see [ApiClient.refreshSessionDirect]).
+  ///
+  /// Refreshes AT MOST ONCE. A session still unauthenticated after a
+  /// successful refresh, or a refresh that itself fails, is genuinely dead
+  /// and must resolve to signed-out — try, don't loop forever pretending it
+  /// might work.
+  @visibleForTesting
+  static Future<app_user.User?> resolveAuthLookupWithOneRefreshRetry({
+    required Future<({int? status, app_user.User? user})> Function()
+    attemptLookup,
+    required Future<bool> Function() refresh,
+  }) async {
+    var refreshedOnce = false;
+    while (true) {
+      final result = await attemptLookup();
+      if (result.status == 200) return result.user;
+
+      if (result.status == 401 && !refreshedOnce) {
+        refreshedOnce = true;
+        debugPrint(
+          '🔄 [Auth] by-auth lookup 401\'d — attempting one session '
+          'refresh before signing out',
+        );
+        bool refreshed;
+        try {
+          refreshed = await refresh();
+        } catch (e) {
+          debugPrint('❌ [Auth] Session refresh attempt failed: $e');
+          refreshed = false;
+        }
+        if (refreshed) {
+          debugPrint('✅ [Auth] Session refreshed — retrying by-auth lookup');
+          continue;
+        }
+        debugPrint(
+          '⚠️ [Auth] Session refresh failed — session is genuinely expired, '
+          'signing out',
+        );
+      }
+
       return null;
     }
   }
