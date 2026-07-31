@@ -70,7 +70,7 @@ import 'widgets/easy_exercise_header.dart' show showEasyExerciseHistorySheet;
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/services/workout_tour_steps.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart' show AppTourState;
-import 'widgets/easy_warmup_runner.dart';
+import '../../../core/constants/api_constants.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -127,12 +127,25 @@ class EasyActiveWorkoutScreenState
   // variants on every rebuild.
   final int _workoutStartEpochMs = DateTime.now().millisecondsSinceEpoch;
 
-  // Warm-up phase (Easy redesign). When `_warmupPhase` is true the build
-  // returns the guided EasyWarmupRunner instead of the working-set screen.
-  // Warm-up is kept OUT of `_exercises` / the logged session so it can't drift
-  // working-set indices or inflate stats — it's a pre-workout interstitial.
-  List<Map<String, dynamic>>? _warmup;
+  // Warm-up phase. There is NO separate warm-up screen any more: a warm-up
+  // move renders through the SAME `EasyActiveWorkoutView` a working exercise
+  // does (top bar + stats strip + header + set ledger + focal column + Ask
+  // coach), so the user never sees a second, differently-shaped UI mid-flow.
+  //
+  // Warm-up moves are still kept OUT of `_exercises` / `_perExercise` / the
+  // shared session. That is deliberate: prepending them would shift every
+  // working-set index (the session mirror, the checkpoint restore, the
+  // Advanced tier's parallel index space, the per-index preload caches) and
+  // would fold warm-up holds into volume / calories / PR math. Warm-up gets
+  // its own tiny parallel index space instead, rendered by the same widget.
+  List<WorkoutExercise> _warmupExercises = const [];
+  final Map<int, EasyExerciseState> _warmupStates = {};
+  int _warmupIndex = 0;
   bool _warmupPhase = false;
+
+  /// Completed warm-up moves accumulated for the single `/warmup-logs` POST
+  /// fired when the warm-up ends (finished OR skipped).
+  final Map<String, List<Map<String, dynamic>>> _warmupCompleted = {};
 
   // True from initState until `_resolveWarmupPhase` decides whether a guided
   // warm-up runs. While true the build shows a neutral warm-up placeholder
@@ -287,8 +300,28 @@ class EasyActiveWorkoutScreenState
       if (!mounted) return;
       final warm = res.warmup;
       if (warm != null && warm.isNotEmpty) {
+        final built = [for (final m in warm) _warmupExerciseFrom(m)];
         setState(() {
-          _warmup = warm;
+          _warmupExercises = built;
+          _warmupStates
+            ..clear()
+            ..addEntries([
+              for (int i = 0; i < built.length; i++)
+                MapEntry(
+                  i,
+                  EasyExerciseState(
+                    displayWeight: 0,
+                    reps: 0,
+                    targetReps: 0,
+                    targetWeightKg: 0,
+                    totalSets: 1,
+                    isTimed: true,
+                    isBodyweight: true,
+                    durationSeconds: built[i].holdSeconds ?? 30,
+                  ),
+                ),
+            ]);
+          _warmupIndex = 0;
           _warmupPhase = true;
           _warmupResolving = false;
         });
@@ -300,11 +333,163 @@ class EasyActiveWorkoutScreenState
     _finishWarmupPhase();
   }
 
+  /// Adapt a raw warm-up item map (`name` / `duration_seconds` / `exercise_id`
+  /// …, as returned by `WorkoutRepository.fetchWarmupAndStretches`) into a
+  /// `WorkoutExercise` so the shared Easy view can render it exactly like a
+  /// working exercise — same media resolution, Instructions sheet, focal timer.
+  WorkoutExercise _warmupExerciseFrom(Map<String, dynamic> m) {
+    int durationOf() {
+      final v = m['duration_seconds'] ??
+          m['durationSeconds'] ??
+          m['hold_seconds'] ??
+          m['holdSeconds'];
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? 30;
+      return 30;
+    }
+
+    return WorkoutExercise(
+      nameValue: m['name']?.toString() ?? 'Warm-up',
+      exerciseId: m['exercise_id']?.toString() ?? m['exerciseId']?.toString(),
+      holdSeconds: durationOf(),
+      isTimed: true,
+      section: 'warmup',
+      gifUrl: m['gif_url']?.toString() ?? m['gifUrl']?.toString(),
+      imageS3Path:
+          m['image_s3_path']?.toString() ?? m['imageS3Path']?.toString(),
+      videoUrl: m['video_url']?.toString() ?? m['videoUrl']?.toString(),
+      instructions: m['instructions']?.toString(),
+      equipment: m['equipment']?.toString(),
+      bodyPart: m['body_part']?.toString() ?? m['bodyPart']?.toString(),
+    );
+  }
+
+  /// "Log set" on a warm-up move → record the hold and advance. Warm-up holds
+  /// never touch `_perExercise` / the session / PR detection, so they can't
+  /// inflate volume, calories or personal records.
+  Future<void> _logWarmupMove() async {
+    final ex = _warmupExercises[_warmupIndex];
+    final st = _warmupStates[_warmupIndex];
+    (_warmupCompleted[ex.name] ??= []).add({
+      'type': 'warmup_complete',
+      'hold_seconds': st?.durationSeconds ?? ex.holdSeconds ?? 30,
+    });
+    await HapticService.instance.success();
+    _advanceWarmup();
+  }
+
+  /// Move to the next warm-up move, or hand off to the working sets.
+  void _advanceWarmup() {
+    if (_warmupIndex + 1 >= _warmupExercises.length) {
+      _finishWarmupPhase();
+      return;
+    }
+    setState(() => _warmupIndex++);
+  }
+
+  void _skipWarmupMove() {
+    HapticService.instance.tap();
+    _advanceWarmup();
+  }
+
+  /// Abandon the remaining warm-up moves and start the working sets. Whatever
+  /// the user already completed is still persisted by [_finishWarmupPhase].
+  void _skipWholeWarmup() {
+    HapticService.instance.tap();
+    _finishWarmupPhase();
+  }
+
+  /// Jump the focal card to another warm-up move (the Plan sheet's row tap).
+  void _jumpWarmupTo(int idx) {
+    if (_warmupExercises.isEmpty) return;
+    setState(
+      () => _warmupIndex = idx.clamp(0, _warmupExercises.length - 1),
+    );
+  }
+
+  /// Fire-and-forget persistence of the completed warm-up moves. Failure is
+  /// non-blocking (the warm-up is done regardless) — matches the existing
+  /// warm-up-interval persistence contract.
+  void _persistWarmupLogs() {
+    final id = widget.workout.id;
+    if (id == null || id.isEmpty || _warmupCompleted.isEmpty) return;
+    final payload = {
+      for (final e in _warmupCompleted.entries)
+        e.key: List<Map<String, dynamic>>.from(e.value),
+    };
+    _warmupCompleted.clear();
+    unawaited(() async {
+      try {
+        await ref.read(apiClientProvider).post(
+          '${ApiConstants.workouts}/$id/warmup-logs',
+          data: {'intervals': payload},
+        );
+      } catch (_) {
+        // Non-blocking — the workout still proceeds.
+      }
+    }());
+  }
+
+  /// The ⋯ actions available on a warm-up move. Deliberately a subset of the
+  /// working-set sheet: a warm-up move has no swap/increment/pain-swap
+  /// semantics, but skipping, video, water, complete and quit all still apply.
+  void _showWarmupActions() {
+    if (_warmupExercises.isEmpty) return;
+    final ex = _warmupExercises[_warmupIndex];
+    final isLast = _warmupIndex >= _warmupExercises.length - 1;
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        showHandle: true,
+        child: EasyExerciseActionsSheet(
+          exerciseName: ex.name,
+          actions: [
+            EasyExerciseAction(
+              icon: Icons.skip_next_rounded,
+              label: isLast ? 'Start working sets' : 'Skip this move',
+              onTap: _advanceWarmup,
+            ),
+            EasyExerciseAction(
+              icon: Icons.fast_forward_rounded,
+              label: 'Skip the whole warm-up',
+              subtitle: '${_warmupExercises.length - _warmupIndex} moves left',
+              onTap: _finishWarmupPhase,
+            ),
+            EasyExerciseAction(
+              icon: Icons.play_circle_outline_rounded,
+              label: 'Show video',
+              onTap: () => openEasyVideo(
+                context,
+                ex,
+                ref: ref,
+                playlist: _warmupExercises,
+                playlistIndex: _warmupIndex,
+              ),
+            ),
+            EasyExerciseAction(
+              icon: Icons.local_drink_outlined,
+              label: 'Log a cup of water',
+              onTap: _logWaterCup,
+            ),
+            EasyExerciseAction(
+              icon: Icons.close_rounded,
+              label: AppLocalizations.of(context).easyActiveWorkoutQuitWorkout,
+              onTap: _quitWorkout,
+              destructive: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Leave the warm-up phase → working sets. Marks warm-up done (so Advanced
   /// won't re-warmup on a tier swap) and shows the first-run help. Called from
   /// the runner's onDone (finished OR skipped) and the no-warmup path.
   void _finishWarmupPhase() {
     if (!mounted) return;
+    // Save whatever warm-up work was actually done before leaving the phase.
+    _persistWarmupLogs();
     // Clear both the active phase and the resolving placeholder so the build
     // falls through to the working sets (covers the no-warm-up / error paths).
     if (_warmupPhase || _warmupResolving) {
@@ -1177,6 +1362,11 @@ class EasyActiveWorkoutScreenState
     if (_isFinishing || !mounted) return;
     _isFinishing = true;
 
+    // "Complete workout now" can fire straight from a warm-up move, which
+    // never reaches _finishWarmupPhase — flush the warm-up logs here too so
+    // completed warm-up work is never silently dropped.
+    _persistWarmupLogs();
+
     _timer.stopWorkoutTimer();
     _restBroadcaster?.dispose();
     _restBroadcaster = null;
@@ -1350,6 +1540,9 @@ class EasyActiveWorkoutScreenState
       ),
     );
     if (ok == true && mounted) {
+      // Warm-up moves the user actually completed before quitting are still
+      // real work — save them before tearing the session down.
+      _persistWarmupLogs();
       // Clear the shared session — user explicitly walked away. Re-entry
       // should rehydrate from persisted server data, not stale memory.
       ref.read(activeWorkoutSessionProvider.notifier).clear();
@@ -1367,13 +1560,13 @@ class EasyActiveWorkoutScreenState
     }
 
     // Warm-up is eligible but its data hasn't resolved yet — show a neutral
-    // placeholder that matches EasyWarmupRunner's background (black/white) so
-    // the working-set screen never flashes in before the warm-up appears.
-    if (_warmupResolving && _warmup == null) {
+    // placeholder on the Easy screen's OWN background so neither the working
+    // sets nor the warm-up move flashes in with a colour change behind it.
+    if (_warmupResolving && _warmupExercises.isEmpty) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       final accent = AccentColorScope.of(context).getColor(isDark);
       return Scaffold(
-        backgroundColor: isDark ? Colors.black : Colors.white,
+        backgroundColor: isDark ? AppColors.background : Colors.white,
         body: Center(
           child: SizedBox(
             width: 28,
@@ -1384,15 +1577,10 @@ class EasyActiveWorkoutScreenState
       );
     }
 
-    // Warm-up phase (Easy redesign) — guided warm-up runner before the working
-    // sets. Kept separate from the logged session (no stats/index impact).
-    if (_warmupPhase && _warmup != null) {
-      return EasyWarmupRunner(
-        warmup: _warmup!,
-        onDone: _finishWarmupPhase,
-        workoutId: widget.workout.id,
-        useKg: ref.read(useKgForWorkoutProvider),
-      );
+    // Warm-up phase — rendered by the SAME view as a working exercise, so the
+    // user never crosses into a second, differently-shaped screen mid-workout.
+    if (_warmupPhase && _warmupExercises.isNotEmpty) {
+      return _buildWarmupView(context);
     }
 
     // Saving / completing pipeline is running — show the same trophy +
@@ -1622,6 +1810,113 @@ class EasyActiveWorkoutScreenState
       onQuitWorkout: _quitWorkout,
       onCompleteWorkoutNow: _completeWorkoutNow,
       allCompletedSets: [for (final s in _perExercise.values) ...s.completed],
+      ),
+    );
+  }
+
+  /// A warm-up move on the ORDINARY Easy screen. Same widget, same chrome,
+  /// same focal timer as a working exercise — only the wiring differs:
+  /// no set ledger to edit, no PR/volume side effects, and "Log set" records
+  /// the hold into `/warmup-logs` instead of `performance_logs`.
+  Widget _buildWarmupView(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    final mq = MediaQuery.of(context);
+    final safeAreaH = mq.size.height - mq.padding.top - mq.padding.bottom;
+    final compact = safeAreaH < kEasyCompactSafeAreaHeight;
+
+    final exercise = _warmupExercises[_warmupIndex];
+    final state = _warmupStates[_warmupIndex]!;
+    final hasMoreWarmup = _warmupIndex + 1 < _warmupExercises.length;
+    // "Next:" points at the following warm-up move, or — on the last one — at
+    // the first working exercise, so the hand-off is never a surprise.
+    final nextName = hasMoreWarmup
+        ? _warmupExercises[_warmupIndex + 1].name
+        : (_exercises.isNotEmpty ? _exercises.first.name : null);
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _quitWorkout();
+      },
+      child: EasyActiveWorkoutView(
+        exercise: exercise,
+        state: state,
+        nextExerciseName: nextName,
+        nextExerciseImageUrl: hasMoreWarmup
+            ? (_warmupExercises[_warmupIndex + 1].imageS3Path ??
+                _warmupExercises[_warmupIndex + 1].gifUrl ??
+                _warmupExercises[_warmupIndex + 1].videoUrl)
+            : null,
+        currentSetNumber: 1,
+        workoutSeconds: _timer.workoutSeconds,
+        useKg: useKg,
+        compact: compact,
+        weightStep: useKg ? 2.5 : 5.0,
+        accent: accent,
+        isDark: isDark,
+        // The insight engine reads logged working sets; a warm-up move has
+        // none, so there is nothing honest to say yet.
+        preSetInsight: null,
+        onBack: _quitWorkout,
+        onShowVideo: () => openEasyVideo(context, exercise,
+            ref: ref,
+            playlist: _warmupExercises,
+            playlistIndex: _warmupIndex),
+        onShowInfo: () => openEasyInfoSheet(context, exercise),
+        // "Plan" during warm-up = the warm-up sequence, in the same sheet the
+        // working sets use. Tapping a row moves the focal card to that move.
+        onOpenPlan: () => openEasyPlanSheet(
+          context: context,
+          exercises: _warmupExercises,
+          perExercise: _warmupStates,
+          currentIndex: _warmupIndex,
+          onJumpTo: _jumpWarmupTo,
+        ),
+        onMinimize: () {
+          ref.read(workoutMiniPlayerProvider.notifier).minimize(
+                workout: widget.workout,
+                workoutSeconds: _timer.workoutSeconds,
+                currentExerciseIndex: 0,
+                currentExerciseName: exercise.name,
+                totalExercises: _exercises.length,
+                isPaused: false,
+                isResting: false,
+                restSecondsRemaining: 0,
+              );
+          Navigator.of(context).pop();
+        },
+        // A warm-up hold is measured in seconds only — the weight / reps /
+        // distance steppers never render for it (isTimed), so those callbacks
+        // are inert by construction.
+        onWeightChanged: (_) {},
+        onRepsChanged: (_) {},
+        onDistanceChanged: (_) {},
+        onDurationChanged: (v) =>
+            setState(() => state.durationSeconds = v.round()),
+        onLogSet: _logWarmupMove,
+        // One hold per move: no ledger editing, no set stepper.
+        onAddSet: null,
+        onRemoveSet: null,
+        onEditSet: null,
+        onSkipToSet: null,
+        onEditNote: null,
+        onFormCheck: null,
+        onHowDidIDo: null,
+        lastSet: null,
+        scoreTarget: null,
+        onSkipToNext: hasMoreWarmup ? _skipWarmupMove : _skipWholeWarmup,
+        onShowHistory: () =>
+            showEasyExerciseHistorySheet(context, ref, exercise.name),
+        onShowExerciseActions: _showWarmupActions,
+        onQuitWorkout: _quitWorkout,
+        onCompleteWorkoutNow: _completeWorkoutNow,
+        // Warm-up holds are NOT working volume — the stats strip must not
+        // count them.
+        allCompletedSets: const [],
+        phaseLabel:
+            'WARM-UP · ${_warmupIndex + 1} OF ${_warmupExercises.length}',
       ),
     );
   }

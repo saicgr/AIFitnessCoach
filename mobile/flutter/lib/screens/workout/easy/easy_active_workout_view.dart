@@ -121,6 +121,12 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// live Calories + Volume numbers in the stats strip.
   final List<SetLog> allCompletedSets;
 
+  /// Non-null for a non-working phase (currently: the warm-up). Replaces the
+  /// header's "SET n OF m" stepper with e.g. "WARM-UP · 1 OF 4". The warm-up
+  /// runs on THIS screen — there is no separate warm-up UI — so the only thing
+  /// that changes is the label.
+  final String? phaseLabel;
+
   const EasyActiveWorkoutView({
     super.key,
     required this.exercise,
@@ -165,6 +171,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.onQuitWorkout,
     this.onCompleteWorkoutNow,
     this.allCompletedSets = const [],
+    this.phaseLabel,
   });
 
   @override
@@ -215,6 +222,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
                 onEditNote: onEditNote,
                 hasNote: hasNote,
                 onShowMore: onShowExerciseActions,
+                phaseLabel: phaseLabel,
               ),
             ),
             EasyCompletedDots(

@@ -9,6 +9,8 @@
 //
 // Nothing scrolls: the thumbnail sizes down on tiny safe-area heights.
 
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
@@ -60,6 +62,12 @@ class EasyExerciseHeader extends ConsumerWidget {
   /// When true, compact layout for SE-class devices (180 pt thumbnail).
   final bool compact;
 
+  /// Replaces the "SET n OF m" row with a phase label (e.g. "WARM-UP · 1 OF 4")
+  /// rendered in the accent colour. Used by the warm-up phase, which runs on
+  /// this exact screen and has one hold per move — so a set counter would be
+  /// noise while the move number is the thing the user wants.
+  final String? phaseLabel;
+
   const EasyExerciseHeader({
     super.key,
     required this.exercise,
@@ -75,6 +83,7 @@ class EasyExerciseHeader extends ConsumerWidget {
     this.hasNote = false,
     this.onShowMore,
     this.compact = false,
+    this.phaseLabel,
   });
 
   @override
@@ -191,6 +200,18 @@ class EasyExerciseHeader extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // Phase label (warm-up) — same row, same rhythm, accurate copy.
+          if (phaseLabel != null)
+            Text(
+              phaseLabel!,
+              style: ZType.lbl(
+                12,
+                color: accent,
+                weight: FontWeight.w700,
+                letterSpacing: 2,
+              ),
+            )
+          else
           // SET n OF m stepper.
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -356,6 +377,44 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // Base surface — the frame is never empty, even before any
+              // media resolves.
+              ColoredBox(
+                color: (isDark ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.04),
+              ),
+              // BACKDROP — the same media, `cover`-scaled and blurred, filling
+              // the frame behind the contained demo. The demo clips are
+              // VERTICAL (1080×1920) and the illustrations are 16:9, so a
+              // single landscape frame can only show ONE of them edge-to-edge.
+              // `contain` (below) is non-negotiable — it's what keeps the whole
+              // body in shot — and this layer is what stops the leftover space
+              // reading as a broken/letterboxed player.
+              if (hasVideo)
+                _BlurBackdrop(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    clipBehavior: Clip.hardEdge,
+                    child: SizedBox(
+                      width: _controller!.value.size.width,
+                      height: _controller!.value.size.height,
+                      child: VideoPlayer(_controller!),
+                    ),
+                  ),
+                )
+              else if (preResolved != null)
+                _BlurBackdrop(
+                  child: ExerciseImage(
+                    exerciseName: widget.exercise.name,
+                    imageUrl: preResolved,
+                    width: double.infinity,
+                    height: double.infinity,
+                    borderRadius: 0,
+                    fit: BoxFit.cover,
+                    backgroundColor: Colors.transparent,
+                    iconColor: Colors.transparent,
+                  ),
+                ),
               if (hasVideo)
                 FittedBox(
                   // The demo clips are VERTICAL (S3 `VERTICAL VIDEOS ALL/`)
@@ -379,13 +438,12 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
                   width: double.infinity,
                   height: double.infinity,
                   borderRadius: 0,
-                  // Illustrations are PORTRAIT on white; this hero frame is
-                  // landscape. `cover` zoom-crops the figure (head/legs cut +
-                  // soft from the heavy zoom) — `contain` shows the whole
-                  // figure crisp, letterboxed on the illustration's own white.
+                  // `cover` zoom-crops the figure (head/legs cut + soft from
+                  // the heavy zoom) — `contain` shows the whole figure crisp.
+                  // Transparent background so the blurred backdrop above shows
+                  // through wherever the aspect ratios don't line up.
                   fit: BoxFit.contain,
-                  backgroundColor: (isDark ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.04),
+                  backgroundColor: Colors.transparent,
                   iconColor: (isDark ? Colors.white : Colors.black)
                       .withValues(alpha: 0.22),
                 ),
@@ -423,6 +481,24 @@ class _WideMediaState extends ConsumerState<_WideMedia> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Blurred, dimmed `cover` copy of the demo media used to fill the hero
+/// frame behind the `contain`-fitted demo. Keeps the whole body in shot
+/// (contain) without leaving hard empty bars beside a vertical clip.
+class _BlurBackdrop extends StatelessWidget {
+  final Widget child;
+  const _BlurBackdrop({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: ImageFiltered(
+        imageFilter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Opacity(opacity: 0.55, child: child),
       ),
     );
   }
