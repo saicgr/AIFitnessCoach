@@ -183,7 +183,13 @@ HARD = ["white_background", "single_plausible_anatomical_figure", "only_target_i
 
 def validate(r, path, pd):
     img_b64 = base64.b64encode(open(path, "rb").read()).decode()
-    primary = pd.get("primary_muscle") or primary_target(r.get("target_muscle", "")); eq = (r.get("equipment", "") or "").strip() or "bodyweight (none)"
+    primary = pd.get("primary_muscle") or primary_target(r.get("target_muscle", ""))
+    # Must match exercise_block()'s equipment precedence (eq_override first) or the
+    # validator judges the render against a DIFFERENT equipment string than what was
+    # actually asked for at generation time -- an unwinnable, permanently-failing QA
+    # loop whenever an override exists specifically because the DB equipment field is
+    # wrong (e.g. "Front Squats Kettlelbell Over Shoulders" DB equipment = "Bodyweight").
+    eq = pd.get("eq_override") or (r.get("equipment", "") or "").strip() or "bodyweight (none)"
     style = (r.get("style") or "dynamic").strip().lower()
     dynamic = style == "dynamic"
     q = (f"You are a QA reviewer for anatomical exercise illustrations. "

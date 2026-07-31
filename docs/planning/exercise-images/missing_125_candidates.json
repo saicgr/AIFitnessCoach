@@ -1,0 +1,128 @@
+[
+  {
+    "name": "Brazilian crunches",
+    "type": "strength",
+    "equipment": "Bodyweight",
+    "target_muscle": "Abdominals (Rectus Abdominis, Obliques)",
+    "style": "dynamic",
+    "slug": "brazilian_crunches",
+    "filename": "brazilian_crunches.png"
+  },
+  {
+    "name": "Bulgarian split squat bodyweight",
+    "type": "strength",
+    "equipment": "Bodyweight",
+    "target_muscle": "Quadriceps (Quadriceps Femoris), Glutes (gluteus maximus, gluteus mideus)",
+    "style": "dynamic",
+    "slug": "bulgarian_split_squat_bodyweight",
+    "filename": "bulgarian_split_squat_bodyweight.png"
+  },
+  {
+    "name": "Front squats kettlelbell over shoulders",
+    "type": "strength",
+    "equipment": "Bodyweight",
+    "target_muscle": "Quadriceps (Quadriceps Femoris)",
+    "style": "dynamic",
+    "slug": "front_squats_kettlelbell_over_shoulders",
+    "filename": "front_squats_kettlelbell_over_shoulders.png"
+  },
+  {
+    "name": "zotman curls dumbbell simultaneous",
+    "type": "strength",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps, Forearms (Brachioradialis)",
+    "style": "dynamic",
+    "slug": "zotman_curls_dumbbell_simultaneous",
+    "filename": "zotman_curls_dumbbell_simultaneous.png"
+  },
+  {
+    "name": "Decline bench oblique crunches dumbbells",
+    "type": "strength",
+    "equipment": "Dumbbells",
+    "target_muscle": "Obliques (Internal and External Obliques)",
+    "style": "dynamic",
+    "slug": "decline_bench_oblique_crunches_dumbbells",
+    "filename": "decline_bench_oblique_crunches_dumbbells.png"
+  },
+  {
+    "name": "Tire Drag Backward",
+    "type": "strength",
+    "equipment": "tire, harness, rope",
+    "target_muscle": "quadriceps",
+    "style": "dynamic",
+    "slug": "tire_drag_backward",
+    "filename": "tire_drag_backward.png"
+  },
+  {
+    "name": "Battle Rope Lunges with Waves",
+    "type": "strength",
+    "equipment": "battle ropes",
+    "target_muscle": "quadriceps",
+    "style": "dynamic",
+    "slug": "battle_rope_lunges_with_waves",
+    "filename": "battle_rope_lunges_with_waves.png"
+  },
+  {
+    "name": "Alternating hammer curls seated dumbbells",
+    "type": "strength",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps (Biceps Brachii), Brachialis (Musculus Brachialis)",
+    "style": "dynamic",
+    "slug": "alternating_hammer_curls_seated_dumbbells",
+    "filename": "alternating_hammer_curls_seated_dumbbells.png"
+  },
+  {
+    "name": "alternating biceps hammer curls resistance band",
+    "type": "strength",
+    "equipment": "Resistance Band",
+    "target_muscle": "Biceps (Biceps Brachii), Brachialis (Musculus Brachialis)",
+    "style": "dynamic",
+    "slug": "alternating_biceps_hammer_curls_resistance_band",
+    "filename": "alternating_biceps_hammer_curls_resistance_band.png"
+  },
+  {
+    "name": "Bench Bulgarian Split Squats",
+    "type": "strength",
+    "equipment": "Bodyweight, Bench",
+    "target_muscle": "Quadriceps (quadriceps femoris), Glutes (gluteus maximus, gluteus mideus)",
+    "style": "dynamic",
+    "slug": "bench_bulgarian_split_squats",
+    "filename": "bench_bulgarian_split_squats.png"
+  },
+  {
+    "name": "Dumbbell Lying One Arm Supinated Triceps Extension",
+    "type": "strength",
+    "equipment": "Dumbbells, Bench",
+    "target_muscle": "Triceps",
+    "style": "dynamic",
+    "slug": "dumbbell_lying_one_arm_supinated_triceps_extension",
+    "filename": "dumbbell_lying_one_arm_supinated_triceps_extension.png"
+  },
+  {
+    "name": "Dumbbell single arm shoulder press",
+    "type": "strength",
+    "equipment": "Dumbbells",
+    "target_muscle": "Shoulders (Anterior Deltoids)",
+    "style": "dynamic",
+    "slug": "dumbbell_single_arm_shoulder_press",
+    "filename": "dumbbell_single_arm_shoulder_press.png"
+  },
+  {
+    "name": "decline bench oblique crunches bodyweight",
+    "type": "strength",
+    "equipment": "Bodyweight, Decline Bench",
+    "target_muscle": "Abdominals, Obliques",
+    "style": "dynamic",
+    "slug": "decline_bench_oblique_crunches_bodyweight",
+    "filename": "decline_bench_oblique_crunches_bodyweight.png"
+  },
+  {
+    "name": "Dumbbell Incline Palms-back Press",
+    "type": "strength",
+    "equipment": "Dumbbells, Incline Bench",
+    "target_muscle": "Chest (Upper), Triceps",
+    "style": "dynamic",
+    "slug": "dumbbell_incline_palms_back_press",
+    "filename": "dumbbell_incline_palms_back_press.png"
+  }
+]

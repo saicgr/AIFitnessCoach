@@ -1,0 +1,1127 @@
+[
+  {
+    "canonical_exercise_id": "175f2fb0-6905-49de-a171-23e9ee9e2aeb",
+    "name": "Brazilian crunches",
+    "slug": "brazilian_crunches",
+    "filename": "brazilian_crunches.png",
+    "action": "generate",
+    "equipment": "Bodyweight",
+    "target_muscle": "Abdominals (Rectus Abdominis, Obliques)"
+  },
+  {
+    "canonical_exercise_id": "5c677d83-d2de-4ae4-86a1-d6ddb4ccfbcd",
+    "name": "Bulgarian split squat bodyweight",
+    "slug": "bulgarian_split_squat_bodyweight",
+    "filename": "bulgarian_split_squat_bodyweight.png",
+    "action": "generate",
+    "equipment": "Bodyweight",
+    "target_muscle": "Quadriceps (Quadriceps Femoris), Glutes (gluteus maximus, gluteus mideus)"
+  },
+  {
+    "canonical_exercise_id": "4c2f0f4e-42d6-4268-b704-b574be8aae9c",
+    "name": "Dumbbell Standing Around World",
+    "slug": "dumbbell_standing_around_world",
+    "filename": "dumbbell_standing_around_world.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Shoulders (Deltoids), Upper Back (Trapezius)"
+  },
+  {
+    "canonical_exercise_id": "6a8fc019-2301-45c1-9fee-a6306f311271",
+    "name": "Front squats kettlelbell over shoulders",
+    "slug": "front_squats_kettlelbell_over_shoulders",
+    "filename": "front_squats_kettlelbell_over_shoulders.png",
+    "action": "generate",
+    "equipment": "Bodyweight",
+    "target_muscle": "Quadriceps (Quadriceps Femoris)"
+  },
+  {
+    "canonical_exercise_id": "c6ed2af6-9e1c-4a86-bc5b-5dd3ce57f37f",
+    "name": "Plate loaded chest press incline",
+    "slug": "plate_loaded_chest_press_incline",
+    "filename": "plate_loaded_chest_press_incline.png",
+    "action": "bridge",
+    "equipment": "Chest Press Machine",
+    "target_muscle": "Chest (Clavicular Head)"
+  },
+  {
+    "canonical_exercise_id": "43239011-f150-41a1-9398-7cb2836e73ba",
+    "name": "zotman curls dumbbell simultaneous",
+    "slug": "zotman_curls_dumbbell_simultaneous",
+    "filename": "zotman_curls_dumbbell_simultaneous.png",
+    "action": "generate",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps, Forearms (Brachioradialis)"
+  },
+  {
+    "canonical_exercise_id": "fa31eec9-d56a-40d6-8be5-07a3ea9f4307",
+    "name": "Gar Nal Weighted Baithak",
+    "slug": "gar_nal_weighted_baithak",
+    "filename": "gar_nal_weighted_baithak.png",
+    "action": "bridge",
+    "equipment": "gar nal (stone neck ring)",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "2cbd7761-28e1-4409-904a-26bab6324729",
+    "name": "Kabaddi Squat Jumps",
+    "slug": "kabaddi_squat_jumps",
+    "filename": "kabaddi_squat_jumps.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "712eb68f-f251-4b08-9e2f-454f529bfd97",
+    "name": "Decline bench oblique crunches",
+    "slug": "decline_bench_oblique_crunches",
+    "filename": "decline_bench_oblique_crunches.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Obliques (Internal and External Obliques)"
+  },
+  {
+    "canonical_exercise_id": "67c50c96-ec3e-4b4f-8b50-da188f9a969e",
+    "name": "Decline bench oblique crunches dumbbells",
+    "slug": "decline_bench_oblique_crunches_dumbbells",
+    "filename": "decline_bench_oblique_crunches_dumbbells.png",
+    "action": "generate",
+    "equipment": "Dumbbells",
+    "target_muscle": "Obliques (Internal and External Obliques)"
+  },
+  {
+    "canonical_exercise_id": "64bbd86e-7ffc-4db6-8fac-e1336273b738",
+    "name": "Tire Flip",
+    "slug": "tire_flip",
+    "filename": "tire_flip.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "dd73588f-0ad1-4df4-adc3-fdaa51c50b9d",
+    "name": "Tire Sledgehammer Overhead Slams",
+    "slug": "tire_sledgehammer_overhead_slams",
+    "filename": "tire_sledgehammer_overhead_slams.png",
+    "action": "bridge",
+    "equipment": "tire, sledgehammer",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "96349a98-70ce-4305-86a0-36af9f3eaf1a",
+    "name": "Tire Sledgehammer Side Slams",
+    "slug": "tire_sledgehammer_side_slams",
+    "filename": "tire_sledgehammer_side_slams.png",
+    "action": "bridge",
+    "equipment": "tire, sledgehammer",
+    "target_muscle": "obliques"
+  },
+  {
+    "canonical_exercise_id": "3cc27c34-3b41-4057-9ee4-9eaf04f5be48",
+    "name": "Tire Drag Forward",
+    "slug": "tire_drag_forward",
+    "filename": "tire_drag_forward.png",
+    "action": "bridge",
+    "equipment": "tire, harness, rope",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "88c06bd1-284c-4147-b691-b337adbd5667",
+    "name": "Tire Drag Backward",
+    "slug": "tire_drag_backward",
+    "filename": "tire_drag_backward.png",
+    "action": "generate",
+    "equipment": "tire, harness, rope",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "6511afac-d587-46b3-a6d0-865e7e2795ff",
+    "name": "Tire Push",
+    "slug": "tire_push",
+    "filename": "tire_push.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "c27c248e-b563-458e-a620-1f88a3183af8",
+    "name": "Tire Lateral Jumps",
+    "slug": "tire_lateral_jumps",
+    "filename": "tire_lateral_jumps.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "9b181d17-f928-44cd-be67-b71a217c5ea4",
+    "name": "Tire Center Squat Jump",
+    "slug": "tire_center_squat_jump",
+    "filename": "tire_center_squat_jump.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "d8142e9f-8b0d-4f43-8d64-1ebc05a5b5a7",
+    "name": "Tire Quick Feet",
+    "slug": "tire_quick_feet",
+    "filename": "tire_quick_feet.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "calves"
+  },
+  {
+    "canonical_exercise_id": "0f1ef530-fe2f-45f8-81ce-7f23bbc8a266",
+    "name": "Tire-Anchored Battle Rope Waves",
+    "slug": "tire_anchored_battle_rope_waves",
+    "filename": "tire_anchored_battle_rope_waves.png",
+    "action": "bridge",
+    "equipment": "tire, battle ropes",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "14172e4f-eaed-4d2d-a07f-e47e05c4e6c5",
+    "name": "Tire-Anchored Battle Rope Slams",
+    "slug": "tire_anchored_battle_rope_slams",
+    "filename": "tire_anchored_battle_rope_slams.png",
+    "action": "bridge",
+    "equipment": "tire, battle ropes",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "b2c36857-5cd3-4de0-8110-dfaf72d16e2d",
+    "name": "Hay Bale Farmer's Carry",
+    "slug": "hay_bale_farmer_s_carry",
+    "filename": "hay_bale_farmer_s_carry.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "trapezius"
+  },
+  {
+    "canonical_exercise_id": "20246230-a8de-494c-bfd0-4a44278f5d78",
+    "name": "Hay Bale Over-Shoulder Throw",
+    "slug": "hay_bale_over_shoulder_throw",
+    "filename": "hay_bale_over_shoulder_throw.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "66ee1851-b215-465c-ab7a-8ac7c27f09c3",
+    "name": "Standing Hay Baler",
+    "slug": "standing_hay_baler",
+    "filename": "standing_hay_baler.png",
+    "action": "bridge",
+    "equipment": "medicine ball, hay bale",
+    "target_muscle": "obliques"
+  },
+  {
+    "canonical_exercise_id": "c34259d9-c6c9-4991-89b5-8597ac6eb84d",
+    "name": "Hay Bale Clean Burpee",
+    "slug": "hay_bale_clean_burpee",
+    "filename": "hay_bale_clean_burpee.png",
+    "action": "bridge",
+    "equipment": "hay bale, hay bale wall",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "c08e476f-772f-4f86-926e-5e4905506d40",
+    "name": "Hay Bale Squat",
+    "slug": "hay_bale_squat",
+    "filename": "hay_bale_squat.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "29212aef-40c9-4a30-b028-c3161282f41c",
+    "name": "Hay Bale Deadlift",
+    "slug": "hay_bale_deadlift",
+    "filename": "hay_bale_deadlift.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "hamstrings"
+  },
+  {
+    "canonical_exercise_id": "8da75abf-6250-4dea-b67b-b7f534d0e926",
+    "name": "Hay Bale Clean",
+    "slug": "hay_bale_clean",
+    "filename": "hay_bale_clean.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "trapezius"
+  },
+  {
+    "canonical_exercise_id": "526bc766-e64f-416e-9528-29a1d20208bd",
+    "name": "Hay Bale Overhead Press",
+    "slug": "hay_bale_overhead_press",
+    "filename": "hay_bale_overhead_press.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "deltoids"
+  },
+  {
+    "canonical_exercise_id": "e61e45b6-e723-4b1e-952c-030b06c9a309",
+    "name": "Hay Bale Russian Twist",
+    "slug": "hay_bale_russian_twist",
+    "filename": "hay_bale_russian_twist.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "obliques"
+  },
+  {
+    "canonical_exercise_id": "efac24cb-821b-4dfe-af36-a5f65253a7b8",
+    "name": "Sheaf Toss",
+    "slug": "sheaf_toss",
+    "filename": "sheaf_toss.png",
+    "action": "bridge",
+    "equipment": "pitchfork, hay bale, sheaf bag",
+    "target_muscle": "deltoids"
+  },
+  {
+    "canonical_exercise_id": "45bb701a-258e-4ffc-ae59-c07a3b99d6e0",
+    "name": "Hay Bale Step-Up",
+    "slug": "hay_bale_step_up",
+    "filename": "hay_bale_step_up.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "200f7e51-e7ed-4479-8849-5c895533e271",
+    "name": "Single-Leg Balance on Hay Bale",
+    "slug": "single_leg_balance_on_hay_bale",
+    "filename": "single_leg_balance_on_hay_bale.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "777fff73-5ca3-4df2-9c94-29db6a18ecbe",
+    "name": "Sandbag Clean",
+    "slug": "sandbag_clean",
+    "filename": "sandbag_clean.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "ead787e2-fb91-484e-971a-265a7343fe4b",
+    "name": "Hay Bale Shoulder Load",
+    "slug": "hay_bale_shoulder_load",
+    "filename": "hay_bale_shoulder_load.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "trapezius"
+  },
+  {
+    "canonical_exercise_id": "af791c08-be6e-4c14-ab6e-320db3b6af67",
+    "name": "Sandbag Shouldering",
+    "slug": "sandbag_shouldering",
+    "filename": "sandbag_shouldering.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "da865d26-9c67-4512-8040-3ec03c499ad9",
+    "name": "Sandbag Bear Hug Carry",
+    "slug": "sandbag_bear_hug_carry",
+    "filename": "sandbag_bear_hug_carry.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "485d84d8-14ec-436b-ab02-be1ce26e3df9",
+    "name": "Sandbag Zercher Carry",
+    "slug": "sandbag_zercher_carry",
+    "filename": "sandbag_zercher_carry.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "552ea2d8-f525-4c81-b53e-0a8e331ab76e",
+    "name": "Sandbag Get-Up",
+    "slug": "sandbag_get_up",
+    "filename": "sandbag_get_up.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "e79feff5-7a02-45dd-bfa7-04ac043b8bfd",
+    "name": "Sandbag Front Squat",
+    "slug": "sandbag_front_squat",
+    "filename": "sandbag_front_squat.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "3738b955-8583-4a09-9bed-7887ea4d1da4",
+    "name": "Sandbag Goblet Squat",
+    "slug": "sandbag_goblet_squat",
+    "filename": "sandbag_goblet_squat.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "1f069c8c-0efb-46cf-a8de-0c7d9f9e4085",
+    "name": "Lathi Basic Staff Handling",
+    "slug": "lathi_basic_staff_handling",
+    "filename": "lathi_basic_staff_handling.png",
+    "action": "bridge",
+    "equipment": "lathi (bamboo staff)",
+    "target_muscle": "forearms"
+  },
+  {
+    "canonical_exercise_id": "679625ce-f5f5-4cd4-b9cd-11b929dd78e9",
+    "name": "Sandbag Deadlift",
+    "slug": "sandbag_deadlift",
+    "filename": "sandbag_deadlift.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "hamstrings"
+  },
+  {
+    "canonical_exercise_id": "032aada5-f0fc-4c89-a744-8d331871fb33",
+    "name": "Sandbag Bent Over Row",
+    "slug": "sandbag_bent_over_row",
+    "filename": "sandbag_bent_over_row.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "latissimus dorsi"
+  },
+  {
+    "canonical_exercise_id": "ef31e080-9e02-4b4c-a2f5-bebb4da7511c",
+    "name": "Sandbag Ground to Overhead",
+    "slug": "sandbag_ground_to_overhead",
+    "filename": "sandbag_ground_to_overhead.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "6c95b3cf-10bf-40b0-b578-caf3b62421b2",
+    "name": "Sandbag Clean and Press",
+    "slug": "sandbag_clean_and_press",
+    "filename": "sandbag_clean_and_press.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "deltoids"
+  },
+  {
+    "canonical_exercise_id": "55e2343f-ef53-4782-9987-ca3ce65e7cf1",
+    "name": "Sandbag Thruster",
+    "slug": "sandbag_thruster",
+    "filename": "sandbag_thruster.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "39e2f921-7541-42b2-9db9-f6646a7245f7",
+    "name": "Sandbag Overhead Slam",
+    "slug": "sandbag_overhead_slam",
+    "filename": "sandbag_overhead_slam.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "d6ae73ed-c454-4315-bc20-2033cdde0498",
+    "name": "Sandbag Rotational Throw",
+    "slug": "sandbag_rotational_throw",
+    "filename": "sandbag_rotational_throw.png",
+    "action": "bridge",
+    "equipment": "sandbag, wall",
+    "target_muscle": "obliques"
+  },
+  {
+    "canonical_exercise_id": "41bd0037-1b5e-4f01-9ae3-e79f5fc12c09",
+    "name": "Sandbag Drag",
+    "slug": "sandbag_drag",
+    "filename": "sandbag_drag.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "fe5e400c-3f03-446c-8254-5466cc495048",
+    "name": "Sandbag Over Shoulder Toss",
+    "slug": "sandbag_over_shoulder_toss",
+    "filename": "sandbag_over_shoulder_toss.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "c71b2852-7872-4382-8f86-8f14da61d4a8",
+    "name": "Battle Rope Slams",
+    "slug": "battle_rope_slams",
+    "filename": "battle_rope_slams.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "a52edcef-9796-4534-b9ea-677fdaf66cea",
+    "name": "Battle Rope Circles",
+    "slug": "battle_rope_circles",
+    "filename": "battle_rope_circles.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "d1757631-aacb-4e88-ad0b-eef2de372267",
+    "name": "Battle Rope Snakes",
+    "slug": "battle_rope_snakes",
+    "filename": "battle_rope_snakes.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "3cbe6c06-7b4c-45ee-a17c-be7d90571119",
+    "name": "Battle Rope Side-to-Side Waves",
+    "slug": "battle_rope_side_to_side_waves",
+    "filename": "battle_rope_side_to_side_waves.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "6291e47f-6bdf-4f08-b19b-216d6c229c60",
+    "name": "Battle Rope Grappler Throws",
+    "slug": "battle_rope_grappler_throws",
+    "filename": "battle_rope_grappler_throws.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "81be2491-f31f-48a9-9eb6-07bbad2b16a4",
+    "name": "Battle Rope Hip Toss",
+    "slug": "battle_rope_hip_toss",
+    "filename": "battle_rope_hip_toss.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "b6d69701-2b98-4766-b4c4-a31cc0a8b2ca",
+    "name": "Battle Rope Squat to Press",
+    "slug": "battle_rope_squat_to_press",
+    "filename": "battle_rope_squat_to_press.png",
+    "action": "bridge",
+    "equipment": "battle ropes",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "13bb791b-c3b4-43fb-bcb3-236cb706ed2d",
+    "name": "Battle Rope Lunges with Waves",
+    "slug": "battle_rope_lunges_with_waves",
+    "filename": "battle_rope_lunges_with_waves.png",
+    "action": "generate",
+    "equipment": "battle ropes",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "4a1307a9-3c3d-4df9-b9e7-aecd1007df95",
+    "name": "Dand (Hindu Push-up)",
+    "slug": "dand_hindu_push_up",
+    "filename": "dand_hindu_push_up.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "chest"
+  },
+  {
+    "canonical_exercise_id": "7a3307dc-b757-4b0d-a720-05f02fc8c58f",
+    "name": "Baithak (Hindu Squat)",
+    "slug": "baithak_hindu_squat",
+    "filename": "baithak_hindu_squat.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "8a35cdd9-b3a8-48e4-aea9-0a1e25ba749b",
+    "name": "Nal Stone Lock Lift",
+    "slug": "nal_stone_lock_lift",
+    "filename": "nal_stone_lock_lift.png",
+    "action": "bridge",
+    "equipment": "nal (stone lock)",
+    "target_muscle": "grip"
+  },
+  {
+    "canonical_exercise_id": "e0a031ec-5e70-4669-9b91-9b6ee0178698",
+    "name": "Ram Murti Dand (Dive Bomber Push-up)",
+    "slug": "ram_murti_dand_dive_bomber_push_up",
+    "filename": "ram_murti_dand_dive_bomber_push_up.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "0e313f30-f3ec-49f0-8fa2-e3938aa367e1",
+    "name": "Hanuman Dand (Power Hindu Push-up)",
+    "slug": "hanuman_dand_power_hindu_push_up",
+    "filename": "hanuman_dand_power_hindu_push_up.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "chest"
+  },
+  {
+    "canonical_exercise_id": "4cb9fe9a-748f-4eba-b6b4-7b6753d42491",
+    "name": "Gada 360-Degree Swing",
+    "slug": "gada_360_degree_swing",
+    "filename": "gada_360_degree_swing.png",
+    "action": "bridge",
+    "equipment": "gada (mace)",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "1f9210c4-79f2-44f6-b5e1-6b3f430ec088",
+    "name": "Gada Pendulum Swing",
+    "slug": "gada_pendulum_swing",
+    "filename": "gada_pendulum_swing.png",
+    "action": "bridge",
+    "equipment": "gada (mace)",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "ca40c2f2-7a07-472d-a9d2-c2d40aa7334b",
+    "name": "Gada Figure 8 Swing",
+    "slug": "gada_figure_8_swing",
+    "filename": "gada_figure_8_swing.png",
+    "action": "bridge",
+    "equipment": "gada (mace)",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "75195968-6ece-4221-b9e5-9a4643e13d22",
+    "name": "Jori Basic Swing",
+    "slug": "jori_basic_swing",
+    "filename": "jori_basic_swing.png",
+    "action": "bridge",
+    "equipment": "jori (indian clubs)",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "793d2ebb-240f-4157-b916-9dfe459c9746",
+    "name": "Jori Figure 8",
+    "slug": "jori_figure_8",
+    "filename": "jori_figure_8.png",
+    "action": "bridge",
+    "equipment": "jori (indian clubs)",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "2353937e-4756-4d60-aad7-f5b8b5076ef3",
+    "name": "Jori Windmill",
+    "slug": "jori_windmill",
+    "filename": "jori_windmill.png",
+    "action": "bridge",
+    "equipment": "jori (indian clubs)",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "4dc0b030-1e2d-4f5e-86cf-171f9c52be2f",
+    "name": "Jori Circular Swings",
+    "slug": "jori_circular_swings",
+    "filename": "jori_circular_swings.png",
+    "action": "bridge",
+    "equipment": "jori (indian clubs)",
+    "target_muscle": "shoulders"
+  },
+  {
+    "canonical_exercise_id": "99ab74cd-03fa-4923-9851-5e8225733d23",
+    "name": "Samtola Bent Over Row",
+    "slug": "samtola_bent_over_row",
+    "filename": "samtola_bent_over_row.png",
+    "action": "bridge",
+    "equipment": "samtola (indian barbell)",
+    "target_muscle": "latissimus_dorsi"
+  },
+  {
+    "canonical_exercise_id": "c5ca7f3e-b2ab-4c70-ba4c-286f73688ccf",
+    "name": "Samtola Rotational Swing",
+    "slug": "samtola_rotational_swing",
+    "filename": "samtola_rotational_swing.png",
+    "action": "bridge",
+    "equipment": "samtola (indian barbell)",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "5056f0ce-661b-4b01-8fbd-c78ce447b922",
+    "name": "Rassi Chadna (Rope Climbing)",
+    "slug": "rassi_chadna_rope_climbing",
+    "filename": "rassi_chadna_rope_climbing.png",
+    "action": "bridge",
+    "equipment": "rope",
+    "target_muscle": "latissimus_dorsi"
+  },
+  {
+    "canonical_exercise_id": "3de6d7a1-ffe8-4eda-8735-f14c7da0ae95",
+    "name": "Lathi Overhead Side Bend",
+    "slug": "lathi_overhead_side_bend",
+    "filename": "lathi_overhead_side_bend.png",
+    "action": "bridge",
+    "equipment": "lathi (bamboo staff)",
+    "target_muscle": "obliques"
+  },
+  {
+    "canonical_exercise_id": "4f85eab3-c74b-4c04-abb2-a0470de87605",
+    "name": "Mallakhamb Basic Mounting",
+    "slug": "mallakhamb_basic_mounting",
+    "filename": "mallakhamb_basic_mounting.png",
+    "action": "bridge",
+    "equipment": "mallakhamb pole",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "ff484ad6-ea2a-4a7c-875d-9e079f989d4e",
+    "name": "Mallakhamb Pole Sit (Danda)",
+    "slug": "mallakhamb_pole_sit_danda",
+    "filename": "mallakhamb_pole_sit_danda.png",
+    "action": "bridge",
+    "equipment": "mallakhamb pole",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "c98e85b6-2e8c-42fa-baff-953a85e9dfdc",
+    "name": "Shirshasana (Headstand)",
+    "slug": "shirshasana_headstand",
+    "filename": "shirshasana_headstand.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "c137a922-eb2d-49f7-a287-7170d3884306",
+    "name": "Gaja Vadivu (Elephant Stance)",
+    "slug": "gaja_vadivu_elephant_stance",
+    "filename": "gaja_vadivu_elephant_stance.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "7f1afbca-3c61-4470-ab26-4aeea094fdb5",
+    "name": "Simha Vadivu (Lion Stance)",
+    "slug": "simha_vadivu_lion_stance",
+    "filename": "simha_vadivu_lion_stance.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "bf4d1956-9712-4eea-98e4-267d6257a78f",
+    "name": "Ashwa Vadivu (Horse Stance)",
+    "slug": "ashwa_vadivu_horse_stance",
+    "filename": "ashwa_vadivu_horse_stance.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "4569cb50-239b-4be8-b34b-02dd4f71119e",
+    "name": "Kalaripayattu High Kick (Kalugal)",
+    "slug": "kalaripayattu_high_kick_kalugal",
+    "filename": "kalaripayattu_high_kick_kalugal.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "hip_flexors"
+  },
+  {
+    "canonical_exercise_id": "df086071-0208-4308-bd79-f71bafbde828",
+    "name": "Matka Head Carry",
+    "slug": "matka_head_carry",
+    "filename": "matka_head_carry.png",
+    "action": "bridge",
+    "equipment": "matka (water pot)",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "5b7d767e-318a-4283-95b7-61dd656718c1",
+    "name": "Matka Hip Carry",
+    "slug": "matka_hip_carry",
+    "filename": "matka_hip_carry.png",
+    "action": "bridge",
+    "equipment": "matka (water pot)",
+    "target_muscle": "obliques"
+  },
+  {
+    "canonical_exercise_id": "3b5d18fd-5f75-4d23-ba89-c326dd31511a",
+    "name": "Kuan Pani Khinchna (Well Water Drawing)",
+    "slug": "kuan_pani_khinchna_well_water_drawing",
+    "filename": "kuan_pani_khinchna_well_water_drawing.png",
+    "action": "bridge",
+    "equipment": "rope",
+    "target_muscle": "biceps"
+  },
+  {
+    "canonical_exercise_id": "03133d0d-e061-4fe1-b753-ef6f58b79e69",
+    "name": "Kabaddi Shuttle Run",
+    "slug": "kabaddi_shuttle_run",
+    "filename": "kabaddi_shuttle_run.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "c3561689-7be0-43fe-a5e3-d359c4f0d41d",
+    "name": "Kabaddi Cant Breathing Practice",
+    "slug": "kabaddi_cant_breathing_practice",
+    "filename": "kabaddi_cant_breathing_practice.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "diaphragm"
+  },
+  {
+    "canonical_exercise_id": "0af30f0a-93dd-4ec1-978f-6d14465043e8",
+    "name": "Lathi Single-Leg Balance",
+    "slug": "lathi_single_leg_balance",
+    "filename": "lathi_single_leg_balance.png",
+    "action": "bridge",
+    "equipment": "lathi (bamboo staff)",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "f74b4856-6b99-4b0a-893c-898691fcce7b",
+    "name": "Tire Single-Leg Box Jump",
+    "slug": "tire_single_leg_box_jump",
+    "filename": "tire_single_leg_box_jump.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "d0dcf6a1-a1a4-49bd-98ee-ccabdf599b8f",
+    "name": "Alternating hammer curls seated dumbbells",
+    "slug": "alternating_hammer_curls_seated_dumbbells",
+    "filename": "alternating_hammer_curls_seated_dumbbells.png",
+    "action": "generate",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps (Biceps Brachii), Brachialis (Musculus Brachialis)"
+  },
+  {
+    "canonical_exercise_id": "63d7fe8e-c56e-4630-8e56-edd4841b52db",
+    "name": "alternating biceps hammer curls resistance band",
+    "slug": "alternating_biceps_hammer_curls_resistance_band",
+    "filename": "alternating_biceps_hammer_curls_resistance_band.png",
+    "action": "generate",
+    "equipment": "Resistance Band",
+    "target_muscle": "Biceps (Biceps Brachii), Brachialis (Musculus Brachialis)"
+  },
+  {
+    "canonical_exercise_id": "4bd2b8db-6794-48b6-b9e4-76a52c2b358f",
+    "name": "Tire Step-Ups",
+    "slug": "tire_step_ups",
+    "filename": "tire_step_ups.png",
+    "action": "bridge",
+    "equipment": "tire",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "b3df3855-6e3d-4b52-acf4-21d337b6b4e8",
+    "name": "Hay Bale Lunge with Rotation",
+    "slug": "hay_bale_lunge_with_rotation",
+    "filename": "hay_bale_lunge_with_rotation.png",
+    "action": "bridge",
+    "equipment": "hay bale",
+    "target_muscle": "quadriceps"
+  },
+  {
+    "canonical_exercise_id": "ef14b3c1-1d11-4a53-b7ad-998b6aa2c3c5",
+    "name": "Sandbag Rotational Lunge",
+    "slug": "sandbag_rotational_lunge",
+    "filename": "sandbag_rotational_lunge.png",
+    "action": "bridge",
+    "equipment": "sandbag",
+    "target_muscle": "glutes"
+  },
+  {
+    "canonical_exercise_id": "894f3d07-0a26-4a71-92ee-db27003c66be",
+    "name": "Bench Bulgarian Split Squats",
+    "slug": "bench_bulgarian_split_squats",
+    "filename": "bench_bulgarian_split_squats.png",
+    "action": "generate",
+    "equipment": "Bodyweight, Bench",
+    "target_muscle": "Quadriceps (quadriceps femoris), Glutes (gluteus maximus, gluteus mideus)"
+  },
+  {
+    "canonical_exercise_id": "59acaef6-ea98-42d3-ae1f-5f23a7ff62ab",
+    "name": "Surya Namaskar (Sun Salutation)",
+    "slug": "surya_namaskar_sun_salutation",
+    "filename": "surya_namaskar_sun_salutation.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "full_body"
+  },
+  {
+    "canonical_exercise_id": "b1400785-ce84-4fbc-afa3-7de01ba854df",
+    "name": "Chakki Chalanasana (Mill Churning Pose)",
+    "slug": "chakki_chalanasana_mill_churning_pose",
+    "filename": "chakki_chalanasana_mill_churning_pose.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "abdominals"
+  },
+  {
+    "canonical_exercise_id": "71262edc-6130-4e74-a87b-a053ce5f28f0",
+    "name": "Sarpa Vadivu (Snake Stance)",
+    "slug": "sarpa_vadivu_snake_stance",
+    "filename": "sarpa_vadivu_snake_stance.png",
+    "action": "bridge",
+    "equipment": "bodyweight",
+    "target_muscle": "core"
+  },
+  {
+    "canonical_exercise_id": "b8b7c779-bf1d-4640-b01b-e206f8c45bbe",
+    "name": "Triceps rope extension on crossover machine",
+    "slug": "triceps_rope_extension_on_crossover_machine",
+    "filename": "triceps_rope_extension_on_crossover_machine.png",
+    "action": "bridge",
+    "equipment": "Cable Pulley Machine",
+    "target_muscle": "Triceps (Triceps Brachii)"
+  },
+  {
+    "canonical_exercise_id": "0d50115e-15c3-4c21-92e9-82ef7e4db107",
+    "name": "Dumbbell Lying One Arm Supinated Triceps Extension",
+    "slug": "dumbbell_lying_one_arm_supinated_triceps_extension",
+    "filename": "dumbbell_lying_one_arm_supinated_triceps_extension.png",
+    "action": "generate",
+    "equipment": "Dumbbells, Bench",
+    "target_muscle": "Triceps"
+  },
+  {
+    "canonical_exercise_id": "97ab110d-ea46-4be2-95e5-cfa6a4c2428f",
+    "name": "Dumbbell single arm shoulder press",
+    "slug": "dumbbell_single_arm_shoulder_press",
+    "filename": "dumbbell_single_arm_shoulder_press.png",
+    "action": "generate",
+    "equipment": "Dumbbells",
+    "target_muscle": "Shoulders (Anterior Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "e11c7baf-6f42-4dc6-a90e-8700248baee7",
+    "name": "Alternate Bicep Curl Resistance Band",
+    "slug": "alternate_bicep_curl_resistance_band",
+    "filename": "alternate_bicep_curl_resistance_band.png",
+    "action": "bridge",
+    "equipment": "Resistance Band",
+    "target_muscle": "Biceps (Biceps Brachii)"
+  },
+  {
+    "canonical_exercise_id": "76557c14-e7a9-4cd5-a0b5-e0a1ea3cc7b3",
+    "name": "Alternate bicep curl standing dumbbells",
+    "slug": "alternate_bicep_curl_standing_dumbbells",
+    "filename": "alternate_bicep_curl_standing_dumbbells.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps (Biceps Brachii)"
+  },
+  {
+    "canonical_exercise_id": "af2f56c3-057f-47bc-96bd-27f7b80c844f",
+    "name": "Band Hammer Grip Incline Bench Two Arm Row",
+    "slug": "band_hammer_grip_incline_bench_two_arm_row",
+    "filename": "band_hammer_grip_incline_bench_two_arm_row.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Full Body"
+  },
+  {
+    "canonical_exercise_id": "980f7756-b1a9-4c3c-9f30-c405fa2832be",
+    "name": "Barbell behind neck military press",
+    "slug": "barbell_behind_neck_military_press",
+    "filename": "barbell_behind_neck_military_press.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Front Shoulders (Anterior Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "85b59024-70a8-49b6-be28-284e02195439",
+    "name": "Barbell full squat back POV",
+    "slug": "barbell_full_squat_back_pov",
+    "filename": "barbell_full_squat_back_pov.png",
+    "action": "bridge",
+    "equipment": "Barbell",
+    "target_muscle": "Quadriceps (Quadriceps Femoris), Glutes (gluteus maximus, gluteus mideus)"
+  },
+  {
+    "canonical_exercise_id": "7f52a949-73fe-4bca-88b0-624f6d9adb09",
+    "name": "Bodyweight kneeling to hand tap",
+    "slug": "bodyweight_kneeling_to_hand_tap",
+    "filename": "bodyweight_kneeling_to_hand_tap.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Hip Flexors (Iliopsoas), Quadriceps (Quadriceps Femoris)"
+  },
+  {
+    "canonical_exercise_id": "017622fc-a0bb-4db2-a676-ad32d2f2e949",
+    "name": "Cable Seated Row With V Bar",
+    "slug": "cable_seated_row_with_v_bar",
+    "filename": "cable_seated_row_with_v_bar.png",
+    "action": "bridge",
+    "equipment": "Cable Row Machine",
+    "target_muscle": "Middle Back (Latissimus Dorsi, Teres Major)"
+  },
+  {
+    "canonical_exercise_id": "3b3eb27a-33ce-4801-b5db-e6748beab479",
+    "name": "Cable reverse fly",
+    "slug": "cable_reverse_fly",
+    "filename": "cable_reverse_fly.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Rear Shoulders (Posterior Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "4719396c-961b-412e-9148-26112bf5149d",
+    "name": "Cable Twisting Curl",
+    "slug": "cable_twisting_curl",
+    "filename": "cable_twisting_curl.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Full Body"
+  },
+  {
+    "canonical_exercise_id": "0b813887-d8dd-486c-a134-e1f0da71b995",
+    "name": "Chair Bulgarian split squats bodyweight",
+    "slug": "chair_bulgarian_split_squats_bodyweight",
+    "filename": "chair_bulgarian_split_squats_bodyweight.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Quadriceps (Quadriceps Femoris), Glutes (gluteus maximus, gluteus mideus)"
+  },
+  {
+    "canonical_exercise_id": "c1326e3a-7f63-4755-9124-35315342120f",
+    "name": "Dumbbell Curl Press",
+    "slug": "dumbbell_curl_press",
+    "filename": "dumbbell_curl_press.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps (Biceps Brachii), Shoulders (Deltoids), Triceps (Triceps Brachii)"
+  },
+  {
+    "canonical_exercise_id": "a48642f3-2f4b-4252-b10b-9849a842f95a",
+    "name": "Dumbbell Plyo Squat",
+    "slug": "dumbbell_plyo_squat",
+    "filename": "dumbbell_plyo_squat.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Quadriceps (Quadriceps Femoris), Glutes (gluteus maximus, gluteus mideus)"
+  },
+  {
+    "canonical_exercise_id": "917d7cff-910e-49c1-83b1-6b4e65be4b99",
+    "name": "Dumbbell Single arm Leaning Lateral Raise",
+    "slug": "dumbbell_single_arm_leaning_lateral_raise",
+    "filename": "dumbbell_single_arm_leaning_lateral_raise.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Shoulders (Lateral Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "e3e2eff7-ef8d-41ab-9cbc-f6eed1481f86",
+    "name": "Dumbbells around the world",
+    "slug": "dumbbells_around_the_world",
+    "filename": "dumbbells_around_the_world.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Shoulders (Anterior Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "0c4a29a3-eaa8-4cab-bbbc-bd23a49fe538",
+    "name": "Front raises dumbbell seated",
+    "slug": "front_raises_dumbbell_seated",
+    "filename": "front_raises_dumbbell_seated.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Shoulders (Anterior Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "cc7bec05-0544-4bbd-840a-56ec77405e57",
+    "name": "Good morning resistace band",
+    "slug": "good_morning_resistace_band",
+    "filename": "good_morning_resistace_band.png",
+    "action": "bridge",
+    "equipment": "Resistance Band",
+    "target_muscle": "Hamstrings (Biceps Femoris, Semitendinosus, Semimembranosus), Glutes (gluteus maximus, gluteus mideus)"
+  },
+  {
+    "canonical_exercise_id": "b36d3e27-7604-4338-adc4-9274de621d09",
+    "name": "Reverse cable fly on crossover",
+    "slug": "reverse_cable_fly_on_crossover",
+    "filename": "reverse_cable_fly_on_crossover.png",
+    "action": "bridge",
+    "equipment": "Resistance Band",
+    "target_muscle": "Upper Back (Rhomboids, Trapezius), Rear Shoulders (Posterior Deltoids)"
+  },
+  {
+    "canonical_exercise_id": "558c5e73-c5f7-4021-8c78-808ac1b1aa25",
+    "name": "seated elbow in alternating dumbbell overhead pres",
+    "slug": "seated_elbow_in_alternating_dumbbell_overhead_pres",
+    "filename": "seated_elbow_in_alternating_dumbbell_overhead_pres.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Full Body"
+  },
+  {
+    "canonical_exercise_id": "46d6f106-c0dc-4c76-9955-2a372c7d2df4",
+    "name": "Sit-ups",
+    "slug": "sit_ups",
+    "filename": "sit_ups.png",
+    "action": "bridge",
+    "equipment": "Bodyweight",
+    "target_muscle": "Abdominals (Rectus Abdominis)"
+  },
+  {
+    "canonical_exercise_id": "e646fa70-81cd-4168-8ae2-18623cf35781",
+    "name": "Suspension Trainer with Grips Wide Grip Inverted Row on floor",
+    "slug": "suspension_trainer_with_grips_wide_grip_inverted_row_on_floor",
+    "filename": "suspension_trainer_with_grips_wide_grip_inverted_row_on_floor.png",
+    "action": "bridge",
+    "equipment": "Suspension Trainer",
+    "target_muscle": "Upper Back (Trapezius, Rhomboids), Middle Back (Latissimus Dorsi, Teres Major)"
+  },
+  {
+    "canonical_exercise_id": "6009152c-2d22-4748-b4c9-ef9c27fcfce8",
+    "name": "Zotman curl dumbbell simultaneous",
+    "slug": "zotman_curl_dumbbell_simultaneous",
+    "filename": "zotman_curl_dumbbell_simultaneous.png",
+    "action": "bridge",
+    "equipment": "Dumbbells",
+    "target_muscle": "Biceps (Biceps Brachii)"
+  },
+  {
+    "canonical_exercise_id": "2c5dec43-0e11-4a7c-86b1-54dd4b1dc6e4",
+    "name": "decline bench oblique crunches bodyweight",
+    "slug": "decline_bench_oblique_crunches_bodyweight",
+    "filename": "decline_bench_oblique_crunches_bodyweight.png",
+    "action": "generate",
+    "equipment": "Bodyweight, Decline Bench",
+    "target_muscle": "Abdominals, Obliques"
+  },
+  {
+    "canonical_exercise_id": "f327c1ed-ef46-49b1-905c-07c922d3efdd",
+    "name": "Dumbbell Incline Palms-back Press",
+    "slug": "dumbbell_incline_palms_back_press",
+    "filename": "dumbbell_incline_palms_back_press.png",
+    "action": "generate",
+    "equipment": "Dumbbells, Incline Bench",
+    "target_muscle": "Chest (Upper), Triceps"
+  },
+  {
+    "canonical_exercise_id": "0cbd6a8b-0d9c-44ad-844c-35e58879a358",
+    "name": "Decline bench oblique crunches bodyweight",
+    "slug": "decline_bench_oblique_crunches_bodyweight",
+    "filename": "decline_bench_oblique_crunches_bodyweight.png",
+    "action": "generate",
+    "equipment": "Bodyweight, Decline Bench",
+    "target_muscle": "Abdominals (Rectus Abdominis), Obliques (External Obliques, Internal Obliques)"
+  }
+]
