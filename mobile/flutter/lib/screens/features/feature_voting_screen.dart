@@ -612,13 +612,13 @@ class _StatusBadge extends StatelessWidget {
     Color color;
     switch (status) {
       case 'planned':
-        color = isDark ? AppColors.warning : AppColorsLight.warning;
+        color = isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: feature-request lifecycle status -- planned/warning
         break;
       case 'in_progress':
-        color = isDark ? AppColors.info : AppColorsLight.info;
+        color = isDark ? AppColors.info : AppColorsLight.info;  // accent-allowlist: feature-request lifecycle status -- in-progress/info
         break;
       case 'released':
-        color = isDark ? AppColors.success : AppColorsLight.success;
+        color = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: feature-request lifecycle status -- released/success
         break;
       default:
         color = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -649,7 +649,7 @@ class _Countdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = isDark ? AppColors.success : AppColorsLight.success;
+    final color = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: countdown chip -- success framing
     if (label.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

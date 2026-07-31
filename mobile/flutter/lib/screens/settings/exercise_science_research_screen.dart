@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 part 'exercise_science_research_screen_part_research_paper.dart';
 
@@ -13,7 +14,7 @@ part 'exercise_science_research_screen_ui.dart';
 const _papers = <_ResearchPaper>[
   _ResearchPaper(
     icon: Icons.fitness_center,
-    color: AppColors.info,
+    color: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
     title: 'Guidelines for Exercise Testing and Prescription',
     authors: 'American College of Sports Medicine (ACSM)',
     journal: 'ACSM Guidelines, 11th Edition',
@@ -31,7 +32,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.trending_up,
-    color: AppColors.success,
+    color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
     title: 'Essentials of Strength Training and Conditioning',
     authors: 'Haff, G. G. & Triplett, N. T.',
     journal: 'NSCA, 4th Edition',
@@ -49,7 +50,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.compare_arrows,
-    color: AppColors.purple,
+    color: AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Effects of Superset Configuration on Kinetic, Kinematic, and Perceived Exertion in the Barbell Bench Press',
     authors: 'Weakley, J. J. S. et al.',
     journal: 'Journal of Strength and Conditioning Research',
@@ -66,7 +67,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.swap_horiz,
-    color: Color(0xFF06B6D4),
+    color: Color(0xFF06B6D4),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Agonist-Antagonist Paired Set Resistance Training: A Brief Review',
     authors: 'Paz, G. A. et al.',
     journal: 'Journal of Sports Science & Medicine',
@@ -83,7 +84,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.local_fire_department,
-    color: Color(0xFFEF4444),
+    color: Color(0xFFEF4444),  // accent-allowlist: error/destructive - same value as AppColors.error
     title: 'Effects of Moderate-Intensity Endurance and High-Intensity Intermittent Training on Anaerobic Capacity and VO2max',
     authors: 'Tabata, I. et al.',
     journal: 'Medicine and Science in Sports and Exercise',
@@ -101,7 +102,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.bolt,
-    color: Color(0xFFF59E0B),
+    color: Color(0xFFF59E0B),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
     title: 'Physiological Adaptations to Low-Volume, High-Intensity Interval Training in Health and Disease',
     authors: 'Gibala, M. J. et al.',
     journal: 'The Journal of Physiology',
@@ -118,7 +119,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.show_chart,
-    color: Color(0xFF10B981),
+    color: Color(0xFF10B981),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Fundamentals of Resistance Training: Progression and Exercise Prescription',
     authors: 'Kraemer, W. J. & Ratamess, N. A.',
     journal: 'Medicine and Science in Sports and Exercise',
@@ -136,7 +137,7 @@ const _papers = <_ResearchPaper>[
   ),
   _ResearchPaper(
     icon: Icons.psychology,
-    color: Color(0xFF8B5CF6),
+    color: Color(0xFF8B5CF6),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Effects of Exercise on Mood and Cognitive Function',
     authors: 'Goldstein, A. N. & Leung, E.',
     journal: 'Neuroscience & Behavioral Reviews',
@@ -156,7 +157,7 @@ const _papers = <_ResearchPaper>[
   // ── Rest Period Optimization ──────────────────────────────────────
   _ResearchPaper(
     icon: Icons.timer,
-    color: Color(0xFF0EA5E9),
+    color: Color(0xFF0EA5E9),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Rest Interval Duration and Muscle Hypertrophy: Bayesian Meta-Analysis',
     authors: 'Singer, A., Wolf, M., Generoso, L. et al.',
     journal: 'Frontiers in Sports and Active Living',
@@ -176,7 +177,7 @@ const _papers = <_ResearchPaper>[
   // ── Superset Meta-Analysis ────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.swap_vert,
-    color: Color(0xFFF97316),
+    color: Color(0xFFF97316),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Superset vs Traditional Resistance Training Prescriptions',
     authors: 'Various (Meta-Analysis)',
     journal: 'Sports Medicine',
@@ -196,7 +197,7 @@ const _papers = <_ResearchPaper>[
   // ── Exercise Variation ────────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.shuffle,
-    color: Color(0xFF22C55E),
+    color: Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
     title: 'Exercise Variation for Regional Hypertrophy and Strength',
     authors: 'Fonseca, R. M. et al.',
     journal: 'Journal of Strength and Conditioning Research',
@@ -216,7 +217,7 @@ const _papers = <_ResearchPaper>[
   // ── Repetition Continuum ──────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.straighten,
-    color: Color(0xFFEC4899),
+    color: Color(0xFFEC4899),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Loading Recommendations: A Re-Examination of the Repetition Continuum',
     authors: 'Schoenfeld, B. J. et al.',
     journal: 'Sports',
@@ -236,7 +237,7 @@ const _papers = <_ResearchPaper>[
   // ── Muscle Recovery ───────────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.healing,
-    color: Color(0xFF14B8A6),
+    color: Color(0xFF14B8A6),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Muscle Protein Synthesis Time Course After Resistance Exercise',
     authors: 'MacDougall, J. D. et al. / Damas, F. et al.',
     journal: 'Multiple (1995, 2016)',
@@ -256,7 +257,7 @@ const _papers = <_ResearchPaper>[
   // ── DUP Periodization ────────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.calendar_today,
-    color: Color(0xFF6366F1),
+    color: Color(0xFF6366F1),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Modified Daily Undulating Periodization in Powerlifters',
     authors: 'Zourdos, M. C. et al.',
     journal: 'Journal of Strength and Conditioning Research',
@@ -276,7 +277,7 @@ const _papers = <_ResearchPaper>[
   // ── Volume Landmarks ──────────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.bar_chart,
-    color: Color(0xFFA855F7),
+    color: Color(0xFFA855F7),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'Training Volume Landmarks for Muscle Growth',
     authors: 'Israetel, M. / RP Strength',
     journal: 'Renaissance Periodization',
@@ -296,7 +297,7 @@ const _papers = <_ResearchPaper>[
   // ── EMOM/AMRAP Research ───────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.access_alarm,
-    color: Color(0xFFEAB308),
+    color: Color(0xFFEAB308),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: 'EMOM, AMRAP, and RFT: Muscular Performance Comparison',
     authors: 'Barba-Ruiz, C. et al.',
     journal: 'Frontiers in Physiology',
@@ -316,7 +317,7 @@ const _papers = <_ResearchPaper>[
   // ── Drop Sets / Advanced Techniques ───────────────────────────────
   _ResearchPaper(
     icon: Icons.trending_down,
-    color: Color(0xFFEF4444),
+    color: Color(0xFFEF4444),  // accent-allowlist: error/destructive - same value as AppColors.error
     title: 'Drop Sets for Muscle Hypertrophy: Systematic Review and Meta-Analysis',
     authors: 'Coleman, M. et al.',
     journal: 'Sports Medicine - Open',
@@ -356,7 +357,7 @@ const _papers = <_ResearchPaper>[
   // ── 1RM Prediction ────────────────────────────────────────────────
   _ResearchPaper(
     icon: Icons.calculate,
-    color: Color(0xFF0D9488),
+    color: Color(0xFF0D9488),  // accent-allowlist: distinct colour per research-paper topic - visual scanning aid across a long citation list, categorical not accent
     title: '1RM Prediction Equations and RPE-Based Load Prescription',
     authors: 'Epley, Brzycki, Mayhew / Helms, E. R. et al.',
     journal: 'Multiple',
@@ -420,13 +421,13 @@ class _ExerciseScienceResearchScreenState
                   begin: AlignmentDirectional.topStart,
                   end: AlignmentDirectional.bottomEnd,
                   colors: [
-                    AppColors.info.withValues(alpha: 0.15),
-                    AppColors.purple.withValues(alpha: 0.1),
+                    AppColors.info.withValues(alpha: 0.15),  // accent-allowlist: informational state - must stay blue regardless of accent
+                    context.accentColor.withValues(alpha: 0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.info.withValues(alpha: 0.2),
+                  color: AppColors.info.withValues(alpha: 0.2),  // accent-allowlist: informational state - must stay blue regardless of accent
                 ),
               ),
               child: Column(
@@ -434,12 +435,12 @@ class _ExerciseScienceResearchScreenState
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.info.withValues(alpha: 0.15),
+                      color: AppColors.info.withValues(alpha: 0.15),  // accent-allowlist: informational state - must stay blue regardless of accent
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
                       Icons.science_outlined,
-                      color: AppColors.info,
+                      color: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
                       size: 36,
                     ),
                   ),
@@ -466,11 +467,11 @@ class _ExerciseScienceResearchScreenState
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStatChip('20', 'Papers', AppColors.info, textMuted),
+                      _buildStatChip('20', 'Papers', AppColors.info, textMuted),  // accent-allowlist: informational state - must stay blue regardless of accent
                       const SizedBox(width: 24),
-                      _buildStatChip('14', 'Journals', AppColors.purple, textMuted),
+                      _buildStatChip('14', 'Journals', context.accentColor, textMuted),
                       const SizedBox(width: 24),
-                      _buildStatChip('30yr', 'Span', AppColors.success, textMuted),
+                      _buildStatChip('30yr', 'Span', AppColors.success, textMuted),  // accent-allowlist: success/positive state - must stay green regardless of accent
                     ],
                   ),
                 ],
@@ -553,7 +554,7 @@ class _ExerciseScienceResearchScreenState
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: AppColors.error.withValues(alpha: 0.7)),
+        Icon(icon, size: 16, color: AppColors.error.withValues(alpha: 0.7)),  // accent-allowlist: error/destructive - must stay red
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -564,7 +565,7 @@ class _ExerciseScienceResearchScreenState
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.error.withValues(alpha: 0.9),
+                  color: AppColors.error.withValues(alpha: 0.9),  // accent-allowlist: error/destructive - must stay red
                 ),
               ),
               const SizedBox(height: 2),

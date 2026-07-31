@@ -260,8 +260,8 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
 
     // Color gradient from green (1) to red (7)
     final sliderColor = Color.lerp(
-      Colors.green,
-      Colors.red,
+      Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
+      Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
       (value - 1) / 6,
     )!;
 
@@ -291,7 +291,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
                 lowLabel,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.green[600],
+                  color: Colors.green[600],  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
               Expanded(
@@ -315,7 +315,7 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
                 highLabel,
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.red[600],
+                  color: Colors.red[600],  // accent-allowlist: error/negative state — must stay red regardless of accent
                 ),
               ),
             ],

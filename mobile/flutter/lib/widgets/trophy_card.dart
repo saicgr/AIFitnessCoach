@@ -250,7 +250,7 @@ class _TrophyCardState extends State<TrophyCard>
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
+                    color: AppColors.orange.withValues(alpha: 0.15), // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -259,7 +259,7 @@ class _TrophyCardState extends State<TrophyCard>
                       const Icon(
                         Icons.star,
                         size: 12,
-                        color: AppColors.orange,
+                        color: AppColors.orange, // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -267,7 +267,7 @@ class _TrophyCardState extends State<TrophyCard>
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.orange,
+                          color: AppColors.orange, // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                         ),
                       ),
                     ],
@@ -281,7 +281,7 @@ class _TrophyCardState extends State<TrophyCard>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.15),
+                      color: AppColors.purple.withValues(alpha: 0.15), // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
@@ -290,7 +290,7 @@ class _TrophyCardState extends State<TrophyCard>
                         const Icon(
                           Icons.card_giftcard,
                           size: 12,
-                          color: AppColors.purple,
+                          color: AppColors.purple, // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -298,7 +298,7 @@ class _TrophyCardState extends State<TrophyCard>
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.purple,
+                            color: AppColors.purple, // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                           ),
                         ),
                       ],
@@ -553,7 +553,7 @@ class TrophyCategoryHeader extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: earnedCount > 0
-                  ? AppColors.green.withValues(alpha: 0.15)
+                  ? AppColors.green.withValues(alpha: 0.15) // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
                   : AppColors.cardBorder,
               borderRadius: BorderRadius.circular(12),
             ),
@@ -562,7 +562,7 @@ class TrophyCategoryHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: earnedCount > 0 ? AppColors.green : AppColors.textMuted,
+                color: earnedCount > 0 ? AppColors.green : AppColors.textMuted, // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
               ),
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
 import 'signature_theme.dart';
 import 'z_poster_card.dart';
@@ -211,7 +212,7 @@ class _PrimaryButton extends StatelessWidget {
         height: 40,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.orange,
+          color: context.accentColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -304,7 +305,7 @@ class ZCarouselDots extends StatelessWidget {
             width: active ? 18 : 6,
             height: 6,
             decoration: BoxDecoration(
-              color: active ? AppColors.orange : AppColors.hairlineStrong,
+              color: active ? context.accentColor : AppColors.hairlineStrong,
               borderRadius: BorderRadius.circular(3),
             ),
           );

@@ -93,7 +93,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
           SnackBar(
             content: Text('Failed to save: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }

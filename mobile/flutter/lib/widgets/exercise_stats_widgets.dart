@@ -155,9 +155,9 @@ class ExerciseStatItem extends StatelessWidget {
 
     Color? valueColor;
     if (isPositive == true) {
-      valueColor = Colors.green;
+      valueColor = Colors.green; // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
     } else if (isPositive == false) {
-      valueColor = Colors.red;
+      valueColor = Colors.red; // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
     }
 
     return Column(
@@ -196,12 +196,12 @@ class ExerciseTrendBadge extends StatelessWidget {
     switch (trend) {
       case 'improving':
         icon = Icons.trending_up;
-        color = Colors.green;
+        color = Colors.green; // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
         label = 'Improving';
         break;
       case 'declining':
         icon = Icons.trending_down;
-        color = Colors.red;
+        color = Colors.red; // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
         label = 'Declining';
         break;
       default:
@@ -413,10 +413,10 @@ class ExercisePRCard extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: Colors.amber.withValues(alpha: 0.2),
+            color: Colors.amber.withValues(alpha: 0.2), // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.emoji_events, color: Colors.amber),
+          child: const Icon(Icons.emoji_events, color: Colors.amber), // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
         ),
         title: Text(record.prTypeDisplayName),
         subtitle: Text(AppLocalizations.of(context)!.exerciseStatsWidgetsAchieved(record.formattedAchievedDate)),
@@ -490,18 +490,18 @@ class ExerciseSessionCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.2),
+                            color: Colors.amber.withValues(alpha: 0.2), // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.star, size: 12, color: Colors.amber),
+                              const Icon(Icons.star, size: 12, color: Colors.amber), // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
                               const SizedBox(width: 3),
                               Text(
                                 session.prBadge ?? AppLocalizations.of(context).aiCoachReportPr,
                                 style: theme.textTheme.labelSmall?.copyWith(
-                                  color: Colors.amber.shade700,
+                                  color: Colors.amber.shade700, // accent-allowlist: trend up/down (green/red) and PR/trophy badge (amber), semantic not accent
                                   fontWeight: FontWeight.bold,
                                   fontSize: 10,
                                 ),

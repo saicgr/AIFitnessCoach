@@ -419,7 +419,7 @@ extension _SettingsCardExt on SettingsCard {
     final measurementUnit = ref.read(authStateProvider).user?.preferredMeasurementUnit ?? 'cm';
     final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
 
     showGlassSheet(
       context: context,

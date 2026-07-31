@@ -70,7 +70,7 @@ class KeyMetricsGrid extends ConsumerWidget {
     final weightCard = _MetricTile(
       label: l10n.metricsDashboardWeight,
       icon: Icons.monitor_weight,
-      color: AppColors.cyan,
+      color: AppColors.cyan, // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
       value: weightKg == null
           ? null
           : _trim(WeightUtils.fromKg(weightKg, displayInLbs: !useKg)),
@@ -87,7 +87,7 @@ class KeyMetricsGrid extends ConsumerWidget {
     final energyCard = _MetricTile(
       label: l10n.metricsDashboardEnergyBurned,
       icon: Icons.local_fire_department,
-      color: AppColors.orange,
+      color: AppColors.orange, // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
       loading: healthAsync.isLoading && history == null,
       error: healthAsync.hasError,
       value: energyToday == null ? null : '${energyToday.round()}',
@@ -103,7 +103,7 @@ class KeyMetricsGrid extends ConsumerWidget {
     final intakeCard = _MetricTile(
       label: l10n.metricsDashboardCalorieIntake,
       icon: Icons.restaurant,
-      color: AppColors.green,
+      color: AppColors.green, // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
       loading: nutritionLoading && nutritionToday == null,
       error: nutritionError,
       value: nutritionToday == null ? null : '${nutritionToday.calories}',
@@ -116,7 +116,7 @@ class KeyMetricsGrid extends ConsumerWidget {
     final stepsCard = _MetricTile(
       label: l10n.metricsDashboardSteps,
       icon: Icons.directions_walk,
-      color: AppColors.cyan,
+      color: AppColors.cyan, // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
       loading: healthAsync.isLoading && history == null,
       error: healthAsync.hasError,
       value: stepsToday == null ? null : '$stepsToday',
@@ -133,7 +133,7 @@ class KeyMetricsGrid extends ConsumerWidget {
     final mindfulCard = _MetricTile(
       label: l10n.metricsDashboardMindfulnessMinutes,
       icon: Icons.self_improvement,
-      color: AppColors.purple,
+      color: AppColors.purple, // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
       loading: mindfulAsync.isLoading && mindful == null,
       error: mindfulAsync.hasError,
       value: mindful == null ? null : '${mindful.minutes}',
@@ -152,7 +152,7 @@ class KeyMetricsGrid extends ConsumerWidget {
     final exerciseCard = _MetricTile(
       label: l10n.metricsDashboardExerciseDays,
       icon: Icons.fitness_center,
-      color: AppColors.success,
+      color: AppColors.success, // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
       value: metrics?.workoutsCompleted == null
           ? null
           : '${metrics!.workoutsCompleted}',
@@ -328,13 +328,13 @@ class _GetStartedCta extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withValues(alpha: 0.10),
+            color: AppColors.cyan.withValues(alpha: 0.10), // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cyan.withValues(alpha: 0.35)),
+            border: Border.all(color: AppColors.cyan.withValues(alpha: 0.35)), // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
           ),
           child: Row(
             children: [
-              const Icon(Icons.auto_graph, color: AppColors.cyan),
+              const Icon(Icons.auto_graph, color: AppColors.cyan), // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -548,10 +548,10 @@ class _MacrosCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cCarbs = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final cFat = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final cCarbs = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs; // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
+    final cFat = isDark ? AppColors.macroFat : AppColorsLight.macroFat; // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
     final cProtein =
-        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein; // accent-allowlist: per-metric identity color (weight/energy/calorie-intake/steps/mindfulness/exercise) + macro identity, matches metrics_dashboard_screen.dart convention
 
     return GestureDetector(
       onTap: onTap,

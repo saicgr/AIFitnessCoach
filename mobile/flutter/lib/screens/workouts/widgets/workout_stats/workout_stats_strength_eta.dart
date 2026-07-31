@@ -205,7 +205,7 @@ class _StrengthRow extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: (isDark ? AppColors.success : AppColorsLight.success)
+                  color: (isDark ? AppColors.success : AppColorsLight.success)  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       .withValues(alpha: isDark ? 0.16 : 0.10),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -215,7 +215,7 @@ class _StrengthRow extends StatelessWidget {
                     Icon(Icons.trending_up_rounded,
                         size: 12,
                         color:
-                            isDark ? AppColors.success : AppColorsLight.success),
+                            isDark ? AppColors.success : AppColorsLight.success),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     const SizedBox(width: 4),
                     Text(
                       eta.label,
@@ -223,8 +223,8 @@ class _StrengthRow extends StatelessWidget {
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: isDark
-                            ? AppColors.success
-                            : AppColorsLight.success,
+                            ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
+                            : AppColorsLight.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       ),
                     ),
                   ],

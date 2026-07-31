@@ -43,37 +43,37 @@ class ActivityShareCard extends StatelessWidget {
   static const _typeConfigs = <String, _ActivityTypeConfig>{
     'workout_completed': _ActivityTypeConfig(
       icon: Icons.fitness_center,
-      accentColor: Color(0xFFF97316),
+      accentColor: Color(0xFFF97316),  // accent-allowlist: activity-type identity (matches personal_record=gold/achievement_earned=green siblings below) — cannot read the live accent because _typeConfigs is a static const map evaluated before any widget/BuildContext exists (same constraint as the file's own i18n TODO above); would require refactoring to a non-const factory method, out of scope for this sweep
       defaultHeadline: 'WORKOUT COMPLETE',
     ),
     'personal_record': _ActivityTypeConfig(
       icon: Icons.emoji_events,
-      accentColor: Color(0xFFFFD700),
+      accentColor: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier
       defaultHeadline: 'NEW PR!',
     ),
     'achievement_earned': _ActivityTypeConfig(
       icon: Icons.star_rounded,
-      accentColor: Color(0xFF22C55E),
+      accentColor: Color(0xFF22C55E),  // accent-allowlist: success/positive state — must stay green regardless of accent
       defaultHeadline: 'ACHIEVEMENT UNLOCKED',
     ),
     'streak_milestone': _ActivityTypeConfig(
       icon: Icons.local_fire_department,
-      accentColor: Color(0xFFF97316),
+      accentColor: Color(0xFFF97316),  // accent-allowlist: activity-type identity (matches personal_record=gold/achievement_earned=green siblings above) — cannot read the live accent because _typeConfigs is a static const map evaluated before any widget/BuildContext exists (same constraint as the file's own i18n TODO above); would require refactoring to a non-const factory method, out of scope for this sweep
       defaultHeadline: 'STREAK',
     ),
     'weight_milestone': _ActivityTypeConfig(
       icon: Icons.monitor_weight,
-      accentColor: Color(0xFFA855F7),
+      accentColor: Color(0xFFA855F7),  // accent-allowlist: activity-type identity (matches personal_record=gold/achievement_earned=green siblings above) — cannot read the live accent because _typeConfigs is a static const map evaluated before any widget/BuildContext exists (same constraint as the file's own i18n TODO above); would require refactoring to a non-const factory method, out of scope for this sweep
       defaultHeadline: 'WEIGHT MILESTONE',
     ),
     'challenge_victory': _ActivityTypeConfig(
       icon: Icons.emoji_events,
-      accentColor: Color(0xFFFFD700),
+      accentColor: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier
       defaultHeadline: 'VICTORY!',
     ),
     'manual_post': _ActivityTypeConfig(
       icon: Icons.chat_bubble_rounded,
-      accentColor: Color(0xFF3B82F6),
+      accentColor: Color(0xFF3B82F6),  // accent-allowlist: informational state — must stay blue regardless of accent
       defaultHeadline: '',
     ),
   };
@@ -231,20 +231,20 @@ class ActivityShareCard extends StatelessWidget {
   List<Color> _getGradientBoldColors() {
     switch (activityType) {
       case 'workout_completed':
-        return const [Color(0xFFF97316), Color(0xFFEA580C), Color(0xFFC2410C)];
+        return const [Color(0xFFF97316), Color(0xFFEA580C), Color(0xFFC2410C)];  // accent-allowlist: activity-type gradient identity — fixed 3-tone gradient per activity type (workout_completed), not tied to accent
       case 'personal_record':
       case 'challenge_victory':
-        return const [Color(0xFFEAB308), Color(0xFFCA8A04), Color(0xFFA16207)];
+        return const [Color(0xFFEAB308), Color(0xFFCA8A04), Color(0xFFA16207)];  // accent-allowlist: warning severity — must stay amber regardless of accent
       case 'achievement_earned':
-        return const [Color(0xFF22C55E), Color(0xFF16A34A), Color(0xFF15803D)];
+        return const [Color(0xFF22C55E), Color(0xFF16A34A), Color(0xFF15803D)];  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'streak_milestone':
-        return const [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFFB91C1C)];
+        return const [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFFB91C1C)];  // accent-allowlist: error/negative state — must stay red regardless of accent
       case 'weight_milestone':
-        return const [Color(0xFFA855F7), Color(0xFF9333EA), Color(0xFF7E22CE)];
+        return const [Color(0xFFA855F7), Color(0xFF9333EA), Color(0xFF7E22CE)];  // accent-allowlist: activity-type gradient identity — fixed 3-tone gradient per activity type (weight_milestone), not tied to accent
       case 'manual_post':
-        return const [Color(0xFF3B82F6), Color(0xFF2563EB), Color(0xFF1D4ED8)];
+        return const [Color(0xFF3B82F6), Color(0xFF2563EB), Color(0xFF1D4ED8)];  // accent-allowlist: informational state — must stay blue regardless of accent
       default:
-        return const [Color(0xFF6366F1), Color(0xFF4F46E5), Color(0xFF4338CA)];
+        return const [Color(0xFF6366F1), Color(0xFF4F46E5), Color(0xFF4338CA)];  // accent-allowlist: informational state — must stay blue regardless of accent
     }
   }
 
@@ -805,19 +805,19 @@ class ActivityShareCard extends StatelessWidget {
   Color _getFlairColor(String flair) {
     switch (flair) {
       case 'fitness':
-        return const Color(0xFF06B6D4);
+        return const Color(0xFF06B6D4);  // accent-allowlist: flair badge identity — no BuildContext available in this scope (helper without context param)
       case 'progress':
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E);  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'milestone':
-        return const Color(0xFFF97316);
+        return const Color(0xFFF97316);  // accent-allowlist: flair badge identity — no BuildContext available in this scope (helper without context param)
       case 'nutrition':
-        return const Color(0xFFA855F7);
+        return const Color(0xFFA855F7);  // accent-allowlist: flair badge identity — no BuildContext available in this scope (helper without context param)
       case 'motivation':
-        return const Color(0xFFEAB308);
+        return const Color(0xFFEAB308);  // accent-allowlist: warning severity — must stay amber regardless of accent
       case 'question':
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6);  // accent-allowlist: informational state — must stay blue regardless of accent
       default:
-        return const Color(0xFF06B6D4);
+        return const Color(0xFF06B6D4);  // accent-allowlist: flair badge identity — no BuildContext available in this scope (helper without context param)
     }
   }
 

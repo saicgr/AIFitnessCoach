@@ -63,7 +63,7 @@ class FirstOfMonthCard extends ConsumerWidget {
               child: OutlinedButton(
                 onPressed: () {
                   HapticService.light();
-                  context.push('/profile/goals');
+                  context.push('/profile?scrollTo=preferences');
                 },
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: c.cardBorder),
@@ -87,7 +87,7 @@ class FirstOfMonthCard extends ConsumerWidget {
               child: ElevatedButton(
                 onPressed: () {
                   HapticService.light();
-                  context.push('/progress/photo');
+                  context.push('/profile?tab=photos');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: c.accent,

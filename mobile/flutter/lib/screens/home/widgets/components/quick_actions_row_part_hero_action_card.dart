@@ -63,10 +63,10 @@ class _PhotoHeroCard extends ConsumerWidget {
 
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text('${viewType.displayName} photo saved!'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           ),
         );
         // Navigate to Stats Photos tab after successful upload (index 2 — the
@@ -76,10 +76,10 @@ class _PhotoHeroCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text('Failed to upload photo: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -328,7 +328,7 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
 
       if (mounted) {
         HapticService.success();
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Row(
               children: [
@@ -345,7 +345,7 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text('Failed to end fast: $e'),
             behavior: SnackBarBehavior.floating,
@@ -567,7 +567,7 @@ Future<int?> showCustomWaterAmountPicker(
                                   AppLocalizations.of(ctx)!.heroActionCardEnter1To5000Ml,
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.error,
+                                    color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                   ),
                                 ),
                               ),
@@ -842,7 +842,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
       final userId = await ref.read(apiClientProvider).getUserId();
       if (userId == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.heroActionCardPleaseLogIn),
               behavior: SnackBarBehavior.floating,
@@ -861,7 +861,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
       if (mounted) {
         if (success) {
           HapticService.success();
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Row(
                 children: [
@@ -877,7 +877,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
             ),
           );
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.heroActionCardFailedToLogWater),
               behavior: SnackBarBehavior.floating,
@@ -888,7 +888,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           const SnackBar(
             content: Text('Failed to log water. Please try again.'),
             behavior: SnackBarBehavior.floating,
@@ -1120,7 +1120,7 @@ class _FastGridActionItem extends ConsumerWidget {
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: isDark ? AppColors.elevated : AppColorsLight.elevated,
@@ -1217,7 +1217,7 @@ Future<void> _logWaterWithFeedback({
       );
   if (!success || !context.mounted) return;
   HapticService.success();
-  ScaffoldMessenger.of(context).showSnackBar(
+  rootSnackBar(
     SnackBar(
       content: Row(
         children: [

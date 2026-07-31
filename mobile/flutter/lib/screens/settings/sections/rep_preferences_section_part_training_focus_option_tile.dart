@@ -29,13 +29,13 @@ class _TrainingFocusOptionTile extends StatelessWidget {
   Color get _color {
     switch (focus) {
       case TrainingFocus.strength:
-        return AppColors.coral;
+        return AppColors.coral;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       case TrainingFocus.hypertrophy:
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       case TrainingFocus.endurance:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       case TrainingFocus.power:
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     }
   }
 
@@ -176,11 +176,11 @@ class _ProgressionStyleOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withOpacity(0.15)
+              ? context.accentColor.withOpacity(0.15)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -188,7 +188,7 @@ class _ProgressionStyleOptionTile extends StatelessWidget {
           children: [
             Icon(
               _icon,
-              color: isSelected ? AppColors.cyan : textMuted,
+              color: isSelected ? context.accentColor : textMuted,
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -214,7 +214,7 @@ class _ProgressionStyleOptionTile extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withOpacity(0.2),
+                            color: context.accentColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -222,7 +222,7 @@ class _ProgressionStyleOptionTile extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           ),
                         ),
@@ -243,7 +243,7 @@ class _ProgressionStyleOptionTile extends StatelessWidget {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 24,
               ),
           ],
@@ -363,7 +363,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
               _getDescription(min, max),
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -376,8 +376,8 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
               min: 1,
               max: 30,
               divisions: 29,
-              activeColor: AppColors.cyan,
-              inactiveColor: AppColors.cyan.withOpacity(0.2),
+              activeColor: context.accentColor,
+              inactiveColor: context.accentColor.withOpacity(0.2),
               onChanged: (values) {
                 HapticFeedback.selectionClick();
                 setState(() => _values = values);
@@ -438,17 +438,17 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.1),
+                color: context.accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.cyan.withOpacity(0.3),
+                  color: context.accentColor.withOpacity(0.3),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -475,7 +475,7 @@ class _RepRangeSliderSheetState extends State<_RepRangeSliderSheet> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -515,10 +515,10 @@ class _RepBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withOpacity(0.15),
+            color: context.accentColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.cyan.withOpacity(0.3),
+              color: context.accentColor.withOpacity(0.3),
             ),
           ),
           child: Text(
@@ -526,7 +526,7 @@ class _RepBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
         ),
@@ -569,7 +569,7 @@ class _PresetChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan
+              ? context.accentColor
               : (isDark
                   ? AppColors.pureBlack.withOpacity(0.5)
                   : Colors.grey[200]),
@@ -703,7 +703,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
               _getVolumeDescription(minSets, maxSets),
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.purple,
+                color: context.accentColor,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -741,8 +741,8 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                   min: kMinSetsLower,
                   max: kMinSetsUpper,
                   divisions: (kMinSetsUpper - kMinSetsLower).toInt(),
-                  activeColor: AppColors.purple,
-                  inactiveColor: AppColors.purple.withOpacity(0.2),
+                  activeColor: context.accentColor,
+                  inactiveColor: context.accentColor.withOpacity(0.2),
                   onChanged: (value) {
                     HapticFeedback.selectionClick();
                     setState(() {
@@ -789,8 +789,8 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                   min: kMaxSetsLower,
                   max: kMaxSetsUpper,
                   divisions: (kMaxSetsUpper - kMaxSetsLower).toInt(),
-                  activeColor: AppColors.purple,
-                  inactiveColor: AppColors.purple.withOpacity(0.2),
+                  activeColor: context.accentColor,
+                  inactiveColor: context.accentColor.withOpacity(0.2),
                   onChanged: (value) {
                     HapticFeedback.selectionClick();
                     setState(() {
@@ -846,17 +846,17 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.purple.withOpacity(0.1),
+                color: context.accentColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.purple.withOpacity(0.3),
+                  color: context.accentColor.withOpacity(0.3),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -883,7 +883,7 @@ class _SetsRangeSliderSheetState extends State<_SetsRangeSliderSheet> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.purple,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -923,10 +923,10 @@ class _SetsBadge extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           decoration: BoxDecoration(
-            color: AppColors.purple.withOpacity(0.15),
+            color: context.accentColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.purple.withOpacity(0.3),
+              color: context.accentColor.withOpacity(0.3),
             ),
           ),
           child: Text(
@@ -934,7 +934,7 @@ class _SetsBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: AppColors.purple,
+              color: context.accentColor,
             ),
           ),
         ),

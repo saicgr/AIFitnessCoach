@@ -64,7 +64,7 @@ class _LevelUpCatchUpBannerState extends ConsumerState<LevelUpCatchUpBanner> {
               colors: [
                 accent,
                 accent.withValues(alpha: 0.7),
-                Colors.amber.shade600,
+                Colors.amber.shade600, // accent-allowlist: level-up celebration color (amber)
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,

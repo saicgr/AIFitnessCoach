@@ -94,7 +94,7 @@ Future<void> showWorkoutOptionsSheet(
                       () => _shareDoMyWorkout(context, ref, workout)),
                 tile(Icons.check_circle_outline, 'Mark as Done',
                     () => _markAsDone(context, ref, workout),
-                    color: AppColors.success),
+                    color: AppColors.success),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 const Divider(height: 1),
                 if (_isQuickWorkout(workout))
                   tile(Icons.close_rounded, 'Dismiss Quick',
@@ -165,11 +165,11 @@ Future<void> _regenerate(
         await showRegenerateWorkoutSheet(context, ref, workout);
     if (!context.mounted) return;
     if (newWorkout != null) {
-      _snack(context, 'Workout regenerated!', AppColors.success);
+      _snack(context, 'Workout regenerated!', AppColors.success);  // accent-allowlist: success/positive state -- must stay green regardless of accent
     }
   } catch (_) {
     _snack(context, "Couldn't regenerate workout. Please try again.",
-        AppColors.error);
+        AppColors.error);  // accent-allowlist: error/destructive -- must stay red
   }
 }
 
@@ -186,7 +186,7 @@ Future<void> _addExercises(
   if (updated != null) {
     ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
     ref.read(workoutsProvider.notifier).silentRefresh();
-    _snack(context, 'Exercise added!', AppColors.success);
+    _snack(context, 'Exercise added!', AppColors.success);  // accent-allowlist: success/positive state -- must stay green regardless of accent
   }
 }
 
@@ -202,7 +202,7 @@ Future<void> _markAsDone(
         : 'Mark workout for $dateLabel as done? This will mark it as '
             'completed without tracking sets.',
     confirmText: 'Mark Done',
-    confirmColor: AppColors.success,
+    confirmColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
     icon: Icons.check_circle_rounded,
   );
   if (!context.mounted || !confirm) return;
@@ -214,10 +214,10 @@ Future<void> _markAsDone(
     if (result != null) {
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
       ref.read(workoutsProvider.notifier).silentRefresh();
-      _snack(context, 'Workout marked as done!', AppColors.success);
+      _snack(context, 'Workout marked as done!', AppColors.success);  // accent-allowlist: success/positive state -- must stay green regardless of accent
     }
   } catch (_) {
-    _snack(context, 'Could not mark workout as done', AppColors.error);
+    _snack(context, 'Could not mark workout as done', AppColors.error);  // accent-allowlist: error/destructive -- must stay red
   }
 }
 
@@ -242,7 +242,7 @@ Future<void> _skipWorkout(
       _snack(context, 'Workout skipped', AppColors.textMuted);
     }
   } catch (_) {
-    _snack(context, 'Could not skip workout', AppColors.error);
+    _snack(context, 'Could not skip workout', AppColors.error);  // accent-allowlist: error/destructive -- must stay red
   }
 }
 
@@ -272,7 +272,7 @@ Future<void> _dismissQuick(
       _snack(context, 'Quick workout dismissed', AppColors.textMuted);
     }
   } catch (_) {
-    _snack(context, 'Could not dismiss workout', AppColors.error);
+    _snack(context, 'Could not dismiss workout', AppColors.error);  // accent-allowlist: error/destructive -- must stay red
   }
 }
 

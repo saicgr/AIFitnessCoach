@@ -25,7 +25,7 @@ class SparkleOverlay {
     required BuildContext context,
     required Offset origin,
     int particleCount = 12,
-    Color color = const Color(0xFFFFD700), // Gold
+    Color color = const Color(0xFFFFD700), // Gold // accent-allowlist: celebration sparkle burst default - gold matches the gamification rarity/achievement palette (gamGold), not the accent
     Duration duration = const Duration(milliseconds: 800),
     bool haptic = true,
     bool showFlash = true,

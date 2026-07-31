@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/goal_unit.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Dialog for recording a single_max attempt or adding volume
@@ -98,12 +99,12 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     widget.isMaxAttempt ? Icons.emoji_events : Icons.add_circle,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -159,7 +160,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                     ],
@@ -182,7 +183,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                       ],
@@ -233,7 +234,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                  borderSide: BorderSide(color: context.accentColor, width: 2),
                 ),
               ),
             ),
@@ -269,7 +270,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                    borderSide: BorderSide(color: context.accentColor, width: 2),
                   ),
                 ),
               ),
@@ -295,7 +296,7 @@ class _RecordAttemptDialogState extends State<RecordAttemptDialog> {
                     onPressed: _isSubmitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: AppColors.cyan,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

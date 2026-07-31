@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 /// A dialog shown when there's a mismatch between selected training split
@@ -48,14 +49,14 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = context.accentColor;
 
     return AlertDialog(
       backgroundColor: elevated,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Row(
         children: [
-          Icon(Icons.calendar_month, color: AppColors.orange, size: 24),
+          Icon(Icons.calendar_month, color: accentColor, size: 24),
           const SizedBox(width: 10),
           Text(
             AppLocalizations.of(context).scheduleMismatchScheduleMismatch,
@@ -224,7 +225,7 @@ class _ScheduleMismatchDialogState extends State<ScheduleMismatchDialog> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.success,
+                            color: AppColors.success, // accent-allowlist: matched-day indicator, success semantic
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(

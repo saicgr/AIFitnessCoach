@@ -12,6 +12,7 @@ import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Screen for managing favorite exercises.
 /// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class FavoriteExercisesScreen extends ConsumerWidget {
@@ -47,7 +48,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
                   ? 'Added "${result.exerciseName}" to favorites'
                   : 'Failed to add exercise',
             ),
-            backgroundColor: success ? AppColors.success : AppColors.error,
+            backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -96,7 +97,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
             bottom: 96,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               foregroundColor: Colors.white,
               onPressed: () => _showAddExercisePicker(context, ref),
               child: const Icon(Icons.add),
@@ -130,7 +131,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('"${suggestion.name}" is already a favorite'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -148,7 +149,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
                 ? 'Added "${suggestion.name}" to favorites'
                 : 'Failed to add exercise',
           ),
-          backgroundColor: success ? AppColors.success : AppColors.error,
+          backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     }
@@ -180,7 +181,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
     return EmptyStateWithSuggestions(
       heroIcon: Icons.favorite_rounded,
-      accentColor: AppColors.error,
+      accentColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       heroTitle: 'Pick the exercises you love',
       heroSubtitle:
           'Favorites get priority when the AI builds your workouts. Tap any suggestion to add it instantly.',
@@ -209,17 +210,17 @@ class FavoriteExercisesScreen extends ConsumerWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.purple.withValues(alpha: 0.1),
+            color: context.accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.purple.withValues(alpha: 0.3),
+              color: context.accentColor.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.auto_awesome,
-                color: AppColors.purple,
+                color: context.accentColor,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -297,7 +298,7 @@ class FavoriteExercisesScreen extends ConsumerWidget {
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               AppLocalizations.of(context).workoutPlanDrawerRemove,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],
@@ -338,12 +339,12 @@ class _FavoriteExerciseTile extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.error.withValues(alpha: 0.1),
+            color: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             Icons.favorite,
-            color: AppColors.error,
+            color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
             size: 22,
           ),
         ),

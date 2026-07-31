@@ -48,7 +48,7 @@ class WrappedIntroCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF9D4EDD).withValues(alpha: 0.2),
+                        const Color(0xFF9D4EDD).withValues(alpha: 0.2), // accent-allowlist: Wrapped feature brand purple (intro card)
                         Colors.transparent,
                       ],
                     ),
@@ -75,7 +75,7 @@ class WrappedIntroCard extends StatelessWidget {
                   Text(
                     data.yearDisplay,
                     style: ZType.lbl(18,
-                        color: const Color(0xFFA855F7).withValues(alpha: 0.8),
+                        color: const Color(0xFFA855F7).withValues(alpha: 0.8), // accent-allowlist: Wrapped feature brand purple (intro card)
                         letterSpacing: 4),
                   ),
 

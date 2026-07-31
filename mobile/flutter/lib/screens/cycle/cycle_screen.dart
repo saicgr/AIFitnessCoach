@@ -47,7 +47,7 @@ part 'cycle_screen_ui.dart';
 /// Cycle-feature accent — pink, per the plan. Mirrors `AccentColor.pink`'s
 /// hue so it harmonises with the app while staying distinct as the cycle
 /// feature's own colour.
-const Color kCycleAccent = Color(0xFFE5567B);
+const Color kCycleAccent = Color(0xFFE5567B);  // accent-allowlist: cycle feature's own established brand colour, per plan
 
 class CycleScreen extends ConsumerStatefulWidget {
   /// Initial tab — 0 Today, 1 Calendar, 2 Insights.

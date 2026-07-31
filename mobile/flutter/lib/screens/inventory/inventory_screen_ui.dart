@@ -15,15 +15,15 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
     // Resolve base trust-level display first.
     final (name, baseColor, icon, baseMultiplier) = switch (trustLevel) {
       0 => ('New User', Colors.grey, Icons.person_outline, '0.5x'),
-      1 => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),
-      2 => ('Trusted', const Color(0xFF22C55E), Icons.star, '1.2x'),
-      _ => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),
+      1 => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),  // accent-allowlist: trust-level tier colour -- Verified tier
+      2 => ('Trusted', const Color(0xFF22C55E), Icons.star, '1.2x'),  // accent-allowlist: trust-level tier colour -- Trusted tier
+      _ => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),  // accent-allowlist: trust-level tier colour -- Verified tier (default case)
     };
     // When the 2x XP boost is active, override the displayed multiplier with
     // a golden, attention-grabbing "2.0x" so users see the active boost
     // reflected here too. Trust-level name/icon stays the same since trust
     // level itself didn't change — only the effective XP multiplier did.
-    const goldColor = Color(0xFFFFC107);
+    const goldColor = Color(0xFFFFC107);  // accent-allowlist: 2x XP boost override colour -- gold, matches the 2x XP Token identity colour elsewhere
     final color = has2xXPActive ? goldColor : baseColor;
     final multiplier = has2xXPActive ? '2.0x' : baseMultiplier;
 
@@ -176,7 +176,7 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
           emoji: '🔥',
           name: 'Streak Crate',
           description: '75-150 XP + items',
-          color: const Color(0xFFFF7043),
+          color: const Color(0xFFFF7043),  // accent-allowlist: Streak Crate's own identity colour, per-crate-type convention
           isAvailable: streakAvailable && !claimed,
           isLocked: !streakAvailable,
           lockedReason: !streakAvailable ? 'Requires 7+ day streak' : (claimed ? 'Claimed today' : null),
@@ -194,7 +194,7 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
           emoji: '⭐',
           name: 'Activity Crate',
           description: '150-250 XP + guaranteed item',
-          color: const Color(0xFFFFB300),
+          color: const Color(0xFFFFB300),  // accent-allowlist: Activity Crate's own identity colour (gold=activity crate), per-crate-type convention
           isAvailable: activityAvailable && !claimed,
           isLocked: !activityAvailable,
           lockedReason: !activityAvailable ? 'Complete all daily goals' : (claimed ? 'Claimed today' : null),

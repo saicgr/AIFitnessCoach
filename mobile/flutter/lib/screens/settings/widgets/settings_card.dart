@@ -153,8 +153,8 @@ class SettingsCard extends ConsumerWidget {
         ref.read(variationProvider.notifier).setVariation(value);
         Navigator.pop(context);
       },
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.cyan,
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
+      checkmarkColor: context.accentColor,
     );
   }
 
@@ -199,8 +199,8 @@ class SettingsCard extends ConsumerWidget {
         ref.read(trainingIntensityProvider.notifier).setGlobalIntensity(value);
         Navigator.pop(context);
       },
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.cyan,
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
+      checkmarkColor: context.accentColor,
     );
   }
 
@@ -211,7 +211,7 @@ class SettingsCard extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Body weight unit → ${unit == 'kg' ? 'kilograms' : 'pounds'}'),
-            backgroundColor: AppColors.cyan,
+            backgroundColor: context.accentColor,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -219,7 +219,7 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive - must stay red
         );
       }
     }
@@ -232,7 +232,7 @@ class SettingsCard extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Body measurement unit → ${unit == 'cm' ? 'centimeters' : 'inches'}'),
-            backgroundColor: AppColors.cyan,
+            backgroundColor: context.accentColor,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -240,7 +240,7 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive - must stay red
         );
       }
     }
@@ -253,7 +253,7 @@ class SettingsCard extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Workout weight unit → ${unit == 'kg' ? 'kilograms' : 'pounds'}'),
-            backgroundColor: AppColors.cyan,
+            backgroundColor: context.accentColor,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -261,7 +261,7 @@ class SettingsCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),
+          SnackBar(content: Text(AppLocalizations.of(context).timelineEntryDetailFailedToUpdate), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive - must stay red
         );
       }
     }
@@ -382,7 +382,7 @@ class SettingsCard extends ConsumerWidget {
                   );
                 }
               },
-              activeThumbColor: AppColors.cyan,
+              activeThumbColor: context.accentColor,
             );
           } else if (item.isThemeToggle) {
             trailing = Switch(
@@ -394,7 +394,7 @@ class SettingsCard extends ConsumerWidget {
                         value ? ThemeMode.dark : ThemeMode.light,
                       );
                     },
-              activeThumbColor: AppColors.cyan,
+              activeThumbColor: context.accentColor,
             );
           } else if (item.isProgressionPaceSelector) {
             trailing = Row(

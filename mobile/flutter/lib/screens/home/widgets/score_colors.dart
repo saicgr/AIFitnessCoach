@@ -11,10 +11,10 @@ import 'package:flutter/widgets.dart' show BuildContext;
 import '../../../data/models/today_score.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
-const Color kTrainColor = Color(0xFFEC8B2C);
-const Color kFuelColor = Color(0xFF3FA66B); // Nourish (internal key remains "fuel")
-const Color kMoveColor = Color(0xFF3E8FD0);
-const Color kSleepColor = Color(0xFF8B5CF6); // Matches sleep iconography + Light/Deep bars
+const Color kTrainColor = Color(0xFFEC8B2C);  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
+const Color kFuelColor = Color(0xFF3FA66B); // Nourish (internal key remains "fuel")  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
+const Color kMoveColor = Color(0xFF3E8FD0);  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
+const Color kSleepColor = Color(0xFF8B5CF6); // Matches sleep iconography + Light/Deep bars  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
 
 /// The solid colour for a contributor.
 Color colorForContributor(ContributorKind kind) {
@@ -47,10 +47,10 @@ Color shadeColor(Color base, double percent) {
 /// Returns the English label as a stable identifier; prefer
 /// [localizedTierLabel] for UI display.
 ({String label, Color color}) tierFor(int score) {
-  if (score >= 85) return (label: 'Excellent', color: Color(0xFF16A34A));
-  if (score >= 70) return (label: 'Good', color: Color(0xFF3FA66B));
-  if (score >= 50) return (label: 'Fair', color: Color(0xFFEC8B2C));
-  return (label: 'Low', color: Color(0xFFE5544D));
+  if (score >= 85) return (label: 'Excellent', color: Color(0xFF16A34A));  // accent-allowlist: score-band tier colour (Excellent/Good/Fair/Low), matches compliance/readiness traffic-light convention
+  if (score >= 70) return (label: 'Good', color: Color(0xFF3FA66B));  // accent-allowlist: score-band tier colour (Excellent/Good/Fair/Low), matches compliance/readiness traffic-light convention
+  if (score >= 50) return (label: 'Fair', color: Color(0xFFEC8B2C));  // accent-allowlist: score-band tier colour (Excellent/Good/Fair/Low), matches compliance/readiness traffic-light convention
+  return (label: 'Low', color: Color(0xFFE5544D));  // accent-allowlist: score-band tier colour (Excellent/Good/Fair/Low), matches compliance/readiness traffic-light convention
 }
 
 /// Localized tier label for a 0-100 score.

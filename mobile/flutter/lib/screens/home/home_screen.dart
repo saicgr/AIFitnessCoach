@@ -49,12 +49,10 @@ import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
 import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/stacked_banner_panel.dart';
-import 'widgets/calibration_banner.dart';
 import 'widgets/cards/setup_checklist_card.dart';
 import 'widgets/my_programs_card.dart';
 import 'widgets/today_addons_row.dart';
 import 'widgets/extended_home_cards_stack.dart';
-import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/today_score_card.dart';
 import 'widgets/coach_hero_card.dart';
@@ -118,6 +116,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
 import '../../widgets/quick_log_fab_chrome.dart';
 import 'widgets/home_schedule_dates.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
 
@@ -811,14 +810,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         context,
                       )!.homeScreenPresetApplied(preset.name),
                     ),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.purple,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
             ),
             child: Text(AppLocalizations.of(context)!.homeScreenApply),
@@ -844,7 +843,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         backgroundColor: elevatedColor,
         title: Row(
           children: [
-            Icon(Icons.restart_alt_rounded, color: AppColors.orange, size: 28),
+            Icon(Icons.restart_alt_rounded, color: context.accentColor, size: 28),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -891,14 +890,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     content: Text(
                       AppLocalizations.of(context)!.homeScreenDefaultRestored,
                     ),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
             ),
             child: Text(AppLocalizations.of(context)!.homeScreenReset),
@@ -1241,7 +1240,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           await refreshAllHome(ref);
           debugPrint('✅ [Home] Pull-to-refresh complete');
         },
-        color: AppColors.cyan,
+        color: context.accentColor,
         backgroundColor: elevatedColor,
         child: SafeArea(
           child: CustomScrollView(
@@ -1249,19 +1248,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Header — greeting + streak + bell + overflow. Fixed chrome.
               const SliverToBoxAdapter(child: MinimalHeader()),
 
-              // Stacked notification-panel banners + rating prompt — fixed
-              // system chrome, always directly under the header. Both
-              // self-collapse to zero height when there's nothing to show.
+              // Stacked notification-panel banners — fixed system chrome,
+              // always directly under the header. Self-collapses to zero
+              // height when there's nothing to show. The rating prompt and
+              // calibration ("Coach is learning you") banners are folded in
+              // as entries in this same stack (E2E #150) rather than
+              // stacking as separate always-visible cards — at most one
+              // promo/status card occupies the fold at a time.
               const SliverToBoxAdapter(child: StackedBannerPanel()),
-              const SliverToBoxAdapter(child: RatingPromptBanner()),
-
-              // Calibration banner (first 30 days). Sets expectations so users
-              // don't churn at Day 3 thinking the AI is dumb — it's learning.
-              // Starts collapsed (slim pill w/ progress ring); self-collapses
-              // to zero height past the 30-day window or after user dismisses.
-              const SliverToBoxAdapter(
-                child: RepaintBoundary(child: CalibrationBanner()),
-              ),
 
               // Get Started Challenge (new-user onboarding checklist) is no
               // longer mounted here — it is spliced in directly BELOW the Next

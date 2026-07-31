@@ -610,17 +610,17 @@ extension TileCategoryExtension on TileCategory {
   Color get color {
     switch (this) {
       case TileCategory.workout:
-        return const Color(0xFF00BCD4); // Cyan
+        return const Color(0xFF00BCD4); // Cyan // accent-allowlist: tile category identity - one distinct color per home-tile category (workout/progress/nutrition/social/wellness/tools) for the tile picker
       case TileCategory.progress:
-        return const Color(0xFF4CAF50); // Green
+        return const Color(0xFF4CAF50); // Green // accent-allowlist: tile category identity - one distinct color per home-tile category (workout/progress/nutrition/social/wellness/tools) for the tile picker
       case TileCategory.nutrition:
-        return const Color(0xFFFF9800); // Orange
+        return const Color(0xFFFF9800); // Orange // accent-allowlist: tile category identity - one distinct color per home-tile category (workout/progress/nutrition/social/wellness/tools) for the tile picker
       case TileCategory.social:
-        return const Color(0xFF9C27B0); // Purple
+        return const Color(0xFF9C27B0); // Purple // accent-allowlist: tile category identity - one distinct color per home-tile category (workout/progress/nutrition/social/wellness/tools) for the tile picker
       case TileCategory.wellness:
-        return const Color(0xFFFFEB3B); // Yellow
+        return const Color(0xFFFFEB3B); // Yellow // accent-allowlist: tile category identity - one distinct color per home-tile category (workout/progress/nutrition/social/wellness/tools) for the tile picker
       case TileCategory.tools:
-        return const Color(0xFF00BCD4); // Cyan
+        return const Color(0xFF00BCD4); // Cyan // accent-allowlist: tile category identity - one distinct color per home-tile category (workout/progress/nutrition/social/wellness/tools) for the tile picker
     }
   }
 }

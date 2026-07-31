@@ -9,6 +9,7 @@ import '../../../data/models/scores.dart';
 import '../../../widgets/body_muscle_selector.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// SVG path ID to muscle group mapping.
 /// Copied from body_muscle_selector.dart (local to getMuscleGroupFromMuscle).
 const Map<String, List<String>> _muscleGroupPathIds = {
@@ -220,7 +221,7 @@ class _BodyScoreOverlayState extends State<BodyScoreOverlay> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: widget.isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  color: widget.isDark ? context.accentColor : AppColorsLight.cyan,
                 ),
               ),
               const SizedBox(height: 10),

@@ -10,6 +10,7 @@ import 'activity_share_card.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Activity Share Sheet - Bottom sheet for sharing social feed posts as branded card images
 ///
 /// Features:
@@ -241,7 +242,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -252,7 +253,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -469,7 +470,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                         Icons.branding_watermark_rounded,
                         size: 18,
                         color:
-                            _showWatermark ? AppColors.cyan : Colors.grey,
+                            _showWatermark ? context.accentColor : Colors.grey,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -486,7 +487,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
                           HapticFeedback.lightImpact();
                           setState(() => _showWatermark = value);
                         },
-                        activeTrackColor: AppColors.cyan,
+                        activeTrackColor: context.accentColor,
                         activeThumbColor: Colors.white,
                       ),
                     ],
@@ -855,7 +856,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
       return ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
+          backgroundColor: context.accentColor,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -888,8 +889,8 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
     return OutlinedButton(
       onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.cyan,
-        side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+        foregroundColor: context.accentColor,
+        side: BorderSide(color: context.accentColor.withValues(alpha: 0.5)),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -901,7 +902,7 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation(context.accentColor),
               ),
             )
           : Row(

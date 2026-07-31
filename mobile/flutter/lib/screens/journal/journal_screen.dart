@@ -214,9 +214,9 @@ class _JournalRow extends StatelessWidget {
       _ => Icons.bookmark_rounded,
     };
     final color = switch (kind) {
-      'workout' => const Color(0xFF22C55E),
-      'meal' => const Color(0xFFF59E0B),
-      'photo' => const Color(0xFF8B5CF6),
+      'workout' => const Color(0xFF22C55E),  // accent-allowlist: journal-entry-kind legend colour -- workout
+      'meal' => const Color(0xFFF59E0B),  // accent-allowlist: journal-entry-kind legend colour -- meal
+      'photo' => const Color(0xFF8B5CF6),  // accent-allowlist: journal-entry-kind legend colour -- photo
       _ => textSecondary,
     };
     return Container(

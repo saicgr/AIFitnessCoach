@@ -41,7 +41,7 @@ class StatDeltaChip extends StatelessWidget {
 
     final Color color = isFlat
         ? muted
-        : (isGood ? AppColors.success : AppColors.error);
+        : (isGood ? AppColors.success : AppColors.error); // accent-allowlist: stat delta up/down color, success/error semantic
     final IconData icon = isFlat
         ? Icons.trending_flat
         : (isUp ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded);

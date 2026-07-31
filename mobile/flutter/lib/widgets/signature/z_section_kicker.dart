@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
 
-/// A Barlow-Condensed uppercase section label in the app accent (orange),
+/// A Barlow-Condensed uppercase section label in the app accent,
 /// optionally followed by a trailing "SEE ALL ›" tap affordance.
 ///
 /// This is the signature-v2 section header used above rails/lists. The label
@@ -25,19 +26,20 @@ class ZSectionKicker extends StatelessWidget {
   /// Override the trailing link text (still uppercased). Defaults to "SEE ALL".
   final String seeAllLabel;
 
-  /// The accent color for the kicker. Defaults to the app orange.
-  final Color color;
+  /// The kicker color. Defaults to the live app accent (`context.accentColor`).
+  final Color? color;
 
   const ZSectionKicker({
     super.key,
     required this.label,
     this.onSeeAll,
     this.seeAllLabel = 'SEE ALL',
-    this.color = AppColors.orange,
+    this.color,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? context.accentColor;
     return Row(
       children: [
         Expanded(
@@ -45,7 +47,7 @@ class ZSectionKicker extends StatelessWidget {
             label.toUpperCase(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: ZType.lbl(12, color: color, letterSpacing: 2.0),
+            style: ZType.lbl(12, color: effectiveColor, letterSpacing: 2.0),
           ),
         ),
         if (onSeeAll != null)

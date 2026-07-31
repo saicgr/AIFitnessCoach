@@ -70,12 +70,12 @@ class _TagMeta {
 }
 
 const Map<String, _TagMeta> _tagMeta = {
-  'is_hill_workout': _TagMeta('🏔', 'Hill workout', Color(0xFF8B6F47)), // earthy brown
-  'is_negative_split': _TagMeta('📈', 'Negative split', Color(0xFF4ADE80)), // accent green
-  'is_new_route': _TagMeta('🌄', 'New route', Color(0xFF38BDF8)), // accent blue
-  'is_dawn_run': _TagMeta('🌅', 'Dawn run', Color(0xFFFB923C)), // orange
-  'is_dusk_run': _TagMeta('🌇', 'Dusk run', Color(0xFFA855F7)), // purple
-  'is_pr_session': _TagMeta('🏆', 'PR session', Color(0xFFFBBF24)), // gold
+  'is_hill_workout': _TagMeta('🏔', 'Hill workout', Color(0xFF8B6F47)), // earthy brown // accent-allowlist: auto-detected cardio activity tag identity color, categorical encoding
+  'is_negative_split': _TagMeta('📈', 'Negative split', Color(0xFF4ADE80)), // accent green // accent-allowlist: auto-detected cardio activity tag identity color, categorical encoding
+  'is_new_route': _TagMeta('🌄', 'New route', Color(0xFF38BDF8)), // accent blue // accent-allowlist: auto-detected cardio activity tag identity color, categorical encoding
+  'is_dawn_run': _TagMeta('🌅', 'Dawn run', Color(0xFFFB923C)), // orange // accent-allowlist: auto-detected cardio activity tag identity color, categorical encoding
+  'is_dusk_run': _TagMeta('🌇', 'Dusk run', Color(0xFFA855F7)), // purple // accent-allowlist: auto-detected cardio activity tag identity color, categorical encoding
+  'is_pr_session': _TagMeta('🏆', 'PR session', Color(0xFFFBBF24)), // gold // accent-allowlist: auto-detected cardio activity tag identity color, categorical encoding
 };
 
 class _AutoTagChip extends StatelessWidget {

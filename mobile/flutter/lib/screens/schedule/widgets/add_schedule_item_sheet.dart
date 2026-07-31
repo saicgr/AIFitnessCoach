@@ -216,10 +216,10 @@ class _AddScheduleItemSheetState extends State<AddScheduleItemSheet> {
 
   Widget _buildTypeSelector(bool isDark) {
     final types = [
-      (ScheduleItemType.workout, 'Workout', Icons.fitness_center, const Color(0xFF06B6D4)),
-      (ScheduleItemType.activity, 'Activity', Icons.directions_run, const Color(0xFF3B82F6)),
-      (ScheduleItemType.meal, 'Meal', Icons.restaurant, const Color(0xFF22C55E)),
-      (ScheduleItemType.habit, 'Habit', Icons.check_circle_outline, const Color(0xFFA855F7)),
+      (ScheduleItemType.workout, 'Workout', Icons.fitness_center, const Color(0xFF06B6D4)), // accent-allowlist: schedule item-type identity (workout/activity/meal/habit), matches ScheduleItem.typeColor convention in data/models/schedule_item.dart
+      (ScheduleItemType.activity, 'Activity', Icons.directions_run, const Color(0xFF3B82F6)), // accent-allowlist: schedule item-type identity (workout/activity/meal/habit), matches ScheduleItem.typeColor convention in data/models/schedule_item.dart
+      (ScheduleItemType.meal, 'Meal', Icons.restaurant, const Color(0xFF22C55E)), // accent-allowlist: schedule item-type identity (workout/activity/meal/habit), matches ScheduleItem.typeColor convention in data/models/schedule_item.dart
+      (ScheduleItemType.habit, 'Habit', Icons.check_circle_outline, const Color(0xFFA855F7)), // accent-allowlist: schedule item-type identity (workout/activity/meal/habit), matches ScheduleItem.typeColor convention in data/models/schedule_item.dart
     ];
 
     return Wrap(
@@ -303,7 +303,7 @@ class _AddScheduleItemSheetState extends State<AddScheduleItemSheet> {
       children: meals.map((m) {
         final (type, label) = m;
         final isSelected = _mealType == type;
-        final color = const Color(0xFF22C55E);
+        final color = const Color(0xFF22C55E); // accent-allowlist: schedule item-type identity (workout/activity/meal/habit), matches ScheduleItem.typeColor convention in data/models/schedule_item.dart
         return ChoiceChip(
           label: Text(label),
           selected: isSelected,

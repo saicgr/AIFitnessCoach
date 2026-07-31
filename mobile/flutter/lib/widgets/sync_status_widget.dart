@@ -22,18 +22,18 @@ class SyncStatusWidget extends ConsumerWidget {
     final String statusText;
 
     if (isOffline) {
-      statusColor = Colors.red;
+      statusColor = Colors.red; // accent-allowlist: sync status severity scale (error/syncing/synced)
       statusText = syncState.pendingCount > 0
           ? 'Offline — ${syncState.pendingCount} change${syncState.pendingCount == 1 ? '' : 's'} queued'
           : 'Offline';
     } else if (syncState.isSyncing) {
-      statusColor = Colors.orange;
+      statusColor = Colors.orange; // accent-allowlist: sync status severity scale (error/syncing/synced)
       statusText = 'Syncing ${syncState.pendingCount} change${syncState.pendingCount == 1 ? '' : 's'}...';
     } else if (syncState.pendingCount > 0) {
-      statusColor = Colors.orange;
+      statusColor = Colors.orange; // accent-allowlist: sync status severity scale (error/syncing/synced)
       statusText = '${syncState.pendingCount} change${syncState.pendingCount == 1 ? '' : 's'} pending';
     } else {
-      statusColor = Colors.green;
+      statusColor = Colors.green; // accent-allowlist: sync status severity scale (error/syncing/synced)
       statusText = 'All synced';
     }
 
@@ -54,7 +54,7 @@ class SyncStatusWidget extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(3),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: Colors.red, // accent-allowlist: sync status severity scale (error/syncing/synced)
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Theme.of(context).scaffoldBackgroundColor,

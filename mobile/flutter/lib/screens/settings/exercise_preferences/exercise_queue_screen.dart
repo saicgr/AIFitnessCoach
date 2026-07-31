@@ -10,6 +10,7 @@ import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Screen for managing the exercise queue.
 /// When [embedded] is true, renders without Scaffold/AppBar for use inside tabs.
 class ExerciseQueueScreen extends ConsumerWidget {
@@ -46,7 +47,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
                   ? 'Added "${result.exerciseName}" to queue'
                   : 'Failed to add exercise',
             ),
-            backgroundColor: success ? AppColors.success : AppColors.error,
+            backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -90,7 +91,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
             bottom: 96,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               onPressed: () => _showAddExercisePicker(context, ref),
               child: const Icon(Icons.add),
@@ -169,7 +170,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
               icon: const Icon(Icons.add),
               label: Text(AppLocalizations.of(context).exerciseQueueAddToQueue),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -199,17 +200,17 @@ class ExerciseQueueScreen extends ConsumerWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.cyan.withValues(alpha: 0.1),
+            color: context.accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.cyan.withValues(alpha: 0.3),
+              color: context.accentColor.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.info_outline,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -297,7 +298,7 @@ class ExerciseQueueScreen extends ConsumerWidget {
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               AppLocalizations.of(context).workoutPlanDrawerRemove,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],
@@ -344,7 +345,7 @@ class _QueuedExerciseTile extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.cyan.withValues(alpha: 0.1),
+            color: context.accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -353,7 +354,7 @@ class _QueuedExerciseTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
             ),
           ),
@@ -383,7 +384,7 @@ class _QueuedExerciseTile extends StatelessWidget {
                   : 'Expires ${_formatDate(item.expiresAt)}',
               style: TextStyle(
                 fontSize: 12,
-                color: isExpiringSoon ? AppColors.warning : textMuted,
+                color: isExpiringSoon ? AppColors.warning : textMuted,  // accent-allowlist: warning severity - must stay amber regardless of accent
                 fontWeight: isExpiringSoon ? FontWeight.w500 : FontWeight.normal,
               ),
             ),

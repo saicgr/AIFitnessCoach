@@ -56,7 +56,7 @@ Future<void> shareReportScreen({
       messenger?.showSnackBar(
         const SnackBar(
           content: Text('Could not capture report. Try again.'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error state -- error semantic
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -81,7 +81,7 @@ Future<void> shareReportScreen({
       messenger?.showSnackBar(
         SnackBar(
           content: Text('Share failed: ${result.error}'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error state -- error semantic
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -91,7 +91,7 @@ Future<void> shareReportScreen({
     messenger?.showSnackBar(
       SnackBar(
         content: Text('Share failed: $e'),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error state -- error semantic
         behavior: SnackBarBehavior.floating,
       ),
     );

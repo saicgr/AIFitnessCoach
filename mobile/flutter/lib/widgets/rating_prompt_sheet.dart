@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/services/rating_prompt_service.dart';
 import 'glass_sheet.dart';
 
@@ -65,7 +66,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
             Center(
               child: Text(
                 '⭐',
-                style: TextStyle(fontSize: 44, color: AppColors.orange),
+                style: TextStyle(fontSize: 44, color: context.accentColor),
               ),
             ),
             const SizedBox(height: 14),
@@ -214,10 +215,10 @@ class _ChoiceButton extends StatelessWidget {
         height: 54,
         decoration: BoxDecoration(
           gradient: primary
-              ? const LinearGradient(
+              ? LinearGradient(
                   begin: AlignmentDirectional.topStart,
                   end: AlignmentDirectional.bottomEnd,
-                  colors: [Color(0xFFFFB366), AppColors.orange],
+                  colors: [context.accentColor.withValues(alpha: 0.8), context.accentColor],
                 )
               : null,
           color: primary
@@ -236,7 +237,7 @@ class _ChoiceButton extends StatelessWidget {
           boxShadow: primary && !disabled
               ? [
                   BoxShadow(
-                    color: AppColors.orange.withValues(alpha: 0.32),
+                    color: context.accentColor.withValues(alpha: 0.32),
                     blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),

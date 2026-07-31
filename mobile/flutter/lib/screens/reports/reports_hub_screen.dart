@@ -133,29 +133,29 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
       _ReportDef(
         section: _Section.training,
         icon: Icons.insights_rounded,
-        accent: AppColors.purple,
+        accent: AppColors.purple,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Period Insights',
         subtitle: 'Workouts, time, calories by 1W / 1M / 3M / 6M / 1Y / YTD / Custom',
         route: '/summaries',
-        gradient: [Color(0xFF1E1B4B), Color(0xFF4C1D95), Color(0xFF0F172A)],
+        gradient: [Color(0xFF1E1B4B), Color(0xFF4C1D95), Color(0xFF0F172A)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.training,
         icon: Icons.emoji_events_rounded,
-        accent: AppColors.orange,
+        accent: AppColors.orange,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Personal Records',
         subtitle: 'Every lift PR you\'ve hit, ranked',
         route: '/stats/personal-records',
-        gradient: [Color(0xFF422006), Color(0xFF92400E), Color(0xFF1A1008)],
+        gradient: [Color(0xFF422006), Color(0xFF92400E), Color(0xFF1A1008)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.training,
         icon: Icons.accessibility_new_rounded,
-        accent: AppColors.cyan,
+        accent: AppColors.cyan,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Muscle Strength',
         subtitle: 'Score per muscle group, trends & heatmap',
         route: '/stats/muscle-analytics',
-        gradient: [Color(0xFF083344), Color(0xFF155E75), Color(0xFF0F172A)],
+        gradient: [Color(0xFF083344), Color(0xFF155E75), Color(0xFF0F172A)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.training,
@@ -164,72 +164,72 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
         title: '1-Rep Maxes',
         subtitle: 'Estimated 1RMs for every main lift',
         route: '/settings/my-1rms',
-        gradient: [Color(0xFF042F2E), Color(0xFF0F766E), Color(0xFF134E4A)],
+        gradient: [Color(0xFF042F2E), Color(0xFF0F766E), Color(0xFF134E4A)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.training,
         icon: Icons.history_rounded,
-        accent: AppColors.coral,
+        accent: AppColors.coral,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Exercise History',
         subtitle: 'Progression curve for every exercise you\'ve done',
         route: '/stats/exercise-history',
-        gradient: [Color(0xFF450A0A), Color(0xFF991B1B), Color(0xFF1F1517)],
+        gradient: [Color(0xFF450A0A), Color(0xFF991B1B), Color(0xFF1F1517)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.training,
         icon: Icons.military_tech_rounded,
-        accent: AppColors.orange,
+        accent: AppColors.orange,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Milestones',
         subtitle: 'Badges unlocked along your journey',
         route: '/stats/milestones',
-        gradient: [Color(0xFF431407), Color(0xFF9A3412), Color(0xFF1C1917)],
+        gradient: [Color(0xFF431407), Color(0xFF9A3412), Color(0xFF1C1917)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.training,
         icon: Icons.show_chart_rounded,
-        accent: AppColors.purple,
+        accent: AppColors.purple,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Progress Charts',
         subtitle: 'Volume, strength, and consistency over time',
         route: '/progress-charts',
-        gradient: [Color(0xFF2E1065), Color(0xFF6D28D9), Color(0xFF0F0A2E)],
+        gradient: [Color(0xFF2E1065), Color(0xFF6D28D9), Color(0xFF0F0A2E)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       // Body & Recovery
       _ReportDef(
         section: _Section.body,
         icon: Icons.monitor_weight_rounded,
-        accent: AppColors.teal,
+        accent: AppColors.teal,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Body Measurements',
         subtitle: 'Weight, body fat, circumference trends',
         route: '/measurements',
-        gradient: [Color(0xFF134E4A), Color(0xFF0D9488), Color(0xFF042F2E)],
+        gradient: [Color(0xFF134E4A), Color(0xFF0D9488), Color(0xFF042F2E)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.body,
         icon: Icons.bolt_rounded,
-        accent: AppColors.cyan,
+        accent: AppColors.cyan,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Readiness & Recovery',
         subtitle: 'Sleep, fatigue, stress, readiness score',
         route: '/stats/readiness',
-        gradient: [Color(0xFF164E63), Color(0xFF0891B2), Color(0xFF0F172A)],
+        gradient: [Color(0xFF164E63), Color(0xFF0891B2), Color(0xFF0F172A)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       // Lifestyle
       _ReportDef(
         section: _Section.lifestyle,
         icon: Icons.restaurant_rounded,
-        accent: AppColors.success,
+        accent: AppColors.success,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Nutrition',
         subtitle: 'Macros, calories, adherence',
         route: '/nutrition',
-        gradient: [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF052E16)],
+        gradient: [Color(0xFF14532D), Color(0xFF15803D), Color(0xFF052E16)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
       _ReportDef(
         section: _Section.lifestyle,
         icon: Icons.auto_awesome_rounded,
-        accent: AppColors.purple,
+        accent: AppColors.purple,  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
         title: 'Achievements',
         subtitle: 'Everything you\'ve earned in ${Branding.appName}',
         route: '/achievements',
-        gradient: [Color(0xFF3B0764), Color(0xFF7E22CE), Color(0xFF1E1B4B)],
+        gradient: [Color(0xFF3B0764), Color(0xFF7E22CE), Color(0xFF1E1B4B)],  // accent-allowlist: per-report-type identity colour -- differentiates report tiles in the hub grid/carousel legend
       ),
     ];
   }
@@ -1096,7 +1096,7 @@ class _HeartButton extends StatelessWidget {
                 : Icons.favorite_border_rounded,
             key: ValueKey(isFavorited),
             color: isFavorited
-                ? const Color(0xFFFB7185)
+                ? const Color(0xFFFB7185)  // accent-allowlist: favourited-heart convention -- universal pink like/favorite colour
                 : Colors.white.withValues(alpha: 0.9),
             size: 20,
           ),
@@ -1451,7 +1451,7 @@ class _ListCard extends StatelessWidget {
                           ? Icons.favorite_rounded
                           : Icons.favorite_border_rounded,
                       color: isFavorited
-                          ? const Color(0xFFFB7185)
+                          ? const Color(0xFFFB7185)  // accent-allowlist: favourited-heart convention -- universal pink like/favorite colour
                           : textMuted,
                       size: 18,
                     ),

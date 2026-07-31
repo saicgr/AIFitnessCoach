@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Locked state widget shown when global leaderboard is not unlocked
 class LeaderboardLockedState extends StatelessWidget {
   final Map<String, dynamic>? unlockStatus;
@@ -32,14 +33,14 @@ class LeaderboardLockedState extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Center(
+              child: Center(
                 child: Icon(
                   Icons.lock_outline,
                   size: 50,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               ),
             ),
@@ -81,7 +82,7 @@ class LeaderboardLockedState extends StatelessWidget {
                     Text(
                       AppLocalizations.of(context)!.leaderboardLockedStateWorkouts(workoutsCompleted),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             fontWeight: FontWeight.bold,
                           ),
                     ),
@@ -94,7 +95,7 @@ class LeaderboardLockedState extends StatelessWidget {
                     value: progress / 100,
                     minHeight: 8,
                     backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.orange),
+                    valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
                   ),
                 ),
               ],
@@ -108,8 +109,8 @@ class LeaderboardLockedState extends StatelessWidget {
               icon: const Icon(Icons.people),
               label: Text(AppLocalizations.of(context).leaderboardLockedStateViewFriendsLeaderboard),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
-                side: const BorderSide(color: AppColors.cyan),
+                foregroundColor: context.accentColor,
+                side: BorderSide(color: context.accentColor),
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
             ),

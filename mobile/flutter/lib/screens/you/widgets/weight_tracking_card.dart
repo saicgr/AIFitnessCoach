@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/user.dart' as app_user;
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -224,11 +225,11 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
           height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.success.withValues(alpha: 0.18),
+            color: context.accentColor.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(Icons.monitor_weight_rounded,
-              color: AppColors.success, size: 18),
+              color: context.accentColor, size: 18),
         ),
         const SizedBox(width: 10),
         Text(
@@ -246,7 +247,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
             context.push('/measurements');
           },
           child: Icon(Icons.add_circle_outline_rounded,
-              size: 22, color: AppColors.success),
+              size: 22, color: context.accentColor),
         ),
       ],
     );
@@ -269,17 +270,17 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
     Color pillColor;
     String pillText;
     if (targetKg == null) {
-      pillColor = AppColors.success;
+      pillColor = context.accentColor;
       pillText = 'Set a target';
     } else if (deltaToGoKg!.abs() < 0.1) {
-      pillColor = AppColors.success;
+      pillColor = context.accentColor;
       pillText = 'At target';
     } else {
       // Negative pill = need to lose; positive = need to gain. Color stays
-      // green either way since "to go" is neutral framing.
+      // neutral (the app accent) either way since "to go" is neutral framing.
       final disp = _displayValue(deltaToGoKg.abs(), unitIsKg);
       final dir = deltaToGoKg > 0 ? '-' : '+';
-      pillColor = AppColors.success;
+      pillColor = context.accentColor;
       pillText = '$dir$disp$unitLabel to go';
     }
 
@@ -352,7 +353,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
   /// Two-button segmented pill: [kg | lbs]
   Widget _buildUnitToggle(Color textMuted) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeBg = AppColors.success;
+    final activeBg = context.accentColor;
     final inactiveBg = isDark
         ? Colors.white.withValues(alpha: 0.06)
         : Colors.black.withValues(alpha: 0.05);
@@ -474,12 +475,12 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         chip(
           'ALL-TIME HIGH ${_displayValue(allTimeMax, unitIsKg)}$unitLabel',
           Icons.trending_up_rounded,
-          AppColors.error,
+          AppColors.error,  // accent-allowlist: all-time-high framing -- higher weight is red
         ),
         chip(
           'ALL-TIME LOW ${_displayValue(allTimeMin, unitIsKg)}$unitLabel',
           Icons.trending_down_rounded,
-          AppColors.success,
+          AppColors.success,  // accent-allowlist: all-time-low framing -- lower weight is green
         ),
       ],
     );
@@ -487,7 +488,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
 
   Widget _buildRangeTabs(Color textMuted) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedBg = AppColors.success;
+    final selectedBg = context.accentColor;
     final inactiveBg = isDark
         ? Colors.white.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.04);
@@ -541,7 +542,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
     required Color cardBorder,
     required bool unitIsKg,
   }) {
-    final accent = AppColors.success;
+    final accent = context.accentColor;
     final spots = entries
         .asMap()
         .entries
@@ -723,7 +724,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         Expanded(
           child: _LowHighTile(
             icon: Icons.south_rounded,
-            color: AppColors.success,
+            color: AppColors.success,  // accent-allowlist: lowest-weight tile -- green
             value: '${_displayValue(low, unitIsKg)} $unitLabel',
             label: AppLocalizations.of(context).weightTrackingCardLowest,
             isDark: isDark,
@@ -733,7 +734,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         Expanded(
           child: _LowHighTile(
             icon: Icons.north_rounded,
-            color: AppColors.error,
+            color: AppColors.error,  // accent-allowlist: highest-weight tile -- red
             value: '${_displayValue(high, unitIsKg)} $unitLabel',
             label: AppLocalizations.of(context).weightTrackingCardHighest,
             isDark: isDark,
@@ -805,10 +806,10 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
                     borderRadius: BorderRadius.circular(6),
                     gradient: const LinearGradient(
                       colors: [
-                        Color(0xFF3B82F6), // Underweight blue
-                        Color(0xFF22C55E), // Normal green
-                        Color(0xFFF59E0B), // Overweight orange
-                        Color(0xFFEF4444), // Obese red
+                        Color(0xFF3B82F6), // Underweight blue  // accent-allowlist: BMI risk-tier band -- underweight blue
+                        Color(0xFF22C55E), // Normal green  // accent-allowlist: BMI risk-tier band -- normal green
+                        Color(0xFFF59E0B), // Overweight orange  // accent-allowlist: BMI risk-tier band -- overweight amber
+                        Color(0xFFEF4444), // Obese red  // accent-allowlist: BMI risk-tier band -- obese red
                       ],
                       stops: [0.0, 0.14, 0.4, 1.0],
                     ),
@@ -862,7 +863,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         Row(
           children: [
             Icon(Icons.history_rounded,
-                size: 16, color: AppColors.success),
+                size: 16, color: context.accentColor),
             const SizedBox(width: 6),
             Text(
               AppLocalizations.of(context).weightTrackingCardRecentEntries,
@@ -886,11 +887,11 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.warning,
+                      color: context.accentColor,
                     ),
                   ),
                   Icon(Icons.chevron_right_rounded,
-                      size: 16, color: AppColors.warning),
+                      size: 16, color: context.accentColor),
                 ],
               ),
             ),
@@ -1020,7 +1021,7 @@ class _RecentEntryRow extends StatelessWidget {
     final delta = previous == null ? 0.0 : (entry.value - previous!.value);
     final showBadge = previous != null && delta.abs() >= 0.05;
     final isUp = delta > 0;
-    final badgeColor = isUp ? AppColors.error : AppColors.success;
+    final badgeColor = isUp ? AppColors.error : AppColors.success;  // accent-allowlist: per-entry weight delta -- up is red, down is green
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

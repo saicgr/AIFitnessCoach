@@ -288,13 +288,13 @@ class _PhaseBand {
 Color cyclePhaseOverlayColor(CyclePhase phase) {
   switch (phase) {
     case CyclePhase.menstrual:
-      return const Color(0xFFE57373); // red
+      return const Color(0xFFE57373); // red // accent-allowlist: menstrual cycle phase identity color, categorical encoding
     case CyclePhase.follicular:
-      return const Color(0xFF81C784); // green
+      return const Color(0xFF81C784); // green // accent-allowlist: menstrual cycle phase identity color, categorical encoding
     case CyclePhase.ovulation:
-      return const Color(0xFFFFD54F); // amber — most saturated, draws the eye
+      return const Color(0xFFFFD54F); // amber — most saturated, draws the eye // accent-allowlist: menstrual cycle phase identity color, categorical encoding
     case CyclePhase.luteal:
-      return const Color(0xFF64B5F6); // blue
+      return const Color(0xFF64B5F6); // blue // accent-allowlist: menstrual cycle phase identity color, categorical encoding
   }
 }
 

@@ -15,13 +15,13 @@ class LogoutSection extends ConsumerWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: () => _showLogoutDialog(context, ref),
-        icon: const Icon(Icons.logout, color: AppColors.error),
+        icon: const Icon(Icons.logout, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
         label: Text(
           AppLocalizations.of(context).logoutSignOut,
-          style: TextStyle(color: AppColors.error),
+          style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
         ),
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.error),
+          side: const BorderSide(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
       ),
@@ -65,7 +65,7 @@ class LogoutSection extends ConsumerWidget {
             },
             child: Text(
               AppLocalizations.of(context).logoutSignOut,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],

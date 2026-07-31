@@ -92,19 +92,19 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
           end: AlignmentDirectional.bottomEnd,
           colors: isPersonalized
               ? [
-                  AppColors.purple.withOpacity(0.15),
-                  AppColors.cyan.withOpacity(0.1),
+                  context.accentColor.withOpacity(0.15),
+                  context.accentColor.withOpacity(0.1),
                 ]
               : [
-                  AppColors.cyan.withOpacity(0.15),
+                  context.accentColor.withOpacity(0.15),
                   AppColors.teal.withOpacity(0.1),
                 ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isPersonalized
-              ? AppColors.purple.withOpacity(0.3)
-              : AppColors.cyan.withOpacity(0.3),
+              ? context.accentColor.withOpacity(0.3)
+              : context.accentColor.withOpacity(0.3),
           width: 1.5,
         ),
       ),
@@ -114,13 +114,13 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: isPersonalized
-                  ? AppColors.purple.withOpacity(0.2)
-                  : AppColors.cyan.withOpacity(0.2),
+                  ? context.accentColor.withOpacity(0.2)
+                  : context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               isPersonalized ? Icons.auto_awesome : Icons.preview_rounded,
-              color: isPersonalized ? AppColors.purple : AppColors.cyan,
+              color: isPersonalized ? context.accentColor : context.accentColor,
               size: 24,
             ),
           ),
@@ -144,7 +144,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.purple.withOpacity(0.2),
+                          color: context.accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -152,7 +152,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                           ),
                         ),
                       ),
@@ -254,12 +254,12 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withOpacity(0.2),
+                color: context.accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.accessibility_new,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 18,
               ),
             ),
@@ -272,14 +272,14 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: context.accentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       muscle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -332,7 +332,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                     const Icon(
                       Icons.check_circle,
                       size: 14,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -369,10 +369,10 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
             child: ElevatedButton(
               onPressed: _startWorkout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 foregroundColor: Colors.white,
                 elevation: 4,
-                shadowColor: AppColors.success.withOpacity(0.4),
+                shadowColor: AppColors.success.withOpacity(0.4),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -411,15 +411,15 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        AppColors.cyan.withOpacity(0.2),
+                        context.accentColor.withOpacity(0.2),
                         AppColors.teal.withOpacity(0.2),
                       ],
                     ),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.auto_awesome,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 32,
                   ),
                 ),
@@ -452,7 +452,7 @@ extension _DemoWorkoutScreenStateUI on _DemoWorkoutScreenState {
                   child: ElevatedButton(
                     onPressed: _navigateToSignUp,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.black,
                       elevation: 0,
                       shape: RoundedRectangleBorder(

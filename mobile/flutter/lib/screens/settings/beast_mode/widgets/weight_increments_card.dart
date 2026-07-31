@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/weight_increments_provider.dart';
 import '../../../../widgets/weight_increments_sheet.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class WeightIncrementsCard extends ConsumerWidget {
   final BeastThemeData theme;
   const WeightIncrementsCard({super.key, required this.theme});
@@ -35,7 +35,7 @@ class WeightIncrementsCard extends ConsumerWidget {
               ),
               Text(
                 state.unit.toUpperCase(),
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.orange),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.accentColor),
               ),
             ],
           ),
@@ -47,10 +47,10 @@ class WeightIncrementsCard extends ConsumerWidget {
                 HapticFeedback.lightImpact();
                 showWeightIncrementsSheet(context);
               },
-              icon: Icon(Icons.tune, size: 18, color: AppColors.orange),
-              label: Text(AppLocalizations.of(context).weightIncrementsCardConfigureIncrements, style: TextStyle(color: AppColors.orange)),
+              icon: Icon(Icons.tune, size: 18, color: context.accentColor),
+              label: Text(AppLocalizations.of(context).weightIncrementsCardConfigureIncrements, style: TextStyle(color: context.accentColor)),
               style: OutlinedButton.styleFrom(
-                side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
+                side: BorderSide(color: context.accentColor.withValues(alpha: 0.5)),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),

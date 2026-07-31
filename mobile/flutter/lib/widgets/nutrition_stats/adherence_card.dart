@@ -83,9 +83,9 @@ class AdherenceCard extends StatelessWidget {
           }
 
           final ratingColor = switch (data.sustainabilityRating) {
-            'high' => const Color(0xFF4CAF50),
-            'medium' => const Color(0xFFFF9800),
-            _ => const Color(0xFFF44336),
+            'high' => const Color(0xFF4CAF50), // accent-allowlist: adherence severity scale (good/moderate/poor)
+            'medium' => const Color(0xFFFF9800), // accent-allowlist: adherence severity scale (good/moderate/poor)
+            _ => const Color(0xFFF44336), // accent-allowlist: adherence severity scale (good/moderate/poor)
           };
 
           return Column(

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/providers/beast_mode_provider.dart';
 import '../../../../../data/services/haptic_service.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class RpeCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -36,7 +36,7 @@ class RpeCard extends ConsumerWidget {
               ),
               Switch(
                 value: config.rpeAutoRegEnabled,
-                activeColor: AppColors.orange,
+                activeColor: context.accentColor,
                 onChanged: (v) {
                   HapticService.selection();
                   notifier.updateRpeAutoReg(v);
@@ -52,9 +52,9 @@ class RpeCard extends ConsumerWidget {
                 Expanded(
                   child: SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: AppColors.orange,
-                      inactiveTrackColor: AppColors.orange.withValues(alpha: 0.15),
-                      thumbColor: AppColors.orange,
+                      activeTrackColor: context.accentColor,
+                      inactiveTrackColor: context.accentColor.withValues(alpha: 0.15),
+                      thumbColor: context.accentColor,
                       trackHeight: 3,
                       thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                     ),
@@ -66,7 +66,7 @@ class RpeCard extends ConsumerWidget {
                   ),
                 ),
                 SizedBox(width: 40, child: Text(config.rpeSensitivity.toStringAsFixed(1),
-                    style: TextStyle(fontSize: 11, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
+                    style: TextStyle(fontSize: 11, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
               ],
             ),
             const SizedBox(height: 8),
@@ -79,13 +79,13 @@ class RpeCard extends ConsumerWidget {
                 return ChoiceChip(
                   label: Text(e.value),
                   selected: isSelected,
-                  selectedColor: AppColors.orange.withValues(alpha: 0.2),
+                  selectedColor: context.accentColor.withValues(alpha: 0.2),
                   labelStyle: TextStyle(
-                    color: isSelected ? AppColors.orange : theme.textMuted,
+                    color: isSelected ? context.accentColor : theme.textMuted,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     fontSize: 12,
                   ),
-                  side: BorderSide(color: isSelected ? AppColors.orange.withValues(alpha: 0.5) : theme.cardBorder),
+                  side: BorderSide(color: isSelected ? context.accentColor.withValues(alpha: 0.5) : theme.cardBorder),
                   onSelected: (_) {
                     HapticService.selection();
                     notifier.updateRpePromptMode(e.key);

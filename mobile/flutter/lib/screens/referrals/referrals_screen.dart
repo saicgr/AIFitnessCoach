@@ -302,14 +302,14 @@ class _CodeCard extends StatelessWidget {
               _StatChip(
                 label: AppLocalizations.of(context).referralsQualified,
                 value: '${summary.qualifiedCount}',
-                color: AppColors.green,
+                color: AppColors.green,  // accent-allowlist: qualified/pending stat framing -- success
                 textMuted: textMuted,
               ),
               const SizedBox(width: 8),
               _StatChip(
                 label: AppLocalizations.of(context).referralsPending,
                 value: '${summary.pendingCount}',
-                color: Colors.amber,
+                color: Colors.amber,  // accent-allowlist: qualified/pending stat framing -- warning/pending
                 textMuted: textMuted,
               ),
             ],
@@ -374,7 +374,7 @@ class _NextTierCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.amber.withValues(alpha: 0.3), Colors.orange.withValues(alpha: 0.2)],
+            colors: [Colors.amber.withValues(alpha: 0.3), Colors.orange.withValues(alpha: 0.2)],  // accent-allowlist: max-tier trophy card -- gold/amber medal framing
           ),
           borderRadius: BorderRadius.circular(16),
         ),
@@ -490,7 +490,7 @@ class _TierRow extends StatelessWidget {
         color: elevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: unlocked ? AppColors.green.withValues(alpha: 0.5) : border,
+          color: unlocked ? AppColors.green.withValues(alpha: 0.5) : border,  // accent-allowlist: tier-unlocked framing -- success/green
           width: unlocked ? 1.5 : 1,
         ),
       ),
@@ -500,7 +500,7 @@ class _TierRow extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: (unlocked ? AppColors.green : textMuted).withValues(alpha: 0.15),
+              color: (unlocked ? AppColors.green : textMuted).withValues(alpha: 0.15),  // accent-allowlist: tier-unlocked framing -- success/green
               shape: BoxShape.circle,
             ),
             child: Center(child: Text(tier.emoji, style: const TextStyle(fontSize: 22))),
@@ -526,7 +526,7 @@ class _TierRow extends StatelessWidget {
             ),
           ),
           if (unlocked)
-            Icon(Icons.check_circle, color: AppColors.green, size: 22)
+            Icon(Icons.check_circle, color: AppColors.green, size: 22)  // accent-allowlist: tier-unlocked framing -- success/green
           else
             Icon(Icons.lock_outline, color: textMuted, size: 20),
         ],
@@ -760,7 +760,7 @@ class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
                         style: TextStyle(
                           fontSize: 12,
                           color: _successMessage != null
-                              ? AppColors.green
+                              ? AppColors.green  // accent-allowlist: redeem-success message -- success semantic
                               : widget.textMuted,
                         ),
                       ),

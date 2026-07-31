@@ -10,6 +10,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'demo_active_workout_screen_part_demo_workout_phase.dart';
 
 part 'demo_active_workout_screen_ui_1.dart';
@@ -453,7 +454,7 @@ class _DemoActiveWorkoutScreenState
             },
             child: Text(
               AppLocalizations.of(context).demoActiveWorkoutExit,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
           ),
         ],
@@ -541,11 +542,11 @@ class _DemoActiveWorkoutScreenState
                           _currentExercise['muscle_group'] ??
                               _currentExercise['body_part'] ??
                               'Unknown',
-                          AppColors.cyan,
+                          context.accentColor,
                         ),
                         _buildChip(
                           _currentExercise['equipment'] ?? 'Bodyweight',
-                          AppColors.purple,
+                          context.accentColor,
                         ),
                       ],
                     ),
@@ -593,20 +594,20 @@ class _DemoActiveWorkoutScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.2),
+              color: context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.timer_outlined, size: 16, color: AppColors.cyan),
+                Icon(Icons.timer_outlined, size: 16, color: context.accentColor),
                 const SizedBox(width: 6),
                 Text(
                   _formatDuration(_workoutSeconds),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ],
@@ -619,7 +620,7 @@ class _DemoActiveWorkoutScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.2),
+              color: context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
@@ -627,7 +628,7 @@ class _DemoActiveWorkoutScreenState
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ),
           ),
@@ -647,8 +648,8 @@ class _DemoActiveWorkoutScreenState
         placeholder: (context, url) => Container(
           height: 250,
           color: isDark ? AppColors.elevated : Colors.grey.shade200,
-          child: const Center(
-            child: CircularProgressIndicator(color: AppColors.cyan),
+          child: Center(
+            child: CircularProgressIndicator(color: context.accentColor),
           ),
         ),
         errorWidget: (context, url, error) => _buildPlaceholderMedia(isDark),
@@ -663,7 +664,7 @@ class _DemoActiveWorkoutScreenState
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withOpacity(0.3),
+            context.accentColor.withOpacity(0.3),
             AppColors.teal.withOpacity(0.3)
           ],
         ),
@@ -672,7 +673,7 @@ class _DemoActiveWorkoutScreenState
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.fitness_center, size: 60, color: AppColors.cyan),
+          Icon(Icons.fitness_center, size: 60, color: context.accentColor),
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context).demoActiveWorkoutExerciseDemo,
@@ -727,7 +728,7 @@ class _DemoActiveWorkoutScreenState
           child: ElevatedButton(
             onPressed: _completeSet,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -771,7 +772,7 @@ class _DemoActiveWorkoutScreenState
             height: 50,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.teal],
+                colors: [context.accentColor, AppColors.teal],
               ),
               borderRadius: BorderRadius.circular(12),
             ),

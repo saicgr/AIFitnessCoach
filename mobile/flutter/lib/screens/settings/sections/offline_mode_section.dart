@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The offline mode settings section.
 ///
 /// Displays the offline mode feature card.
@@ -36,12 +37,12 @@ class OfflineModeSection extends ConsumerWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.12),
+              color: context.accentColor.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.cloud_off_rounded,
-              color: AppColors.orange,
+              color: context.accentColor,
               size: 28,
             ),
           ),

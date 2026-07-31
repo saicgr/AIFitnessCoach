@@ -240,10 +240,10 @@ class StrainRiskCard extends StatelessWidget {
     final isIncrease = risk.weeklyIncreasePercent > 0;
     final isDangerous = risk.weeklyIncreasePercent > risk.recommendedMaxIncrease;
     final color = isDangerous
-        ? Colors.red
+        ? Colors.red // accent-allowlist: strain risk severity scale
         : isIncrease
-            ? Colors.orange
-            : Colors.green;
+            ? Colors.orange // accent-allowlist: strain risk severity scale
+            : Colors.green; // accent-allowlist: strain risk severity scale
 
     return Row(
       children: [
@@ -266,7 +266,7 @@ class StrainRiskCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
+              color: Colors.red.withValues(alpha: 0.1), // accent-allowlist: strain risk severity scale
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -274,7 +274,7 @@ class StrainRiskCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: Colors.red.shade700,
+                color: Colors.red.shade700, // accent-allowlist: strain risk severity scale
               ),
             ),
           ),

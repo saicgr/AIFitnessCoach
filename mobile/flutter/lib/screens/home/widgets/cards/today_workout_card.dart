@@ -8,6 +8,7 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Today's Workout Card Widget
 ///
 /// A prominent home screen card that provides a "Quick Start" / "Today's Workout"
@@ -113,16 +114,16 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.2)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
-          const SizedBox(
+          SizedBox(
             height: 24,
             width: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
           const SizedBox(height: 12),
@@ -146,11 +147,11 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),  // accent-allowlist: error/destructive -- must stay red
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 32),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 32),  // accent-allowlist: error/destructive -- must stay red
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context).todayWorkoutCardCouldNotLoadWorkout,
@@ -180,19 +181,19 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withValues(alpha: 0.15),
+              color: context.accentColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.fitness_center,
-              color: AppColors.cyan,
+              color: context.accentColor,
               size: 36,
             ),
           ),
@@ -228,7 +229,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -268,12 +269,12 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.cyan.withValues(alpha: _glowAnimation.value),
+                color: context.accentColor.withValues(alpha: _glowAnimation.value),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.cyan.withValues(alpha: _glowAnimation.value * 0.3),
+                  color: context.accentColor.withValues(alpha: _glowAnimation.value * 0.3),
                   blurRadius: 20,
                   spreadRadius: 2,
                 ),
@@ -298,24 +299,24 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.2),
+                      color: context.accentColor.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.today,
                           size: 14,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           'TODAY',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             letterSpacing: 1,
                           ),
                         ),
@@ -385,14 +386,14 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.15),
+                        color: context.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         muscle,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.purple.withValues(alpha: 0.9),
+                          color: context.accentColor.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -417,14 +418,14 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                     elevation: 4,
-                    shadowColor: AppColors.cyan.withValues(alpha: 0.5),
+                    shadowColor: context.accentColor.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -446,7 +447,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.purple.withValues(alpha: 0.3)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -454,12 +455,12 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.purple.withValues(alpha: 0.15),
+              color: context.accentColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.spa,
-              color: AppColors.purple,
+              color: context.accentColor,
               size: 36,
             ),
           ),
@@ -498,12 +499,12 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.event,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 22,
                     ),
                   ),
@@ -553,7 +554,7 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
             icon: const Icon(Icons.calendar_month, size: 18),
             label: Text(AppLocalizations.of(context).todayWorkoutCardViewUpcoming),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.cyan,
+              foregroundColor: context.accentColor,
             ),
           ),
         ],

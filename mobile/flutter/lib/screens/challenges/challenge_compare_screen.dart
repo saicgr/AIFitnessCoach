@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../../core/services/posthog_service.dart';
@@ -92,7 +93,7 @@ class _ChallengeCompareScreenState
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.error),
+            Icon(Icons.error_outline, size: 48, color: AppColors.error), // accent-allowlist: error state, semantic
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context).challengeCompareFailedToLoadChallenge,
@@ -118,7 +119,7 @@ class _ChallengeCompareScreenState
               icon: const Icon(Icons.refresh, size: 18),
               label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -186,7 +187,7 @@ class _ChallengeCompareScreenState
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ),
 
@@ -298,17 +299,17 @@ class _ChallengeCompareScreenState
           end: Alignment.bottomRight,
           colors: didBeat
               ? [
-                  Colors.green.withValues(alpha: 0.1),
-                  AppColors.cyan.withValues(alpha: 0.1),
+                  Colors.green.withValues(alpha: 0.1), // accent-allowlist: challenge winner indicator (green), semantic win state
+                  context.accentColor.withValues(alpha: 0.1),
                 ]
               : [
-                  AppColors.orange.withValues(alpha: 0.1),
-                  AppColors.orange.withValues(alpha: 0.05),
+                  context.accentColor.withValues(alpha: 0.1),
+                  context.accentColor.withValues(alpha: 0.05),
                 ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: (didBeat ? Colors.green : AppColors.orange)
+          color: (didBeat ? Colors.green : context.accentColor) // accent-allowlist: win indicator (green), semantic win state
               .withValues(alpha: 0.3),
         ),
       ),
@@ -331,17 +332,17 @@ class _ChallengeCompareScreenState
               color: elevated,
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.orange.withValues(alpha: 0.5),
+                color: context.accentColor.withValues(alpha: 0.5),
                 width: 2,
               ),
             ),
-            child: const Center(
+            child: Center(
               child: Text(
                 'VS',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               ),
             ),
@@ -372,16 +373,16 @@ class _ChallengeCompareScreenState
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+              backgroundColor: context.accentColor.withValues(alpha: 0.2),
               backgroundImage:
                   avatarUrl != null ? NetworkImage(avatarUrl) : null,
               child: avatarUrl == null
                   ? Text(
                       name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     )
                   : null,
@@ -391,7 +392,7 @@ class _ChallengeCompareScreenState
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: Colors.green,
+                  color: Colors.green, // accent-allowlist: challenge winner indicator (green), semantic win state
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
@@ -408,7 +409,7 @@ class _ChallengeCompareScreenState
           style: TextStyle(
             fontSize: 14,
             fontWeight: isWinner ? FontWeight.bold : FontWeight.w500,
-            color: isWinner ? Colors.green : null,
+            color: isWinner ? Colors.green : null, // accent-allowlist: challenge winner indicator (green), semantic win state
           ),
         ),
         if (isWinner)
@@ -417,7 +418,7 @@ class _ChallengeCompareScreenState
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: Colors.green,
+              color: Colors.green, // accent-allowlist: challenge winner indicator (green), semantic win state
               letterSpacing: 1,
             ),
           ),
@@ -493,12 +494,12 @@ class _ChallengeCompareScreenState
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: aWins ? FontWeight.bold : FontWeight.w500,
-                  color: aWins ? Colors.green : textColor,
+                  color: aWins ? Colors.green : textColor, // accent-allowlist: challenge winner indicator (green), semantic win state
                 ),
               ),
               if (aWins) ...[
                 const SizedBox(width: 4),
-                const Icon(Icons.check_circle, size: 14, color: Colors.green),
+                const Icon(Icons.check_circle, size: 14, color: Colors.green), // accent-allowlist: challenge winner indicator (green), semantic win state
               ],
             ],
           ),
@@ -517,12 +518,12 @@ class _ChallengeCompareScreenState
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: bWins ? FontWeight.bold : FontWeight.w500,
-                  color: bWins ? Colors.green : textColor,
+                  color: bWins ? Colors.green : textColor, // accent-allowlist: challenge winner indicator (green), semantic win state
                 ),
               ),
               if (bWins) ...[
                 const SizedBox(width: 4),
-                const Icon(Icons.check_circle, size: 14, color: Colors.green),
+                const Icon(Icons.check_circle, size: 14, color: Colors.green), // accent-allowlist: challenge winner indicator (green), semantic win state
               ],
             ],
           ),
@@ -625,13 +626,13 @@ class _ChallengeCompareScreenState
                               fontSize: 13,
                               fontWeight:
                                   aWins ? FontWeight.bold : FontWeight.w400,
-                              color: aWins ? Colors.green : textMuted,
+                              color: aWins ? Colors.green : textMuted, // accent-allowlist: challenge winner indicator (green), semantic win state
                             ),
                           ),
                           if (aWins) ...[
                             const SizedBox(width: 4),
                             const Icon(Icons.check_circle,
-                                size: 12, color: Colors.green),
+                                size: 12, color: Colors.green), // accent-allowlist: challenge winner indicator (green), semantic win state
                           ],
                         ],
                       ),
@@ -647,13 +648,13 @@ class _ChallengeCompareScreenState
                               fontSize: 13,
                               fontWeight:
                                   bWins ? FontWeight.bold : FontWeight.w400,
-                              color: bWins ? Colors.green : textMuted,
+                              color: bWins ? Colors.green : textMuted, // accent-allowlist: challenge winner indicator (green), semantic win state
                             ),
                           ),
                           if (bWins) ...[
                             const SizedBox(width: 4),
                             const Icon(Icons.check_circle,
-                                size: 12, color: Colors.green),
+                                size: 12, color: Colors.green), // accent-allowlist: challenge winner indicator (green), semantic win state
                           ],
                         ],
                       ),
@@ -682,7 +683,7 @@ class _ChallengeCompareScreenState
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -702,18 +703,18 @@ class _ChallengeCompareScreenState
             icon: Icon(
               Icons.feed_rounded,
               size: 20,
-              color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
+              color: context.accentColor,
             ),
             label: Text(
               AppLocalizations.of(context).challengeCompareViewFeed,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
+                color: context.accentColor,
               ),
             ),
             style: OutlinedButton.styleFrom(
               side: BorderSide(
-                color: (isDark ? AppColors.cyan : AppColorsLight.textPrimary)
+                color: (context.accentColor)
                     .withValues(alpha: 0.5),
               ),
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -756,7 +757,7 @@ class _ChallengeCompareScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).challengeCompareRematchSent),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green, // accent-allowlist: challenge winner indicator (green), semantic win state
           ),
         );
       }
@@ -766,7 +767,7 @@ class _ChallengeCompareScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send rematch: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error, // accent-allowlist: error state, semantic
           ),
         );
       }

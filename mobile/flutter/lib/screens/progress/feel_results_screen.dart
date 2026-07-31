@@ -13,6 +13,7 @@ import '../../widgets/pill_app_bar.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/subjective_feedback.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 
@@ -56,6 +57,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accent = context.accentColor;
 
     final feedbackState = ref.watch(subjectiveFeedbackProvider);
 
@@ -76,22 +78,22 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Headline insight card
-                      _buildHeadlineCard(feedbackState.feelResults, isDark),
+                      _buildHeadlineCard(feedbackState.feelResults, isDark, accent),
 
                       const SizedBox(height: 24),
 
                       // Period selector
-                      _buildPeriodSelector(elevated, textPrimary, textSecondary),
+                      _buildPeriodSelector(elevated, textPrimary, textSecondary, accent),
 
                       const SizedBox(height: 24),
 
                       // Mood before vs after chart
-                      _buildMoodComparisonCard(feedbackState.trends, isDark, elevated, textPrimary, textSecondary),
+                      _buildMoodComparisonCard(feedbackState.trends, isDark, elevated, textPrimary, textSecondary, accent),
 
                       const SizedBox(height: 20),
 
                       // Key metrics grid
-                      _buildMetricsGrid(feedbackState.trends, elevated, textPrimary, textSecondary),
+                      _buildMetricsGrid(feedbackState.trends, elevated, textPrimary, textSecondary, accent),
 
                       const SizedBox(height: 24),
 
@@ -106,7 +108,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       const SizedBox(height: 24),
 
                       // Tips card
-                      _buildTipsCard(feedbackState.trends, elevated, textSecondary),
+                      _buildTipsCard(feedbackState.trends, elevated, textSecondary, accent),
 
                       const SizedBox(height: 40),
                     ],
@@ -118,7 +120,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
   }
 
   /// Build the headline insight card
-  Widget _buildHeadlineCard(FeelResultsSummary? summary, bool isDark) {
+  Widget _buildHeadlineCard(FeelResultsSummary? summary, bool isDark, Color accent) {
     if (summary == null || !summary.hasData) {
       return Container(
         width: double.infinity,
@@ -126,21 +128,21 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.cyan.withOpacity(0.15),
-              AppColors.purple.withOpacity(0.1),
+              accent.withValues(alpha: 0.15),
+              accent.withValues(alpha: 0.05),
             ],
             begin: AlignmentDirectional.topStart,
             end: AlignmentDirectional.bottomEnd,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
         ),
         child: Column(
           children: [
-            const Icon(
+            Icon(
               Icons.mood,
               size: 48,
-              color: AppColors.cyan,
+              color: accent,
             ),
             const SizedBox(height: 16),
             Text(
@@ -148,7 +150,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: AppColors.cyan,
+                color: accent,
               ),
               textAlign: TextAlign.center,
             ),
@@ -175,12 +177,12 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
         gradient: LinearGradient(
           colors: isImproving
               ? [
-                  AppColors.success.withOpacity(0.2),
-                  AppColors.cyan.withOpacity(0.1),
+                  AppColors.success.withOpacity(0.2), // accent-allowlist: improvement state — must stay green regardless of accent
+                  accent.withValues(alpha: 0.1),
                 ]
               : [
-                  AppColors.cyan.withOpacity(0.15),
-                  AppColors.purple.withOpacity(0.1),
+                  accent.withValues(alpha: 0.15),
+                  accent.withValues(alpha: 0.05),
                 ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
@@ -188,8 +190,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isImproving
-              ? AppColors.success.withOpacity(0.4)
-              : AppColors.cyan.withOpacity(0.3),
+              ? AppColors.success.withOpacity(0.4) // accent-allowlist: improvement state — must stay green regardless of accent
+              : accent.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -199,7 +201,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.2),
+                color: AppColors.success.withOpacity(0.2), // accent-allowlist: improvement state — must stay green regardless of accent
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -208,7 +210,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                   const Icon(
                     Icons.trending_up,
                     size: 16,
-                    color: AppColors.success,
+                    color: AppColors.success, // accent-allowlist: improvement state — must stay green regardless of accent
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -216,7 +218,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.success,
+                      color: AppColors.success, // accent-allowlist: improvement state — must stay green regardless of accent
                     ),
                   ),
                 ],
@@ -231,7 +233,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: isImproving ? AppColors.success : AppColors.cyan,
+              color: isImproving ? AppColors.success : accent, // accent-allowlist: success branch stays green (improvement state); non-improving branch follows the accent
             ),
             textAlign: TextAlign.center,
           ).animate().fadeIn(delay: 100.ms),
@@ -258,18 +260,21 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 'Workouts',
                 '${summary.totalWorkoutsTracked}',
                 Icons.fitness_center,
+                accent,
               ),
               const SizedBox(width: 24),
               _buildSmallStat(
                 'Avg Mood',
                 '${summary.avgPostWorkoutMood.toStringAsFixed(1)}/5',
                 Icons.mood,
+                accent,
               ),
               const SizedBox(width: 24),
               _buildSmallStat(
                 'Feel Stronger',
                 '${summary.feelingStrongerPercent.toStringAsFixed(0)}%',
                 Icons.trending_up,
+                accent,
               ),
             ],
           ).animate().fadeIn(delay: 300.ms),
@@ -278,10 +283,10 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
     ).animate().fadeIn().scale(begin: const Offset(0.95, 0.95));
   }
 
-  Widget _buildSmallStat(String label, String value, IconData icon) {
+  Widget _buildSmallStat(String label, String value, IconData icon, Color accent) {
     return Column(
       children: [
-        Icon(icon, size: 20, color: AppColors.cyan.withOpacity(0.7)),
+        Icon(icon, size: 20, color: accent.withValues(alpha: 0.7)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -302,20 +307,20 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
   }
 
   /// Build period selector chips
-  Widget _buildPeriodSelector(Color elevated, Color textPrimary, Color textSecondary) {
+  Widget _buildPeriodSelector(Color elevated, Color textPrimary, Color textSecondary, Color accent) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        _buildPeriodChip('7 Days', 7, elevated, textPrimary, textSecondary),
+        _buildPeriodChip('7 Days', 7, elevated, textPrimary, textSecondary, accent),
         const SizedBox(width: 8),
-        _buildPeriodChip('30 Days', 30, elevated, textPrimary, textSecondary),
+        _buildPeriodChip('30 Days', 30, elevated, textPrimary, textSecondary, accent),
         const SizedBox(width: 8),
-        _buildPeriodChip('90 Days', 90, elevated, textPrimary, textSecondary),
+        _buildPeriodChip('90 Days', 90, elevated, textPrimary, textSecondary, accent),
       ],
     );
   }
 
-  Widget _buildPeriodChip(String label, int days, Color elevated, Color textPrimary, Color textSecondary) {
+  Widget _buildPeriodChip(String label, int days, Color elevated, Color textPrimary, Color textSecondary, Color accent) {
     final isSelected = _selectedPeriodDays == days;
     return GestureDetector(
       onTap: () => _changePeriod(days),
@@ -323,10 +328,10 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cyan.withOpacity(0.2) : elevated,
+          color: isSelected ? accent.withValues(alpha: 0.2) : elevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : Colors.transparent,
+            color: isSelected ? accent : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -335,7 +340,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? AppColors.cyan : textSecondary,
+            color: isSelected ? accent : textSecondary,
           ),
         ),
       ),
@@ -349,6 +354,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
     Color elevated,
     Color textPrimary,
     Color textSecondary,
+    Color accent,
   ) {
     if (trends == null || trends.totalWorkouts == 0) {
       return const SizedBox.shrink();
@@ -390,8 +396,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 child: _buildMoodBlock(
                   'Before',
                   trends.avgMoodBefore,
-                  AppColors.orange.withOpacity(0.2),
-                  AppColors.orange,
+                  accent.withValues(alpha: 0.2),
+                  accent,
                 ),
               ),
               const SizedBox(width: 16),
@@ -400,7 +406,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 children: [
                   Icon(
                     isPositive ? Icons.arrow_forward : Icons.remove,
-                    color: isPositive ? AppColors.success : textSecondary,
+                    color: isPositive ? AppColors.success : textSecondary, // accent-allowlist: positive mood change — must stay green regardless of accent
                     size: 24,
                   ),
                   Text(
@@ -408,7 +414,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: isPositive ? AppColors.success : textSecondary,
+                      color: isPositive ? AppColors.success : textSecondary, // accent-allowlist: positive mood change — must stay green regardless of accent
                     ),
                   ),
                 ],
@@ -418,8 +424,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 child: _buildMoodBlock(
                   'After',
                   trends.avgMoodAfter,
-                  AppColors.success.withOpacity(0.2),
-                  AppColors.success,
+                  AppColors.success.withOpacity(0.2), // accent-allowlist: "after" mood is the improvement/positive state — must stay green regardless of accent
+                  AppColors.success, // accent-allowlist: "after" mood is the improvement/positive state — must stay green regardless of accent
                 ),
               ),
             ],
@@ -486,6 +492,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
     Color elevated,
     Color textPrimary,
     Color textSecondary,
+    Color accent,
   ) {
     if (trends == null) return const SizedBox.shrink();
 
@@ -497,7 +504,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             trends.avgEnergyAfter.toStringAsFixed(1),
             '/5',
             Icons.bolt,
-            AppColors.orange,
+            accent,
             elevated,
             textPrimary,
           ),
@@ -509,7 +516,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             trends.avgSleepQuality.toStringAsFixed(1),
             '/5',
             Icons.bedtime,
-            AppColors.purple,
+            accent,
             elevated,
             textPrimary,
           ),
@@ -521,7 +528,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
             trends.avgConfidence.toStringAsFixed(1),
             '/5',
             Icons.psychology,
-            AppColors.cyan,
+            accent,
             elevated,
             textPrimary,
           ),
@@ -690,7 +697,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       return FlSpot(entry.key.toDouble(), entry.value.avgMood);
                     }).toList(),
                     isCurved: true,
-                    color: AppColors.cyan,
+                    color: AppColors.cyan, // accent-allowlist: chart series color — Mood line in the 2-series Mood/Energy chart, read against the legend below (line ~744)
                     barWidth: 3,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -698,7 +705,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 4,
-                          color: AppColors.cyan,
+                          color: AppColors.cyan, // accent-allowlist: chart series color — Mood line dot, matches line color above
                           strokeWidth: 2,
                           strokeColor: Colors.white,
                         );
@@ -706,7 +713,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                     ),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: AppColors.cyan.withOpacity(0.1), // accent-allowlist: chart series color — Mood line area fill
                     ),
                   ),
                   // Energy line
@@ -715,7 +722,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       return FlSpot(entry.key.toDouble(), entry.value.avgEnergy);
                     }).toList(),
                     isCurved: true,
-                    color: AppColors.orange,
+                    color: AppColors.orange, // accent-allowlist: chart series color — Energy line in the 2-series Mood/Energy chart, read against the legend below (line ~746)
                     barWidth: 3,
                     isStrokeCapRound: true,
                     dotData: FlDotData(
@@ -723,7 +730,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       getDotPainter: (spot, percent, barData, index) {
                         return FlDotCirclePainter(
                           radius: 4,
-                          color: AppColors.orange,
+                          color: AppColors.orange, // accent-allowlist: chart series color — Energy line dot, matches line color above
                           strokeWidth: 2,
                           strokeColor: Colors.white,
                         );
@@ -741,9 +748,9 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem('Mood', AppColors.cyan),
+              _buildLegendItem('Mood', AppColors.cyan), // accent-allowlist: chart series color — Mood line legend swatch
               const SizedBox(width: 24),
-              _buildLegendItem('Energy', AppColors.orange),
+              _buildLegendItem('Energy', AppColors.orange), // accent-allowlist: chart series color — Energy line legend swatch
             ],
           ),
         ],
@@ -792,14 +799,14 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.success.withOpacity(0.15),
-            AppColors.success.withOpacity(0.05),
+            AppColors.success.withOpacity(0.15), // accent-allowlist: "feeling stronger" is a positive/improvement stat — must stay green regardless of accent
+            AppColors.success.withOpacity(0.05), // accent-allowlist: "feeling stronger" is a positive/improvement stat — must stay green regardless of accent
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+        border: Border.all(color: AppColors.success.withOpacity(0.3)), // accent-allowlist: "feeling stronger" is a positive/improvement stat — must stay green regardless of accent
       ),
       child: Row(
         children: [
@@ -813,8 +820,8 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 child: CircularProgressIndicator(
                   value: percent / 100,
                   strokeWidth: 8,
-                  backgroundColor: AppColors.success.withOpacity(0.2),
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success),
+                  backgroundColor: AppColors.success.withOpacity(0.2), // accent-allowlist: "feeling stronger" is a positive/improvement stat — must stay green regardless of accent
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.success), // accent-allowlist: "feeling stronger" is a positive/improvement stat — must stay green regardless of accent
                 ),
               ),
               Text(
@@ -822,7 +829,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.success,
+                  color: AppColors.success, // accent-allowlist: "feeling stronger" is a positive/improvement stat — must stay green regardless of accent
                 ),
               ),
             ],
@@ -862,7 +869,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.2),
+                      color: AppColors.success.withOpacity(0.2), // accent-allowlist: "training is working" is a positive/improvement stat — must stay green regardless of accent
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -870,7 +877,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.success,
+                        color: AppColors.success, // accent-allowlist: "training is working" is a positive/improvement stat — must stay green regardless of accent
                       ),
                     ),
                   ),
@@ -884,7 +891,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
   }
 
   /// Build tips card
-  Widget _buildTipsCard(SubjectiveTrendsResponse? trends, Color elevated, Color textSecondary) {
+  Widget _buildTipsCard(SubjectiveTrendsResponse? trends, Color elevated, Color textSecondary, Color accent) {
     String tip;
     IconData icon;
 
@@ -908,7 +915,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cyan.withOpacity(0.2)),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -916,7 +923,7 @@ class _FeelResultsScreenState extends ConsumerState<FeelResultsScreen> {
           Icon(
             icon,
             size: 20,
-            color: AppColors.cyan,
+            color: accent,
           ),
           const SizedBox(width: 12),
           Expanded(

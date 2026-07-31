@@ -10,6 +10,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class RecoverySection extends ConsumerStatefulWidget {
   final BeastThemeData theme;
 
@@ -156,7 +157,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                       _resetRecoveryKValues();
                     },
                     child: Text(AppLocalizations.of(context).trophyFilterReset,
-                        style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
+                        style: TextStyle(fontSize: 12, color: context.accentColor, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -189,7 +190,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                         labelText: AppLocalizations.of(context).workoutHistoryImportWeightKg,
                         labelStyle: TextStyle(color: t.textMuted, fontSize: 12),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: t.cardBorder)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.orange)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: context.accentColor)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                       onChanged: (_) => _calculate1rm(),
@@ -205,7 +206,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                         labelText: AppLocalizations.of(context).workoutSummaryGeneralReps,
                         labelStyle: TextStyle(color: t.textMuted, fontSize: 12),
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: t.cardBorder)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.orange)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: context.accentColor)),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                       ),
                       onChanged: (_) => _calculate1rm(),
@@ -215,11 +216,11 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
               ),
               if (_epley1rm != null) ...[
                 const SizedBox(height: 16),
-                _build1rmResult('Epley', _epley1rm!, 'Best for 2-10 reps', const Color(0xFF3B82F6), t),
+                _build1rmResult('Epley', _epley1rm!, 'Best for 2-10 reps', const Color(0xFF3B82F6), t),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
                 const SizedBox(height: 8),
-                _build1rmResult('Brzycki', _brzycki1rm!, 'Best for 1-6 reps', const Color(0xFF22C55E), t),
+                _build1rmResult('Brzycki', _brzycki1rm!, 'Best for 1-6 reps', const Color(0xFF22C55E), t),  // accent-allowlist: success/positive state - same value as AppColors.success
                 const SizedBox(height: 8),
-                _build1rmResult('Mayhew', _mayhew1rm!, 'Best for 5-10 reps', const Color(0xFFA855F7), t),
+                _build1rmResult('Mayhew', _mayhew1rm!, 'Best for 5-10 reps', const Color(0xFFA855F7), t),  // accent-allowlist: categorical 1RM-formula legend (Epley/Brzycki/Mayhew each need a distinct colour)
                 const SizedBox(height: 8),
                 _buildBestFormulaHint(t),
               ],
@@ -239,7 +240,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
       runSpacing: 8,
       children: muscles.map((entry) {
         final score = entry.value;
-        final color = score < 40 ? AppColors.error : score < 70 ? AppColors.warning : AppColors.success;
+        final color = score < 40 ? AppColors.error : score < 70 ? AppColors.warning : AppColors.success;  // accent-allowlist: success/positive state - must stay green regardless of accent
         final name = entry.key.replaceAll('_', ' ');
         return SizedBox(
           width: (MediaQuery.of(context).size.width - 64) / 3,
@@ -296,10 +297,10 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
               Expanded(
                 child: SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: AppColors.orange,
-                    inactiveTrackColor: AppColors.orange.withValues(alpha: 0.15),
-                    thumbColor: AppColors.orange,
-                    overlayColor: AppColors.orange.withValues(alpha: 0.08),
+                    activeTrackColor: context.accentColor,
+                    inactiveTrackColor: context.accentColor.withValues(alpha: 0.15),
+                    thumbColor: context.accentColor,
+                    overlayColor: context.accentColor.withValues(alpha: 0.08),
                     trackHeight: 3,
                     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                   ),
@@ -311,7 +312,7 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
                 ),
               ),
               SizedBox(width: 46, child: Text(k.toStringAsFixed(3),
-                  style: TextStyle(fontSize: 11, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
+                  style: TextStyle(fontSize: 11, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
             ],
           ),
         ));
@@ -362,11 +363,11 @@ class _RecoverySectionState extends ConsumerState<RecoverySection> {
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),
-        color: AppColors.info.withValues(alpha: 0.08),
+        color: AppColors.info.withValues(alpha: 0.08),  // accent-allowlist: informational state - must stay blue regardless of accent
       ),
       child: Row(
         children: [
-          Icon(Icons.lightbulb_outline, size: 14, color: AppColors.info),
+          Icon(Icons.lightbulb_outline, size: 14, color: AppColors.info),  // accent-allowlist: informational state - must stay blue regardless of accent
           const SizedBox(width: 8),
           Expanded(child: Text(best, style: TextStyle(fontSize: 11, color: t.textMuted))),
         ],

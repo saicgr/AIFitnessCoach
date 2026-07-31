@@ -356,7 +356,7 @@ class _InjuryChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.healing, size: 12, color: AppColors.error),
+          const Icon(Icons.healing, size: 12, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
           const SizedBox(width: 5),
           Text(
             label,
@@ -397,20 +397,20 @@ class _AddInjuryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.green.withValues(alpha: 0.10),
+          color: AppColors.green.withValues(alpha: 0.10),  // accent-allowlist: success/positive state — must stay green regardless of accent
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.green.withValues(alpha: 0.45)),
+          border: Border.all(color: AppColors.green.withValues(alpha: 0.45)),  // accent-allowlist: success/positive state — must stay green regardless of accent
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.add_rounded, size: 13, color: AppColors.green),
+            const Icon(Icons.add_rounded, size: 13, color: AppColors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
             const SizedBox(width: 3),
             Text(
               hasInjuries ? 'Add' : 'Add injury',
               style: const TextStyle(
                 fontSize: 11,
-                color: AppColors.green,
+                color: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 letterSpacing: 0.1,
                 fontWeight: FontWeight.w600,
               ),

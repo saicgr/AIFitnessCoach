@@ -218,9 +218,9 @@ class MoodAnalyticsCard extends StatelessWidget {
   }
 
   Color _getCompletionColor(double rate) {
-    if (rate >= 75) return Colors.green;
-    if (rate >= 50) return Colors.orange;
-    if (rate >= 25) return Colors.amber;
+    if (rate >= 75) return Colors.green;  // accent-allowlist: completion-rate band -- high
+    if (rate >= 50) return Colors.orange;  // accent-allowlist: completion-rate band -- medium
+    if (rate >= 25) return Colors.amber;  // accent-allowlist: completion-rate band -- low
     return Colors.grey;
   }
 

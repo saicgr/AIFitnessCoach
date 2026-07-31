@@ -12,9 +12,9 @@ class InjuryCard extends StatelessWidget {
 
   Color _getSeverityColor() {
     switch (injury.severity.toLowerCase()) {
-      case 'mild': return AppColors.success;
-      case 'moderate': return AppColors.warning;
-      case 'severe': return AppColors.error;
+      case 'mild': return AppColors.success; // accent-allowlist: injury severity scale (mild/moderate/severe)
+      case 'moderate': return AppColors.warning; // accent-allowlist: injury severity scale (mild/moderate/severe)
+      case 'severe': return AppColors.error; // accent-allowlist: injury severity scale (mild/moderate/severe)
       default: return AppColors.textMuted;
     }
   }
@@ -56,9 +56,9 @@ class InjuryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isHealed
-                ? AppColors.success.withValues(alpha: 0.5)
+                ? AppColors.success.withValues(alpha: 0.5) // accent-allowlist: injury severity scale (mild/moderate/severe)
                 : isRecovering
-                    ? AppColors.warning.withValues(alpha: 0.3)
+                    ? AppColors.warning.withValues(alpha: 0.3) // accent-allowlist: injury severity scale (mild/moderate/severe)
                     : cardBorder,
             width: isHealed || isRecovering ? 1.5 : 1,
           ),
@@ -174,15 +174,15 @@ class InjuryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.15),
+                  color: AppColors.success.withValues(alpha: 0.15), // accent-allowlist: injury severity scale (mild/moderate/severe)
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle, size: 16, color: AppColors.success),
+                    const Icon(Icons.check_circle, size: 16, color: AppColors.success), // accent-allowlist: injury severity scale (mild/moderate/severe)
                     const SizedBox(width: 6),
-                    Text(AppLocalizations.of(context).injuryCardFullyRecovered, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)),
+                    Text(AppLocalizations.of(context).injuryCardFullyRecovered, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.success)), // accent-allowlist: injury severity scale (mild/moderate/severe)
                   ],
                 ),
               ),
@@ -194,9 +194,9 @@ class InjuryCard extends StatelessWidget {
   }
 
   Color _getPainColor(int painLevel) {
-    if (painLevel <= 3) return AppColors.success;
-    if (painLevel <= 6) return AppColors.warning;
-    return AppColors.error;
+    if (painLevel <= 3) return AppColors.success; // accent-allowlist: injury severity scale (mild/moderate/severe)
+    if (painLevel <= 6) return AppColors.warning; // accent-allowlist: injury severity scale (mild/moderate/severe)
+    return AppColors.error; // accent-allowlist: injury severity scale (mild/moderate/severe)
   }
 
   String _formatInjuryType(String type) => type.replaceAll('_', ' ').split(' ').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');

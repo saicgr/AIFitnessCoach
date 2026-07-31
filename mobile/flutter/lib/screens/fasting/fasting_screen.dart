@@ -563,7 +563,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to start fast: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red, // accent-allowlist: error/destructive state, semantic
           ),
         );
       }
@@ -648,7 +648,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(AppLocalizations.of(context).fastingFailedToEndFast),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: AppColors.error, // accent-allowlist: error/destructive state, semantic
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -657,7 +657,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             },
             child: Text(
               AppLocalizations.of(context).heroFastingCardEndFast,
-              style: TextStyle(color: AppColors.coral),
+              style: TextStyle(color: AppColors.coral), // accent-allowlist: error/destructive state, semantic
             ),
           ),
         ],

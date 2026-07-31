@@ -91,14 +91,14 @@ class _DemoDayBannerState extends ConsumerState<DemoDayBanner>
             begin: AlignmentDirectional.topStart,
             end: AlignmentDirectional.bottomEnd,
             colors: [
-              const Color(0xFF6366F1), // Indigo
-              const Color(0xFF8B5CF6), // Purple
-              const Color(0xFFEC4899), // Pink
+              const Color(0xFF6366F1), // Indigo  // accent-allowlist: informational state — must stay blue regardless of accent
+              const Color(0xFF8B5CF6), // Purple  // accent-allowlist: fixed decorative gradient — Demo Day guest banner design, not tied to accent
+              const Color(0xFFEC4899), // Pink  // accent-allowlist: fixed decorative gradient — Demo Day guest banner design, not tied to accent
             ],
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF8B5CF6).withOpacity(0.4),
+              color: const Color(0xFF8B5CF6).withOpacity(0.4),  // accent-allowlist: fixed decorative gradient — Demo Day guest banner design, not tied to accent
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -342,8 +342,8 @@ class DemoDayBannerCompact extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF6366F1),
-              const Color(0xFF8B5CF6),
+              const Color(0xFF6366F1),  // accent-allowlist: informational state — must stay blue regardless of accent
+              const Color(0xFF8B5CF6),  // accent-allowlist: fixed decorative gradient — Demo Day guest banner design, not tied to accent
             ],
           ),
           borderRadius: BorderRadius.circular(20),

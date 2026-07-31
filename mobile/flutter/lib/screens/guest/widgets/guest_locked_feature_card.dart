@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A card showing a locked feature in guest mode
 /// Displays with a lock icon and prompts user to sign up
 class GuestLockedFeatureCard extends StatelessWidget {
@@ -60,12 +61,12 @@ class GuestLockedFeatureCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       icon,
-                      color: AppColors.purple.withOpacity(0.6),
+                      color: context.accentColor.withOpacity(0.6),
                       size: 24,
                     ),
                   ),
@@ -108,7 +109,7 @@ class GuestLockedFeatureCard extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.add_circle_outline,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 12,
                   ),
                   const SizedBox(width: 4),
@@ -116,7 +117,7 @@ class GuestLockedFeatureCard extends StatelessWidget {
                     AppLocalizations.of(context).guestLockedFeatureUnlockFree,
                     style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

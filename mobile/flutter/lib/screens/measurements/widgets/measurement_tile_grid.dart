@@ -195,7 +195,7 @@ class _MetricTile extends StatelessWidget {
     if (change == null || change!.abs() < 0.1) return textMuted;
     final positive = change! > 0;
     final good = lowerIsBetter ? !positive : positive;
-    return good ? AppColors.success : AppColors.error;
+    return good ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
   }
 
   @override

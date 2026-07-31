@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/cardio_pr.dart';
 import '../../data/repositories/cardio_pr_repository.dart';
 import '../../widgets/glass_sheet.dart';
@@ -35,6 +36,7 @@ class _CardioPrHistoryBody extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final colors = ref.colors(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -48,15 +50,11 @@ class _CardioPrHistoryBody extends ConsumerWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF7043), Color(0xFFEF5350)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: colors.accentGradient,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFF7043).withOpacity(0.3),
+                      color: colors.accent.withOpacity(0.3),
                       blurRadius: 12,
                       spreadRadius: 2,
                     ),
@@ -306,20 +304,20 @@ class _CardioPrRowState extends ConsumerState<_CardioPrRow> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.green.withOpacity(0.15),
+                                  color: AppColors.green.withOpacity(0.15),  // accent-allowlist: PR improvement delta badge (positive-trend indicator), semantic not accent
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(Icons.arrow_upward,
-                                        size: 11, color: AppColors.green),
+                                        size: 11, color: AppColors.green),  // accent-allowlist: PR improvement delta badge (positive-trend indicator), semantic not accent
                                     const SizedBox(width: 2),
                                     Text(delta,
                                         style: TextStyle(
                                           fontSize: 11,
                                           fontWeight: FontWeight.w600,
-                                          color: AppColors.green,
+                                          color: AppColors.green,  // accent-allowlist: PR improvement delta badge (positive-trend indicator), semantic not accent
                                         )),
                                   ],
                                 ),
@@ -433,7 +431,7 @@ class _FirstTimeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.18),
+        color: AppColors.orange.withOpacity(0.18),  // accent-allowlist: "First time doing this activity" achievement badge, semantic not accent
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -441,7 +439,7 @@ class _FirstTimeBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
-          color: AppColors.orange,
+          color: AppColors.orange,  // accent-allowlist: "First time doing this activity" achievement badge, semantic not accent
           letterSpacing: 0.3,
         ),
       ),
@@ -481,19 +479,19 @@ IconData _sportIcon(String sport) {
 Color _sportColor(String sport) {
   switch (sport) {
     case 'running':
-      return AppColors.orange;
+      return AppColors.orange;  // accent-allowlist: per-sport identity color (running/cycling/walking/hiking/rowing/swimming), matches synced_workout_kinds.dart convention
     case 'cycling':
-      return AppColors.cyan;
+      return AppColors.cyan;  // accent-allowlist: per-sport identity color (running/cycling/walking/hiking/rowing/swimming), matches synced_workout_kinds.dart convention
     case 'walking':
-      return AppColors.green;
+      return AppColors.green;  // accent-allowlist: per-sport identity color (running/cycling/walking/hiking/rowing/swimming), matches synced_workout_kinds.dart convention
     case 'hiking':
       return const Color(0xFF8D6E63);
     case 'rowing':
-      return AppColors.purple;
+      return AppColors.purple;  // accent-allowlist: per-sport identity color (running/cycling/walking/hiking/rowing/swimming), matches synced_workout_kinds.dart convention
     case 'swimming':
-      return const Color(0xFF26C6DA);
+      return const Color(0xFF26C6DA);  // accent-allowlist: per-sport identity color (running/cycling/walking/hiking/rowing/swimming), matches synced_workout_kinds.dart convention
     default:
-      return AppColors.orange;
+      return AppColors.orange;  // accent-allowlist: per-sport identity color (running/cycling/walking/hiking/rowing/swimming), matches synced_workout_kinds.dart convention
   }
 }
 

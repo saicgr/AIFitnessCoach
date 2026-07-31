@@ -151,7 +151,7 @@ class _WrappedTrophiesStack extends StatelessWidget {
                 width: 54,
                 height: 54,
                 child: CustomPaint(
-                  painter: _MiniSunburst(color: const Color(0xFFFBBF24)),
+                  painter: _MiniSunburst(color: const Color(0xFFFBBF24)), // accent-allowlist: Wrapped card visual identity (trophies=amber), deliberate design not accent
                   child: Center(
                     child: Text(
                       t.trophy.icon,

@@ -429,15 +429,15 @@ extension MoodLevelExtension on int {
   Color get moodColor {
     switch (this) {
       case 1:
-        return const Color(0xFFE53935); // Red
+        return const Color(0xFFE53935); // Red // accent-allowlist: mood/soreness severity scale (red to green)
       case 2:
-        return const Color(0xFFFF9800); // Orange
+        return const Color(0xFFFF9800); // Orange // accent-allowlist: mood/soreness severity scale (red to green)
       case 3:
-        return const Color(0xFFFFEB3B); // Yellow
+        return const Color(0xFFFFEB3B); // Yellow // accent-allowlist: mood/soreness severity scale (red to green)
       case 4:
-        return const Color(0xFF8BC34A); // Light green
+        return const Color(0xFF8BC34A); // Light green // accent-allowlist: mood/soreness severity scale (red to green)
       case 5:
-        return const Color(0xFF4CAF50); // Green
+        return const Color(0xFF4CAF50); // Green // accent-allowlist: mood/soreness severity scale (red to green)
       default:
         return const Color(0xFF9E9E9E); // Grey
     }

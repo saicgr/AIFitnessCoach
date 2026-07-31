@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/goal_unit.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/services/goal_social_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -60,11 +61,11 @@ class GoalCard extends StatelessWidget {
     // Colors based on status
     Color statusColor;
     if (isCompleted) {
-      statusColor = AppColors.success;
+      statusColor = AppColors.success; // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
     } else if (isPrBeaten) {
-      statusColor = AppColors.orange;
+      statusColor = AppColors.orange; // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
     } else {
-      statusColor = AppColors.cyan;
+      statusColor = context.accentColor;
     }
 
     return GestureDetector(
@@ -79,7 +80,7 @@ class GoalCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: const Icon(Icons.delete_outline, color: Colors.red),
+                  leading: const Icon(Icons.delete_outline, color: Colors.red), // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                   title: Text(AppLocalizations.of(context).goalCardDeleteGoal, style: TextStyle(color: textPrimary)),
                   subtitle: Text(AppLocalizations.of(context)!.goalCardPermanentlyRemove(exerciseName), style: TextStyle(color: textMuted, fontSize: 12)),
                   onTap: () {
@@ -159,20 +160,20 @@ class GoalCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.2),
+                      color: AppColors.success.withValues(alpha: 0.2), // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.check_circle, size: 14, color: AppColors.success),
+                        Icon(Icons.check_circle, size: 14, color: AppColors.success), // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                         SizedBox(width: 4),
                         Text(
                           AppLocalizations.of(context).commonDone,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.success,
+                            color: AppColors.success, // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                           ),
                         ),
                       ],
@@ -182,20 +183,20 @@ class GoalCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.2),
+                      color: AppColors.orange.withValues(alpha: 0.2), // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.emoji_events, size: 14, color: AppColors.orange),
+                        Icon(Icons.emoji_events, size: 14, color: AppColors.orange), // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                         SizedBox(width: 4),
                         Text(
                           AppLocalizations.of(context).log1rmNewPr,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: AppColors.orange, // accent-allowlist: goal status color (completed=success, PR-beaten=celebration orange) + destructive delete
                           ),
                         ),
                       ],

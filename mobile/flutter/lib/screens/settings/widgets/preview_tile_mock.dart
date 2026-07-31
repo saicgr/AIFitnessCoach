@@ -26,14 +26,14 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.nextWorkout:
         return _MockTileData(
           icon: Icons.fitness_center,
-          color: const Color(0xFF00BCD4),
+          color: const Color(0xFF00BCD4),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Push Day - Chest & Triceps',
           subtitle: '45 min - 6 exercises',
         );
       case TileType.fitnessScore:
         return _MockTileData(
           icon: Icons.insights,
-          color: const Color(0xFF22C55E),
+          color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
           title: 'Fitness Score',
           subtitle: 'Good progress',
           value: '72',
@@ -41,7 +41,7 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.bodyWeight:
         return _MockTileData(
           icon: Icons.monitor_weight,
-          color: const Color(0xFF22C55E),
+          color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
           title: 'Weight Tracker',
           subtitle: '-0.3 kg this week',
           value: '72.5 kg',
@@ -49,7 +49,7 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.caloriesSummary:
         return _MockTileData(
           icon: Icons.restaurant,
-          color: const Color(0xFFF97316),
+          color: Color(0xFFF97316),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
           title: 'Calories',
           subtitle: 'On track',
           value: '1,650 / 2,200',
@@ -57,14 +57,14 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.macroRings:
         return _MockTileData(
           icon: Icons.pie_chart,
-          color: const Color(0xFFA855F7),
+          color: const Color(0xFFA855F7),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Macros',
           subtitle: 'P: 120g  C: 180g  F: 65g',
         );
       case TileType.personalRecords:
         return _MockTileData(
           icon: Icons.emoji_events,
-          color: const Color(0xFFEAB308),
+          color: const Color(0xFFEAB308),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Personal Records',
           subtitle: '2 new PRs this week',
           value: 'Bench 80 kg',
@@ -72,7 +72,7 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.dailyStats:
         return _MockTileData(
           icon: Icons.directions_walk,
-          color: const Color(0xFF22C55E),
+          color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
           title: 'Daily Stats',
           subtitle: '320 kcal total today',
           value: '8,234 steps',
@@ -80,21 +80,21 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.habits:
         return _MockTileData(
           icon: Icons.checklist,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
           title: 'Today\'s Habits',
           subtitle: '3/5 habits completed today',
         );
       case TileType.achievements:
         return _MockTileData(
           icon: Icons.emoji_events,
-          color: const Color(0xFFA855F7),
+          color: const Color(0xFFA855F7),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Achievements',
           subtitle: '12 badges unlocked',
         );
       case TileType.quickLogWeight:
         return _MockTileData(
           icon: Icons.scale,
-          color: const Color(0xFF22C55E),
+          color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
           title: 'Quick Log Weight',
           subtitle: 'Tap to log today\'s weight',
           value: '72.5 kg',
@@ -102,77 +102,77 @@ class PreviewTileMock extends StatelessWidget {
       case TileType.quickLogMeasurements:
         return _MockTileData(
           icon: Icons.straighten,
-          color: const Color(0xFF00BCD4),
+          color: const Color(0xFF00BCD4),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Quick Measurements',
           subtitle: 'Chest, waist, arms & more',
         );
       case TileType.muscleHeatmap:
         return _MockTileData(
           icon: Icons.accessibility_new,
-          color: const Color(0xFFEF4444),
+          color: const Color(0xFFEF4444),  // accent-allowlist: error/destructive - same value as AppColors.error
           title: 'Muscle Map',
           subtitle: 'Chest & back trained today',
         );
       case TileType.weekChanges:
         return _MockTileData(
           icon: Icons.swap_horiz,
-          color: const Color(0xFF00BCD4),
+          color: const Color(0xFF00BCD4),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Week Changes',
           subtitle: '3 exercises varied',
         );
       case TileType.challengeProgress:
         return _MockTileData(
           icon: Icons.military_tech,
-          color: const Color(0xFFF97316),
+          color: Color(0xFFF97316),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
           title: 'Active Challenge',
           subtitle: '7/30 days completed',
         );
       case TileType.aiCoachTip:
         return _MockTileData(
           icon: Icons.tips_and_updates,
-          color: const Color(0xFFEAB308),
+          color: const Color(0xFFEAB308),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Coach Tip',
           subtitle: 'Try adding a warm-up set before heavy lifts',
         );
       case TileType.fasting:
         return _MockTileData(
           icon: Icons.timer,
-          color: const Color(0xFFF97316),
+          color: Color(0xFFF97316),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
           title: 'Fasting Timer',
           subtitle: '14h 30m / 16h elapsed',
         );
       case TileType.moodPicker:
         return _MockTileData(
           icon: Icons.wb_sunny_outlined,
-          color: const Color(0xFFEAB308),
+          color: const Color(0xFFEAB308),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Mood Check-in',
           subtitle: 'How are you feeling today?',
         );
       case TileType.quickActions:
         return _MockTileData(
           icon: Icons.apps,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
           title: 'Quick Actions',
           subtitle: 'Log Food, Stats, Share, Water',
         );
       case TileType.progressCharts:
         return _MockTileData(
           icon: Icons.show_chart,
-          color: const Color(0xFF22C55E),
+          color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
           title: 'Progress Charts',
           subtitle: 'Strength & volume over time',
         );
       case TileType.roiSummary:
         return _MockTileData(
           icon: Icons.trending_up,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
           title: 'Your Journey ROI',
           subtitle: '48 workouts, 36 hrs invested',
         );
       case TileType.dailyActivity:
         return _MockTileData(
           icon: Icons.watch,
-          color: const Color(0xFF00BCD4),
+          color: const Color(0xFF00BCD4),  // accent-allowlist: distinct preview colour per home-tile type in the tile picker - categorical, helps distinguish tile options at a glance
           title: 'Daily Activity',
           subtitle: 'Health device summary',
         );
@@ -312,7 +312,7 @@ class PreviewTileMock extends StatelessWidget {
     final bgColor = isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF4F4F5);
     final textColor = isDark ? const Color(0xFFFAFAFA) : const Color(0xFF18181B);
     final mutedColor = isDark ? const Color(0xFF71717A) : const Color(0xFF71717A);
-    const scoreColor = Color(0xFF22C55E);
+    const scoreColor = Color(0xFF22C55E);  // accent-allowlist: success/positive state - same value as AppColors.success
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),

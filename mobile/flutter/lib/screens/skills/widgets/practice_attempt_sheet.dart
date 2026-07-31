@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/skill_progression.dart';
 import '../../../data/providers/skill_progression_provider.dart';
@@ -429,8 +430,9 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
               ],
             ),
             behavior: SnackBarBehavior.floating,
-            backgroundColor:
-                attempt.unlockedNext ? AppColors.green : AppColors.cyan,
+            backgroundColor: attempt.unlockedNext
+                ? AppColors.green  // accent-allowlist: unlocked-next celebration -- success semantic
+                : context.accentColor,
           ),
         );
       }

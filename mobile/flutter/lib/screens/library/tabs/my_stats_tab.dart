@@ -10,6 +10,7 @@ import '../components/exercise_stats_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../common/app_refresh_indicator.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// My Stats tab showing exercise history and performance
 class MyStatsTab extends ConsumerWidget {
   const MyStatsTab({super.key});
@@ -18,7 +19,7 @@ class MyStatsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(exerciseHistoryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
@@ -144,11 +145,11 @@ class _ExerciseHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
-    final error = isDark ? AppColors.error : AppColorsLight.error;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final error = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
 
     // Get progression icon and color
     IconData progressIcon = Icons.remove;

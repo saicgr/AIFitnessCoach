@@ -399,9 +399,9 @@ class _DayCell extends StatelessWidget {
   Widget _buildStatusIndicator() {
     final Color? dotColor;
     if (_isCompleted) {
-      dotColor = AppColors.success;
+      dotColor = AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     } else if (_isMissed) {
-      dotColor = AppColors.error;
+      dotColor = AppColors.error;  // accent-allowlist: error/destructive -- must stay red
     } else if (workoutStatus == false) {
       dotColor = accentColor;
     } else {

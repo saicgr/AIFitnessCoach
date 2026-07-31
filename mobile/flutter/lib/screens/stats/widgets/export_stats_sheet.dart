@@ -18,6 +18,7 @@ import '../../settings/dialogs/export_dialog.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Bottom sheet for exporting stats in various formats
 class ExportStatsSheet extends ConsumerStatefulWidget {
   const ExportStatsSheet({super.key});
@@ -70,7 +71,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                 children: [
                   Icon(
                     Icons.file_download_outlined,
-                    color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                    color: isDark ? context.accentColor : AppColorsLight.cyan,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -94,7 +95,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   // CSV/ZIP Export
                   _ExportOptionCard(
                     icon: Icons.folder_zip_outlined,
-                    iconColor: Colors.orange,
+                    iconColor: Colors.orange,  // accent-allowlist: warning/highlight tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket
                     title: AppLocalizations.of(context).exportStatsCsvZip,
                     description: AppLocalizations.of(context).exportStatsFullDataExportWith,
                     onTap: _isExporting ? null : () => _exportCsvZip(context),
@@ -104,7 +105,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   // PDF Report
                   _ExportOptionCard(
                     icon: Icons.picture_as_pdf_outlined,
-                    iconColor: Colors.red,
+                    iconColor: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
                     title: AppLocalizations.of(context).exportStatsPdfReport,
                     description: AppLocalizations.of(context).exportStatsStyledReportWithStats,
                     onTap: _isExporting ? null : _exportPdf,
@@ -114,7 +115,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
                   // Text Summary
                   _ExportOptionCard(
                     icon: Icons.text_snippet_outlined,
-                    iconColor: Colors.blue,
+                    iconColor: Colors.blue,  // accent-allowlist: informational state — must stay blue regardless of accent
                     title: AppLocalizations.of(context).exportStatsTextSummary,
                     description: AppLocalizations.of(context).exportStatsQuickShareableTextSummary,
                     onTap: _isExporting ? null : _exportText,
@@ -256,7 +257,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -266,7 +267,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );

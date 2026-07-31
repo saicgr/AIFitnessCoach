@@ -550,7 +550,7 @@ class _SkippedRowsNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final warn = Colors.amber.shade700;
+    final warn = Colors.amber.shade700;  // accent-allowlist: warning severity - must stay amber regardless of accent
     return Row(
       children: [
         Icon(Icons.info_outline_rounded, size: 16, color: warn),

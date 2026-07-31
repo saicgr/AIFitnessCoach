@@ -6,6 +6,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 // =============================================================================
 // Tracking pills visibility state + provider
 // =============================================================================
@@ -172,7 +173,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).nutritionGoalsCardDailyGoals,
         subtitle: AppLocalizations.of(context).editTrackingLoginWeightMealWorkout,
         icon: Icons.flag_outlined,
-        color: const Color(0xFF22C55E),
+        color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
         enabled: pillsState.showGoals,
       ),
       _PillOption(
@@ -180,7 +181,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).editTrackingNutritionHydration,
         subtitle: AppLocalizations.of(context).editTrackingCaloriesPCF,
         icon: Icons.restaurant_outlined,
-        color: AppColors.orange,
+        color: context.accentColor,
         enabled: pillsState.showNutrition,
       ),
       _PillOption(
@@ -188,7 +189,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).metricsDashboardCaloriesBurned,
         subtitle: AppLocalizations.of(context).editTrackingFromConnectedHealthDevices,
         icon: Icons.local_fire_department,
-        color: const Color(0xFFFF6B35),
+        color: const Color(0xFFFF6B35),  // accent-allowlist: per-metric tracker identity colour, matches today_stats_row.dart's fixed per-metric palette (calories/steps/sleep/habits)
         enabled: pillsState.showBurned,
       ),
       _PillOption(
@@ -196,7 +197,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).syncedWorkoutDetailSteps,
         subtitle: AppLocalizations.of(context).editTrackingDailyStepCountFrom,
         icon: Icons.directions_walk,
-        color: const Color(0xFF8B5CF6),
+        color: const Color(0xFF8B5CF6),  // accent-allowlist: per-metric tracker identity colour, matches today_stats_row.dart's fixed per-metric palette (calories/steps/sleep/habits)
         enabled: pillsState.showSteps,
       ),
       _PillOption(
@@ -204,7 +205,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).sleepDetailSleep,
         subtitle: AppLocalizations.of(context).editTrackingLastNightSSleep,
         icon: Icons.bedtime_outlined,
-        color: const Color(0xFF6366F1),
+        color: const Color(0xFF6366F1),  // accent-allowlist: per-metric tracker identity colour, matches today_stats_row.dart's fixed per-metric palette (calories/steps/sleep/habits)
         enabled: pillsState.showSleep,
       ),
       _PillOption(
@@ -212,7 +213,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).editTrackingWorkoutStreak,
         subtitle: AppLocalizations.of(context).editTrackingConsecutiveWorkoutDays,
         icon: Icons.bolt_outlined,
-        color: const Color(0xFFF59E0B),
+        color: const Color(0xFFF59E0B),  // accent-allowlist: warning severity (amber-500)
         enabled: pillsState.showStreak,
       ),
       _PillOption(
@@ -220,7 +221,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: AppLocalizations.of(context).habitsTileCardHabits,
         subtitle: AppLocalizations.of(context).editTrackingDailyHabitCompletionProgres,
         icon: Icons.check_circle_outline,
-        color: const Color(0xFF10B981),
+        color: const Color(0xFF10B981),  // accent-allowlist: per-metric tracker identity colour, matches today_stats_row.dart's fixed per-metric palette (calories/steps/sleep/habits)
         enabled: pillsState.showHabits,
       ),
       // Gap 3 — cardio training-load (ACWR) state. Plain strings (no ARB key)
@@ -231,7 +232,7 @@ class EditTrackingSheet extends ConsumerWidget {
         title: 'Cardio load',
         subtitle: 'Training load and recovery balance',
         icon: Icons.monitor_heart_outlined,
-        color: const Color(0xFFEF4444),
+        color: const Color(0xFFEF4444),  // accent-allowlist: error/destructive -- must stay red (red-500)
         enabled: pillsState.showCardioLoad,
       ),
     ];
@@ -265,7 +266,7 @@ class EditTrackingSheet extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ),
@@ -382,7 +383,7 @@ class EditTrackingSheet extends ConsumerWidget {
           Switch.adaptive(
             value: pill.enabled,
             onChanged: isLastEnabled ? null : onChanged,
-            activeTrackColor: AppColors.cyan,
+            activeTrackColor: context.accentColor,
             activeThumbColor: Colors.white,
           ),
         ],

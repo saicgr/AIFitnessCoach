@@ -227,7 +227,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
             child: _StatItem(
               label: AppLocalizations.of(context).syncedWorkoutDetailMin,
               value: '${_formatValue(min)} $unit',
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           ),
           Container(
@@ -251,7 +251,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
             child: _StatItem(
               label: AppLocalizations.of(context).strengthOverviewCardMax,
               value: '${_formatValue(max)} $unit',
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
           ),
         ],

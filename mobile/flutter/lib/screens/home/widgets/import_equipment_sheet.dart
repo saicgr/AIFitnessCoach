@@ -467,7 +467,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
       children: [
         _InputTile(
           icon: Icons.picture_as_pdf_rounded,
-          tint: const Color(0xFFE11D48),
+          tint: context.accentColor,
           label: 'Upload PDF or Word',
           description: AppLocalizations.of(context).importEquipmentYourGymSEquipment,
           onTap: _pickPdf,
@@ -475,7 +475,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
         const SizedBox(height: 12),
         _InputTile(
           icon: Icons.photo_library_rounded,
-          tint: const Color(0xFF0EA5E9),
+          tint: context.accentColor,
           label: 'Take photos of your gym',
           description: AppLocalizations.of(context)!.importEquipmentSheetUpToPhotosEquipment(_kMaxPhotos),
           onTap: _pickPhotos,
@@ -483,7 +483,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
         const SizedBox(height: 12),
         _InputTile(
           icon: Icons.text_fields_rounded,
-          tint: const Color(0xFF22C55E),
+          tint: const Color(0xFF22C55E),  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
           label: 'Paste text',
           description: 'Copy a list from a website, email, or doc',
           onTap: () {
@@ -497,7 +497,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
         const SizedBox(height: 12),
         _InputTile(
           icon: Icons.link_rounded,
-          tint: const Color(0xFFF59E0B),
+          tint: const Color(0xFFF59E0B),  // accent-allowlist: warning severity (amber-500)
           label: 'Paste a URL',
           description: 'Link to your gym\'s equipment / facilities page',
           onTap: () {
@@ -690,7 +690,7 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.error_outline_rounded,
-              size: 56, color: Colors.red.shade400),
+              size: 56, color: Colors.red.shade400),  // accent-allowlist: error/destructive -- must stay red
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).workoutImportSummaryImportFailed,

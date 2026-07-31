@@ -22,7 +22,7 @@ class _ProviderCatalog {
       displayName: 'Strava',
       subtitle: 'Runs, rides, swims — push webhook, <1s latency.',
       icon: Icons.directions_run,
-      color: Color(0xFFFC4C02),
+      color: Color(0xFFFC4C02),  // accent-allowlist: third-party brand colour, legally fixed (Strava)
       requiresCredentials: false,
     ),
     _ProviderEntry(
@@ -30,7 +30,7 @@ class _ProviderCatalog {
       displayName: 'Fitbit',
       subtitle: 'Activity, heart rate, sleep. Push webhook.',
       icon: Icons.watch,
-      color: Color(0xFF00B0B9),
+      color: Color(0xFF00B0B9),  // accent-allowlist: third-party brand colour, legally fixed (Fitbit)
       requiresCredentials: false,
     ),
     _ProviderEntry(
@@ -46,7 +46,7 @@ class _ProviderCatalog {
       displayName: 'Apple Health',
       subtitle: 'iOS only — on-device HealthKit bridge.',
       icon: Icons.favorite,
-      color: Color(0xFFFF3B30),
+      color: Color(0xFFFF3B30),  // accent-allowlist: third-party brand colour, legally fixed (Apple Health)
       requiresCredentials: false,
       isDeviceOnly: true,
     ),
@@ -330,7 +330,7 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
               onPressed: () => _confirmDisconnect(account!),
               icon: const Icon(Icons.link_off, size: 18),
               label: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
             ),
             const SizedBox(width: 6),
             OutlinedButton.icon(
@@ -350,7 +350,7 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
                 onPressed: () => _confirmDisconnect(account),
                 icon: const Icon(Icons.link_off, size: 18),
                 label: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
               ),
             const SizedBox(width: 6),
             FilledButton.icon(
@@ -492,7 +492,7 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
             child: Text(AppLocalizations.of(context).googleCalendarConnectDisconnect),
           ),
         ],
@@ -562,7 +562,7 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? Colors.red.shade700 : null,
+        backgroundColor: isError ? Colors.red.shade700 : null,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   }
@@ -596,17 +596,17 @@ class _StatusPill extends StatelessWidget {
         break;
       case _ProviderStatus.syncing:
         fg = Colors.white;
-        bg = Colors.amber.shade700;
+        bg = Colors.amber.shade700;  // accent-allowlist: warning severity - must stay amber regardless of accent
         label = 'Syncing';
         break;
       case _ProviderStatus.needsReauth:
         fg = Colors.white;
-        bg = Colors.orange.shade700;
+        bg = Colors.orange.shade700;  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
         label = 'Reconnect';
         break;
       case _ProviderStatus.hasError:
         fg = Colors.white;
-        bg = Colors.red.shade600;
+        bg = Colors.red.shade600;  // accent-allowlist: error/destructive - must stay red
         label = 'Error';
         break;
     }
@@ -650,7 +650,7 @@ class _AccountDetail extends StatelessWidget {
             Tooltip(
               message: account.lastError!,
               child: const Icon(Icons.info_outline,
-                  size: 14, color: Colors.redAccent),
+                  size: 14, color: Colors.redAccent),  // accent-allowlist: error/destructive - sync-error tooltip icon
             ),
         ],
       ),
@@ -793,7 +793,7 @@ class _StravaAutoShareToggleState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not update Strava sharing: $e'),
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: Colors.red.shade700,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -838,7 +838,7 @@ class _StravaAutoShareToggleState
             padding: const EdgeInsets.only(top: 2, bottom: 4),
             child: Text(
               'Reconnect Strava to enable posting (write access).',
-              style: TextStyle(fontSize: 11, color: Colors.orange.shade800),
+              style: TextStyle(fontSize: 11, color: Colors.orange.shade800),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
             ),
           ),
       ],
@@ -859,7 +859,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
+            const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),  // accent-allowlist: error/destructive - sync-error state icon
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),

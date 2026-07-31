@@ -14,6 +14,7 @@ import '../core/constants/type_scale.dart';
 import '../core/providers/serious_mode_provider.dart';
 import '../core/providers/subscription_provider.dart';
 import '../data/services/recipe_notification_router.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/coach_refresh_coordinator.dart';

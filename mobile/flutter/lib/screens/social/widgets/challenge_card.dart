@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/safe_num.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Challenge Card - Displays a fitness challenge
 class ChallengeCard extends StatelessWidget {
   final String title;
@@ -49,7 +50,7 @@ class ChallengeCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isActive
-                  ? AppColors.orange.withValues(alpha: 0.5)
+                  ? context.accentColor.withValues(alpha: 0.5)
                   : cardBorder.withValues(alpha: 0.3),
               width: isActive ? 2 : 1,
             ),
@@ -69,8 +70,8 @@ class ChallengeCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.orange,
-                            AppColors.pink,
+                            context.accentColor,
+                            AppColors.pink,  // accent-allowlist: decorative gradient tint — not one of the app's default accent values, kept distinct for visual variety
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -113,7 +114,7 @@ class ChallengeCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withValues(alpha: 0.2),
+                          color: context.accentColor.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -121,7 +122,7 @@ class ChallengeCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -150,10 +151,10 @@ class ChallengeCard extends StatelessWidget {
                           ),
                           Text(
                             '${safePercent(progressPercentage)}%',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -164,9 +165,9 @@ class ChallengeCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: safeFraction(progressPercentage / 100),
-                          backgroundColor: AppColors.orange.withValues(alpha: 0.2),
-                          valueColor: const AlwaysStoppedAnimation<Color>(
-                            AppColors.orange,
+                          backgroundColor: context.accentColor.withValues(alpha: 0.2),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            context.accentColor,
                           ),
                           minHeight: 8,
                         ),

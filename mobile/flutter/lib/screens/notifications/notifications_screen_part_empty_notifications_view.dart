@@ -55,20 +55,20 @@ class _EmptyNotificationsView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: elevatedColor,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                border: Border.all(color: context.accentColor.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.lightbulb_outline, size: 18, color: AppColors.cyan),
+                      Icon(Icons.lightbulb_outline, size: 18, color: context.accentColor),
                       const SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context).notificationsScreenPartWhatToExpect,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                     ],
@@ -208,58 +208,23 @@ class _NotificationCard extends StatelessWidget {
     }
   }
 
-  Color _getColorForType(String type) {
+  // E2E register row 15: this used to hand ~24 notification types one of 5
+  // arbitrary bucket colors (cyan/purple/orange/blue/pink) with no real
+  // per-type meaning (e.g. workout_reminder/test/comment/week1_tip/contextual
+  // all shared cyan for no reason). Consolidated to the live accent; only the
+  // genuinely semantic outcomes (positive/celebration) keep their own color.
+  Color _getColorForType(BuildContext context, String type) {
     switch (type) {
-      case 'workout_reminder':
-        return AppColors.cyan;
-      case 'ai_coach':
-        return AppColors.purple;
-      case 'streak_alert':
-        return AppColors.orange;
       case 'achievement':
-        return AppColors.success;
-      case 'weekly_summary':
-        return AppColors.purple;
       case 'nutrition_reminder':
-        return AppColors.success;
-      case 'hydration_reminder':
-        return Colors.blue;
-      case 'test':
-        return AppColors.cyan;
-      case 'friend_request':
-        return AppColors.purple;
-      case 'challenge_received':
-        return AppColors.orange;
-      case 'challenge_accepted':
-        return AppColors.cyan;
       case 'challenge_completed':
-        return AppColors.success;
-      case 'challenge_beaten':
-        return const Color(0xFFFFD700);
-      case 'reaction':
-        return AppColors.pink;
-      case 'comment':
-        return AppColors.cyan;
-      case 'mention':
-        return AppColors.orange;
       case 'friend_accepted':
-        return AppColors.success;
-      case 'missed_workout':
-        return AppColors.orange;
-      case 'daily_crate':
-        return AppColors.purple;
       case 'double_xp':
-        return AppColors.success;
-      case 'week1_tip':
-        return AppColors.cyan;
-      case 'contextual':
-        return AppColors.cyan;
-      case 'wrapped':
-        return AppColors.purple;
-      case 'renewal':
-        return AppColors.orange;
+        return AppColors.success; // accent-allowlist: positive/earned outcome
+      case 'challenge_beaten':
+        return const Color(0xFFFFD700); // accent-allowlist: celebration gold, matches PR/trophy convention
       default:
-        return AppColors.cyan;
+        return context.accentColor;
     }
   }
 
@@ -302,7 +267,7 @@ class _NotificationCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final typeColor = _getColorForType(notification.type);
+    final typeColor = _getColorForType(context, notification.type);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -459,48 +424,18 @@ class _UnifiedNotificationCard extends StatelessWidget {
     }
   }
 
-  Color _getColorForType(String type) {
+  // See _getColorForType above (same E2E register row 15 consolidation).
+  Color _getColorForType(BuildContext context, String type) {
     switch (type) {
-      case 'workout_reminder':
-        return AppColors.cyan;
-      case 'ai_coach':
-        return AppColors.purple;
-      case 'streak_alert':
-        return AppColors.orange;
       case 'achievement':
-        return AppColors.success;
-      case 'weekly_summary':
-        return AppColors.purple;
       case 'nutrition_reminder':
-        return AppColors.success;
-      case 'hydration_reminder':
-        return Colors.blue;
-      case 'friend_request':
-        return AppColors.purple;
-      case 'challenge_received':
-        return AppColors.orange;
-      case 'challenge_accepted':
-        return AppColors.cyan;
       case 'challenge_completed':
-        return AppColors.success;
-      case 'challenge_beaten':
-        return const Color(0xFFFFD700);
-      case 'missed_workout':
-        return AppColors.orange;
-      case 'daily_crate':
-        return AppColors.purple;
       case 'double_xp':
-        return AppColors.success;
-      case 'week1_tip':
-        return AppColors.cyan;
-      case 'contextual':
-        return AppColors.cyan;
-      case 'wrapped':
-        return AppColors.purple;
-      case 'renewal':
-        return AppColors.orange;
+        return AppColors.success; // accent-allowlist: positive/earned outcome
+      case 'challenge_beaten':
+        return const Color(0xFFFFD700); // accent-allowlist: celebration gold, matches PR/trophy convention
       default:
-        return AppColors.cyan;
+        return context.accentColor;
     }
   }
 
@@ -539,7 +474,7 @@ class _UnifiedNotificationCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final typeColor = _getColorForType(notification.type);
+    final typeColor = _getColorForType(context, notification.type);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -642,7 +577,7 @@ class _UnifiedNotificationCard extends StatelessWidget {
                                   child: FilledButton(
                                     onPressed: onAccept,
                                     style: FilledButton.styleFrom(
-                                      backgroundColor: AppColors.cyan,
+                                      backgroundColor: context.accentColor,
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(horizontal: 12),
                                       shape: RoundedRectangleBorder(

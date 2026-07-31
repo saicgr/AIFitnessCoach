@@ -558,7 +558,7 @@ class _RankHeroCard extends ConsumerWidget {
     // semantics; macro/XP categories keep their fixed hue).
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final xpPurple =
-        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: XP category metric keeps a fixed hue independent of accent -- see comment above
 
     // Neutral surface — drops the prior accent-tinted gradient + accent
     // border. Accent is now reserved for the rank number itself (one
@@ -763,7 +763,7 @@ class _PrimaryRankLine extends StatelessWidget {
           Icon(
             delta > 0 ? Icons.arrow_upward : Icons.arrow_downward,
             size: 18,
-            color: delta > 0 ? Colors.green : Colors.redAccent,
+            color: delta > 0 ? Colors.green : Colors.redAccent,  // accent-allowlist: rank-delta arrow -- up is green, down is red
           ),
           const SizedBox(width: 2),
           Text(
@@ -771,7 +771,7 @@ class _PrimaryRankLine extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w800,
-              color: delta > 0 ? Colors.green : Colors.redAccent,
+              color: delta > 0 ? Colors.green : Colors.redAccent,  // accent-allowlist: rank-delta value -- up is green, down is red
             ),
           ),
         ],
@@ -848,7 +848,7 @@ class _MoversChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.trending_up, size: 10, color: Colors.green),
+          const Icon(Icons.trending_up, size: 10, color: Colors.green),  // accent-allowlist: movers indicator -- positive/success framing
           const SizedBox(width: 3),
           Text(
             'Movers',
@@ -1908,8 +1908,8 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
     // and made the two shapes indistinguishable.
     //   AppColors.magenta = Them
     //   AppColors.cyan    = You
-    const targetColor = AppColors.magenta;
-    const viewerColor = AppColors.cyan;
+    const targetColor = AppColors.magenta;  // accent-allowlist: You-vs-Them radar chart series colour -- pinned to avoid colliding with the accent-coloured viewer series
+    const viewerColor = AppColors.cyan;  // accent-allowlist: You-vs-Them radar chart series colour -- pinned to avoid colliding with the accent-coloured target series
 
     // Detect "no shape yet" case — every axis below 5% of full. Without
     // this guard fl_chart still draws a tiny regular hexagon at the

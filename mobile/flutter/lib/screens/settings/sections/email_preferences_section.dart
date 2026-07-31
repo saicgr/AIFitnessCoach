@@ -9,6 +9,7 @@ import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The email preferences section for managing email subscription settings.
 ///
 /// Allows users to control what emails they receive from Zealova.
@@ -91,7 +92,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
                     ? AppLocalizations.of(context).emailPreferencesUnsubscribedFromMarketingEm
                     : 'Failed to unsubscribe. Please try again.',
               ),
-              backgroundColor: success ? AppColors.success : AppColors.error,
+              backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
             ),
           );
         }
@@ -126,7 +127,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
         child: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.cyan,
+            color: context.accentColor,
           ),
         ),
       );
@@ -142,7 +143,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            Icon(Icons.error_outline, color: AppColors.error, size: 32),
+            Icon(Icons.error_outline, color: AppColors.error, size: 32),  // accent-allowlist: error/destructive - must stay red
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context).emailPreferencesFailedToLoadEmail,
@@ -172,7 +173,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
               children: [
                 Icon(
                   Icons.email_outlined,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -193,7 +194,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Workout Reminders
           SettingSwitchTile(
             icon: Icons.fitness_center,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).notificationPrimeWorkoutReminders,
             subtitle: AppLocalizations.of(context).emailPreferencesDailyRemindersAboutYour,
             value: prefs?.workoutReminders ?? true,
@@ -207,7 +208,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Missed-workout alerts (new)
           SettingSwitchTile(
             icon: Icons.running_with_errors_outlined,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).emailPreferencesMissedWorkoutNudges,
             subtitle: AppLocalizations.of(context).emailPreferencesAFollowUpIf,
             value: prefs?.missedWorkoutAlerts ?? true,
@@ -221,7 +222,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Streak alerts (new, independent of workout reminders)
           SettingSwitchTile(
             icon: Icons.local_fire_department_outlined,
-            iconColor: Colors.deepOrange,
+            iconColor: Colors.deepOrange,  // accent-allowlist: streak/fire iconography - conventional flame colour, matches other streak indicators app-wide
             title: AppLocalizations.of(context).emailPreferencesStreakAlerts,
             subtitle: AppLocalizations.of(context).emailPreferencesWhenYourStreakIs,
             value: prefs?.streakAlerts ?? true,
@@ -235,7 +236,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Motivational nudges (renamed from AI coach tips)
           SettingSwitchTile(
             icon: Icons.favorite_outline,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).emailPreferencesMotivationalNudges,
             subtitle: AppLocalizations.of(context).emailPreferencesCheckInsFromYour,
             value: prefs?.coachTips ?? true,
@@ -249,7 +250,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Achievement alerts (new)
           SettingSwitchTile(
             icon: Icons.emoji_events_outlined,
-            iconColor: Colors.amber,
+            iconColor: Colors.amber,  // accent-allowlist: warning severity - must stay amber regardless of accent
             title: AppLocalizations.of(context).emailPreferencesAchievementUnlocks,
             subtitle: AppLocalizations.of(context).emailPreferencesTrophiesFirstWorkoutCeleb,
             value: prefs?.achievementAlerts ?? true,
@@ -263,7 +264,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Weekly Summary
           SettingSwitchTile(
             icon: Icons.bar_chart,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).emailPreferencesWeeklySummary,
             subtitle: AppLocalizations.of(context).emailPreferencesSundayRecapWithWorkouts,
             value: prefs?.weeklySummary ?? true,
@@ -277,7 +278,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Product Updates
           SettingSwitchTile(
             icon: Icons.new_releases_outlined,
-            iconColor: AppColors.success,
+            iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             title: AppLocalizations.of(context).emailPreferencesProductUpdates,
             subtitle: AppLocalizations.of(context).emailPreferencesNewFeaturesAndApp,
             value: prefs?.productUpdates ?? true,
@@ -291,7 +292,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
           // Promotional (opt-in)
           SettingSwitchTile(
             icon: Icons.local_offer_outlined,
-            iconColor: Colors.pink,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).emailPreferencesOffersDiscounts,
             subtitle: AppLocalizations.of(context).emailPreferencesSpecialOffersAndRe,
             value: prefs?.promotional ?? false,
@@ -308,7 +309,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
             child: IgnorePointer(
               child: SettingSwitchTile(
                 icon: Icons.credit_card_outlined,
-                iconColor: AppColors.cyan,
+                iconColor: context.accentColor,
                 title: AppLocalizations.of(context).emailPreferencesBillingAccount,
                 subtitle: AppLocalizations.of(context).emailPreferencesPurchaseBillingCancellatio,
                 value: true,
@@ -330,7 +331,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
                 children: [
                   Icon(
                     Icons.unsubscribe_outlined,
-                    color: AppColors.error.withOpacity(0.8),
+                    color: AppColors.error.withOpacity(0.8),  // accent-allowlist: error/destructive - must stay red
                     size: 22,
                   ),
                   const SizedBox(width: 12),
@@ -342,7 +343,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
                           AppLocalizations.of(context).emailPreferencesUnsubscribeFromAllMarketing,
                           style: TextStyle(
                             fontSize: 15,
-                            color: AppColors.error.withOpacity(0.9),
+                            color: AppColors.error.withOpacity(0.9),  // accent-allowlist: error/destructive - must stay red
                           ),
                         ),
                         Text(
@@ -387,7 +388,7 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
-          Icon(Icons.unsubscribe_outlined, color: AppColors.error, size: 24),
+          Icon(Icons.unsubscribe_outlined, color: AppColors.error, size: 24),  // accent-allowlist: error/destructive - must stay red
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context).emailPreferencesUnsubscribe,
@@ -432,7 +433,7 @@ class _UnsubscribeConfirmDialog extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(
             AppLocalizations.of(context).emailPreferencesUnsubscribe,
-            style: TextStyle(color: AppColors.error),
+            style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
           ),
         ),
       ],

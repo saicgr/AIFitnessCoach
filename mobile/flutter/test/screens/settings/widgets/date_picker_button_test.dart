@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitwiz/core/theme/accent_color_provider.dart';
 import 'package:fitwiz/screens/settings/widgets/date_picker_button.dart';
 import 'package:fitwiz/core/constants/app_colors.dart';
 
@@ -107,9 +108,21 @@ void main() {
       expect(find.byIcon(Icons.calendar_today), findsOneWidget);
     });
 
-    testWidgets('calendar icon has cyan color', (tester) async {
+    testWidgets('calendar icon has the app accent colour', (tester) async {
+      // E2E register row 15. This test used to assert the literal
+      // `AppColors.cyan` — i.e. it encoded the defect: a control painted a
+      // fixed cyan while the app accent was orange. The widget now reads the
+      // accent, so the test drives a NON-DEFAULT accent through
+      // AccentColorScope and asserts the control follows it. Asserting a
+      // different literal would just re-freeze the bug at a new colour.
+      const scoped = AccentColor.cyan;
+      // These widgets are rendered with isDark: true, so resolve the dark shade.
+      final expected = scoped.getColor(true);
+
       await tester.pumpWidget(
-        MaterialApp(
+        AccentColorScope(
+          accent: scoped,
+          child: MaterialApp(
           home: Scaffold(
             body: DatePickerButton(
               label: 'Test',
@@ -119,10 +132,11 @@ void main() {
             ),
           ),
         ),
+        ),
       );
 
       final icon = tester.widget<Icon>(find.byIcon(Icons.calendar_today));
-      expect(icon.color, AppColors.cyan);
+      expect(icon.color, expected);
     });
 
     testWidgets('calls onTap when tapped', (tester) async {

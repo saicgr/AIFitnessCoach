@@ -76,7 +76,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.purple.withValues(alpha: 0.2),
+                              color: context.accentColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -85,7 +85,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                                 Icon(
                                   Icons.all_inclusive,
                                   size: 12,
-                                  color: AppColors.purple,
+                                  color: context.accentColor,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -93,7 +93,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.purple,
+                                    color: context.accentColor,
                                   ),
                                 ),
                               ],
@@ -220,7 +220,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
             : Colors.white.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -230,14 +230,14 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Icon(Icons.timer_outlined,
-                  size: 22, color: AppColors.orange),
+                  size: 22, color: context.accentColor),
               const SizedBox(width: 8),
               Text(
                 headlineNumber,
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   height: 1.0,
                 ),
               ),
@@ -249,7 +249,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                 ),
               ),
@@ -409,7 +409,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                   icon: Icons.play_circle_outline,
                   title: AppLocalizations.of(context).subscriptionManagementScreenResumeSubscription,
                   subtitle: AppLocalizations.of(context).subscriptionManagementScreenStartBillingAgain,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                   onTap: _handleResume,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
@@ -421,7 +421,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                   icon: Icons.pause_circle_outline,
                   title: AppLocalizations.of(context).subscriptionManagementScreenPauseSubscription,
                   subtitle: AppLocalizations.of(context).subscriptionManagementScreenTakeABreakFor,
-                  color: Colors.amber.shade700,
+                  color: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                   onTap: _showPauseSheet,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
@@ -432,7 +432,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                 icon: Icons.cancel_outlined,
                 title: AppLocalizations.of(context).subscriptionManagementScreenCancelSubscription,
                 subtitle: AppLocalizations.of(context).subscriptionManagementScreenCancelAutoRenewal,
-                color: Colors.red.shade400,
+                color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                 onTap: _showCancelConfirmation,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
@@ -450,7 +450,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
               'Manage in ${Platform.isIOS ? 'App Store' : 'Play Store'}',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
             ),
           ),

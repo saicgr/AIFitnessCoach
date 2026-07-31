@@ -7,6 +7,7 @@ import '../models/filter_option.dart';
 import '../providers/library_providers.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Search bar widget for filtering exercises by name OR equipment.
 ///
 /// GymBeat-parity: typing an equipment keyword (e.g. "treadmill", "barbell")
@@ -119,7 +120,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     final query = ref.watch(exerciseSearchProvider);
     final filterOpts = ref.watch(filterOptionsProvider).valueOrNull;
@@ -263,7 +264,7 @@ class _ProgramSearchBarState extends ConsumerState<ProgramSearchBar> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return TextField(
       controller: _controller,

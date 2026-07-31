@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/custom_goal.dart';
@@ -210,12 +211,12 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.2),
+                    color: AppColors.success.withValues(alpha: 0.2),  // accent-allowlist: goal-created success confirmation -- success semantic
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.check,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: goal-created success confirmation -- success semantic
                     size: 24,
                   ),
                 ),
@@ -295,7 +296,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -431,19 +432,19 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                 vertical: 14,
               ),
               suffixIcon: _isCreating
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
+                  ? Padding(
+                      padding: const EdgeInsets.all(12),
                       child: SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                     )
                   : IconButton(
-                      icon: const Icon(Icons.add_circle, color: AppColors.cyan),
+                      icon: Icon(Icons.add_circle, color: context.accentColor),
                       onPressed: () => _createGoal(_goalController.text),
                     ),
             ),
@@ -476,10 +477,10 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.add,
                               size: 14,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -561,7 +562,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           const Icon(
             Icons.error_outline,
             size: 48,
-            color: AppColors.error,
+            color: AppColors.error,  // accent-allowlist: error state icon -- must stay red
           ),
           const SizedBox(height: 16),
           Text(
@@ -614,18 +615,18 @@ class _GoalCard extends StatelessWidget {
     switch (goal.goalType.toLowerCase()) {
       case 'power':
       case 'plyometric':
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: goal-type badge legend colour -- power/plyometric
       case 'skill':
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: goal-type badge legend colour -- skill
       case 'endurance':
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: goal-type badge legend colour -- endurance
       case 'strength':
-        return AppColors.red;
+        return AppColors.red;  // accent-allowlist: goal-type badge legend colour -- strength
       case 'flexibility':
       case 'mobility':
         return AppColors.teal;
       default:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: goal-type badge legend colour -- default
     }
   }
 
@@ -677,7 +678,7 @@ class _GoalCard extends StatelessWidget {
                       child: Icon(
                         filled ? Icons.star : Icons.star_border,
                         size: 18,
-                        color: filled ? AppColors.yellow : AppColors.textMuted,
+                        color: filled ? AppColors.yellow : AppColors.textMuted,  // accent-allowlist: priority star rating -- universal filled-star gold convention
                       ),
                     );
                   }),
@@ -752,7 +753,7 @@ class _GoalCard extends StatelessWidget {
                   const Icon(
                     Icons.lightbulb_outline,
                     size: 14,
-                    color: AppColors.yellow,
+                    color: AppColors.yellow,  // accent-allowlist: tip/info icon -- warning/info semantic
                   ),
                   const SizedBox(width: 6),
                   Expanded(

@@ -90,10 +90,10 @@ class ScoreBreakdownSection extends StatelessWidget {
   }
 
   Color _getScoreColor(int score) {
-    if (score >= 80) return AppColors.green;
-    if (score >= 60) return AppColors.cyan;
-    if (score >= 40) return AppColors.yellow;
-    return Colors.orange;
+    if (score >= 80) return AppColors.green; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
+    if (score >= 60) return AppColors.cyan; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
+    if (score >= 40) return AppColors.yellow; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
+    return Colors.orange; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
   }
 }
 

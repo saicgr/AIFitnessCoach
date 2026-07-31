@@ -49,25 +49,25 @@ extension XPGoalTypeExtension on XPGoalType {
   Color get color {
     switch (this) {
       case XPGoalType.dailyLogin:
-        return AppColors.orange;
+        return AppColors.orange; // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.weightLog:
-        return const Color(0xFF06B6D4); // Cyan
+        return const Color(0xFF06B6D4); // Cyan // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.mealLog:
-        return AppColors.purple;
+        return AppColors.purple; // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.workoutComplete:
-        return AppColors.orange;
+        return AppColors.orange; // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.proteinGoal:
-        return AppColors.green;
+        return AppColors.green; // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.bodyMeasurements:
-        return const Color(0xFFEC4899); // Pink
+        return const Color(0xFFEC4899); // Pink // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.stepsGoal:
-        return AppColors.green;
+        return AppColors.green; // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.hydrationGoal:
-        return const Color(0xFF0EA5E9); // Sky blue
+        return const Color(0xFF0EA5E9); // Sky blue // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.calorieGoal:
-        return AppColors.orange;
+        return AppColors.orange; // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
       case XPGoalType.cycleLogged:
-        return const Color(0xFFEC4899); // Pink — the cycle feature accent
+        return const Color(0xFFEC4899); // Pink — the cycle feature accent // accent-allowlist: XP goal-type identity color for the celebration particle burst - blended with gold+white, not decorative chrome; only consumed within this file's particle effect
     }
   }
 
@@ -163,8 +163,8 @@ class _XPEarnedToastState extends State<XPEarnedToast>
     final colors = [
       goalColor,
       goalColor.withValues(alpha: 0.8),
-      AppColors.orange,
-      const Color(0xFFFFD700), // Gold
+      AppColors.orange, // accent-allowlist: celebration particle burst palette (gold/orange), matches confetti convention
+      const Color(0xFFFFD700), // Gold // accent-allowlist: celebration particle burst palette (gold/orange), matches confetti convention
       Colors.white,
     ];
 

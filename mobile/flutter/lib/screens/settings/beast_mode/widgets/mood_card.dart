@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/providers/beast_mode_provider.dart';
 import '../../../../../data/services/haptic_service.dart';
 import '../../../../../widgets/app_snackbar.dart';
@@ -10,6 +9,7 @@ import 'shared/tappable_cell.dart';
 import 'shared/slider_dialog.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class MoodCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -46,7 +46,7 @@ class MoodCard extends ConsumerWidget {
                   AppSnackBar.info(context, 'Mood multipliers reset');
                 },
                 child: Text(AppLocalizations.of(context).moodCardResetAll,
-                    style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
+                    style: TextStyle(fontSize: 12, color: context.accentColor, fontWeight: FontWeight.w600)),
               ),
             ],
           ),

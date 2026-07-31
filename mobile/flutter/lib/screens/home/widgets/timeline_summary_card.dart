@@ -49,7 +49,7 @@ class TimelineSummaryCard extends StatelessWidget {
             children: [
               if (summary.streakDay != null && summary.streakDay! > 0) ...[
                 const Icon(Icons.local_fire_department,
-                    color: Colors.orange, size: 18),
+                    color: Colors.orange, size: 18),  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
                 const SizedBox(width: 4),
                 Text(
                   'Day ${summary.streakDay}',
@@ -107,30 +107,30 @@ class TimelineSummaryCard extends StatelessWidget {
             children: [
               _MiniPill(
                 icon: Icons.water_drop,
-                color: Colors.blue,
+                color: Colors.blue,  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
                 label: '${summary.waterMl}/${summary.waterGoalMl} ml',
               ),
               _MiniPill(
                 icon: Icons.restaurant,
-                color: Colors.orange,
+                color: Colors.orange,  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
                 label: '${summary.caloriesEaten} kcal in',
               ),
               if (summary.habitsCompleted > 0)
                 _MiniPill(
                   icon: Icons.check_circle,
-                  color: Colors.green,
+                  color: Colors.green,  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
                   label: '${summary.habitsCompleted} habits',
                 ),
               if (summary.mood != null)
                 _MiniPill(
                   icon: Icons.mood,
-                  color: Colors.amber,
+                  color: Colors.amber,  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
                   label: 'Mood: ${summary.mood}',
                 ),
               if (summary.steps != null && summary.steps! > 0)
                 _MiniPill(
                   icon: Icons.directions_walk,
-                  color: Colors.teal,
+                  color: Colors.teal,  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
                   label: '${summary.steps} steps',
                 ),
             ],
@@ -144,7 +144,7 @@ class TimelineSummaryCard extends StatelessWidget {
       net >= 0 ? '+$net' : '$net';
 
   static Color _calorieColor(int net, Color accent) =>
-      net <= 0 ? Colors.green : Colors.orange;
+      net <= 0 ? Colors.green : Colors.orange;  // accent-allowlist: timeline summary-pill categorical legend (each stat type -- steps/water/calories/etc -- keeps a fixed colour matching timeline_entry_tile.dart)
 
   static String _fmtSleep(int minutes) {
     if (minutes <= 0) return '—';

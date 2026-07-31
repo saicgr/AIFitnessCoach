@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Stats Level Up Template - RPG/gaming style with XP bar and level ring
 /// Deep purple → indigo gradient with hexagonal grid
 class StatsLevelUpTemplate extends StatelessWidget {
@@ -73,7 +74,7 @@ class StatsLevelUpTemplate extends StatelessWidget {
                 Text(
                   _rank,
                   style: const TextStyle(
-                    color: Color(0xFFA78BFA),
+                    color: Color(0xFFA78BFA),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 4,
@@ -97,7 +98,7 @@ class StatsLevelUpTemplate extends StatelessWidget {
                           const Text(
                             'LVL',
                             style: TextStyle(
-                              color: Color(0xFFA78BFA),
+                              color: Color(0xFFA78BFA),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 2,
@@ -162,14 +163,14 @@ class StatsLevelUpTemplate extends StatelessWidget {
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [
-                                    Color(0xFF7C3AED),
-                                    Color(0xFFA78BFA),
+                                    Color(0xFF7C3AED),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
+                                    Color(0xFFA78BFA),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(5),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFF7C3AED).withOpacity(0.5),
+                                    color: const Color(0xFF7C3AED).withOpacity(0.5),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
                                     blurRadius: 8,
                                     spreadRadius: 1,
                                   ),
@@ -193,7 +194,7 @@ class StatsLevelUpTemplate extends StatelessWidget {
                         icon: Icons.fitness_center,
                         value: '$totalWorkouts',
                         label: AppLocalizations.of(context).workoutListTitle,
-                        color: const Color(0xFF7C3AED),
+                        color: const Color(0xFF7C3AED),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -202,7 +203,7 @@ class StatsLevelUpTemplate extends StatelessWidget {
                         icon: Icons.local_fire_department,
                         value: '$currentStreak',
                         label: AppLocalizations.of(context).xpProgressCardStreak,
-                        color: const Color(0xFFF97316),
+                        color: context.accentColor,
                       ),
                     ),
                   ],
@@ -301,8 +302,8 @@ class _LevelRingPainter extends CustomPainter {
         startAngle: -math.pi / 2,
         endAngle: 3 * math.pi / 2,
         colors: [
-          Color(0xFF7C3AED),
-          Color(0xFFA78BFA),
+          Color(0xFF7C3AED),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
+          Color(0xFFA78BFA),  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
           Color(0xFFC4B5FD),
         ],
       ).createShader(Rect.fromCircle(center: center, radius: radius))
@@ -320,7 +321,7 @@ class _LevelRingPainter extends CustomPainter {
 
     // Glow effect
     final glowPaint = Paint()
-      ..color = const Color(0xFF7C3AED).withOpacity(0.2)
+      ..color = const Color(0xFF7C3AED).withOpacity(0.2)  // accent-allowlist: fixed decorative template gradient (level-up violet) — not tied to accent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);

@@ -19,6 +19,7 @@ import '../../l10n/generated/app_localizations.dart';
 // weight-projection screen so both surfaces quote the same timeline.
 // (WeightProjectionCalculator lives in a `part` of this library.)
 import 'weight_projection_screen.dart' show WeightProjectionCalculator;
+import '../../core/theme/accent_color_provider.dart';
 
 /// Commitment Pact Screen — Onboarding v5
 ///
@@ -144,8 +145,8 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                 child: Container(
                   height: 54,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+                    gradient: LinearGradient(
+                      colors: [AppColors.onboardingAccent, context.accentColor],
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),

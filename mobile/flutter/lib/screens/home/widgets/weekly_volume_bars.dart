@@ -90,10 +90,10 @@ class _WeeklyVolumeBarsState extends ConsumerState<WeeklyVolumeBars> {
     final pct = cap == 0 ? 0.0 : (e.weeklySets / cap).clamp(0.0, 1.2);
     final atCap = pct >= 0.95;
     final color = atCap
-        ? const Color(0xFFE74C3C)
+        ? const Color(0xFFE74C3C)  // accent-allowlist: weekly training-volume capacity traffic light (red/amber/green vs cap)
         : pct >= 0.75
-            ? const Color(0xFFF5A623)
-            : const Color(0xFF2ECC71);
+            ? const Color(0xFFF5A623)  // accent-allowlist: weekly training-volume capacity traffic light (red/amber/green vs cap)
+            : const Color(0xFF2ECC71);  // accent-allowlist: weekly training-volume capacity traffic light (red/amber/green vs cap)
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),

@@ -220,91 +220,91 @@ class NotificationService {
       id: 'workout_coach',
       name: 'Workout Coach',
       description: 'Workout reminders and motivation from your Workout Coach',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'nutrition_reminder': _ChannelConfig(
       id: 'nutrition_coach',
       name: 'Nutrition Coach',
       description: 'Meal logging reminders from your Nutrition Coach',
-      color: Color(0xFF4ADE80), // Green
+      color: Color(0xFF4ADE80), // Green  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'hydration_reminder': _ChannelConfig(
       id: 'hydration_coach',
       name: 'Hydration Coach',
       description: 'Water intake reminders from your Hydration Coach',
-      color: Color(0xFF3B82F6), // Blue
+      color: Color(0xFF3B82F6), // Blue  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'streak_alert': _ChannelConfig(
       id: 'streak_coach',
       name: 'Streak Coach',
       description: 'Streak celebrations and alerts',
-      color: Color(0xFFF97316), // Orange
+      color: Color(0xFFF97316), // Orange  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'weekly_summary': _ChannelConfig(
       id: 'progress_coach',
       name: 'Progress Coach',
       description: 'Weekly summaries and progress updates',
-      color: Color(0xFFA855F7), // Purple
+      color: Color(0xFFA855F7), // Purple  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'billing_reminder': _ChannelConfig(
       id: 'billing_coach',
       name: 'Billing Reminders',
       description: 'Subscription renewal and billing notifications',
-      color: Color(0xFF10B981), // Emerald
+      color: Color(0xFF10B981), // Emerald  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'movement_reminder': _ChannelConfig(
       id: 'movement_coach',
       name: 'Movement Coach',
       description: 'Hourly movement reminders to reduce sedentary time',
-      color: Color(0xFFEAB308), // Yellow
+      color: Color(0xFFEAB308), // Yellow  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'ai_coach': _ChannelConfig(
       id: 'ai_coach',
       name: 'AI Coach',
       description: 'General messages from your ${Branding.appName} coach',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'test': _ChannelConfig(
       id: 'test_notifications',
       name: 'Test Notifications',
       description: 'Test notifications',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'live_chat': _ChannelConfig(
       id: 'live_chat',
       name: 'Live Chat Support',
       description: 'Messages from support agents',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'live_chat_message': _ChannelConfig(
       id: 'live_chat',
       name: 'Live Chat Support',
       description: 'Messages from support agents',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'live_chat_connected': _ChannelConfig(
       id: 'live_chat',
       name: 'Live Chat Support',
       description: 'Messages from support agents',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'live_chat_ended': _ChannelConfig(
       id: 'live_chat',
       name: 'Live Chat Support',
       description: 'Messages from support agents',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'daily_bundle': _ChannelConfig(
       id: 'daily_bundle',
       name: 'Daily Check-ins',
       description: 'Morning, midday, and evening check-in notifications',
-      color: Color(0xFF00D9FF), // Cyan
+      color: Color(0xFF00D9FF), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     'schedule_reminder': _ChannelConfig(
       id: 'schedule_reminder',
       name: 'Schedule Reminders',
       description: 'Reminders for your scheduled activities, meals, and habits',
-      color: Color(0xFF06B6D4), // Cyan
+      color: Color(0xFF06B6D4), // Cyan  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
     ),
     // Cycle tracking reminders (period / fertility / BBT / symptom check-in).
     // One channel for the whole feature so the OS groups them and the user
@@ -314,7 +314,7 @@ class NotificationService {
       id: 'cycle_reminder',
       name: 'Cycle Reminders',
       description: 'Period, fertility, and cycle-logging reminders',
-      color: Color(0xFFEC4899), // Pink — the cycle feature accent
+      color: Color(0xFFEC4899), // Pink — the cycle feature accent  // accent-allowlist: cycle-tracking feature's own established brand colour (see cycle screens), plus Android notification channel colour has no BuildContext
     ),
   };
 
@@ -323,7 +323,7 @@ class NotificationService {
     id: 'fitwiz_notifications',
     name: '${Branding.appName}',
     description: 'Notifications from your ${Branding.appName} coach',
-    color: Color(0xFF00D9FF),
+    color: Color(0xFF00D9FF),  // accent-allowlist: Android notification channel colour — OS-level channel registration (static const, no BuildContext); differentiates per-coach system channels, not app-in-UI chrome
   );
 
   /// Initialize local timezone based on device timezone offset

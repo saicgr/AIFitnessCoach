@@ -186,7 +186,7 @@ class WeeklyCalendarCard extends ConsumerWidget {
                   height: 6,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   ),
                 )
               : day.isScheduled

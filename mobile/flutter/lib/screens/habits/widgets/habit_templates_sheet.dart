@@ -176,7 +176,7 @@ class HabitTemplatesSheet extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.red.shade50,
+                              color: Colors.red.shade50,  // accent-allowlist: "AVOID" badge background for negative habit templates, warning semantic not accent, matches habit_card.dart convention
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -184,7 +184,7 @@ class HabitTemplatesSheet extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.red.shade700,
+                                color: Colors.red.shade700,  // accent-allowlist: "AVOID" badge text for negative habit templates, warning semantic not accent, matches habit_card.dart convention
                               ),
                             ),
                           ),

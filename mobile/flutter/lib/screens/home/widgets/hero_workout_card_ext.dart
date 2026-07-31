@@ -30,7 +30,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
         // Network-failed dismiss: still removed locally; tell user it'll
         // sync when back online (no resurrection of card).
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).heroWorkoutCardDismissedOfflineWillSync),
               backgroundColor: AppColors.textMuted,
@@ -40,7 +40,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
       } else if (mounted) {
         // Best-effort: keep workouts list in sync as well.
         ref.read(workoutsProvider.notifier).silentRefresh();
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardQuickWorkoutDismissed),
             backgroundColor: AppColors.textMuted,
@@ -49,10 +49,10 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotDismissWorkout),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -72,7 +72,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
       title: AppLocalizations.of(context).workoutOptionsMarkAsDone,
       message: dialogMessage,
       confirmText: AppLocalizations.of(context).heroWorkoutCardMarkDone,
-      confirmColor: AppColors.success,
+      confirmColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
       icon: Icons.check_circle_rounded,
     );
 
@@ -88,20 +88,20 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
         ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
         ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).heroWorkoutCardWorkoutMarkedAsDone),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
             ),
           );
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotMarkWorkout),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -229,12 +229,12 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
               ListTile(
                 leading: Icon(
                   Icons.check_circle_outline,
-                  color: isDark ? AppColors.success : AppColors.success,
+                  color: isDark ? AppColors.success : AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 ),
                 title: Text(
                   AppLocalizations.of(context).heroWorkoutCardMarkAsDone2,
                   style: TextStyle(
-                    color: isDark ? AppColors.success : AppColors.success,
+                    color: isDark ? AppColors.success : AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     fontWeight: FontWeight.w500,
                   ),
                 ),

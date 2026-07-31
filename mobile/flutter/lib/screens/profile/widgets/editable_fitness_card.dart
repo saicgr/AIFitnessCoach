@@ -16,6 +16,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../home/widgets/manage_gym_profiles_sheet.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 
 part 'editable_fitness_card_part_editable_fitness_card_state.dart';

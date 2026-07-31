@@ -1,6 +1,5 @@
 part of 'level_up_dialog.dart';
 
-
 // =============================================================================
 // Accomplishment data model
 // =============================================================================
@@ -22,7 +21,6 @@ class _Accomplishment {
     this.isCrate = false,
   });
 }
-
 
 // =============================================================================
 // Accomplishments carousel — cards slide in from right, pause, then slide out
@@ -48,9 +46,17 @@ class _AccomplishmentCarousel extends StatelessWidget {
         // Section header
         Row(
           children: [
-            Container(width: 20, height: 1, color: Colors.white.withValues(alpha: 0.15)),
+            Container(
+              width: 20,
+              height: 1,
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
             const SizedBox(width: 8),
-            Icon(Icons.military_tech_rounded, size: 14, color: Colors.white.withValues(alpha: 0.5)),
+            Icon(
+              Icons.military_tech_rounded,
+              size: 14,
+              color: Colors.white.withValues(alpha: 0.5),
+            ),
             const SizedBox(width: 6),
             Text(
               AppLocalizations.of(context).levelUpDialogAccomplishments,
@@ -63,7 +69,12 @@ class _AccomplishmentCarousel extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(child: Container(height: 1, color: Colors.white.withValues(alpha: 0.15))),
+            Expanded(
+              child: Container(
+                height: 1,
+                color: Colors.white.withValues(alpha: 0.15),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 10),
@@ -88,15 +99,16 @@ class _AccomplishmentCarousel extends StatelessWidget {
 
               return SlideTransition(
                 position: isIncoming ? slideIn : slideOut,
-                child: FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
+                child: FadeTransition(opacity: animation, child: child),
               );
             },
             child: _AccomplishmentCard(
               key: ValueKey<int>(currentIndex),
-              accomplishment: accomplishments[currentIndex.clamp(0, accomplishments.length - 1)],
+              accomplishment:
+                  accomplishments[currentIndex.clamp(
+                    0,
+                    accomplishments.length - 1,
+                  )],
               onOpenCrate: onOpenCrate,
               compact: compact,
               index: currentIndex,
@@ -129,7 +141,6 @@ class _AccomplishmentCarousel extends StatelessWidget {
     );
   }
 }
-
 
 // =============================================================================
 // Single accomplishment card
@@ -170,104 +181,115 @@ class _AccomplishmentCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // XP text label (top, like "3,822 XP GAINED")
-          Text(
-            accomplishment.xpText,
-            style: TextStyle(
-              fontSize: compact ? 9 : 10,
-              fontWeight: FontWeight.w800,
-              color: color,
-              letterSpacing: 2,
-              decoration: TextDecoration.none,
-            ),
-          ),
-          SizedBox(height: compact ? 10 : 14),
-
-          // Icon
-          Text(
-            accomplishment.icon,
-            style: TextStyle(fontSize: compact ? 36 : 44),
-          ),
-          SizedBox(height: compact ? 8 : 12),
-
-          // Title
-          Text(
-            accomplishment.title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: compact ? 15 : 17,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1,
-              decoration: TextDecoration.none,
-            ),
-          ),
-          const SizedBox(height: 4),
-
-          // Subtitle
-          Text(
-            accomplishment.subtitle,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: compact ? 11 : 12,
-              color: Colors.white60,
-              decoration: TextDecoration.none,
-              height: 1.3,
-            ),
-          ),
-
-          // Progress bar (mastery style)
-          SizedBox(height: compact ? 10 : 14),
-          SizedBox(
-            height: 4,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: 1.0,
-                backgroundColor: Colors.white.withValues(alpha: 0.08),
-                valueColor: AlwaysStoppedAnimation<Color>(color.withValues(alpha: 0.6)),
+      // The Expanded ancestor (level_up_dialog.dart's carousel slot) gives
+      // this card a FIXED height budget sized off the plain (non-crate)
+      // variant. The crate variant adds an extra spacer + full-width button
+      // (~50px taller) — without a scroll fallback that overflows the
+      // Column by ~20px (E2E #115). SingleChildScrollView is a no-op when
+      // content already fits (the common case) and only kicks in for the
+      // taller crate card, so nothing visually changes for non-crate cards.
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // XP text label (top, like "3,822 XP GAINED")
+            Text(
+              accomplishment.xpText,
+              style: TextStyle(
+                fontSize: compact ? 9 : 10,
+                fontWeight: FontWeight.w800,
+                color: color,
+                letterSpacing: 2,
+                decoration: TextDecoration.none,
               ),
             ),
-          ),
+            SizedBox(height: compact ? 10 : 14),
 
-          // Open crate button (if applicable)
-          if (accomplishment.isCrate) ...[
+            // Icon
+            Text(
+              accomplishment.icon,
+              style: TextStyle(fontSize: compact ? 36 : 44),
+            ),
+            SizedBox(height: compact ? 8 : 12),
+
+            // Title
+            Text(
+              accomplishment.title,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: compact ? 15 : 17,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1,
+                decoration: TextDecoration.none,
+              ),
+            ),
+            const SizedBox(height: 4),
+
+            // Subtitle
+            Text(
+              accomplishment.subtitle,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 11 : 12,
+                color: Colors.white60,
+                decoration: TextDecoration.none,
+                height: 1.3,
+              ),
+            ),
+
+            // Progress bar (mastery style)
             SizedBox(height: compact ? 10 : 14),
             SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onOpenCrate,
-                icon: const Icon(Icons.lock_open_rounded, size: 14),
-                label: Text(
-                  AppLocalizations.of(context).levelUpDialogOpenCrate,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: color,
-                  side: BorderSide(color: color.withValues(alpha: 0.5)),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+              height: 4,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: LinearProgressIndicator(
+                  value: 1.0,
+                  backgroundColor: Colors.white.withValues(alpha: 0.08),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    color.withValues(alpha: 0.6),
                   ),
                 ),
               ),
             ),
+
+            // Open crate button (if applicable)
+            if (accomplishment.isCrate) ...[
+              SizedBox(height: compact ? 10 : 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onOpenCrate,
+                  icon: const Icon(Icons.lock_open_rounded, size: 14),
+                  label: Text(
+                    AppLocalizations.of(context).levelUpDialogOpenCrate,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: color,
+                    side: BorderSide(color: color.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
-
 
 // =============================================================================
 // Particle system for atmospheric background
@@ -284,20 +306,23 @@ class _Particle {
   });
 
   factory _Particle.random(math.Random r) => _Particle(
-        x: r.nextDouble(),
-        y: r.nextDouble(),
-        speed: 0.02 + r.nextDouble() * 0.06,
-        size: 1.0 + r.nextDouble() * 2.5,
-        opacity: 0.05 + r.nextDouble() * 0.2,
-      );
+    x: r.nextDouble(),
+    y: r.nextDouble(),
+    speed: 0.02 + r.nextDouble() * 0.06,
+    size: 1.0 + r.nextDouble() * 2.5,
+    opacity: 0.05 + r.nextDouble() * 0.2,
+  );
 }
-
 
 class _ParticlePainter extends CustomPainter {
   final List<_Particle> particles;
   final double time;
   final Color color;
-  _ParticlePainter({required this.particles, required this.time, required this.color});
+  _ParticlePainter({
+    required this.particles,
+    required this.time,
+    required this.color,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -315,7 +340,6 @@ class _ParticlePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ParticlePainter old) => true;
 }
-
 
 // =============================================================================
 // Military rank emblem (CustomPainter)
@@ -362,14 +386,21 @@ class _RankEmblemPainter extends CustomPainter {
     canvas.drawPath(
       path,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            glowColor.withValues(alpha: 0.4),
-            glowColor.withValues(alpha: 0.15),
-          ],
-        ).createShader(Rect.fromCenter(center: Offset(cx, cy), width: r * 2, height: r * 2)),
+        ..shader =
+            LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                glowColor.withValues(alpha: 0.4),
+                glowColor.withValues(alpha: 0.15),
+              ],
+            ).createShader(
+              Rect.fromCenter(
+                center: Offset(cx, cy),
+                width: r * 2,
+                height: r * 2,
+              ),
+            ),
     );
 
     // Border
@@ -410,11 +441,27 @@ class _RankEmblemPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     // Left wing
-    canvas.drawLine(Offset(cx - r - 6, cy), Offset(cx - r - 18, cy - 8), wingPaint);
-    canvas.drawLine(Offset(cx - r - 6, cy), Offset(cx - r - 18, cy + 8), wingPaint);
+    canvas.drawLine(
+      Offset(cx - r - 6, cy),
+      Offset(cx - r - 18, cy - 8),
+      wingPaint,
+    );
+    canvas.drawLine(
+      Offset(cx - r - 6, cy),
+      Offset(cx - r - 18, cy + 8),
+      wingPaint,
+    );
     // Right wing
-    canvas.drawLine(Offset(cx + r + 6, cy), Offset(cx + r + 18, cy - 8), wingPaint);
-    canvas.drawLine(Offset(cx + r + 6, cy), Offset(cx + r + 18, cy + 8), wingPaint);
+    canvas.drawLine(
+      Offset(cx + r + 6, cy),
+      Offset(cx + r + 18, cy - 8),
+      wingPaint,
+    );
+    canvas.drawLine(
+      Offset(cx + r + 6, cy),
+      Offset(cx + r + 18, cy + 8),
+      wingPaint,
+    );
 
     // Level number
     final textPainter = TextPainter(
@@ -442,7 +489,6 @@ class _RankEmblemPainter extends CustomPainter {
   bool shouldRepaint(covariant _RankEmblemPainter old) =>
       level != old.level || glowColor != old.glowColor;
 }
-
 
 // =============================================================================
 // Chevron-segmented progress bar (CustomPainter)
@@ -472,23 +518,22 @@ class _ChevronBarPainter extends CustomPainter {
         ..close();
 
       if (filled) {
+        final darkerFill = Color.lerp(fillColor, Colors.black, 0.35)!;
         canvas.drawPath(
           path,
           Paint()
             ..shader = LinearGradient(
-              colors: [
-                Colors.green.shade700,
-                Colors.green.shade400,
-              ],
+              colors: [darkerFill, fillColor],
             ).createShader(Rect.fromLTWH(x, 0, segW, size.height)),
         );
 
-        // Edge glow on the last filled segment
+        // Edge glow on the last filled segment — matches the bar's own fill
+        // colour (the app accent) rather than a fixed unrelated hue.
         if ((i + 1) / segments > progress - 1 / segments) {
           canvas.drawPath(
             path,
             Paint()
-              ..color = Colors.cyan.withValues(alpha: 0.3)
+              ..color = fillColor.withValues(alpha: 0.5)
               ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
           );
         }
@@ -506,7 +551,6 @@ class _ChevronBarPainter extends CustomPainter {
       progress != old.progress;
 }
 
-
 /// Battlefield-style progression screen.
 /// Shows level badges, animated XP progress bar, XP counter, and rewards.
 class _CascadingLevelOverlay extends StatefulWidget {
@@ -523,7 +567,6 @@ class _CascadingLevelOverlay extends StatefulWidget {
   @override
   State<_CascadingLevelOverlay> createState() => _CascadingLevelOverlayState();
 }
-
 
 class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
     with TickerProviderStateMixin {
@@ -628,6 +671,10 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final barWidth = screenWidth - 160; // 80px per badge side
+    // Overlay always renders over a dark blurred background regardless of
+    // system theme — force the dark-mode accent variant, matching
+    // LevelUpDialog's own "always dark context" convention.
+    final accentColor = AccentColorScope.of(context).getColor(true);
 
     return FadeTransition(
       opacity: _fadeController,
@@ -650,11 +697,11 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
                 minBlastForce: 5,
                 emissionFrequency: 0.08,
                 gravity: 0.2,
-                colors: const [
-                  Colors.amber,
-                  Colors.orange,
-                  Colors.cyan,
-                  Colors.purple,
+                colors: [
+                  accentColor,
+                  Colors.amber, // accent-allowlist: confetti burst needs colour variety for festivity — accentColor leads the mix, this is decorative variety not app identity
+                  Colors.orange, // accent-allowlist: confetti burst needs colour variety for festivity — accentColor leads the mix, this is decorative variety not app identity
+                  Colors.purple, // accent-allowlist: confetti burst needs colour variety for festivity — accentColor leads the mix, this is decorative variety not app identity
                   Colors.white,
                 ],
               ),
@@ -667,7 +714,10 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
               child: GestureDetector(
                 onTap: _skip,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -703,15 +753,17 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
                         scale: _showLevelUpFlash ? 1.0 : 0.7,
                         curve: Curves.elasticOut,
                         child: Text(
-                          AppLocalizations.of(context).neatGamificationWidgetsLevelUp,
+                          AppLocalizations.of(
+                            context,
+                          ).neatGamificationWidgetsLevelUp,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
-                            color: Colors.amber,
+                            color: accentColor,
                             letterSpacing: 4,
                             decoration: TextDecoration.none,
                             shadows: [
-                              Shadow(color: Colors.amber, blurRadius: 20),
+                              Shadow(color: accentColor, blurRadius: 20),
                             ],
                           ),
                         ),
@@ -728,6 +780,7 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
                         _LevelBadge(
                           level: _currentFromLevel,
                           isActive: true,
+                          accent: accentColor,
                         ),
 
                         const SizedBox(width: 12),
@@ -740,6 +793,7 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
                               return _ProgressBar(
                                 progress: _barController.value,
                                 barWidth: barWidth,
+                                accent: accentColor,
                               );
                             },
                           ),
@@ -754,6 +808,7 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
                             key: ValueKey(_currentToLevel),
                             level: _currentToLevel,
                             isActive: false,
+                            accent: accentColor,
                           ),
                         ),
                       ],
@@ -806,7 +861,11 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
 
                     // Next reward info
                     Text(
-                      AppLocalizations.of(context)!.levelUpDialogPartAccomplishmentNextRewardAtLevel(widget.newLevel + 2),
+                      AppLocalizations.of(
+                        context,
+                      )!.levelUpDialogPartAccomplishmentNextRewardAtLevel(
+                        widget.newLevel + 2,
+                      ),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -826,22 +885,24 @@ class _CascadingLevelOverlayState extends State<_CascadingLevelOverlay>
   }
 }
 
-
 /// Circular level badge for the progression screen
 class _LevelBadge extends StatelessWidget {
   final int level;
   final bool isActive;
+  final Color accent;
 
   const _LevelBadge({
     super.key,
     required this.level,
     required this.isActive,
+    required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? Colors.amber : Colors.grey.shade600;
+    final color = isActive ? accent : Colors.grey.shade600;
     final size = isActive ? 64.0 : 56.0;
+    final accentDark = Color.lerp(accent, Colors.black, 0.35)!;
 
     return Container(
       width: size,
@@ -850,7 +911,7 @@ class _LevelBadge extends StatelessWidget {
         shape: BoxShape.circle,
         gradient: isActive
             ? LinearGradient(
-                colors: [Colors.amber.shade600, Colors.orange.shade800],
+                colors: [accent, accentDark],
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
               )
@@ -863,7 +924,7 @@ class _LevelBadge extends StatelessWidget {
         boxShadow: isActive
             ? [
                 BoxShadow(
-                  color: Colors.amber.withValues(alpha: 0.4),
+                  color: accent.withValues(alpha: 0.4),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -884,4 +945,3 @@ class _LevelBadge extends StatelessWidget {
     );
   }
 }
-

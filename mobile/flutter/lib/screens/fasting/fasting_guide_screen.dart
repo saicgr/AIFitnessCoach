@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/design_system/zealova.dart';
@@ -48,10 +49,10 @@ class FastingGuideScreen extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   // ── (1) Collapsible intro education cards ────────────
-                const CollapsibleIntroCard(
+                CollapsibleIntroCard(
                   index: 0,
-                  icon: Icons.lightbulb_outline_rounded,
-                  accent: Color(0xFF8B5CF6),
+                  icon: Icons.lightbulb_outline_rounded, // accent-allowlist: educational card per-section identity color
+                  accent: context.accentColor,
                   eyebrow: 'The basics',
                   title: 'What is fasting?',
                   body:
@@ -62,10 +63,10 @@ class FastingGuideScreen extends StatelessWidget {
                   stat: '16:8',
                   statLabel: 'most popular window',
                 ),
-                const CollapsibleIntroCard(
+                CollapsibleIntroCard(
                   index: 1,
-                  icon: Icons.bolt_rounded,
-                  accent: Color(0xFFF59E0B),
+                  icon: Icons.bolt_rounded, // accent-allowlist: educational card per-section identity color
+                  accent: context.accentColor,
                   eyebrow: 'The science',
                   title: 'How it works',
                   body:
@@ -80,8 +81,8 @@ class FastingGuideScreen extends StatelessWidget {
                 ),
                 const CollapsibleIntroCard(
                   index: 2,
-                  icon: Icons.health_and_safety_outlined,
-                  accent: Color(0xFFEF4444),
+                  icon: Icons.health_and_safety_outlined, // accent-allowlist: educational card per-section identity color
+                  accent: Color(0xFFEF4444), // accent-allowlist: safety-caution card ("Is it safe for me?") — genuine warning semantic, not decorative
                   eyebrow: 'Before you start',
                   title: 'Is it safe for me?',
                   body:

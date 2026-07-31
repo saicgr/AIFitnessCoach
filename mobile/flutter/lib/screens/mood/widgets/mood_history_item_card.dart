@@ -65,7 +65,7 @@ class MoodHistoryItemCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       _buildStatusChip(
                         item.workoutCompleted ? 'Completed' : 'Generated',
-                        item.workoutCompleted ? Colors.green : item.color,
+                        item.workoutCompleted ? Colors.green : item.color,  // accent-allowlist: workout-status framing -- completed is success/green
                       ),
                     ],
                   ],

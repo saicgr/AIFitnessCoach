@@ -35,12 +35,12 @@ class WorkoutDesign {
 
   /// RIR (Reps in Reserve) pill colors - colored for quick scanning
   /// Red (MAX/0) → Orange (1) → Yellow (2) → Green (3+)
-  static const Color rirMax = Color(0xFFEF4444); // Red - MAX effort (RIR 0)
-  static const Color rir1 = Color(0xFFF97316); // Orange - RIR 1 (challenging)
-  static const Color rir2 = Color(0xFFEAB308); // Yellow/Amber - RIR 2 (moderate)
-  static const Color rir3 = Color(0xFF22C55E); // Green - RIR 3+ (easy/warmup)
-  static const Color rir4 = Color(0xFF22C55E); // Green - RIR 4+ (easy/warmup)
-  static const Color rir5 = Color(0xFF22C55E); // Green - RIR 5 (warmup)
+  static const Color rirMax = Color(0xFFEF4444); // Red - MAX effort (RIR 0) // accent-allowlist: RIR (reps-in-reserve) effort severity scale, red=max effort to green=easy - not accent
+  static const Color rir1 = Color(0xFFF97316); // Orange - RIR 1 (challenging) // accent-allowlist: RIR (reps-in-reserve) effort severity scale, red=max effort to green=easy - not accent
+  static const Color rir2 = Color(0xFFEAB308); // Yellow/Amber - RIR 2 (moderate) // accent-allowlist: RIR (reps-in-reserve) effort severity scale, red=max effort to green=easy - not accent
+  static const Color rir3 = Color(0xFF22C55E); // Green - RIR 3+ (easy/warmup) // accent-allowlist: RIR (reps-in-reserve) effort severity scale, red=max effort to green=easy - not accent
+  static const Color rir4 = Color(0xFF22C55E); // Green - RIR 4+ (easy/warmup) // accent-allowlist: RIR (reps-in-reserve) effort severity scale, red=max effort to green=easy - not accent
+  static const Color rir5 = Color(0xFF22C55E); // Green - RIR 5 (warmup) // accent-allowlist: RIR (reps-in-reserve) effort severity scale, red=max effort to green=easy - not accent
 
   /// Accent colors - monochrome
   static const Color accent = Color(0xFFE0E0E0); // Light gray for AI features

@@ -48,7 +48,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
                   value: summary.totalChainsStarted.toString(),
                   label: AppLocalizations.of(context).skillProgressSummarySkillsStarted,
                   icon: Icons.play_arrow_rounded,
-                  color: AppColors.purple,
+                  color: AppColors.purple,  // accent-allowlist: stat-row legend colour -- skills started
                 ),
               ),
               Expanded(
@@ -56,7 +56,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
                   value: summary.totalChainsCompleted.toString(),
                   label: AppLocalizations.of(context).skillProgressSummaryMastered,
                   icon: Icons.emoji_events_rounded,
-                  color: AppColors.orange,
+                  color: AppColors.orange,  // accent-allowlist: stat-row legend colour -- mastered/trophy
                 ),
               ),
               Expanded(
@@ -64,7 +64,7 @@ class SkillProgressSummaryCard extends StatelessWidget {
                   value: summary.totalStepsUnlocked.toString(),
                   label: AppLocalizations.of(context).skillProgressSummaryStepsUnlocked,
                   icon: Icons.lock_open_rounded,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: stat-row legend colour -- steps unlocked
                 ),
               ),
             ],

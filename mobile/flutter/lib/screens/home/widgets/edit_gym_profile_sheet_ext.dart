@@ -819,7 +819,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_unchecked_rounded,
               size: 20,
-              color: selected ? AppColors.orange : textPrimary.withValues(alpha: 0.5),
+              color: selected ? context.accentColor : textPrimary.withValues(alpha: 0.5),
             ),
             const SizedBox(width: 12),
             Text(

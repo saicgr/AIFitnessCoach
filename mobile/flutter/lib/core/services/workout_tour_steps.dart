@@ -97,10 +97,10 @@ List<AppTourStep> easyTourSteps() => [
 
 /// Animated spotlight-ring gradient for the Easy tour (brand green → cyan).
 const List<Color> _easyHighlight = [
-  Color(0xFF4ADE80),
-  Color(0xFF22D3EE),
-  Color(0xFF3B82F6),
-  Color(0xFF4ADE80),
+  Color(0xFF4ADE80), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+  Color(0xFF22D3EE), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+  Color(0xFF3B82F6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+  Color(0xFF4ADE80), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
 ];
 
 /// Simple tour — 5 steps. Introduces rail editing, Prev auto-fill, rest
@@ -141,10 +141,10 @@ List<AppTourStep> simpleTourSteps() => [
         position: TooltipPosition.above,
         cornerRadius: 999,
         highlightColors: const [
-          Color(0xFF9B59B6),
-          Color(0xFF00BCD4),
-          Color(0xFF3B82F6),
-          Color(0xFF9B59B6),
+          Color(0xFF9B59B6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+          Color(0xFF00BCD4), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+          Color(0xFF3B82F6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+          Color(0xFF9B59B6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
         ],
       ),
       AppTourStep(
@@ -212,10 +212,10 @@ List<AppTourStep> advancedTourSteps() => [
         position: TooltipPosition.above,
         cornerRadius: 999,
         highlightColors: const [
-          Color(0xFF9B59B6),
-          Color(0xFF00BCD4),
-          Color(0xFF3B82F6),
-          Color(0xFF9B59B6),
+          Color(0xFF9B59B6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+          Color(0xFF00BCD4), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+          Color(0xFF3B82F6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
+          Color(0xFF9B59B6), // accent-allowlist: decorative animated tour-spotlight shimmer ring (multi-hue gradient), not the app accent; consumed by lib/screens/workout/ (outside this pass's ownership)
         ],
       ),
       AppTourStep(

@@ -318,7 +318,7 @@ class HabitsScreen extends ConsumerWidget {
           alignment: AlignmentDirectional.centerEnd,
           padding: const EdgeInsetsDirectional.only(end: 20),
           decoration: BoxDecoration(
-            color: AppColors.error,
+            color: AppColors.error,  // accent-allowlist: delete swipe-action background, destructive semantic not accent
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Icon(
@@ -355,7 +355,7 @@ class HabitsScreen extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.error),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.error),  // accent-allowlist: delete confirmation button, destructive semantic not accent
                   child: Text(AppLocalizations.of(context).buttonDelete),
                 ),
               ],

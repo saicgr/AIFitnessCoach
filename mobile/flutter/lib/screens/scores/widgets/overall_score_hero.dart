@@ -161,11 +161,11 @@ class OverallScoreHero extends StatelessWidget {
 
     if (isImproving) {
       icon = Icons.trending_up;
-      color = AppColors.green;
+      color = AppColors.green; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent + week-over-week trend indicator
       label = '+$change from last week';
     } else if (isDecreasing) {
       icon = Icons.trending_down;
-      color = Colors.orange;
+      color = Colors.orange; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent + week-over-week trend indicator
       label = '$change from last week';
     } else {
       icon = Icons.trending_flat;
@@ -191,10 +191,10 @@ class OverallScoreHero extends StatelessWidget {
   }
 
   Color _getScoreColor(int score) {
-    if (score >= 80) return AppColors.green;
-    if (score >= 60) return AppColors.cyan;
-    if (score >= 40) return AppColors.yellow;
-    return Colors.orange;
+    if (score >= 80) return AppColors.green; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent + week-over-week trend indicator
+    if (score >= 60) return AppColors.cyan; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent + week-over-week trend indicator
+    if (score >= 40) return AppColors.yellow; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent + week-over-week trend indicator
+    return Colors.orange; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent + week-over-week trend indicator
   }
 
   IconData _getLevelIcon() {

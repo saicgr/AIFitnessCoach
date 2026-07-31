@@ -219,11 +219,11 @@ class _PlateauDashboardScreenState
     final String statusLabel;
 
     if (isPlateaued) {
-      statusColor = Colors.amber;
+      statusColor = Colors.amber;  // accent-allowlist: plateau status framing -- plateaued is amber/warning
       statusIcon = Icons.trending_flat;
       statusLabel = 'PLATEAUED';
     } else {
-      statusColor = Colors.green;
+      statusColor = Colors.green;  // accent-allowlist: plateau status framing -- progressing is green/success
       statusIcon = Icons.trending_up;
       statusLabel = 'PROGRESSING';
     }
@@ -298,13 +298,13 @@ class _PlateauDashboardScreenState
               _buildStatusStat(
                 'Exercises',
                 exercisePlateauCount.toString(),
-                exercisePlateauCount > 0 ? Colors.amber : Colors.green,
+                exercisePlateauCount > 0 ? Colors.amber : Colors.green,  // accent-allowlist: plateau status framing -- stalled amber vs OK green
                 colorScheme,
               ),
               _buildStatusStat(
                 'Weight',
                 weightPlateaued ? 'Stalled' : 'OK',
-                weightPlateaued ? Colors.amber : Colors.green,
+                weightPlateaued ? Colors.amber : Colors.green,  // accent-allowlist: plateau status framing -- stalled amber vs OK green
                 colorScheme,
               ),
             ],
@@ -374,7 +374,7 @@ class _PlateauDashboardScreenState
             color: colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.amber.withValues(alpha: 0.2),
+              color: Colors.amber.withValues(alpha: 0.2),  // accent-allowlist: exercise-plateau card -- warning framing (this card flags a stalled exercise)
             ),
           ),
           child: Column(
@@ -385,12 +385,12 @@ class _PlateauDashboardScreenState
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.15),
+                      color: Colors.amber.withValues(alpha: 0.15),  // accent-allowlist: exercise-plateau card -- warning framing (this card flags a stalled exercise)
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.fitness_center,
-                      color: Colors.amber,
+                      color: Colors.amber,  // accent-allowlist: exercise-plateau card -- warning framing (this card flags a stalled exercise)
                       size: 20,
                     ),
                   ),
@@ -441,10 +441,10 @@ class _PlateauDashboardScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.15),
+        color: AppColors.orange.withValues(alpha: 0.15),  // accent-allowlist: suggested-strategy chip inside the amber-framed plateau card -- warning framing
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.3),
+          color: AppColors.orange.withValues(alpha: 0.3),  // accent-allowlist: suggested-strategy chip inside the amber-framed plateau card -- warning framing
         ),
       ),
       child: Text(
@@ -452,7 +452,7 @@ class _PlateauDashboardScreenState
         style: const TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.orange,
+          color: AppColors.orange,  // accent-allowlist: suggested-strategy chip inside the amber-framed plateau card -- warning framing
         ),
       ),
     );
@@ -490,7 +490,7 @@ class _PlateauDashboardScreenState
     final suggestedAction =
         weightPlateau['suggested_action'] as String? ?? '';
 
-    final statusColor = isPlateaued ? Colors.amber : Colors.green;
+    final statusColor = isPlateaued ? Colors.amber : Colors.green;  // accent-allowlist: plateau status framing -- stalled amber vs OK green
     final statusIcon = isPlateaued ? Icons.trending_flat : Icons.trending_up;
 
     return Container(
@@ -615,7 +615,7 @@ class _PlateauDashboardScreenState
               Icon(
                 Icons.lightbulb_outline,
                 size: 18,
-                color: AppColors.orange,
+                color: AppColors.orange,  // accent-allowlist: tip/info icon -- warning/info semantic
               ),
               const SizedBox(width: 10),
               Expanded(

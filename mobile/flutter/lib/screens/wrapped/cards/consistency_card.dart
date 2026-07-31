@@ -55,7 +55,7 @@ class WrappedConsistencyCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF22C55E).withValues(alpha: 0.1),
+                        const Color(0xFF22C55E).withValues(alpha: 0.1), // accent-allowlist: Wrapped card visual identity - Spotify-Wrapped-style per-card color story (consistency=green), deliberate design not accent
                         Colors.transparent,
                       ],
                     ),
@@ -76,7 +76,7 @@ class WrappedConsistencyCard extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).progressShareTemplatesConsistency.toUpperCase(),
                     style: ZType.lbl(16,
-                        color: const Color(0xFF4ADE80).withValues(alpha: 0.9),
+                        color: const Color(0xFF4ADE80).withValues(alpha: 0.9), // accent-allowlist: Wrapped card visual identity - Spotify-Wrapped-style per-card color story (consistency=green), deliberate design not accent
                         weight: FontWeight.w700,
                         letterSpacing: 6),
                   ),
@@ -108,10 +108,10 @@ class WrappedConsistencyCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF22C55E).withValues(alpha: 0.1),
+                      color: const Color(0xFF22C55E).withValues(alpha: 0.1), // accent-allowlist: Wrapped card visual identity - Spotify-Wrapped-style per-card color story (consistency=green), deliberate design not accent
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: const Color(0xFF22C55E).withValues(alpha: 0.25),
+                        color: const Color(0xFF22C55E).withValues(alpha: 0.25), // accent-allowlist: Wrapped card visual identity - Spotify-Wrapped-style per-card color story (consistency=green), deliberate design not accent
                       ),
                     ),
                     child: Row(
@@ -119,7 +119,7 @@ class WrappedConsistencyCard extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.local_fire_department,
-                          color: Color(0xFF4ADE80),
+                          color: Color(0xFF4ADE80), // accent-allowlist: Wrapped card visual identity - Spotify-Wrapped-style per-card color story (consistency=green), deliberate design not accent
                           size: 28,
                         ),
                         const SizedBox(width: 12),
@@ -182,7 +182,7 @@ class WrappedConsistencyCard extends StatelessWidget {
           height: 28,
           decoration: BoxDecoration(
             color: isActive
-                ? const Color(0xFF22C55E).withValues(alpha: 0.7)
+                ? const Color(0xFF22C55E).withValues(alpha: 0.7) // accent-allowlist: Wrapped card visual identity - Spotify-Wrapped-style per-card color story (consistency=green), deliberate design not accent
                 : Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(6),
             border: isActive

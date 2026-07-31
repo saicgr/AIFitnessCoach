@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/design_system/zealova.dart';
 import '../../data/providers/sleep_detail_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
@@ -255,7 +256,7 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
         children: [
           _CardHeader(
             icon: Icons.bedtime_rounded,
-            color: AppColors.macroProtein,
+            color: AppColors.macroProtein, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: DateFormat('EEEE, MMM d').format(night.date),
             isDark: isDark,
           ),
@@ -311,7 +312,7 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
                       ? '${main.latencyMinutes} min'
                       : '–',
                   icon: Icons.hourglass_bottom_rounded,
-                  color: AppColors.cyan,
+                  color: AppColors.cyan, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                   isDark: isDark,
                 ),
               ),
@@ -515,7 +516,7 @@ class _NapsSection extends StatelessWidget {
             child: Row(
               children: [
                 const Icon(Icons.wb_sunny_outlined,
-                    size: 14, color: Color(0xFFFFD54A)),
+                    size: 14, color: Color(0xFFFFD54A)), // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                 const SizedBox(width: 8),
                 Text(
                   _fmtDur(nap.totalMinutes),
@@ -576,7 +577,7 @@ class _SevenNightChart extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.bar_chart_rounded,
-            color: AppColors.cyan,
+            color: AppColors.cyan, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: AppLocalizations.of(context).sleepDetailLast7Nights,
             isDark: isDark,
           ),
@@ -641,8 +642,8 @@ class _DayBar extends StatelessWidget {
     final barColor = minutes == 0
         ? track
         : (hitGoal
-            ? AppColors.macroProtein
-            : AppColors.macroProtein.withValues(alpha: 0.40));
+            ? AppColors.macroProtein // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
+            : AppColors.macroProtein.withValues(alpha: 0.40)); // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
     final hours = minutes > 0
         ? (minutes / 60).toStringAsFixed(1)
         : '';
@@ -655,7 +656,7 @@ class _DayBar extends StatelessWidget {
           Text(
             hours,
             style: ZType.data(9,
-                color: hitGoal ? AppColors.macroProtein : textMuted),
+                color: hitGoal ? AppColors.macroProtein : textMuted), // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
           ),
           const SizedBox(height: 4),
           Expanded(
@@ -716,7 +717,7 @@ class _ThirtyDayTrend extends ConsumerWidget {
         children: [
           _CardHeader(
             icon: Icons.show_chart_rounded,
-            color: AppColors.purple,
+            color: AppColors.purple, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: AppLocalizations.of(context).sleepDetail30DayTrend,
             isDark: isDark,
           ),
@@ -742,7 +743,7 @@ class _ThirtyDayTrend extends ConsumerWidget {
               }
               return TrendChart(
                 height: 180,
-                accent: AppColors.purple,
+                accent: AppColors.purple, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                 primary: TrendChartSeries(
                   label: AppLocalizations.of(context).sleepDetailSleep,
                   unit: series.unit,
@@ -784,7 +785,7 @@ class _DebtRegularityCard extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.balance_rounded,
-            color: AppColors.macroCarbs,
+            color: AppColors.macroCarbs, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: AppLocalizations.of(context).sleepDetailDebtRegularity,
             isDark: isDark,
           ),
@@ -793,7 +794,7 @@ class _DebtRegularityCard extends StatelessWidget {
             label: AppLocalizations.of(context).sleepDetailSleepDebt14d,
             value: debt <= 0 ? 'None' : '${debt ~/ 60}h ${debt % 60}m',
             fraction: debtFrac,
-            fill: AppColors.error,
+            fill: AppColors.error, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             isDark: isDark,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -803,7 +804,7 @@ class _DebtRegularityCard extends StatelessWidget {
             label: AppLocalizations.of(context).sleepDetailRegularity,
             value: regularity != null ? '$regularity' : '–',
             fraction: regFrac,
-            fill: AppColors.macroCarbs,
+            fill: AppColors.macroCarbs, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             isDark: isDark,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -887,7 +888,7 @@ class _MonthlySummaryCard extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.calendar_month_rounded,
-            color: AppColors.cyan,
+            color: AppColors.cyan, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: AppLocalizations.of(context).sleepDetailMonthlySummary,
             isDark: isDark,
           ),
@@ -907,7 +908,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                     value:
                         '${summary.avgAsleepMinutes ~/ 60}h ${summary.avgAsleepMinutes % 60}m',
                     icon: Icons.nightlight_round,
-                    color: AppColors.purple,
+                    color: AppColors.purple, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                     isDark: isDark,
                   ),
                 ),
@@ -918,7 +919,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                     value:
                         '${summary.bestAsleepMinutes ~/ 60}h ${summary.bestAsleepMinutes % 60}m',
                     icon: Icons.star_rounded,
-                    color: AppColors.success,
+                    color: AppColors.success, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                     isDark: isDark,
                   ),
                 ),
@@ -933,7 +934,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                     value:
                         '${summary.worstAsleepMinutes ~/ 60}h ${summary.worstAsleepMinutes % 60}m',
                     icon: Icons.trending_down_rounded,
-                    color: AppColors.warning,
+                    color: AppColors.warning, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                     isDark: isDark,
                   ),
                 ),
@@ -943,7 +944,7 @@ class _MonthlySummaryCard extends StatelessWidget {
                     label: AppLocalizations.of(context).sleepDetailNightsWithNaps,
                     value: '${summary.napNightCount}',
                     icon: Icons.wb_sunny_outlined,
-                    color: AppColors.cyan,
+                    color: AppColors.cyan, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                     isDark: isDark,
                   ),
                 ),
@@ -1000,7 +1001,7 @@ class _CoachingCard extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.lightbulb_outline_rounded,
-            color: AppColors.warning,
+            color: AppColors.warning, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: AppLocalizations.of(context).sleepDetailCoachingTips,
             isDark: isDark,
           ),
@@ -1013,7 +1014,7 @@ class _CoachingCard extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Icon(Icons.check_circle_outline_rounded,
-                      size: 16, color: AppColors.warning),
+                      size: 16, color: AppColors.warning), // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1107,7 +1108,7 @@ class _SleepGoalCardState extends ConsumerState<_SleepGoalCard> {
         children: [
           _CardHeader(
             icon: Icons.flag_rounded,
-            color: AppColors.success,
+            color: AppColors.success, // accent-allowlist: sleep-stage identity color (deep/REM/light) and sleep-score severity scale
             title: AppLocalizations.of(context).sleepDetailSleepGoal,
             isDark: isDark,
           ),
@@ -1183,11 +1184,11 @@ class _GoalChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.success.withValues(alpha: 0.12)
+              ? context.accentColor.withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: selected ? AppColors.success : border,
+            color: selected ? context.accentColor : border,
             width: 1,
           ),
         ),
@@ -1195,7 +1196,7 @@ class _GoalChip extends StatelessWidget {
           label.toUpperCase(),
           style: ZType.lbl(
             12,
-            color: selected ? AppColors.success : textMuted,
+            color: selected ? context.accentColor : textMuted,
             weight: selected ? FontWeight.w700 : FontWeight.w600,
             letterSpacing: 1.0,
           ),

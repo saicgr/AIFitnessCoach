@@ -10,9 +10,6 @@ import '../onboarding/widgets/foldable_quiz_scaffold.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
-/// Signature v2 single orange accent.
-const Color _kSigAccent = Color(0xFFF97316);
-
 /// Paywall Screen 2: Trial Timeline
 /// Shows users what to expect during their free trial
 class PaywallTimelineScreen extends ConsumerWidget {
@@ -206,11 +203,11 @@ class PaywallTimelineScreen extends ConsumerWidget {
                       context,
                     ).paywallTimelineTrialWorks.toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Anton',
                       fontSize: 28,
                       height: 1.05,
-                      color: _kSigAccent,
+                      color: colors.accent,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -221,7 +218,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 // Timeline
                 _TimelineItem(
                   icon: Icons.card_giftcard,
-                  iconColor: _kSigAccent,
+                  iconColor: colors.accent,
                   title: AppLocalizations.of(context).todayScoreCardToday,
                   subtitle: AppLocalizations.of(
                     context,
@@ -232,7 +229,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
                 ),
                 _TimelineItem(
                   icon: Icons.notifications_outlined,
-                  iconColor: _kSigAccent,
+                  iconColor: colors.accent,
                   title: AppLocalizations.of(context).paywallTimelineIn5Days,
                   subtitle: AppLocalizations.of(
                     context,
@@ -266,7 +263,7 @@ class PaywallTimelineScreen extends ConsumerWidget {
               child: ElevatedButton(
                 onPressed: () => context.push('/paywall-pricing'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kSigAccent,
+                  backgroundColor: colors.accent,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -402,7 +399,7 @@ class _TrustItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: _kSigAccent),
+        Icon(icon, size: 18, color: colors.accent),
         const SizedBox(width: 10),
         Expanded(
           child: Text(

@@ -243,7 +243,7 @@ extension _MeasurementsScreenStateUI on _MeasurementsScreenState {
                 alignment: AlignmentDirectional.centerEnd,
                 padding: const EdgeInsetsDirectional.only(end: 20),
                 decoration: BoxDecoration(
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.delete, color: Colors.white),

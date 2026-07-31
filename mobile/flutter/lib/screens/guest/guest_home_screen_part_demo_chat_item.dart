@@ -48,7 +48,7 @@ class _DemoChatItemState extends State<_DemoChatItem> with SingleTickerProviderS
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: _isExpanded ? AppColors.cyan.withOpacity(0.5) : borderColor,
+                color: _isExpanded ? context.accentColor.withOpacity(0.5) : borderColor,
               ),
             ),
             child: Column(
@@ -61,10 +61,10 @@ class _DemoChatItemState extends State<_DemoChatItem> with SingleTickerProviderS
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, color: AppColors.cyan, size: 18),
+                      child: Icon(Icons.person, color: context.accentColor, size: 18),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -102,7 +102,7 @@ class _DemoChatItemState extends State<_DemoChatItem> with SingleTickerProviderS
                           height: 32,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [AppColors.purple, AppColors.cyan],
+                              colors: [context.accentColor, context.accentColor],
                             ),
                             shape: BoxShape.circle,
                           ),
@@ -113,7 +113,7 @@ class _DemoChatItemState extends State<_DemoChatItem> with SingleTickerProviderS
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: AppColors.purple.withOpacity(0.1),
+                              color: context.accentColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(

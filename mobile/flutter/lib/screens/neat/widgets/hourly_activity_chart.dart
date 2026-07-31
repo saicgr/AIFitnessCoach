@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A horizontal scrollable bar chart showing hourly step activity.
 ///
 /// Features:
@@ -115,9 +116,9 @@ class _HourlyActivityChartState extends State<HourlyActivityChart>
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
-    final error = isDark ? AppColors.error : AppColorsLight.error;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final error = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     final currentHour = widget.currentHour ?? DateTime.now().hour;
 
@@ -373,8 +374,8 @@ class _SelectedHourInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final success = isDark ? AppColors.success : AppColorsLight.success;
-    final error = isDark ? AppColors.error : AppColorsLight.error;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final error = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final color = isActive ? success : error;

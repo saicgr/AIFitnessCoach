@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:muscle_selector/muscle_selector.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 /// Mapping from muscle_selector package group names to our backend muscle names
@@ -163,7 +164,7 @@ class _BodyMuscleSelectorWidgetState extends State<BodyMuscleSelectorWidget> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             CircularProgressIndicator(
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                               strokeWidth: 2,
                             ),
                             const SizedBox(height: 12),
@@ -198,8 +199,8 @@ class _BodyMuscleSelectorWidgetState extends State<BodyMuscleSelectorWidget> {
                                 _handleMuscleChange(muscles);
                               },
                               actAsToggle: true,
-                              dotColor: AppColors.cyan,
-                              selectedColor: AppColors.error.withValues(alpha: 0.7),
+                              dotColor: context.accentColor,
+                              selectedColor: AppColors.error.withValues(alpha: 0.7), // accent-allowlist: selected muscle indicates a reported injury/pain area, error semantic
                               strokeColor: isDark
                                   ? Colors.white.withValues(alpha: 0.4)
                                   : Colors.black.withValues(alpha: 0.4),

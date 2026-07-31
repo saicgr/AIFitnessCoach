@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/schedule_provider.dart';
 import '../../../../data/models/schedule_item.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Card showing the next 2-3 upcoming scheduled items on the home screen
 class UpNextCard extends ConsumerStatefulWidget {
   final bool isDark;
@@ -72,12 +72,12 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.schedule,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 20,
                 ),
               ),
@@ -132,14 +132,14 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 12,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ],
             ),
@@ -189,7 +189,7 @@ class _UpNextCardState extends ConsumerState<UpNextCard>
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
             ),

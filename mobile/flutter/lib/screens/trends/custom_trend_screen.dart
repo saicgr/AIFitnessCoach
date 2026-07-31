@@ -49,10 +49,10 @@ const int _kMaxOverlays = 4;
 /// the user's accent; overlays cycle through these so series are separable by
 /// colour (in addition to dash style + end-of-line label).
 const List<Color> _kOverlayPalette = [
-  Color(0xFFE0823D), // amber
-  Color(0xFF3DA5E0), // sky
-  Color(0xFFB05CD6), // violet
-  Color(0xFF3DC97A), // green
+  Color(0xFFE0823D), // amber  // accent-allowlist: fixed overlay-series palette -- primary line already uses the accent; these keep additional series separable by colour
+  Color(0xFF3DA5E0), // sky  // accent-allowlist: fixed overlay-series palette -- primary line already uses the accent; these keep additional series separable by colour
+  Color(0xFFB05CD6), // violet  // accent-allowlist: fixed overlay-series palette -- primary line already uses the accent; these keep additional series separable by colour
+  Color(0xFF3DC97A), // green  // accent-allowlist: fixed overlay-series palette -- primary line already uses the accent; these keep additional series separable by colour
 ];
 
 class CustomTrendScreen extends ConsumerStatefulWidget {
@@ -135,14 +135,14 @@ class _SavedTrend {
 /// hues across light/dark. The first row mirrors [_kOverlayPalette] so the
 /// defaults are reachable; the rest add range.
 const List<Color> _kColorSwatches = [
-  Color(0xFFE0823D), // amber
-  Color(0xFF3DA5E0), // sky
-  Color(0xFFB05CD6), // violet
-  Color(0xFF3DC97A), // green
-  Color(0xFFE0533D), // coral
-  Color(0xFFE0C53D), // gold
-  Color(0xFF3DC9C2), // teal
-  Color(0xFFE03D8F), // magenta
+  Color(0xFFE0823D), // amber  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFF3DA5E0), // sky  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFFB05CD6), // violet  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFF3DC97A), // green  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFFE0533D), // coral  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFFE0C53D), // gold  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFF3DC9C2), // teal  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
+  Color(0xFFE03D8F), // magenta  // accent-allowlist: colour-swatch picker mirroring the overlay-series palette above
 ];
 
 class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
@@ -763,7 +763,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             label: '${primary.metric.displayName} · last cycle',
             unit: primary.unit,
             points: shifted,
-            color: const Color(0xFF8A6FE0),
+            color: const Color(0xFF8A6FE0),  // accent-allowlist: chart series colour -- 'last cycle' comparison overlay, distinct from the accent-coloured primary line
           ));
         }
       }
@@ -1219,7 +1219,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     final cycleLen = (avg != null && avg >= 21) ? avg : 28;
     final enabled = _range.days == 0 || _range.days >= 2 * cycleLen;
     final active = enabled && _compareLastCycleOn;
-    const color = Color(0xFF8A6FE0); // violet — distinct from period rose
+    const color = Color(0xFF8A6FE0); // violet — distinct from period rose  // accent-allowlist: chart series colour -- matches the 'last cycle' overlay series colour
     if (!enabled) {
       // Disabled hint pill — communicates the gate instead of silently
       // hiding the affordance.
@@ -1282,7 +1282,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   /// Toggle pill for the cycle-phases background overlay. Shaped identically
   /// to [_eventChip] so it slots into the same row visually.
   Widget _cyclePhasesChip(ThemeColors colors, bool active) {
-    const color = Color(0xFFE06FA8); // rose — matches Period swatch palette
+    const color = Color(0xFFE06FA8); // rose — matches Period swatch palette  // accent-allowlist: cycle-phases overlay colour -- matches the Period event/swatch colour, cycle feature identity
     return GestureDetector(
       onTap: () {
         HapticService.light();
@@ -1396,19 +1396,19 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       case TrendEventKind.workout:
         return colors.success;
       case TrendEventKind.fasting:
-        return const Color(0xFF8A6FE0); // violet
+        return const Color(0xFF8A6FE0); // violet  // accent-allowlist: event-overlay legend colour -- fasting events
       case TrendEventKind.rest:
         return colors.info;
       case TrendEventKind.weighIn:
-        return const Color(0xFF3DA5E0); // sky
+        return const Color(0xFF3DA5E0); // sky  // accent-allowlist: event-overlay legend colour -- weigh-in events
       case TrendEventKind.pr:
-        return const Color(0xFFE0A93D); // gold
+        return const Color(0xFFE0A93D); // gold  // accent-allowlist: event-overlay legend colour -- PR events
       case TrendEventKind.overTarget:
         return colors.error;
       case TrendEventKind.lowSleep:
-        return const Color(0xFFD6675C); // muted red-orange
+        return const Color(0xFFD6675C); // muted red-orange  // accent-allowlist: event-overlay legend colour -- low-sleep events
       case TrendEventKind.period:
-        return const Color(0xFFE0567A); // rose
+        return const Color(0xFFE0567A); // rose  // accent-allowlist: event-overlay legend colour -- period events, cycle feature identity
     }
   }
 

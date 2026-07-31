@@ -23,12 +23,12 @@ class FastZoneStrip extends ConsumerWidget {
   // inside the dedicated /fasting screen so a tap doesn't reveal a different
   // taxonomy.
   static const List<({double hours, String label, Color tint})> _zones = [
-    (hours: 0, label: 'Anabolic', tint: Color(0xFF7DD3FC)),
-    (hours: 4, label: 'Catabolic', tint: Color(0xFF60A5FA)),
-    (hours: 12, label: 'Fat burn', tint: Color(0xFFA78BFA)),
-    (hours: 16, label: 'Ketosis', tint: Color(0xFFF472B6)),
-    (hours: 24, label: 'Deep keto', tint: Color(0xFFFB923C)),
-    (hours: 48, label: 'Autophagy', tint: Color(0xFFFACC15)),
+    (hours: 0, label: 'Anabolic', tint: Color(0xFF7DD3FC)),  // accent-allowlist: fasting-zone taxonomy, mirrors the dedicated /fasting screen's staged-zone model
+    (hours: 4, label: 'Catabolic', tint: Color(0xFF60A5FA)),  // accent-allowlist: fasting-zone taxonomy, mirrors the dedicated /fasting screen's staged-zone model
+    (hours: 12, label: 'Fat burn', tint: Color(0xFFA78BFA)),  // accent-allowlist: fasting-zone taxonomy, mirrors the dedicated /fasting screen's staged-zone model
+    (hours: 16, label: 'Ketosis', tint: Color(0xFFF472B6)),  // accent-allowlist: fasting-zone taxonomy, mirrors the dedicated /fasting screen's staged-zone model
+    (hours: 24, label: 'Deep keto', tint: Color(0xFFFB923C)),  // accent-allowlist: fasting-zone taxonomy, mirrors the dedicated /fasting screen's staged-zone model
+    (hours: 48, label: 'Autophagy', tint: Color(0xFFFACC15)),  // accent-allowlist: fasting-zone taxonomy, mirrors the dedicated /fasting screen's staged-zone model
   ];
 
   double _elapsedHours(WidgetRef ref) {

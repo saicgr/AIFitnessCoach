@@ -13,6 +13,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 // ---------------------------------------------------------------------------
 // Public API: call this to show the import sheet from home_screen.dart
@@ -221,7 +222,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
         // Header
         SheetHeader(
           icon: Icons.download_rounded,
-          iconColor: AppColors.orange,
+          iconColor: context.accentColor,
           title: AppLocalizations.of(context)!.workoutImportWorkoutDetected,
           subtitle: pending.length > 1
               ? '${_currentIndex + 1} of ${pending.length}'
@@ -387,20 +388,20 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.error.withValues(alpha: 0.12),
+                            color: AppColors.error.withValues(alpha: 0.12),  // accent-allowlist: error/destructive -- must stay red
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
                               const Icon(Icons.error_outline,
-                                  color: AppColors.error, size: 18),
+                                  color: AppColors.error, size: 18),  // accent-allowlist: error/destructive -- must stay red
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   importState.error!,
                                   style: const TextStyle(
                                     fontSize: 13,
-                                    color: AppColors.error,
+                                    color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                   ),
                                 ),
                               ),
@@ -570,7 +571,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
         // HR numbers
         Row(
           children: [
-            Icon(Icons.favorite_rounded, size: 16, color: AppColors.red),
+            Icon(Icons.favorite_rounded, size: 16, color: AppColors.red),  // accent-allowlist: error/destructive -- must stay red
             const SizedBox(width: 6),
             Text(
               'Avg ${workout.avgHeartRate} bpm',
@@ -701,9 +702,9 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
       bool isDark, Color textPrimary, Color cardBorder) {
     final l10n = AppLocalizations.of(context)!;
     final efforts = [
-      (l10n.workoutImportEasy, 'beginner', AppColors.green),
-      (l10n.workoutImportMedium, 'intermediate', AppColors.warning),
-      (l10n.workoutImportHard, 'advanced', AppColors.orange),
+      (l10n.workoutImportEasy, 'beginner', AppColors.green),  // accent-allowlist: success/positive state -- must stay green regardless of accent
+      (l10n.workoutImportMedium, 'intermediate', AppColors.warning),  // accent-allowlist: warning severity
+      (l10n.workoutImportHard, 'advanced', context.accentColor),
     ];
 
     return Row(

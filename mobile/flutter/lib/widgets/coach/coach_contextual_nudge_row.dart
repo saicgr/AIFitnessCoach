@@ -50,7 +50,7 @@ class CoachContextualNudgeRow extends ConsumerWidget {
   /// Red used for the swipe-to-hide background. Fixed (not theme-derived) so
   /// it reads as destructive in both light and dark; matches the delete tint
   /// used elsewhere in the app.
-  static const Color _kDeleteRed = Color(0xFFE5484D);
+  static const Color _kDeleteRed = Color(0xFFE5484D); // accent-allowlist: swipe-to-hide destructive delete tint, fixed by design comment (not theme-derived), matches delete tint elsewhere
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -395,7 +395,7 @@ Color ctaColorForNudge(NudgeId id) {
   // so the expanded enum stays exhaustive without listing every id.
   final n = id.name.toLowerCase();
   if (n.contains('hydration') || n.contains('electrolyte')) {
-    return AppColors.cyan;
+    return AppColors.cyan; // accent-allowlist: hydration/electrolyte nudge tint - matches the universal water=blue convention; default is already the accent (c.accent), this overrides only for recognized categories
   }
   if (n.contains('breakfast') ||
       n.contains('lunch') ||
@@ -405,13 +405,13 @@ Color ctaColorForNudge(NudgeId id) {
       n.contains('refuel') ||
       n.contains('protein') ||
       n.contains('fiber')) {
-    return AppColors.macroCarbs;
+    return AppColors.macroCarbs; // accent-allowlist: macro identity color (protein/carbs/fat)
   }
   if (n.contains('workout') ||
       n.contains('warmup') ||
       n.contains('strain') ||
       n.contains('readiness')) {
-    return AppColors.macroProtein;
+    return AppColors.macroProtein; // accent-allowlist: macro identity color (protein/carbs/fat)
   }
   if (n.contains('sleep') ||
       n.contains('bedtime') ||
@@ -419,7 +419,7 @@ Color ctaColorForNudge(NudgeId id) {
       n.contains('breath') ||
       n.contains('mood') ||
       n.contains('mindful')) {
-    return AppColors.macroFat;
+    return AppColors.macroFat; // accent-allowlist: macro identity color (protein/carbs/fat)
   }
-  return AppColors.macroCarbs;
+  return AppColors.macroCarbs; // accent-allowlist: macro identity color (protein/carbs/fat)
 }

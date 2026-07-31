@@ -245,11 +245,11 @@ Color _trafficLightFor(ReadinessLevel level, Color accent) {
     case ReadinessLevel.good:
       // Blend toward green so the accent flavours but doesn't obscure
       // the "green = go" semantics.
-      return Color.lerp(const Color(0xFF22C55E), accent, 0.35)!;
+      return Color.lerp(const Color(0xFF22C55E), accent, 0.35)!;  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
     case ReadinessLevel.moderate:
-      return const Color(0xFFF59E0B); // amber
+      return const Color(0xFFF59E0B); // amber  // accent-allowlist: warning severity (amber-500)
     case ReadinessLevel.low:
-      return const Color(0xFFEF4444); // red
+      return const Color(0xFFEF4444); // red  // accent-allowlist: error/destructive -- must stay red (red-500)
   }
 }
 

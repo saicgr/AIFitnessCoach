@@ -106,7 +106,7 @@ class DayCard extends StatelessWidget {
                       context,
                       isCompleted: entry.workoutCompleted,
                       icon: Icons.fitness_center,
-                      color: Colors.green,
+                      color: Colors.green,  // accent-allowlist: completion-indicator trio (workout/fasting/nutrition) shown together -- categorical legend, not the app accent
                     ),
                   ],
                   if (entry.eatingWindowStart != null) ...[
@@ -115,7 +115,7 @@ class DayCard extends StatelessWidget {
                       context,
                       isCompleted: entry.fastingCompleted,
                       icon: Icons.timer,
-                      color: Colors.orange,
+                      color: Colors.orange,  // accent-allowlist: completion-indicator trio (workout/fasting/nutrition) shown together -- categorical legend, not the app accent
                     ),
                   ],
                   const SizedBox(width: 6),
@@ -123,7 +123,7 @@ class DayCard extends StatelessWidget {
                     context,
                     isCompleted: entry.nutritionLogged,
                     icon: Icons.restaurant,
-                    color: Colors.blue,
+                    color: Colors.blue,  // accent-allowlist: completion-indicator trio (workout/fasting/nutrition) shown together -- categorical legend, not the app accent
                   ),
 
                   const SizedBox(width: 8),
@@ -181,7 +181,7 @@ class DayCard extends StatelessWidget {
                     icon: Icons.local_fire_department,
                     value: '${entry.calorieTarget}',
                     label: 'cal',
-                    color: Colors.orange,
+                    color: Colors.orange,  // accent-allowlist: macro/nutrient identity colour -- differentiates macro chips shown side by side
                   ),
                   const SizedBox(width: 8),
                   _buildMacroChip(
@@ -189,7 +189,7 @@ class DayCard extends StatelessWidget {
                     icon: Icons.egg_alt,
                     value: '${entry.proteinTargetG.toInt()}g',
                     label: 'protein',
-                    color: Colors.red,
+                    color: Colors.red,  // accent-allowlist: macro/nutrient identity colour -- differentiates macro chips shown side by side
                   ),
                   const Spacer(),
                   if (entry.eatingWindowDisplay != null)
@@ -211,9 +211,9 @@ class DayCard extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withOpacity(0.1),  // accent-allowlist: warning banner -- warning severity
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),  // accent-allowlist: warning banner -- warning severity
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -221,13 +221,13 @@ class DayCard extends StatelessWidget {
                       const Icon(
                         Icons.warning_amber,
                         size: 16,
-                        color: Colors.orange,
+                        color: Colors.orange,  // accent-allowlist: warning banner -- warning severity
                       ),
                       const SizedBox(width: 6),
                       Text(
                         AppLocalizations.of(context)!.dayCardNoteS(entry.coordinationNotes.length),
                         style: const TextStyle(
-                          color: Colors.orange,
+                          color: Colors.orange,  // accent-allowlist: warning banner -- warning severity
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),

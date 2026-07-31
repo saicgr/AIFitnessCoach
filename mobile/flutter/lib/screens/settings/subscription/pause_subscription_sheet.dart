@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Pause duration option
 class PauseDuration {
@@ -143,12 +144,12 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.1),
+                    color: Colors.amber.withValues(alpha: 0.1),  // accent-allowlist: warning severity - must stay amber regardless of accent
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.pause_circle_outlined,
-                    color: Colors.amber.shade700,
+                    color: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                     size: 24,
                   ),
                 ),
@@ -192,10 +193,10 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.1),
+                      color: context.accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.cyan.withValues(alpha: 0.3),
+                        color: context.accentColor.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Column(
@@ -206,7 +207,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                             Icon(
                               Icons.info_outline,
                               size: 20,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -224,21 +225,21 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                           AppLocalizations.of(context).pauseSubscriptionBillingIsPaused,
                           AppLocalizations.of(context).pauseSubscriptionYouWontBeCharged,
                           Icons.money_off,
-                          AppColors.green,
+                          AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                           textSecondary,
                         ),
                         _buildInfoItem(
                           AppLocalizations.of(context).pauseSubscriptionDataIsPreserved,
                           AppLocalizations.of(context).pauseSubscriptionYourWorkoutHistory,
                           Icons.save_alt,
-                          AppColors.cyan,
+                          context.accentColor,
                           textSecondary,
                         ),
                         _buildInfoItem(
                           AppLocalizations.of(context).pauseSubscriptionLimitedAccess,
                           AppLocalizations.of(context).pauseSubscriptionPremiumFeaturesAre,
                           Icons.lock_outline,
-                          Colors.amber.shade700,
+                          Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                           textSecondary,
                         ),
                       ],
@@ -272,10 +273,10 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.green.withValues(alpha: 0.1),
+                        color: AppColors.green.withValues(alpha: 0.1),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.green.withValues(alpha: 0.3),
+                          color: AppColors.green.withValues(alpha: 0.3),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                         ),
                       ),
                       child: Row(
@@ -283,12 +284,12 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.green.withValues(alpha: 0.2),
+                              color: AppColors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.event_available,
-                              color: AppColors.green,
+                              color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                               size: 20,
                             ),
                           ),
@@ -341,10 +342,10 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                           ? _confirmPause
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.amber.shade700,
+                        backgroundColor: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                         foregroundColor: Colors.white,
                         disabledBackgroundColor:
-                            Colors.amber.shade700.withValues(alpha: 0.3),
+                            Colors.amber.shade700.withValues(alpha: 0.3),  // accent-allowlist: warning severity - must stay amber regardless of accent
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -451,11 +452,11 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.amber.withValues(alpha: 0.1)
+              ? Colors.amber.withValues(alpha: 0.1)  // accent-allowlist: warning severity - must stay amber regardless of accent
               : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? Colors.amber.shade700 : cardBorder,
+            color: isSelected ? Colors.amber.shade700 : cardBorder,  // accent-allowlist: warning severity - must stay amber regardless of accent
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -465,7 +466,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Colors.amber.withValues(alpha: 0.2)
+                    ? Colors.amber.withValues(alpha: 0.2)  // accent-allowlist: warning severity - must stay amber regardless of accent
                     : (isDark
                         ? AppColors.pureBlack.withValues(alpha: 0.3)
                         : Colors.grey.shade100),
@@ -473,7 +474,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
               ),
               child: Icon(
                 option.icon,
-                color: isSelected ? Colors.amber.shade700 : textSecondary,
+                color: isSelected ? Colors.amber.shade700 : textSecondary,  // accent-allowlist: warning severity - must stay amber regardless of accent
                 size: 20,
               ),
             ),
@@ -487,7 +488,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: isSelected ? Colors.amber.shade700 : textPrimary,
+                      color: isSelected ? Colors.amber.shade700 : textPrimary,  // accent-allowlist: warning severity - must stay amber regardless of accent
                     ),
                   ),
                   Text(
@@ -504,7 +505,7 @@ class _PauseSubscriptionSheetState extends State<PauseSubscriptionSheet> {
               Container(
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade700,
+                  color: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(

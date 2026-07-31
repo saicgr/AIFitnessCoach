@@ -36,7 +36,7 @@ class StreakFreezeScreen extends ConsumerWidget {
 
   /// The single hardcoded color allowed by the house rules: the existing ice
   /// blue used everywhere freezes appear (freeze rail, day grid, freeze chip).
-  static const Color _ice = Color(0xFF4FC3F7);
+  static const Color _ice = Color(0xFF4FC3F7); // accent-allowlist: streak-freeze "ice" identity — one fixed hue shared by the freeze rail, day grid and freeze chip so a freeze is recognisable at a glance; following the app accent would make freezes indistinguishable from ordinary accent chrome
 
   /// Freeze capacity cap (passive bank never exceeds this).
   static const int _cap = 5;

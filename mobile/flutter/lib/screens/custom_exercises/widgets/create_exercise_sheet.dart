@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/exercise_tracking_metric.dart' show kMetricCatalog;
 import '../../../data/providers/exercise_metrics_provider.dart';
 import '../../../data/models/custom_exercise.dart';
@@ -158,7 +159,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.pureWhite;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -250,7 +251,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildSimpleForm(BuildContext context, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -426,7 +427,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildComboForm(BuildContext context, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return SingleChildScrollView(
@@ -844,7 +845,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           SnackBar(
             content: Text('Failed to analyze photo: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error snackbar -- must stay red
           ),
         );
       }
@@ -1035,7 +1036,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           SnackBar(
             content: Text('Couldn\'t build combo: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error snackbar -- must stay red
           ),
         );
       }
@@ -1047,7 +1048,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildComboTypeSelector(bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return Wrap(
       spacing: 8,
@@ -1092,7 +1093,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildComponentTile(ComponentExercise comp, int index, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -1146,7 +1147,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               setState(() => _components.removeAt(index));
             },
             icon: const Icon(Icons.close, size: 18),
-            color: Colors.red.withOpacity(0.7),
+            color: Colors.red.withOpacity(0.7),  // accent-allowlist: destructive remove-component action -- error semantic
           ),
         ],
       ),
@@ -1271,7 +1272,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Widget _buildAdvancedSection(bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -1490,7 +1491,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  color: context.accentColor,
                 ),
               ),
             ),

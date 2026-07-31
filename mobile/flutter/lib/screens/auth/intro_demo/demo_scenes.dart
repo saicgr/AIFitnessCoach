@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'demo_clock.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// The auto-playing scenes of the intro demo — faithful, lightweight
 /// recreations of real app surfaces (ported from the zealova.com hero):
@@ -21,15 +22,14 @@ import 'demo_clock.dart';
 
 // ── shared bits ─────────────────────────────────────────────────────────
 
-const _userBubbleColor = Color(0xFF06B6D4);
 const _demoDarkBg = Color(0xFF0B0B0C);
 const _demoDarkCard = Color(0xFF141416);
 const _demoDarkBorder = Color(0xFF232326);
-const _proteinColor = Color(0xFF9C27B0);
-const _carbsColor = Color(0xFFFF9800);
-const _badgeGreen = Color(0xFF4CAF50);
-const _badgeYellow = Color(0xFFFFC107);
-const _badgeRed = Color(0xFFF44336);
+const _proteinColor = Color(0xFF9C27B0);  // accent-allowlist: macro identity -- protein colour, matches macroProtein convention
+const _carbsColor = Color(0xFFFF9800);  // accent-allowlist: macro identity -- carbs colour, matches macroCarbs convention
+const _badgeGreen = Color(0xFF4CAF50);  // accent-allowlist: success/positive state -- must stay green regardless of accent
+const _badgeYellow = Color(0xFFFFC107);  // accent-allowlist: warning severity
+const _badgeRed = Color(0xFFF44336);  // accent-allowlist: error/destructive -- must stay red
 
 class _CoachAvatar extends StatelessWidget {
   static const double size = 34;
@@ -40,12 +40,12 @@ class _CoachAvatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFFFFB366), AppColors.orange],
+          colors: [context.accentColor.withValues(alpha: 0.7), context.accentColor],
         ),
       ),
       alignment: Alignment.center,
@@ -167,11 +167,11 @@ class ProgramBuilderScene extends StatelessWidget {
                     border: Border.all(color: const Color(0xFFFED7AA)),
                   ),
                   child: Text(l10n.introDemoLiveBadge,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 10,
                           letterSpacing: 2,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.orange)),
+                          color: context.accentColor)),
                 ),
               ],
             ),
@@ -183,8 +183,8 @@ class ProgramBuilderScene extends StatelessWidget {
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-              decoration: const BoxDecoration(
-                color: _userBubbleColor,
+              decoration: BoxDecoration(
+                color: context.accentColor,
                 borderRadius: BorderRadiusDirectional.only(
                   topStart: Radius.circular(16),
                   topEnd: Radius.circular(16),
@@ -215,15 +215,15 @@ class ProgramBuilderScene extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(l10n.introDemoPushDayMon,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11,
                           letterSpacing: 1.5,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.orange)),
+                          color: context.accentColor)),
                   const SizedBox(height: 4),
-                  _progRow('Bench Press', '4 × 8 · 185 lb', 900),
-                  _progRow('Incline DB Press', '3 × 10', 1150),
-                  _progRow('Cable Fly', '3 × 12', 1400),
+                  _progRow(context, 'Bench Press', '4 × 8 · 185 lb', 900),
+                  _progRow(context, 'Incline DB Press', '3 × 10', 1150),
+                  _progRow(context, 'Cable Fly', '3 × 12', 1400),
                 ],
               ),
             ),
@@ -241,10 +241,10 @@ class ProgramBuilderScene extends StatelessWidget {
                 border: Border.all(color: const Color(0xFFFED7AA)),
               ),
               child: Text(l10n.introDemoGoalChip,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFC2410C))),
+                      color: context.accentColor)),
             ),
           ),
           const SizedBox(height: 9),
@@ -256,8 +256,8 @@ class ProgramBuilderScene extends StatelessWidget {
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-                decoration: const BoxDecoration(
-                  color: _userBubbleColor,
+                decoration: BoxDecoration(
+                  color: context.accentColor,
                   borderRadius: BorderRadiusDirectional.only(
                     topStart: Radius.circular(16),
                     topEnd: Radius.circular(16),
@@ -277,7 +277,7 @@ class ProgramBuilderScene extends StatelessWidget {
     );
   }
 
-  Widget _progRow(String name, String detail, int at) {
+  Widget _progRow(BuildContext context, String name, String detail, int at) {
     return BeatIn(
       localMs: localMs,
       at: at,
@@ -342,12 +342,12 @@ class LiveLoggingScene extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(l10n.introDemoExerciseKicker,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontFamily: 'Barlow Condensed',
                             fontSize: 12,
                             letterSpacing: 2,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.orange)),
+                            color: context.accentColor)),
                     const SizedBox(height: 3),
                     const Text('Bench Press',
                         style: TextStyle(
@@ -358,17 +358,17 @@ class LiveLoggingScene extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(timer,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontFamily: 'Space Mono',
                         fontSize: 17,
-                        color: AppColors.orange)),
+                        color: context.accentColor)),
               ],
             ),
           ),
           const SizedBox(height: 13),
-          _setRow(l10n, 1, '185 lb × 8', done: true, at: 0),
-          _setRow(l10n, 2, '215 lb × 5', done: true, at: 200),
-          _setRow(l10n, 3, '225 lb × 3',
+          _setRow(context, l10n, 1, '185 lb × 8', done: true, at: 0),
+          _setRow(context, l10n, 2, '215 lb × 5', done: true, at: 200),
+          _setRow(context, l10n, 3, '225 lb × 3',
               done: false, active: true, at: 500, restingLabel: l10n.introDemoResting),
           const SizedBox(height: 8),
           BeatIn(
@@ -391,7 +391,7 @@ class LiveLoggingScene extends StatelessWidget {
     );
   }
 
-  Widget _setRow(AppLocalizations l10n, int n, String detail,
+  Widget _setRow(BuildContext context, AppLocalizations l10n, int n, String detail,
       {required bool done,
       bool active = false,
       required int at,
@@ -404,12 +404,12 @@ class LiveLoggingScene extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
         decoration: BoxDecoration(
           color: active
-              ? AppColors.orange.withValues(alpha: 0.08)
+              ? context.accentColor.withValues(alpha: 0.08)
               : _demoDarkCard,
           borderRadius: BorderRadius.circular(11),
           border: Border.all(
             color: active
-                ? AppColors.orange.withValues(alpha: 0.55)
+                ? context.accentColor.withValues(alpha: 0.55)
                 : _demoDarkBorder,
           ),
         ),
@@ -418,7 +418,7 @@ class LiveLoggingScene extends StatelessWidget {
             Text(done ? '✓' : '▸',
                 style: TextStyle(
                     fontSize: 13,
-                    color: done ? const Color(0xFF2ECC71) : AppColors.orange)),
+                    color: done ? const Color(0xFF2ECC71) : AppColors.orange)),  // accent-allowlist: success/positive state -- done-step indicator, must stay green regardless of accent
             const SizedBox(width: 10),
             Text(l10n.introDemoSetRow(n),
                 style: const TextStyle(
@@ -467,13 +467,13 @@ class _PrChip extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(9),
           border:
-              Border.all(color: const Color(0xFFFFD54A).withValues(alpha: 0.5)),
+              Border.all(color: context.accentColor.withValues(alpha: 0.5)),
         ),
         child: Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFFFFD54A))),
+                color: context.accentColor)),
       ),
     );
   }
@@ -513,12 +513,12 @@ class FoodScanScene extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.introDemoPhotoLogging,
-                style: const TextStyle(
+                style: TextStyle(
                     fontFamily: 'Barlow Condensed',
                     fontSize: 12,
                     letterSpacing: 2.5,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.orange)),
+                    color: context.accentColor)),
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
@@ -539,13 +539,13 @@ class FoodScanScene extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(2),
                           gradient: LinearGradient(colors: [
-                            AppColors.orange.withValues(alpha: 0),
-                            AppColors.orange,
-                            AppColors.orange.withValues(alpha: 0),
+                            context.accentColor.withValues(alpha: 0),
+                            context.accentColor,
+                            context.accentColor.withValues(alpha: 0),
                           ]),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.orange.withValues(alpha: 0.8),
+                              color: context.accentColor.withValues(alpha: 0.8),
                               blurRadius: 14,
                             ),
                           ],
@@ -564,11 +564,11 @@ class FoodScanScene extends StatelessWidget {
                 _macroChip(l10n.introDemoKcalChip, const Color(0xFF18181B),
                     Colors.white, 700),
                 _macroChip(l10n.introDemoProteinChip, const Color(0xFFF3E8FF),
-                    const Color(0xFF7C3AED), 850),
+                    const Color(0xFF7C3AED), 850),  // accent-allowlist: macro identity -- protein colour, matches macroProtein convention
                 _macroChip(l10n.introDemoCarbsChip, const Color(0xFFFFF7ED),
-                    const Color(0xFFC2410C), 1000),
+                    const Color(0xFFC2410C), 1000),  // accent-allowlist: macro identity -- carbs colour, matches macroCarbs convention
                 _macroChip(l10n.introDemoFatChip, const Color(0xFFFDF2F8),
-                    const Color(0xFFDB2777), 1150),
+                    const Color(0xFFDB2777), 1150),  // accent-allowlist: macro identity -- fat colour, matches macroFat convention
               ],
             ),
             const SizedBox(height: 12),
@@ -579,7 +579,7 @@ class FoodScanScene extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF16A34A))),
+                      color: Color(0xFF16A34A))),  // accent-allowlist: success/positive state -- logged confirmation, must stay green regardless of accent
             ),
           ],
         ),
@@ -677,13 +677,13 @@ class MenuAnalysisScene extends StatelessWidget {
                   style: const TextStyle(
                       fontSize: 11, color: Color(0xFF8A8A92))),
               const SizedBox(width: 7),
-              _sortPill('${l10n.introDemoSortProtein}${byCarbs ? '' : ' ↓'}',
+              _sortPill(context, '${l10n.introDemoSortProtein}${byCarbs ? '' : ' ↓'}',
                   active: !byCarbs),
               const SizedBox(width: 7),
-              _sortPill('${l10n.introDemoSortCarbs}${byCarbs ? ' ↓' : ''}',
+              _sortPill(context, '${l10n.introDemoSortCarbs}${byCarbs ? ' ↓' : ''}',
                   active: byCarbs),
               const SizedBox(width: 7),
-              _sortPill(l10n.introDemoSortInflammation, active: false),
+              _sortPill(context, l10n.introDemoSortInflammation, active: false),
             ],
           ),
           const SizedBox(height: 12),
@@ -700,7 +700,7 @@ class MenuAnalysisScene extends StatelessWidget {
                     start: 0,
                     end: 0,
                     height: _rowStep - 7,
-                    child: _dishRow(l10n, d),
+                    child: _dishRow(context, l10n, d),
                   ),
               ],
             ),
@@ -710,18 +710,18 @@ class MenuAnalysisScene extends StatelessWidget {
     );
   }
 
-  Widget _sortPill(String label, {required bool active}) {
+  Widget _sortPill(BuildContext context, String label, {required bool active}) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: active
-            ? AppColors.orange.withValues(alpha: 0.15)
+            ? context.accentColor.withValues(alpha: 0.15)
             : Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(99),
         border: Border.all(
           color: active
-              ? AppColors.orange.withValues(alpha: 0.55)
+              ? context.accentColor.withValues(alpha: 0.55)
               : Colors.transparent,
         ),
       ),
@@ -730,11 +730,11 @@ class MenuAnalysisScene extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color:
-                  active ? AppColors.orange : const Color(0xFF8A8A92))),
+                  active ? context.accentColor : const Color(0xFF8A8A92))),
     );
   }
 
-  Widget _dishRow(AppLocalizations l10n, _Dish d) {
+  Widget _dishRow(BuildContext context, AppLocalizations l10n, _Dish d) {
     final badgeColor = switch (d.badge) {
       'rec' => _badgeGreen,
       'avoid' => _badgeRed,
@@ -754,7 +754,7 @@ class MenuAnalysisScene extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: d.pick
-              ? const Color(0xFFFCD34D).withValues(alpha: 0.45)
+              ? context.accentColor.withValues(alpha: 0.45)
               : _demoDarkBorder,
         ),
       ),
@@ -764,10 +764,10 @@ class MenuAnalysisScene extends StatelessWidget {
             width: 16,
             height: 16,
             decoration: BoxDecoration(
-              color: d.pick ? AppColors.orange : Colors.transparent,
+              color: d.pick ? context.accentColor : Colors.transparent,
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: d.pick ? AppColors.orange : const Color(0xFF3A3A40),
+                color: d.pick ? context.accentColor : const Color(0xFF3A3A40),
               ),
             ),
             alignment: Alignment.center,
@@ -855,17 +855,17 @@ class _IntegrationTile {
   const _IntegrationTile(this.icon, this.label, this.color);
 }
 
-const List<_IntegrationTile> _integrationTiles = [
+List<_IntegrationTile> _integrationTiles(BuildContext context) => [
   _IntegrationTile(
-      Icons.health_and_safety_rounded, 'Health Connect', Color(0xFF34A853)),
-  _IntegrationTile(Icons.favorite_rounded, 'Apple Health', Color(0xFFFF375F)),
+      Icons.health_and_safety_rounded, 'Health Connect', const Color(0xFF34A853)),  // accent-allowlist: third-party brand mark -- Google Health Connect green
+  _IntegrationTile(Icons.favorite_rounded, 'Apple Health', const Color(0xFFFF375F)),  // accent-allowlist: third-party brand mark -- Apple Health red
   _IntegrationTile(
-      Icons.directions_walk_rounded, 'Steps', Color(0xFF06B6D4)),
+      Icons.directions_walk_rounded, 'Steps', context.accentColor),
   _IntegrationTile(
-      Icons.monitor_heart_rounded, 'Heart rate', Color(0xFFEF4444)),
-  _IntegrationTile(Icons.bedtime_rounded, 'Sleep', Color(0xFF8B5CF6)),
+      Icons.monitor_heart_rounded, 'Heart rate', const Color(0xFFEF4444)),  // accent-allowlist: error/destructive -- must stay red (red-500)
+  _IntegrationTile(Icons.bedtime_rounded, 'Sleep', context.accentColor),
   _IntegrationTile(
-      Icons.local_fire_department_rounded, 'Calories', AppColors.orange),
+      Icons.local_fire_department_rounded, 'Calories', context.accentColor),
 ];
 
 class IntegrationsGridScene extends StatelessWidget {
@@ -884,13 +884,13 @@ class IntegrationsGridScene extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('CONNECTED DATA',
+          Text('CONNECTED DATA',
               style: TextStyle(
                   fontFamily: 'Barlow Condensed',
                   fontSize: 12,
                   letterSpacing: 2.5,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.orange)),
+                  color: context.accentColor)),
           const SizedBox(height: 8),
           const Text('Adapts to your data.',
               style: TextStyle(
@@ -899,19 +899,19 @@ class IntegrationsGridScene extends StatelessWidget {
                   color: Color(0xFFFAFAFA))),
           const SizedBox(height: 16),
           // 2-column tile grid; each tile pops in on its own beat.
-          for (var row = 0; row < _integrationTiles.length; row += 2)
+          for (var row = 0; row < _integrationTiles(context).length; row += 2)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(
                 children: [
                   Expanded(
-                    child: _tile(_integrationTiles[row], 250 + row * 130),
+                    child: _tile(_integrationTiles(context)[row], 250 + row * 130),
                   ),
                   const SizedBox(width: 10),
-                  if (row + 1 < _integrationTiles.length)
+                  if (row + 1 < _integrationTiles(context).length)
                     Expanded(
                       child:
-                          _tile(_integrationTiles[row + 1], 320 + row * 130),
+                          _tile(_integrationTiles(context)[row + 1], 320 + row * 130),
                     )
                   else
                     const Expanded(child: SizedBox()),
@@ -925,7 +925,7 @@ class IntegrationsGridScene extends StatelessWidget {
             child: Row(
               children: [
                 Icon(Icons.auto_awesome_rounded,
-                    size: 15, color: AppColors.orange.withValues(alpha: 0.9)),
+                    size: 15, color: context.accentColor.withValues(alpha: 0.9)),
                 const SizedBox(width: 7),
                 const Expanded(
                   child: Text(
@@ -987,7 +987,7 @@ class IntegrationsGridScene extends StatelessWidget {
               height: 7,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF2ECC71)
+                color: const Color(0xFF2ECC71)  // accent-allowlist: success/positive state -- live/active indicator dot, must stay green regardless of accent
                     .withValues(alpha: dotAlpha * inT),
               ),
             ),
@@ -1046,13 +1046,13 @@ class ShareablesScene extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('SHARE YOUR WINS',
+          Text('SHARE YOUR WINS',
               style: TextStyle(
                   fontFamily: 'Barlow Condensed',
                   fontSize: 12,
                   letterSpacing: 2.5,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.orange)),
+                  color: context.accentColor)),
           const SizedBox(height: 8),
           const Text('Flex your progress.',
               style: TextStyle(
@@ -1081,7 +1081,7 @@ class ShareablesScene extends StatelessWidget {
                           child: SizedBox(
                             width: w,
                             height: h,
-                            child: _beforeAfterCard(),
+                            child: _beforeAfterCard(context),
                           ),
                         ),
                       ),
@@ -1096,7 +1096,7 @@ class ShareablesScene extends StatelessWidget {
     );
   }
 
-  Widget _beforeAfterCard() {
+  Widget _beforeAfterCard(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Stack(
@@ -1123,7 +1123,7 @@ class ShareablesScene extends StatelessWidget {
           const Positioned(top: 12, left: 12, child: _BaTag('BEFORE')),
           const Positioned(top: 12, right: 12, child: _BaTag('AFTER')),
           // Centre delta pill straddling the seam.
-          Center(child: _deltaPill()),
+          Center(child: _deltaPill(context)),
           // Brand watermark.
           const Positioned(
             left: 0,
@@ -1136,11 +1136,11 @@ class ShareablesScene extends StatelessWidget {
     );
   }
 
-  Widget _deltaPill() {
+  Widget _deltaPill(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
       decoration: BoxDecoration(
-        color: AppColors.orange,
+        color: context.accentColor,
         borderRadius: BorderRadius.circular(40),
         boxShadow: const [
           BoxShadow(
@@ -1195,10 +1195,10 @@ class _BaWatermark extends StatelessWidget {
   const _BaWatermark();
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.bolt, color: AppColors.orange, size: 15),
+        Icon(Icons.bolt, color: context.accentColor, size: 15),
         SizedBox(width: 3),
         Text('Zealova',
             style: TextStyle(

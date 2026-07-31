@@ -148,10 +148,10 @@ _HexPalette _paletteForLevel(int level) {
   if (level >= 6) {
     // Gold
     return const _HexPalette(
-      Color(0xFFB45309),
+      Color(0xFFB45309), // accent-allowlist: mastery tier rarity color
       Color(0xFFFEF3C7),
-      Color(0xFFF59E0B),
-      Color(0xFF78350F),
+      Color(0xFFF59E0B), // accent-allowlist: mastery tier rarity color
+      Color(0xFF78350F), // accent-allowlist: mastery tier rarity color
     );
   }
   if (level >= 3) {
@@ -166,9 +166,9 @@ _HexPalette _paletteForLevel(int level) {
   if (level >= 1) {
     // Bronze
     return const _HexPalette(
-      Color(0xFF92400E),
-      Color(0xFFFDE68A),
-      Color(0xFFB45309),
+      Color(0xFF92400E), // accent-allowlist: mastery tier rarity color
+      Color(0xFFFDE68A), // accent-allowlist: mastery tier rarity color
+      Color(0xFFB45309), // accent-allowlist: mastery tier rarity color
       Color(0xFF451A03),
     );
   }

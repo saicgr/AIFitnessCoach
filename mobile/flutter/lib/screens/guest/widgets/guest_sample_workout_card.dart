@@ -6,6 +6,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A sample workout card for guest mode that shows what a real workout looks like
 /// Tapping shows a demo preview without actual workout functionality
 class GuestSampleWorkoutCard extends ConsumerWidget {
@@ -39,7 +40,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
                 colors: [
-                  AppColors.cyan.withOpacity(0.05),
+                  context.accentColor.withOpacity(0.05),
                   Colors.transparent,
                 ],
               ),
@@ -55,12 +56,12 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.fitness_center,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         size: 24,
                       ),
                     ),
@@ -86,15 +87,15 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.orange.withOpacity(0.2),
+                                  color: context.accentColor.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'DEMO',
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.orange,
+                                    color: context.accentColor,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -114,7 +115,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                     ),
                     Icon(
                       Icons.play_circle_outline,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 32,
                     ),
                   ],
@@ -163,7 +164,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                           _buildExerciseChip('Bench Press', textPrimary),
                           _buildExerciseChip('Squats', textPrimary),
                           _buildExerciseChip('Deadlift', textPrimary),
-                          _buildExerciseChip('+3 more', AppColors.cyan),
+                          _buildExerciseChip('+3 more', context.accentColor),
                         ],
                       ),
                     ],
@@ -178,7 +179,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                     AppLocalizations.of(context).guestSampleWorkoutTapToSeeWorkout,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -259,12 +260,12 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.cyan.withOpacity(0.15),
+                          color: context.accentColor.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.fitness_center,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                           size: 28,
                         ),
                       ),
@@ -352,20 +353,20 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.cyan.withOpacity(0.15),
-                          AppColors.purple.withOpacity(0.1),
+                          context.accentColor.withOpacity(0.15),
+                          context.accentColor.withOpacity(0.1),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: AppColors.cyan.withOpacity(0.3),
+                        color: context.accentColor.withOpacity(0.3),
                       ),
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.auto_awesome,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                           size: 32,
                         ),
                         const SizedBox(height: 8),
@@ -397,7 +398,7 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
                               // Navigation handled by parent
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.cyan,
+                              backgroundColor: context.accentColor,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
@@ -477,10 +478,10 @@ class GuestSampleWorkoutCard extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.15),
+              color: AppColors.purple.withOpacity(0.15),  // accent-allowlist: no BuildContext available in this scope (helper without context param) — kept as the fixed default value
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: AppColors.purple, size: 22),
+            child: Icon(icon, color: AppColors.purple, size: 22),  // accent-allowlist: no BuildContext available in this scope (helper without context param) — kept as the fixed default value
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -16,11 +16,11 @@ class HrZoneBreakdownCard extends ConsumerWidget {
   const HrZoneBreakdownCard({super.key});
 
   static const List<({String label, Color color})> _zones = [
-    (label: 'Z1', color: Color(0xFF60A5FA)),
-    (label: 'Z2', color: Color(0xFF34D399)),
-    (label: 'Z3', color: Color(0xFFFACC15)),
-    (label: 'Z4', color: Color(0xFFFB923C)),
-    (label: 'Z5', color: Color(0xFFF87171)),
+    (label: 'Z1', color: Color(0xFF60A5FA)),  // accent-allowlist: heart-rate zone categorical legend (Z1-Z5)
+    (label: 'Z2', color: Color(0xFF34D399)),  // accent-allowlist: heart-rate zone categorical legend (Z1-Z5)
+    (label: 'Z3', color: Color(0xFFFACC15)),  // accent-allowlist: heart-rate zone categorical legend (Z1-Z5)
+    (label: 'Z4', color: Color(0xFFFB923C)),  // accent-allowlist: heart-rate zone categorical legend (Z1-Z5)
+    (label: 'Z5', color: Color(0xFFF87171)),  // accent-allowlist: heart-rate zone categorical legend (Z1-Z5)
   ];
 
   // TODO(backend): expose `hr_zone_minutes: [z1,z2,z3,z4,z5]` on the

@@ -9,6 +9,7 @@ import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Shows the import data dialog.
 void showImportDialog(BuildContext context, WidgetRef ref) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -19,7 +20,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       title: Row(
         children: [
-          Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
+          Icon(Icons.file_upload_outlined, color: context.accentColor, size: 24),
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context)!.importDialogImportData(Branding.appName),
@@ -36,20 +37,20 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.1),
+              color: context.accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+              border: Border.all(color: context.accentColor.withOpacity(0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.warning_amber_rounded, color: AppColors.orange, size: 20),
+                Icon(Icons.warning_amber_rounded, color: context.accentColor, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     AppLocalizations.of(context)!.importDialogThisWillReplaceYour(Branding.appName),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       fontSize: 13,
                     ),
                   ),
@@ -83,7 +84,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           },
           child: Text(
             AppLocalizations.of(context).importSelectFile,
-            style: TextStyle(color: AppColors.purple),
+            style: TextStyle(color: context.accentColor),
           ),
         ),
       ],
@@ -118,7 +119,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
           backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
           title: Row(
             children: [
-              Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
+              Icon(Icons.file_upload_outlined, color: context.accentColor, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -159,17 +160,17 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               const SizedBox(height: 8),
               DialogBulletPoint(
                 text: 'Workouts & exercise plans',
-                color: AppColors.purple,
+                color: context.accentColor,
                 isDark: isDark,
               ),
               DialogBulletPoint(
                 text: 'Performance history (weights, reps)',
-                color: AppColors.purple,
+                color: context.accentColor,
                 isDark: isDark,
               ),
               DialogBulletPoint(
                 text: 'Personal records',
-                color: AppColors.purple,
+                color: context.accentColor,
                 isDark: isDark,
               ),
               const SizedBox(height: 12),
@@ -196,7 +197,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               onPressed: () => Navigator.pop(context, true),
               child: Text(
                 AppLocalizations.of(context).recipesImport,
-                style: TextStyle(color: AppColors.purple),
+                style: TextStyle(color: context.accentColor),
               ),
             ),
           ],
@@ -213,8 +214,8 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(color: AppColors.purple),
+        builder: (context) => Center(
+          child: CircularProgressIndicator(color: context.accentColor),
         ),
       );
     }
@@ -258,7 +259,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
               title: Row(
                 children: [
-                  Icon(Icons.check_circle, color: AppColors.success, size: 24),
+                  Icon(Icons.check_circle, color: AppColors.success, size: 24),  // accent-allowlist: success/positive state - must stay green regardless of accent
                   const SizedBox(width: 12),
                   Text(
                     AppLocalizations.of(context).importImportSuccessful,
@@ -279,7 +280,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     AppLocalizations.of(context).healthSyncOk,
-                    style: TextStyle(color: AppColors.success),
+                    style: TextStyle(color: AppColors.success),  // accent-allowlist: success/positive state - must stay green regardless of accent
                   ),
                 ),
               ],
@@ -301,7 +302,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Import failed: ${e.toString()}'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     }

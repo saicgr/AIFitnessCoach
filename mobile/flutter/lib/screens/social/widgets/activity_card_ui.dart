@@ -342,8 +342,8 @@ extension _ActivityCardStateUI on _ActivityCardState {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                AppColors.orange.withValues(alpha: 0.3),
-                AppColors.pink.withValues(alpha: 0.3),
+                context.accentColor.withValues(alpha: 0.3),
+                AppColors.pink.withValues(alpha: 0.3),  // accent-allowlist: decorative gradient tint — not one of the app's default accent values, kept distinct for visual variety
               ],
             ),
             borderRadius: BorderRadius.circular(12),
@@ -399,7 +399,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
             text: '$value $unit',
             style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: AppColors.green,
+              color: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           ),
         ],
@@ -432,9 +432,9 @@ extension _ActivityCardStateUI on _ActivityCardState {
 
     return Row(
       children: [
-        const Icon(
+        Icon(
           Icons.local_fire_department,
-          color: AppColors.orange,
+          color: context.accentColor,
           size: 24,
         ),
         const SizedBox(width: 8),
@@ -445,9 +445,9 @@ extension _ActivityCardStateUI on _ActivityCardState {
               const TextSpan(text: 'reached a '),
               TextSpan(
                 text: '$days-day streak',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               ),
               const TextSpan(text: '!'),
@@ -482,15 +482,15 @@ extension _ActivityCardStateUI on _ActivityCardState {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.yellow.withValues(alpha: 0.4),
-                    Colors.orange.withValues(alpha: 0.4),
+                    Colors.yellow.withValues(alpha: 0.4),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
+                    Colors.orange.withValues(alpha: 0.4),  // accent-allowlist: warning/highlight tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket
                   ],
                   begin: AlignmentDirectional.topStart,
                   end: AlignmentDirectional.bottomEnd,
                 ),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.5),
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.5),  // accent-allowlist: medal/rarity tier
                   width: 2,
                 ),
               ),
@@ -508,7 +508,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFFFFD700),
+                      color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier
                       letterSpacing: 1,
                     ),
                   ),
@@ -525,9 +525,9 @@ extension _ActivityCardStateUI on _ActivityCardState {
                         const TextSpan(text: ' '),
                         TextSpan(
                           text: workoutName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                       ],
@@ -545,10 +545,10 @@ extension _ActivityCardStateUI on _ActivityCardState {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
+            color: Colors.green.withValues(alpha: 0.1),  // accent-allowlist: success/positive state — must stay green regardless of accent
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.green.withValues(alpha: 0.3),
+              color: Colors.green.withValues(alpha: 0.3),  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           ),
           child: Column(
@@ -635,7 +635,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green,
+                          color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ),
                     ],
@@ -674,7 +674,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.2),
+                  color: Colors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -682,7 +682,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ),
                 ),
               ),
@@ -712,10 +712,10 @@ extension _ActivityCardStateUI on _ActivityCardState {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.2),
+                color: context.accentColor.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.orange.withValues(alpha: 0.4),
+                  color: context.accentColor.withValues(alpha: 0.4),
                   width: 2,
                 ),
               ),
@@ -733,7 +733,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -750,9 +750,9 @@ extension _ActivityCardStateUI on _ActivityCardState {
                         const TextSpan(text: ' '),
                         TextSpan(
                           text: workoutName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                       ],
@@ -770,10 +770,10 @@ extension _ActivityCardStateUI on _ActivityCardState {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.orange.withValues(alpha: 0.1),
+            color: context.accentColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.orange.withValues(alpha: 0.3),
+              color: context.accentColor.withValues(alpha: 0.3),
             ),
           ),
           child: Column(
@@ -781,7 +781,7 @@ extension _ActivityCardStateUI on _ActivityCardState {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 16, color: AppColors.orange),
+                  Icon(Icons.info_outline, size: 16, color: context.accentColor),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -858,10 +858,10 @@ extension _ActivityCardStateUI on _ActivityCardState {
                   ),
                   Text(
                     targetValue,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   ),
                 ],
@@ -906,19 +906,19 @@ extension _ActivityCardStateUI on _ActivityCardState {
         Color badgeColor;
         switch (colorStr.toLowerCase()) {
           case 'orange':
-            badgeColor = AppColors.orange;
+            badgeColor = AppColors.orange;  // accent-allowlist: badge-type color — maps a backend-provided badge color string (TRENDING/HALL OF FAME/etc.) to a fixed hue per type, not tied to accent
             break;
           case 'gold':
-            badgeColor = const Color(0xFFFFD700);
+            badgeColor = const Color(0xFFFFD700);  // accent-allowlist: badge-type color — maps a backend-provided badge color string (TRENDING/HALL OF FAME/etc.) to a fixed hue per type, not tied to accent
             break;
           case 'red':
-            badgeColor = AppColors.red;
+            badgeColor = AppColors.red;  // accent-allowlist: badge-type color — maps a backend-provided badge color string (TRENDING/HALL OF FAME/etc.) to a fixed hue per type, not tied to accent
             break;
           case 'purple':
-            badgeColor = AppColors.purple;
+            badgeColor = AppColors.purple;  // accent-allowlist: badge-type color — maps a backend-provided badge color string (TRENDING/HALL OF FAME/etc.) to a fixed hue per type, not tied to accent
             break;
           default:
-            badgeColor = AppColors.cyan;
+            badgeColor = AppColors.cyan;  // accent-allowlist: badge-type color — maps a backend-provided badge color string (TRENDING/HALL OF FAME/etc.) to a fixed hue per type, not tied to accent
         }
 
         return Container(

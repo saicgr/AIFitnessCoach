@@ -9,6 +9,7 @@ import '../widgets/setting_tile.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'rep_preferences_section_part_training_focus_option_tile.dart';
 
 
@@ -47,35 +48,35 @@ class RepPreferencesSection extends ConsumerWidget {
               'title': 'Training Focus',
               'description':
                   'Choose your primary training goal. This affects the rep ranges suggested for your workouts.',
-              'color': AppColors.cyan,
+              'color': context.accentColor,
             },
             {
               'icon': Icons.repeat,
               'title': 'Rep Range',
               'description':
                   'Set your preferred minimum and maximum reps per set. The AI will try to keep exercises within this range.',
-              'color': AppColors.purple,
+              'color': context.accentColor,
             },
             {
               'icon': Icons.format_list_numbered,
               'title': 'Sets Per Exercise',
               'description':
                   'Configure how many sets you want per exercise. Min sets ensures adequate volume, max sets prevents overtraining.',
-              'color': AppColors.coral,
+              'color': context.accentColor,
             },
             {
               'icon': Icons.vertical_align_top,
               'title': 'Enforce Rep Ceiling',
               'description':
                   'When enabled, the AI will strictly enforce your maximum rep limit and never exceed it.',
-              'color': AppColors.orange,
+              'color': context.accentColor,
             },
             {
               'icon': Icons.trending_up,
               'title': 'Progression Style',
               'description':
                   'Leverage First: Master harder positions before adding weight. Load First: Add weight before changing exercises. Balanced: Let AI decide.',
-              'color': AppColors.green,
+              'color': context.accentColor,
             },
           ],
         ),
@@ -168,7 +169,7 @@ class RepPreferencesSection extends ConsumerWidget {
                     .read(exerciseProgressionProvider.notifier)
                     .setEnforceRepCeiling(value);
               },
-        activeThumbColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+        activeThumbColor: isDark ? context.accentColor : AppColorsLight.cyan,
       ),
       showChevron: false,
     );
@@ -180,17 +181,17 @@ class RepPreferencesSection extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: (isDark ? AppColors.cyan : AppColorsLight.cyan).withOpacity(0.1),
+        color: (isDark ? context.accentColor : AppColorsLight.cyan).withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isDark ? AppColors.cyan : AppColorsLight.cyan).withOpacity(0.3),
+          color: (isDark ? context.accentColor : AppColorsLight.cyan).withOpacity(0.3),
         ),
       ),
       child: Row(
         children: [
           Icon(
             Icons.summarize,
-            color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            color: isDark ? context.accentColor : AppColorsLight.cyan,
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -293,7 +294,7 @@ class RepPreferencesSection extends ConsumerWidget {
                     .read(exerciseProgressionProvider.notifier)
                     .setAvoidHighReps(value);
               },
-        activeThumbColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+        activeThumbColor: isDark ? context.accentColor : AppColorsLight.cyan,
       ),
       showChevron: false,
     );

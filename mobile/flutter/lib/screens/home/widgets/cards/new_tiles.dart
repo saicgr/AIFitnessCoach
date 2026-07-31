@@ -21,6 +21,7 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 part 'new_tiles_part_personal_records_card.dart';
 part 'new_tiles_part_active_challenge_card.dart';
 part 'new_tiles_part_my_journey_card.dart';
@@ -50,7 +51,7 @@ class StreakCounterCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final orangeColor = AppColors.orange;
+    final orangeColor = context.accentColor;
 
     if (size == TileSize.compact) {
       return Container(

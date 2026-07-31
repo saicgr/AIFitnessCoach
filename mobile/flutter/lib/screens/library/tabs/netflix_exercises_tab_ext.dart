@@ -17,7 +17,7 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: isDark ? AppColors.cyan : AppColorsLight.cyan),
+              CircularProgressIndicator(color: isDark ? context.accentColor : AppColorsLight.cyan),
               const SizedBox(height: 16),
               Text(AppLocalizations.of(context).netflixExercisesTabSearching, style: TextStyle(color: textMuted)),
             ],
@@ -60,7 +60,7 @@ extension __NetflixExercisesTabStateExt on _NetflixExercisesTabState {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Row(
                 children: [
-                  Icon(Icons.auto_fix_high, size: 14, color: isDark ? AppColors.cyan : AppColorsLight.cyan),
+                  Icon(Icons.auto_fix_high, size: 14, color: isDark ? context.accentColor : AppColorsLight.cyan),
                   const SizedBox(width: 6),
                   Expanded(
                     child: RichText(

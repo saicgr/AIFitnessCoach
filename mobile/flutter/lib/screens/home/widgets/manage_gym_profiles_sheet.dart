@@ -13,6 +13,7 @@ import 'add_gym_profile_sheet.dart';
 import 'edit_gym_profile_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Bottom sheet for managing gym profiles (reorder, edit, delete)
 class ManageGymProfilesSheet extends ConsumerStatefulWidget {
   /// Optional callback for back button - if null, no back button shown
@@ -259,12 +260,12 @@ class _ManageGymProfilesSheetState
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.manage_accounts_rounded,
-                      color: AppColors.purple,
+                      color: context.accentColor,
                       size: 24,
                     ),
                   ),
@@ -379,8 +380,8 @@ class _ManageGymProfilesSheetState
                     icon: const Icon(Icons.add_rounded),
                     label: Text(AppLocalizations.of(context).manageGymProfilesAddNewGym),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.cyan,
-                      side: BorderSide(color: AppColors.cyan),
+                      foregroundColor: context.accentColor,
+                      side: BorderSide(color: context.accentColor),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -625,12 +626,12 @@ class _ManageGymProfilesSheetState
                             Icon(
                               Icons.delete_outline_rounded,
                               size: 20,
-                              color: AppColors.error,
+                              color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                             ),
                             const SizedBox(width: 12),
                             Text(
                               AppLocalizations.of(context).buttonDelete,
-                              style: TextStyle(color: AppColors.error),
+                              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive -- must stay red
                             ),
                           ],
                         ),

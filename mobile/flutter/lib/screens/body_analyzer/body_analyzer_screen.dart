@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/body_analyzer.dart';
 import '../../data/repositories/body_analyzer_repository.dart';
@@ -376,7 +377,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
         padding: const EdgeInsets.symmetric(vertical: 48),
         child: Column(
           children: [
-            const Icon(Icons.assessment_outlined, size: 64, color: Color(0xFFB24BF3)),
+            Icon(Icons.assessment_outlined, size: 64, color: context.accentColor),
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context).bodyAnalyzerGetYourBodyAnalyzer,
@@ -404,7 +405,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
               icon: const Icon(Icons.camera_alt_outlined),
               label: Text(AppLocalizations.of(context).bodyAnalyzerStartAnalysis),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB24BF3),
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -437,14 +438,14 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB24BF3).withValues(alpha: 0.12),
+                  color: context.accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   snap.bodyType![0].toUpperCase() + snap.bodyType!.substring(1),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFFB24BF3),
+                    color: context.accentColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -469,7 +470,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                 value:
                     '${(snap.bodyFatPercent ?? 0).toStringAsFixed(0)}%',
                 fill: ((snap.bodyFatPercent ?? 0) / 40).clamp(0.0, 1.0),
-                color: const Color(0xFF3498DB),
+                color: const Color(0xFF3498DB),  // accent-allowlist: one of three ScoreRing metrics (body-fat/muscle-mass/symmetry) shown side by side as a fixed categorical trio
                 isDark: isDark,
               ),
             ),
@@ -480,7 +481,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                 value:
                     '${(snap.muscleMassPercent ?? 0).toStringAsFixed(0)}%',
                 fill: ((snap.muscleMassPercent ?? 0) / 60).clamp(0.0, 1.0),
-                color: const Color(0xFFF5A623),
+                color: const Color(0xFFF5A623),  // accent-allowlist: one of three ScoreRing metrics (body-fat/muscle-mass/symmetry) shown side by side as a fixed categorical trio
                 isDark: isDark,
               ),
             ),
@@ -490,7 +491,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                 label: AppLocalizations.of(context).shareBodyAnalyzerSymmetry,
                 value: '${((snap.symmetryScore ?? 0) / 10).round()}/10',
                 fill: ((snap.symmetryScore ?? 0) / 100).clamp(0.0, 1.0),
-                color: const Color(0xFFB24BF3),
+                color: const Color(0xFFB24BF3),  // accent-allowlist: one of three ScoreRing metrics (body-fat/muscle-mass/symmetry) shown side by side as a fixed categorical trio
                 isDark: isDark,
               ),
             ),
@@ -542,7 +543,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(Icons.arrow_right_rounded,
-                              size: 18, color: Color(0xFF2ECC71)),
+                              size: 18, color: Color(0xFF2ECC71)),  // accent-allowlist: positive/actionable tip bullet marker, success-adjacent
                           Expanded(
                             child: Text(
                               t,
@@ -595,8 +596,8 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                 icon: const Icon(Icons.camera_alt_outlined, size: 18),
                 label: Text(AppLocalizations.of(context).bodyAnalyzerNewAnalysis),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFB24BF3),
-                  side: const BorderSide(color: Color(0xFFB24BF3), width: 1.4),
+                  foregroundColor: context.accentColor,
+                  side: BorderSide(color: context.accentColor, width: 1.4),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -624,7 +625,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                       ? AppLocalizations.of(context).bodyAnalyzerCreatingProposal
                       : 'Retune my program'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB24BF3),
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -671,15 +672,15 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: const Color(0xFFB24BF3).withValues(alpha: 0.15),
+                color: context.accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
               child: Text(
                 '${snap.overallRating ?? 0}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFFB24BF3),
+                  color: context.accentColor,
                 ),
               ),
             ),

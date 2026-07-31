@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/line_icon.dart';
 import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Fitbod-style "what weights do you own" editor for ONE equipment id
 /// (dumbbells / kettlebell / barbell). Min / Max / Increment via sliders +
@@ -179,12 +180,12 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.16),
+                  color: context.accentColor.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: LineIcon(widget.lineIcon,
-                      size: 22, color: AppColors.orange),
+                      size: 22, color: context.accentColor),
                 ),
               ),
               const SizedBox(width: 12),
@@ -245,17 +246,17 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 9, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withValues(alpha: 0.12),
+                        color: context.accentColor.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                            color: AppColors.orange.withValues(alpha: 0.3)),
+                            color: context.accentColor.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         _fmt(w),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -271,8 +272,8 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.orange, Color(0xFFEA580C)],
+                gradient: LinearGradient(
+                  colors: [context.accentColor.withValues(alpha: 0.85), context.accentColor],
                 ),
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -302,7 +303,7 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: active
-                ? AppColors.orange.withValues(alpha: 0.18)
+                ? context.accentColor.withValues(alpha: 0.18)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(9),
           ),
@@ -311,7 +312,7 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: active ? AppColors.orange : textSecondary,
+              color: active ? context.accentColor : textSecondary,
             ),
           ),
         ),
@@ -362,20 +363,20 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.14),
+                  color: context.accentColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(_fmt(value),
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.orange)),
+                            color: context.accentColor)),
                     const SizedBox(width: 5),
-                    const Icon(Icons.edit_rounded,
-                        size: 13, color: AppColors.orange),
+                    Icon(Icons.edit_rounded,
+                        size: 13, color: context.accentColor),
                   ],
                 ),
               ),
@@ -384,10 +385,10 @@ class _EquipmentWeightSheetState extends State<_EquipmentWeightSheet> {
         ),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: AppColors.orange,
-            inactiveTrackColor: AppColors.orange.withValues(alpha: 0.18),
-            thumbColor: AppColors.orange,
-            overlayColor: AppColors.orange.withValues(alpha: 0.16),
+            activeTrackColor: context.accentColor,
+            inactiveTrackColor: context.accentColor.withValues(alpha: 0.18),
+            thumbColor: context.accentColor,
+            overlayColor: context.accentColor.withValues(alpha: 0.16),
             trackHeight: 4,
           ),
           child: Slider(

@@ -5,14 +5,17 @@ part of 'level_up_dialog.dart';
 class _ProgressBar extends StatelessWidget {
   final double progress;
   final double barWidth;
+  final Color accent;
 
   const _ProgressBar({
     required this.progress,
     required this.barWidth,
+    required this.accent,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accentDark = Color.lerp(accent, Colors.black, 0.3)!;
     return Container(
       height: 14,
       decoration: BoxDecoration(
@@ -24,21 +27,18 @@ class _ProgressBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(7),
         child: Stack(
           children: [
-            // Green filled portion
+            // Filled portion — the app accent, not a fixed hue
             FractionallySizedBox(
               widthFactor: progress.clamp(0.0, 1.0),
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.green.shade600,
-                      Colors.green.shade400,
-                    ],
+                    colors: [accentDark, accent],
                   ),
                 ),
               ),
             ),
-            // Blue marker at the edge
+            // Marker at the leading edge, matches the fill colour
             if (progress > 0.02 && progress < 0.98)
               PositionedDirectional(start: (progress * (barWidth - 4)).clamp(0.0, barWidth - 4),
                 top: 0,
@@ -46,10 +46,10 @@ class _ProgressBar extends StatelessWidget {
                 child: Container(
                   width: 4,
                   decoration: BoxDecoration(
-                    color: Colors.cyan.shade300,
+                    color: accent,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.cyan.withValues(alpha: 0.8),
+                        color: accent.withValues(alpha: 0.8),
                         blurRadius: 6,
                       ),
                     ],

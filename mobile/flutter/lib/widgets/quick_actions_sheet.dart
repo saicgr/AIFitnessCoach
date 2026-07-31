@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../core/animations/app_animations.dart';
 import '../core/constants/app_colors.dart';
 import '../core/models/quick_action.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/quick_action_provider.dart';
 import '../data/repositories/hydration_repository.dart';
@@ -308,7 +309,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
       onTap: handleTap,
       icon: action.icon,
       label: action.label,
-      iconColor: action.color,
+      iconColor: context.accentColor,
       isPinned: isPinned,
     );
   }
@@ -700,9 +701,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDark
-                            ? AppColors.cyan
-                            : const Color(0xFF0891B2),
+                        color: context.accentColor,
                       ),
                     ),
                   ),
@@ -763,12 +762,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                     margin: const EdgeInsets.only(bottom: 4),
                     decoration: BoxDecoration(
                       color: isVisibleInBar
-                          ? action.color.withValues(alpha: isDark ? 0.12 : 0.08)
+                          ? context.accentColor.withValues(alpha: isDark ? 0.12 : 0.08)
                           : elevatedColor,
                       borderRadius: BorderRadius.circular(12),
                       border: isVisibleInBar
                           ? Border.all(
-                              color: action.color.withValues(alpha: 0.3),
+                              color: context.accentColor.withValues(alpha: 0.3),
                             )
                           : null,
                     ),
@@ -789,12 +788,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           width: 32,
                           height: 32,
                           decoration: BoxDecoration(
-                            color: action.color.withValues(alpha: 0.15),
+                            color: context.accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Icon(
                             action.icon,
-                            color: action.color,
+                            color: context.accentColor,
                             size: 18,
                           ),
                         ),
@@ -829,7 +828,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             height: 24,
                             margin: const EdgeInsetsDirectional.only(end: 12),
                             decoration: BoxDecoration(
-                              color: action.color,
+                              color: context.accentColor,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Center(

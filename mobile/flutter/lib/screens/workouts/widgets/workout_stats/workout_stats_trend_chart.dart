@@ -417,8 +417,8 @@ class _BarsWithReadiness extends ConsumerWidget {
                     child: MiniSparkline(
                       values: readinessLine,
                       color: isDark
-                          ? AppColors.success
-                          : AppColorsLight.success,
+                          ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
+                          : AppColorsLight.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       height: chartHeight,
                       filled: false,
                       strokeWidth: 2,
@@ -447,7 +447,7 @@ class _BarsWithReadiness extends ConsumerWidget {
                 width: 14,
                 height: 2.5,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.success : AppColorsLight.success,
+                  color: isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -543,14 +543,14 @@ class _AcwrPill extends ConsumerWidget {
   static Color _stateColor(String state, bool isDark) {
     switch (state) {
       case 'overreaching':
-        return isDark ? AppColors.error : AppColorsLight.error;
+        return isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive -- must stay red
       case 'loading':
-        return isDark ? AppColors.warning : AppColorsLight.warning;
+        return isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: warning severity
       case 'detraining':
-        return isDark ? AppColors.info : AppColorsLight.info;
+        return isDark ? AppColors.info : AppColorsLight.info;  // accent-allowlist: informational
       case 'balanced':
       default:
-        return isDark ? AppColors.success : AppColorsLight.success;
+        return isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     }
   }
 }

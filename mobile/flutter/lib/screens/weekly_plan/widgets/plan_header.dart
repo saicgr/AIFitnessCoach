@@ -89,7 +89,7 @@ class PlanHeader extends StatelessWidget {
                 icon: Icons.fitness_center,
                 label: AppLocalizations.of(context).settingsTrainingSection,
                 value: AppLocalizations.of(context)!.planHeaderDays(plan.trainingDayCount),
-                color: Colors.green,
+                color: Colors.green, // accent-allowlist: stat identity (training days=green/avg calories=orange), matches section-identity convention
               ),
               _buildStatItem(
                 context,
@@ -103,7 +103,7 @@ class PlanHeader extends StatelessWidget {
                 icon: Icons.local_fire_department,
                 label: AppLocalizations.of(context).weeklyCheckinSheetAvgCalories,
                 value: '${plan.avgDailyCalories}',
-                color: Colors.orange,
+                color: Colors.orange, // accent-allowlist: stat identity (training days=green/avg calories=orange), matches section-identity convention
               ),
             ],
           ),

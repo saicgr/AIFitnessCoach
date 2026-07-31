@@ -76,7 +76,7 @@ class UsageUpsellBanner extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           HapticService.light();
-          context.push('/paywall?source=home_usage_banner');
+          context.push('/hard-paywall');
         },
         child: Container(
           padding: const EdgeInsets.all(14),

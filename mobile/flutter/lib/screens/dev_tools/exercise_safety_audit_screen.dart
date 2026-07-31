@@ -494,10 +494,10 @@ class _ExerciseList extends ConsumerWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.md),
-            color: Colors.red.withAlpha(26),
+            color: Colors.red.withAlpha(26),  // accent-allowlist: error banner -- error semantic
             child: Text(
               state.errorMessage!,
-              style: const TextStyle(color: Colors.red, fontSize: 14),
+              style: const TextStyle(color: Colors.red, fontSize: 14),  // accent-allowlist: error banner -- error semantic
             ),
           ),
         Expanded(
@@ -602,19 +602,19 @@ class _ExerciseRow extends StatelessWidget {
                       label: exercise.movementPattern ?? AppLocalizations.of(context).exerciseSafetyAuditNoPattern,
                       color: exercise.movementPattern != null
                           ? colors.accent.withAlpha(51)
-                          : Colors.orange.withAlpha(51),
+                          : Colors.orange.withAlpha(51),  // accent-allowlist: missing-classification warning chip
                       textColor: exercise.movementPattern != null
                           ? colors.accent
-                          : Colors.orange,
+                          : Colors.orange,  // accent-allowlist: missing-classification warning chip
                     ),
                     _StatusChip(
                       label: exercise.safetyDifficulty ?? AppLocalizations.of(context).exerciseSafetyAuditNoDifficulty,
                       color: exercise.safetyDifficulty != null
                           ? colors.accent.withAlpha(51)
-                          : Colors.orange.withAlpha(51),
+                          : Colors.orange.withAlpha(51),  // accent-allowlist: missing-classification warning chip
                       textColor: exercise.safetyDifficulty != null
                           ? colors.accent
-                          : Colors.orange,
+                          : Colors.orange,  // accent-allowlist: missing-classification warning chip
                     ),
                   ],
                 ),
@@ -966,19 +966,19 @@ class _ReviewModalState extends ConsumerState<_ReviewModal> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: Colors.red.withAlpha(26),
+                  color: Colors.red.withAlpha(26),  // accent-allowlist: error banner -- error semantic
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.error_outline,
-                        color: Colors.red, size: 16),
+                        color: Colors.red, size: 16),  // accent-allowlist: error banner -- error semantic
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
                         _saveError!,
                         style: const TextStyle(
-                          color: Colors.red,
+                          color: Colors.red,  // accent-allowlist: error banner -- error semantic
                           fontSize: 13,
                         ),
                       ),

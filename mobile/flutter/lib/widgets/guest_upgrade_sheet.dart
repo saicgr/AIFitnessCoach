@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
 import 'glass_sheet.dart';
@@ -143,32 +144,11 @@ class GuestUpgradeSheet extends ConsumerWidget {
     }
   }
 
-  Color _getColor() {
-    switch (feature) {
-      case GuestFeatureLimit.chat:
-        return AppColors.purple;
-      case GuestFeatureLimit.workout:
-        return AppColors.cyan;
-      case GuestFeatureLimit.foodScan:
-        return AppColors.orange;
-      case GuestFeatureLimit.photoScan:
-        return AppColors.orange;
-      case GuestFeatureLimit.barcodeScan:
-        return AppColors.orange;
-      case GuestFeatureLimit.textDescribe:
-        return AppColors.orange;
-      case GuestFeatureLimit.nutrition:
-        return AppColors.green;
-      case GuestFeatureLimit.progress:
-        return AppColors.teal;
-      case GuestFeatureLimit.fasting:
-        return AppColors.purple;
-      case GuestFeatureLimit.workoutHistory:
-        return AppColors.cyan;
-      case GuestFeatureLimit.custom:
-        return AppColors.cyan;
-    }
-  }
+  // E2E register row 15: each of the 11 guest-limit reasons used to get its
+  // own private hex (purple/cyan/orange/green/teal), so this paywall sheet
+  // rendered a different color per feature independent of the app's accent
+  // setting. Single-sourced to the live accent instead.
+  Color _getColor(BuildContext context) => context.accentColor;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -179,7 +159,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final usage = ref.watch(guestUsageLimitsProvider);
-    final accentColor = _getColor();
+    final accentColor = _getColor(context);
 
     return GlassSheet(
           child: SafeArea(
@@ -263,19 +243,19 @@ class GuestUpgradeSheet extends ConsumerWidget {
                           'Chats',
                           '${usage.chatMessagesToday}/${GuestUsageLimits.maxChatMessagesPerDay}',
                           usage.isChatLimitReached,
-                          AppColors.purple,
+                          accentColor,
                         ),
                         _buildUsageStat(
                           'Workouts',
                           '${usage.workoutGenerationsTotal}/${GuestUsageLimits.maxWorkoutGenerationsTotal}',
                           usage.isWorkoutLimitReached,
-                          AppColors.cyan,
+                          accentColor,
                         ),
                         _buildUsageStat(
                           'Scans',
                           '${usage.photoScansTotal + usage.barcodeScansTotal + usage.textDescribeTotal}/3',
                           usage.isPhotoScanLimitReached && usage.isBarcodeScanLimitReached && usage.isTextDescribeLimitReached,
-                          AppColors.orange,
+                          accentColor,
                         ),
                       ],
                     ),
@@ -286,7 +266,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // Benefits list
-              _buildBenefitsList(textPrimary),
+              _buildBenefitsList(context, textPrimary),
 
               const SizedBox(height: 24),
 
@@ -303,7 +283,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: accentColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -358,7 +338,7 @@ class GuestUpgradeSheet extends ConsumerWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: isLimitReached ? AppColors.error : color,
+            color: isLimitReached ? AppColors.error : color, // accent-allowlist: error branch is semantic; non-error branch is the accent passed in by the caller
           ),
         ),
         const SizedBox(height: 4),
@@ -366,14 +346,14 @@ class GuestUpgradeSheet extends ConsumerWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: isLimitReached ? AppColors.error : Colors.grey,
+            color: isLimitReached ? AppColors.error : Colors.grey, // accent-allowlist: error/limit-reached severity color
           ),
         ),
       ],
     );
   }
 
-  Widget _buildBenefitsList(Color textColor) {
+  Widget _buildBenefitsList(BuildContext context, Color textColor) {
     final benefits = [
       ('Unlimited AI coaching', Icons.chat_bubble_outline),
       ('Personalized workout plans', Icons.fitness_center),
@@ -391,17 +371,17 @@ class GuestUpgradeSheet extends ConsumerWidget {
                 width: 24,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
+                  color: AppColors.success.withOpacity(0.15), // accent-allowlist: included-benefit checkmark, success semantic
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.check,
-                  color: AppColors.success,
+                  color: AppColors.success, // accent-allowlist: included-benefit checkmark, success semantic
                   size: 14,
                 ),
               ),
               const SizedBox(width: 12),
-              Icon(benefit.$2, size: 18, color: AppColors.cyan),
+              Icon(benefit.$2, size: 18, color: context.accentColor),
               const SizedBox(width: 8),
               Text(
                 benefit.$1,
@@ -431,6 +411,7 @@ class GuestUsageBanner extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final usage = ref.watch(guestUsageLimitsProvider);
     final elevatedColor = isDark ? AppColors.elevated : Colors.white;
+    final accentColor = context.accentColor;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -439,7 +420,7 @@ class GuestUsageBanner extends ConsumerWidget {
         color: elevatedColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.orange.withOpacity(0.3),
+          color: accentColor.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -447,12 +428,12 @@ class GuestUsageBanner extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.orange.withOpacity(0.15),
+              color: accentColor.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_outline,
-              color: AppColors.orange,
+              color: accentColor,
               size: 20,
             ),
           ),
@@ -475,15 +456,15 @@ class GuestUsageBanner extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.2),
+                        color: accentColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         '${usage.remainingChatMessages} chats left',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.orange,
+                          color: accentColor,
                         ),
                       ),
                     ),
@@ -510,7 +491,7 @@ class GuestUsageBanner extends ConsumerWidget {
             },
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              backgroundColor: AppColors.cyan,
+              backgroundColor: accentColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

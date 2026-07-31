@@ -136,10 +136,10 @@ class FastingScoreCard extends StatelessWidget {
     IconData trendIcon;
 
     if (isUp) {
-      trendColor = AppColors.success;
+      trendColor = AppColors.success; // accent-allowlist: fasting score severity scale
       trendIcon = Icons.trending_up_rounded;
     } else if (isDown) {
-      trendColor = AppColors.coral;
+      trendColor = AppColors.coral; // accent-allowlist: fasting score severity scale
       trendIcon = Icons.trending_down_rounded;
     } else {
       trendColor = textMuted;
@@ -195,7 +195,7 @@ class FastingScoreCard extends StatelessWidget {
           score.completionComponent,
           30,
           Icons.check_circle_outline,
-          AppColors.success,
+          AppColors.success, // accent-allowlist: fasting score severity scale
           textPrimary,
           textMuted,
         ),
@@ -205,7 +205,7 @@ class FastingScoreCard extends StatelessWidget {
           score.streakComponent,
           25,
           Icons.local_fire_department_outlined,
-          AppColors.coral,
+          AppColors.coral, // accent-allowlist: fasting score severity scale
           textPrimary,
           textMuted,
         ),
@@ -235,7 +235,7 @@ class FastingScoreCard extends StatelessWidget {
           score.protocolComponent,
           10,
           Icons.speed_outlined,
-          AppColors.yellow,
+          AppColors.yellow, // accent-allowlist: fasting score severity scale
           textPrimary,
           textMuted,
         ),
@@ -378,7 +378,7 @@ class FastingScoreCompact extends StatelessWidget {
                           ? Icons.arrow_upward_rounded
                           : Icons.arrow_downward_rounded,
                       size: 12,
-                      color: trend!.isUp ? AppColors.success : AppColors.coral,
+                      color: trend!.isUp ? AppColors.success : AppColors.coral, // accent-allowlist: fasting score severity scale
                     ),
                   ],
                 ],

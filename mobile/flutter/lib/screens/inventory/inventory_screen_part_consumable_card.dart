@@ -138,7 +138,7 @@ class _ConsumableCard extends StatelessWidget {
                   Text(
                     disabledReason!,
                     style: TextStyle(
-                      color: AppColors.warning.withValues(alpha: 0.9),
+                      color: AppColors.warning.withValues(alpha: 0.9),  // accent-allowlist: warning severity -- disabled/locked reason text
                       fontSize: 11,
                     ),
                   ),
@@ -278,7 +278,7 @@ class _DailyCrateCard extends StatelessWidget {
                     Text(
                       lockedReason!,
                       style: TextStyle(
-                        color: isLocked ? AppColors.warning.withValues(alpha: 0.9) : textMuted.withValues(alpha: 0.7),
+                        color: isLocked ? AppColors.warning.withValues(alpha: 0.9) : textMuted.withValues(alpha: 0.7),  // accent-allowlist: warning severity -- disabled/locked reason text
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
                       ),

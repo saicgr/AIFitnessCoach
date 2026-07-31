@@ -60,7 +60,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(Icons.favorite, color: AppColors.error, size: 24),
+                Icon(Icons.favorite, color: AppColors.error, size: 24),  // accent-allowlist: error/destructive -- must stay red
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -194,7 +194,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                   width: 52,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.15),
+                    color: AppColors.error.withValues(alpha: 0.15),  // accent-allowlist: error/destructive -- must stay red
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
@@ -204,7 +204,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.error,
+                          color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                         ),
                       ),
                       Text(
@@ -212,7 +212,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.error,
+                          color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                         ),
                       ),
                     ],
@@ -240,7 +240,7 @@ class _FavoriteWorkoutsSheet extends ConsumerWidget {
                           ),
                           const Icon(
                             Icons.favorite,
-                            color: AppColors.error,
+                            color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                             size: 18,
                           ),
                         ],

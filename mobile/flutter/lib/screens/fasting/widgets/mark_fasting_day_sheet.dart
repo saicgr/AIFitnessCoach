@@ -190,7 +190,7 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
           SnackBar(
             content: Text(result.message),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success, // accent-allowlist: fasting day status severity
           ),
         );
       }
@@ -470,19 +470,19 @@ class _MarkFastingDaySheetState extends ConsumerState<MarkFastingDaySheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.coral.withValues(alpha: 0.1),
+                    color: AppColors.coral.withValues(alpha: 0.1), // accent-allowlist: fasting day status severity
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.3)),
+                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.3)), // accent-allowlist: fasting day status severity
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.coral, size: 20),
+                      Icon(Icons.error_outline, color: AppColors.coral, size: 20), // accent-allowlist: fasting day status severity
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _errorMessage!,
                           style: TextStyle(
-                            color: AppColors.coral,
+                            color: AppColors.coral, // accent-allowlist: fasting day status severity
                             fontSize: 13,
                           ),
                         ),

@@ -7,6 +7,7 @@ import '../../../data/providers/week1_tips_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Banner that surfaces one progressive feature tip per day during the
 /// user's first week. Dismissed tips stay hidden for the rest of the day.
 class Week1TipBanner extends ConsumerStatefulWidget {
@@ -217,11 +218,11 @@ class _Week1TipBannerState extends ConsumerState<Week1TipBanner>
 
   /// Map dark-theme accent colors to their light-theme counterparts.
   Color _lightAccent(Color darkColor) {
-    if (darkColor == AppColors.orange) return AppColorsLight.orange;
-    if (darkColor == AppColors.cyan) return AppColorsLight.cyan;
-    if (darkColor == AppColors.purple) return AppColorsLight.purple;
-    if (darkColor == AppColors.success) return AppColorsLight.success;
-    if (darkColor == AppColors.green) return AppColorsLight.green;
+    if (darkColor == context.accentColor) return context.accentColor;
+    if (darkColor == context.accentColor) return AppColorsLight.cyan;
+    if (darkColor == context.accentColor) return context.accentColor;
+    if (darkColor == AppColors.success) return AppColorsLight.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+    if (darkColor == AppColors.green) return AppColorsLight.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     return darkColor;
   }
 }

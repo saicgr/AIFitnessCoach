@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/services/haptic_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Beast Mode unlock celebration dialog.
 ///
 /// Shown when user taps the version label 7 times.
@@ -80,7 +81,7 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = context.accentColor;
 
     return Stack(
       children: [
@@ -99,11 +100,11 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
             confettiController: _confettiController,
             blastDirectionality: BlastDirectionality.explosive,
             shouldLoop: false,
-            colors: const [
-              AppColors.orange,
-              Colors.amber,
-              Colors.yellow,
-              Colors.deepOrange,
+            colors: [
+              context.accentColor,
+              Colors.amber,  // accent-allowlist: warning severity - must stay amber regardless of accent
+              Colors.yellow,  // accent-allowlist: celebratory confetti burst - decorative multi-colour variety by design
+              Colors.deepOrange,  // accent-allowlist: celebratory confetti burst - decorative multi-colour variety by design
             ],
             numberOfParticles: 30,
             maxBlastForce: 20,
@@ -155,7 +156,7 @@ class _BeastModeUnlockDialogState extends State<BeastModeUnlockDialog>
                     shaderCallback: (bounds) => LinearGradient(
                       colors: [
                         orange,
-                        Colors.amber,
+                        Colors.amber,  // accent-allowlist: warning severity - must stay amber regardless of accent
                         orange,
                       ],
                     ).createShader(bounds),

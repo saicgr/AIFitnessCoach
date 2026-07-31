@@ -219,7 +219,7 @@ class _BillingTab extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.22)
-                            : const Color(0xFF16A34A),
+                            : const Color(0xFF16A34A), // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
                         borderRadius:
                             BorderRadius.circular(prominentBadge ? 5 : 4),
                       ),
@@ -392,7 +392,7 @@ class _TierPlanCard extends StatelessWidget {
                   // Green ✓ universally reads "included". Reserve the
                   // brand orange for price + CTA so it stays meaningful.
                   Icon(Icons.check_circle,
-                      size: 16, color: const Color(0xFF16A34A)),
+                      size: 16, color: const Color(0xFF16A34A)), // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -811,7 +811,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.timer_outlined, size: 16, color: Colors.orange),
+            Icon(Icons.timer_outlined, size: 16, color: Colors.orange), // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
             const SizedBox(width: 6),
             Text(
               AppLocalizations.of(context).paywallPricingScreenOfferExpiresIn,
@@ -826,7 +826,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 fontFamily: 'monospace',
-                color: _secondsRemaining <= 60 ? Colors.red : Colors.orange,
+                color: _secondsRemaining <= 60 ? Colors.red : Colors.orange, // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
               ),
             ),
           ],
@@ -873,7 +873,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                       fontWeight: FontWeight.w500,
                       color: colors.textSecondary,
                       decoration: TextDecoration.lineThrough,
-                      decorationColor: Colors.red,
+                      decorationColor: Colors.red, // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
                       decorationThickness: 2.5,
                     ),
                   ),
@@ -916,7 +916,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.2),
+                  color: Colors.green.withOpacity(0.2), // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -924,7 +924,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: Colors.green, // accent-allowlist: included-checkmark green + countdown urgency (orange/red) + strikethrough old-price + savings badge; file's own comment: "Green checkmark universally reads included. Reserve the brand orange for price + CTA so it stays meaningful" - semantic, not accent
                   ),
                 ),
               ),

@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
 
@@ -22,7 +23,7 @@ class CustomExerciseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     return GestureDetector(
@@ -132,7 +133,7 @@ class CustomExerciseCard extends StatelessWidget {
                       },
                       icon: Icon(
                         Icons.delete_outline,
-                        color: Colors.red.withOpacity(0.7),
+                        color: Colors.red.withOpacity(0.7),  // accent-allowlist: destructive delete action -- error semantic
                         size: 20,
                       ),
                       padding: EdgeInsets.zero,

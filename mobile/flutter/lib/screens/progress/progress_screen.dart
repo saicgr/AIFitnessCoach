@@ -237,7 +237,7 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.cyan,
+                          backgroundColor: context.accentColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -394,9 +394,9 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
   Color _getTrendColor(TrendDirection trend) {
     switch (trend) {
       case TrendDirection.improving:
-        return Colors.green;
+        return Colors.green;  // accent-allowlist: success/positive state — must stay green regardless of accent
       case TrendDirection.declining:
-        return Colors.red;
+        return Colors.red;  // accent-allowlist: error/negative state — must stay red regardless of accent
       case TrendDirection.maintaining:
         return Colors.grey;
     }
@@ -649,12 +649,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         icon: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
+            color: Colors.green.withValues(alpha: 0.1),  // accent-allowlist: success/positive state — must stay green regardless of accent
             shape: BoxShape.circle,
           ),
           child: const Icon(
             Icons.check_circle,
-            color: Colors.green,
+            color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             size: 48,
           ),
         ),
@@ -681,12 +681,12 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
         icon: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.red.withValues(alpha: 0.1),
+            color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/negative state — must stay red regardless of accent
             shape: BoxShape.circle,
           ),
           child: const Icon(
             Icons.error_outline,
-            color: Colors.red,
+            color: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
             size: 48,
           ),
         ),

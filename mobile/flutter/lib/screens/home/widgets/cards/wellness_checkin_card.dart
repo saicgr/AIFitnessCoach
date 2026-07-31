@@ -408,8 +408,8 @@ class _WellnessCheckinCardState extends State<WellnessCheckinCard> {
 
     // Color gradient from green (1=Great) to red (5=Bad)
     final sliderColor = Color.lerp(
-      Colors.green,
-      Colors.red,
+      Colors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
+      Colors.red,  // accent-allowlist: error/destructive -- must stay red
       (value - 1) / 4,
     )!;
 

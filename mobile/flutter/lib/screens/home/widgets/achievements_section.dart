@@ -291,11 +291,11 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
   Color _getTierColor(String tier, Color accentColor) {
     switch (tier.toLowerCase()) {
       case 'gold':
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700);  // accent-allowlist: medal/rarity tier -- gold
       case 'silver':
         return const Color(0xFFC0C0C0);
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return const Color(0xFFCD7F32);  // accent-allowlist: medal/rarity tier -- bronze
       case 'platinum':
         return const Color(0xFFE5E4E2);
       default:

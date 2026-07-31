@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/providers/cosmetics_provider.dart';
 import '../data/services/haptic_service.dart';
 import '../data/services/tts_service.dart';
@@ -146,11 +147,11 @@ class CoachVoicePicker extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.cyan : border,
+            color: selected ? context.accentColor : border,
             width: selected ? 2 : 1,
           ),
           color: selected
-              ? AppColors.cyan.withValues(alpha: isDark ? 0.12 : 0.08)
+              ? context.accentColor.withValues(alpha: isDark ? 0.12 : 0.08)
               : Colors.transparent,
         ),
         child: Row(
@@ -188,7 +189,7 @@ class CoachVoicePicker extends ConsumerWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: AppColors.cyan, size: 22),
+              Icon(Icons.check_circle, color: context.accentColor, size: 22),
           ],
         ),
       ),

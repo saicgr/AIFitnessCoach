@@ -13,9 +13,9 @@ import '../../data/repositories/training_load_repository.dart';
 class DailyCardioLoadCard extends ConsumerWidget {
   const DailyCardioLoadCard({super.key});
 
-  static const Color _balanced = Color(0xFF22C55E);
-  static const Color _loading = Color(0xFFF59E0B);
-  static const Color _over = Color(0xFFEF4444);
+  static const Color _balanced = Color(0xFF22C55E); // accent-allowlist: cardio training-load severity scale
+  static const Color _loading = Color(0xFFF59E0B); // accent-allowlist: cardio training-load severity scale
+  static const Color _over = Color(0xFFEF4444); // accent-allowlist: cardio training-load severity scale
 
   Color _stateColor(String state, Color muted) {
     switch (state) {
@@ -26,7 +26,7 @@ class DailyCardioLoadCard extends ConsumerWidget {
       case 'overreaching':
         return _over;
       case 'detraining':
-        return const Color(0xFF38BDF8);
+        return const Color(0xFF38BDF8); // accent-allowlist: cardio training-load severity scale
       default:
         return muted;
     }
@@ -291,7 +291,7 @@ class _AcwrBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final track = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08);
-    final band = const Color(0xFF22C55E).withValues(alpha: 0.22);
+    final band = const Color(0xFF22C55E).withValues(alpha: 0.22); // accent-allowlist: cardio training-load severity scale
     return LayoutBuilder(builder: (context, c) {
       final w = c.maxWidth;
       double pos(double v) => (v / _scaleMax).clamp(0.0, 1.0) * w;

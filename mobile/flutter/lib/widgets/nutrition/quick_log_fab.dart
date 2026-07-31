@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/last_used_service.dart';
 import '../../screens/nutrition/log_meal_sheet.dart';
@@ -81,8 +82,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final green = isDark ? AppColors.green : AppColorsLight.success;
+    final accent = context.accentColor;
 
     return Stack(
       alignment: AlignmentDirectional.bottomEnd,
@@ -108,7 +108,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
                 index: 0,
                 icon: _isListening ? Icons.mic : Icons.mic_none,
                 label: _isListening ? AppLocalizations.of(context).quickLogFabListening : AppLocalizations.of(context).quickLogFabVoice,
-                color: Colors.purple,
+                color: accent,
                 method: 'voice',
                 onTap: _startVoiceLogging,
               ),
@@ -118,7 +118,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
               index: 1,
               icon: Icons.camera_alt,
               label: AppLocalizations.of(context).recipeImportPhoto,
-              color: Colors.blue,
+              color: accent,
               method: 'image',
               onTap: _openCameraLogging,
             ),
@@ -128,7 +128,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
               index: 2,
               icon: Icons.qr_code_scanner,
               label: AppLocalizations.of(context).quickLogFabScan,
-              color: Colors.orange,
+              color: accent,
               method: 'barcode',
               onTap: _openBarcodeLogging,
             ),
@@ -138,7 +138,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
               index: 3,
               icon: Icons.edit,
               label: AppLocalizations.of(context).workoutDetailType,
-              color: Colors.teal,
+              color: accent,
               method: 'text',
               onTap: _openTextLogging,
             ),
@@ -148,7 +148,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
               index: 4,
               icon: Icons.pie_chart,
               label: AppLocalizations.of(context).quickLogFabBatch,
-              color: Colors.deepPurple,
+              color: accent,
               method: 'batch',
               onTap: _openBatchPortioning,
             ),
@@ -159,7 +159,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
             FloatingActionButton(
               heroTag: 'quick_log_fab_main',
               onPressed: _toggleExpanded,
-              backgroundColor: green,
+              backgroundColor: accent,
               child: AnimatedRotation(
                 turns: _isExpanded ? 0.125 : 0,
                 duration: const Duration(milliseconds: 250),
@@ -347,13 +347,12 @@ class QuickLogFABCompact extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final green = isDark ? AppColors.green : AppColorsLight.success;
+    final accent = context.accentColor;
 
     return FloatingActionButton(
       heroTag: 'quick_log_fab_compact',
       onPressed: () => _showQuickActions(context),
-      backgroundColor: green,
+      backgroundColor: accent,
       child: const Icon(Icons.add, color: Colors.white),
     );
   }
@@ -410,28 +409,28 @@ class _QuickActionsSheet extends StatelessWidget {
                   context,
                   icon: Icons.camera_alt,
                   label: AppLocalizations.of(context).recipeImportPhoto,
-                  color: Colors.blue,
+                  color: context.accentColor,
                   onTap: () => _openLogging(context, 'image'),
                 ),
                 _buildQuickAction(
                   context,
                   icon: Icons.qr_code_scanner,
                   label: AppLocalizations.of(context).quickLogFabScan,
-                  color: Colors.orange,
+                  color: context.accentColor,
                   onTap: () => _openLogging(context, 'barcode'),
                 ),
                 _buildQuickAction(
                   context,
                   icon: Icons.edit,
                   label: AppLocalizations.of(context).workoutDetailType,
-                  color: Colors.teal,
+                  color: context.accentColor,
                   onTap: () => _openLogging(context, 'text'),
                 ),
                 _buildQuickAction(
                   context,
                   icon: Icons.mic,
                   label: AppLocalizations.of(context).quickLogFabVoice,
-                  color: Colors.purple,
+                  color: context.accentColor,
                   onTap: () => _openLogging(context, 'voice'),
                 ),
               ],
@@ -445,7 +444,7 @@ class _QuickActionsSheet extends StatelessWidget {
                   context,
                   icon: Icons.pie_chart,
                   label: AppLocalizations.of(context).quickLogFabBatch,
-                  color: Colors.deepPurple,
+                  color: context.accentColor,
                   onTap: () => _openLogging(context, 'batch'),
                 ),
               ],

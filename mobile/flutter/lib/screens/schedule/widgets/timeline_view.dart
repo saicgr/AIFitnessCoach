@@ -252,11 +252,11 @@ class _TimelineViewState extends State<TimelineView>
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: const Color(0xFFEF4444),
+                color: const Color(0xFFEF4444), // accent-allowlist: "now" timeline marker, conventionally red/urgent, semantic not accent
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFEF4444).withOpacity(0.4 * _pulseAnimation.value),
+                    color: const Color(0xFFEF4444).withOpacity(0.4 * _pulseAnimation.value), // accent-allowlist: "now" timeline marker, conventionally red/urgent, semantic not accent
                     blurRadius: 6 * _pulseAnimation.value,
                     spreadRadius: 1 * _pulseAnimation.value,
                   ),
@@ -267,7 +267,7 @@ class _TimelineViewState extends State<TimelineView>
             Expanded(
               child: Container(
                 height: 2,
-                color: const Color(0xFFEF4444),
+                color: const Color(0xFFEF4444), // accent-allowlist: "now" timeline marker, conventionally red/urgent, semantic not accent
               ),
             ),
           ],

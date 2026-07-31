@@ -817,8 +817,8 @@ class _FoodTile extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: expands
-                      ? Colors.green.withValues(alpha: 0.15)
-                      : Colors.orange.withValues(alpha: 0.15),
+                      ? Colors.green.withValues(alpha: 0.15) // accent-allowlist: expands-vs-shrinks direction indicator (green=expands, orange=compresses), not accent
+                      : Colors.orange.withValues(alpha: 0.15), // accent-allowlist: expands-vs-shrinks direction indicator (green=expands, orange=compresses), not accent
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -827,7 +827,7 @@ class _FoodTile extends StatelessWidget {
                     Icon(
                       expands ? Icons.expand : Icons.compress,
                       size: 12,
-                      color: expands ? Colors.green : Colors.orange,
+                      color: expands ? Colors.green : Colors.orange, // accent-allowlist: expands-vs-shrinks direction indicator (green=expands, orange=compresses), not accent
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -835,7 +835,7 @@ class _FoodTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: expands ? Colors.green : Colors.orange,
+                        color: expands ? Colors.green : Colors.orange, // accent-allowlist: expands-vs-shrinks direction indicator (green=expands, orange=compresses), not accent
                       ),
                     ),
                   ],

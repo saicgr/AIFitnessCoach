@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A card widget displaying step goal progress with animated circular indicator.
 ///
 /// Features:
@@ -172,13 +173,13 @@ class _StepGoalCardState extends State<StepGoalCard>
   /// - 100%: Green
   Color _getProgressColor(double progress) {
     if (progress >= 1.0) {
-      return AppColors.success;
+      return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
     } else if (progress >= 0.67) {
-      return Color.lerp(AppColors.yellow, AppColors.success, (progress - 0.67) / 0.33)!;
+      return Color.lerp(AppColors.yellow, AppColors.success, (progress - 0.67) / 0.33)!;  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent; success/positive state — must stay green regardless of accent
     } else if (progress >= 0.34) {
-      return Color.lerp(AppColors.orange, AppColors.yellow, (progress - 0.34) / 0.33)!;
+      return Color.lerp(context.accentColor, AppColors.yellow, (progress - 0.34) / 0.33)!;  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
     } else {
-      return Color.lerp(AppColors.error, AppColors.orange, progress / 0.34)!;
+      return Color.lerp(AppColors.error, context.accentColor, progress / 0.34)!;  // accent-allowlist: error/destructive state — must stay red regardless of accent
     }
   }
 
@@ -224,14 +225,14 @@ class _StepGoalCardState extends State<StepGoalCard>
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: isGoalReached
-                        ? AppColors.success.withOpacity(0.5)
+                        ? AppColors.success.withOpacity(0.5)  // accent-allowlist: success/positive state — must stay green regardless of accent
                         : progressColor.withOpacity(0.2),
                     width: isGoalReached ? 2 : 1,
                   ),
                   boxShadow: isGoalReached
                       ? [
                           BoxShadow(
-                            color: AppColors.success.withOpacity(0.2),
+                            color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                             blurRadius: 20,
                             spreadRadius: 2,
                           )
@@ -277,7 +278,7 @@ class _StepGoalCardState extends State<StepGoalCard>
                                   Icon(
                                     Icons.emoji_events,
                                     size: 32,
-                                    color: AppColors.success,
+                                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                     semanticLabel: AppLocalizations.of(context).stepGoalCardGoalReached,
                                   ),
                                   const SizedBox(height: 4),
@@ -338,7 +339,7 @@ class _StepGoalCardState extends State<StepGoalCard>
                                 const Icon(
                                   Icons.check_circle,
                                   size: 18,
-                                  color: AppColors.success,
+                                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                 )
                               else
                                 Icon(
@@ -370,7 +371,7 @@ class _StepGoalCardState extends State<StepGoalCard>
                           : '${_formatNumber(stepsRemaining)} steps to go',
                       style: TextStyle(
                         fontSize: 14,
-                        color: isGoalReached ? AppColors.success : textSecondary,
+                        color: isGoalReached ? AppColors.success : textSecondary,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         fontWeight: isGoalReached ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
@@ -469,7 +470,7 @@ class _CelebrationParticles extends StatelessWidget {
       width: 100,
       height: 50,
       child: CustomPaint(
-        painter: _ParticlesPainter(animationValue: animationValue),
+        painter: _ParticlesPainter(animationValue: animationValue, accent: context.accentColor),
       ),
     );
   }
@@ -477,16 +478,17 @@ class _CelebrationParticles extends StatelessWidget {
 
 class _ParticlesPainter extends CustomPainter {
   final double animationValue;
+  final Color accent;
 
-  _ParticlesPainter({required this.animationValue});
+  _ParticlesPainter({required this.animationValue, required this.accent});
 
   @override
   void paint(Canvas canvas, Size size) {
     final colors = [
-      AppColors.success,
-      AppColors.yellow,
-      AppColors.cyan,
-      AppColors.orange,
+      AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
+      AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
+      accent,
+      accent,
     ];
 
     final random = math.Random(42); // Fixed seed for consistent particles
@@ -508,6 +510,6 @@ class _ParticlesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ParticlesPainter oldDelegate) {
-    return oldDelegate.animationValue != animationValue;
+    return oldDelegate.animationValue != animationValue || oldDelegate.accent != accent;
   }
 }

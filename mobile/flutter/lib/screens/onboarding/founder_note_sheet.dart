@@ -14,6 +14,7 @@ import '../../data/repositories/auth_repository.dart';
 import 'pre_auth_quiz_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Founder Note Sheet — Onboarding v5.1
 ///
@@ -169,7 +170,7 @@ class FounderNoteSheet extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.orange.withValues(alpha: 0.28),
+                              color: context.accentColor.withValues(alpha: 0.28),
                               blurRadius: 20,
                               spreadRadius: 1,
                               offset: const Offset(0, 6),
@@ -182,7 +183,7 @@ class FounderNoteSheet extends ConsumerWidget {
                             'assets/icon/app_icon.png',
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               alignment: Alignment.center,
                               child: const Text(
                                 'Z',
@@ -207,7 +208,7 @@ class FounderNoteSheet extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           letterSpacing: 1.8,
                         ),
                       ).animate().fadeIn(delay: 200.ms),
@@ -235,8 +236,8 @@ class FounderNoteSheet extends ConsumerWidget {
                                   const TextSpan(text: 'Hey '),
                                   TextSpan(
                                     text: firstName,
-                                    style: const TextStyle(
-                                      color: AppColors.orange,
+                                    style: TextStyle(
+                                      color: context.accentColor,
                                     ),
                                   ),
                                   const TextSpan(text: '.'),
@@ -280,8 +281,8 @@ class FounderNoteSheet extends ConsumerWidget {
                             if (firstName != 'there') ...[
                               TextSpan(
                                 text: firstName,
-                                style: const TextStyle(
-                                  color: AppColors.orange,
+                                style: TextStyle(
+                                  color: context.accentColor,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -305,10 +306,10 @@ class FounderNoteSheet extends ConsumerWidget {
                         children: [
                           Text(
                             '— $_founderName',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               fontStyle: FontStyle.italic,
                               letterSpacing: -0.3,
                             ),
@@ -350,25 +351,25 @@ class FounderNoteSheet extends ConsumerWidget {
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.discord,
                       label: AppLocalizations.of(context).founderNoteDiscord,
-                      color: const Color(0xFF5865F2),
+                      color: const Color(0xFF5865F2),  // accent-allowlist: third-party brand colour, legally fixed (Discord)
                       onTap: () => _open(AppLinks.discord),
                     ),
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.reddit,
                       label: 'Reddit',
-                      color: const Color(0xFFFF4500),
+                      color: const Color(0xFFFF4500),  // accent-allowlist: third-party brand colour, legally fixed (Reddit)
                       onTap: () => _open(AppLinks.reddit),
                     ),
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.instagram,
                       label: AppLocalizations.of(context).wrappedShareInstagram,
-                      color: const Color(0xFFE1306C),
+                      color: const Color(0xFFE1306C),  // accent-allowlist: third-party brand colour, legally fixed (Instagram)
                       onTap: () => _open(AppLinks.instagram),
                     ),
                     _InlineSocialLink(
                       icon: FontAwesomeIcons.mapLocationDot,
                       label: AppLocalizations.of(context).founderNoteRoadmap,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       onTap: () => _open(AppLinks.roadmap),
                     ),
                   ],
@@ -395,15 +396,15 @@ class FounderNoteSheet extends ConsumerWidget {
                     width: double.infinity,
                     height: 56,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [Color(0xFFFFB366), AppColors.orange],
+                        colors: [context.accentColor, context.accentColor.withValues(alpha: 0.85)],
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.orange.withValues(alpha: 0.4),
+                          color: context.accentColor.withValues(alpha: 0.4),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -543,7 +544,7 @@ class _BlurredOrbFieldState extends State<_BlurredOrbField>
                     dx: 0.3 + 0.30 * math.sin(t),
                     dy: 0.18 + 0.18 * math.cos(t * 0.7),
                     size: 220,
-                    color: AppColors.orange.withValues(alpha: 0.55),
+                    color: context.accentColor.withValues(alpha: 0.55),
                   ),
                   _orb(
                     maxW: maxW,
@@ -551,7 +552,7 @@ class _BlurredOrbFieldState extends State<_BlurredOrbField>
                     dx: 0.78 + 0.24 * math.cos(t * 1.1),
                     dy: 0.42 + 0.20 * math.sin(t * 0.9),
                     size: 170,
-                    color: const Color(0xFFFFB366).withValues(alpha: 0.55),
+                    color: context.accentColor.withValues(alpha: 0.55),
                   ),
                   _orb(
                     maxW: maxW,
@@ -559,7 +560,7 @@ class _BlurredOrbFieldState extends State<_BlurredOrbField>
                     dx: 0.22 + 0.18 * math.sin(t * 1.3),
                     dy: 0.78 + 0.18 * math.cos(t * 1.5),
                     size: 200,
-                    color: const Color(0xFFE74C3C).withValues(alpha: 0.30),
+                    color: context.accentColor.withValues(alpha: 0.30),
                   ),
                   // Single large blur over the orbs to soften them into
                   // ambient color rather than distinct circles.

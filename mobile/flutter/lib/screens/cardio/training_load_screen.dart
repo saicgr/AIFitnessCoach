@@ -364,11 +364,11 @@ class _Legend extends StatelessWidget {
         _legendChip('ACWR', isDark ? Colors.white : Colors.black87, textColor,
             dashed: true),
         _legendChip('Sweet spot 0.8–1.3',
-            Colors.green.withValues(alpha: 0.35), textColor),
+            Colors.green.withValues(alpha: 0.35), textColor),  // accent-allowlist: training-load ACWR severity band (sweet spot=green/loading=amber/overreaching=red), matches strain_prevention severity-scale convention
         _legendChip('Loading 1.3–1.5',
-            Colors.amber.withValues(alpha: 0.45), textColor),
+            Colors.amber.withValues(alpha: 0.45), textColor),  // accent-allowlist: training-load ACWR severity band (sweet spot=green/loading=amber/overreaching=red), matches strain_prevention severity-scale convention
         _legendChip('Overreaching >1.5',
-            Colors.redAccent.withValues(alpha: 0.45), textColor),
+            Colors.redAccent.withValues(alpha: 0.45), textColor),  // accent-allowlist: training-load ACWR severity band (sweet spot=green/loading=amber/overreaching=red), matches strain_prevention severity-scale convention
       ],
     );
   }
@@ -406,13 +406,13 @@ class _ErrorBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.redAccent.withValues(alpha: 0.10),
+        color: Colors.redAccent.withValues(alpha: 0.10),  // accent-allowlist: error state box, semantic not accent
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),  // accent-allowlist: error state box, semantic not accent
       ),
       child: Text(
         AppLocalizations.of(context)!.trainingLoadScreenCouldNotLoadTraining(message),
-        style: const TextStyle(color: Colors.redAccent),
+        style: const TextStyle(color: Colors.redAccent),  // accent-allowlist: error state box, semantic not accent
       ),
     );
   }
@@ -421,11 +421,11 @@ class _ErrorBox extends StatelessWidget {
 Color _colorForState(String state) {
   switch (state) {
     case 'balanced':
-      return Colors.green;
+      return Colors.green;  // accent-allowlist: training-load ACWR severity band (sweet spot=green/loading=amber/overreaching=red), matches strain_prevention severity-scale convention
     case 'loading':
-      return Colors.amber;
+      return Colors.amber;  // accent-allowlist: training-load ACWR severity band (sweet spot=green/loading=amber/overreaching=red), matches strain_prevention severity-scale convention
     case 'overreaching':
-      return Colors.redAccent;
+      return Colors.redAccent;  // accent-allowlist: training-load ACWR severity band (sweet spot=green/loading=amber/overreaching=red), matches strain_prevention severity-scale convention
     case 'detraining':
       return Colors.blueGrey;
     case 'calibration':

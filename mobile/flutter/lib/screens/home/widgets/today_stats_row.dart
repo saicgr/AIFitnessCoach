@@ -99,7 +99,7 @@ class _GoalsPill extends ConsumerWidget {
     if (loggedMeal) completed++;
     if (completedWorkout) completed++;
 
-    final doneColor = const Color(0xFF22C55E);
+    final doneColor = const Color(0xFF22C55E);  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
     final mutedColor = Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3);
 
     return _StatPillContainer(
@@ -210,8 +210,8 @@ class _NutritionPill extends ConsumerWidget {
     final accent = AccentColorScope.of(context).getColor(isDark);
     final textColor = Theme.of(context).colorScheme.onSurface;
     final waterColor = currentL >= goalL
-        ? const Color(0xFF3B82F6)
-        : const Color(0xFF60A5FA);
+        ? const Color(0xFF3B82F6)  // accent-allowlist: informational (blue-500)
+        : const Color(0xFF60A5FA);  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
 
     return _StatPillContainer(
       onTap: () {
@@ -233,7 +233,7 @@ class _NutritionPill extends ConsumerWidget {
                     // Composite pill: modest bump only, dual-line layout kept.
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFF6B35),
+                    color: Color(0xFFFF6B35),  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                   ),
                 ),
                 Text(
@@ -269,11 +269,11 @@ class _NutritionPill extends ConsumerWidget {
               text: TextSpan(
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                 children: [
-                  TextSpan(text: 'P:${proteinG}g', style: TextStyle(color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein)),
+                  TextSpan(text: 'P:${proteinG}g', style: TextStyle(color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein)),  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
                   const TextSpan(text: '  '),
-                  TextSpan(text: 'C:${carbsG}g', style: TextStyle(color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs)),
+                  TextSpan(text: 'C:${carbsG}g', style: TextStyle(color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs)),  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces
                   const TextSpan(text: '  '),
-                  TextSpan(text: 'F:${fatG}g', style: TextStyle(color: isDark ? AppColors.macroFat : AppColorsLight.macroFat)),
+                  TextSpan(text: 'F:${fatG}g', style: TextStyle(color: isDark ? AppColors.macroFat : AppColorsLight.macroFat)),  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
                 ],
               ),
             ),
@@ -344,7 +344,7 @@ class _BurnedPill extends ConsumerWidget {
             value: connected || saunaCal > 0 || aiBurned > 0 ? '$burned' : '--',
             size: StatType.compact,
             color: hasData
-                ? const Color(0xFFFF6B35)
+                ? const Color(0xFFFF6B35)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : Theme.of(context).colorScheme.onSurface,
             alignment: Alignment.center,
           ),
@@ -353,7 +353,7 @@ class _BurnedPill extends ConsumerWidget {
             Icons.local_fire_department,
             size: 14,
             color: hasData
-                ? const Color(0xFFFF6B35)
+                ? const Color(0xFFFF6B35)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
@@ -390,7 +390,7 @@ class _StepsPill extends ConsumerWidget {
             value: connected ? _formatSteps(steps) : '--',
             size: StatType.compact,
             color: connected && steps > 0
-                ? const Color(0xFF8B5CF6)
+                ? const Color(0xFF8B5CF6)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : Theme.of(context).colorScheme.onSurface,
             alignment: Alignment.center,
           ),
@@ -399,7 +399,7 @@ class _StepsPill extends ConsumerWidget {
             Icons.directions_walk,
             size: 14,
             color: connected && steps > 0
-                ? const Color(0xFF8B5CF6)
+                ? const Color(0xFF8B5CF6)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
@@ -446,7 +446,7 @@ class _SleepPill extends ConsumerWidget {
             value: connected && totalMin > 0 ? '${hours}h${mins > 0 ? ' ${mins}m' : ''}' : '--',
             size: StatType.compact,
             color: connected && totalMin > 0
-                ? const Color(0xFF6366F1)
+                ? const Color(0xFF6366F1)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : Theme.of(context).colorScheme.onSurface,
             alignment: Alignment.center,
           ),
@@ -455,7 +455,7 @@ class _SleepPill extends ConsumerWidget {
             Icons.bedtime_outlined,
             size: 14,
             color: connected && totalMin > 0
-                ? const Color(0xFF6366F1)
+                ? const Color(0xFF6366F1)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
@@ -489,7 +489,7 @@ class _StreakPill extends ConsumerWidget {
             value: '$streak',
             size: StatType.compact,
             color: isActive && streak > 0
-                ? const Color(0xFFF59E0B)
+                ? const Color(0xFFF59E0B)  // accent-allowlist: warning severity (amber-500)
                 : Theme.of(context).colorScheme.onSurface,
             alignment: Alignment.center,
           ),
@@ -498,7 +498,7 @@ class _StreakPill extends ConsumerWidget {
             Icons.bolt_outlined,
             size: 14,
             color: isActive && streak > 0
-                ? const Color(0xFFF59E0B)
+                ? const Color(0xFFF59E0B)  // accent-allowlist: warning severity (amber-500)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
@@ -553,7 +553,7 @@ class _HabitsPill extends ConsumerWidget {
               fontSize: 17,
               fontWeight: FontWeight.bold,
               color: completed > 0
-                  ? const Color(0xFF10B981)
+                  ? const Color(0xFF10B981)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                   : Theme.of(context).colorScheme.onSurface,
             ),
           ),
@@ -562,9 +562,9 @@ class _HabitsPill extends ConsumerWidget {
             allDone ? Icons.check_circle : Icons.check_circle_outline,
             size: 14,
             color: allDone
-                ? const Color(0xFF10B981)
+                ? const Color(0xFF10B981)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                 : (completed > 0
-                    ? const Color(0xFF10B981).withValues(alpha: 0.6)
+                    ? const Color(0xFF10B981).withValues(alpha: 0.6)  // accent-allowlist: per-metric stat identity colour -- today_stats_row shows water/calories/steps/sleep/habits together, each with a fixed colour so the same metric always reads the same colour
                     : Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
@@ -580,7 +580,7 @@ class _HabitsPill extends ConsumerWidget {
 class _CardioLoadPill extends ConsumerWidget {
   const _CardioLoadPill({super.key});
 
-  static const _color = Color(0xFFEF4444);
+  static const _color = Color(0xFFEF4444);  // accent-allowlist: error/destructive -- must stay red (red-500)
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -603,7 +603,7 @@ class _CardioLoadPill extends ConsumerWidget {
 
     final color = load?.state == 'overreaching'
         ? _color
-        : (hasState ? const Color(0xFF22C55E) : null);
+        : (hasState ? const Color(0xFF22C55E) : null);  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
 
     return _StatPillContainer(
       onTap: () {

@@ -99,7 +99,7 @@ class _ExerciseCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.orange.withValues(alpha: 0.15),
+                                color: context.accentColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -107,7 +107,7 @@ class _ExerciseCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.orange,
+                                  color: context.accentColor,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -117,7 +117,7 @@ class _ExerciseCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.cyan.withValues(alpha: 0.15),
+                                color: context.accentColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -125,7 +125,7 @@ class _ExerciseCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.cyan,
+                                  color: context.accentColor,
                                   letterSpacing: 0.5,
                                 ),
                               ),

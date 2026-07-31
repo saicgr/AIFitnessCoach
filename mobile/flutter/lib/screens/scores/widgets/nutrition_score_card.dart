@@ -213,20 +213,20 @@ class NutritionScoreCard extends StatelessWidget {
   Color _getLevelColor(NutritionLevel level) {
     switch (level) {
       case NutritionLevel.excellent:
-        return AppColors.green;
+        return AppColors.green; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
       case NutritionLevel.good:
-        return AppColors.cyan;
+        return AppColors.cyan; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
       case NutritionLevel.fair:
-        return AppColors.yellow;
+        return AppColors.yellow; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
       case NutritionLevel.needsWork:
-        return Colors.orange;
+        return Colors.orange; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
     }
   }
 
   Color _getPercentColor(int percent) {
-    if (percent >= 80) return AppColors.green;
-    if (percent >= 60) return AppColors.cyan;
-    if (percent >= 40) return AppColors.yellow;
-    return Colors.orange;
+    if (percent >= 80) return AppColors.green; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
+    if (percent >= 60) return AppColors.cyan; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
+    if (percent >= 40) return AppColors.yellow; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
+    return Colors.orange; // accent-allowlist: ordinal score band (excellent/good/fair/poor), semantic not accent
   }
 }

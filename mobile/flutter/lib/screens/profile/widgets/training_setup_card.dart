@@ -11,6 +11,7 @@ import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../home/widgets/edit_gym_profile_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Unified card displaying equipment and workout preferences with edit capability.
 /// Equipment and Environment are pulled from the active gym profile.
 class TrainingSetupCard extends ConsumerWidget {
@@ -179,12 +180,12 @@ class TrainingSetupCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.1),
+                      color: context.accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.edit_rounded,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 18,
                     ),
                   ),
@@ -196,7 +197,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Equipment row
           _SetupRow(
             icon: Icons.fitness_center,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             label: AppLocalizations.of(context).trainingSetupCardEquipment,
             value: _getEquipmentDisplay(equipment),
             textPrimary: textPrimary,
@@ -207,7 +208,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Environment row (from gym profile)
           _SetupRow(
             icon: Icons.location_on_outlined,
-            iconColor: AppColors.green,
+            iconColor: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             label: AppLocalizations.of(context).workoutPreferencesCardEnvironment,
             value: environment,
             textPrimary: textPrimary,
@@ -218,7 +219,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Experience row
           _SetupRow(
             icon: Icons.timeline,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             label: AppLocalizations.of(context).workoutPreferencesCardExperience,
             value: user?.trainingExperienceDisplay ?? AppLocalizations.of(context).workoutPreferencesCardNotSet,
             textPrimary: textPrimary,
@@ -230,7 +231,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // My Gym edits surface here without a reload)
           _SetupRow(
             icon: Icons.center_focus_strong,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             label: AppLocalizations.of(context).workoutPreferencesCardFocusAreas,
             value: focusAreasValue,
             textPrimary: textPrimary,
@@ -241,7 +242,7 @@ class TrainingSetupCard extends ConsumerWidget {
           // Workout Days row (active gym profile is source of truth)
           _SetupRow(
             icon: Icons.calendar_today_outlined,
-            iconColor: AppColors.info,
+            iconColor: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
             label: AppLocalizations.of(context).workoutSettingsWorkoutDays,
             value: workoutDaysValue,
             textPrimary: textPrimary,
@@ -274,7 +275,7 @@ class TrainingSetupCard extends ConsumerWidget {
               icon: Icons.build_outlined,
               label: AppLocalizations.of(context).trainingSetupCardMyCustomEquipment,
               subtitle: AppLocalizations.of(context).trainingSetupCardAddEquipmentNotIn,
-              iconColor: AppColors.yellow,
+              iconColor: AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
               textPrimary: textPrimary,
               textSecondary: textSecondary,
               onTap: onCustomEquipment!,
@@ -456,7 +457,7 @@ class _TrainingSplitRow extends ConsumerWidget {
 
     return _SetupRow(
       icon: Icons.view_week_outlined,
-      iconColor: AppColors.limeGreen,
+      iconColor: AppColors.limeGreen,  // accent-allowlist: positive/streak state — must stay green regardless of accent
       label: AppLocalizations.of(context).workoutSettingsTrainingSplit,
       value: displayName,
       textPrimary: textPrimary,
@@ -494,7 +495,7 @@ class _VarietyRow extends ConsumerWidget {
       behavior: HitTestBehavior.opaque,
       child: _SetupRow(
         icon: Icons.shuffle_rounded,
-        iconColor: AppColors.yellow,
+        iconColor: AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
         label: AppLocalizations.of(context).workoutSettingsWeeklyVariety,
         value: _varietyLabel(percentage),
         textPrimary: textPrimary,
@@ -567,8 +568,8 @@ class _VarietyRow extends ConsumerWidget {
         ref.read(variationProvider.notifier).setVariation(value);
         Navigator.pop(context);
       },
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.cyan,
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
+      checkmarkColor: context.accentColor,
     );
   }
 }

@@ -9,6 +9,7 @@ import '../../../widgets/double_xp_banner.dart';
 import 'daily_crate_banner.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Compact ~32dp strip that collapses all home screen banners into one line.
 ///
 /// **Collapsed view (~32dp):**
@@ -133,7 +134,7 @@ class _CollapsedBannerStripState extends ConsumerState<CollapsedBannerStrip> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -141,7 +142,7 @@ class _CollapsedBannerStripState extends ConsumerState<CollapsedBannerStrip> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.orange : AppColorsLight.orange,
+                        color: context.accentColor,
                       ),
                     ),
                   ),

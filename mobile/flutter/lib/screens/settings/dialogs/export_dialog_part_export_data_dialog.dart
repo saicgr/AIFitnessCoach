@@ -91,7 +91,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.cyan,
+              primary: context.accentColor,
               onPrimary: Colors.white,
               surface: isDark ? AppColors.elevated : AppColorsLight.elevated,
               onSurface: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
@@ -138,7 +138,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Data categories & columns
-              Text(AppLocalizations.of(context).exportDialogPartExportedData, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.cyan)),
+              Text(AppLocalizations.of(context).exportDialogPartExportedData, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: context.accentColor)),
               const SizedBox(height: 8),
               _dataCategory('Profile', 'name, email, fitness_level, goals, equipment, height, weight, age, gender', isDark),
               _dataCategory('Body Metrics', 'date, weight, waist, hip, neck, body_fat, heart_rate, blood_pressure', isDark),
@@ -151,7 +151,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
               const SizedBox(height: 14),
 
               // Formats
-              Text(AppLocalizations.of(context).measurementsScreenPartFormats, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.cyan)),
+              Text(AppLocalizations.of(context).measurementsScreenPartFormats, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: context.accentColor)),
               const SizedBox(height: 8),
               _formatInfoRow(Icons.folder_zip_outlined, 'CSV/ZIP',
                   'Comma-separated values in a ZIP archive. Opens in Excel, Google Sheets, or any spreadsheet app.', isDark),
@@ -173,7 +173,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(color: AppColors.cyan)),
+            child: Text(AppLocalizations.of(context).weightIncrementsGotIt, style: TextStyle(color: context.accentColor)),
           ),
         ],
       ),
@@ -207,7 +207,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.cyan),
+        Icon(icon, size: 18, color: context.accentColor),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -244,7 +244,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       title: Row(
         children: [
-          Icon(Icons.file_download_outlined, color: AppColors.cyan, size: 24),
+          Icon(Icons.file_download_outlined, color: context.accentColor, size: 24),
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context)!.exportDialogPartExportDataDialogExportData(Branding.appName),
@@ -290,7 +290,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       setState(() => _selectedRange = range);
                     }
                   },
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -385,7 +385,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       setState(() => _selectedFormat = ExportFormat.csvZip);
                     }
                   },
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -421,7 +421,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       setState(() => _selectedFormat = ExportFormat.plainText);
                     }
                   },
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -457,7 +457,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       setState(() => _selectedFormat = ExportFormat.json);
                     }
                   },
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -493,7 +493,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       setState(() => _selectedFormat = ExportFormat.excel);
                     }
                   },
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -529,7 +529,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                       setState(() => _selectedFormat = ExportFormat.parquet);
                     }
                   },
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -577,7 +577,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                     _selectedCategories.length == kExportCategories.length
                         ? 'Clear'
                         : 'Select all',
-                    style: TextStyle(color: AppColors.cyan, fontSize: 12),
+                    style: TextStyle(color: context.accentColor, fontSize: 12),
                   ),
                 ),
               ],
@@ -631,7 +631,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
                     });
                   },
                   showCheckmark: false,
-                  selectedColor: AppColors.cyan,
+                  selectedColor: context.accentColor,
                   backgroundColor: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -687,7 +687,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
             style: TextStyle(
               color: _selectedCategories.isEmpty
                   ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
-                  : AppColors.cyan,
+                  : context.accentColor,
             ),
           ),
         ),

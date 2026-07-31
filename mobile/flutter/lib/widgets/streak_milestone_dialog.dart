@@ -80,12 +80,12 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
   }
 
   Color _getMilestoneColor() {
-    if (widget.milestone.days >= 365) return const Color(0xFFFFD700); // Gold
-    if (widget.milestone.days >= 180) return const Color(0xFF4FC3F7); // Diamond blue
+    if (widget.milestone.days >= 365) return const Color(0xFFFFD700); // Gold // accent-allowlist: streak milestone rarity tier (bronze/silver/gold/platinum/diamond)
+    if (widget.milestone.days >= 180) return const Color(0xFF4FC3F7); // Diamond blue // accent-allowlist: streak milestone rarity tier (bronze/silver/gold/platinum/diamond)
     if (widget.milestone.days >= 90) return const Color(0xFFE5E4E2); // Platinum
-    if (widget.milestone.days >= 60) return const Color(0xFFFFD700); // Gold
+    if (widget.milestone.days >= 60) return const Color(0xFFFFD700); // Gold // accent-allowlist: streak milestone rarity tier (bronze/silver/gold/platinum/diamond)
     if (widget.milestone.days >= 30) return const Color(0xFFC0C0C0); // Silver
-    return const Color(0xFFCD7F32); // Bronze
+    return const Color(0xFFCD7F32); // Bronze // accent-allowlist: streak milestone rarity tier (bronze/silver/gold/platinum/diamond)
   }
 
   @override
@@ -118,9 +118,9 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
             blastDirectionality: BlastDirectionality.explosive,
             shouldLoop: false,
             colors: [
-              Colors.orange,
-              Colors.red,
-              Colors.amber,
+              Colors.orange, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
+              Colors.red, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
+              Colors.amber, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
               milestoneColor,
               accentColor,
             ],
@@ -145,12 +145,12 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                 color: bgColor,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                  color: Colors.orange.withValues(alpha: 0.4),
+                  color: Colors.orange.withValues(alpha: 0.4), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                   width: 2,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withValues(alpha: 0.3),
+                    color: Colors.orange.withValues(alpha: 0.3), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -178,7 +178,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                       const SizedBox(width: 8),
                       ShaderMask(
                         shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Colors.orange, Colors.red, Colors.orange],
+                          colors: [Colors.orange, Colors.red, Colors.orange], // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                         ).createShader(bounds),
                         child: Text(
                           l10n.streakMilestoneStreakMilestone,
@@ -216,17 +216,17 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          Colors.orange.withValues(alpha: 0.3),
-                          Colors.red.withValues(alpha: 0.1),
+                          Colors.orange.withValues(alpha: 0.3), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
+                          Colors.red.withValues(alpha: 0.1), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                         ],
                       ),
                       border: Border.all(
-                        color: Colors.orange,
+                        color: Colors.orange, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                         width: 3,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.orange.withValues(alpha: 0.5),
+                          color: Colors.orange.withValues(alpha: 0.5), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),
@@ -241,7 +241,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                             style: const TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.bold,
-                              color: Colors.orange,
+                              color: Colors.orange, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                             ),
                           ),
                           Text(
@@ -249,7 +249,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.orange,
+                              color: Colors.orange, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                               letterSpacing: 1,
                             ),
                           ),
@@ -381,14 +381,14 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                         widget.onDismiss();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
+                        backgroundColor: Colors.orange, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 4,
-                        shadowColor: Colors.orange.withValues(alpha: 0.5),
+                        shadowColor: Colors.orange.withValues(alpha: 0.5), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
                       ),
                       child: Text(
                         l10n.streakMilestoneKeepTheStreakGoing,
@@ -421,11 +421,11 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isRare
-            ? Colors.amber.withValues(alpha: 0.1)
+            ? Colors.amber.withValues(alpha: 0.1) // accent-allowlist: rare-reward badge color, rarity tier not accent
             : textSecondary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
         border: isRare
-            ? Border.all(color: Colors.amber.withValues(alpha: 0.3))
+            ? Border.all(color: Colors.amber.withValues(alpha: 0.3)) // accent-allowlist: rare-reward badge color, rarity tier not accent
             : null,
       ),
       child: Row(
@@ -442,7 +442,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.2),
+                          color: Colors.amber.withValues(alpha: 0.2), // accent-allowlist: rare-reward badge color, rarity tier not accent
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -450,7 +450,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                           style: const TextStyle(
                             fontSize: 8,
                             fontWeight: FontWeight.bold,
-                            color: Colors.amber,
+                            color: Colors.amber, // accent-allowlist: rare-reward badge color, rarity tier not accent
                           ),
                         ),
                       ),
@@ -489,7 +489,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.amber.withValues(alpha: 0.1),
+          color: Colors.amber.withValues(alpha: 0.1), // accent-allowlist: rare-reward badge color, rarity tier not accent
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -548,7 +548,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.2),
+              color: Colors.orange.withValues(alpha: 0.2), // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -556,7 +556,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: Colors.orange,
+                color: Colors.orange, // accent-allowlist: streak-flame theme - deliberately fire-colored (matches the confetti's mixed accent+fire palette already used in this file, and the header flame emoji), not accent
               ),
             ),
           ),

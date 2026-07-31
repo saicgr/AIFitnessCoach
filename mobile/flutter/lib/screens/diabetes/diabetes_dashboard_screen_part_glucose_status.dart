@@ -29,13 +29,13 @@ enum GlucoseStatus {
   Color get color {
     switch (this) {
       case GlucoseStatus.low:
-        return AppColors.error;
+        return AppColors.error; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       case GlucoseStatus.normal:
-        return AppColors.success;
+        return AppColors.success; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       case GlucoseStatus.high:
-        return AppColors.warning;
+        return AppColors.warning; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       case GlucoseStatus.veryHigh:
-        return AppColors.error;
+        return AppColors.error; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
     }
   }
 
@@ -113,11 +113,11 @@ class InsulinDose {
   Color get typeColor {
     switch (type) {
       case 'rapid':
-        return AppColors.cyan;
+        return AppColors.cyan; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       case 'long':
-        return AppColors.purple;
+        return AppColors.purple; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       case 'mixed':
-        return AppColors.orange;
+        return AppColors.orange; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
       default:
         return AppColors.textSecondary;
     }
@@ -158,9 +158,9 @@ class A1CRecord {
   });
 
   Color get statusColor {
-    if (value < 5.7) return AppColors.success;
-    if (value < 6.5) return AppColors.warning;
-    return AppColors.error;
+    if (value < 5.7) return AppColors.success; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
+    if (value < 6.5) return AppColors.warning; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
+    return AppColors.error; // accent-allowlist: glucose-status severity scale + insulin-type identity + A1C severity scale
   }
 
   String get statusLabel {

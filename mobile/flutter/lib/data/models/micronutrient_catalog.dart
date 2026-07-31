@@ -41,32 +41,32 @@ class MicroCatalogEntry {
 /// user hide / reorder any of these.
 const List<MicroCatalogEntry> kMicroCatalog = [
   // ── former page 2 ──────────────────────────────────────────────────────
-  MicroCatalogEntry(id: 'fiber', name: 'Fiber', goal: 28, unit: 'g', emoji: '🥦', color: Color(0xFF3F8F5F), fixed: 0),
-  MicroCatalogEntry(id: 'sugar', name: 'Sugar', goal: 50, unit: 'g', emoji: '🍬', color: Color(0xFFB65689), fixed: 0),
-  MicroCatalogEntry(id: 'sodium', name: 'Sodium', goal: 2300, unit: 'mg', emoji: '🧂', color: Color(0xFF5560BF), fixed: 0),
-  MicroCatalogEntry(id: 'potassium', name: 'Potassium', goal: 4700, unit: 'mg', emoji: '🍌', color: Color(0xFFCC8A2A), fixed: 0),
-  MicroCatalogEntry(id: 'cholesterol', name: 'Cholesterol', goal: 300, unit: 'mg', emoji: '🧈', color: Color(0xFFCF5F4A), fixed: 0),
-  MicroCatalogEntry(id: 'calcium', name: 'Calcium', goal: 1300, unit: 'mg', emoji: '🥛', color: Color(0xFF3A9A9A), fixed: 0),
+  MicroCatalogEntry(id: 'fiber', name: 'Fiber', goal: 28, unit: 'g', emoji: '🥦', color: Color(0xFF3F8F5F), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'sugar', name: 'Sugar', goal: 50, unit: 'g', emoji: '🍬', color: Color(0xFFB65689), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'sodium', name: 'Sodium', goal: 2300, unit: 'mg', emoji: '🧂', color: Color(0xFF5560BF), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'potassium', name: 'Potassium', goal: 4700, unit: 'mg', emoji: '🍌', color: Color(0xFFCC8A2A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'cholesterol', name: 'Cholesterol', goal: 300, unit: 'mg', emoji: '🧈', color: Color(0xFFCF5F4A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'calcium', name: 'Calcium', goal: 1300, unit: 'mg', emoji: '🥛', color: Color(0xFF3A9A9A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
   // ── former page 3 ──────────────────────────────────────────────────────
-  MicroCatalogEntry(id: 'iron', name: 'Iron', goal: 18, unit: 'mg', emoji: '🩸', color: Color(0xFF8C5BB0), fixed: 0),
-  MicroCatalogEntry(id: 'vitamin_c', name: 'Vitamin C', goal: 90, unit: 'mg', emoji: '🍊', color: Color(0xFFC79520), fixed: 0),
-  MicroCatalogEntry(id: 'vitamin_a', name: 'Vitamin A', goal: 900, unit: 'µg', emoji: '🥕', color: Color(0xFFD9802E), fixed: 0),
-  MicroCatalogEntry(id: 'vitamin_d', name: 'Vitamin D', goal: 800, unit: 'IU', emoji: '☀️', color: Color(0xFFCFA62A), fixed: 0),
-  MicroCatalogEntry(id: 'sat_fat', name: 'Sat. Fat', goal: 20, unit: 'g', emoji: '🧀', color: Color(0xFFCF5F4A), fixed: 0),
+  MicroCatalogEntry(id: 'iron', name: 'Iron', goal: 18, unit: 'mg', emoji: '🩸', color: Color(0xFF8C5BB0), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'vitamin_c', name: 'Vitamin C', goal: 90, unit: 'mg', emoji: '🍊', color: Color(0xFFC79520), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'vitamin_a', name: 'Vitamin A', goal: 900, unit: 'µg', emoji: '🥕', color: Color(0xFFD9802E), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'vitamin_d', name: 'Vitamin D', goal: 800, unit: 'IU', emoji: '☀️', color: Color(0xFFCFA62A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'sat_fat', name: 'Sat. Fat', goal: 20, unit: 'g', emoji: '🧀', color: Color(0xFFCF5F4A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
   // ── former page 4 ──────────────────────────────────────────────────────
   MicroCatalogEntry(id: 'magnesium', name: 'Magnesium', goal: 420, unit: 'mg', emoji: '🪨', color: Color(0xFF5F8F6B), fixed: 0),
   MicroCatalogEntry(id: 'zinc', name: 'Zinc', goal: 11, unit: 'mg', emoji: '⚙️', color: Color(0xFF7A8CA3), fixed: 0),
-  MicroCatalogEntry(id: 'vitamin_b12', name: 'Vitamin B12', goal: 2.4, unit: 'µg', emoji: '🐟', color: Color(0xFFB5604A), fixed: 1),
-  MicroCatalogEntry(id: 'folate', name: 'Folate', goal: 400, unit: 'µg', emoji: '🥬', color: Color(0xFF4F9E5A), fixed: 0),
-  MicroCatalogEntry(id: 'vitamin_e', name: 'Vitamin E', goal: 15, unit: 'mg', emoji: '🥜', color: Color(0xFFC7902A), fixed: 1),
-  MicroCatalogEntry(id: 'omega_3', name: 'Omega-3', goal: 1.6, unit: 'g', emoji: '🐠', color: Color(0xFF3F8FA3), fixed: 1),
+  MicroCatalogEntry(id: 'vitamin_b12', name: 'Vitamin B12', goal: 2.4, unit: 'µg', emoji: '🐟', color: Color(0xFFB5604A), fixed: 1), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'folate', name: 'Folate', goal: 400, unit: 'µg', emoji: '🥬', color: Color(0xFF4F9E5A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'vitamin_e', name: 'Vitamin E', goal: 15, unit: 'mg', emoji: '🥜', color: Color(0xFFC7902A), fixed: 1), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'omega_3', name: 'Omega-3', goal: 1.6, unit: 'g', emoji: '🐠', color: Color(0xFF3F8FA3), fixed: 1), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
   // ── former page 5 ──────────────────────────────────────────────────────
-  MicroCatalogEntry(id: 'vitamin_k', name: 'Vitamin K', goal: 120, unit: 'µg', emoji: '🥦', color: Color(0xFF3F8F5F), fixed: 0),
-  MicroCatalogEntry(id: 'vitamin_b6', name: 'Vitamin B6', goal: 1.7, unit: 'mg', emoji: '🍗', color: Color(0xFFB07A4A), fixed: 1),
+  MicroCatalogEntry(id: 'vitamin_k', name: 'Vitamin K', goal: 120, unit: 'µg', emoji: '🥦', color: Color(0xFF3F8F5F), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'vitamin_b6', name: 'Vitamin B6', goal: 1.7, unit: 'mg', emoji: '🍗', color: Color(0xFFB07A4A), fixed: 1), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
   MicroCatalogEntry(id: 'phosphorus', name: 'Phosphorus', goal: 1250, unit: 'mg', emoji: '🦴', color: Color(0xFF8A8FA8), fixed: 0),
-  MicroCatalogEntry(id: 'selenium', name: 'Selenium', goal: 55, unit: 'µg', emoji: '🌰', color: Color(0xFF9A6F3A), fixed: 0),
-  MicroCatalogEntry(id: 'copper', name: 'Copper', goal: 0.9, unit: 'mg', emoji: '🟫', color: Color(0xFFB5733A), fixed: 1),
-  MicroCatalogEntry(id: 'manganese', name: 'Manganese', goal: 2.3, unit: 'mg', emoji: '🧱', color: Color(0xFF9A5F4A), fixed: 1),
+  MicroCatalogEntry(id: 'selenium', name: 'Selenium', goal: 55, unit: 'µg', emoji: '🌰', color: Color(0xFF9A6F3A), fixed: 0), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'copper', name: 'Copper', goal: 0.9, unit: 'mg', emoji: '🟫', color: Color(0xFFB5733A), fixed: 1), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
+  MicroCatalogEntry(id: 'manganese', name: 'Manganese', goal: 2.3, unit: 'mg', emoji: '🧱', color: Color(0xFF9A5F4A), fixed: 1), // accent-allowlist: micronutrient identity - categorical encoding, each nutrient needs a stable distinguishable color across all nutrition surfaces (same pattern as macroProtein/macroCarbs/macroFat)
 ];
 
 /// Canonical default visible order — every catalog tile, in catalog order.

@@ -8,6 +8,7 @@ import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Local toggle for the public workout-share-link feature.
 /// When false, the "Share" button on a completed workout never calls
 /// `POST /workouts/{id}/share-link` — no URL is generated. Stored
@@ -276,7 +277,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               children: [
-                Icon(Icons.lock_outline_rounded, color: AppColors.cyan, size: 18),
+                Icon(Icons.lock_outline_rounded, color: context.accentColor, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).settingsPrivacySection,
@@ -296,7 +297,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.shield_outlined,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyPrivateAccount,
             subtitle: AppLocalizations.of(context).socialPrivacyRequireApprovalForFollow,
             value: socialSettings.requireFollowApproval,
@@ -313,7 +314,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.person_add_outlined,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyAllowFriendRequests,
             subtitle: AppLocalizations.of(context).socialPrivacyLetOthersSendYou,
             value: socialSettings.allowFriendRequests,
@@ -330,7 +331,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.emoji_events_outlined,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyAllowChallengeInvites,
             subtitle: AppLocalizations.of(context).socialPrivacyLetOthersInviteYou,
             value: socialSettings.allowChallengeInvites,
@@ -347,7 +348,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.leaderboard_outlined,
-            iconColor: AppColors.success,
+            iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             title: AppLocalizations.of(context).socialPrivacyShowOnLeaderboards,
             subtitle: AppLocalizations.of(context).socialPrivacyAppearInPublicAnd,
             value: socialSettings.showOnLeaderboards,
@@ -365,7 +366,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.public_rounded,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyPublicShareLinks,
             subtitle:
                 AppLocalizations.of(context).socialPrivacyAllowGeneratingShareableWor,
@@ -383,7 +384,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.done_all_rounded,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyReadReceipts,
             subtitle: AppLocalizations.of(context).socialPrivacyLetOthersSeeWhen,
             value: socialSettings.showReadReceipts,
@@ -401,7 +402,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Row(
               children: [
-                Icon(Icons.notifications_outlined, color: AppColors.cyan, size: 18),
+                Icon(Icons.notifications_outlined, color: context.accentColor, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).socialPrivacySocialNotifications,
@@ -421,7 +422,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.person_add_alt_1_rounded,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyFriendRequests,
             subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneSendsYou,
             value: socialSettings.notifyFriendRequests,
@@ -438,7 +439,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.favorite_outline,
-            iconColor: AppColors.pink,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyReactions,
             subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneReactsTo,
             value: socialSettings.notifyReactions,
@@ -455,7 +456,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.chat_bubble_outline,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyComments,
             subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneCommentsOn,
             value: socialSettings.notifyComments,
@@ -472,7 +473,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.sports_score_rounded,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).socialPrivacyChallengeInvites,
             subtitle: AppLocalizations.of(context).socialPrivacyWhenSomeoneInvitesYou,
             value: socialSettings.notifyChallengeInvites,
@@ -489,7 +490,7 @@ class _SocialPrivacyCard extends ConsumerWidget {
             context: context,
             ref: ref,
             icon: Icons.directions_run_rounded,
-            iconColor: AppColors.success,
+            iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             title: AppLocalizations.of(context).socialPrivacyFriendActivity,
             subtitle: AppLocalizations.of(context).socialPrivacyWhenFriendsCompleteWorkouts,
             value: socialSettings.notifyFriendActivity,
@@ -542,8 +543,8 @@ class _SocialPrivacyCard extends ConsumerWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
-            activeThumbColor: AppColors.cyan,
+            activeTrackColor: context.accentColor.withValues(alpha: 0.5),
+            activeThumbColor: context.accentColor,
           ),
           const SizedBox(width: 8),
         ],

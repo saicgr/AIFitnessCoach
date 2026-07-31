@@ -128,12 +128,12 @@ class DifficultySelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.2),
+                color: Colors.red.withOpacity(0.2),  // accent-allowlist: error/destructive -- must stay red
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.local_fire_department,
-                color: Colors.red,
+                color: Colors.red,  // accent-allowlist: error/destructive -- must stay red
                 size: 28,
               ),
             ),
@@ -142,7 +142,7 @@ class DifficultySelector extends StatelessWidget {
               child: Text(
                 AppLocalizations.of(context).difficultySelectorHellModeWarning,
                 style: TextStyle(
-                  color: Colors.red,
+                  color: Colors.red,  // accent-allowlist: error/destructive -- must stay red
                   fontWeight: FontWeight.bold,
                   fontSize: 18,
                 ),
@@ -209,7 +209,7 @@ class DifficultySelector extends StatelessWidget {
               onSelectionChanged('hell');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -239,7 +239,7 @@ class DifficultySelector extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.warning_amber, color: Colors.red.withOpacity(0.8), size: 18),
+          Icon(Icons.warning_amber, color: Colors.red.withOpacity(0.8), size: 18),  // accent-allowlist: error/destructive -- must stay red
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -501,7 +501,7 @@ class DifficultySelector extends StatelessWidget {
             curve: Curves.easeInOut,
           )
           .shimmer(
-            color: Colors.red.withValues(alpha: 0.8),
+            color: Colors.red.withValues(alpha: 0.8),  // accent-allowlist: error/destructive -- must stay red
             duration: 800.ms,
           );
     }

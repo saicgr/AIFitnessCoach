@@ -6,6 +6,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class AccessibilityCard extends ConsumerWidget {
   final BeastThemeData theme;
   const AccessibilityCard({super.key, required this.theme});
@@ -122,7 +123,7 @@ class _AccessibilityToggle extends StatelessWidget {
         Switch.adaptive(
           value: value,
           onChanged: onChanged,
-          activeTrackColor: AppColors.orange,
+          activeTrackColor: context.accentColor,
         ),
       ],
     );

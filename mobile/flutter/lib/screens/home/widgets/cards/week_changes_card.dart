@@ -6,6 +6,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// A card showing what exercises changed this week compared to last week.
 /// Provides transparency into weekly exercise variation.
 class WeekChangesCard extends ConsumerWidget {
@@ -46,7 +47,7 @@ class WeekChangesCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: hasChanges
-                ? AppColors.cyan.withOpacity(0.3)
+                ? context.accentColor.withOpacity(0.3)
                 : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
           ),
         ),
@@ -70,13 +71,13 @@ class WeekChangesCard extends ConsumerWidget {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: hasChanges
-                              ? AppColors.cyan.withOpacity(0.15)
+                              ? context.accentColor.withOpacity(0.15)
                               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           hasChanges ? Icons.autorenew : Icons.check_circle_outline,
-                          color: hasChanges ? AppColors.cyan : AppColors.success,
+                          color: hasChanges ? context.accentColor : AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                           size: 20,
                         ),
                       ),
@@ -203,7 +204,7 @@ class WeekChangesCard extends ConsumerWidget {
                       children: [
                         Icon(
                           Icons.compare_arrows,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
@@ -233,7 +234,7 @@ class WeekChangesCard extends ConsumerWidget {
                                 label: AppLocalizations.of(context).workoutCompleteThisWeek,
                                 value: '${comparison.totalCurrent}',
                                 icon: Icons.fitness_center,
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 isDark: isDark,
                               ),
                             ),
@@ -243,7 +244,7 @@ class WeekChangesCard extends ConsumerWidget {
                                 label: AppLocalizations.of(context).weekChangesCardLastWeek,
                                 value: '${comparison.totalPrevious}',
                                 icon: Icons.history,
-                                color: AppColors.purple,
+                                color: context.accentColor,
                                 isDark: isDark,
                               ),
                             ),
@@ -256,7 +257,7 @@ class WeekChangesCard extends ConsumerWidget {
                           _SectionHeader(
                             title: AppLocalizations.of(context).weekChangesCardNewThisWeek,
                             count: comparison.newExercises.length,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             icon: Icons.add_circle_outline,
                             isDark: isDark,
                           ),
@@ -265,7 +266,7 @@ class WeekChangesCard extends ConsumerWidget {
                             return _ExerciseListItem(
                               name: exercise,
                               icon: Icons.fiber_new,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                               isDark: isDark,
                             );
                           }),
@@ -277,7 +278,7 @@ class WeekChangesCard extends ConsumerWidget {
                           _SectionHeader(
                             title: AppLocalizations.of(context).weekChangesCardRotatedOut,
                             count: comparison.removedExercises.length,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             icon: Icons.remove_circle_outline,
                             isDark: isDark,
                           ),
@@ -286,7 +287,7 @@ class WeekChangesCard extends ConsumerWidget {
                             return _ExerciseListItem(
                               name: exercise,
                               icon: Icons.swap_horiz,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               isDark: isDark,
                             );
                           }),
@@ -298,7 +299,7 @@ class WeekChangesCard extends ConsumerWidget {
                           _SectionHeader(
                             title: AppLocalizations.of(context).weekChangesCardConsistent,
                             count: comparison.keptExercises.length,
-                            color: AppColors.success,
+                            color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                             icon: Icons.check_circle_outline,
                             isDark: isDark,
                           ),
@@ -307,7 +308,7 @@ class WeekChangesCard extends ConsumerWidget {
                             return _ExerciseListItem(
                               name: exercise,
                               icon: Icons.check,
-                              color: AppColors.success,
+                              color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                               isDark: isDark,
                             );
                           }),

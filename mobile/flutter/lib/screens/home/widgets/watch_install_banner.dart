@@ -8,6 +8,8 @@ import '../../../data/services/haptic_service.dart';
 import '../../../data/services/wearable_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../data/providers/root_messenger.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Apple AirPods-style banner to prompt WearOS app installation.
 ///
 /// Shows when:
@@ -152,7 +154,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
       } else {
         // Show error feedback
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).watchInstallBannerCouldNotOpenPlay),
               duration: Duration(seconds: 3),
@@ -163,7 +165,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
     } catch (e) {
       debugPrint('❌ Error prompting watch install: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).watchInstallBannerFailedToConnectTo),
             duration: Duration(seconds: 3),
@@ -190,7 +192,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    const accentColor = AppColors.cyan;
+    final accentColor = context.accentColor;
 
     return AnimatedBuilder(
       animation: _animationController,
@@ -248,7 +250,7 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
                           width: 1,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.watch,
                         color: accentColor,
                         size: 28,

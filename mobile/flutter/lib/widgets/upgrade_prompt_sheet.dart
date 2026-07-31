@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../core/providers/usage_tracking_provider.dart';
 import 'glass_sheet.dart';
 import 'main_shell.dart' show floatingNavBarVisibleProvider;
@@ -120,15 +121,13 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
                     width: 64,
                     height: 64,
                     decoration: BoxDecoration(
-                      color: (isDark ? AppColors.orange : AppColorsLight.orange)
-                          .withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.lock_rounded,
                       size: 28,
-                      color:
-                          isDark ? AppColors.orange : AppColorsLight.orange,
+                      color: context.accentColor,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -209,8 +208,7 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
                         context.push('/hard-paywall');
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isDark ? AppColors.orange : AppColorsLight.orange,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

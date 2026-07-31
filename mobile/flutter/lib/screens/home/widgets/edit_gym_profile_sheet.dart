@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/training_preferences_provider.dart';
 import '../../../core/providers/variation_provider.dart';
 import '../../../core/utils/time_slot_utils.dart';

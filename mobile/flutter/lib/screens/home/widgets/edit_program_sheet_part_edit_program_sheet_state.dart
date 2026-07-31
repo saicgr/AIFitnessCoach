@@ -384,7 +384,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.editProgramSheetPleaseSelectAtLeast),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
         ),
       );
       // Send the user to the Schedule tab where days live.
@@ -434,7 +434,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
           rootScaffoldMessengerKey.currentState?.showSnackBar(
             SnackBar(
               content: Text(_saveErrorMessage(e)),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
             ),
           );
         }
@@ -527,7 +527,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
       rootScaffoldMessengerKey.currentState?.showSnackBar(
         SnackBar(
           content: Text(_saveErrorMessage(failure)),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
         ),
       );
     } else {
@@ -712,7 +712,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.editProgramSheetProgramRestoredRegenerateW),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           ),
         );
       }
@@ -721,7 +721,7 @@ class _EditProgramSheetState extends ConsumerState<_EditProgramSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.editProgramSheetFailedToRestore(e.toString())),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }

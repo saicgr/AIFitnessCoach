@@ -62,7 +62,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.15),
+                color: AppColors.success.withValues(alpha: 0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(19),
                 ),
@@ -73,7 +73,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                   Icon(
                     Icons.check_circle_rounded,
                     size: 18,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -81,7 +81,7 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     ),
                   ),
                 ],

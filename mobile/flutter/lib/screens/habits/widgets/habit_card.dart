@@ -32,10 +32,10 @@ class HabitCard extends StatelessWidget {
         alignment: AlignmentDirectional.centerEnd,
         padding: const EdgeInsetsDirectional.only(end: 16),
         decoration: BoxDecoration(
-          color: Colors.red.shade100,
+          color: Colors.red.shade100,  // accent-allowlist: delete swipe-action background, destructive semantic not accent
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Icon(Icons.delete, color: Colors.red),
+        child: const Icon(Icons.delete, color: Colors.red),  // accent-allowlist: delete swipe-action icon, destructive semantic not accent
       ),
       confirmDismiss: (direction) async {
         if (onDelete != null) {
@@ -95,7 +95,7 @@ class HabitCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
+                                color: Colors.red.shade50,  // accent-allowlist: "AVOID" badge background for negative habits, warning semantic not accent
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -103,7 +103,7 @@ class HabitCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.red.shade700,
+                                  color: Colors.red.shade700,  // accent-allowlist: "AVOID" badge text for negative habits, warning semantic not accent
                                 ),
                               ),
                             ),
@@ -138,7 +138,7 @@ class HabitCard extends StatelessWidget {
                             Icon(
                               Icons.local_fire_department,
                               size: 14,
-                              color: Colors.orange.shade600,
+                              color: Colors.orange.shade600,  // accent-allowlist: streak fire icon, matches app-wide streak-fire theme convention
                             ),
                             const SizedBox(width: 2),
                             Text(
@@ -146,7 +146,7 @@ class HabitCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.orange.shade600,
+                                color: Colors.orange.shade600,  // accent-allowlist: streak count text, matches app-wide streak-fire theme convention
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -211,9 +211,9 @@ class HabitCard extends StatelessWidget {
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete, size: 20, color: Colors.red),
+                          Icon(Icons.delete, size: 20, color: Colors.red),  // accent-allowlist: delete menu item icon, destructive semantic not accent
                           SizedBox(width: 8),
-                          Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: Colors.red)),
+                          Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: Colors.red)),  // accent-allowlist: delete menu item text, destructive semantic not accent
                         ],
                       ),
                     ),

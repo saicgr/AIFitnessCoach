@@ -21,6 +21,7 @@ import 'today_stats_row.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'home_schedule_dates.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Factory class for creating tile widgets based on TileType
 class TileFactory {
   /// Build a widget for the given tile configuration
@@ -365,10 +366,10 @@ class _NutritionPatternsTile extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                color: context.accentColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.insights_rounded, color: Color(0xFF6366F1)),
+              child: Icon(Icons.insights_rounded, color: context.accentColor),
             ),
             const SizedBox(width: 12),
             Expanded(

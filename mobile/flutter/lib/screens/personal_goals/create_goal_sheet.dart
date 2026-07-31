@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/constants/goal_unit.dart';
 import '../../data/services/personal_goals_service.dart';
 
@@ -206,13 +207,13 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                       label: Text(unit.label),
                       selected: isSelected,
                       onSelected: (_) => setState(() => _selectedUnit = unit),
-                      selectedColor: AppColors.cyan,
+                      selectedColor: context.accentColor,
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : textSecondary,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                       backgroundColor: elevated,
-                      side: BorderSide(color: isSelected ? AppColors.cyan : cardBorder),
+                      side: BorderSide(color: isSelected ? context.accentColor : cardBorder),
                     ),
                   );
                 }).toList(),
@@ -246,17 +247,17 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.cyan.withValues(alpha: 0.2) : elevated,
+                      color: isSelected ? context.accentColor.withValues(alpha: 0.2) : elevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : cardBorder,
+                        color: isSelected ? context.accentColor : cardBorder,
                       ),
                     ),
                     child: Text(
                       ex,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isSelected ? AppColors.cyan : textSecondary,
+                        color: isSelected ? context.accentColor : textSecondary,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
@@ -285,7 +286,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                  borderSide: BorderSide(color: context.accentColor, width: 2),
                 ),
               ),
               onChanged: (_) => setState(() {}),
@@ -327,7 +328,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                  borderSide: BorderSide(color: context.accentColor, width: 2),
                 ),
                 suffixText: _selectedUnit.label,
                 suffixStyle: TextStyle(color: textSecondary, fontSize: 16),
@@ -342,7 +343,7 @@ class _CreateGoalSheetState extends State<CreateGoalSheet> {
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -404,10 +405,10 @@ class _GoalTypeOption extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.cyan.withValues(alpha: 0.15) : elevated,
+            color: isSelected ? context.accentColor.withValues(alpha: 0.15) : elevated,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.cyan : cardBorder,
+              color: isSelected ? context.accentColor : cardBorder,
               width: isSelected ? 2 : 1,
             ),
           ),
@@ -416,7 +417,7 @@ class _GoalTypeOption extends StatelessWidget {
               Icon(
                 icon,
                 size: 28,
-                color: isSelected ? AppColors.cyan : textMuted,
+                color: isSelected ? context.accentColor : textMuted,
               ),
               const SizedBox(height: 8),
               Text(
@@ -424,7 +425,7 @@ class _GoalTypeOption extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.cyan : textPrimary,
+                  color: isSelected ? context.accentColor : textPrimary,
                 ),
               ),
               const SizedBox(height: 4),

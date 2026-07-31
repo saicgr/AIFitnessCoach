@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/accent_color_provider.dart';
+
 /// Centralized color definitions for the onboarding flow ("System A",
-/// first-run redesign 2026-06: black canvas + brand-orange selection).
+/// first-run redesign 2026-06: black canvas + brand-accent selection).
 ///
 /// All onboarding quiz widgets, sign-in screens, and gate screens should
 /// use `OnboardingTheme.of(context)` to get the correct colors for the
@@ -9,26 +11,36 @@ import 'package:flutter/material.dart';
 ///
 /// v7 redesign notes (mockups: docs/planning/first-run-redesign-2026-06):
 /// - The blue glassmorphic gradient + animated orbs are gone; the funnel
-///   now matches the app's own black + #F97316 identity end to end.
-/// - `selectionAccent` is brand ORANGE (was iOS green) — selected cards,
-///   checks and badges all read as brand. `warningAccent` stays red:
+///   now matches the app's own black + accent identity end to end.
+/// - `selectionAccent` follows `context.accentColor` (was a hardcoded
+///   #F97316, before that iOS green) — selected cards, checks and badges
+///   read as brand, and now stay in sync with the user's chosen accent
+///   instead of forcing orange regardless of setting (E2E register row 15:
+///   "colour has stopped carrying meaning"). `warningAccent` stays red:
 ///   injury/limitation selection must NOT read as a positive confirmation.
 class OnboardingTheme {
   final bool isDark;
+  final Color _accent;
+  final Color _accentDeep;
 
-  const OnboardingTheme._({required this.isDark});
+  const OnboardingTheme._({
+    required this.isDark,
+    required Color accent,
+    required Color accentDeep,
+  })  : _accent = accent,
+        _accentDeep = accentDeep;
 
   /// Resolve the onboarding palette from the current [BuildContext].
   factory OnboardingTheme.of(BuildContext context) {
+    final accent = context.accentColor;
     return OnboardingTheme._(
       isDark: Theme.of(context).brightness == Brightness.dark,
+      accent: accent,
+      // Darker gradient stop derived from the single accent read, same
+      // technique as chat_media_widgets.dart's accent gradients.
+      accentDeep: Color.lerp(accent, Colors.black, 0.15)!,
     );
   }
-
-  // ── Brand constants ───────────────────────────────────────────────
-
-  static const Color _orange = Color(0xFFF97316);
-  static const Color _orangeDeep = Color(0xFFEA580C);
 
   // ── Background gradients ──────────────────────────────────────────
 
@@ -60,19 +72,19 @@ class OnboardingTheme {
   Color get textDisabled =>
       isDark ? const Color(0xFF5F5F66) : const Color(0xFFAEAEB2);
 
-  // ── Accent colors ─────────────────────────────────────────────────
+  // ── Accent colors ─────────────────────────────────────────────────  // accent-allowlist: warning/caution - injury & limitation selections, explicitly documented as distinct from selectionAccent (must not read as a positive confirmation)
 
-  /// Brand orange for CTA buttons (Continue, Generate).
-  Color get accent => _orange;
+  /// App accent for CTA buttons (Continue, Generate).
+  Color get accent => _accent;
 
-  /// Brand orange for selection confirmation (checkmarks, counters,
+  /// App accent for selection confirmation (checkmarks, counters,
   /// badges). v7: was green #34C759 — selection now reads as brand.
-  Color get selectionAccent => _orange;
+  Color get selectionAccent => _accent;
 
   /// Red accent for caution / warning selections (injuries, limitations).
   /// Semantically distinct from `selectionAccent` — "you have an injury here"
   /// reads as a warning, not a positive confirmation.
-  Color get warningAccent => const Color(0xFFFF3B30);
+  Color get warningAccent => const Color(0xFFFF3B30);  // accent-allowlist: warning/caution - injury & limitation selections, explicitly documented as distinct from selectionAccent (must not read as a positive confirmation)
 
   /// Badge background for "Recommended" / "BEST" labels.
   Color get badgeBg => selectionAccent.withValues(alpha: 0.15);
@@ -130,13 +142,16 @@ class OnboardingTheme {
 
   // ── Buttons ───────────────────────────────────────────────────────
 
-  /// v7: primary buttons are SOLID brand orange (no more white glass).
-  List<Color> get buttonGradient => const [_orange, _orangeDeep];
+  /// v7: primary buttons are SOLID brand accent (no more white glass).
+  List<Color> get buttonGradient => [_accent, _accentDeep];
 
-  Color get buttonBorder => _orange.withValues(alpha: 0.0);
+  Color get buttonBorder => _accent.withValues(alpha: 0.0);
 
-  /// Dark ink on orange — matches the approved System A mockups.
-  Color get buttonText => const Color(0xFF160B03);
+  /// Ink on accent — matches the approved System A mockups' contrast ratio,
+  /// computed per-accent (luminance threshold matches feature_detail_sheet.dart)
+  /// since a fixed near-black no longer reads correctly on every accent choice.
+  Color get buttonText =>
+      _accent.computeLuminance() > 0.55 ? const Color(0xFF160B03) : Colors.white;
 
   // ── Icon containers ───────────────────────────────────────────────
 
@@ -191,8 +206,7 @@ class OnboardingBackground extends StatelessWidget {
                     center: Alignment.center,
                     radius: 0.9,
                     colors: [
-                      OnboardingTheme._orange
-                          .withValues(alpha: t.isDark ? 0.10 : 0.07),
+                      t.accent.withValues(alpha: t.isDark ? 0.10 : 0.07),
                       Colors.transparent,
                     ],
                   ),

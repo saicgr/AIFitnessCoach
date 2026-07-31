@@ -32,7 +32,7 @@ class PostureFindingsCard extends StatelessWidget {
         color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFF5A623).withValues(alpha: 0.35),
+          color: const Color(0xFFF5A623).withValues(alpha: 0.35),  // accent-allowlist: warning framing -- this card exists to flag detected posture issues
         ),
       ),
       child: Column(
@@ -42,7 +42,7 @@ class PostureFindingsCard extends StatelessWidget {
             children: [
               const Icon(
                 Icons.accessibility_new_rounded,
-                color: Color(0xFFF5A623),
+                color: Color(0xFFF5A623),  // accent-allowlist: warning framing -- this card exists to flag detected posture issues
                 size: 18,
               ),
               const SizedBox(width: 8),
@@ -108,7 +108,7 @@ class PostureFindingsCard extends StatelessWidget {
                   isApplying ? AppLocalizations.of(context).postureFindingsCardQueuing : AppLocalizations.of(context).postureFindingsCardAddCorrectiveExercises,
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF5A623),
+                  backgroundColor: const Color(0xFFF5A623),  // accent-allowlist: warning framing -- this card exists to flag detected posture issues
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
@@ -125,10 +125,10 @@ class PostureFindingsCard extends StatelessWidget {
 
   Widget _severityDot(int severity) {
     final color = severity >= 3
-        ? const Color(0xFFE74C3C)
+        ? const Color(0xFFE74C3C)  // accent-allowlist: severity dot -- high severity is always red
         : severity == 2
-            ? const Color(0xFFF5A623)
-            : const Color(0xFFF8C971);
+            ? const Color(0xFFF5A623)  // accent-allowlist: severity dot -- medium severity is always amber
+            : const Color(0xFFF8C971);  // accent-allowlist: severity dot -- low severity is always light gold
     return Container(
       width: 10,
       height: 10,

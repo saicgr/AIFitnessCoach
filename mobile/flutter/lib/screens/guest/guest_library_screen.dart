@@ -11,6 +11,7 @@ import '../../widgets/glass_sheet.dart';
 import '../library/providers/library_providers.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Maximum exercises shown in guest mode
 const int guestExerciseLimit = 20;
 
@@ -70,7 +71,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
             Expanded(
               child: exercisesAsync.when(
                 loading: () => Center(
-                  child: CircularProgressIndicator(color: AppColors.cyan),
+                  child: CircularProgressIndicator(color: context.accentColor),
                 ),
                 error: (error, _) => _buildErrorState(textSecondary),
                 data: (categoryData) => _buildExerciseList(
@@ -125,7 +126,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.2),
+                        color: context.accentColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -133,7 +134,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -204,15 +205,15 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.cyan.withOpacity(0.1),
+          color: context.accentColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+          border: Border.all(color: context.accentColor.withOpacity(0.3)),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.info_outline,
-              color: AppColors.cyan,
+              color: context.accentColor,
               size: 20,
             ),
             const SizedBox(width: 10),
@@ -231,7 +232,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -335,7 +336,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: exercise.gifUrl != null
@@ -344,16 +345,16 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                           child: Image.network(
                             exercise.gifUrl!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorBuilder: (_, __, ___) => Icon(
                               Icons.fitness_center,
-                              color: AppColors.purple,
+                              color: context.accentColor,
                               size: 24,
                             ),
                           ),
                         )
-                      : const Icon(
+                      : Icon(
                           Icons.fitness_center,
-                          color: AppColors.purple,
+                          color: context.accentColor,
                           size: 24,
                         ),
                 ),
@@ -376,11 +377,11 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                       Row(
                         children: [
                           if (exercise.bodyPart != null) ...[
-                            _buildChip(exercise.bodyPart!, AppColors.purple),
+                            _buildChip(exercise.bodyPart!, context.accentColor),
                             const SizedBox(width: 6),
                           ],
                           if (exercise.equipment.isNotEmpty)
-                            _buildChip(exercise.equipment.first, AppColors.cyan),
+                            _buildChip(exercise.equipment.first, context.accentColor),
                         ],
                       ),
                     ],
@@ -431,20 +432,20 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withOpacity(0.15),
-            AppColors.purple.withOpacity(0.1),
+            context.accentColor.withOpacity(0.15),
+            context.accentColor.withOpacity(0.1),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+        border: Border.all(color: context.accentColor.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             Icons.lock_open,
-            color: AppColors.cyan,
+            color: context.accentColor,
             size: 40,
           ),
           const SizedBox(height: 12),
@@ -472,7 +473,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
             child: ElevatedButton(
               onPressed: _navigateToSignUp,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -519,7 +520,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
             },
             child: Text(
               AppLocalizations.of(context).netflixExercisesTabClearSearch,
-              style: TextStyle(color: AppColors.cyan),
+              style: TextStyle(color: context.accentColor),
             ),
           ),
         ],
@@ -535,7 +536,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: AppColors.error.withOpacity(0.5),
+            color: AppColors.error.withOpacity(0.5),  // accent-allowlist: error/destructive state — must stay red regardless of accent
           ),
           const SizedBox(height: 16),
           Text(
@@ -627,11 +628,11 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                     runSpacing: 8,
                     children: [
                       if (exercise.bodyPart != null)
-                        _buildDetailChip(exercise.bodyPart!, AppColors.purple),
+                        _buildDetailChip(exercise.bodyPart!, context.accentColor),
                       if (exercise.equipment.isNotEmpty)
-                        _buildDetailChip(exercise.equipment.first, AppColors.cyan),
+                        _buildDetailChip(exercise.equipment.first, context.accentColor),
                       if (exercise.targetMuscle != null)
-                        _buildDetailChip(exercise.targetMuscle!, AppColors.orange),
+                        _buildDetailChip(exercise.targetMuscle!, context.accentColor),
                     ],
                   ),
 
@@ -658,16 +659,16 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                               width: 24,
                               height: 24,
                               decoration: BoxDecoration(
-                                color: AppColors.cyan.withOpacity(0.15),
+                                color: context.accentColor.withOpacity(0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
                                 child: Text(
                                   '${entry.key + 1}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.cyan,
+                                    color: context.accentColor,
                                   ),
                                 ),
                               ),
@@ -703,15 +704,15 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: context.accentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                      border: Border.all(color: context.accentColor.withOpacity(0.3)),
                     ),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.videocam,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                           size: 32,
                         ),
                         const SizedBox(height: 8),
@@ -741,7 +742,7 @@ class _GuestLibraryScreenState extends ConsumerState<GuestLibraryScreen> {
                               _navigateToSignUp();
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.cyan,
+                              backgroundColor: context.accentColor,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),

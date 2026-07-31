@@ -7,6 +7,7 @@ import '../../../core/providers/warmup_duration_provider.dart';
 import '../widgets/section_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The warmup and stretch settings section for configuring durations.
 ///
 /// Allows users to customize:
@@ -40,8 +41,8 @@ class _WarmupSettingsCard extends ConsumerWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final orange = context.accentColor;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Material(
       color: elevatedColor,
@@ -88,8 +89,8 @@ class _WarmupSettingsCard extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           ref.read(warmupDurationProvider.notifier).setWarmupEnabled(value);
                         },
-                  activeThumbColor: AppColors.cyan,
-                  activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
+                  activeThumbColor: context.accentColor,
+                  activeTrackColor: context.accentColor.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -184,8 +185,8 @@ class _WarmupSettingsCard extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           ref.read(warmupDurationProvider.notifier).setStretchEnabled(value);
                         },
-                  activeThumbColor: AppColors.cyan,
-                  activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
+                  activeThumbColor: context.accentColor,
+                  activeTrackColor: context.accentColor.withValues(alpha: 0.5),
                 ),
               ],
             ),
@@ -448,8 +449,8 @@ class _SkipWarningToggleState extends State<_SkipWarningToggle> {
           Switch(
             value: !_isDismissed,
             onChanged: _toggle,
-            activeThumbColor: AppColors.cyan,
-            activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
+            activeThumbColor: context.accentColor,
+            activeTrackColor: context.accentColor.withValues(alpha: 0.5),
           ),
         ],
       ),

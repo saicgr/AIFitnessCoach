@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/trophy.dart';
 import '../../../data/models/trophy_filter_state.dart';
 import '../../../data/providers/trophy_filter_provider.dart';
@@ -134,7 +135,7 @@ class TrophyFilterSheet extends ConsumerWidget {
                           label: group,
                           icon: _getMuscleIcon(group),
                           isSelected: isSelected,
-                          color: AppColors.quickActionWater,
+                          color: context.accentColor,
                           onTap: () {
                             HapticService.light();
                             notifier.toggleMuscleGroup(group);
@@ -162,7 +163,7 @@ class TrophyFilterSheet extends ConsumerWidget {
                           label: category.displayName,
                           icon: category.icon,
                           isSelected: isSelected,
-                          color: AppColors.green,
+                          color: AppColors.green, // accent-allowlist: trophy tier rarity scale (bronze/silver/gold/platinum/mystery) + earned-filter green
                           onTap: () {
                             HapticService.light();
                             notifier.toggleCategory(category);
@@ -225,7 +226,7 @@ class TrophyFilterSheet extends ConsumerWidget {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.quickActionWater,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -352,17 +353,17 @@ class TrophyFilterSheet extends ConsumerWidget {
   Color _getTierColor(String tier) {
     switch (tier) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return const Color(0xFFCD7F32); // accent-allowlist: trophy tier rarity scale (bronze/silver/gold/platinum/mystery) + earned-filter green
       case 'silver':
         return const Color(0xFFC0C0C0);
       case 'gold':
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700); // accent-allowlist: trophy tier rarity scale (bronze/silver/gold/platinum/mystery) + earned-filter green
       case 'platinum':
         return const Color(0xFFE5E4E2);
       case 'mystery':
-        return AppColors.purple;
+        return AppColors.purple; // accent-allowlist: trophy tier rarity scale (bronze/silver/gold/platinum/mystery) + earned-filter green
       default:
-        return AppColors.quickActionWater;
+        return AppColors.quickActionWater; // accent-allowlist: trophy tier rarity scale (bronze/silver/gold/platinum/mystery) + earned-filter green
     }
   }
 

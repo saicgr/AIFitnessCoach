@@ -8,6 +8,7 @@ import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/quick_action_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -16,6 +17,7 @@ import '../../../../widgets/main_shell.dart';
 import '../../../../widgets/mood_picker_sheet.dart';
 import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
+import '../../../../data/providers/root_messenger.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
 import '../../../stats/widgets/photos_tab.dart';
 import '../../../custom_exercises/widgets/create_exercise_sheet.dart';
@@ -191,7 +193,11 @@ Widget buildQuickActionWidget(
       return _GridActionItem(
         icon: action.icon,
         label: action.label,
-        iconColor: action.color,
+        // E2E register row 15: follow the user's accent rather than a private
+        // per-action hue. See quick_log_sheet.dart for the fuller note.
+        // `action.color` is non-nullable here (the registry always supplies
+        // one), so this is a straight override rather than a `??` fallback.
+        iconColor: context.accentColor,
         // Shared launcher handles the route guard (it logs + no-ops on
         // registry entries with a non-route behavior, same as before).
         onTap: () => launchQuickAction(context, ref, actionId),

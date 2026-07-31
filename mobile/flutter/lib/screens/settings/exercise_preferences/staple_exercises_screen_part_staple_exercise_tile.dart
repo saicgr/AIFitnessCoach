@@ -36,15 +36,15 @@ class _StapleExerciseTile extends ConsumerWidget {
   Color _badgeColor(String? reason) {
     switch (reason) {
       case 'core_compound':
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       case 'favorite':
-        return Colors.redAccent;
+        return Colors.redAccent;  // accent-allowlist: categorical staple-reason badge legend (core_compound/favorite/rehab each need a distinct colour)
       case 'rehab':
-        return Colors.green;
+        return Colors.green;  // accent-allowlist: success/positive state - must stay green regardless of accent
       case 'strength_focus':
-        return Colors.orange;
+        return Colors.orange;  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
       default:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     }
   }
 
@@ -68,7 +68,7 @@ class _StapleExerciseTile extends ConsumerWidget {
       final hex = hexColor.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (_) {
-      return AppColors.cyan;
+      return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     }
   }
 
@@ -150,8 +150,8 @@ class _StapleExerciseTile extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: staple.section == 'warmup'
-                            ? Colors.orange.withValues(alpha: 0.15)
-                            : Colors.teal.withValues(alpha: 0.15),
+                            ? Colors.orange.withValues(alpha: 0.15)  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
+                            : Colors.teal.withValues(alpha: 0.15),  // accent-allowlist: categorical warmup-vs-stretch section badge colour
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
@@ -159,7 +159,7 @@ class _StapleExerciseTile extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: staple.section == 'warmup' ? Colors.orange : Colors.teal,
+                          color: staple.section == 'warmup' ? Colors.orange : Colors.teal,  // accent-allowlist: categorical warmup-vs-stretch section badge colour
                         ),
                       ),
                     ),
@@ -229,12 +229,12 @@ class _StapleExerciseTile extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.edit_outlined, color: AppColors.cyan),
+              icon: Icon(Icons.edit_outlined, color: context.accentColor),
               onPressed: onEdit,
               tooltip: AppLocalizations.of(context).commonEdit,
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
               onPressed: onRemove,
               tooltip: AppLocalizations.of(context).workoutPlanDrawerRemove,
             ),

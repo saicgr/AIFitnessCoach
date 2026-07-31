@@ -75,14 +75,14 @@ class _SummaryBodyState extends State<_SummaryBody> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: (failed ? Colors.red : Colors.green).withValues(alpha: 0.15),
+                  color: (failed ? Colors.red : Colors.green).withValues(alpha: 0.15),  // accent-allowlist: success/positive state - must stay green regardless of accent
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   failed
                       ? Icons.error_outline_rounded
                       : Icons.celebration_rounded,
-                  color: failed ? Colors.red : Colors.green.shade700,
+                  color: failed ? Colors.red : Colors.green.shade700,  // accent-allowlist: success/positive state - must stay green regardless of accent
                 ),
               ),
               const SizedBox(width: 12),
@@ -286,9 +286,9 @@ class _FailureBlock extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.08),
+        color: Colors.red.withValues(alpha: 0.08),  // accent-allowlist: error/destructive - must stay red
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),  // accent-allowlist: error/destructive - must stay red
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,9 +321,9 @@ class _UnresolvedSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.12),
+        color: Colors.amber.withValues(alpha: 0.12),  // accent-allowlist: warning severity - must stay amber regardless of accent
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),  // accent-allowlist: warning severity - must stay amber regardless of accent
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,7 +360,7 @@ class _UnresolvedSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.2),
+                    color: Colors.amber.withValues(alpha: 0.2),  // accent-allowlist: warning severity - must stay amber regardless of accent
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(n, style: theme.textTheme.labelMedium),

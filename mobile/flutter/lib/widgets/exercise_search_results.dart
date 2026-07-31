@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/models/workout_day_detail.dart';
 import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
@@ -84,7 +85,7 @@ class _SearchResultsList extends StatelessWidget {
               Icon(
                 Icons.search,
                 size: 16,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -153,7 +154,7 @@ class _ResultCard extends StatelessWidget {
           color: AppColors.glassSurface,
           borderRadius: BorderRadius.circular(12),
           border: result.hasPr
-              ? Border.all(color: AppColors.yellow.withOpacity(0.3))
+              ? Border.all(color: AppColors.yellow.withOpacity(0.3)) // accent-allowlist: personal-record (PR) badge, achievement gold not accent
               : Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
@@ -182,7 +183,7 @@ class _ResultCard extends StatelessWidget {
                           result.workoutName,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.cyan,
+                                    color: context.accentColor,
                                   ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -225,7 +226,7 @@ class _ResultCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.yellow.withOpacity(0.15),
+                  color: AppColors.yellow.withOpacity(0.15), // accent-allowlist: personal-record (PR) badge, achievement gold not accent
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -233,14 +234,14 @@ class _ResultCard extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.emoji_events,
-                      color: AppColors.yellow,
+                      color: AppColors.yellow, // accent-allowlist: personal-record (PR) badge, achievement gold not accent
                       size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       result.prType ?? AppLocalizations.of(context).goalLeaderboardPr,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.yellow,
+                            color: AppColors.yellow, // accent-allowlist: personal-record (PR) badge, achievement gold not accent
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
@@ -318,13 +319,13 @@ class _SearchLoading extends StatelessWidget {
         color: AppColors.glassSurface,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Center(
+      child: Center(
         child: SizedBox(
           width: 24,
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+            valueColor: AlwaysStoppedAnimation(context.accentColor),
           ),
         ),
       ),
@@ -343,15 +344,15 @@ class _SearchError extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.error.withOpacity(0.1), // accent-allowlist: search error state, semantic
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withOpacity(0.3)), // accent-allowlist: search error state, semantic
       ),
       child: Row(
         children: [
           Icon(
             Icons.error_outline,
-            color: AppColors.error,
+            color: AppColors.error, // accent-allowlist: search error state, semantic
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -359,7 +360,7 @@ class _SearchError extends StatelessWidget {
             child: Text(
               AppLocalizations.of(context).exerciseSearchResultsFailedToSearchExercises,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.error,
+                    color: AppColors.error, // accent-allowlist: search error state, semantic
                   ),
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Bottom sheet for selecting workout days.
 ///
 /// Allows users to select which days of the week they want to work out.
@@ -90,7 +91,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to update workout days: $e'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
             ),
           );
         }
@@ -203,13 +204,13 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
                               : AppColorsLight.glassSurface),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : cardBorder,
+                        color: isSelected ? context.accentColor : cardBorder,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppColors.cyan.withValues(alpha: 0.3),
+                                color: context.accentColor.withValues(alpha: 0.3),
                                 blurRadius: 8,
                                 spreadRadius: 0,
                               ),
@@ -251,10 +252,10 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
+                  color: context.accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -263,7 +264,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
                   Icon(
                     Icons.calendar_today,
                     size: 16,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -294,17 +295,17 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
+                  color: context.accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -328,14 +329,14 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _handleSave,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   disabledBackgroundColor:
-                      AppColors.cyan.withValues(alpha: 0.5),
+                      context.accentColor.withValues(alpha: 0.5),
                 ),
                 child: _isSaving
                     ? const SizedBox(

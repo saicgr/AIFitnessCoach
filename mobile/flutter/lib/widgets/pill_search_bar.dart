@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 
 /// Samsung-Settings-style pill search bar.
 ///
@@ -58,7 +59,7 @@ class PillSearchBar extends StatelessWidget {
               focusNode: focusNode,
               onChanged: onChanged,
               autofocus: autofocus,
-              cursorColor: AppColors.orange,
+              cursorColor: context.accentColor,
               style: TextStyle(color: textPrimary, fontSize: 15),
               decoration: InputDecoration(
                 hintText: hintText,

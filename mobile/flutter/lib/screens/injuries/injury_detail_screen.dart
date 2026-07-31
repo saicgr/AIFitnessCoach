@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/cache/cache_first_mixin.dart';
@@ -148,7 +149,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(AppLocalizations.of(context).injuryDetailCheckInLoggedSuccessfully),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: AppColors.success, // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
                   ),
                 );
               }
@@ -157,7 +158,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Failed to log check-in: $e'),
-                    backgroundColor: AppColors.error,
+                    backgroundColor: AppColors.error, // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
                   ),
                 );
               }
@@ -213,7 +214,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(AppLocalizations.of(context).injuryDetailCongratulationsOnYourRecove),
-                      backgroundColor: AppColors.success,
+                      backgroundColor: AppColors.success, // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
                     ),
                   );
                   context.pop();
@@ -223,7 +224,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Failed to mark as healed: $e'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: AppColors.error, // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
                     ),
                   );
                 }
@@ -787,20 +788,20 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
   Color _getSeverityColor(String severity) {
     switch (severity.toLowerCase()) {
       case 'mild':
-        return AppColors.success;
+        return AppColors.success; // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
       case 'moderate':
-        return AppColors.warning;
+        return AppColors.warning; // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
       case 'severe':
-        return AppColors.error;
+        return AppColors.error; // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
       default:
         return AppColors.textMuted;
     }
   }
 
   Color _getPainColor(int painLevel) {
-    if (painLevel <= 3) return AppColors.success;
-    if (painLevel <= 6) return AppColors.warning;
-    return AppColors.error;
+    if (painLevel <= 3) return AppColors.success; // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
+    if (painLevel <= 6) return AppColors.warning; // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
+    return AppColors.error; // accent-allowlist: injury severity/status scale (mild/moderate/severe, healed/recovering), semantic
   }
 
   String _formatInjuryType(String type) {

@@ -100,14 +100,14 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                 end: Alignment.bottomRight,
                 colors: [
                   Color(0xFF2D1B69),
-                  Color(0xFF7B2FF7),
-                  Color(0xFF9D4EDD),
+                  Color(0xFF7B2FF7), // accent-allowlist: Wrapped feature brand purple/gold, deliberate design not accent
+                  Color(0xFF9D4EDD), // accent-allowlist: Wrapped feature brand purple/gold, deliberate design not accent
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF9D4EDD).withValues(alpha: 0.4),
+                  color: const Color(0xFF9D4EDD).withValues(alpha: 0.4), // accent-allowlist: Wrapped feature brand purple/gold, deliberate design not accent
                   blurRadius: 20,
                   offset: const Offset(0, 6),
                 ),
@@ -125,7 +125,7 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                         boxShadow: [
                           BoxShadow(
                             color:
-                                Colors.amberAccent.withValues(alpha: 0.5),
+                                Colors.amberAccent.withValues(alpha: 0.5), // accent-allowlist: Wrapped feature brand purple/gold, deliberate design not accent
                             blurRadius: 16,
                             spreadRadius: 2,
                           ),
@@ -133,7 +133,7 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                       ),
                       child: const Icon(
                         Icons.auto_awesome,
-                        color: Colors.amberAccent,
+                        color: Colors.amberAccent, // accent-allowlist: Wrapped feature brand purple/gold, deliberate design not accent
                         size: 28,
                       ),
                     ),
@@ -238,7 +238,7 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.bolt, color: Color(0xFFFFD54F), size: 20),
+            const Icon(Icons.bolt, color: Color(0xFFFFD54F), size: 20), // accent-allowlist: Wrapped feature brand purple/gold, deliberate design not accent
             const SizedBox(width: 10),
             Expanded(
               child: Column(

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/models/set_progression.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Educational screen showing all set progression patterns with research-backed
 /// explanations, usage guidance, and adaptive behavior details.
 class TrainingMethodsScreen extends StatefulWidget {
@@ -275,11 +276,11 @@ class _TrainingMethodsScreenState extends State<TrainingMethodsScreen> {
   Color _goalColor(String tag, bool isDark) {
     switch (tag) {
       case 'Strength':
-        return isDark ? AppColors.orange : AppColorsLight.orange;
+        return context.accentColor;
       case 'Hypertrophy':
-        return isDark ? AppColors.purple : AppColorsLight.purple;
+        return context.accentColor;
       default:
-        return isDark ? AppColors.cyan : AppColorsLight.cyan;
+        return isDark ? context.accentColor : AppColorsLight.cyan;
     }
   }
 }

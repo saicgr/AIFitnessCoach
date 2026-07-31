@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// User Search Result Card - Displays a user in search results or suggestions
 class UserSearchResultCard extends StatelessWidget {
@@ -52,15 +53,15 @@ class UserSearchResultCard extends StatelessWidget {
           // Avatar
           CircleAvatar(
             radius: 28,
-            backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+            backgroundColor: context.accentColor.withValues(alpha: 0.2),
             backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
             child: avatarUrl == null
                 ? Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   )
                 : null,
@@ -121,15 +122,15 @@ class UserSearchResultCard extends StatelessWidget {
                       Icon(
                         Icons.star_outline_rounded,
                         size: 12,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           suggestionReason,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -151,6 +152,7 @@ class UserSearchResultCard extends StatelessWidget {
               isFriend: isFriend,
               hasPendingRequest: hasPendingRequest,
               requiresApproval: requiresApproval,
+              accent: context.accentColor,
             ),
         ],
       ),
@@ -183,6 +185,7 @@ class UserSearchResultCard extends StatelessWidget {
     required bool isFriend,
     required bool hasPendingRequest,
     required bool requiresApproval,
+    required Color accent,
   }) {
     String label;
     IconData icon;
@@ -192,12 +195,12 @@ class UserSearchResultCard extends StatelessWidget {
     if (isFriend) {
       label = 'Friends';
       icon = Icons.check_circle_rounded;
-      color = AppColors.cyan;
+      color = accent;
       isOutlined = true;
     } else if (hasPendingRequest) {
       label = 'Requested';
       icon = Icons.schedule_rounded;
-      color = AppColors.orange;
+      color = accent;
       isOutlined = true;
     } else if (isFollowing) {
       label = 'Following';
@@ -207,12 +210,12 @@ class UserSearchResultCard extends StatelessWidget {
     } else if (requiresApproval) {
       label = 'Request';
       icon = Icons.person_add_rounded;
-      color = AppColors.orange;
+      color = accent;
       isOutlined = false;
     } else {
       label = 'Add';
       icon = Icons.person_add_rounded;
-      color = AppColors.orange;
+      color = accent;
       isOutlined = false;
     }
 

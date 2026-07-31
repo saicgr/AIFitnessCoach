@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -137,7 +138,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final green = isDark ? AppColors.green : AppColorsLight.success;
+    final green = isDark ? AppColors.green : AppColorsLight.success; // accent-allowlist: success/confirmation-flow color (portion confirm buttons, check_circle banner) - not accent
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -182,12 +183,12 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.pie_chart,
-                    color: Colors.purple,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -281,7 +282,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                               child: _buildMacroInput(
                                 controller: _totalProteinController,
                                 label: AppLocalizations.of(context).batchPortioningProteinG,
-                                color: Colors.blue,
+                                color: Colors.blue, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                               ),
@@ -295,7 +296,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                               child: _buildMacroInput(
                                 controller: _totalCarbsController,
                                 label: AppLocalizations.of(context).batchPortioningCarbsG,
-                                color: Colors.orange,
+                                color: Colors.orange, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                               ),
@@ -305,7 +306,7 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                               child: _buildMacroInput(
                                 controller: _totalFatController,
                                 label: AppLocalizations.of(context).batchPortioningFatG,
-                                color: Colors.purple,
+                                color: Colors.purple, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                               ),
@@ -414,21 +415,21 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                           _buildMacroDisplay(
                             value: _proteinPerServing.toStringAsFixed(1),
                             label: 'protein',
-                            color: Colors.blue,
+                            color: Colors.blue, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                             textPrimary: textPrimary,
                             textMuted: textMuted,
                           ),
                           _buildMacroDisplay(
                             value: _carbsPerServing.toStringAsFixed(1),
                             label: 'carbs',
-                            color: Colors.orange,
+                            color: Colors.orange, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                             textPrimary: textPrimary,
                             textMuted: textMuted,
                           ),
                           _buildMacroDisplay(
                             value: _fatPerServing.toStringAsFixed(1),
                             label: 'fat',
-                            color: Colors.purple,
+                            color: Colors.purple, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                             textPrimary: textPrimary,
                             textMuted: textMuted,
                           ),
@@ -589,21 +590,21 @@ class _BatchPortioningSheetState extends State<BatchPortioningSheet> {
                               _buildFinalMacro(
                                 value: _proteinConsumed.toStringAsFixed(1),
                                 label: 'P',
-                                color: Colors.blue,
+                                color: Colors.blue, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                               ),
                               _buildFinalMacro(
                                 value: _carbsConsumed.toStringAsFixed(1),
                                 label: 'C',
-                                color: Colors.orange,
+                                color: Colors.orange, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                               ),
                               _buildFinalMacro(
                                 value: _fatConsumed.toStringAsFixed(1),
                                 label: 'F',
-                                color: Colors.purple,
+                                color: Colors.purple, // accent-allowlist: macro identity color (protein/carbs/fat) for this sheet's macro inputs/displays
                                 textPrimary: textPrimary,
                                 textMuted: textMuted,
                               ),

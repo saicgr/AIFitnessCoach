@@ -885,10 +885,10 @@ class _PrivacySection extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () => _showClearHistoryDialog(context, widgetRef),
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
-              label: Text(AppLocalizations.of(context).chatScreenExtClearChatHistory, style: TextStyle(color: AppColors.error)),
+              icon: const Icon(Icons.delete_outline, color: AppColors.error),  // accent-allowlist: error status -- error semantic
+              label: Text(AppLocalizations.of(context).chatScreenExtClearChatHistory, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error status -- error semantic
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.error),
+                side: const BorderSide(color: AppColors.error),  // accent-allowlist: error status -- error semantic
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -931,11 +931,11 @@ class _PrivacySection extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(AppLocalizations.of(context).aiSettingsScreenChatHistoryCleared),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.success,  // accent-allowlist: success status -- success semantic
                 ),
               );
             },
-            child: Text(AppLocalizations.of(context).vacationModeClear, style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context).vacationModeClear, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error status -- error semantic
           ),
         ],
       ),

@@ -19,7 +19,7 @@ import '../common/app_refresh_indicator.dart';
 class VitalsDetailScreen extends ConsumerWidget {
   const VitalsDetailScreen({super.key});
 
-  static const Color _danger = Color(0xFFF97316); // warm amber-orange
+  static const Color _danger = Color(0xFFF97316); // warm amber-orange // accent-allowlist: vitals metric identity color
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

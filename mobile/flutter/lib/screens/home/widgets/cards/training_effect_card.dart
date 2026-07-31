@@ -83,13 +83,13 @@ class TrainingEffectCard extends ConsumerWidget {
               _Score(
                 label: 'Aerobic',
                 value: effect.aerobic,
-                tint: const Color(0xFF60A5FA),
+                tint: const Color(0xFF60A5FA),  // accent-allowlist: aerobic/anaerobic training-effect categorical pair, shown side by side
               ),
               const SizedBox(width: 14),
               _Score(
                 label: 'Anaerobic',
                 value: effect.anaerobic,
-                tint: const Color(0xFFFB7185),
+                tint: const Color(0xFFFB7185),  // accent-allowlist: aerobic/anaerobic training-effect categorical pair, shown side by side
               ),
             ],
           ),

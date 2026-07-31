@@ -101,10 +101,10 @@ extension PowerUpKindMeta on PowerUpKind {
 
   /// Distinct accent colour per power-up so the HUD chips read at a glance.
   Color get color => switch (this) {
-        PowerUpKind.magnet => const Color(0xFF42A5F5),
-        PowerUpKind.slowMo => const Color(0xFF26C6DA),
-        PowerUpKind.shield => const Color(0xFF66BB6A),
-        PowerUpKind.doubleScore => const Color(0xFFFFC107),
+        PowerUpKind.magnet => const Color(0xFF42A5F5), // accent-allowlist: power-up identity color per kind (magnet/slowMo/shield/doubleScore), game asset not accent
+        PowerUpKind.slowMo => const Color(0xFF26C6DA), // accent-allowlist: power-up identity color per kind (magnet/slowMo/shield/doubleScore), game asset not accent
+        PowerUpKind.shield => const Color(0xFF66BB6A), // accent-allowlist: power-up identity color per kind (magnet/slowMo/shield/doubleScore), game asset not accent
+        PowerUpKind.doubleScore => const Color(0xFFFFC107), // accent-allowlist: power-up identity color per kind (magnet/slowMo/shield/doubleScore), game asset not accent
       };
 }
 

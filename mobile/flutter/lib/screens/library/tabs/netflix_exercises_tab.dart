@@ -22,6 +22,7 @@ import '../components/ai_split_preset_detail_sheet.dart';
 import '../../workout/exercise_browse.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'netflix_exercises_tab_part_exercise_list_card.dart';
 
 part 'netflix_exercises_tab_ui.dart';
@@ -219,7 +220,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final accentColor = ref.colors(context).accent;
 
     final categoryExercisesAsync = ref.watch(categoryExercisesProvider);
@@ -707,14 +708,14 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
                 height: 32,
                 decoration: BoxDecoration(
                   color: _useSmartSearch
-                      ? (isDark ? AppColors.cyan : AppColorsLight.cyan).withValues(alpha: 0.2)
+                      ? (isDark ? context.accentColor : AppColorsLight.cyan).withValues(alpha: 0.2)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
                   Icons.auto_awesome,
                   color: _useSmartSearch
-                      ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                      ? (isDark ? context.accentColor : AppColorsLight.cyan)
                       : textMuted,
                   size: 18,
                 ),
@@ -728,7 +729,7 @@ class _NetflixExercisesTabState extends ConsumerState<NetflixExercisesTab> {
 
   void _showAddCustomExercise(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = isDark ? context.accentColor : context.accentColor;
 
     showGlassSheet(
       context: context,

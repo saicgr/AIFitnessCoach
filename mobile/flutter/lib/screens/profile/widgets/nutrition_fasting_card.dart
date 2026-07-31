@@ -9,6 +9,7 @@ import '../../../core/providers/user_provider.dart';
 import '../../settings/sections/nutrition_fasting_section.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Displays nutrition and fasting profile information from onboarding
 class NutritionFastingCard extends ConsumerStatefulWidget {
   const NutritionFastingCard({super.key});
@@ -105,7 +106,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
                   },
                   icon: const Icon(
                     Icons.edit_outlined,
-                    color: AppColors.green,
+                    color: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     size: 20,
                   ),
                   tooltip: AppLocalizations.of(context).nutritionFastingCardEditNutritionSettings,
@@ -117,7 +118,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           // Nutrition info rows
           _buildInfoRow(
             icon: Icons.local_fire_department_outlined,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             label: AppLocalizations.of(context).nutritionFastingCardDailyTarget,
             value: caloriesDisplay,
             isDark: isDark,
@@ -128,7 +129,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
 
           _buildInfoRow(
             icon: Icons.restaurant_outlined,
-            iconColor: AppColors.green,
+            iconColor: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             label: AppLocalizations.of(context).nutritionFastingCardDietType,
             value: _getDietTypeDisplay(prefs?.dietType),
             isDark: isDark,
@@ -139,7 +140,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
 
           _buildInfoRow(
             icon: Icons.flag_outlined,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             // Renamed from generic "Goal" → "Body composition target" to
             // disambiguate from the higher-level Training goal pill at the
             // top of the Profile screen. UX review found a 3-way "Goal"
@@ -154,7 +155,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
             _buildInfoRow(
               icon: Icons.my_location_outlined,
-              iconColor: AppColors.green,
+              iconColor: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
               label: AppLocalizations.of(context).nutritionFastingCardGoalWeight,
               value: '${prefs!.goalWeightKg!.toStringAsFixed(1)} kg',
               isDark: isDark,
@@ -166,7 +167,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
             _buildInfoRow(
               icon: Icons.calendar_today_outlined,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               label: AppLocalizations.of(context).nutritionFastingCardTargetDate,
               value: _formatGoalDate(prefs!.goalDate!, prefs.weeksToGoal),
               isDark: isDark,
@@ -180,7 +181,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
             _buildInfoRow(
               icon: Icons.trending_down_outlined,
-              iconColor: AppColors.orange,
+              iconColor: context.accentColor,
               label: AppLocalizations.of(context).nutritionFastingCardWeeklyRate,
               value: _formatWeeklyRate(prefs.rateOfChange!),
               isDark: isDark,
@@ -207,7 +208,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
             _buildInfoRow(
               icon: Icons.warning_amber_outlined,
-              iconColor: AppColors.orange,
+              iconColor: context.accentColor,
               label: AppLocalizations.of(context).nutritionSettingsScreenAllergens,
               value: _formatAllergenList(prefs!.allergies),
               isDark: isDark,
@@ -221,7 +222,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
             _buildInfoRow(
               icon: Icons.no_meals_outlined,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               label: AppLocalizations.of(context).nutritionFastingCardRestrictions,
               value: _formatRestrictionList(prefs!.dietaryRestrictions),
               isDark: isDark,
@@ -235,7 +236,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             Divider(height: 1, color: cardBorder, indent: 16, endIndent: 16),
             _buildInfoRow(
               icon: Icons.schedule,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               label: AppLocalizations.of(context).nutritionFastingFastingProtocol,
               value: _getFastingProtocolDisplay(fastingState.fastingProtocol),
               isDark: isDark,
@@ -298,7 +299,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(Icons.pie_chart_outline, color: AppColors.info, size: 20),
+          Icon(Icons.pie_chart_outline, color: AppColors.info, size: 20),  // accent-allowlist: informational state — must stay blue regardless of accent
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context).nutritionFastingCardMacros,
@@ -308,11 +309,11 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             ),
           ),
           const Spacer(),
-          _MacroBadge(label: 'P', value: '${protein}g', color: AppColors.macroProtein),
+          _MacroBadge(label: 'P', value: '${protein}g', color: AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always the same colour across every nutrition surface
           const SizedBox(width: 6),
-          _MacroBadge(label: 'C', value: '${carbs}g', color: AppColors.macroCarbs),
+          _MacroBadge(label: 'C', value: '${carbs}g', color: AppColors.macroCarbs),  // accent-allowlist: macro identity — carbs is always the same colour across every nutrition surface
           const SizedBox(width: 6),
-          _MacroBadge(label: 'F', value: '${fat}g', color: AppColors.macroFat),
+          _MacroBadge(label: 'F', value: '${fat}g', color: AppColors.macroFat),  // accent-allowlist: macro identity — fat is always the same colour across every nutrition surface
         ],
       ),
     );

@@ -292,7 +292,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.preAuthQuizSomethingWentWrongPlease),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
             duration: const Duration(seconds: 3),
           ),
         );
@@ -346,7 +346,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.preAuthQuizFailedToSaveOnboarding),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -449,14 +449,14 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 1:
         return buildTip(
           icon: Icons.person_outline,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
           title: 'Calibrating your baseline',
           body: AppLocalizations.of(context)!.preAuthQuizFitnessLevelHelpsSet,
         );
       case 2:
         return buildTip(
           icon: Icons.calendar_today_rounded,
-          color: AppColors.green,
+          color: AppColors.green,  // accent-allowlist: categorical per-tip icon colour, distinct from neighbouring tips for visual scanning
           title: AppLocalizations.of(context)!.preAuthQuizConsistencyBeatsIntensity,
           body: AppLocalizations.of(context)!.preAuthQuizWeLlBuildThe,
           bullets: [
@@ -468,14 +468,14 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 3:
         return buildTip(
           icon: Icons.event_available,
-          color: const Color(0xFFA855F7),
+          color: const Color(0xFFA855F7),  // accent-allowlist: categorical per-tip icon colour, distinct from neighbouring tips for visual scanning
           title: AppLocalizations.of(context)!.preAuthQuizWhichDaysWorkBest,
           body: 'Your chosen days help us space workouts optimally for muscle recovery between sessions.',
         );
       case 4:
         return buildTip(
           icon: Icons.home_rounded,
-          color: AppColors.cyan,
+          color: context.accentColor,
           title: AppLocalizations.of(context)!.preAuthQuizMatchedToYourSetup,
           body: AppLocalizations.of(context)!.preAuthQuizEveryExerciseWillBe,
           bullets: [
@@ -486,7 +486,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 5:
         return buildTip(
           icon: Icons.shield_outlined,
-          color: AppColors.green,
+          color: AppColors.green,  // accent-allowlist: categorical per-tip icon colour, distinct from neighbouring tips for visual scanning
           title: AppLocalizations.of(context)!.preAuthQuizSafetyFirst,
           body: AppLocalizations.of(context)!.preAuthQuizTellingUsAboutInjuries,
         );
@@ -502,21 +502,21 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 8:
         return buildTip(
           icon: Icons.accessibility_new,
-          color: const Color(0xFFEF4444),
+          color: const Color(0xFFEF4444),  // accent-allowlist: error/destructive - same value as AppColors.error
           title: 'Target weak points',
           body: 'Selected muscles get extra volume and priority placement in your workouts.',
         );
       case 9:
         return buildTip(
           icon: Icons.view_week_rounded,
-          color: const Color(0xFF3B82F6),
+          color: const Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
           title: 'Training philosophy',
           body: 'Each style structures your week differently. Let AI decide if you\'re unsure — it adapts to your schedule.',
         );
       case 10:
         return buildTip(
           icon: Icons.speed_rounded,
-          color: AppColors.green,
+          color: AppColors.green,  // accent-allowlist: categorical per-tip icon colour, distinct from neighbouring tips for visual scanning
           title: AppLocalizations.of(context)!.preAuthQuizYourProgressionSpeed,
           body: AppLocalizations.of(context)!.preAuthQuizControlsHowQuicklyWeights,
         );

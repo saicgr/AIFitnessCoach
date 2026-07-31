@@ -21,11 +21,11 @@ class QuizMotivation extends StatelessWidget {
 
   static List<Map<String, Object>> _buildMotivations(AppLocalizations l10n) => [
     {'id': 'look_better', 'label': l10n.quizMotivationLookBetter, 'icon': Icons.auto_awesome, 'color': AppColors.onboardingAccent},
-    {'id': 'feel_stronger', 'label': l10n.quizMotivationFeelStronger, 'icon': Icons.fitness_center, 'color': AppColors.purple},
+    {'id': 'feel_stronger', 'label': l10n.quizMotivationFeelStronger, 'icon': Icons.fitness_center, 'color': AppColors.purple},  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     {'id': 'more_energy', 'label': l10n.quizMotivationHaveMoreEnergy, 'icon': Icons.bolt, 'color': AppColors.electricBlue},
-    {'id': 'mental_health', 'label': l10n.quizMotivationImproveMentalHealth, 'icon': Icons.psychology, 'color': AppColors.green},
+    {'id': 'mental_health', 'label': l10n.quizMotivationImproveMentalHealth, 'icon': Icons.psychology, 'color': AppColors.green},  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     {'id': 'sleep_better', 'label': l10n.quizMotivationSleepBetter, 'icon': Icons.nightlight_round, 'color': AppColors.electricBlue},
-    {'id': 'be_healthier', 'label': l10n.quizMotivationBeHealthierOverall, 'icon': Icons.favorite, 'color': AppColors.pink},
+    {'id': 'be_healthier', 'label': l10n.quizMotivationBeHealthierOverall, 'icon': Icons.favorite, 'color': AppColors.pink},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
     {'id': 'sports_performance', 'label': l10n.quizMotivationSportsPerformance, 'icon': Icons.sports_basketball, 'color': AppColors.onboardingAccent},
     {'id': 'confidence', 'label': l10n.quizMotivationBuildConfidence, 'icon': Icons.star, 'color': AppColors.onboardingAccent},
   ];

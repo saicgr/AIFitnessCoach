@@ -261,21 +261,21 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
+                color: AppColors.success.withValues(alpha: 0.1),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+                border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),  // accent-allowlist: success/positive state -- must stay green regardless of accent
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                  Icon(Icons.check_circle, color: AppColors.success, size: 16),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   const SizedBox(width: 6),
                   Text(
                     AppLocalizations.of(context).quickLogWeightLogged,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     ),
                   ),
                 ],
@@ -294,7 +294,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: _errorMessage != null
-                            ? AppColors.error.withValues(alpha: 0.5)
+                            ? AppColors.error.withValues(alpha: 0.5)  // accent-allowlist: error/destructive -- must stay red
                             : cardBorder,
                       ),
                     ),
@@ -390,7 +390,7 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                 _errorMessage!,
                 style: TextStyle(
                   fontSize: 10,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -500,10 +500,10 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
                   : Icons.trending_flat,
           size: 16,
           color: isLosing
-              ? AppColors.success
+              ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
               : isGaining
-                  ? AppColors.error
-                  : AppColors.orange,
+                  ? AppColors.error  // accent-allowlist: error/destructive -- must stay red
+                  : context.accentColor,
         ),
         const SizedBox(width: 6),
         Expanded(

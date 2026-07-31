@@ -144,28 +144,28 @@ class FastingTrainingWarning extends ConsumerWidget {
     switch (warningLevel) {
       case _WarningLevel.info:
         backgroundColor = isDark
-            ? AppColors.cyan.withValues(alpha: 0.1)
-            : AppColors.cyan.withValues(alpha: 0.08);
-        borderColor = AppColors.cyan.withValues(alpha: 0.3);
-        iconColor = AppColors.cyan;
+            ? AppColors.cyan.withValues(alpha: 0.1) // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+            : AppColors.cyan.withValues(alpha: 0.08); // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+        borderColor = AppColors.cyan.withValues(alpha: 0.3); // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+        iconColor = AppColors.cyan; // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
         icon = Icons.info_outline;
         title = 'Training Fasted';
         message = _getInfoMessage(hoursFasted, currentZone);
       case _WarningLevel.warning:
         backgroundColor = isDark
-            ? AppColors.orange.withValues(alpha: 0.1)
-            : AppColors.orange.withValues(alpha: 0.08);
-        borderColor = AppColors.orange.withValues(alpha: 0.3);
-        iconColor = AppColors.orange;
+            ? AppColors.orange.withValues(alpha: 0.1) // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+            : AppColors.orange.withValues(alpha: 0.08); // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+        borderColor = AppColors.orange.withValues(alpha: 0.3); // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+        iconColor = AppColors.orange; // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
         icon = Icons.warning_amber_rounded;
         title = 'Fasted Training Caution';
         message = _getWarningMessage(hoursFasted, currentZone);
       case _WarningLevel.danger:
         backgroundColor = isDark
-            ? AppColors.error.withValues(alpha: 0.1)
-            : AppColors.error.withValues(alpha: 0.08);
-        borderColor = AppColors.error.withValues(alpha: 0.3);
-        iconColor = AppColors.error;
+            ? AppColors.error.withValues(alpha: 0.1) // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+            : AppColors.error.withValues(alpha: 0.08); // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+        borderColor = AppColors.error.withValues(alpha: 0.3); // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
+        iconColor = AppColors.error; // accent-allowlist: fasted-training warning severity scale (info/warning/danger)
         icon = Icons.warning_rounded;
         title = 'Extended Fast Warning';
         message = _getDangerMessage(hoursFasted);

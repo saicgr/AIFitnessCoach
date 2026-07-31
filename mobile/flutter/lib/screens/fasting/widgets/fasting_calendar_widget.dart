@@ -166,7 +166,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
                 icon: Icons.flag_outlined,
                 label: AppLocalizations.of(context).fastingCalendarGoals,
                 value: '${data.goalsCompleted}/${data.goalsTotal} completed',
-                color: AppColors.success,
+                color: AppColors.success, // accent-allowlist: fasting calendar day status severity
                 isDark: isDark,
               ),
             ],
@@ -176,7 +176,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
                 icon: Icons.monitor_weight_outlined,
                 label: AppLocalizations.of(context).workoutSummaryAdvancedWeight,
                 value: '${data.weight!.toStringAsFixed(1)} kg',
-                color: AppColors.orange,
+                color: AppColors.orange, // accent-allowlist: fasting calendar day status severity
                 isDark: isDark,
               ),
             ],
@@ -186,7 +186,7 @@ class _FastingCalendarWidgetState extends ConsumerState<FastingCalendarWidget> {
                 icon: Icons.bolt,
                 label: AppLocalizations.of(context).workoutSummaryGeneralEnergy,
                 value: '${data.energyLevel}/10',
-                color: AppColors.yellow,
+                color: AppColors.yellow, // accent-allowlist: fasting calendar day status severity
                 isDark: isDark,
               ),
             ],

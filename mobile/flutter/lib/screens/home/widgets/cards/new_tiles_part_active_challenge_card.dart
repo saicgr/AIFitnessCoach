@@ -20,7 +20,7 @@ class ActiveChallengeCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final pinkColor = const Color(0xFFE91E63);
+    final pinkColor = context.accentColor;
 
     final userId = ref.watch(currentUserIdProvider);
     final challengesAsync = userId != null
@@ -148,7 +148,7 @@ class RestDayTipCard extends StatelessWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final tealColor = const Color(0xFF009688);
+    final tealColor = context.accentColor;
 
     const tips = [
       'Get 7-9 hours of quality sleep tonight',
@@ -345,7 +345,7 @@ class StepsCounterCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final greenColor = AppColors.green;
+    final greenColor = AppColors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
 
     final steps = ref.watch(currentStepsProvider);
     final targetSteps = ref.watch(stepGoalProvider);
@@ -431,7 +431,7 @@ class HeartRateCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final redColor = AppColors.error;
+    final redColor = AppColors.error;  // accent-allowlist: error/destructive -- must stay red
 
     final recoveryAsync = ref.watch(recoveryProvider);
     final recovery = recoveryAsync.valueOrNull;

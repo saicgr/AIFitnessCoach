@@ -1466,7 +1466,7 @@ class _FastingScreenRedesignedState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to start fast: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error, // accent-allowlist: error state, semantic
           ),
         );
       }
@@ -1540,7 +1540,7 @@ class _FastingScreenRedesignedState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to end fast: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error, // accent-allowlist: error state, semantic
           ),
         );
       }

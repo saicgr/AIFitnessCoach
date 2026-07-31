@@ -26,7 +26,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.cyan.withOpacity(
+                          color: context.accentColor.withOpacity(
                             0.3 + _pulseController.value * 0.2,
                           ),
                           blurRadius: 24 + _pulseController.value * 12,
@@ -379,7 +379,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
         children: [
           Row(
             children: [
-              Icon(Icons.flag_outlined, color: AppColors.orange, size: 20),
+              Icon(Icons.flag_outlined, color: context.accentColor, size: 20),
               const SizedBox(width: 10),
               Text(
                 AppLocalizations.of(
@@ -406,14 +406,14 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                     height: 36,
                     decoration: BoxDecoration(
                       color: isCurrentWeek
-                          ? AppColors.orange.withOpacity(0.15)
+                          ? context.accentColor.withOpacity(0.15)
                           : Colors.grey.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       achievement['icon'] as IconData,
                       size: 18,
-                      color: isCurrentWeek ? AppColors.orange : Colors.grey,
+                      color: isCurrentWeek ? context.accentColor : Colors.grey,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -433,7 +433,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1.5,
                             color: isCurrentWeek
-                                ? AppColors.orange
+                                ? context.accentColor
                                 : textSecondary,
                           ),
                         ),
@@ -457,7 +457,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -469,7 +469,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1.5,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -569,7 +569,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
+                backgroundColor: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -593,7 +593,7 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                       context.push('/paywall-pricing');
                     },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.cyan),
+                      side: BorderSide(color: context.accentColor),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -602,10 +602,10 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                       AppLocalizations.of(
                         context,
                       )!.planPreviewScreenSubscribeForFullAccess,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     ),
                   ),
@@ -620,18 +620,18 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
                     context.go('/home');
                   },
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.green),
+                    side: BorderSide(color: Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    backgroundColor: Colors.green.withOpacity(0.08),
+                    backgroundColor: Colors.green.withOpacity(0.08),  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ),
                   child: Text(
                     AppLocalizations.of(context)!.planPreviewScreenContinueFree,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.green,
+                      color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ),
                   ),
                 ),

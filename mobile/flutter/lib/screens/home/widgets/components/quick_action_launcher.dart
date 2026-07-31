@@ -15,6 +15,7 @@ import '../../../nutrition/widgets/gut_health_card.dart';
 import '../../../workout/widgets/equipment_snap_flow.dart';
 import '../../../workout/widgets/form_analysis_sheet.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
+import '../../../../data/providers/root_messenger.dart';
 
 /// SharedPreferences key storing the gym profile id that was active BEFORE the
 /// user entered Travel Mode, so a future "back to my gym" affordance can restore
@@ -139,7 +140,7 @@ Future<bool> launchQuickAction(
         ref.invalidate(workoutScreenSummaryProvider);
 
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text('${travel.name} on. Bodyweight workouts ready.'),
             ),
@@ -148,7 +149,7 @@ Future<bool> launchQuickAction(
       } catch (e) {
         debugPrint('❌ [QuickActionLauncher] Travel Mode failed: $e');
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             const SnackBar(
               content: Text(
                 "Couldn't switch to Travel Mode. Please try again.",

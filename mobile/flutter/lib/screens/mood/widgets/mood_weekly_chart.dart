@@ -123,20 +123,20 @@ class MoodWeeklyChart extends ConsumerWidget {
 
     switch (summary.trend) {
       case 'improving':
-        bgColor = Colors.green.withValues(alpha: 0.15);
-        textColor = Colors.green;
+        bgColor = Colors.green.withValues(alpha: 0.15);  // accent-allowlist: trend badge -- improving/success
+        textColor = Colors.green;  // accent-allowlist: trend badge -- improving/success
         icon = Icons.trending_up;
         label = l10n.moodWeeklyChartImproving;
         break;
       case 'declining':
-        bgColor = Colors.orange.withValues(alpha: 0.15);
-        textColor = Colors.orange;
+        bgColor = Colors.orange.withValues(alpha: 0.15);  // accent-allowlist: trend badge -- declining/warning
+        textColor = Colors.orange;  // accent-allowlist: trend badge -- declining/warning
         icon = Icons.trending_down;
         label = l10n.moodWeeklyChartDeclining;
         break;
       default:
-        bgColor = Colors.blue.withValues(alpha: 0.15);
-        textColor = Colors.blue;
+        bgColor = Colors.blue.withValues(alpha: 0.15);  // accent-allowlist: trend badge -- stable/info
+        textColor = Colors.blue;  // accent-allowlist: trend badge -- stable/info
         icon = Icons.trending_flat;
         label = l10n.moodWeeklyChartStable;
     }

@@ -9,6 +9,7 @@ import 'onboarding_experiments.dart';
 import 'widgets/onboarding_theme.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Onboarding conversion v6 — price-anchor "value stack".
 ///
 /// Shown right before the paywall. It stacks what the user would pay to
@@ -430,8 +431,8 @@ class _ValueContinueButton extends StatelessWidget {
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+            gradient: LinearGradient(
+              colors: [AppColors.onboardingAccent, context.accentColor],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [

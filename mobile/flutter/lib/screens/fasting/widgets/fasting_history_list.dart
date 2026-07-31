@@ -82,10 +82,10 @@ class FastingHistoryCard extends StatelessWidget {
 
     final completedGoal = completionPercent >= 100;
     final statusColor = completedGoal
-        ? AppColors.success
+        ? AppColors.success // accent-allowlist: fasting history entry status severity
         : completionPercent >= 80
-            ? AppColors.warning
-            : AppColors.coral;
+            ? AppColors.warning // accent-allowlist: fasting history entry status severity
+            : AppColors.coral; // accent-allowlist: fasting history entry status severity
 
     return Container(
       padding: const EdgeInsets.all(16),

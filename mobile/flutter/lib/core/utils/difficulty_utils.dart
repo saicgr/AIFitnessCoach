@@ -68,15 +68,15 @@ class DifficultyUtils {
     // Semantic colors: green (easy) -> amber -> orange -> red (hell)
     switch (internal.toLowerCase()) {
       case 'easy':
-        return const Color(0xFF22C55E);  // Green - beginner friendly
+        return const Color(0xFF22C55E);  // Green - beginner friendly // accent-allowlist: difficulty severity scale, green (easy) to red (hell)
       case 'medium':
-        return const Color(0xFFF59E0B);  // Amber - moderate challenge
+        return const Color(0xFFF59E0B);  // Amber - moderate challenge // accent-allowlist: difficulty severity scale, green (easy) to red (hell)
       case 'hard':
-        return const Color(0xFFF97316);  // Orange - challenging
+        return const Color(0xFFF97316);  // Orange - challenging // accent-allowlist: difficulty severity scale, green (easy) to red (hell)
       case 'hell':
-        return const Color(0xFFEF4444);  // Red - maximum intensity
+        return const Color(0xFFEF4444);  // Red - maximum intensity // accent-allowlist: difficulty severity scale, green (easy) to red (hell)
       default:
-        return const Color(0xFFF59E0B);  // Default amber
+        return const Color(0xFFF59E0B);  // Default amber // accent-allowlist: difficulty severity scale, green (easy) to red (hell)
     }
   }
 

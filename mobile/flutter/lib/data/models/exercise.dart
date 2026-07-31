@@ -331,6 +331,7 @@ class WorkoutExercise extends Equatable {
         trackingTypeHint: trackingType,
         distanceMeters: distanceMeters,
         repsSpec: repsSpec,
+        targetReps: reps,
       );
 
   /// The full capability profile — ordered metric columns + primary metric.
@@ -345,6 +346,7 @@ class WorkoutExercise extends Equatable {
         trackingTypeHint: trackingType,
         distanceMeters: distanceMeters,
         repsSpec: repsSpec,
+        targetReps: reps,
         explicitKeys: metricKeys,
       );
 

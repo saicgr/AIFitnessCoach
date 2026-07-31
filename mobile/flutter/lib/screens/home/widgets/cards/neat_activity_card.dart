@@ -128,7 +128,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.2),
+                      color: Colors.orange.withValues(alpha: 0.2),  // accent-allowlist: warning severity
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -139,7 +139,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                         Text(
                           '${streak.currentStreak}',
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: Colors.orange,
+                            color: Colors.orange,  // accent-allowlist: warning severity
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -226,10 +226,10 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                   label: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                   value: AppLocalizations.of(context)!.neatActivityCardH(activeHours),
                   color: activeHours >= 8
-                      ? Colors.green
+                      ? Colors.green  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       : activeHours >= 5
-                          ? Colors.orange
-                          : Colors.red,
+                          ? Colors.orange  // accent-allowlist: warning severity
+                          : Colors.red,  // accent-allowlist: error/destructive -- must stay red
                   colorScheme: colorScheme,
                   theme: theme,
                 ),
@@ -242,7 +242,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.2),
+                        color: Colors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -251,7 +251,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                           const Icon(
                             Icons.check_circle,
                             size: 14,
-                            color: Colors.green,
+                            color: Colors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                           ),
                           const SizedBox(width: 4),
                           Flexible(
@@ -260,7 +260,7 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.green,
+                                color: Colors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -421,19 +421,19 @@ class _NeatActivityCardState extends ConsumerState<NeatActivityCard>
   }
 
   Color _getProgressColor(double progress) {
-    if (progress >= 1.0) return Colors.green;
-    if (progress >= 0.75) return Colors.lightGreen;
-    if (progress >= 0.5) return Colors.amber;
-    if (progress >= 0.25) return Colors.orange;
-    return Colors.red;
+    if (progress >= 1.0) return Colors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+    if (progress >= 0.75) return Colors.lightGreen;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+    if (progress >= 0.5) return Colors.amber;  // accent-allowlist: warning severity
+    if (progress >= 0.25) return Colors.orange;  // accent-allowlist: warning severity
+    return Colors.red;  // accent-allowlist: error/destructive -- must stay red
   }
 
   Color _getScoreColor(int score) {
-    if (score >= 90) return Colors.green;
-    if (score >= 75) return Colors.lightGreen;
-    if (score >= 50) return Colors.amber;
-    if (score >= 25) return Colors.orange;
-    return Colors.red;
+    if (score >= 90) return Colors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+    if (score >= 75) return Colors.lightGreen;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+    if (score >= 50) return Colors.amber;  // accent-allowlist: warning severity
+    if (score >= 25) return Colors.orange;  // accent-allowlist: warning severity
+    return Colors.red;  // accent-allowlist: error/destructive -- must stay red
   }
 
   String _formatNumber(int number) {

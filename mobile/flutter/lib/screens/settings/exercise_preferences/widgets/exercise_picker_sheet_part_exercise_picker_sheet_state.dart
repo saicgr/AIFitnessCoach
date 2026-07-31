@@ -112,13 +112,13 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   Color get _accentColor {
     switch (widget.type) {
       case ExercisePickerType.favorite:
-        return AppColors.error; // Heart color
+        return AppColors.error; // Heart color  // accent-allowlist: error/destructive - must stay red
       case ExercisePickerType.staple:
-        return AppColors.cyan;
+        return context.accentColor;
       case ExercisePickerType.queue:
-        return AppColors.cyan;
+        return context.accentColor;
       case ExercisePickerType.avoided:
-        return AppColors.orange;
+        return context.accentColor;
     }
   }
 
@@ -607,7 +607,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
-                Icon(Icons.auto_fix_high, size: 14, color: AppColors.cyan),
+                Icon(Icons.auto_fix_high, size: 14, color: context.accentColor),
                 const SizedBox(width: 6),
                 Expanded(
                   child: RichText(
@@ -860,7 +860,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                     : 'Turn on AI search — find exercises by meaning, not just spelling',
                 child: Material(
                   color: _useSmartSearch
-                      ? AppColors.cyan.withValues(alpha: 0.2)
+                      ? context.accentColor.withValues(alpha: 0.2)
                       : cardBackground,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
@@ -884,7 +884,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                       padding: const EdgeInsets.all(12),
                       child: Icon(
                         Icons.auto_awesome,
-                        color: _useSmartSearch ? AppColors.cyan : textMuted,
+                        color: _useSmartSearch ? context.accentColor : textMuted,
                         size: 24,
                       ),
                     ),

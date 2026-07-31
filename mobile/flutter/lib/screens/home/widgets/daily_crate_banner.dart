@@ -9,6 +9,7 @@ import '../../../widgets/crate_opening_play.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../data/providers/root_messenger.dart';
 /// Banner showing available daily crates with tap to open selection
 ///
 /// Displays when user has unclaimed daily crates available.
@@ -134,7 +135,7 @@ class _DailyCrateBannerState extends ConsumerState<DailyCrateBanner>
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     // Use a gold/amber accent for the crate banner
-    const crateColor = Color(0xFFFFB300); // Amber
+    const crateColor = Color(0xFFFFB300); // Amber  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
 
     final availableCount = cratesState.availableCount;
 
@@ -360,10 +361,10 @@ class _DailyCrateSelectionSheetState
         debugPrint('❌ [Crate UI] Claim failed for type=$crateType: ${result.message}');
         HapticService.error();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(result.message ?? AppLocalizations.of(context).stackedBannerPanelFailedToClaimCrate),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
               duration: const Duration(seconds: 6),
             ),
           );
@@ -378,10 +379,10 @@ class _DailyCrateSelectionSheetState
       debugPrint('❌ [Crate UI] Stack:\n$stack');
       HapticService.error();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
             duration: const Duration(seconds: 6),
           ),
         );
@@ -410,9 +411,9 @@ class _DailyCrateSelectionSheetState
   Color _crateColor(String? type) {
     switch (type) {
       case 'activity':
-        return const Color(0xFFFFB300);
+        return const Color(0xFFFFB300);  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
       case 'streak':
-        return const Color(0xFFFF7043);
+        return const Color(0xFFFF7043);  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
       default:
         return const Color(0xFF78909C);
     }
@@ -512,7 +513,7 @@ class _DailyCrateSelectionSheetState
                         ? 'Better rewards for 7+ day streak'
                         : 'Requires 7+ day streak',
                     icon: '🔥',
-                    color: const Color(0xFFFF7043), // Deep orange
+                    color: const Color(0xFFFF7043), // Deep orange  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                     isLoading: _isLoading && _selectedCrate == 'streak',
                     isDisabled: !widget.cratesState.streakCrateAvailable ||
                         (_isLoading && _selectedCrate != 'streak'),
@@ -533,7 +534,7 @@ class _DailyCrateSelectionSheetState
                         ? 'Best rewards for completing all goals'
                         : 'Complete all daily goals to unlock',
                     icon: '⭐',
-                    color: const Color(0xFFFFB300), // Amber
+                    color: const Color(0xFFFFB300), // Amber  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                     isLoading: _isLoading && _selectedCrate == 'activity',
                     isDisabled: !widget.cratesState.activityCrateAvailable ||
                         (_isLoading && _selectedCrate != 'activity'),
@@ -793,12 +794,12 @@ class _AnimatedRewardToastState extends State<_AnimatedRewardToast>
                   color: backgroundColor,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: const Color(0xFFFFB300).withOpacity(0.5),
+                    color: const Color(0xFFFFB300).withOpacity(0.5),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFFFB300).withOpacity(0.3),
+                      color: const Color(0xFFFFB300).withOpacity(0.3),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                       blurRadius: 20,
                       spreadRadius: 2,
                     ),

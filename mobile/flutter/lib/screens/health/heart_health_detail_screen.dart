@@ -19,9 +19,9 @@ import '../common/app_refresh_indicator.dart';
 class HeartHealthDetailScreen extends ConsumerWidget {
   const HeartHealthDetailScreen({super.key});
 
-  static const Color _good = Color(0xFF22C55E);
-  static const Color _fair = Color(0xFFF59E0B);
-  static const Color _poor = Color(0xFFF97316);
+  static const Color _good = Color(0xFF22C55E); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
+  static const Color _fair = Color(0xFFF59E0B); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
+  static const Color _poor = Color(0xFFF97316); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
 
   static Color _scoreColor(int s) =>
       s >= 75 ? _good : (s >= 50 ? _fair : _poor);
@@ -254,7 +254,7 @@ class _DeltaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final up = delta > 0;
-    final c = up ? const Color(0xFF22C55E) : const Color(0xFFF97316);
+    final c = up ? const Color(0xFF22C55E) : const Color(0xFFF97316); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(
@@ -293,11 +293,11 @@ class _ComponentTile extends StatelessWidget {
   Color _bandColor() {
     switch (component.band) {
       case 'Good':
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
       case 'Fair':
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
       case 'Poor':
-        return const Color(0xFFF97316);
+        return const Color(0xFFF97316); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
       default:
         return textSecondary;
     }

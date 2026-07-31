@@ -124,7 +124,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: (priceDiff > 0 ? Colors.red : Colors.green).withValues(alpha: 0.1),
+                color: (priceDiff > 0 ? Colors.red : Colors.green).withValues(alpha: 0.1), // accent-allowlist: price-increase/decrease severity indicator (red=more expensive, green=cheaper), semantic
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -132,7 +132,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                 children: [
                   Icon(
                     priceDiff > 0 ? Icons.trending_up : Icons.trending_down,
-                    color: priceDiff > 0 ? Colors.red : Colors.green,
+                    color: priceDiff > 0 ? Colors.red : Colors.green, // accent-allowlist: price-increase/decrease severity indicator (red=more expensive, green=cheaper), semantic
                     size: 20,
                   ),
                   const SizedBox(width: 8),
@@ -143,7 +143,7 @@ class _PlanChangeConfirmationDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: priceDiff > 0 ? Colors.red : Colors.green,
+                      color: priceDiff > 0 ? Colors.red : Colors.green, // accent-allowlist: price-increase/decrease severity indicator (red=more expensive, green=cheaper), semantic
                     ),
                   ),
                   Text(

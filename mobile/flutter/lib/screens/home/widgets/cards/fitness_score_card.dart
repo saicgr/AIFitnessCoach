@@ -401,10 +401,10 @@ const String _kNoValue = '—';
 /// Band colour for a score, or a neutral grey when there is no score to band.
 Color _scoreColor(int? score) {
   if (score == null) return AppColors.textMuted;
-  if (score >= 80) return AppColors.green;
-  if (score >= 60) return AppColors.cyan;
-  if (score >= 40) return AppColors.yellow;
-  return Colors.orange;
+  if (score >= 80) return AppColors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+  if (score >= 60) return AppColors.cyan;  // accent-allowlist: score-band tier colour (matches compliance/readiness traffic-light convention); top-level function has no BuildContext
+  if (score >= 40) return AppColors.yellow;  // accent-allowlist: warning severity
+  return Colors.orange;  // accent-allowlist: warning severity
 }
 
 /// Central overall score display

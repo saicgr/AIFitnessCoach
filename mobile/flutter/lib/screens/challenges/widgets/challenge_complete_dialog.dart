@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Dialog shown after completing a challenge workout
@@ -93,12 +94,12 @@ class ChallengeCompleteDialog extends StatelessWidget {
           end: AlignmentDirectional.bottomEnd,
           colors: didBeat
               ? [
-                  const Color(0xFFFFD700).withValues(alpha: 0.3),
-                  Colors.orange.withValues(alpha: 0.3),
+                  const Color(0xFFFFD700).withValues(alpha: 0.3), // accent-allowlist: victory celebration gold, matches PR/trophy convention
+                  Colors.orange.withValues(alpha: 0.3), // accent-allowlist: victory celebration gold gradient stop
                 ]
               : [
-                  AppColors.orange.withValues(alpha: 0.2),
-                  AppColors.orange.withValues(alpha: 0.1),
+                  context.accentColor.withValues(alpha: 0.2),
+                  context.accentColor.withValues(alpha: 0.1),
                 ],
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -118,7 +119,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: didBeat ? const Color(0xFFFFD700) : AppColors.orange,
+              color: didBeat ? const Color(0xFFFFD700) : context.accentColor, // accent-allowlist: didBeat branch is victory celebration gold
               letterSpacing: 1.5,
             ),
           ),
@@ -140,9 +141,9 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 const TextSpan(text: ' '),
                 TextSpan(
                   text: workoutName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                 ),
                 const TextSpan(text: '!'),
@@ -164,13 +165,13 @@ class ChallengeCompleteDialog extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: didBeat
-            ? Colors.green.withValues(alpha: 0.1)
-            : AppColors.orange.withValues(alpha: 0.1),
+            ? Colors.green.withValues(alpha: 0.1) // accent-allowlist: win indicator, semantic
+            : context.accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: didBeat
-              ? Colors.green.withValues(alpha: 0.3)
-              : AppColors.orange.withValues(alpha: 0.3),
+              ? Colors.green.withValues(alpha: 0.3) // accent-allowlist: win indicator, semantic
+              : context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -181,7 +182,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
               Icon(
                 Icons.analytics_outlined,
                 size: 18,
-                color: didBeat ? Colors.green : AppColors.orange,
+                color: didBeat ? Colors.green : context.accentColor, // accent-allowlist: win indicator, semantic
               ),
               const SizedBox(width: 8),
               Text(
@@ -189,7 +190,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: didBeat ? Colors.green : AppColors.orange,
+                  color: didBeat ? Colors.green : context.accentColor, // accent-allowlist: win indicator, semantic
                 ),
               ),
             ],
@@ -270,7 +271,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: youWon ? Colors.green : null,
+                          color: youWon ? Colors.green : null, // accent-allowlist: win indicator, semantic
                         ),
                       ),
                       if (youWon) ...[
@@ -278,7 +279,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                         const Icon(
                           Icons.check_circle,
                           size: 14,
-                          color: Colors.green,
+                          color: Colors.green, // accent-allowlist: win indicator, semantic
                         ),
                       ],
                     ],
@@ -316,15 +317,15 @@ class ChallengeCompleteDialog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withValues(alpha: 0.1),
+        color: context.accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.share, size: 18, color: AppColors.cyan),
+          Icon(Icons.share, size: 18, color: context.accentColor),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -359,7 +360,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -386,7 +387,7 @@ class ChallengeCompleteDialog extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 import 'quiz_step_header.dart';
 
@@ -276,10 +275,10 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.15),
+                          color: Colors.orange.withValues(alpha: 0.15),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: Colors.orange.withValues(alpha: 0.4),
+                            color: Colors.orange.withValues(alpha: 0.4),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                             width: 1.5,
                           ),
                         ),
@@ -290,7 +289,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                               children: [
                                 const Icon(
                                   Icons.warning_amber_rounded,
-                                  color: Colors.orange,
+                                  color: Colors.orange,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                                   size: 22,
                                 ),
                                 const SizedBox(width: 12),
@@ -300,7 +299,7 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w700,
-                                      color: Colors.orange,
+                                      color: Colors.orange,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                                     ),
                                   ),
                                 ),

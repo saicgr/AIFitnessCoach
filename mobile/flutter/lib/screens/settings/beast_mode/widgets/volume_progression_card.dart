@@ -8,6 +8,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class VolumeProgressionCard extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -36,13 +37,13 @@ class VolumeProgressionCard extends ConsumerWidget {
               return ChoiceChip(
                 label: Text(e.value),
                 selected: isSelected,
-                selectedColor: AppColors.orange.withValues(alpha: 0.2),
+                selectedColor: context.accentColor.withValues(alpha: 0.2),
                 labelStyle: TextStyle(
-                  color: isSelected ? AppColors.orange : theme.textMuted,
+                  color: isSelected ? context.accentColor : theme.textMuted,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 12,
                 ),
-                side: BorderSide(color: isSelected ? AppColors.orange.withValues(alpha: 0.5) : theme.cardBorder),
+                side: BorderSide(color: isSelected ? context.accentColor.withValues(alpha: 0.5) : theme.cardBorder),
                 onSelected: (_) {
                   HapticService.selection();
                   notifier.updateProgressionModel(e.key);
@@ -84,16 +85,16 @@ class VolumeProgressionCard extends ConsumerWidget {
         Expanded(
           child: SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.orange,
-              inactiveTrackColor: AppColors.orange.withValues(alpha: 0.15),
-              thumbColor: AppColors.orange,
+              activeTrackColor: context.accentColor,
+              inactiveTrackColor: context.accentColor.withValues(alpha: 0.15),
+              thumbColor: context.accentColor,
               trackHeight: 3,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             ),
             child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
           ),
         ),
-        SizedBox(width: displayWidth, child: Text(display, style: TextStyle(fontSize: 11, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
+        SizedBox(width: displayWidth, child: Text(display, style: TextStyle(fontSize: 11, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
       ],
     );
   }
@@ -146,14 +147,14 @@ class VolumeProgressionCard extends ConsumerWidget {
           LineChartBarData(
             spots: spots,
             isCurved: config.progressionModel == 'undulating',
-            color: AppColors.orange,
+            color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
             barWidth: 2.5,
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(radius: 3, color: AppColors.orange, strokeWidth: 0),
+                  FlDotCirclePainter(radius: 3, color: AppColors.orange, strokeWidth: 0),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
             ),
-            belowBarData: BarAreaData(show: true, color: AppColors.orange.withValues(alpha: theme.isDark ? 0.15 : 0.08)),
+            belowBarData: BarAreaData(show: true, color: AppColors.orange.withValues(alpha: theme.isDark ? 0.15 : 0.08)),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
           ),
         ],
       ),

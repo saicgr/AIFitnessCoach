@@ -386,7 +386,7 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(3),
-                      color: stepsProgress >= 1.0 ? AppColors.success : accentColor,
+                      color: stepsProgress >= 1.0 ? AppColors.success : accentColor,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     ),
                   ),
                 ),

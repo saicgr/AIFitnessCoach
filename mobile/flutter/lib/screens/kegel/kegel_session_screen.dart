@@ -174,7 +174,7 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
       barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 48),  // accent-allowlist: session-complete confirmation -- success semantic
           title: Text(AppLocalizations.of(context).kegelSessionSessionComplete),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -424,19 +424,19 @@ class _KegelSessionScreenState extends ConsumerState<KegelSessionScreen>
     switch (exercise.difficulty.toLowerCase()) {
       case 'beginner':
         icon = Icons.fitness_center;
-        color = Colors.green;
+        color = Colors.green;  // accent-allowlist: difficulty-tier legend colour -- beginner
         break;
       case 'intermediate':
         icon = Icons.trending_up;
-        color = Colors.orange;
+        color = Colors.orange;  // accent-allowlist: difficulty-tier legend colour -- intermediate
         break;
       case 'advanced':
         icon = Icons.whatshot;
-        color = Colors.red;
+        color = Colors.red;  // accent-allowlist: difficulty-tier legend colour -- advanced
         break;
       default:
         icon = Icons.fitness_center;
-        color = Colors.green;
+        color = Colors.green;  // accent-allowlist: difficulty-tier legend colour -- default/beginner
     }
 
     return Container(

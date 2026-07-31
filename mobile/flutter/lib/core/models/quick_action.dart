@@ -35,6 +35,21 @@ enum QuickActionBehavior {
   gutHealth,
 }
 
+// E2E register row 15: this registry used to hand each of the 35 quick
+// actions its own private hex (amber/green/teal/blue/purple/pink/red/...),
+// independent of the app's accent setting. `color` below is now
+// single-sourced to [_defaultChipColor] instead of a distinct value per
+// action.
+//
+// This registry is a top-level `const` map with no `BuildContext`, so it
+// cannot read `context.accentColor` itself. `copyWith` exists so a
+// context-aware call site CAN re-tint an action with the live accent
+// (`action.copyWith(color: context.accentColor)`); `lib/widgets/quick_actions_sheet.dart`
+// (owned by this pass) has been wired to do so. Consumers under
+// `lib/screens/home/` (outside this pass's file ownership) still render the
+// single default colour below pending the same wiring.
+const _defaultChipColor = Color(0xFFF97316); // accent-allowlist: const registry has no BuildContext to read the live accent from; single-sourced default (was 35 distinct per-action hexes) pending a context-aware override at each lib/screens/home/ consumer via copyWith
+
 class QuickAction {
   final String id;
   final String label;
@@ -51,6 +66,26 @@ class QuickAction {
     required this.behavior,
     this.route,
   });
+
+  /// Lets a context-aware caller re-tint this action (e.g. with
+  /// `context.accentColor`) without the model itself needing a BuildContext.
+  QuickAction copyWith({
+    String? id,
+    String? label,
+    IconData? icon,
+    Color? color,
+    QuickActionBehavior? behavior,
+    String? route,
+  }) {
+    return QuickAction(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      behavior: behavior ?? this.behavior,
+      route: route ?? this.route,
+    );
+  }
 }
 
 const quickActionRegistry = <String, QuickAction>{
@@ -60,14 +95,14 @@ const quickActionRegistry = <String, QuickAction>{
     // scale (not monitor_weight): the boxy monitor_weight glyph read as an
     // unrecognizable square at small tile sizes in the quick-log sheet.
     icon: Icons.scale_outlined,
-    color: Color(0xFFF59E0B),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.weightLog,
   ),
   'food': QuickAction(
     id: 'food',
     label: 'Food',
     icon: Icons.restaurant_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.foodLog,
   ),
   'scan_food': QuickAction(
@@ -77,7 +112,7 @@ const quickActionRegistry = <String, QuickAction>{
     // camera button — "document scanner" reads as "scan this thing" in the
     // Material set and pairs with the amber Scan Menu entry.
     icon: Icons.document_scanner_outlined,
-    color: Color(0xFF16A34A),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.foodScan,
   ),
   // "Photo Log" replaces 'scan_food' as the default slot-5 entry — single
@@ -88,28 +123,28 @@ const quickActionRegistry = <String, QuickAction>{
     // Surface 1.3 — clearer verb: "Snap Food" reads as the camera action.
     label: 'Snap Food',
     icon: Icons.lunch_dining_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.foodPhoto,
   ),
   'barcode_food': QuickAction(
     id: 'barcode_food',
     label: 'Barcode',
     icon: Icons.qr_code_scanner_outlined,
-    color: Color(0xFF14B8A6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.foodBarcode,
   ),
   'scan_menu': QuickAction(
     id: 'scan_menu',
     label: 'Scan Menu',
     icon: Icons.menu_book_outlined,
-    color: Color(0xFFF59E0B),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.menuScan,
   ),
   'water': QuickAction(
     id: 'water',
     label: 'Water',
     icon: Icons.water_drop_outlined,
-    color: Color(0xFF3B82F6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.waterQuickAdd,
   ),
   'photo': QuickAction(
@@ -118,7 +153,7 @@ const quickActionRegistry = <String, QuickAction>{
     // grid cell wraps gracefully at this length on iPhone SE.
     label: 'Progress Photo',
     icon: Icons.accessibility_new_outlined,
-    color: Color(0xFFA855F7),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/stats?openPhoto=true',
   ),
@@ -126,14 +161,14 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'quick_workout',
     label: 'Quick',
     icon: Icons.flash_on,
-    color: Color(0xFF00D9FF),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.quickWorkout,
   ),
   'fasting': QuickAction(
     id: 'fasting',
     label: 'Fasting',
     icon: Icons.timer_outlined,
-    color: Color(0xFFF97316),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.fastingNav,
     route: '/fasting',
   ),
@@ -141,7 +176,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'measure',
     label: 'Measure',
     icon: Icons.straighten_outlined,
-    color: Color(0xFFA855F7),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/measurements',
   ),
@@ -149,7 +184,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'mood',
     label: 'Mood',
     icon: Icons.mood_outlined,
-    color: Color(0xFFEC4899),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.moodLog,
   ),
   // Meditate — opens today's curated guided session (the same destination the
@@ -160,14 +195,14 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'meditate',
     label: 'Meditate',
     icon: Icons.self_improvement_outlined,
-    color: Color(0xFF8B5CF6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
   ),
   'history': QuickAction(
     id: 'history',
     label: 'History',
     icon: Icons.history_outlined,
-    color: Color(0xFF6B7280),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/workout-gallery',
   ),
@@ -175,7 +210,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'steps',
     label: 'Steps',
     icon: Icons.directions_walk_outlined,
-    color: Color(0xFF10B981),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/neat',
   ),
@@ -183,7 +218,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'workout',
     label: 'Workout',
     icon: Icons.fitness_center_outlined,
-    color: Color(0xFFEF4444),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/workouts',
   ),
@@ -191,7 +226,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'library',
     label: 'Library',
     icon: Icons.menu_book_outlined,
-    color: Color(0xFF8B5CF6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/library',
   ),
@@ -199,7 +234,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'programs',
     label: 'Programs',
     icon: Icons.view_list_outlined,
-    color: Color(0xFFE11D48),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/library?tab=1',
   ),
@@ -207,14 +242,14 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'chat',
     label: 'Chat',
     icon: Icons.auto_awesome,
-    color: Color(0xFF9B59B6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.chat,
   ),
   'settings': QuickAction(
     id: 'settings',
     label: 'Settings',
     icon: Icons.settings_outlined,
-    color: Color(0xFF64748B),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/settings',
   ),
@@ -222,7 +257,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'schedule',
     label: 'Schedule',
     icon: Icons.calendar_today_outlined,
-    color: Color(0xFF0EA5E9),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/schedule',
   ),
@@ -230,7 +265,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'habits',
     label: 'Habits',
     icon: Icons.checklist_outlined,
-    color: Color(0xFF14B8A6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/habits',
   ),
@@ -238,7 +273,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'progress',
     label: 'Progress',
     icon: Icons.show_chart_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     // Score tab is index 3 (Overload was inserted at index 1).
     route: '/stats?tab=3',
@@ -247,7 +282,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'achievements',
     label: 'Achieve',
     icon: Icons.emoji_events_outlined,
-    color: Color(0xFFEAB308),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/achievements',
   ),
@@ -255,7 +290,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'hydration',
     label: 'Hydration',
     icon: Icons.local_drink_outlined,
-    color: Color(0xFF3B82F6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/hydration',
   ),
@@ -263,7 +298,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'summaries',
     label: 'Summary',
     icon: Icons.summarize_outlined,
-    color: Color(0xFF8B5CF6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/summaries',
   ),
@@ -271,7 +306,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'stats',
     label: 'Stats',
     icon: Icons.leaderboard_outlined,
-    color: Color(0xFF6366F1),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/stats',
   ),
@@ -281,7 +316,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'share_plan',
     label: 'Share',
     icon: Icons.ios_share_rounded,
-    color: Color(0xFF0EA5E9),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/share-plan',
   ),
@@ -294,7 +329,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'identify_equipment',
     label: "What's this?",
     icon: Icons.camera_alt_outlined,
-    color: Color(0xFF06B6D4),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.identifyEquipment,
   ),
   // F3B: one-tap Travel Mode. Lives in the More overflow by default (pinnable
@@ -304,7 +339,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'travel_mode',
     label: 'Travel Mode',
     icon: Icons.hotel_outlined,
-    color: Color(0xFFF59E0B),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.travelMode,
   ),
   // Calorii-audit surfacing — all four already exist as features; these
@@ -313,7 +348,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'meal_planner',
     label: 'Meal Plan',
     icon: Icons.event_note_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/nutrition/meal-planner',
   ),
@@ -321,14 +356,14 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'recipe_creator',
     label: 'New Recipe',
     icon: Icons.menu_book_outlined,
-    color: Color(0xFF16A34A),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.recipeBuilder,
   ),
   'from_fridge': QuickAction(
     id: 'from_fridge',
     label: 'From Fridge',
     icon: Icons.kitchen_outlined,
-    color: Color(0xFF10B981),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/nutrition/from-fridge',
   ),
@@ -336,14 +371,14 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'gut_health',
     label: 'Gut Health',
     icon: Icons.spa_outlined,
-    color: Color(0xFF14B8A6),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.gutHealth,
   ),
   'custom_trends': QuickAction(
     id: 'custom_trends',
     label: 'Custom Trends',
     icon: Icons.insights_outlined,
-    color: Color(0xFF6366F1),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.route,
     route: '/trends/custom',
   ),
@@ -356,7 +391,7 @@ const quickActionRegistry = <String, QuickAction>{
     // videocam (not sports_gymnastics): form check = record/upload a video
     // of your lift; the gymnast glyph read as martial arts, not video review.
     icon: Icons.videocam_outlined,
-    color: Color(0xFF06B6D4),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.formCheck,
   ),
   // Add Exercise — open the AI create-exercise sheet (Fill-with-AI) directly.
@@ -364,7 +399,7 @@ const quickActionRegistry = <String, QuickAction>{
     id: 'add_exercise',
     label: 'Add Exercise',
     icon: Icons.add_circle_outline,
-    color: Color(0xFFEF4444),
+    color: _defaultChipColor,
     behavior: QuickActionBehavior.addExercise,
   ),
 };

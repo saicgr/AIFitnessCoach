@@ -8,6 +8,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A banner that shows when the user's subscription is renewing soon (within 5 days)
 class RenewalReminderBanner extends ConsumerWidget {
   const RenewalReminderBanner({super.key});
@@ -116,20 +117,20 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
 
     if (renewal.daysUntilRenewal != null && renewal.daysUntilRenewal! <= 1) {
       // Tomorrow or today - urgent
-      bannerColor = AppColors.error.withValues(alpha: 0.15);
-      iconColor = AppColors.error;
+      bannerColor = AppColors.error.withValues(alpha: 0.15);  // accent-allowlist: error/destructive -- must stay red
+      iconColor = AppColors.error;  // accent-allowlist: error/destructive -- must stay red
       icon = Icons.warning_amber_rounded;
     } else if (renewal.daysUntilRenewal != null && renewal.daysUntilRenewal! <= 3) {
       // Within 3 days - warning
-      bannerColor = AppColors.orange.withValues(alpha: 0.15);
-      iconColor = AppColors.orange;
+      bannerColor = context.accentColor.withValues(alpha: 0.15);
+      iconColor = context.accentColor;
       icon = Icons.schedule;
     } else {
       // 4-5 days - informational
       bannerColor = isDark
-          ? AppColors.cyan.withValues(alpha: 0.15)
+          ? context.accentColor.withValues(alpha: 0.15)
           : AppColorsLight.elevated;
-      iconColor = AppColors.cyan;
+      iconColor = context.accentColor;
       icon = Icons.info_outline;
     }
 

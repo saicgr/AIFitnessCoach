@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
-/// FitBudd-style pink-to-purple gradient hero showing the /100 rating.
+/// FitBudd-style gradient hero showing the /100 rating, derived from the app accent.
 class BodyAnalyzerHero extends StatelessWidget {
   final int score; // 0..100
   final String? trendText; // "↑ 3 pts this month"
@@ -16,11 +17,12 @@ class BodyAnalyzerHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = context.accentColor;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],
+        gradient: LinearGradient(
+          colors: [accent.withValues(alpha: 0.65), accent],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),

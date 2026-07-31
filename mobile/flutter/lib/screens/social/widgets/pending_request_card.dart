@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Pending Request Card - Compact card for displaying pending friend requests
 class PendingRequestCard extends StatelessWidget {
   final Map<String, dynamic> request;
@@ -42,7 +43,7 @@ class PendingRequestCard extends StatelessWidget {
           CircleAvatar(
             radius: 24,
             backgroundColor: isDark
-                ? AppColors.cyan.withValues(alpha: 0.2)
+                ? context.accentColor.withValues(alpha: 0.2)
                 : AppColorsLight.accent.withValues(alpha: 0.1),
             backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
             child: avatarUrl == null
@@ -51,7 +52,7 @@ class PendingRequestCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? AppColors.cyan : AppColorsLight.accent,
+                      color: isDark ? context.accentColor : AppColorsLight.accent,
                     ),
                   )
                 : null,
@@ -116,9 +117,9 @@ class PendingRequestCard extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: onDecline,
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                    foregroundColor: isDark ? context.accentColor : context.accentColor,
                     side: BorderSide(
-                      color: (isDark ? AppColors.coral : AppColorsLight.coral)
+                      color: (isDark ? context.accentColor : context.accentColor)
                           .withValues(alpha: 0.3),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 6),
@@ -132,7 +133,7 @@ class PendingRequestCard extends StatelessWidget {
                 child: FilledButton(
                   onPressed: onAccept,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     visualDensity: VisualDensity.compact,

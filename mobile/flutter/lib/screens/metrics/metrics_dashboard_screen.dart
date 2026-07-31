@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/stat_typography.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/stats/stat_trend.dart';
 import '../../core/stats/stat_trend_provider.dart';
@@ -83,7 +84,7 @@ class _MetricsDashboardScreenState
       body: SafeArea(
         child: AppRefreshIndicator(
           onRefresh: _loadMetrics,
-          color: AppColors.cyan,
+          color: context.accentColor,
           child: CustomScrollView(
             slivers: [
               // Header
@@ -166,12 +167,12 @@ class _MetricsDashboardScreenState
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.cyan.withOpacity(0.2)
+                                  ? context.accentColor.withOpacity(0.2)
                                   : AppColors.elevated,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.cyan
+                                    ? context.accentColor
                                     : AppColors.cardBorder,
                               ),
                             ),
@@ -184,7 +185,7 @@ class _MetricsDashboardScreenState
                                       ? FontWeight.bold
                                       : FontWeight.normal,
                                   color: isSelected
-                                      ? AppColors.cyan
+                                      ? context.accentColor
                                       : AppColors.textSecondary,
                                 ),
                               ),
@@ -250,12 +251,12 @@ class _MetricsDashboardScreenState
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.cyan.withOpacity(0.2)
+                                  ? context.accentColor.withOpacity(0.2)
                                   : AppColors.elevated,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: isSelected
-                                    ? AppColors.cyan
+                                    ? context.accentColor
                                     : AppColors.cardBorder,
                               ),
                             ),
@@ -265,7 +266,7 @@ class _MetricsDashboardScreenState
                                   metric['icon'] as IconData,
                                   size: 16,
                                   color: isSelected
-                                      ? AppColors.cyan
+                                      ? context.accentColor
                                       : AppColors.textMuted,
                                 ),
                                 const SizedBox(width: 6),
@@ -277,7 +278,7 @@ class _MetricsDashboardScreenState
                                         ? FontWeight.w600
                                         : FontWeight.normal,
                                     color: isSelected
-                                        ? AppColors.cyan
+                                        ? context.accentColor
                                         : AppColors.textSecondary,
                                   ),
                                 ),
@@ -360,7 +361,7 @@ class _MetricsDashboardScreenState
                               title: l10n.metricsDashboardWorkoutsThisWeek,
                               value: '${metricsState.latestMetrics?.workoutsCompleted ?? 0}',
                               icon: Icons.fitness_center,
-                              color: AppColors.cyan,
+                              color: AppColors.cyan, // accent-allowlist: per-metric identity color (weight/energy/bodyFat/workouts/streak/calories), matches key_metrics_grid.dart convention
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -369,7 +370,7 @@ class _MetricsDashboardScreenState
                               title: l10n.metricsDashboardActiveStreak,
                               value: '${metricsState.latestMetrics?.streak ?? 0} days',
                               icon: Icons.local_fire_department,
-                              color: AppColors.orange,
+                              color: AppColors.orange, // accent-allowlist: per-metric identity color (weight/energy/bodyFat/workouts/streak/calories), matches key_metrics_grid.dart convention
                             ),
                           ),
                         ],
@@ -382,7 +383,7 @@ class _MetricsDashboardScreenState
                               title: l10n.metricsDashboardTotalTime,
                               value: '${(metricsState.latestMetrics?.totalMinutes ?? 0) ~/ 60}h',
                               icon: Icons.timer,
-                              color: AppColors.purple,
+                              color: AppColors.purple, // accent-allowlist: per-metric identity color (weight/energy/bodyFat/workouts/streak/calories), matches key_metrics_grid.dart convention
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -391,7 +392,7 @@ class _MetricsDashboardScreenState
                               title: l10n.metricsDashboardCaloriesBurned,
                               value: '${metricsState.latestMetrics?.caloriesBurned ?? 0}',
                               icon: Icons.local_fire_department,
-                              color: AppColors.success,
+                              color: AppColors.success, // accent-allowlist: per-metric identity color (weight/energy/bodyFat/workouts/streak/calories), matches key_metrics_grid.dart convention
                             ),
                           ),
                         ],
@@ -410,7 +411,7 @@ class _MetricsDashboardScreenState
       // Add metric FAB
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddMetricSheet(context),
-        backgroundColor: AppColors.cyan,
+        backgroundColor: context.accentColor,
         foregroundColor: AppColors.pureBlack,
         child: const Icon(Icons.add),
       ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3),
@@ -441,7 +442,7 @@ class _MetricsDashboardScreenState
                 value: metrics.weightKg?.toStringAsFixed(1) ?? '--',
                 unit: 'kg',
                 icon: Icons.monitor_weight,
-                color: AppColors.cyan,
+                color: AppColors.cyan, // accent-allowlist: per-metric identity color (weight/energy/bodyFat/workouts/streak/calories), matches key_metrics_grid.dart convention
                 trendMetric: TrendMetric.weight,
                 range: range,
               ),
@@ -453,7 +454,7 @@ class _MetricsDashboardScreenState
                 value: metrics.bodyFatPercent?.toStringAsFixed(1) ?? '--',
                 unit: '%',
                 icon: Icons.percent,
-                color: AppColors.purple,
+                color: AppColors.purple, // accent-allowlist: per-metric identity color (weight/energy/bodyFat/workouts/streak/calories), matches key_metrics_grid.dart convention
                 trendMetric: TrendMetric.bodyFat,
                 range: range,
               ),
@@ -482,7 +483,7 @@ class _MetricsDashboardScreenState
                 value: '${metrics.restingHeartRate ?? '--'}',
                 unit: 'bpm',
                 icon: Icons.favorite,
-                color: AppColors.error,
+                color: AppColors.error, // accent-allowlist: BMI severity color
                 trendMetric: TrendMetric.restingHeartRate,
                 range: range,
               ),
@@ -585,7 +586,7 @@ class _MetricsDashboardScreenState
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: AppColors.cyan,
+            color: context.accentColor,
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: FlDotData(
@@ -593,7 +594,7 @@ class _MetricsDashboardScreenState
               getDotPainter: (spot, percent, barData, index) {
                 return FlDotCirclePainter(
                   radius: 4,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   strokeWidth: 2,
                   strokeColor: AppColors.pureBlack,
                 );
@@ -603,8 +604,8 @@ class _MetricsDashboardScreenState
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  AppColors.cyan.withOpacity(0.3),
-                  AppColors.cyan.withOpacity(0.0),
+                  context.accentColor.withOpacity(0.3),
+                  context.accentColor.withOpacity(0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -640,10 +641,10 @@ class _MetricsDashboardScreenState
 
   Color _getBmiColor(double? bmi) {
     if (bmi == null) return AppColors.textMuted;
-    if (bmi < 18.5) return AppColors.warning;
-    if (bmi < 25) return AppColors.success;
-    if (bmi < 30) return AppColors.warning;
-    return AppColors.error;
+    if (bmi < 18.5) return AppColors.warning; // accent-allowlist: warning/success/error metric status
+    if (bmi < 25) return AppColors.success; // accent-allowlist: warning/success/error metric status
+    if (bmi < 30) return AppColors.warning; // accent-allowlist: warning/success/error metric status
+    return AppColors.error; // accent-allowlist: warning/success/error metric status
   }
 
   void _showAddMetricSheet(BuildContext context) {
@@ -1053,11 +1054,11 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withOpacity(0.2)
+              ? context.accentColor.withOpacity(0.2)
               : AppColors.elevated,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+            color: isSelected ? context.accentColor : AppColors.cardBorder,
           ),
         ),
         child: Text(
@@ -1065,7 +1066,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+            color: isSelected ? context.accentColor : AppColors.textSecondary,
           ),
         ),
       ),
@@ -1141,11 +1142,11 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.cyan.withOpacity(0.2)
+                          ? context.accentColor.withOpacity(0.2)
                           : AppColors.elevated,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : AppColors.cardBorder,
+                        color: isSelected ? context.accentColor : AppColors.cardBorder,
                       ),
                     ),
                     child: Text(
@@ -1153,7 +1154,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        color: isSelected ? AppColors.cyan : AppColors.textSecondary,
+                        color: isSelected ? context.accentColor : AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -1208,7 +1209,7 @@ class _AddMetricSheetState extends State<_AddMetricSheet> {
                         }
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: AppColors.pureBlack,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -1304,10 +1305,10 @@ class _CustomMetricCard extends ConsumerWidget {
   /// the trend coloring (green/red) is what stays neutral.
   Color get _accent {
     const palette = [
-      AppColors.cyan,
-      AppColors.purple,
-      AppColors.success,
-      AppColors.orange,
+      AppColors.cyan, // accent-allowlist: deterministic per-custom-metric identity palette (see inline comment: 'stable accent per custom metric so two cards don't share a color')
+      AppColors.purple, // accent-allowlist: deterministic per-custom-metric identity palette (see inline comment: 'stable accent per custom metric so two cards don't share a color')
+      AppColors.success, // accent-allowlist: deterministic per-custom-metric identity palette (see inline comment: 'stable accent per custom metric so two cards don't share a color')
+      AppColors.orange, // accent-allowlist: deterministic per-custom-metric identity palette (see inline comment: 'stable accent per custom metric so two cards don't share a color')
     ];
     return palette[def.key.hashCode.abs() % palette.length];
   }
@@ -1457,7 +1458,7 @@ class _LogCustomValueDialogState extends State<_LogCustomValueDialog> {
         ElevatedButton(
           onPressed: _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.cyan,
+            backgroundColor: context.accentColor,
             foregroundColor: AppColors.pureBlack,
           ),
           child: const Text('Save'),

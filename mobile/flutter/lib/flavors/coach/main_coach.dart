@@ -26,7 +26,7 @@ class RepporaCoachApp extends StatelessWidget {
     return MaterialApp(
       title: cfg.appStoreName,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3A5DFF)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3A5DFF)),  // accent-allowlist: Reppora brand colour -- a different white-labelled product, not Zealova's accent
         useMaterial3: true,
         brightness: Brightness.dark,
       ),

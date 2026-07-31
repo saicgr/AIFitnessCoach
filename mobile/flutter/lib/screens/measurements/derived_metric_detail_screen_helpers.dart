@@ -12,52 +12,52 @@ extension _DerivedMetricDetailScreenHelpers on _DerivedMetricDetailScreenState {
     switch (type) {
       case DerivedMetricType.bmi:
         return [
-          _zoneLine(18.5, 'Underweight', Colors.blue),
-          _zoneLine(25, 'Overweight', Colors.amber),
-          _zoneLine(30, 'Obese', Colors.red),
+          _zoneLine(18.5, 'Underweight', Colors.blue),  // accent-allowlist: informational state — must stay blue regardless of accent
+          _zoneLine(25, 'Overweight', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+          _zoneLine(30, 'Obese', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
         ];
 
       case DerivedMetricType.waistToHipRatio:
         if (isMale) {
           return [
-            _zoneLine(0.90, 'Moderate', Colors.amber),
-            _zoneLine(1.0, 'High Risk', Colors.red),
+            _zoneLine(0.90, 'Moderate', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+            _zoneLine(1.0, 'High Risk', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
           ];
         } else {
           return [
-            _zoneLine(0.80, 'Moderate', Colors.amber),
-            _zoneLine(0.85, 'High Risk', Colors.red),
+            _zoneLine(0.80, 'Moderate', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+            _zoneLine(0.85, 'High Risk', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
           ];
         }
 
       case DerivedMetricType.waistToHeightRatio:
         return [
-          _zoneLine(0.4, 'Underweight', Colors.blue),
-          _zoneLine(0.5, 'Overweight', Colors.amber),
-          _zoneLine(0.6, 'Obese', Colors.red),
+          _zoneLine(0.4, 'Underweight', Colors.blue),  // accent-allowlist: informational state — must stay blue regardless of accent
+          _zoneLine(0.5, 'Overweight', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+          _zoneLine(0.6, 'Obese', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
         ];
 
       case DerivedMetricType.ffmi:
         if (isMale) {
           return [
-            _zoneLine(18, 'Average', Colors.amber),
-            _zoneLine(20, 'Above Avg', Colors.green),
-            _zoneLine(25, 'Natural Limit', Colors.red),
+            _zoneLine(18, 'Average', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+            _zoneLine(20, 'Above Avg', Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
+            _zoneLine(25, 'Natural Limit', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
           ];
         } else {
           return [
-            _zoneLine(14, 'Average', Colors.amber),
-            _zoneLine(16, 'Above Avg', Colors.green),
-            _zoneLine(21, 'Natural Limit', Colors.red),
+            _zoneLine(14, 'Average', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+            _zoneLine(16, 'Above Avg', Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
+            _zoneLine(21, 'Natural Limit', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
           ];
         }
 
       case DerivedMetricType.armSymmetry:
       case DerivedMetricType.legSymmetry:
         return [
-          _zoneLine(88, 'Imbalanced', Colors.red),
-          _zoneLine(93, 'Moderate', Colors.amber),
-          _zoneLine(97, 'Good', Colors.green),
+          _zoneLine(88, 'Imbalanced', Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
+          _zoneLine(93, 'Moderate', Colors.amber),  // accent-allowlist: warning severity — must stay amber regardless of accent
+          _zoneLine(97, 'Good', Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
         ];
 
       // No standard health zones for these

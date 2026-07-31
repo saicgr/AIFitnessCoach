@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Theme colors interface for bottom sheets
 /// Provides consistent theming across all customization sheets
@@ -19,7 +20,8 @@ abstract class SheetColors {
 
 /// Dark theme colors for sheets
 class DarkSheetColors implements SheetColors {
-  const DarkSheetColors();
+  final Color accent;
+  const DarkSheetColors(this.accent);
 
   @override
   Color get elevated => AppColors.elevated;
@@ -34,20 +36,21 @@ class DarkSheetColors implements SheetColors {
   @override
   Color get glassSurface => AppColors.glassSurface;
   @override
-  Color get cyan => AppColors.cyan;
+  Color get cyan => accent;
   @override
-  Color get purple => AppColors.purple;
+  Color get purple => accent;
   @override
-  Color get orange => AppColors.orange;
+  Color get orange => accent;
   @override
-  Color get success => AppColors.success;
+  Color get success => AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
   @override
-  Color get error => AppColors.error;
+  Color get error => AppColors.error;  // accent-allowlist: error/destructive -- must stay red
 }
 
 /// Light theme colors for sheets
 class LightSheetColors implements SheetColors {
-  const LightSheetColors();
+  final Color accent;
+  const LightSheetColors(this.accent);
 
   @override
   Color get elevated => AppColorsLight.elevated;
@@ -64,13 +67,13 @@ class LightSheetColors implements SheetColors {
   @override
   Color get cyan => AppColorsLight.cyan;
   @override
-  Color get purple => AppColors.purple;
+  Color get purple => accent;
   @override
-  Color get orange => AppColors.orange;
+  Color get orange => accent;
   @override
-  Color get success => AppColorsLight.success;
+  Color get success => AppColorsLight.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
   @override
-  Color get error => AppColorsLight.error;
+  Color get error => AppColorsLight.error;  // accent-allowlist: error/destructive -- must stay red
 }
 
 /// Extension to get appropriate sheet colors based on brightness
@@ -78,7 +81,8 @@ extension SheetColorsExtension on BuildContext {
   /// Returns the appropriate SheetColors based on current theme brightness
   SheetColors get sheetColors {
     final isDark = Theme.of(this).brightness == Brightness.dark;
-    return isDark ? const DarkSheetColors() : const LightSheetColors();
+    final accent = accentColor;
+    return isDark ? DarkSheetColors(accent) : LightSheetColors(accent);
   }
 }
 

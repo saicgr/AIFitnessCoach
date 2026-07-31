@@ -22,7 +22,7 @@ class _PeriodSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder =
@@ -180,7 +180,7 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final errorColor = isDark ? AppColors.error : AppColorsLight.error;
+    final errorColor = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -269,8 +269,8 @@ class _TrendChip extends StatelessWidget {
     final isPositive = delta > 0;
     final isGood = positiveIsGood ? isPositive : !isPositive;
     final color = isGood
-        ? (isDark ? AppColors.success : AppColorsLight.success)
-        : (isDark ? AppColors.coral : AppColorsLight.coral);
+        ? (isDark ? AppColors.success : AppColorsLight.success)  // accent-allowlist: success/positive state — must stay green regardless of accent
+        : (isDark ? context.accentColor : context.accentColor);
 
     final displayDelta = delta.abs();
     final deltaText = displayDelta == displayDelta.roundToDouble()
@@ -324,16 +324,16 @@ class _OverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? context.accentColor : context.accentColor;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final orange = isDark ? context.accentColor : context.accentColor;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -564,7 +564,7 @@ class _NutritionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -690,7 +690,7 @@ class _RecoveryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = isDark ? context.accentColor : context.accentColor;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =

@@ -10,6 +10,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Screen showing list of workout environments with their equipment.
 class EnvironmentListScreen extends ConsumerStatefulWidget {
   const EnvironmentListScreen({super.key});
@@ -49,18 +50,18 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: isDark
-                  ? AppColors.cyan.withValues(alpha: 0.1)
+                  ? context.accentColor.withValues(alpha: 0.1)
                   : AppColorsLight.cyan.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isDark
-                    ? AppColors.cyan.withValues(alpha: 0.3)
+                    ? context.accentColor.withValues(alpha: 0.3)
                     : AppColorsLight.cyan.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.cyan, size: 20),
+                Icon(Icons.info_outline, color: context.accentColor, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -131,7 +132,7 @@ class _EnvironmentListScreenState extends ConsumerState<EnvironmentListScreen> {
               SnackBar(
                 content: Text(AppLocalizations.of(context)!.environmentListScreenEnvironmentSaved(name)),
                 behavior: SnackBarBehavior.floating,
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
               ),
             );
           },
@@ -168,7 +169,7 @@ class _EnvironmentCard extends StatelessWidget {
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? AppColors.cyan : cardBorder,
+          color: isSelected ? context.accentColor : cardBorder,
           width: isSelected ? 2 : 1,
         ),
       ),
@@ -190,7 +191,7 @@ class _EnvironmentCard extends StatelessWidget {
                       height: 48,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.cyan.withValues(alpha: 0.15)
+                            ? context.accentColor.withValues(alpha: 0.15)
                             : (isDark ? AppColors.pureBlack : Colors.grey[100]),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -222,7 +223,7 @@ class _EnvironmentCard extends StatelessWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.cyan,
+                                    color: context.accentColor,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Text(
@@ -292,7 +293,7 @@ class _EnvironmentCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                         ),
                       ),
@@ -435,11 +436,11 @@ class _AddEnvironmentSheetState extends State<_AddEnvironmentSheet> {
                     height: 48,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.cyan.withValues(alpha: 0.15)
+                          ? context.accentColor.withValues(alpha: 0.15)
                           : (isDark ? AppColors.pureBlack : Colors.grey[100]),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : Colors.transparent,
+                        color: isSelected ? context.accentColor : Colors.transparent,
                         width: 2,
                       ),
                     ),
@@ -461,7 +462,7 @@ class _AddEnvironmentSheetState extends State<_AddEnvironmentSheet> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

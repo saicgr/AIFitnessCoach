@@ -405,7 +405,7 @@ class _GenerateWorkoutPlaceholderState
                         : 'Ready to train?',
                 style: TextStyle(
                   color: widget.isGenerationFailed
-                      ? (isDark ? Colors.redAccent : Colors.red[700])
+                      ? (isDark ? Colors.redAccent : Colors.red[700])  // accent-allowlist: error/destructive -- must stay red
                       : (isDark ? Colors.white : Colors.black87),
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -714,14 +714,14 @@ class _GenerateWorkoutPlaceholderState
         ),
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isDark ? Colors.redAccent.withValues(alpha: 0.8) : Colors.red[600],
+        backgroundColor: isDark ? Colors.redAccent.withValues(alpha: 0.8) : Colors.red[600],  // accent-allowlist: error/destructive -- must stay red
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),
         elevation: 4,
-        shadowColor: Colors.red.withValues(alpha: 0.3),
+        shadowColor: Colors.red.withValues(alpha: 0.3),  // accent-allowlist: error/destructive -- must stay red
       ),
     );
   }

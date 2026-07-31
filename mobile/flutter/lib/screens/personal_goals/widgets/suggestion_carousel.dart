@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/providers/goal_suggestions_provider.dart';
 import 'suggestion_card.dart';
@@ -56,7 +57,7 @@ class SuggestionCarousel extends ConsumerWidget {
 
     return Row(
       children: [
-        const Icon(Icons.lightbulb_outline, color: AppColors.orange, size: 20),
+        Icon(Icons.lightbulb_outline, color: context.accentColor, size: 20),
         const SizedBox(width: 8),
         Text(
           AppLocalizations.of(context).suggestionCarouselSuggestedGoals,
@@ -70,14 +71,14 @@ class SuggestionCarousel extends ConsumerWidget {
         Icon(
           Icons.auto_awesome,
           size: 16,
-          color: AppColors.purple.withValues(alpha: 0.7),
+          color: context.accentColor.withValues(alpha: 0.7),
         ),
         const SizedBox(width: 4),
         Text(
           AppLocalizations.of(context).exercisePickerSheetAi,
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.purple.withValues(alpha: 0.7),
+            color: context.accentColor.withValues(alpha: 0.7),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -231,7 +232,7 @@ class SuggestionCarousel extends ConsumerWidget {
     try {
       return Color(int.parse(hexColor.replaceAll('#', '0xFF')));
     } catch (_) {
-      return AppColors.cyan;
+      return AppColors.cyan; // accent-allowlist: fallback for server-driven categorical suggestion-type color, matches category.accentColor system
     }
   }
 

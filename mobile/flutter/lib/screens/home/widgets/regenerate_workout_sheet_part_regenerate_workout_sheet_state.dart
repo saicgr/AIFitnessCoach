@@ -912,7 +912,7 @@ class _RegenerateWorkoutSheetState
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(color: AppColors.cyan),
+                      CircularProgressIndicator(color: context.accentColor),
                       const SizedBox(height: 16),
                       Text(
                         AppLocalizations.of(context)!.regenerateSheetGeneratingSuggestions,

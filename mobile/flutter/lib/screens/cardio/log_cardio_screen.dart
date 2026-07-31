@@ -555,7 +555,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
         SnackBar(
           content: Text(
               AppLocalizations.of(context).logCardioScreenSessionLogged(_selectedType.label, session.formattedDuration)),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success snackbar (session logged), semantic not accent
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -601,7 +601,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error snackbar (parse failure), semantic not accent
         behavior: SnackBarBehavior.floating,
       ),
     );

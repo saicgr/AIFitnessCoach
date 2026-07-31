@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/live_chat_session.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -58,7 +59,7 @@ class LiveChatMessageBubble extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     ),
                   ),
@@ -74,7 +75,7 @@ class LiveChatMessageBubble extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: isUser
-                        ? AppColors.cyan
+                        ? context.accentColor
                         : (isDark ? AppColors.elevated : AppColorsLight.elevated),
                     borderRadius: BorderRadius.circular(16).copyWith(
                       bottomRight: isUser ? const Radius.circular(4) : null,
@@ -164,7 +165,7 @@ class _AgentAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [AppColors.cyan, AppColors.teal],
+          colors: [context.accentColor, AppColors.teal],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),

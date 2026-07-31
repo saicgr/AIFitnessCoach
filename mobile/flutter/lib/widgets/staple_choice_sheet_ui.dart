@@ -63,7 +63,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
           children: [
             Row(
               children: [
-                Icon(Icons.timer, color: AppColors.cyan, size: 18),
+                Icon(Icons.timer, color: context.accentColor, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).stapleExercisesCardioSettings,
@@ -204,7 +204,7 @@ extension _StapleChoiceSheetStateUI on _StapleChoiceSheetState {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: AppColors.cyan),
+                borderSide: BorderSide(color: context.accentColor),
               ),
             ),
           ),

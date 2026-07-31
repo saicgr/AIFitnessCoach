@@ -7,6 +7,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Single carousel slide that aggregates all Health-Connect / Apple-Health
 /// synced workouts for one day. Replaces the prior "one cyan card per synced
 /// row" design which crowded the carousel when a watch logged 6+ activities.
@@ -34,7 +35,7 @@ class SyncedWorkoutsSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = AppColors.cyan;
+    final cyan = context.accentColor;
     final count = workouts.length;
     final platformLabel = _platforms.length == 1
         ? _platforms.first
@@ -265,7 +266,7 @@ class _SyncedWorkoutsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.surface : Colors.white;
-    final cyan = AppColors.cyan;
+    final cyan = context.accentColor;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.65,
@@ -342,7 +343,7 @@ class _SyncedRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cyan = AppColors.cyan;
+    final cyan = context.accentColor;
     final meta = workout.generationMetadata ?? const <String, dynamic>{};
     final activityKind = meta['hc_activity_kind']?.toString();
     final startIso = meta['start_time_iso']?.toString();

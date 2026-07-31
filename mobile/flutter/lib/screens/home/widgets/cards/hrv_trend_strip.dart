@@ -33,7 +33,7 @@ class HrvTrendStrip extends ConsumerWidget {
     final delta = latest - prev;
 
     return GestureDetector(
-      onTap: () => context.go('/recovery'),
+      onTap: () => context.go('/health/vitals'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

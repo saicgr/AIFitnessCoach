@@ -29,6 +29,7 @@ import '../widgets/setting_tile.dart';
 import '../widgets/section_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 const List<String> countdownSoundTypes = [
   'beep',
   'chime',
@@ -88,7 +89,7 @@ class SoundSettingsSection extends ConsumerWidget {
             children: [
               _SoundCategoryRow(
                 icon: Icons.timer_outlined,
-                iconColor: AppColors.cyan,
+                iconColor: context.accentColor,
                 title: AppLocalizations.of(context).soundSettingsCountdownSounds,
                 subtitle: AppLocalizations.of(context).soundSettingsPlaySoundsDuringCountdown,
                 enabled: prefs.countdownSoundEnabled,
@@ -104,7 +105,7 @@ class SoundSettingsSection extends ConsumerWidget {
               Divider(height: 1, color: cardBorder),
               _SoundCategoryRow(
                 icon: Icons.hourglass_empty,
-                iconColor: AppColors.warning,
+                iconColor: AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                 title: AppLocalizations.of(context).soundSettingsRestTimerEnd,
                 subtitle: AppLocalizations.of(context).soundSettingsPlaySoundWhenRest,
                 enabled: prefs.restTimerSoundEnabled,
@@ -136,7 +137,7 @@ class SoundSettingsSection extends ConsumerWidget {
               Divider(height: 1, color: cardBorder),
               _SoundCategoryRow(
                 icon: Icons.celebration_outlined,
-                iconColor: AppColors.success,
+                iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                 title: AppLocalizations.of(context).soundSettingsWorkoutCompletion,
                 subtitle: AppLocalizations.of(context).soundSettingsPlaySoundWhenEntire,
                 enabled: prefs.workoutCompletionSoundEnabled,
@@ -510,7 +511,7 @@ class _SoundPickerSheetState extends State<_SoundPickerSheet> {
                 content: Text(
                   'File too large (${(file.size / (1024 * 1024)).toStringAsFixed(1)}MB). Max 2MB for sound effects.',
                 ),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               ),
             );
           }

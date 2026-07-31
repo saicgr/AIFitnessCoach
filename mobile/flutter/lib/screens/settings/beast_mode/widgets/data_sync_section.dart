@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/services/data_cache_service.dart';
 import '../../../../../data/services/haptic_service.dart';
 import '../../../../../widgets/app_snackbar.dart';
@@ -10,6 +9,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class DataSyncSection extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -100,7 +100,7 @@ class DataSyncSection extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Icon(icon, color: AppColors.orange, size: 20),
+            Icon(icon, color: context.accentColor, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -133,10 +133,10 @@ class DataSyncSection extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.15),
+                color: context.accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: AppColors.orange, size: 18),
+              child: Icon(icon, color: context.accentColor, size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(

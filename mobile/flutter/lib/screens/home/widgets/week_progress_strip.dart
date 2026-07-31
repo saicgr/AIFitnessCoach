@@ -227,8 +227,8 @@ class _DayCircle extends StatelessWidget {
 
     if (state.isCompleted) {
       // Completed - filled green with checkmark
-      bgColor = AppColors.success;
-      borderColor = AppColors.success;
+      bgColor = AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
+      borderColor = AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
       centerWidget = Icon(Icons.check, size: 16, color: Colors.white);
     } else if (state.isToday) {
       // Today - monochrome accent ring
@@ -244,8 +244,8 @@ class _DayCircle extends StatelessWidget {
       );
     } else if (state.hasWorkout && state.isPast) {
       // Missed workout - red outline
-      bgColor = AppColors.error.withValues(alpha: 0.1);
-      borderColor = AppColors.error.withValues(alpha: 0.5);
+      bgColor = AppColors.error.withValues(alpha: 0.1);  // accent-allowlist: error/destructive -- must stay red
+      borderColor = AppColors.error.withValues(alpha: 0.5);  // accent-allowlist: error/destructive -- must stay red
       centerWidget = null;
     } else if (state.hasWorkout) {
       // Future scheduled - outlined

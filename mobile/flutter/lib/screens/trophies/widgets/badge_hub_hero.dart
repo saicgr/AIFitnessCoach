@@ -86,11 +86,11 @@ class _HeroBadge extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: gold
-            ? AppColors.gamGold.withValues(alpha: 0.08)
+            ? AppColors.gamGold.withValues(alpha: 0.08) // accent-allowlist: badge rarity gold
             : tc.surface,
         border: Border.all(
           color: gold
-              ? AppColors.gamGold.withValues(alpha: 0.5)
+              ? AppColors.gamGold.withValues(alpha: 0.5) // accent-allowlist: badge rarity gold
               : AppColors.cardBorder,
         ),
       ),

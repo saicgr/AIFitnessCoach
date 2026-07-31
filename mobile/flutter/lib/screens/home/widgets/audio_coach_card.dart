@@ -7,6 +7,7 @@ import '../../../data/models/body_analyzer.dart';
 import '../../../data/repositories/body_analyzer_repository.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Home-screen tile that plays a 15–20 s personalised audio brief.
 ///
 /// Off by default — the card only renders when the user has opted in via
@@ -91,12 +92,12 @@ class _AudioCoachCardState extends ConsumerState<AudioCoachCard> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFFB24BF3).withValues(alpha: 0.15),
+                color: context.accentColor.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                color: const Color(0xFFB24BF3),
+                color: context.accentColor,
                 size: 28,
               ),
             ),

@@ -16,7 +16,7 @@ class _BodyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
+    final coral = isDark ? context.accentColor : context.accentColor;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -173,8 +173,8 @@ class _BodyMetric extends StatelessWidget {
     // For body metrics, a decrease is typically desirable (losing weight/fat),
     // but this is context-dependent. Show neutral colors and let the user interpret.
     final isPositive = value > 0;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final coral = isDark ? context.accentColor : context.accentColor;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -240,16 +240,16 @@ class _AiNarrativeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final purple = isDark ? context.accentColor : context.accentColor;
+    final orange = isDark ? context.accentColor : context.accentColor;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -515,7 +515,7 @@ class _PastReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -647,9 +647,9 @@ class _PastReportCard extends StatelessWidget {
   }
 
   Color _completionColor(double rate) {
-    if (rate >= 80) return isDark ? AppColors.success : AppColorsLight.success;
-    if (rate >= 50) return isDark ? AppColors.warning : AppColorsLight.warning;
-    return isDark ? AppColors.error : AppColorsLight.error;
+    if (rate >= 80) return isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (rate >= 50) return isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: warning severity — must stay amber regardless of accent
+    return isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
   }
 
   String _monthAbbr(String dateStr) {

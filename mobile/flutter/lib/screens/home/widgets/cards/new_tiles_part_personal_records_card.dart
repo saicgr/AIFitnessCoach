@@ -657,7 +657,7 @@ class SleepScoreCard extends ConsumerWidget {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purpleColor = const Color(0xFF7C4DFF);
+    final purpleColor = context.accentColor;
 
     final sleepAsync = ref.watch(sleepProvider);
     final sleepData = sleepAsync.valueOrNull;

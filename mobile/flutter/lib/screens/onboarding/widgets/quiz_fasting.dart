@@ -80,7 +80,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 12,
       'eatingHours': 12,
       'icon': Icons.wb_sunny_outlined,
-      'color': AppColors.green,
+      'color': AppColors.green,  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       'difficulty': 'Beginner',
       'bestFor': ['beginners', 'maintain'],
     },
@@ -114,7 +114,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 18,
       'eatingHours': 6,
       'icon': Icons.timer,
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'advanced', 'lose'],
     },
@@ -136,7 +136,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 23,
       'eatingHours': 1,
       'icon': Icons.restaurant,
-      'color': AppColors.error,
+      'color': AppColors.error,  // accent-allowlist: error/destructive - must stay red
       'difficulty': 'Advanced',
       'bestFor': ['advanced', 'lose'],
       'warning': 'Requires careful meal planning',
@@ -148,7 +148,7 @@ class _QuizFastingState extends State<QuizFasting> {
       'fastingHours': 24,
       'eatingHours': 0,
       'icon': Icons.calendar_view_week,
-      'color': AppColors.pink,
+      'color': AppColors.pink,  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       'difficulty': 'Intermediate',
       'bestFor': ['intermediate', 'lose'],
       'isModified': true,
@@ -474,7 +474,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: isRecommended && !isSelected
-                                        ? AppColors.green.withValues(alpha: 0.6)
+                                        ? AppColors.green.withValues(alpha: 0.6)  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                         : (isSelected
                                             ? t.borderSelected
                                             : t.borderDefault),
@@ -573,7 +573,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontStyle: FontStyle.italic,
-                                                color: AppColors.green,
+                                                color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                               ),
                                             ),
                                           ],
@@ -586,7 +586,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                   size: 12,
                                                   color: isSelected
                                                       ? t.textSecondary
-                                                      : AppColors.warning,
+                                                      : AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                                                 ),
                                                 const SizedBox(width: 4),
                                                 Text(
@@ -595,7 +595,7 @@ class _QuizFastingState extends State<QuizFasting> {
                                                     fontSize: 10,
                                                     color: isSelected
                                                         ? t.textSecondary
-                                                        : AppColors.warning,
+                                                        : AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                                                   ),
                                                 ),
                                               ],
@@ -793,8 +793,8 @@ class _QuizFastingState extends State<QuizFasting> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: (_customFastingHours + _customEatingHours == 24)
-                      ? AppColors.success.withValues(alpha: 0.15)
-                      : AppColors.warning.withValues(alpha: 0.15),
+                      ? AppColors.success.withValues(alpha: 0.15)  // accent-allowlist: success/positive state - must stay green regardless of accent
+                      : AppColors.warning.withValues(alpha: 0.15),  // accent-allowlist: warning severity - must stay amber regardless of accent
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -805,8 +805,8 @@ class _QuizFastingState extends State<QuizFasting> {
                           : Icons.info_outline,
                       size: 16,
                       color: (_customFastingHours + _customEatingHours == 24)
-                          ? AppColors.success
-                          : AppColors.warning,
+                          ? AppColors.success  // accent-allowlist: success/positive state - must stay green regardless of accent
+                          : AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -817,8 +817,8 @@ class _QuizFastingState extends State<QuizFasting> {
                         style: TextStyle(
                           fontSize: 12,
                           color: (_customFastingHours + _customEatingHours == 24)
-                              ? AppColors.success
-                              : AppColors.warning,
+                              ? AppColors.success  // accent-allowlist: success/positive state - must stay green regardless of accent
+                              : AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                         ),
                       ),
                     ),

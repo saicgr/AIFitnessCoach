@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -17,7 +18,7 @@ class EmptyCustomExercises extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return Center(
@@ -148,7 +149,7 @@ class EmptyCustomExercises extends StatelessWidget {
     bool isDark,
   ) {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return Row(
       children: [

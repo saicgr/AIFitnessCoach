@@ -312,7 +312,7 @@ class _MemberRow extends StatelessWidget {
             children: [
               _Badge(
                 label: row.isPrimary ? AppLocalizations.of(context).nutritionSettingsScreenPrimary : AppLocalizations.of(context).manageDuplicateImportsHidden,
-                color: row.isPrimary ? Colors.green : Colors.grey,
+                color: row.isPrimary ? Colors.green : Colors.grey,  // accent-allowlist: success/positive state - must stay green regardless of accent
               ),
               const SizedBox(width: 8),
               Text(
@@ -333,11 +333,11 @@ class _MemberRow extends StatelessWidget {
                     value: 'unlink',
                     child: Row(
                       children: [
-                        const Icon(Icons.link_off_rounded, size: 18, color: AppColors.error),
+                        const Icon(Icons.link_off_rounded, size: 18, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
                         const SizedBox(width: 10),
                         Text(
                           AppLocalizations.of(context).manageDuplicateImportsUnlinkFromGroup,
-                          style: const TextStyle(color: AppColors.error),
+                          style: const TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
                         ),
                       ],
                     ),

@@ -520,7 +520,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 40, color: Colors.redAccent),
+            const Icon(Icons.error_outline, size: 40, color: Colors.redAccent),  // accent-allowlist: error state icon, semantic not accent
             const SizedBox(height: 12),
             Text(message, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),

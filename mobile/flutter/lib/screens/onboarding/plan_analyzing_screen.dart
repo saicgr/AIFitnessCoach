@@ -12,6 +12,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/services/posthog_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'pre_auth_quiz_data.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Plan Analyzing Screen — Onboarding v5 / Cal AI pattern
 ///
@@ -346,7 +347,7 @@ class _StepRowState extends State<_StepRow> with TickerProviderStateMixin {
     final isActive = state == _StepState.active;
     final isIdle = state == _StepState.idle;
 
-    const doneColor = Color(0xFF2ECC71);
+    const doneColor = Color(0xFF2ECC71);  // accent-allowlist: success/positive 'done' step state - same family as AppColors.success
     final accentColor = isDone ? doneColor : AppColors.onboardingAccent;
     final iconBg = isIdle
         ? (isDark ? AppColors.elevated : AppColorsLight.elevated)
@@ -676,14 +677,14 @@ class _ShimmerProgressBarState extends State<_ShimmerProgressBar>
               },
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [
-                    Color(0xFFFFB366),
-                    AppColors.orange,
+                  gradient: LinearGradient(colors: [
+                    context.accentColor,
+                    context.accentColor,
                   ]),
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.orange.withValues(alpha: 0.5),
+                      color: context.accentColor.withValues(alpha: 0.5),
                       blurRadius: 12,
                     ),
                   ],
@@ -841,7 +842,7 @@ class _OrbitRingPainter extends CustomPainter {
       spark,
       3 + breathe * 1.2,
       Paint()
-        ..color = AppColors.orange
+        ..color = AppColors.orange  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
     );
     canvas.drawCircle(

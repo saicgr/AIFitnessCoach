@@ -81,7 +81,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
       backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
       title: Row(
         children: [
-          Icon(Icons.delete_forever, color: AppColors.error, size: 24),
+          Icon(Icons.delete_forever, color: AppColors.error, size: 24), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context).deleteAccountFlowDeleteAccount,
@@ -101,22 +101,22 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: AppColors.error.withValues(alpha: 0.1), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                 borderRadius: BorderRadius.circular(8),
                 border:
-                    Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                    Border.all(color: AppColors.error.withValues(alpha: 0.3)), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
               ),
               child: Row(
                 children: [
                   Icon(Icons.warning_amber_rounded,
-                      color: AppColors.error, size: 20),
+                      color: AppColors.error, size: 20), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       AppLocalizations.of(context).deleteAccountFlowThisActionCannotBe,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.error,
+                        color: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                         fontSize: 13,
                       ),
                     ),
@@ -137,17 +137,17 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
             const SizedBox(height: 12),
             DialogBulletPoint(
               text: 'Your account and profile',
-              color: AppColors.error,
+              color: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
               isDark: isDark,
             ),
             DialogBulletPoint(
               text: 'All workout history',
-              color: AppColors.error,
+              color: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
               isDark: isDark,
             ),
             DialogBulletPoint(
               text: 'All saved preferences',
-              color: AppColors.error,
+              color: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
               isDark: isDark,
             ),
             const SizedBox(height: 16),
@@ -165,14 +165,14 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
               Row(
                 children: [
                   Icon(Icons.lock_outline,
-                      size: 16, color: AppColors.error),
+                      size: 16, color: AppColors.error), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                   const SizedBox(width: 6),
                   Text(
                     AppLocalizations.of(context).deleteAccountFlowConfirmWithYourPassword,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.error,
+                      color: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -224,14 +224,14 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                      color: AppColors.error.withValues(alpha: 0.4),
+                      color: AppColors.error.withValues(alpha: 0.4), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                       width: 1.5,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                      color: AppColors.error,
+                      color: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
                       width: 2,
                     ),
                   ),
@@ -265,7 +265,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
           },
           child: Text(
             AppLocalizations.of(context).settingsDeleteAccount,
-            style: TextStyle(color: AppColors.error),
+            style: TextStyle(color: AppColors.error), // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
           ),
         ),
       ],
@@ -405,7 +405,7 @@ Future<void> _runDelete(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('Error: $errorMsg'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error, // accent-allowlist: destructive account-deletion flow, error/danger semantic throughout
         ),
       );
     }

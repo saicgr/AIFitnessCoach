@@ -50,7 +50,7 @@ class SwipeToComplete extends StatefulWidget {
     required this.onComplete,
     this.threshold = 0.7,
     this.fillColor = const Color(0x3322C55E), // Green 20%
-    this.completeFillColor = const Color(0x6622C55E), // Green 40%
+    this.completeFillColor = const Color(0x6622C55E), // Green 40% // accent-allowlist: swipe-to-complete success confirmation color (green), semantic
     this.leadingIcon = Icons.check_rounded,
     this.height,
     this.borderRadius = const BorderRadius.all(Radius.circular(12)),
@@ -195,8 +195,8 @@ class _SwipeToCompleteState extends State<SwipeToComplete>
                           height: 28,
                           decoration: BoxDecoration(
                             color: _isPastThreshold
-                                ? const Color(0xFF22C55E)
-                                : const Color(0xFF22C55E).withValues(alpha: 0.5),
+                                ? const Color(0xFF22C55E) // accent-allowlist: swipe-to-complete success confirmation color (green), semantic
+                                : const Color(0xFF22C55E).withValues(alpha: 0.5), // accent-allowlist: swipe-to-complete success confirmation color (green), semantic
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

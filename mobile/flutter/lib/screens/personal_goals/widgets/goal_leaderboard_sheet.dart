@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/goal_social_service.dart';
 import '../../../data/services/personal_goals_service.dart';
@@ -46,12 +47,12 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.leaderboard,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -141,13 +142,13 @@ class GoalLeaderboardSheet extends ConsumerWidget {
     Color rankColor;
     IconData? rankIcon;
     if (rank == 1) {
-      rankColor = const Color(0xFFFFD700); // Gold
+      rankColor = const Color(0xFFFFD700); // Gold // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
       rankIcon = Icons.emoji_events;
     } else if (rank == 2) {
       rankColor = const Color(0xFFC0C0C0); // Silver
       rankIcon = Icons.emoji_events;
     } else if (rank == 3) {
-      rankColor = const Color(0xFFCD7F32); // Bronze
+      rankColor = const Color(0xFFCD7F32); // Bronze // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
       rankIcon = Icons.emoji_events;
     } else {
       rankColor = textSecondary;
@@ -182,7 +183,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           // Avatar
-          _buildAvatar(friend, 40),
+          _buildAvatar(context, friend, 40),
           const SizedBox(width: 12),
           // Name and progress
           Expanded(
@@ -204,20 +205,20 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
-                          color: AppColors.orange.withValues(alpha: 0.15),
+                          color: AppColors.orange.withValues(alpha: 0.15), // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.local_fire_department, size: 10, color: AppColors.orange),
+                            Icon(Icons.local_fire_department, size: 10, color: AppColors.orange), // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
                             SizedBox(width: 2),
                             Text(
                               AppLocalizations.of(context).goalLeaderboardPr,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.orange,
+                                color: AppColors.orange, // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
                               ),
                             ),
                           ],
@@ -234,7 +235,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                     value: friend.progressPercentage / 100,
                     backgroundColor: textSecondary.withValues(alpha: 0.2),
                     valueColor: AlwaysStoppedAnimation(
-                      friend.progressPercentage >= 100 ? AppColors.green : AppColors.purple,
+                      friend.progressPercentage >= 100 ? AppColors.green : context.accentColor, // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
                     ),
                     minHeight: 6,
                   ),
@@ -252,7 +253,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: friend.progressPercentage >= 100 ? AppColors.green : textPrimary,
+                  color: friend.progressPercentage >= 100 ? AppColors.green : textPrimary, // accent-allowlist: leaderboard rank medal (gold/bronze) + PR-beaten celebration orange + goal-completed green
                 ),
               ),
               Text(
@@ -277,9 +278,9 @@ class GoalLeaderboardSheet extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withValues(alpha: 0.1),
+        color: context.accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -287,10 +288,10 @@ class GoalLeaderboardSheet extends ConsumerWidget {
             width: 32,
             child: Text(
               '${response.userRank}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -298,8 +299,8 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           const SizedBox(width: 12),
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
-            child: const Icon(Icons.person, color: AppColors.cyan, size: 24),
+            backgroundColor: context.accentColor.withValues(alpha: 0.2),
+            child: Icon(Icons.person, color: context.accentColor, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -320,7 +321,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
                   child: LinearProgressIndicator(
                     value: response.userProgressPercentage / 100,
                     backgroundColor: textSecondary.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation(AppColors.cyan),
+                    valueColor: AlwaysStoppedAnimation(context.accentColor),
                     minHeight: 6,
                   ),
                 ),
@@ -330,10 +331,10 @@ class GoalLeaderboardSheet extends ConsumerWidget {
           const SizedBox(width: 12),
           Text(
             AppLocalizations.of(context)!.goalLeaderboardSheetValue(response.userProgressPercentage.toStringAsFixed(0)),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
         ],
@@ -397,7 +398,7 @@ class GoalLeaderboardSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildAvatar(FriendGoalProgress friend, double size) {
+  Widget _buildAvatar(BuildContext context, FriendGoalProgress friend, double size) {
     if (friend.avatarUrl != null && friend.avatarUrl!.isNotEmpty) {
       return CircleAvatar(
         radius: size / 2,
@@ -408,12 +409,12 @@ class GoalLeaderboardSheet extends ConsumerWidget {
 
     return CircleAvatar(
       radius: size / 2,
-      backgroundColor: AppColors.purple.withValues(alpha: 0.2),
+      backgroundColor: context.accentColor.withValues(alpha: 0.2),
       child: Text(
         friend.name.isNotEmpty ? friend.name[0].toUpperCase() : '?',
         style: TextStyle(
           fontSize: size * 0.4,
-          color: AppColors.purple,
+          color: context.accentColor,
           fontWeight: FontWeight.bold,
         ),
       ),

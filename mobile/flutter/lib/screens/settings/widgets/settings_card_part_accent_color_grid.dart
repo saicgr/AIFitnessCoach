@@ -139,7 +139,7 @@ class _TimezoneOptionTile extends StatelessWidget {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 24,
               ),
           ],
@@ -186,11 +186,11 @@ class _ProgressionPaceOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
+              ? (isDark ? context.accentColor.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -198,7 +198,7 @@ class _ProgressionPaceOptionTile extends StatelessWidget {
           children: [
             Icon(
               _icon,
-              color: isSelected ? AppColors.cyan : textMuted,
+              color: isSelected ? context.accentColor : textMuted,
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -237,7 +237,7 @@ class _ProgressionPaceOptionTile extends StatelessWidget {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 24,
               ),
           ],
@@ -288,11 +288,11 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
+              ? (isDark ? context.accentColor.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -300,7 +300,7 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
           children: [
             Icon(
               _icon,
-              color: isSelected ? AppColors.cyan : textMuted,
+              color: isSelected ? context.accentColor : textMuted,
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -323,7 +323,7 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withValues(alpha: 0.2),
+                            color: context.accentColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -331,7 +331,7 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           ),
                         ),
@@ -352,7 +352,7 @@ class _WorkoutTypeOptionTile extends StatelessWidget {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 24,
               ),
           ],
@@ -502,7 +502,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppColors.cyan),
+                    borderSide: BorderSide(color: context.accentColor),
                   ),
                   filled: true,
                   fillColor: isDark ? AppColors.pureBlack.withValues(alpha: 0.3) : Colors.grey[100],
@@ -530,7 +530,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
                         AppLocalizations.of(context).settingsCardPartClearAll,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -566,7 +566,7 @@ class _EquipmentSelectorSheetState extends State<_EquipmentSelectorSheet> {
                     Navigator.pop(context);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -617,11 +617,11 @@ class _EquipmentOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
+              ? (isDark ? context.accentColor.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -629,7 +629,7 @@ class _EquipmentOptionTile extends StatelessWidget {
           children: [
             Icon(
               isSelected ? Icons.check_box : Icons.check_box_outline_blank,
-              color: isSelected ? AppColors.cyan : textMuted,
+              color: isSelected ? context.accentColor : textMuted,
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -685,11 +685,11 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isDark ? AppColors.cyan.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
+              ? (isDark ? context.accentColor.withValues(alpha: 0.15) : AppColorsLight.cyan.withValues(alpha: 0.1))
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -697,7 +697,7 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
           children: [
             Icon(
               _icon,
-              color: isSelected ? AppColors.cyan : textMuted,
+              color: isSelected ? context.accentColor : textMuted,
               size: 28,
             ),
             const SizedBox(width: 16),
@@ -720,7 +720,7 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppColors.purple.withValues(alpha: 0.2),
+                            color: context.accentColor.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -728,7 +728,7 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
+                              color: context.accentColor,
                             ),
                           ),
                         ),
@@ -749,7 +749,7 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
             if (isSelected)
               Icon(
                 Icons.check_circle,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 24,
               ),
           ],

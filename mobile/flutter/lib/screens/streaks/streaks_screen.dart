@@ -481,7 +481,7 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
 
   Widget _buildFreezeChip(ThemeColors c, int count) {
     // Cyan outline pill for streak-freeze.
-    const cyan = Color(0xFF38BDF8);
+    const cyan = Color(0xFF38BDF8);  // accent-allowlist: streak-freeze "ice" identity, matches streak_freeze_screen.dart -- following the app accent would make freezes indistinguishable from ordinary accent chrome 
     return GestureDetector(
       onTap: () {
         HapticService.light();

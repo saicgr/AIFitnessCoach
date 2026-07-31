@@ -34,11 +34,11 @@ class BeastThemeData {
 // ─── Scoring factor colors ──────────────────────────────────
 
 const kScoringColors = <String, Color>{
-  'Freshness': Color(0xFF3B82F6),
-  'Staple': Color(0xFF22C55E),
-  'Known Data': Color(0xFFA855F7),
-  'Collaborative': Color(0xFF14B8A6),
-  'SFR': Color(0xFFF59E0B),
+  'Freshness': Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
+  'Staple': Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
+  'Known Data': Color(0xFFA855F7),  // accent-allowlist: categorical scoring-dimension legend (kScoringColors)
+  'Collaborative': Color(0xFF14B8A6),  // accent-allowlist: categorical scoring-dimension legend (kScoringColors)
+  'SFR': Color(0xFFF59E0B),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
   'Random': Color(0xFF71717A),
 };
 
@@ -85,10 +85,10 @@ const kAiModels = <(String, String, String, String)>[
 // ─── Difficulty tier colors ─────────────────────────────────
 
 const kTierColors = <String, Color>{
-  'Easy': Color(0xFF22C55E), // AppColors.success
-  'Medium': Color(0xFFF59E0B), // AppColors.warning
-  'Hard': Color(0xFFFF6B00), // AppColors.orange
-  'Hell': Color(0xFFEF4444), // AppColors.error
+  'Easy': Color(0xFF22C55E), // AppColors.success  // accent-allowlist: success/positive state - must stay green regardless of accent
+  'Medium': Color(0xFFF59E0B), // AppColors.warning  // accent-allowlist: warning severity - must stay amber regardless of accent
+  'Hard': Color(0xFFFF6B00), // AppColors.orange  // accent-allowlist: difficulty-tier severity scale (Easy/Medium/Hard/Hell), categorical progression alongside AppColors.success/warning/error
+  'Hell': Color(0xFFEF4444), // AppColors.error  // accent-allowlist: error/destructive - must stay red
 };
 
 // ─── SharedPreferences keys ─────────────────────────────────

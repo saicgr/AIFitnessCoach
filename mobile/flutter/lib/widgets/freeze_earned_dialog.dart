@@ -52,8 +52,8 @@ class _FreezeEarnedDialogState extends ConsumerState<FreezeEarnedDialog>
   late final ConfettiController _confetti;
   late final AnimationController _pulse;
 
-  static const Color _ice = Color(0xFF4FC3F7);
-  static const Color _iceDeep = Color(0xFF0288D1);
+  static const Color _ice = Color(0xFF4FC3F7); // accent-allowlist: streak-freeze ice-blue theme, matches streak_saved_dialog.dart convention
+  static const Color _iceDeep = Color(0xFF0288D1); // accent-allowlist: streak-freeze ice-blue theme, matches streak_saved_dialog.dart convention
 
   @override
   void initState() {
@@ -99,7 +99,7 @@ class _FreezeEarnedDialogState extends ConsumerState<FreezeEarnedDialog>
             minBlastForce: 4,
             emissionFrequency: 0.06,
             gravity: 0.25,
-            colors: const [_ice, Color(0xFF00BCD4), Colors.white, Color(0xFFB3E5FC)],
+            colors: const [_ice, Color(0xFF00BCD4), Colors.white, Color(0xFFB3E5FC)], // accent-allowlist: streak-freeze ice-blue theme, matches streak_saved_dialog.dart convention
           ),
           Container(
             decoration: BoxDecoration(

@@ -5,7 +5,7 @@
 /// is available so it composes safely into the SubCardRanker output without
 /// adding empty placeholder UI to the home feed.
 ///
-/// Self-contained: theme-aware via [ThemeColors]. Tap routes to `/recovery`
+/// Self-contained: theme-aware via [ThemeColors]. Tap routes to `/health/vitals`
 /// for the full breakdown.
 library;
 
@@ -49,7 +49,7 @@ class ReadinessScoreCard extends ConsumerWidget {
                 : 'Recover';
 
     return GestureDetector(
-      onTap: () => context.go('/recovery'),
+      onTap: () => context.go('/health/vitals'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

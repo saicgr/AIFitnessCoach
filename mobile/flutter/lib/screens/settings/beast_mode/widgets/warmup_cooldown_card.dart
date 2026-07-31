@@ -7,6 +7,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Beast Mode card with continuous sliders for precise warmup & cooldown control.
 class WarmupCooldownCard extends ConsumerWidget {
   final BeastThemeData theme;
@@ -31,10 +32,10 @@ class WarmupCooldownCard extends ConsumerWidget {
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.orange,
-              inactiveTrackColor: AppColors.orange.withValues(alpha: 0.2),
-              thumbColor: AppColors.orange,
-              overlayColor: AppColors.orange.withValues(alpha: 0.2),
+              activeTrackColor: context.accentColor,
+              inactiveTrackColor: context.accentColor.withValues(alpha: 0.2),
+              thumbColor: context.accentColor,
+              overlayColor: context.accentColor.withValues(alpha: 0.2),
               trackHeight: 4,
             ),
             child: Slider(
@@ -75,10 +76,10 @@ class WarmupCooldownCard extends ConsumerWidget {
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.cyan,
-              inactiveTrackColor: AppColors.cyan.withValues(alpha: 0.2),
-              thumbColor: AppColors.cyan,
-              overlayColor: AppColors.cyan.withValues(alpha: 0.2),
+              activeTrackColor: context.accentColor,
+              inactiveTrackColor: context.accentColor.withValues(alpha: 0.2),
+              thumbColor: context.accentColor,
+              overlayColor: context.accentColor.withValues(alpha: 0.2),
               trackHeight: 4,
             ),
             child: Slider(
@@ -125,10 +126,10 @@ class WarmupCooldownCard extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(
-            color: AppColors.orange.withValues(alpha: 0.15),
+            color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
             borderRadius: BorderRadius.circular(6),
           ),
-          child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.orange)),
+          child: Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.orange)),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
         ),
       ],
     );

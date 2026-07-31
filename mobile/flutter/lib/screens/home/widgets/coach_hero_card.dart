@@ -53,6 +53,7 @@ import '../../chat/widgets/generic_blocks_renderer.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../data/providers/root_messenger.dart';
 class CoachHeroCard extends ConsumerStatefulWidget {
   const CoachHeroCard({super.key});
 
@@ -857,8 +858,20 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         ),
         const Spacer(),
         // ⋮ — opens the coach options sheet (change persona / open AI
-        // Settings / hide for today). Subtle, sits before the chevron so
-        // the primary expand/minimize action keeps trailing emphasis.
+        // Settings / refresh insight / hide coach + nudges for today).
+        // Subtle, sits before the chevron so the primary expand/minimize
+        // action keeps trailing emphasis.
+        //
+        // E2E #152: the header used to carry a THIRD icon here — a
+        // standalone destructive ✕ ("Hide coach + all nudges for today")
+        // sitting 2px from the benign chevron, both unlabeled icons of
+        // similar visual weight. That action was ALREADY reachable one tap
+        // deeper via this menu ("Hide coach card today", below) — true
+        // duplication, not two different capabilities. Removing the
+        // standalone ✕ collapses the cluster to exactly one menu + one
+        // collapse, AND better-guards the destructive action: it now takes
+        // an explicit menu open + a clearly-labeled row instead of a flat
+        // tap on an unlabeled icon 2px from "Minimize".
         _CoachChromeIconButton(
           icon: Icons.more_vert,
           tooltip: 'Coach options',
@@ -875,20 +888,6 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           onTap: () => ref
               .read(coachCardVisibilityProvider.notifier)
               .toggleMinimized(),
-        ),
-        const SizedBox(width: 2),
-        // X — destructive dismiss-for-today. Flat 14pt, no fill, muted
-        // so a tap requires intent rather than reading like a primary
-        // action sitting next to the chevron.
-        // Dismisses the WHOLE coach card AND its entire nudge stack for the
-        // day in one tap — the "dismiss all" affordance (issue 5). Tooltip
-        // spells that out so users don't swipe each nudge individually.
-        _CoachChromeIconButton(
-          icon: Icons.close_rounded,
-          tooltip: 'Hide coach + all nudges for today',
-          onTap: () => ref
-              .read(coachCardVisibilityProvider.notifier)
-              .setDismissedToday(),
         ),
       ],
     );
@@ -1133,9 +1132,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       // Refresh today's workout so the swap shows immediately.
       ref.read(todayWorkoutProvider.notifier).refresh();
       final bp = cn.bodyPart!.replaceAll('_', ' ');
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
-          backgroundColor: AppColors.green,
+          backgroundColor: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           duration: const Duration(seconds: 4),
           content: Text(
             reshaped && reasons.isNotEmpty
@@ -1197,7 +1196,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     final now = DateTime.now();
     if (_lastRegenAt != null &&
         now.difference(_lastRegenAt!) < const Duration(minutes: 30)) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
           duration: Duration(seconds: 2),
           content: Text(AppLocalizations.of(context).coachHeroCardAlreadyRefreshedInThe),
@@ -1224,7 +1223,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         setState(() => _regenerating = false);
         // Surface the failure instead of failing silently — the card keeps
         // showing the prior insight, so this degrades gracefully.
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           const SnackBar(
             duration: Duration(seconds: 2),
             content: Text("Couldn't refresh, try again"),
@@ -1242,17 +1241,30 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     showGlassSheet<void>(
       context: context,
       builder: (sheetCtx) {
-        Widget row(IconData icon, String label, VoidCallback onTap) {
+        Widget row(
+          IconData icon,
+          String label,
+          VoidCallback onTap, {
+          String? subtitle,
+          bool destructive = false,
+        }) {
+          final tint = destructive ? AppColors.error : c.textPrimary;  // accent-allowlist: error/destructive -- must stay red
           return ListTile(
-            leading: Icon(icon, size: 22, color: c.textPrimary),
+            leading: Icon(icon, size: 22, color: tint),
             title: Text(
               label,
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: c.textPrimary,
+                color: tint,
               ),
             ),
+            subtitle: subtitle != null
+                ? Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: c.textMuted),
+                  )
+                : null,
             onTap: onTap,
           );
         }
@@ -1274,12 +1286,18 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
                 Navigator.of(sheetCtx).pop();
                 context.push('/ai-settings');
               }),
-              row(Icons.visibility_off_outlined, 'Hide coach card today', () {
-                Navigator.of(sheetCtx).pop();
-                ref
-                    .read(coachCardVisibilityProvider.notifier)
-                    .setDismissedToday();
-              }),
+              row(
+                Icons.visibility_off_outlined,
+                'Hide coach card today',
+                () {
+                  Navigator.of(sheetCtx).pop();
+                  ref
+                      .read(coachCardVisibilityProvider.notifier)
+                      .setDismissedToday();
+                },
+                subtitle: 'Also hides all of today\'s nudges',
+                destructive: true,
+              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -1688,13 +1706,13 @@ class _TodoCard extends StatelessWidget {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: task.done
-                        ? AppColors.green.withValues(alpha: 0.16)
+                        ? AppColors.green.withValues(alpha: 0.16)  // accent-allowlist: success/positive state -- must stay green regardless of accent
                         : c.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(11),
                   ),
                   child: Icon(task.icon,
                       size: 20,
-                      color: task.done ? AppColors.green : c.accent),
+                      color: task.done ? AppColors.green : c.accent),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 ),
                 const SizedBox(width: 12),
                 Expanded(

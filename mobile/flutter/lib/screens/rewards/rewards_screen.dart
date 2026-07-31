@@ -261,7 +261,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               borderRadius: BorderRadius.circular(8),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: AppColors.gamGold),
+              borderSide: BorderSide(color: c.accent),
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -282,7 +282,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.gamGold,
+              backgroundColor: c.accent,
               foregroundColor: Colors.black,
             ),
             child: Text(AppLocalizations.of(context).workoutUiBuildersConfirm),
@@ -323,13 +323,13 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                       center: Alignment(-0.3, -0.4),
                     ),
                     border: Border.all(
-                      color: AppColors.gamGold.withValues(alpha: 0.55),
+                      color: AppColors.gamGold.withValues(alpha: 0.55),  // accent-allowlist: level badge -- gold rarity ring, matches leaderboard convention
                       width: 1.5,
                     ),
                   ),
                   child: Text(
                     '${xpState.currentLevel}',
-                    style: ZType.disp(24, color: AppColors.gamGold),
+                    style: ZType.disp(24, color: AppColors.gamGold),  // accent-allowlist: level badge -- gold rarity ring, matches leaderboard convention
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -356,7 +356,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                     const SizedBox(height: 2),
                     Text(
                       '${xpState.earnedCount}',
-                      style: ZType.disp(16, color: AppColors.gamGold),
+                      style: ZType.disp(16, color: AppColors.gamGold),  // accent-allowlist: trophy count -- gamification tier colour
                     ),
                   ],
                 ),
@@ -401,7 +401,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                           children: [
                             Icon(
                               Icons.error_outline,
-                              color: Colors.red.shade400,
+                              color: Colors.red.shade400,  // accent-allowlist: error state icon -- must stay red
                               size: 48,
                             ),
                             const SizedBox(height: 16),
@@ -479,7 +479,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
     return AppRefreshIndicator(
       onRefresh: _loadRewards,
-      color: AppColors.gamGold,
+      color: c.accent,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: rewards.length,
@@ -542,26 +542,26 @@ class _RewardCard extends StatelessWidget {
     switch (rewardType) {
       case 'gift_card':
         icon = Icons.card_giftcard;
-        iconColor = const Color(0xFFFF9800);
+        iconColor = const Color(0xFFFF9800);  // accent-allowlist: reward-type identity colour -- gift card
         title = '\$$rewardValue Gift Card';
         subtitle = _getTriggerDescription(triggerType);
         break;
       case 'merch':
         icon = Icons.checkroom;
-        iconColor = const Color(0xFF9C27B0);
+        iconColor = const Color(0xFF9C27B0);  // accent-allowlist: reward-type identity colour -- merch
         final details = reward['reward_details'] as Map<String, dynamic>?;
         title = details?['item'] as String? ?? '${Branding.appName} Merch';
         subtitle = _getTriggerDescription(triggerType);
         break;
       case 'premium':
         icon = Icons.workspace_premium;
-        iconColor = AppColors.gamGold;
+        iconColor = AppColors.gamGold;  // accent-allowlist: reward-type identity colour -- premium
         title = 'Premium Subscription';
         subtitle = _getTriggerDescription(triggerType);
         break;
       case 'discount':
         icon = Icons.local_offer;
-        iconColor = const Color(0xFF4CAF50);
+        iconColor = const Color(0xFF4CAF50);  // accent-allowlist: reward-type identity colour -- discount
         // Guard against Infinity/NaN from DB — `.toInt()` throws UnsupportedError
         // on non-finite doubles, which crashed the Rewards screen in production.
         final discountPercent = rewardValue.isFinite ? rewardValue.toInt() : 0;
@@ -706,12 +706,12 @@ class _RewardCard extends StatelessWidget {
       case 'delivered':
       case 'claimed':
       case 'redeemed':
-        return Colors.green;
+        return Colors.green;  // accent-allowlist: claim-status framing -- delivered/claimed/redeemed is green/success
       case 'shipped':
-        return Colors.blue;
+        return Colors.blue;  // accent-allowlist: claim-status framing -- shipped is blue/info
       case 'processing':
       default:
-        return Colors.amber;
+        return Colors.amber;  // accent-allowlist: claim-status framing -- processing is amber/warning
     }
   }
 

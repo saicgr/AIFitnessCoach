@@ -158,109 +158,109 @@ enum SyncedKind {
     switch (this) {
       case SyncedKind.walking:
         return const KindPalette(
-          fg: Color(0xFF22C55E),
+          fg: Color(0xFF22C55E), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x262ECC71),
           bgLight: Color(0xFFDCFCE7),
         );
       case SyncedKind.running:
         return const KindPalette(
-          fg: Color(0xFFF97316),
+          fg: Color(0xFFF97316), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26F97316),
           bgLight: Color(0xFFFFEDD5),
         );
       case SyncedKind.cycling:
         return const KindPalette(
-          fg: Color(0xFF0EA5E9),
+          fg: Color(0xFF0EA5E9), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x260EA5E9),
           bgLight: Color(0xFFE0F2FE),
         );
       case SyncedKind.swimming:
         return const KindPalette(
-          fg: Color(0xFF2563EB),
+          fg: Color(0xFF2563EB), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x262563EB),
           bgLight: Color(0xFFDBEAFE),
         );
       case SyncedKind.rowing:
         return const KindPalette(
-          fg: Color(0xFF14B8A6),
+          fg: Color(0xFF14B8A6), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x2614B8A6),
           bgLight: Color(0xFFCCFBF1),
         );
       case SyncedKind.hiking:
         return const KindPalette(
-          fg: Color(0xFF84CC16),
+          fg: Color(0xFF84CC16), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x2684CC16),
           bgLight: Color(0xFFECFCCB),
         );
       case SyncedKind.elliptical:
         return const KindPalette(
-          fg: Color(0xFF06B6D4),
+          fg: Color(0xFF06B6D4), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x2606B6D4),
           bgLight: Color(0xFFCFFAFE),
         );
       case SyncedKind.stairs:
         return const KindPalette(
-          fg: Color(0xFF8B5CF6),
+          fg: Color(0xFF8B5CF6), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x268B5CF6),
           bgLight: Color(0xFFEDE9FE),
         );
       case SyncedKind.skating:
         return const KindPalette(
-          fg: Color(0xFF3B82F6),
+          fg: Color(0xFF3B82F6), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x263B82F6),
           bgLight: Color(0xFFDBEAFE),
         );
       case SyncedKind.dance:
         return const KindPalette(
-          fg: Color(0xFFEC4899),
+          fg: Color(0xFFEC4899), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26EC4899),
           bgLight: Color(0xFFFCE7F3),
         );
       case SyncedKind.yoga:
         return const KindPalette(
-          fg: Color(0xFFA855F7),
+          fg: Color(0xFFA855F7), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26A855F7),
           bgLight: Color(0xFFF3E8FF),
         );
       case SyncedKind.pilates:
         return const KindPalette(
-          fg: Color(0xFFF472B6),
+          fg: Color(0xFFF472B6), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26F472B6),
           bgLight: Color(0xFFFCE7F3),
         );
       case SyncedKind.hiit:
         return const KindPalette(
-          fg: Color(0xFFE11D48),
+          fg: Color(0xFFE11D48), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26E11D48),
           bgLight: Color(0xFFFFE4E6),
         );
       case SyncedKind.tennis:
         return const KindPalette(
-          fg: Color(0xFFEAB308),
+          fg: Color(0xFFEAB308), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26EAB308),
           bgLight: Color(0xFFFEF9C3),
         );
       case SyncedKind.basketball:
         return const KindPalette(
-          fg: Color(0xFFEA580C),
+          fg: Color(0xFFEA580C), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26EA580C),
           bgLight: Color(0xFFFFEDD5),
         );
       case SyncedKind.football:
         return const KindPalette(
-          fg: Color(0xFF7C3AED),
+          fg: Color(0xFF7C3AED), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x267C3AED),
           bgLight: Color(0xFFEDE9FE),
         );
       case SyncedKind.soccer:
         return const KindPalette(
-          fg: Color(0xFF15803D),
+          fg: Color(0xFF15803D), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x2615803D),
           bgLight: Color(0xFFDCFCE7),
         );
       case SyncedKind.strength:
         return const KindPalette(
-          fg: Color(0xFFEF4444),
+          fg: Color(0xFFEF4444), // accent-allowlist: workout-type identity palette - each synced activity type (walking/running/cycling/etc.) needs a stable distinct color across icon/chip surfaces
           bgDark: Color(0x26EF4444),
           bgLight: Color(0xFFFEE2E2),
         );

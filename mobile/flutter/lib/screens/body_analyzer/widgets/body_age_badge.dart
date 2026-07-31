@@ -24,8 +24,8 @@ class BodyAgeBadge extends StatelessWidget {
     final color = delta == 0
         ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
         : younger
-            ? const Color(0xFF2ECC71)
-            : const Color(0xFFF5A623);
+            ? const Color(0xFF2ECC71)  // accent-allowlist: NASM body-age convention -- younger-than-actual is always green
+            : const Color(0xFFF5A623);  // accent-allowlist: NASM body-age convention -- older-than-actual is always amber
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final surface = isDark

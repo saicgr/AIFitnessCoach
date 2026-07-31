@@ -287,11 +287,11 @@ class _GoalSpeedComparisonState extends ConsumerState<GoalSpeedComparison>
                 text: TextSpan(
                   style: TextStyle(fontSize: 16, color: c.textPrimary),
                   children: [
-                    const TextSpan(
+                    TextSpan(
                       text: '2× more likely',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFFFC4C02),
+                        color: accent,
                       ),
                     ),
                     const TextSpan(

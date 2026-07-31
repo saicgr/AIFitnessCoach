@@ -8,6 +8,7 @@ import '../../../../data/providers/habit_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// Habits Tile Card - Shows today's habits with quick toggle
 /// Displays habit checklist with completion progress
@@ -64,7 +65,7 @@ class HabitsTileCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),  // accent-allowlist: success/positive state -- must stay green regardless of accent
       ),
       child: isLoading
           ? _buildLoadingState(context, textMuted)
@@ -129,8 +130,8 @@ class HabitsTileCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: allDone
-                ? AppColors.success.withValues(alpha: 0.5)
-                : AppColors.success.withValues(alpha: 0.3),
+                ? AppColors.success.withValues(alpha: 0.5)  // accent-allowlist: success/positive state -- must stay green regardless of accent
+                : AppColors.success.withValues(alpha: 0.3),  // accent-allowlist: success/positive state -- must stay green regardless of accent
           ),
         ),
         child: Row(
@@ -138,7 +139,7 @@ class HabitsTileCard extends ConsumerWidget {
           children: [
             Icon(
               allDone ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: allDone ? AppColors.success : textMuted,
+              color: allDone ? AppColors.success : textMuted,  // accent-allowlist: success/positive state -- must stay green regardless of accent
               size: 16,
             ),
             const SizedBox(width: 6),
@@ -151,7 +152,7 @@ class HabitsTileCard extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: allDone ? AppColors.success : textColor,
+                color: allDone ? AppColors.success : textColor,  // accent-allowlist: success/positive state -- must stay green regardless of accent
               ),
             ),
           ],
@@ -190,7 +191,7 @@ class HabitsTileCard extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.check_circle_outline, color: AppColors.success, size: 20),
+            Icon(Icons.check_circle_outline, color: AppColors.success, size: 20),  // accent-allowlist: success/positive state -- must stay green regardless of accent
             const SizedBox(width: 8),
             Text(
               l10n.habitsTileCardHabits,
@@ -219,7 +220,7 @@ class HabitsTileCard extends ConsumerWidget {
           icon: Icon(Icons.add, size: 18),
           label: Text(l10n.habitsTileCardAddHabit),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
             foregroundColor: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -263,7 +264,7 @@ class HabitsTileCard extends ConsumerWidget {
           children: [
             Icon(
               allDone ? Icons.check_circle : Icons.check_circle_outline,
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
               size: 20,
             ),
             const SizedBox(width: 8),
@@ -281,7 +282,7 @@ class HabitsTileCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: allDone
-                    ? AppColors.success.withValues(alpha: 0.15)
+                    ? AppColors.success.withValues(alpha: 0.15)  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     : textMuted.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -290,7 +291,7 @@ class HabitsTileCard extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: allDone ? AppColors.success : textMuted,
+                  color: allDone ? AppColors.success : textMuted,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 ),
               ),
             ),
@@ -337,7 +338,7 @@ class HabitsTileCard extends ConsumerWidget {
                   AppLocalizations.of(context)!.habitsTileCardMore(remainingCount),
                   style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -345,7 +346,7 @@ class HabitsTileCard extends ConsumerWidget {
                 Icon(
                   Icons.arrow_forward,
                   size: 14,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 ),
               ],
             ),
@@ -358,13 +359,13 @@ class HabitsTileCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
+              color: AppColors.success.withValues(alpha: 0.1),  // accent-allowlist: success/positive state -- must stay green regardless of accent
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
+              border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),  // accent-allowlist: success/positive state -- must stay green regardless of accent
             ),
             child: Row(
               children: [
-                Icon(Icons.celebration, color: AppColors.success, size: 20),
+                Icon(Icons.celebration, color: AppColors.success, size: 20),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -372,7 +373,7 @@ class HabitsTileCard extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     ),
                   ),
                 ),
@@ -408,7 +409,7 @@ class _HabitItem extends StatelessWidget {
     try {
       habitColor = Color(int.parse(habit.color.replaceFirst('#', '0xFF')));
     } catch (_) {
-      habitColor = AppColors.success;
+      habitColor = AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     }
 
     return Padding(
@@ -457,14 +458,14 @@ class _HabitItem extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.local_fire_department, size: 14, color: AppColors.orange),
+                    Icon(Icons.local_fire_department, size: 14, color: context.accentColor),
                     const SizedBox(width: 2),
                     Text(
                       '${habit.currentStreak}',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.orange,
+                        color: context.accentColor,
                       ),
                     ),
                   ],

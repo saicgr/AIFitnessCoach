@@ -6,7 +6,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/widgets/line_icon.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -1837,7 +1836,7 @@ class _PresetChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = AppColors.cyan;
+    final activeColor = context.accentColor;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(

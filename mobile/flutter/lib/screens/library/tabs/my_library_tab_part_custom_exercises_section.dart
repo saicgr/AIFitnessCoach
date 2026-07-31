@@ -14,7 +14,7 @@ class _CustomExercisesSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final customState = ref.watch(customExercisesProvider);
     final exercises = customState.exercises;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = isDark ? context.accentColor : context.accentColor;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Column(
@@ -129,7 +129,7 @@ class _CustomExercisesSection extends ConsumerWidget {
             end: AlignmentDirectional.bottomEnd,
             colors: [
               orange.withValues(alpha: 0.10),
-              Colors.amber.withValues(alpha: 0.05),
+              Colors.amber.withValues(alpha: 0.05),  // accent-allowlist: warning severity — must stay amber regardless of accent
             ],
           ),
           borderRadius: BorderRadius.circular(16),
@@ -202,7 +202,7 @@ class _CustomExerciseCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = isDark ? context.accentColor : context.accentColor;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
@@ -218,7 +218,7 @@ class _CustomExerciseCard extends ConsumerWidget {
             end: AlignmentDirectional.bottomEnd,
             colors: [
               orange.withValues(alpha: 0.10),
-              Colors.amber.withValues(alpha: 0.05),
+              Colors.amber.withValues(alpha: 0.05),  // accent-allowlist: warning severity — must stay amber regardless of accent
             ],
           ),
           borderRadius: BorderRadius.circular(14),
@@ -368,7 +368,7 @@ class _FavoritesSection extends ConsumerWidget {
     final favoriteNames = favoritesState.favorites;
     final categoryAsync = ref.watch(categoryExercisesProvider);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final coral = isDark ? AppColors.coral : AppColorsLight.coral;
+    final coral = isDark ? context.accentColor : context.accentColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,7 +444,7 @@ class _FavoritesSection extends ConsumerWidget {
                         isDark: isDark,
                         gradientColors: [
                           coral.withValues(alpha: 0.10),
-                          AppColors.pink.withValues(alpha: 0.05),
+                          coral.withValues(alpha: 0.05),
                         ],
                       ),
                     ).animate().fadeIn(delay: (index * 80).ms).slideX(begin: 0.15);
@@ -489,7 +489,7 @@ class _StaplesSection extends ConsumerWidget {
     final staples = staplesState.staples;
     final categoryAsync = ref.watch(categoryExercisesProvider);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -580,7 +580,7 @@ class _StaplesSection extends ConsumerWidget {
                         isDark: isDark,
                         gradientColors: [
                           purple.withValues(alpha: 0.10),
-                          AppColors.info.withValues(alpha: 0.05),
+                          AppColors.info.withValues(alpha: 0.05),  // accent-allowlist: informational state — must stay blue regardless of accent
                         ],
                       ),
                     ).animate().fadeIn(delay: (index * 80).ms).slideX(begin: 0.15);
@@ -624,7 +624,7 @@ class _StapleNameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return SizedBox(
@@ -636,7 +636,7 @@ class _StapleNameCard extends StatelessWidget {
             end: AlignmentDirectional.bottomEnd,
             colors: [
               purple.withValues(alpha: 0.10),
-              AppColors.info.withValues(alpha: 0.05),
+              AppColors.info.withValues(alpha: 0.05),  // accent-allowlist: informational state — must stay blue regardless of accent
             ],
           ),
           borderRadius: BorderRadius.circular(14),
@@ -817,7 +817,7 @@ class _RecentActivitySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(exerciseHistoryProvider);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

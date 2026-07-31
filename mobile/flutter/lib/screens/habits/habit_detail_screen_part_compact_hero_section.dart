@@ -165,11 +165,11 @@ class _CompactHeroSection extends StatelessWidget {
         // Row 2: Quick stats - 4 compact tiles
         Row(
           children: [
-            _MiniStatTile(icon: Icons.local_fire_department, value: '${data.currentStreak}', label: AppLocalizations.of(context).xpProgressCardStreak, color: Colors.orange, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.local_fire_department, value: '${data.currentStreak}', label: AppLocalizations.of(context).xpProgressCardStreak, color: Colors.orange, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),  // accent-allowlist: streak fire icon, matches app-wide streak-fire theme convention
             const SizedBox(width: 8),
-            _MiniStatTile(icon: Icons.emoji_events, value: '${data.longestStreak}', label: AppLocalizations.of(context).habitDetailScreenBest, color: Colors.amber, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.emoji_events, value: '${data.longestStreak}', label: AppLocalizations.of(context).habitDetailScreenBest, color: Colors.amber, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),  // accent-allowlist: best-streak trophy stat, icon-matched achievement color (gold), matches other tiles' icon-color pairing
             const SizedBox(width: 8),
-            _MiniStatTile(icon: Icons.check_circle_outline, value: '${data.totalCompletions}', label: AppLocalizations.of(context).statsStreakFireTotal, color: Colors.green, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
+            _MiniStatTile(icon: Icons.check_circle_outline, value: '${data.totalCompletions}', label: AppLocalizations.of(context).statsStreakFireTotal, color: Colors.green, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),  // accent-allowlist: total-completions checkmark stat, icon-matched success color, matches other tiles' icon-color pairing
             const SizedBox(width: 8),
             _MiniStatTile(icon: Icons.trending_up, value: '${data.completionRate}%', label: AppLocalizations.of(context).habitDetailScreenRate, color: habitColor, cardBg: cardBg, cardBorder: cardBorder, textPrimary: textPrimary, textSecondary: textSecondary),
           ],
@@ -181,12 +181,12 @@ class _CompactHeroSection extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.12),
+              color: Colors.amber.withValues(alpha: 0.12),  // accent-allowlist: best-streak-proximity alert icon, matches trophy/achievement amber convention
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
-                const Icon(Icons.bolt, size: 16, color: Colors.amber),
+                const Icon(Icons.bolt, size: 16, color: Colors.amber),  // accent-allowlist: best-streak-proximity alert text, matches trophy/achievement amber convention
                 const SizedBox(width: 6),
                 Text(
                   '${data.daysUntilBestStreak} days until you beat your personal best!',
@@ -404,17 +404,17 @@ class _TrendSparkline extends StatelessWidget {
     String trendLabel;
     switch (trend) {
       case 'improving':
-        trendColor = Colors.green;
+        trendColor = Colors.green;  // accent-allowlist: weekly trend indicator (improving=green/declining=red/stable=amber), semantic severity scale
         trendIcon = Icons.trending_up;
         trendLabel = 'Improving';
         break;
       case 'declining':
-        trendColor = Colors.redAccent;
+        trendColor = Colors.redAccent;  // accent-allowlist: weekly trend indicator (improving=green/declining=red/stable=amber), semantic severity scale
         trendIcon = Icons.trending_down;
         trendLabel = 'Declining';
         break;
       default:
-        trendColor = Colors.amber;
+        trendColor = Colors.amber;  // accent-allowlist: weekly trend indicator (improving=green/declining=red/stable=amber), semantic severity scale
         trendIcon = Icons.trending_flat;
         trendLabel = 'Stable';
     }
@@ -789,7 +789,7 @@ class _DayOfWeekChart extends StatelessWidget {
                 if (bestDay != null)
                   Row(
                     children: [
-                      const Icon(Icons.arrow_upward_rounded, size: 13, color: Colors.green),
+                      const Icon(Icons.arrow_upward_rounded, size: 13, color: Colors.green),  // accent-allowlist: best-day indicator (improvement), semantic not accent
                       const SizedBox(width: 3),
                       Text(
                         'Best: ${fullDayNames[bestDay]} (${(bestRate * 100).round()}%)',
@@ -800,7 +800,7 @@ class _DayOfWeekChart extends StatelessWidget {
                 if (worstDay != null && bestDay != worstDay)
                   Row(
                     children: [
-                      const Icon(Icons.arrow_downward_rounded, size: 13, color: Colors.redAccent),
+                      const Icon(Icons.arrow_downward_rounded, size: 13, color: Colors.redAccent),  // accent-allowlist: weakest-day indicator (decline), semantic not accent
                       const SizedBox(width: 3),
                       Text(
                         'Weakest: ${fullDayNames[worstDay]} (${(worstRate * 100).round()}%)',

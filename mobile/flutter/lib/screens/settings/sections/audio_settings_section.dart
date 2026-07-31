@@ -10,6 +10,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Combined workout audio section: voice announcements + audio behavior.
 class AudioSettingsSection extends StatelessWidget {
   const AudioSettingsSection({super.key});
@@ -104,7 +105,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
           if (_isInitialized && prefs != null) ...[
             SettingSwitchTile(
               icon: Icons.queue_music,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               title: AppLocalizations.of(context).audioSettingsBackgroundMusic,
               subtitle: AppLocalizations.of(context).audioSettingsKeepSpotifyMusicPlaying,
               value: prefs.allowBackgroundMusic,
@@ -121,7 +122,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
             // Audio Ducking toggle
             SettingSwitchTile(
               icon: Icons.graphic_eq,
-              iconColor: AppColors.orange,
+              iconColor: context.accentColor,
               title: AppLocalizations.of(context).audioSettingsAudioDucking,
               subtitle: AppLocalizations.of(context).audioSettingsLowerMusicDuringVoice,
               value: prefs.audioDucking,
@@ -216,7 +217,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                     _buildVolumeSlider(
                       'Ducking Level',
                       Icons.graphic_eq,
-                      AppColors.orange,
+                      context.accentColor,
                       p.duckVolumeLevel,
                       (v) {
                         if (_userId != null) {

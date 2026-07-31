@@ -22,9 +22,9 @@ class _HistoryTimelineCard extends StatelessWidget {
     final isIncreasing = item.progression?.isIncreasing == true;
     final isDecreasing = item.progression?.isDecreasing == true;
     final trendColor = isIncreasing
-        ? AppColors.success
+        ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
         : isDecreasing
-            ? AppColors.error
+            ? AppColors.error  // accent-allowlist: error/destructive state — must stay red regardless of accent
             : textMuted;
     final trendIcon = isIncreasing
         ? Icons.trending_up

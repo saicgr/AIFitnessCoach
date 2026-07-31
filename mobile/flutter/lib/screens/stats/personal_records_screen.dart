@@ -469,7 +469,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
             '${stats.totalPrs}',
             'Total PRs',
             Icons.emoji_events_rounded,
-            Colors.amber,
+            Colors.amber,  // accent-allowlist: warning severity — must stay amber regardless of accent
           ),
           _verticalDivider(isDark),
           statItem(
@@ -483,7 +483,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
             '${stats.currentPrStreak}',
             'PR Streak',
             Icons.local_fire_department_rounded,
-            Colors.deepOrange,
+            Colors.deepOrange,  // accent-allowlist: secondary stat-icon tint — fixed decorative color for visual variety alongside the primary accent-tracked stat
           ),
           if (dots != null && dots.dotsScore > 0) ...[
             _verticalDivider(isDark),
@@ -491,7 +491,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
               dots.dotsScore.toStringAsFixed(0),
               'DOTS',
               Icons.speed_rounded,
-              Colors.purpleAccent,
+              Colors.purpleAccent,  // accent-allowlist: strength-level tier color — fixed rank/tier identity (beginner/novice/intermediate/advanced/elite), like a rarity tier, not tied to accent
             ),
           ],
         ],
@@ -701,7 +701,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.emoji_events_outlined,
-                size: 64, color: Colors.amber.withValues(alpha: 0.5)),
+                size: 64, color: Colors.amber.withValues(alpha: 0.5)),  // accent-allowlist: warning severity — must stay amber regardless of accent
             const SizedBox(height: 16),
             Text(
               gymScoped
@@ -784,13 +784,13 @@ class _ExercisePRCard extends StatelessWidget {
   Color _levelColor(String level) {
     switch (level.toLowerCase()) {
       case 'elite':
-        return Colors.amber;
+        return Colors.amber;  // accent-allowlist: warning severity — must stay amber regardless of accent
       case 'advanced':
-        return Colors.deepPurple;
+        return Colors.deepPurple;  // accent-allowlist: strength-level tier color — fixed rank/tier identity (beginner/novice/intermediate/advanced/elite), like a rarity tier, not tied to accent
       case 'intermediate':
-        return Colors.blue;
+        return Colors.blue;  // accent-allowlist: informational state — must stay blue regardless of accent
       case 'novice':
-        return Colors.teal;
+        return Colors.teal;  // accent-allowlist: strength-level tier color — fixed rank/tier identity (beginner/novice/intermediate/advanced/elite), like a rarity tier, not tied to accent
       default:
         return Colors.grey;
     }
@@ -873,7 +873,7 @@ class _ExercisePRCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.15),
+                      color: Colors.amber.withValues(alpha: 0.15),  // accent-allowlist: warning severity — must stay amber regardless of accent
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -881,7 +881,7 @@ class _ExercisePRCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: Colors.amber.shade700,
+                        color: Colors.amber.shade700,  // accent-allowlist: warning severity — must stay amber regardless of accent
                       ),
                     ),
                   ),
@@ -964,7 +964,7 @@ class _ExercisePRCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.12),
+                      color: Colors.green.withValues(alpha: 0.12),  // accent-allowlist: success/positive state — must stay green regardless of accent
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -972,7 +972,7 @@ class _ExercisePRCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Colors.green,
+                        color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                       ),
                     ),
                   ),

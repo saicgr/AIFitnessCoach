@@ -40,7 +40,7 @@ class StressScoreTile extends ConsumerWidget {
     final stressColor = s >= 50 ? c.warning : c.accent;
 
     return GestureDetector(
-      onTap: () => context.go('/recovery'),
+      onTap: () => context.go('/health/vitals'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

@@ -189,21 +189,21 @@ class TimelineEntryTile extends StatelessWidget {
   static Color _domainColor(String type) {
     switch (type) {
       case 'workout':
-        return Colors.deepPurple;
+        return Colors.deepPurple;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'sleep':
-        return Colors.indigo;
+        return Colors.indigo;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'food':
-        return Colors.orange;
+        return Colors.orange;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'water':
-        return Colors.blue;
+        return Colors.blue;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'weight':
-        return Colors.green;
+        return Colors.green;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'mood':
-        return Colors.amber;
+        return Colors.amber;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'habit':
-        return Colors.teal;
+        return Colors.teal;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       case 'achievement':
-        return Colors.pinkAccent;
+        return Colors.pinkAccent;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
       default:
         return Colors.grey;
     }
@@ -302,7 +302,7 @@ class _AchievementChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPR = achievement.kind.contains('pr');
-    final color = isPR ? Colors.amber.shade700 : Colors.deepOrange;
+    final color = isPR ? Colors.amber.shade700 : Colors.deepOrange;  // accent-allowlist: timeline entry-type categorical legend (_domainColor: workout/sleep/food/water/mood/habit/achievement each keep a fixed colour so entry types stay recognisable)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(

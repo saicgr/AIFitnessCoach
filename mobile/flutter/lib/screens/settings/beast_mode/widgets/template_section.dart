@@ -9,6 +9,7 @@ import 'shared/beast_card.dart';
 import 'template_editor_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class TemplateSection extends ConsumerWidget {
   final BeastThemeData theme;
 
@@ -33,15 +34,15 @@ class TemplateSection extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add, size: 14, color: AppColors.orange),
+                      Icon(Icons.add, size: 14, color: context.accentColor),
                       const SizedBox(width: 4),
-                      Text(AppLocalizations.of(context).templateNew, style: TextStyle(fontSize: 12, color: AppColors.orange, fontWeight: FontWeight.w600)),
+                      Text(AppLocalizations.of(context).templateNew, style: TextStyle(fontSize: 12, color: context.accentColor, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -75,10 +76,10 @@ class TemplateSection extends ConsumerWidget {
               final alreadyAdded = templates.any((existing) => existing.id == t.id);
               return ActionChip(
                 avatar: Icon(alreadyAdded ? Icons.check : Icons.add, size: 14,
-                    color: alreadyAdded ? AppColors.success : AppColors.orange),
+                    color: alreadyAdded ? AppColors.success : context.accentColor),  // accent-allowlist: success/positive state - must stay green regardless of accent
                 label: Text(t.name),
                 labelStyle: TextStyle(fontSize: 12, color: alreadyAdded ? theme.textMuted : theme.textPrimary),
-                side: BorderSide(color: alreadyAdded ? theme.cardBorder : AppColors.orange.withValues(alpha: 0.3)),
+                side: BorderSide(color: alreadyAdded ? theme.cardBorder : context.accentColor.withValues(alpha: 0.3)),
                 onPressed: alreadyAdded
                     ? null
                     : () {
@@ -99,9 +100,9 @@ class TemplateSection extends ConsumerWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.05),
+        color: context.accentColor.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.15)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -111,7 +112,7 @@ class TemplateSection extends ConsumerWidget {
               Expanded(child: Text(template.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: theme.textPrimary))),
               GestureDetector(
                 onTap: () => TemplateEditorSheet.show(context, template, notifier),
-                child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.edit_outlined, size: 16, color: AppColors.orange)),
+                child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.edit_outlined, size: 16, color: context.accentColor)),
               ),
               GestureDetector(
                 onTap: () {
@@ -127,7 +128,7 @@ class TemplateSection extends ConsumerWidget {
                   notifier.removeTemplate(template.id);
                   AppSnackBar.info(context, 'Template removed');
                 },
-                child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.delete_outline, size: 16, color: AppColors.error)),
+                child: Padding(padding: const EdgeInsets.all(4), child: Icon(Icons.delete_outline, size: 16, color: AppColors.error)),  // accent-allowlist: error/destructive - must stay red
               ),
             ],
           ),

@@ -289,17 +289,17 @@ class _TogglesTabState extends ConsumerState<_TogglesTab> {
     Color baseColor;
     switch (type.category) {
       case TileCategory.workout:
-        baseColor = AppColors.cyan;
+        baseColor = context.accentColor;
       case TileCategory.progress:
-        baseColor = AppColors.green;
+        baseColor = AppColors.green;  // accent-allowlist: categorical tile-category legend colour (workout/social/wellness/tools)
       case TileCategory.nutrition:
-        baseColor = AppColors.orange;
+        baseColor = context.accentColor;
       case TileCategory.social:
-        baseColor = AppColors.purple;
+        baseColor = context.accentColor;
       case TileCategory.wellness:
-        baseColor = AppColors.yellow;
+        baseColor = AppColors.yellow;  // accent-allowlist: categorical tile-category legend colour (workout/social/wellness/tools)
       case TileCategory.tools:
-        baseColor = AppColors.cyan;
+        baseColor = context.accentColor;
     }
     return isDark ? baseColor : _darkenColor(baseColor);
   }
@@ -422,8 +422,8 @@ class _DiscoverTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final purple = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
-    final cyan = isDark ? AppColors.cyan : _darkenColor(AppColors.cyan);
+    final purple = isDark ? context.accentColor : _darkenColor(context.accentColor);
+    final cyan = isDark ? context.accentColor : _darkenColor(context.accentColor);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

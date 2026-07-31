@@ -123,7 +123,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).programHistoryProgramRestoredSuccessfully),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           ),
         );
 
@@ -135,7 +135,7 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to restore program: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }

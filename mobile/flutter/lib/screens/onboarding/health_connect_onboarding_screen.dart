@@ -18,6 +18,7 @@ import 'onboarding_experiments.dart';
 import 'onboarding_nutrition_import_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Health Connect / Apple Health onboarding step.
 ///
@@ -180,7 +181,7 @@ class _HealthConnectOnboardingScreenState
     final textSecondary = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
-    const accent = AppColors.purple;
+    final accent = context.accentColor;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -206,7 +207,7 @@ class _HealthConnectOnboardingScreenState
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: 24),
-                        const _Illustration(accent: accent)
+                        _Illustration(accent: accent)
                             .animate()
                             .scale(
                               duration: 400.ms,

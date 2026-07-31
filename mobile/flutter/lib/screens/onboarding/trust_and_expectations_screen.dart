@@ -11,6 +11,7 @@ import '../../core/services/posthog_service.dart';
 import '../../widgets/citation_link.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Trust & Expectations — Onboarding v5.1
 ///
 /// Replaces TWO standalone screens (honest-expectations + privacy-trust)
@@ -70,7 +71,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                     // ── Section 1: A bit of honesty
                     _SectionHeader(
                       icon: Icons.handshake_outlined,
-                      iconColor: AppColors.orange,
+                      iconColor: context.accentColor,
                       title: AppLocalizations.of(context).trustAndExpectationsABitOfHonesty,
                       isDark: isDark,
                     ).animate().fadeIn(delay: 250.ms),
@@ -113,7 +114,7 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                     // ── Section 2: Your data stays yours
                     _SectionHeader(
                       icon: Icons.shield_outlined,
-                      iconColor: const Color(0xFF2ECC71),
+                      iconColor: const Color(0xFF2ECC71),  // accent-allowlist: success/positive state (privacy reassurance section) - same family as AppColors.success
                       title: 'Your data stays yours',
                       isDark: isDark,
                     ).animate().fadeIn(delay: 700.ms),
@@ -196,12 +197,12 @@ class TrustAndExpectationsScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                         SizedBox(width: 6),
                         Icon(Icons.auto_awesome_rounded,
-                            color: AppColors.orange, size: 18),
+                            color: context.accentColor, size: 18),
                       ],
                     ),
                   ),
@@ -293,7 +294,7 @@ class _Bullet extends StatelessWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accent =
-        tone == BulletTone.warm ? AppColors.orange : const Color(0xFF2ECC71);
+        tone == BulletTone.warm ? AppColors.orange : const Color(0xFF2ECC71);  // accent-allowlist: success/positive state (positive bullet tone) - same family as AppColors.success
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(

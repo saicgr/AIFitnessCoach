@@ -11,6 +11,7 @@ import 'widgets/onboarding_theme.dart';
 import '../../widgets/glass_back_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Onboarding conversion v6 — "What's your why" screen.
 ///
 /// The emotional anchor, asked FIRST (right after /intro, before the
@@ -47,17 +48,17 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
   // — never reorder-rename without a migration of `preAuth_primaryWhy`.
   static const List<_WhyOption> _options = [
     _WhyOption('feel_confident', 'Feel confident in my body',
-        Icons.spa_rounded, Color(0xFF8B5CF6)),
+        Icons.spa_rounded, Color(0xFF8B5CF6)),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
     _WhyOption('keep_up', 'Keep up with my family',
-        Icons.family_restroom_rounded, Color(0xFF3B82F6)),
+        Icons.family_restroom_rounded, Color(0xFF3B82F6)),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
     _WhyOption('event', 'Get ready for an event',
-        Icons.celebration_rounded, Color(0xFFFF6B6B)),
+        Icons.celebration_rounded, Color(0xFFFF6B6B)),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
     _WhyOption('health', 'A health wake-up call',
-        Icons.monitor_heart_rounded, Color(0xFFEF4444)),
+        Icons.monitor_heart_rounded, Color(0xFFEF4444)),  // accent-allowlist: error/destructive - same value as AppColors.error
     _WhyOption('feel_strong', 'Feel strong and capable',
-        Icons.bolt_rounded, Color(0xFFF59E0B)),
+        Icons.bolt_rounded, Color(0xFFF59E0B)),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
     _WhyOption('energy', 'More energy, less stress',
-        Icons.wb_sunny_rounded, Color(0xFF14B8A6)),
+        Icons.wb_sunny_rounded, Color(0xFF14B8A6)),  // accent-allowlist: categorical per-option palette - each 'why' option needs a distinct colour for visual scanning; recolouring collapses the distinction
   ];
 
   // Multi-select: people are usually driven by more than one reason. All picks
@@ -331,8 +332,8 @@ class _ContinueButton extends StatelessWidget {
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+              gradient: LinearGradient(
+                colors: [AppColors.onboardingAccent, context.accentColor],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: enabled

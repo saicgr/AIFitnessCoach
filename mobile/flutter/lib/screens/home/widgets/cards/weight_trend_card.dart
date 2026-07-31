@@ -14,6 +14,7 @@ import '../../../../data/services/data_cache_service.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/charts/cycle_phase_chart_overlay.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 // Cycle-aware weight intelligence (Phase G — MacroFactor 1.1 / 1.3 / 1.11 /
@@ -304,10 +305,10 @@ class WeightTrendCard extends ConsumerWidget {
 
     // Colors based on direction (for fat loss: losing is good)
     final trendColor = isLosing
-        ? AppColors.success
+        ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
         : isGaining
-            ? AppColors.error
-            : AppColors.orange;
+            ? AppColors.error  // accent-allowlist: error/destructive -- must stay red
+            : context.accentColor;
 
     // Format change for display
     final l10n = AppLocalizations.of(context)!;
@@ -350,7 +351,7 @@ class WeightTrendCard extends ConsumerWidget {
           border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.orange.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
@@ -411,7 +412,7 @@ class WeightTrendCard extends ConsumerWidget {
           border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.orange.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
@@ -820,9 +821,9 @@ class _SamePointLastCycleRow extends StatelessWidget {
     final down = diffLbs < -0.1;
     final up = diffLbs > 0.1;
     final color = down
-        ? AppColors.success
+        ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
         : up
-            ? AppColors.error
+            ? AppColors.error  // accent-allowlist: error/destructive -- must stay red
             : textMuted;
     final magnitude = diffLbs.abs().toStringAsFixed(1);
     final l10n = AppLocalizations.of(context)!;
@@ -866,7 +867,7 @@ class _TargetHeldMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = const Color(0xFF64B5F6); // luteal blue
+    final color = const Color(0xFF64B5F6); // luteal blue  // accent-allowlist: luteal-phase cycle annotation colour, shared identity with calories_summary_card.dart
     // Phase D — surface the hold as a tight one-liner directly under the
     // weight-change number. When the backend supplies a window label (e.g.
     // "until May 26") splice it inline; otherwise use the static copy.

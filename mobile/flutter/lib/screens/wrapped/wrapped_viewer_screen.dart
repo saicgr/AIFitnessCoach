@@ -141,7 +141,7 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
       backgroundColor: Colors.black,
       body: asyncData.when(
         loading: () => const Center(
-          child: CircularProgressIndicator(color: Color(0xFFA855F7)),
+          child: CircularProgressIndicator(color: Color(0xFFA855F7)), // accent-allowlist: Wrapped feature brand purple, consistent with intro_card.dart theme
         ),
         error: (error, _) => Center(
           child: Padding(
@@ -346,7 +346,7 @@ class _ProgressBar extends StatelessWidget {
               color: isCompleted
                   ? Colors.white.withValues(alpha: 0.9)
                   : isCurrent
-                      ? const Color(0xFFA855F7)
+                      ? const Color(0xFFA855F7) // accent-allowlist: Wrapped feature brand purple, consistent with intro_card.dart theme
                       : Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(1.5),
             ),

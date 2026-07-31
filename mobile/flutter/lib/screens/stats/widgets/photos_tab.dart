@@ -239,20 +239,20 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.12),
+                        color: Colors.red.withValues(alpha: 0.12),  // accent-allowlist: error/negative state — must stay red regardless of accent
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.delete_outline, size: 18, color: Colors.red),
+                          const Icon(Icons.delete_outline, size: 18, color: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
                           const SizedBox(width: 4),
                           Text(
                             AppLocalizations.of(context).buttonDelete,
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: Colors.red,
+                              color: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
                             ),
                           ),
                         ],
@@ -626,7 +626,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
                           ),
                           errorWidget: (_, __, ___) => const Icon(
                             Icons.broken_image,
-                            color: Colors.red,
+                            color: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
                           ),
                         ),
                       )
@@ -833,7 +833,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${viewType.displayName} photo saved!'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
         );
       }
@@ -843,7 +843,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to upload photo: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
           ),
         );
       }
@@ -878,7 +878,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to open editor: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
           ),
         );
       }

@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Stats Overview Template - Shows activity summary with key stats
 /// Dark gradient background with heatmap-style visualization
 class StatsOverviewTemplate extends StatelessWidget {
@@ -68,7 +69,7 @@ class StatsOverviewTemplate extends StatelessWidget {
                           Text(
                             AppLocalizations.of(context).statsOverviewTemplateMyStats,
                             style: TextStyle(
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 2,
@@ -90,14 +91,14 @@ class StatsOverviewTemplate extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.2),
+                        color: context.accentColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.orange.withOpacity(0.4)),
+                        border: Border.all(color: context.accentColor.withOpacity(0.4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.local_fire_department, color: AppColors.orange, size: 16),
+                          Icon(Icons.local_fire_department, color: context.accentColor, size: 16),
                           const SizedBox(width: 4),
                           Text(
                             '$currentStreak day streak',
@@ -151,19 +152,19 @@ class StatsOverviewTemplate extends StatelessWidget {
                       icon: Icons.calendar_today,
                       value: '$weeklyCompleted/$weeklyGoal',
                       label: AppLocalizations.of(context).workoutCompleteThisWeek,
-                      color: AppColors.purple,
+                      color: context.accentColor,
                     ),
                     _StatItem(
                       icon: Icons.timer_outlined,
                       value: totalTimeFormatted,
                       label: AppLocalizations.of(context).statsOverviewTemplateTotalTime,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ),
                     _StatItem(
                       icon: Icons.trending_up,
                       value: '$currentStreak',
                       label: AppLocalizations.of(context).xpProgressCardStreak,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   ],
                 ),
@@ -232,7 +233,7 @@ class _HeatmapPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.orange.withOpacity(0.03)
+      ..color = AppColors.orange.withOpacity(0.03)  // accent-allowlist: fixed decorative template palette — decorative heatmap-style pattern (see class doc above), not tied to accent
       ..style = PaintingStyle.fill;
 
     const cellSize = 12.0;
@@ -242,7 +243,7 @@ class _HeatmapPatternPainter extends CustomPainter {
       for (double y = 100; y < 180; y += cellSize + gap) {
         // Random-ish opacity based on position
         final opacity = ((x + y) % 50) / 500;
-        paint.color = AppColors.orange.withOpacity(0.02 + opacity);
+        paint.color = AppColors.orange.withOpacity(0.02 + opacity);  // accent-allowlist: fixed decorative template palette — decorative heatmap-style pattern (see class doc above), not tied to accent
         canvas.drawRRect(
           RRect.fromRectAndRadius(
             Rect.fromLTWH(x, y, cellSize, cellSize),

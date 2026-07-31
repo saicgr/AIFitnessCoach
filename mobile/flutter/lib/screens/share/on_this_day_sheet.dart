@@ -77,7 +77,7 @@ class _OnThisDayBody extends ConsumerWidget {
         const ShareableMetric(label: 'STILL HERE', value: 'Today'),
       ],
       userDisplayName: name,
-      accentColor: const Color(0xFFD8FF3A),
+      accentColor: ThemeColors.of(context).accent,
     );
     if (!context.mounted) return;
     Navigator.of(context).pop();
@@ -103,7 +103,7 @@ class _OnThisDayBody extends ConsumerWidget {
       ],
       healthScore: (m['health_score'] as num?)?.round(),
       userDisplayName: name,
-      accentColor: const Color(0xFFD8FF3A),
+      accentColor: ThemeColors.of(context).accent,
     );
     if (!context.mounted) return;
     Navigator.of(context).pop();

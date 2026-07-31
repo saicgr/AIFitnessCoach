@@ -165,7 +165,7 @@ class AIPrivacySection extends ConsumerWidget {
           icon: Icons.info_outlined,
           title: AppLocalizations.of(context).aiPrivacyHowYourDataIs,
           subtitle: AppLocalizations.of(context).aiPrivacySeeWhatDataIs,
-          color: AppColors.info,
+          color: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
           onTap: () => context.push('/settings/ai-data-usage'),
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -186,12 +186,12 @@ class AIPrivacySection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.15),
+                  color: AppColors.success.withValues(alpha: 0.15),  // accent-allowlist: success/positive state - must stay green regardless of accent
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.psychology_outlined,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                   size: 20,
                 ),
               ),
@@ -223,7 +223,7 @@ class AIPrivacySection extends ConsumerWidget {
               Switch.adaptive(
                 value: personalizationEnabled,
                 onChanged: (v) => _togglePersonalization(ref, v),
-                activeColor: AppColors.success,
+                activeColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
               ),
             ],
           ),
@@ -243,12 +243,12 @@ class AIPrivacySection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.15),
+                  color: AppColors.info.withValues(alpha: 0.15),  // accent-allowlist: informational state - must stay blue regardless of accent
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.chat_bubble_outline,
-                  color: AppColors.info,
+                  color: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
                   size: 20,
                 ),
               ),
@@ -280,7 +280,7 @@ class AIPrivacySection extends ConsumerWidget {
               Switch.adaptive(
                 value: saveChatHistory,
                 onChanged: (v) => _toggleSaveChatHistory(ref, v),
-                activeColor: AppColors.info,
+                activeColor: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
               ),
             ],
           ),
@@ -301,12 +301,12 @@ class AIPrivacySection extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE91E63).withValues(alpha: 0.15),
+                  color: const Color(0xFFE91E63).withValues(alpha: 0.15),  // accent-allowlist: cycle-tracking feature's own thematic colour, not the app accent
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
                   Icons.volunteer_activism_outlined,
-                  color: Color(0xFFE91E63),
+                  color: Color(0xFFE91E63),  // accent-allowlist: cycle-tracking feature's own thematic colour, not the app accent
                   size: 20,
                 ),
               ),
@@ -339,7 +339,7 @@ class AIPrivacySection extends ConsumerWidget {
               Switch.adaptive(
                 value: cycleResearchConsent,
                 onChanged: (v) => _toggleCycleResearch(context, ref, v),
-                activeColor: const Color(0xFFE91E63),
+                activeColor: const Color(0xFFE91E63),  // accent-allowlist: cycle-tracking feature's own thematic colour, not the app accent
               ),
             ],
           ),
@@ -352,7 +352,7 @@ class AIPrivacySection extends ConsumerWidget {
           icon: Icons.medical_information_outlined,
           title: AppLocalizations.of(context).medicalDisclaimerMedicalDisclaimer,
           subtitle: AppLocalizations.of(context).aiPrivacyImportantHealthInformation,
-          color: AppColors.warning,
+          color: AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
           onTap: () => context.push('/settings/medical-disclaimer'),
           textPrimary: textPrimary,
           textMuted: textMuted,

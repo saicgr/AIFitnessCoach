@@ -390,7 +390,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.cyan.withValues(alpha: 0.3),
+                          color: context.accentColor.withValues(alpha: 0.3),
                           width: 2,
                           strokeAlign: BorderSide.strokeAlignInside,
                         ),
@@ -400,7 +400,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                         children: [
                           Icon(
                             Icons.add_circle_outline,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -409,7 +409,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -432,7 +432,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.purple.withValues(alpha: 0.3),
+                          color: context.accentColor.withValues(alpha: 0.3),
                           width: 2,
                           strokeAlign: BorderSide.strokeAlignInside,
                         ),
@@ -442,7 +442,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                         children: [
                           Icon(
                             Icons.explore,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -451,7 +451,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -529,7 +529,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.cyan.withValues(alpha: 0.3),
+                          color: context.accentColor.withValues(alpha: 0.3),
                           width: 2,
                           strokeAlign: BorderSide.strokeAlignInside,
                         ),
@@ -539,7 +539,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                         children: [
                           Icon(
                             Icons.add_circle_outline,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -548,7 +548,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -571,7 +571,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.purple.withValues(alpha: 0.3),
+                          color: context.accentColor.withValues(alpha: 0.3),
                           width: 2,
                           strokeAlign: BorderSide.strokeAlignInside,
                         ),
@@ -581,7 +581,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                         children: [
                           Icon(
                             Icons.explore,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                             size: 22,
                           ),
                           const SizedBox(width: 6),
@@ -590,7 +590,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.purple,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -687,7 +687,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.purple.withValues(alpha: 0.5),
+                    color: context.accentColor.withValues(alpha: 0.5),
                     width: 2,
                   ),
                 ),
@@ -705,7 +705,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                       ),
                       child: Icon(
                         Icons.drag_handle_rounded,
-                        color: AppColors.purple,
+                        color: context.accentColor,
                         size: 24,
                       ),
                     ),
@@ -727,7 +727,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                             children: [
                               Icon(
                                 Icons.aspect_ratio_rounded,
-                                color: AppColors.orange,
+                                color: context.accentColor,
                                 size: 20,
                               ),
                               const SizedBox(width: 4),
@@ -736,7 +736,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.orange,
+                                  color: context.accentColor,
                                 ),
                               ),
                             ],
@@ -763,7 +763,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           tile.isVisible
                               ? Icons.visibility_rounded
                               : Icons.visibility_off_rounded,
-                          color: tile.isVisible ? AppColors.cyan : AppColors.textMuted,
+                          color: tile.isVisible ? context.accentColor : AppColors.textMuted,
                           size: 22,
                         ),
                       ),
@@ -839,7 +839,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.purple.withValues(alpha: 0.5),
+                    color: context.accentColor.withValues(alpha: 0.5),
                     width: 2,
                   ),
                 ),
@@ -857,7 +857,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                       ),
                       child: Icon(
                         Icons.drag_handle_rounded,
-                        color: AppColors.purple,
+                        color: context.accentColor,
                         size: 24,
                       ),
                     ),
@@ -880,7 +880,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                             children: [
                               Icon(
                                 Icons.aspect_ratio_rounded,
-                                color: AppColors.orange,
+                                color: context.accentColor,
                                 size: 20,
                               ),
                               const SizedBox(width: 4),
@@ -889,7 +889,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.orange,
+                                  color: context.accentColor,
                                 ),
                               ),
                             ],
@@ -916,7 +916,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           tile.isVisible
                               ? Icons.visibility_rounded
                               : Icons.visibility_off_rounded,
-                          color: tile.isVisible ? AppColors.cyan : AppColors.textMuted,
+                          color: tile.isVisible ? context.accentColor : AppColors.textMuted,
                           size: 24,
                         ),
                       ),
@@ -934,7 +934,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withValues(alpha: 0.9),
+                    color: context.accentColor.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

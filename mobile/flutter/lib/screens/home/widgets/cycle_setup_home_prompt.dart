@@ -88,7 +88,7 @@ class _CycleSetupHomePromptState extends ConsumerState<CycleSetupHomePrompt> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // Pink is the cycle feature accent (see the cycle plan / settings screen).
-    const accent = Color(0xFFEC4899);
+    const accent = Color(0xFFEC4899);  // accent-allowlist: cycle-tracking feature's own dedicated pink brand accent (comment: "Pink is the cycle feature accent"), not the app accent
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;

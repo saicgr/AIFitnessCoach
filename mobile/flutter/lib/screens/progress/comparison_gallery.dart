@@ -13,6 +13,7 @@ import 'comparison_view.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Full-screen gallery of saved before/after comparisons
 class ComparisonGalleryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -262,8 +263,8 @@ class _ComparisonGalleryScreenState
                           ),
                           decoration: BoxDecoration(
                             color: (comparison.weightChangeKg ?? 0) < 0
-                                ? AppColors.green.withOpacity(0.15)
-                                : AppColors.orange.withOpacity(0.15),
+                                ? AppColors.green.withOpacity(0.15)  // accent-allowlist: success/positive state — must stay green regardless of accent
+                                : context.accentColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -272,8 +273,8 @@ class _ComparisonGalleryScreenState
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: (comparison.weightChangeKg ?? 0) < 0
-                                  ? AppColors.green
-                                  : AppColors.orange,
+                                  ? AppColors.green  // accent-allowlist: success/positive state — must stay green regardless of accent
+                                  : context.accentColor,
                             ),
                           ),
                         ),

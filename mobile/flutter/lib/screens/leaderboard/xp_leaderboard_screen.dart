@@ -538,11 +538,11 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
   Widget _buildRankCell(int rank, Color textMuted) {
     Color? rankColor;
     if (rank == 1) {
-      rankColor = AppColors.rarityGold;
+      rankColor = AppColors.rarityGold;  // accent-allowlist: podium rank medal colour -- gold/silver/bronze rank tier
     } else if (rank == 2) {
       rankColor = AppColors.raritySilver;
     } else if (rank == 3) {
-      rankColor = AppColors.rarityBronze;
+      rankColor = AppColors.rarityBronze;  // accent-allowlist: podium rank medal colour -- gold/silver/bronze rank tier
     }
     return SizedBox(
       width: 36,
@@ -585,16 +585,16 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     Color color;
     String tier;
     if (score >= 90) {
-      color = const Color(0xFFFFD700);
+      color = const Color(0xFFFFD700);  // accent-allowlist: strength-score tier ramp -- Elite
       tier = 'Elite';
     } else if (score >= 70) {
-      color = const Color(0xFF9C27B0);
+      color = const Color(0xFF9C27B0);  // accent-allowlist: strength-score tier ramp -- Advanced
       tier = 'Advanced';
     } else if (score >= 50) {
-      color = const Color(0xFF2196F3);
+      color = const Color(0xFF2196F3);  // accent-allowlist: strength-score tier ramp -- Intermediate
       tier = 'Intermediate';
     } else if (score >= 25) {
-      color = const Color(0xFF4CAF50);
+      color = const Color(0xFF4CAF50);  // accent-allowlist: strength-score tier ramp -- Novice
       tier = 'Novice';
     } else {
       color = const Color(0xFF9E9E9E);
@@ -655,13 +655,13 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
                     center: Alignment(-0.3, -0.4),
                   ),
                   border: Border.all(
-                    color: AppColors.gamGold.withValues(alpha: 0.55),
+                    color: AppColors.gamGold.withValues(alpha: 0.55),  // accent-allowlist: rank badge -- gold rarity ring
                     width: 1.5,
                   ),
                 ),
                 child: Text(
                   '#$rank',
-                  style: ZType.disp(18, color: AppColors.gamGold),
+                  style: ZType.disp(18, color: AppColors.gamGold),  // accent-allowlist: rank badge -- gold rarity ring
                 ),
               ),
               const SizedBox(width: 14),
@@ -852,16 +852,16 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
 
   Color _getTitleColorForLevel(int level) {
     if (level <= 10) return const Color(0xFF9E9E9E);
-    if (level <= 25) return const Color(0xFF8BC34A);
-    if (level <= 50) return const Color(0xFF4CAF50);
-    if (level <= 75) return const Color(0xFF2196F3);
-    if (level <= 100) return const Color(0xFF9C27B0);
-    if (level <= 125) return const Color(0xFFFF9800);
-    if (level <= 150) return const Color(0xFFFF5722);
-    if (level <= 175) return const Color(0xFFFFD700);
-    if (level <= 200) return const Color(0xFFE040FB);
-    if (level <= 225) return const Color(0xFF00E5FF);
-    return const Color(0xFFFF1744);
+    if (level <= 25) return const Color(0xFF8BC34A);  // accent-allowlist: level-title tier ramp
+    if (level <= 50) return const Color(0xFF4CAF50);  // accent-allowlist: level-title tier ramp
+    if (level <= 75) return const Color(0xFF2196F3);  // accent-allowlist: level-title tier ramp
+    if (level <= 100) return const Color(0xFF9C27B0);  // accent-allowlist: level-title tier ramp
+    if (level <= 125) return const Color(0xFFFF9800);  // accent-allowlist: level-title tier ramp
+    if (level <= 150) return const Color(0xFFFF5722);  // accent-allowlist: level-title tier ramp
+    if (level <= 175) return const Color(0xFFFFD700);  // accent-allowlist: level-title tier ramp
+    if (level <= 200) return const Color(0xFFE040FB);  // accent-allowlist: level-title tier ramp
+    if (level <= 225) return const Color(0xFF00E5FF);  // accent-allowlist: level-title tier ramp
+    return const Color(0xFFFF1744);  // accent-allowlist: level-title tier ramp
   }
 
   String _formatXP(int xp) {

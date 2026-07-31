@@ -12,6 +12,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Comments Sheet - Bottom sheet showing comments for an activity
 class CommentsSheet extends ConsumerStatefulWidget {
   final String activityId;
@@ -159,7 +160,7 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
               Navigator.pop(context);
               _deleteComment(commentId, index);
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -389,16 +390,16 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
           // Avatar
           CircleAvatar(
             radius: 16,
-            backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+            backgroundColor: context.accentColor.withValues(alpha: 0.2),
             backgroundImage:
                 userAvatar != null ? NetworkImage(userAvatar) : null,
             child: userAvatar == null
                 ? Text(
                     userName.isNotEmpty ? userName[0].toUpperCase() : '?',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   )
                 : null,
@@ -482,9 +483,9 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
             if (isOwn)
               ListTile(
                 leading: const Icon(Icons.delete_outline_rounded,
-                    color: AppColors.red),
+                    color: AppColors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
                 title: Text(AppLocalizations.of(context).buttonDelete,
-                    style: TextStyle(color: AppColors.red)),
+                    style: TextStyle(color: AppColors.red)),  // accent-allowlist: error/negative state — must stay red regardless of accent
                 onTap: () {
                   Navigator.pop(context);
                   _showDeleteConfirmation(commentId, index);

@@ -98,7 +98,7 @@ class _MeasurementDetailScreenState
     // Signature v2: the measurement family's documented accent exception is
     // cyan (#06B6D4). It's used on the chart line + the CTA only — never as a
     // general orange substitute.
-    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always the same colour across every nutrition surface
 
     final history = measurementsState.historyByType[_type] ?? [];
     final filteredHistory = _filterByPeriod(history);
@@ -656,8 +656,8 @@ class _MeasurementDetailScreenState
 
     // Signature v2 verdict line: a literal status green/red (not the accent) —
     // green #5BE49B for a desirable change, red for the rest.
-    const verdictGreen = Color(0xFF5BE49B);
-    final color = isGoodChange ? verdictGreen : AppColors.error;
+    const verdictGreen = Color(0xFF5BE49B);  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final color = isGoodChange ? verdictGreen : AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
 
     // Verb pool keeps copy human: weight/fat read "lost/gained"; girths read
     // "down/up". Exact magnitude is substituted, never rounded to theatre.
@@ -848,56 +848,56 @@ class _MeasurementDetailScreenState
       case MeasurementType.bodyFat:
         if (g == 'female') {
           return [
-            HorizontalLine(y: 20, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 20, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: success/positive state — must stay green regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 labelResolver: (_) => 'Athletes')),
-            HorizontalLine(y: 24, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 24, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: health reference-range color — fixed ACE body-fat classification zone, not tied to accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),  // accent-allowlist: health reference-range color — fixed ACE body-fat classification zone, not tied to accent
                 labelResolver: (_) => 'Fitness')),
-            HorizontalLine(y: 31, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 31, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: error/negative state — must stay red regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),  // accent-allowlist: error/negative state — must stay red regardless of accent
                 labelResolver: (_) => 'Obese')),
           ];
         } else {
           return [
-            HorizontalLine(y: 13, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 13, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: success/positive state — must stay green regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
                 labelResolver: (_) => 'Athletes')),
-            HorizontalLine(y: 17, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 17, color: Colors.cyan.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.cyan.withOpacity(0.7)),  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
                 labelResolver: (_) => 'Fitness')),
-            HorizontalLine(y: 24, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 24, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
                 labelResolver: (_) => 'Obese')),
           ];
         }
       case MeasurementType.waist:
         if (g == 'female') {
           return [
-            HorizontalLine(y: 80, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 80, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: success/positive state — must stay green regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 labelResolver: (_) => 'Healthy')),
-            HorizontalLine(y: 88, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 88, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: error/negative state — must stay red regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),  // accent-allowlist: error/negative state — must stay red regardless of accent
                 labelResolver: (_) => 'High Risk')),
           ];
         } else {
           return [
-            HorizontalLine(y: 94, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 94, color: Colors.green.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: success/positive state — must stay green regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.green.withOpacity(0.7)),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 labelResolver: (_) => 'Healthy')),
-            HorizontalLine(y: 102, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],
+            HorizontalLine(y: 102, color: Colors.red.withOpacity(0.4), strokeWidth: 1, dashArray: [5, 5],  // accent-allowlist: error/negative state — must stay red regardless of accent
               label: HorizontalLineLabel(show: true, alignment: Alignment.topRight, // rtl-keep: fl_chart HorizontalLineLabel requires Alignment
-                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),
+                style: TextStyle(fontSize: 9, color: Colors.red.withOpacity(0.7)),  // accent-allowlist: error/negative state — must stay red regardless of accent
                 labelResolver: (_) => 'High Risk')),
           ];
         }
@@ -941,7 +941,7 @@ class _MeasurementDetailScreenState
                 label: AppLocalizations.of(context).syncedWorkoutDetailMin,
                 // Min reads as a subtle status green.
                 value: '${_formatValue(min)} $unit',
-                color: const Color(0xFF5BE49B),
+                color: const Color(0xFF5BE49B),  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             ),
           ),
@@ -962,7 +962,7 @@ class _MeasurementDetailScreenState
                 label: AppLocalizations.of(context).strengthOverviewCardMax,
                 // Max reads as a subtle status red.
                 value: '${_formatValue(max)} $unit',
-                color: AppColors.error,
+                color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
               ),
             ),
           ),
@@ -984,9 +984,9 @@ class _MeasurementDetailScreenState
 
   Color _getRelatedChangeColor(MeasurementType type, double change) {
     if (type == MeasurementType.weight || type == MeasurementType.bodyFat) {
-      return change < 0 ? AppColors.success : AppColors.error;
+      return change < 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
     }
-    return change > 0 ? AppColors.success : AppColors.error;
+    return change > 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
   }
 
   Future<bool> _confirmDelete(MeasurementEntry entry) async {
@@ -1008,7 +1008,7 @@ class _MeasurementDetailScreenState
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -1075,10 +1075,10 @@ class _MeasurementDetailScreenState
   Color _getChangeColor(double change) {
     // For weight and body fat, decrease is good
     if (_type == MeasurementType.weight || _type == MeasurementType.bodyFat) {
-      return change < 0 ? AppColors.success : AppColors.error;
+      return change < 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
     }
     // For other measurements (muscle), increase is usually good
-    return change > 0 ? AppColors.success : AppColors.error;
+    return change > 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
   }
 
   void _showAddMeasurementSheet(BuildContext context) {
@@ -1087,7 +1087,7 @@ class _MeasurementDetailScreenState
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     // Cyan — this family's documented accent exception (matches the chart line
     // + the in-scroll CTA).
-    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always the same colour across every nutrition surface
     final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
 
     final valueController = TextEditingController();
@@ -1188,7 +1188,7 @@ class _MeasurementDetailScreenState
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(AppLocalizations.of(context).measurementsScreenPartPleaseEnterAValue),
-                                  backgroundColor: AppColors.error,
+                                  backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                                 ),
                               );
                               return;
@@ -1199,7 +1199,7 @@ class _MeasurementDetailScreenState
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(AppLocalizations.of(context).recordAttemptPleaseEnterAValid),
-                                  backgroundColor: AppColors.error,
+                                  backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                                 ),
                               );
                               return;
@@ -1246,7 +1246,7 @@ class _MeasurementDetailScreenState
                                     SnackBar(
                                       content:
                                           Text(AppLocalizations.of(context)!.measurementDetailScreenRecorded(_type.displayName)),
-                                      backgroundColor: AppColors.success,
+                                      backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                     ),
                                   );
                                 }
@@ -1258,7 +1258,7 @@ class _MeasurementDetailScreenState
                                     SnackBar(
                                       content: Text(
                                           AppLocalizations.of(context)!.measurementDetailScreenCouldnTSaveTry(_type.displayName.toLowerCase())),
-                                      backgroundColor: AppColors.error,
+                                      backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                                     ),
                                   );
                                 }

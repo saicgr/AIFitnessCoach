@@ -264,13 +264,13 @@ class _PhaseHeader extends StatelessWidget {
   Color _phaseColor(CyclePhase p, ThemeColors c) {
     switch (p) {
       case CyclePhase.menstrual:
-        return const Color(0xFFEF4444); // red — period
+        return const Color(0xFFEF4444); // red — period  // accent-allowlist: error/destructive -- must stay red (red-500)
       case CyclePhase.follicular:
-        return const Color(0xFF22C55E); // green — building
+        return const Color(0xFF22C55E); // green — building  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
       case CyclePhase.ovulation:
         return c.accent; // accent — peak window
       case CyclePhase.luteal:
-        return const Color(0xFFF59E0B); // amber — pre-period
+        return const Color(0xFFF59E0B); // amber — pre-period  // accent-allowlist: warning severity (amber-500)
     }
   }
 
@@ -332,7 +332,7 @@ class _PredictionRow extends StatelessWidget {
               width: 7,
               height: 7,
               decoration: const BoxDecoration(
-                color: Color(0xFFEF4444),
+                color: Color(0xFFEF4444),  // accent-allowlist: error/destructive -- must stay red (red-500)
                 shape: BoxShape.circle,
               ),
             ),

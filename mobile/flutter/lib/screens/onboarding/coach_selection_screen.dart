@@ -289,7 +289,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    const exampleColor = Color(0xFFEC4899); // Pink for the example coach
+    const exampleColor = Color(0xFFEC4899); // Pink for the example coach  // accent-allowlist: example custom-coach persona preview colour, deliberately not the user's own accent
 
     showGlassSheet<void>(
       context: context,
@@ -309,7 +309,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                           height: 40,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [exampleColor, Color(0xFFA855F7)],
+                              colors: [exampleColor, Color(0xFFA855F7)],  // accent-allowlist: example custom-coach persona preview colour, deliberately not the user's own accent
                             ),
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -366,7 +366,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                                         end: Alignment.bottomRight,
                                         colors: [
                                           exampleColor.withValues(alpha: 0.25),
-                                          const Color(0xFFA855F7).withValues(alpha: 0.25),
+                                          const Color(0xFFA855F7).withValues(alpha: 0.25),  // accent-allowlist: example custom-coach persona preview colour, deliberately not the user's own accent
                                         ],
                                       ),
                                       border: Border.all(color: exampleColor, width: 2.5),
@@ -1209,7 +1209,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
     final canContinue = _selectedCoach != null || (_isCustomMode && _customName.isNotEmpty);
 
-    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final coachColor = _selectedCoach?.primaryColor ?? context.accentColor;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,

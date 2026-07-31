@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Individual leaderboard entry card
 class LeaderboardEntryCard extends StatelessWidget {
   final Map<String, dynamic> entry;
@@ -37,8 +38,8 @@ class LeaderboardEntryCard extends StatelessWidget {
 
     final cardColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final highlightColor = isCurrentUser
-        ? AppColors.cyan.withValues(alpha: 0.1)
-        : (isFriend ? AppColors.green.withValues(alpha: 0.05) : cardColor);
+        ? context.accentColor.withValues(alpha: 0.1)
+        : (isFriend ? AppColors.green.withValues(alpha: 0.05) : cardColor);  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -46,7 +47,7 @@ class LeaderboardEntryCard extends StatelessWidget {
         color: highlightColor,
         borderRadius: BorderRadius.circular(12),
         border: isCurrentUser
-            ? Border.all(color: AppColors.cyan.withValues(alpha: 0.5), width: 2)
+            ? Border.all(color: context.accentColor.withValues(alpha: 0.5), width: 2)
             : null,
       ),
       child: Row(
@@ -101,14 +102,14 @@ class LeaderboardEntryCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.green.withValues(alpha: 0.2),
+                          color: AppColors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
                           AppLocalizations.of(context).leaderboardEntryCardFriend,
                           style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.green,
+                            color: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -128,7 +129,7 @@ class LeaderboardEntryCard extends StatelessWidget {
               onPressed: onChallengeTap,
               icon: Icon(
                 isFriend ? Icons.emoji_events : Icons.flash_on,
-                color: isFriend ? AppColors.orange : AppColors.cyan,
+                color: isFriend ? context.accentColor : context.accentColor,
               ),
               tooltip: isFriend ? AppLocalizations.of(context).leaderboardEntryCardChallengeFriend : AppLocalizations.of(context).leaderboardEntryCardBeatTheirBest,
             ),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -128,7 +129,7 @@ class _LiveChatInputBarState extends State<LiveChatInputBar> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide(
-                      color: AppColors.cyan.withOpacity(0.5),
+                      color: context.accentColor.withOpacity(0.5),
                       width: 1,
                     ),
                   ),
@@ -179,7 +180,7 @@ class _SendButton extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: enabled
             ? LinearGradient(
-                colors: [AppColors.cyan, AppColors.teal],
+                colors: [context.accentColor, AppColors.teal],
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
               )
@@ -189,7 +190,7 @@ class _SendButton extends StatelessWidget {
         boxShadow: enabled
             ? [
                 BoxShadow(
-                  color: AppColors.cyan.withOpacity(0.3),
+                  color: context.accentColor.withOpacity(0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

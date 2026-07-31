@@ -35,9 +35,9 @@ class MacroRingsCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
+    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
 
     final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
     final prefs = ref.watch(nutritionPreferencesProvider);

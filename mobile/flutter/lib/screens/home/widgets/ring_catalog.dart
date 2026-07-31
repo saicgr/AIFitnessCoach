@@ -79,7 +79,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.train,
     id: 'train',
     label: 'Train',
-    color: Color(0xFFEC8B2C),
+    color: Color(0xFFEC8B2C),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'today_score.train',
     isCore: true,
     defaultVisible: true,
@@ -88,7 +88,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.nourish,
     id: 'nourish',
     label: 'Nourish',
-    color: Color(0xFF3FA66B),
+    color: Color(0xFF3FA66B),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'today_score.fuel',
     isCore: true,
     defaultVisible: true,
@@ -97,7 +97,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.move,
     id: 'move',
     label: 'Move',
-    color: Color(0xFF3E8FD0),
+    color: Color(0xFF3E8FD0),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'today_score.move',
     isCore: true,
     defaultVisible: true,
@@ -106,7 +106,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.sleep,
     id: 'sleep',
     label: 'Sleep',
-    color: Color(0xFF8B5CF6),
+    color: Color(0xFF8B5CF6),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'today_score.sleep',
     isCore: true,
     defaultVisible: true,
@@ -124,7 +124,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.heartRate,
     id: 'heart_rate',
     label: 'Heart rate',
-    color: Color(0xFFE5544D),
+    color: Color(0xFFE5544D),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.hr',
     isCore: false,
     defaultVisible: false,
@@ -133,7 +133,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.hrv,
     id: 'hrv',
     label: 'HRV',
-    color: Color(0xFF14B8A6),
+    color: Color(0xFF14B8A6),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.hrv',
     isCore: false,
     defaultVisible: false,
@@ -142,7 +142,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.stress,
     id: 'stress',
     label: 'Stress',
-    color: Color(0xFFF59E0B),
+    color: Color(0xFFF59E0B),  // accent-allowlist: warning severity (amber-500)
     sourceId: 'wearable.stress',
     isCore: false,
     defaultVisible: false,
@@ -151,7 +151,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.hydration,
     id: 'hydration',
     label: 'Hydration',
-    color: Color(0xFF06B6D4),
+    color: Color(0xFF06B6D4),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'hydration.today',
     isCore: false,
     defaultVisible: false,
@@ -169,7 +169,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.recovery,
     id: 'recovery',
     label: 'Recovery',
-    color: Color(0xFFA855F7),
+    color: Color(0xFFA855F7),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.recovery',
     isCore: false,
     defaultVisible: false,
@@ -178,7 +178,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.sleepLatency,
     id: 'sleep_latency',
     label: 'Sleep latency',
-    color: Color(0xFF8B5CF6),
+    color: Color(0xFF8B5CF6),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'sleep.latency',
     isCore: false,
     defaultVisible: false,
@@ -187,7 +187,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.wakeConsistency,
     id: 'wake_consistency',
     label: 'Wake consistency',
-    color: Color(0xFFF59E0B),
+    color: Color(0xFFF59E0B),  // accent-allowlist: warning severity (amber-500)
     sourceId: 'sleep.wake_consistency',
     isCore: false,
     defaultVisible: false,
@@ -196,7 +196,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.bedtimeWindow,
     id: 'bedtime_window',
     label: 'Bedtime',
-    color: Color(0xFF6366F1),
+    color: Color(0xFF6366F1),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'sleep.bedtime_window',
     isCore: false,
     defaultVisible: false,
@@ -205,7 +205,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.vo2max,
     id: 'vo2max',
     label: 'VO₂max',
-    color: Color(0xFFE5544D),
+    color: Color(0xFFE5544D),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.vo2max',
     isCore: false,
     defaultVisible: false,
@@ -214,7 +214,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.activeEnergy,
     id: 'active_energy',
     label: 'Active energy',
-    color: Color(0xFFF97316),
+    color: Color(0xFFF97316),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.active_energy',
     isCore: false,
     defaultVisible: false,
@@ -223,7 +223,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.protein,
     id: 'protein',
     label: 'Protein',
-    color: Color(0xFFEF4444),
+    color: Color(0xFFEF4444),  // accent-allowlist: error/destructive -- must stay red (red-500)
     sourceId: 'nutrition.protein',
     isCore: false,
     defaultVisible: false,
@@ -232,7 +232,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.zoneMinutes,
     id: 'zone_minutes',
     label: 'Zone minutes',
-    color: Color(0xFF10B981),
+    color: Color(0xFF10B981),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.zone_minutes',
     isCore: false,
     defaultVisible: false,
@@ -241,7 +241,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.mindfulMinutes,
     id: 'mindful_minutes',
     label: 'Mindful minutes',
-    color: Color(0xFF8B5CF6),
+    color: Color(0xFF8B5CF6),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'mindfulness.today',
     isCore: false,
     defaultVisible: false,
@@ -250,7 +250,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.stepStreak,
     id: 'step_streak',
     label: 'Step streak',
-    color: Color(0xFF10B981),
+    color: Color(0xFF10B981),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'wearable.step_streak',
     isCore: false,
     defaultVisible: false,
@@ -259,7 +259,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.bodyFat,
     id: 'body_fat',
     label: 'Body fat',
-    color: Color(0xFFEC4899),
+    color: Color(0xFFEC4899),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'measurement.body_fat',
     isCore: false,
     defaultVisible: false,
@@ -268,7 +268,7 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     kind: RingKind.cardioDistance,
     id: 'cardio_distance',
     label: 'Distance',
-    color: Color(0xFF3DC97A),
+    color: Color(0xFF3DC97A),  // accent-allowlist: ring/metric categorical identity -- each health-score ring (Train/Nourish/Move/Sleep/HRV/Recovery/VO2max/...) keeps one fixed colour across every ring display
     sourceId: 'cardio.distance',
     isCore: false,
     defaultVisible: false,

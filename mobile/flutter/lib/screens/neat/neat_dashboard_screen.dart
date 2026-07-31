@@ -10,6 +10,7 @@ import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'neat_dashboard_screen_part_neat_score_card.dart';
 part 'neat_dashboard_screen_part_streaks_card.dart';
 
@@ -44,9 +45,9 @@ class NeatScore {
 
   /// Get score color based on value
   Color get scoreColor {
-    if (score >= 75) return AppColors.success;
-    if (score >= 50) return AppColors.orange;
-    return AppColors.error;
+    if (score >= 75) return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (score >= 50) return AppColors.orange;  // accent-allowlist: no BuildContext available in this scope (getter without context param) — score-band identity color
+    return AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
   }
 
   /// Progress towards step goal (0.0 - 1.0+)
@@ -449,7 +450,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
       ),
       body: AppRefreshIndicator(
         onRefresh: _loadData,
-        color: AppColors.cyan,
+        color: context.accentColor,
         backgroundColor: elevatedColor,
         // Cache-first: a cold install shows a card-shaped skeleton; a returning
         // user sees the last dashboard instantly. `NeatState` is mapped to an
@@ -507,7 +508,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.error.withOpacity(0.7),
+              color: AppColors.error.withOpacity(0.7),  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
             const SizedBox(height: 16),
             Text(
@@ -530,7 +531,7 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
               icon: const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
               ),
             ),

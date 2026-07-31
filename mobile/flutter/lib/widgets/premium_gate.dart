@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../core/providers/usage_tracking_provider.dart';
 import 'upgrade_prompt_sheet.dart';
 
@@ -78,13 +79,13 @@ class PremiumLockCard extends ConsumerWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: (isDark ? AppColors.orange : AppColorsLight.orange)
+              color: (context.accentColor)
                   .withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
               icon,
-              color: isDark ? AppColors.orange : AppColorsLight.orange,
+              color: context.accentColor,
               size: 20,
             ),
           ),
@@ -122,7 +123,7 @@ class PremiumLockCard extends ConsumerWidget {
               );
             },
             style: TextButton.styleFrom(
-              backgroundColor: isDark ? AppColors.orange : AppColorsLight.orange,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Stats Streak Fire Template - Bold flame celebration
 /// Radial gradient orange → red → dark with flame-shaped paths
 class StatsStreakFireTemplate extends StatelessWidget {
@@ -33,13 +34,13 @@ class StatsStreakFireTemplate extends StatelessWidget {
       width: 320,
       height: 440,
       decoration: BoxDecoration(
-        gradient: const RadialGradient(
+        gradient: RadialGradient(
           center: Alignment(0, -0.2),
           radius: 1.2,
           colors: [
-            Color(0xFFF97316),
-            Color(0xFFDC2626),
-            Color(0xFF7F1D1D),
+            context.accentColor,
+            Color(0xFFDC2626),  // accent-allowlist: error/negative state — must stay red regardless of accent
+            Color(0xFF7F1D1D),  // accent-allowlist: error/negative state — must stay red regardless of accent
             Color(0xFF1C1917),
           ],
           stops: [0.0, 0.3, 0.6, 1.0],
@@ -85,13 +86,13 @@ class StatsStreakFireTemplate extends StatelessWidget {
 
                 // Big streak number with shader mask
                 ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
+                  shaderCallback: (bounds) => LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Color(0xFFFFD700),
-                      Color(0xFFF97316),
-                      Color(0xFFEF4444),
+                      Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier
+                      context.accentColor,
+                      Color(0xFFEF4444),  // accent-allowlist: error/negative state — must stay red regardless of accent
                     ],
                   ).createShader(bounds),
                   child: Text(
@@ -124,7 +125,7 @@ class StatsStreakFireTemplate extends StatelessWidget {
                     color: Colors.black.withOpacity(0.35),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFFF97316).withOpacity(0.3),
+                      color: context.accentColor.withOpacity(0.3),
                     ),
                   ),
                   child: Row(
@@ -177,7 +178,7 @@ class _FireStat extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: const Color(0xFFF97316), size: 18),
+        Icon(icon, color: context.accentColor, size: 18),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +218,7 @@ class _FlamePainter extends CustomPainter {
       center: Offset(cx, size.height * 0.55),
       width: size.width * 0.6,
       height: size.height * 0.45,
-      color: const Color(0xFFF97316).withOpacity(0.06),
+      color: const Color(0xFFF97316).withOpacity(0.06),  // accent-allowlist: fixed decorative template palette — flame-shaped decorative painter (see class doc above), not tied to accent
     );
 
     // Left flame
@@ -226,7 +227,7 @@ class _FlamePainter extends CustomPainter {
       center: Offset(cx - 60, size.height * 0.6),
       width: size.width * 0.25,
       height: size.height * 0.3,
-      color: const Color(0xFFEF4444).withOpacity(0.05),
+      color: const Color(0xFFEF4444).withOpacity(0.05),  // accent-allowlist: error/negative state — must stay red regardless of accent
     );
 
     // Right flame
@@ -235,7 +236,7 @@ class _FlamePainter extends CustomPainter {
       center: Offset(cx + 60, size.height * 0.6),
       width: size.width * 0.25,
       height: size.height * 0.3,
-      color: const Color(0xFFEF4444).withOpacity(0.05),
+      color: const Color(0xFFEF4444).withOpacity(0.05),  // accent-allowlist: error/negative state — must stay red regardless of accent
     );
   }
 

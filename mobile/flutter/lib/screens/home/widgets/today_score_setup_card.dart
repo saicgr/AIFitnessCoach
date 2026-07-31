@@ -150,10 +150,10 @@ class _SetupRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final iconBg = step.done
-        ? const Color(0xFF3FA66B).withValues(alpha: 0.18)
+        ? const Color(0xFF3FA66B).withValues(alpha: 0.18)  // accent-allowlist: success/positive state -- checklist-done indicator, must stay green regardless of accent
         : c.cardBorder.withValues(alpha: 0.6);
     final iconColor =
-        step.done ? const Color(0xFF3FA66B) : c.textMuted;
+        step.done ? const Color(0xFF3FA66B) : c.textMuted;  // accent-allowlist: success/positive state -- checklist-done indicator, must stay green regardless of accent
 
     return InkWell(
       onTap: step.onTap,

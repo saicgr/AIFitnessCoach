@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
@@ -176,8 +177,8 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                         style: TextStyle(
                           fontSize: 13,
                           color: _isLoading
-                              ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                              : (isDark ? AppColors.success : AppColorsLight.success),
+                              ? (isDark ? AppColors.orange : AppColorsLight.orange) // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
+                              : (isDark ? AppColors.success : AppColorsLight.success), // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
                         ),
                       ),
                     ],
@@ -206,7 +207,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             child: messagesState.when(
               loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  color: context.accentColor,
                 ),
               ),
               error: (e, _) => Center(
@@ -214,7 +215,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.error_outline,
-                        color: isDark ? AppColors.error : AppColorsLight.error,
+                        color: isDark ? AppColors.error : AppColorsLight.error, // accent-allowlist: error state icon, semantic
                         size: 40),
                     const SizedBox(height: 12),
                     Text(AppLocalizations.of(context).globalChatBubbleErrorLoadingMessages, style: TextStyle(color: textMuted)),
@@ -288,9 +289,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                     gradient: LinearGradient(
                       colors: _isLoading
                           ? [textMuted, textMuted]
-                          : isDark
-                              ? [AppColors.cyan, AppColors.purple]
-                              : [AppColorsLight.cyan, AppColorsLight.purple],
+                          : [context.accentColor, context.accentColor.withValues(alpha: 0.7)],
                     ),
                     shape: BoxShape.circle,
                   ),
@@ -408,7 +407,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
 
     if (isError) {
@@ -421,11 +420,11 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             maxWidth: MediaQuery.of(context).size.width * 0.78,
           ),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08),
+            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08), // accent-allowlist: error chat bubble, semantic error state
             borderRadius: BorderRadius.circular(18).copyWith(
               bottomLeft: const Radius.circular(4),
             ),
-            border: Border.all(color: Colors.red.withOpacity(0.3)),
+            border: Border.all(color: Colors.red.withOpacity(0.3)), // accent-allowlist: error chat bubble, semantic error state
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -433,13 +432,13 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             children: [
               const Padding(
                 padding: EdgeInsetsDirectional.only(top: 2, end: 8),
-                child: Icon(Icons.error_outline, color: Colors.red, size: 16),
+                child: Icon(Icons.error_outline, color: Colors.red, size: 16), // accent-allowlist: error chat bubble, semantic error state
               ),
               Flexible(
                 child: Text(
                   message.content,
                   style: TextStyle(
-                    color: Colors.red[isDark ? 300 : 700],
+                    color: Colors.red[isDark ? 300 : 700], // accent-allowlist: error chat bubble, semantic error state
                     fontSize: 13,
                     height: 1.4,
                   ),
@@ -554,7 +553,7 @@ class _BouncingTypingDotsState extends State<_BouncingTypingDots>
                 height: 8,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.6 + bounce * 0.4),
+                  color: context.accentColor.withOpacity(0.6 + bounce * 0.4),
                   shape: BoxShape.circle,
                 ),
               ),

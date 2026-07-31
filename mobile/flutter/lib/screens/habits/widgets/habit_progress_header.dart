@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Progress header showing today's habit completion stats
@@ -19,6 +19,7 @@ class HabitProgressHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = total > 0 ? completed / total : 0.0;
     final isComplete = total > 0 && completed >= total;
+    final accent = context.accentColor;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -26,15 +27,15 @@ class HabitProgressHeader extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isComplete
-              ? [Colors.green.shade400, Colors.green.shade600]
-              : [AppColors.teal, AppColors.teal.withValues(alpha: 0.8)],
+              ? [Colors.green.shade400, Colors.green.shade600] // accent-allowlist: completion celebration state, semantic not accent
+              : [accent, accent.withValues(alpha: 0.8)],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: (isComplete ? Colors.green : AppColors.teal)
+            color: (isComplete ? Colors.green : accent) // accent-allowlist: completion celebration state, semantic not accent
                 .withValues(alpha: 0.3),
             blurRadius: 12,
             offset: const Offset(0, 4),

@@ -15,6 +15,7 @@ import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'avoided_exercises_screen_part_avoided_exercise_card.dart';
 
 
@@ -74,13 +75,13 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.1),
+              color: context.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+              border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.orange, size: 24),
+                Icon(Icons.info_outline, color: context.accentColor, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -112,7 +113,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                  Icon(Icons.error_outline, size: 48, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
                   const SizedBox(height: 16),
                   Text(AppLocalizations.of(context).avoidedExercisesErrorLoadingExercises, style: TextStyle(color: textMuted)),
                   const SizedBox(height: 8),
@@ -132,7 +133,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                       Icon(
                         Icons.check_circle_outline,
                         size: 64,
-                        color: AppColors.green.withValues(alpha: 0.5),
+                        color: AppColors.green.withValues(alpha: 0.5),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -182,7 +183,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
             bottom: 96,
             child: FloatingActionButton(
               mini: true,
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               foregroundColor: Colors.white,
               onPressed: () => _showAddExerciseSheet(context, userId),
               child: const Icon(Icons.add),
@@ -358,7 +359,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                               if (!value) endDate = null;
                             });
                           },
-                          activeThumbColor: AppColors.cyan,
+                          activeThumbColor: context.accentColor,
                         ),
                       ],
                     ),
@@ -385,7 +386,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
+                            Icon(Icons.calendar_today, color: context.accentColor, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -419,7 +420,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -541,7 +542,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                               if (!value) endDate = null;
                             });
                           },
-                          activeThumbColor: AppColors.cyan,
+                          activeThumbColor: context.accentColor,
                         ),
                       ],
                     ),
@@ -568,7 +569,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
+                            Icon(Icons.calendar_today, color: context.accentColor, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -603,7 +604,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -673,7 +674,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Replaced "$exerciseName" in upcoming workouts'),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
           ),
         );
       }
@@ -682,7 +683,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -786,7 +787,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                               if (!value) endDate = null;
                             });
                           },
-                          activeThumbColor: AppColors.cyan,
+                          activeThumbColor: context.accentColor,
                         ),
                       ],
                     ),
@@ -813,7 +814,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
+                            Icon(Icons.calendar_today, color: context.accentColor, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
@@ -848,7 +849,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -890,7 +891,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Updated "${exercise.exerciseName}"'),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             ),
           );
         }
@@ -899,7 +900,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${e.toString()}'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
             ),
           );
         }
@@ -922,7 +923,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove, style: TextStyle(color: AppColors.error)),
+            child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove, style: TextStyle(color: AppColors.error)),  // accent-allowlist: error/destructive - must stay red
           ),
         ],
       ),
@@ -938,7 +939,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Removed "${exercise.exerciseName}"'),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             ),
           );
         }
@@ -947,7 +948,7 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error: ${e.toString()}'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
             ),
           );
         }

@@ -11,6 +11,7 @@ import '../../../data/providers/weekly_plan_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Contextual banner types in priority order
 enum ContextualBannerType {
   fasting,     // Highest priority - time sensitive
@@ -236,7 +237,7 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
               title: AppLocalizations.of(context).stackedBannerPanelKeepItUp,
               subtitle: "You're $remaining $workoutWord away from your weekly goal",
               icon: Icons.flag_outlined,
-              accentColor: AppColors.cyan,
+              accentColor: context.accentColor,
               actionLabel: 'View Workouts',
               actionRoute: '/workouts',
               dismissKey: weeklyDismissKey,
@@ -272,7 +273,7 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
                 title: AppLocalizations.of(context).stackedBannerPanelNewPr,
                 subtitle: '${pr.exerciseName}: $weightLbs lbs',
                 icon: Icons.emoji_events_outlined,
-                accentColor: AppColors.success,
+                accentColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 actionLabel: 'View Stats',
                 actionRoute: '/stats',
                 dismissKey: prDismissKey,

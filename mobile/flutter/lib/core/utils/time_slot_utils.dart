@@ -58,11 +58,11 @@ extension TimeSlotExtension on TimeSlot {
 
   /// Color associated with this time slot
   Color get color => switch (this) {
-        TimeSlot.earlyMorning => const Color(0xFFFF9800), // Orange
-        TimeSlot.morning => const Color(0xFFFFEB3B), // Yellow
-        TimeSlot.afternoon => const Color(0xFF03A9F4), // Light Blue
-        TimeSlot.evening => const Color(0xFF673AB7), // Deep Purple
-        TimeSlot.night => const Color(0xFF1A237E), // Indigo
+        TimeSlot.earlyMorning => const Color(0xFFFF9800), // Orange // accent-allowlist: time-of-day identity color (dawn/morning/afternoon/evening/night), not accent
+        TimeSlot.morning => const Color(0xFFFFEB3B), // Yellow // accent-allowlist: time-of-day identity color (dawn/morning/afternoon/evening/night), not accent
+        TimeSlot.afternoon => const Color(0xFF03A9F4), // Light Blue // accent-allowlist: time-of-day identity color (dawn/morning/afternoon/evening/night), not accent
+        TimeSlot.evening => const Color(0xFF673AB7), // Deep Purple // accent-allowlist: time-of-day identity color (dawn/morning/afternoon/evening/night), not accent
+        TimeSlot.night => const Color(0xFF1A237E), // Indigo // accent-allowlist: time-of-day identity color (dawn/morning/afternoon/evening/night), not accent
       };
 
   /// Start hour for this time slot (24-hour format)

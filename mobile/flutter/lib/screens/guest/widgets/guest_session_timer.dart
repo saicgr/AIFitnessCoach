@@ -7,6 +7,7 @@ import '../../../data/providers/guest_mode_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Displays the remaining session time for guest mode
 /// Enhanced with Demo Day banner and countdown timer
 /// Makes free trial experience more prominent
@@ -32,13 +33,13 @@ class GuestSessionTimer extends ConsumerWidget {
     Color timerColor;
     String statusMessage;
     if (remaining.inMinutes < 2) {
-      timerColor = AppColors.error;
+      timerColor = AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
       statusMessage = 'Hurry! Time running out';
     } else if (remaining.inMinutes < 5) {
-      timerColor = AppColors.warning;
+      timerColor = AppColors.warning;  // accent-allowlist: warning severity — must stay amber regardless of accent
       statusMessage = 'Keep exploring!';
     } else {
-      timerColor = AppColors.success;
+      timerColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       statusMessage = 'Enjoy your free demo';
     }
 
@@ -115,7 +116,7 @@ class GuestSessionTimer extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.2),
+                              color: Colors.green.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -123,7 +124,7 @@ class GuestSessionTimer extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.green,
+                                color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                             ),
                           ),
@@ -199,7 +200,7 @@ class GuestSessionTimer extends ConsumerWidget {
                         context,
                         icon: Icons.visibility_outlined,
                         label: AppLocalizations.of(context).guestSessionTimerPreviewPlan,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         onTap: () {
                           HapticService.light();
                           context.push('/plan-preview');
@@ -213,7 +214,7 @@ class GuestSessionTimer extends ConsumerWidget {
                         context,
                         icon: Icons.play_circle_outline,
                         label: AppLocalizations.of(context).guestSessionTimerTryWorkout,
-                        color: Colors.green,
+                        color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         onTap: () {
                           HapticService.light();
                           context.push('/demo-workout');

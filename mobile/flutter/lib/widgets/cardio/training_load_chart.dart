@@ -56,7 +56,7 @@ class TrainingLoadChart extends ConsumerWidget {
             child: Text(
               'Could not load training load: $e',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.redAccent),
+              style: const TextStyle(color: Colors.redAccent), // accent-allowlist: cardio training-load severity color
             ),
           ),
         ),
@@ -125,17 +125,17 @@ class _ChartBody extends StatelessWidget {
       HorizontalRangeAnnotation(
         y1: acwrToPrimary(0.8),
         y2: acwrToPrimary(1.3),
-        color: Colors.green.withValues(alpha: 0.12),
+        color: Colors.green.withValues(alpha: 0.12), // accent-allowlist: cardio training-load severity color
       ),
       HorizontalRangeAnnotation(
         y1: acwrToPrimary(1.3),
         y2: acwrToPrimary(1.5),
-        color: Colors.amber.withValues(alpha: 0.14),
+        color: Colors.amber.withValues(alpha: 0.14), // accent-allowlist: cardio training-load severity color
       ),
       HorizontalRangeAnnotation(
         y1: acwrToPrimary(1.5),
         y2: primaryMax,
-        color: Colors.redAccent.withValues(alpha: 0.12),
+        color: Colors.redAccent.withValues(alpha: 0.12), // accent-allowlist: cardio training-load severity color
       ),
     ];
 

@@ -30,6 +30,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/quick_log_fab_chrome.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
 class WorkoutsScreen extends ConsumerStatefulWidget {
@@ -1041,8 +1042,10 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
 ///
 /// [GymProfileSwitcher] still owns the tap → profile-picker sheet, the
 /// loading/error/empty states and the activation side effects; this only
-/// re-frames it. Its non-`large` mode renders the name at 15pt with a 20pt
-/// chevron, which is exactly the sub-line weight this pill wants.
+/// re-frames it. It renders the name at 15pt with a 20pt chevron, which is
+/// exactly the sub-line weight this pill wants — the switcher used to also
+/// support a `large` masthead-hero mode, but that had zero callers (E2E
+/// #116 register correction) and was deleted outright.
 class _EquipmentProfilePill extends StatelessWidget {
   const _EquipmentProfilePill();
 
@@ -1206,7 +1209,7 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
                 icon: Icons.upload_file_rounded,
                 title: AppLocalizations.of(context).workoutsCsvOrJsonFile,
                 subtitle: AppLocalizations.of(context).workoutsHevyStrongLiftinFitbod,
-                accent: AppColors.purple,
+                accent: context.accentColor,
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/settings/workout-history-import');
@@ -1217,7 +1220,7 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
                 icon: Icons.edit_note_rounded,
                 title: AppLocalizations.of(context).workoutsTypeAFewPrs,
                 subtitle: AppLocalizations.of(context).workoutsBenchSquatDeadliftBest,
-                accent: AppColors.cyan,
+                accent: context.accentColor,
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/settings/workout-history-import');
@@ -1228,7 +1231,7 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
                 icon: Icons.sync_rounded,
                 title: AppLocalizations.of(context).workoutsHealthConnectAppleHealth,
                 subtitle: AppLocalizations.of(context).workoutsSyncSessionsFromYour,
-                accent: AppColors.success,
+                accent: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 onTap: () {
                   Navigator.of(context).pop();
                   context.push('/settings');

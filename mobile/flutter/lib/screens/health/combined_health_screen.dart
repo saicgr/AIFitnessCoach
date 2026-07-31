@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton_box.dart';
 import '../../data/providers/combined_health_provider.dart';
@@ -12,7 +13,6 @@ import '../../data/providers/trend_series_provider.dart';
 import '../../data/repositories/vitals_repository.dart';
 import '../../data/repositories/heart_health_repository.dart';
 import '../../data/repositories/fitness_index_repository.dart';
-import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/activity_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/health_goals_service.dart';
@@ -244,7 +244,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         MetricHistoryCard(
           title: l10n.combinedHealthSteps,
           icon: Icons.directions_walk_rounded,
-          color: AppColors.success,
+          color: AppColors.success, // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           valueText: _metricValueLine(
             history: history,
             dayValue: (day != null && day.steps > 0) ? day.steps.toDouble() : null,
@@ -265,7 +265,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         MetricHistoryCard(
           title: l10n.combinedHealthActiveEnergy,
           icon: Icons.local_fire_department_rounded,
-          color: AppColors.orange,
+          color: AppColors.orange, // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           valueText: _metricValueLine(
             history: history,
             dayValue: (day != null && day.caloriesBurned > 0)
@@ -282,7 +282,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         MetricHistoryCard(
           title: l10n.combinedHealthRestingHeartRate,
           icon: Icons.favorite_rounded,
-          color: AppColors.error,
+          color: AppColors.error, // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           valueText: _metricValueLine(
             history: history,
             dayValue: day?.restingHeartRate?.toDouble(),
@@ -298,7 +298,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         MetricHistoryCard(
           title: l10n.combinedHealthSleep,
           icon: Icons.bedtime_rounded,
-          color: AppColors.purple,
+          color: AppColors.purple, // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           valueText: _metricValueLine(
             history: history,
             dayValue: (day?.sleepMinutes != null && day!.sleepMinutes! > 0)
@@ -329,7 +329,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         MetricHistoryCard(
           title: l10n.combinedHealthWater,
           icon: Icons.water_drop_rounded,
-          color: AppColors.cyan,
+          color: AppColors.cyan, // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           valueText: day?.waterMl != null && day!.waterMl! > 0
               ? '${day.waterMl} ml'
               : null,
@@ -466,12 +466,12 @@ class _RecoveryHero extends ConsumerWidget {
     final color = score == null
         ? textMuted
         : (score >= 80
-            ? AppColors.success
+            ? AppColors.success // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
             : score >= 60
                 ? AppColors.teal
                 : score >= 40
-                    ? AppColors.warning
-                    : AppColors.error);
+                    ? AppColors.warning // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
+                    : AppColors.error); // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
     return Row(
       children: [
         SizedBox(
@@ -567,16 +567,16 @@ class _TrainingLoadTile extends ConsumerWidget {
     } else {
       switch (load.state) {
         case 'overreaching':
-          stateColor = AppColors.error;
+          stateColor = AppColors.error; // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           break;
         case 'loading':
-          stateColor = AppColors.warning;
+          stateColor = AppColors.warning; // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           break;
         case 'detraining':
           stateColor = AppColors.teal;
           break;
         default:
-          stateColor = AppColors.success;
+          stateColor = AppColors.success; // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
       }
       final acwrText =
           load.acwr != null ? ' · ratio ${load.acwr!.toStringAsFixed(1)}' : '';
@@ -668,11 +668,11 @@ class _ActivityStreakCard extends ConsumerWidget {
             height: 36,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.18),
+              color: AppColors.orange.withValues(alpha: 0.18), // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(Icons.local_fire_department_rounded,
-                color: AppColors.orange, size: 18),
+                color: AppColors.orange, size: 18), // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -701,7 +701,7 @@ class _ActivityStreakCard extends ConsumerWidget {
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w800,
-              color: streak > 0 ? AppColors.orange : textMuted,
+              color: streak > 0 ? AppColors.orange : textMuted, // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
             ),
           ),
         ],
@@ -784,11 +784,11 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
                 height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.18),
+                  color: AppColors.success.withValues(alpha: 0.18), // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.flag_rounded,
-                    color: AppColors.success, size: 18),
+                    color: AppColors.success, size: 18), // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
               ),
               const SizedBox(width: 10),
               Text(
@@ -901,11 +901,11 @@ class _GoalChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.success.withValues(alpha: 0.18)
+              ? context.accentColor.withValues(alpha: 0.18)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.success : border,
+            color: selected ? context.accentColor : border,
             width: selected ? 1.6 : 1,
           ),
         ),
@@ -914,7 +914,7 @@ class _GoalChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: selected ? AppColors.success : textPrimary,
+            color: selected ? context.accentColor : textPrimary,
           ),
         ),
       ),
@@ -1188,7 +1188,7 @@ class _HeartHealthHubCard extends ConsumerWidget {
     );
     return _MetricHubCard(
       icon: Icons.favorite_rounded,
-      accent: const Color(0xFFEF4444),
+      accent: const Color(0xFFEF4444), // accent-allowlist: health-metric identity color per metric type (steps/calories/heart-rate/sleep/water) and severity/streak colors, matches MetricHistoryCard convention
       title: 'Heart Health Score',
       value: value,
       subtitle: subtitle,

@@ -65,7 +65,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Retrying $recovered item${recovered == 1 ? '' : 's'}...'),
-            backgroundColor: AppColors.info,
+            backgroundColor: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
           ),
         );
         await _loadDeadLetterItems();
@@ -75,7 +75,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Retry failed: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -95,7 +95,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Export failed: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -178,15 +178,15 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
   Color _pillColorFor(SyncErrorKind kind, {required bool isDark}) {
     switch (kind) {
       case SyncErrorKind.auth:
-        return AppColors.warning;
+        return AppColors.warning;  // accent-allowlist: warning severity - must stay amber regardless of accent
       case SyncErrorKind.network:
-        return AppColors.info;
+        return AppColors.info;  // accent-allowlist: informational state - must stay blue regardless of accent
       case SyncErrorKind.validation4xx:
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive - must stay red
       case SyncErrorKind.server5xx:
-        return AppColors.warning;
+        return AppColors.warning;  // accent-allowlist: warning severity - must stay amber regardless of accent
       case SyncErrorKind.corrupt:
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive - must stay red
       case SyncErrorKind.unknown:
         return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     }
@@ -227,7 +227,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),  // accent-allowlist: error/destructive - must stay red
             child: Text(AppLocalizations.of(context).syncDetailsDiscard),
           ),
         ],
@@ -279,7 +279,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                       Icon(
                         Icons.check_circle_outline_rounded,
                         size: 64,
-                        color: AppColors.success,
+                        color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -317,12 +317,12 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.error.withValues(alpha: 0.15),
+                              color: AppColors.error.withValues(alpha: 0.15),  // accent-allowlist: error/destructive - must stay red
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.sync_problem_rounded,
-                              color: AppColors.error,
+                              color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                               size: 24,
                             ),
                           ),
@@ -385,14 +385,14 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: AppColors.error
+                                        color: AppColors.error  // accent-allowlist: error/destructive - must stay red
                                             .withValues(alpha: 0.1),
                                         borderRadius:
                                             BorderRadius.circular(8),
                                       ),
                                       child: Icon(
                                         _iconForEntityType(item.entityType),
-                                        color: AppColors.error,
+                                        color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                                         size: 20,
                                       ),
                                     ),
@@ -449,7 +449,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                               item.lastError!,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: AppColors.error,
+                                                color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                                               ),
                                               maxLines: 2,
                                               overflow:
@@ -491,7 +491,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                           size: 16),
                                       label: Text(AppLocalizations.of(context).syncDetailsDiscard),
                                       style: TextButton.styleFrom(
-                                        foregroundColor: AppColors.error,
+                                        foregroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 4),
                                         minimumSize: Size.zero,
@@ -510,7 +510,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                           ? AppLocalizations.of(context).buttonRetry
                                           : 'Edit & re-log'),
                                       style: TextButton.styleFrom(
-                                        foregroundColor: AppColors.info,
+                                        foregroundColor: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 4),
                                         minimumSize: Size.zero,
@@ -579,7 +579,7 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
                                         size: 18),
                                 label: Text(AppLocalizations.of(context).syncDetailsRetryAll),
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.info,
+                                  backgroundColor: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 12),

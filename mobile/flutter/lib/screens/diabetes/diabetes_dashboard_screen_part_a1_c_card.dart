@@ -46,7 +46,7 @@ class _A1CCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.analytics,
-                color: AppColors.orange,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -270,7 +270,7 @@ class _RecentReadingsCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.history,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -321,7 +321,7 @@ class _RecentReadingsCard extends StatelessWidget {
                   AppLocalizations.of(context).weightTrackingCardSeeAll,
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ),
@@ -501,26 +501,26 @@ class _HealthConnectSyncCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.success.withOpacity(0.15),
-            AppColors.cyan.withOpacity(0.15),
+            AppColors.success.withOpacity(0.15), // accent-allowlist: health-sync connected/success card, cyan is a secondary gradient stop for richness
+            AppColors.cyan.withOpacity(0.15), // accent-allowlist: health-sync connected/success card, cyan is a secondary gradient stop for richness
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.success.withOpacity(0.3)),
+        border: Border.all(color: AppColors.success.withOpacity(0.3)), // accent-allowlist: health-sync connected/success card, cyan is a secondary gradient stop for richness
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.2),
+              color: AppColors.success.withOpacity(0.2), // accent-allowlist: health-sync connected/success card, cyan is a secondary gradient stop for richness
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.favorite,
-              color: AppColors.success,
+              color: AppColors.success, // accent-allowlist: health-sync connected/success card, cyan is a secondary gradient stop for richness
               size: 24,
             ),
           ),
@@ -559,7 +559,7 @@ class _HealthConnectSyncCard extends StatelessWidget {
           ElevatedButton(
             onPressed: isSyncing ? null : onSync,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success, // accent-allowlist: health-sync connected/success card, cyan is a secondary gradient stop for richness
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(

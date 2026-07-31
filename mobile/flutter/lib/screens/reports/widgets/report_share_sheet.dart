@@ -268,7 +268,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error snackbar, semantic not accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -279,7 +279,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success snackbar, semantic not accent
         behavior: SnackBarBehavior.floating,
       ),
     );

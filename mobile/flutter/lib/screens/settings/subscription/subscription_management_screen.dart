@@ -17,6 +17,7 @@ import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../common/app_refresh_indicator.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'subscription_management_screen_ui.dart';
 
 
@@ -178,7 +179,7 @@ class _SubscriptionManagementScreenState
             SnackBar(
               content: Text(
                   'Subscription paused for $durationDays days'),
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
             ),
           );
           await _loadSubscriptionDetails();
@@ -190,7 +191,7 @@ class _SubscriptionManagementScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to pause subscription: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -211,7 +212,7 @@ class _SubscriptionManagementScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).subscriptionManagementSubscriptionResumedSuccessfu),
-              backgroundColor: AppColors.green,
+              backgroundColor: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
             ),
           );
           await _loadSubscriptionDetails();
@@ -223,7 +224,7 @@ class _SubscriptionManagementScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to resume subscription: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -248,7 +249,7 @@ class _SubscriptionManagementScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).subscriptionManagementCouldNotOpenSubscription),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
             ),
           );
         }
@@ -288,7 +289,7 @@ class _SubscriptionManagementScreenState
               children: [
                 AppRefreshIndicator(
                   onRefresh: () => _loadSubscriptionDetails(),
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
@@ -359,8 +360,8 @@ class _SubscriptionManagementScreenState
                 if (_isLoading)
                   Container(
                     color: Colors.black.withValues(alpha: 0.15),
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.cyan),
+                    child: Center(
+                      child: CircularProgressIndicator(color: context.accentColor),
                     ),
                   ),
               ],
@@ -378,7 +379,7 @@ class _SubscriptionManagementScreenState
             Icon(
               Icons.error_outline,
               size: 64,
-              color: Colors.red.shade400,
+              color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
             ),
             const SizedBox(height: 16),
             Text(
@@ -404,7 +405,7 @@ class _SubscriptionManagementScreenState
               icon: const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -419,20 +420,20 @@ class _SubscriptionManagementScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.2),
+        color: context.accentColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.timer, size: 14, color: AppColors.orange),
+          Icon(Icons.timer, size: 14, color: context.accentColor),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ),
         ],
@@ -495,8 +496,8 @@ class _SubscriptionManagementScreenState
     if (label.isEmpty) return const SizedBox.shrink();
 
     final color = period == BillingPeriod.lifetime
-        ? AppColors.purple
-        : AppColors.cyan;
+        ? context.accentColor
+        : context.accentColor;
     final icon = period == BillingPeriod.lifetime
         ? Icons.all_inclusive
         : (period == BillingPeriod.yearly
@@ -533,20 +534,20 @@ class _SubscriptionManagementScreenState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.2),
+        color: Colors.amber.withValues(alpha: 0.2),  // accent-allowlist: warning severity - must stay amber regardless of accent
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.pause_circle, size: 14, color: Colors.amber.shade700),
+          Icon(Icons.pause_circle, size: 14, color: Colors.amber.shade700),  // accent-allowlist: warning severity - must stay amber regardless of accent
           const SizedBox(width: 4),
           Text(
             AppLocalizations.of(context).subscriptionManagementSubscriptionPaused,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.amber.shade700,
+              color: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
             ),
           ),
         ],
@@ -575,7 +576,7 @@ class _SubscriptionManagementScreenState
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long, color: AppColors.cyan, size: 20),
+              Icon(Icons.receipt_long, color: context.accentColor, size: 20),
               const SizedBox(width: 10),
               Text(
                 AppLocalizations.of(context).subscriptionManagementBillingInformation,
@@ -607,7 +608,7 @@ class _SubscriptionManagementScreenState
               'Auto-renew',
               _upcomingRenewal!.isAutoRenew ? 'Enabled' : 'Disabled',
               textSecondary,
-              _upcomingRenewal!.isAutoRenew ? AppColors.green : Colors.orange,
+              _upcomingRenewal!.isAutoRenew ? AppColors.green : Colors.orange,  // accent-allowlist: auto-renew status indicator - green=enabled (success/positive), amber=disabled (warning severity, table classifies Material Colors.orange as warning-family); both fixed regardless of the app accent
             ),
           ] else
             Text(
@@ -686,7 +687,7 @@ class _SubscriptionManagementScreenState
                           ? AppLocalizations.of(context).subscriptionManagementPurchasesRestoredSuccessfull
                           : 'No purchases to restore',
                     ),
-                    backgroundColor: success ? AppColors.green : Colors.orange,
+                    backgroundColor: success ? AppColors.green : Colors.orange,  // accent-allowlist: outcome status indicator - green=success, amber=failure/needs attention (warning severity, table classifies Material Colors.orange as warning-family); both fixed regardless of the app accent
                   ),
                 );
               }
@@ -725,10 +726,10 @@ class _SubscriptionManagementScreenState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    color: context.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: AppColors.cyan, size: 20),
+                  child: Icon(icon, color: context.accentColor, size: 20),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -840,15 +841,15 @@ class _SubscriptionManagementScreenState
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withValues(alpha: 0.15),
-            AppColors.purple.withValues(alpha: 0.15),
+            context.accentColor.withValues(alpha: 0.15),
+            context.accentColor.withValues(alpha: 0.15),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -856,7 +857,7 @@ class _SubscriptionManagementScreenState
           Icon(
             Icons.rocket_launch,
             size: 48,
-            color: AppColors.cyan,
+            color: context.accentColor,
           ),
           const SizedBox(height: 16),
           Text(
@@ -882,7 +883,7 @@ class _SubscriptionManagementScreenState
             child: ElevatedButton(
               onPressed: () => context.push('/paywall-pricing'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -926,11 +927,11 @@ class _SubscriptionManagementScreenState
       case SubscriptionTier.free:
         return AppColors.textMuted;
       case SubscriptionTier.premium:
-        return AppColors.cyan;
+        return context.accentColor;
       case SubscriptionTier.premiumPlus:
-        return AppColors.purple;
+        return context.accentColor;
       case SubscriptionTier.lifetime:
-        return AppColors.purple;
+        return context.accentColor;
     }
   }
 

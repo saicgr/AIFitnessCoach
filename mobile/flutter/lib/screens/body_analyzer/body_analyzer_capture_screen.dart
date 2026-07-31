@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/progress_photos.dart';
 import '../../data/repositories/body_analyzer_repository.dart';
 import '../../data/repositories/progress_photos_repository.dart';
@@ -209,7 +210,7 @@ class _BodyAnalyzerCaptureScreenState
                   ? AppLocalizations.of(context).logMealSheetAnalyzing
                   : 'Analyze (${_picked.length} photo${_picked.length == 1 ? '' : 's'})'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB24BF3),
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
@@ -272,7 +273,7 @@ class _BodyAnalyzerCaptureScreenState
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: selected
-                            ? const Color(0xFFB24BF3)
+                            ? context.accentColor
                             : Colors.transparent,
                         width: 2,
                       ),
@@ -292,8 +293,8 @@ class _BodyAnalyzerCaptureScreenState
                             child: Container(
                               margin: const EdgeInsets.all(4),
                               padding: const EdgeInsets.all(3),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFB24BF3),
+                              decoration: BoxDecoration(
+                                color: context.accentColor,
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.check,

@@ -184,10 +184,10 @@ SleepScore? computeSleepScore({
 
 /// Color for a score band — green / lime / amber / red.
 Color sleepScoreColor(int score) {
-  if (score >= 85) return AppColors.success;
+  if (score >= 85) return AppColors.success; // accent-allowlist: sleep-score severity scale + sleep-stage identity
   if (score >= 70) return AppColors.teal;
-  if (score >= 50) return AppColors.warning;
-  return AppColors.error;
+  if (score >= 50) return AppColors.warning; // accent-allowlist: sleep-score severity scale + sleep-stage identity
+  return AppColors.error; // accent-allowlist: sleep-score severity scale + sleep-stage identity
 }
 
 /// The Signature sleep-score frame: ONE deliberate violet progress arc beside
@@ -209,7 +209,7 @@ class SleepScoreRing extends StatelessWidget {
     this.asleepMinutes,
   });
 
-  static const Color _accent = AppColors.macroProtein; // violet — used once
+  static const Color _accent = AppColors.macroProtein; // violet — used once // accent-allowlist: sleep-score severity scale + sleep-stage identity
 
   @override
   Widget build(BuildContext context) {

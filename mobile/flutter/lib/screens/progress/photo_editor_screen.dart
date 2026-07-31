@@ -14,6 +14,7 @@ import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 // ============================================================================
 // Photo filters — applied via pixel-level operations in a background isolate.
 // ============================================================================
@@ -349,11 +350,11 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
             toolbarColor: isDark ? AppColors.nearBlack : AppColorsLight.pureWhite,
             toolbarWidgetColor: isDark ? Colors.white : AppColorsLight.textPrimary,
             backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.nearWhite,
-            activeControlsWidgetColor: isDark ? AppColors.cyan : AppColorsLight.accent,
+            activeControlsWidgetColor: isDark ? context.accentColor : AppColorsLight.accent,
             dimmedLayerColor: isDark
                 ? Colors.black.withValues(alpha: 0.6)
                 : Colors.white.withValues(alpha: 0.6),
-            cropFrameColor: isDark ? AppColors.cyan : AppColorsLight.accent,
+            cropFrameColor: isDark ? context.accentColor : AppColorsLight.accent,
             cropGridColor: isDark
                 ? Colors.white.withValues(alpha: 0.3)
                 : Colors.black.withValues(alpha: 0.2),
@@ -466,7 +467,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           ),
         );
       }
@@ -710,14 +711,14 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                                     color: Colors.black.withValues(alpha: 0.65),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                      color: AppColors.cyan.withValues(alpha: 0.35),
+                                      color: context.accentColor.withValues(alpha: 0.35),
                                     ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(_poseIcon,
-                                          size: 16, color: AppColors.cyan),
+                                          size: 16, color: context.accentColor),
                                       const SizedBox(width: 6),
                                       Text(
                                         '${widget.viewTypeName} pose',
@@ -807,7 +808,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                               ),
                               GestureDetector(
                                 onTap: () => _removeEmojiSticker(_activeEmojiIndex!),
-                                child: Icon(Icons.delete_outline, size: 20, color: AppColors.error),
+                                child: Icon(Icons.delete_outline, size: 20, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
                               ),
                             ],
                           ),
@@ -901,7 +902,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                           child: CircularProgressIndicator(
                             strokeWidth: 2.4,
                             valueColor:
-                                AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                                AlwaysStoppedAnimation<Color>(context.accentColor),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -927,7 +928,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   /// Horizontal strip of filter preview tiles — thumbnail + name.
   Widget _buildFilterStrip() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final secondaryColor =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -1052,7 +1053,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                       decoration: isActive
                           ? BoxDecoration(
                               border: Border.all(
-                                color: AppColors.cyan.withValues(alpha: 0.6),
+                                color: context.accentColor.withValues(alpha: 0.6),
                                 width: 1.5,
                               ),
                               borderRadius: BorderRadius.circular(8),
@@ -1078,7 +1079,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: AppColors.error,
+                        color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -1112,7 +1113,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                       width: 26,
                       height: 26,
                       decoration: BoxDecoration(
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -1144,7 +1145,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: AppColors.purple,
+                        color: context.accentColor,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -1172,7 +1173,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     bool enabled = true,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -1241,7 +1242,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
               errorBuilder: (_, __, ___) => Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.cyan, AppColors.purple],
+                    colors: [context.accentColor, context.accentColor],
                   ),
                   borderRadius: BorderRadius.circular(7),
                 ),
@@ -1344,7 +1345,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 

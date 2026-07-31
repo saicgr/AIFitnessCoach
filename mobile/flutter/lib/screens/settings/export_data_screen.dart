@@ -14,6 +14,7 @@ import '../../data/services/api_client.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Reverse-direction export screen.
 ///
 /// Sends the current user's strength + cardio history (and optionally
@@ -230,7 +231,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Exported ${_formatByteSize(bytes.length)}.'),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
         ),
       );
     } on DioException catch (e) {
@@ -241,14 +242,14 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
               ? e.response!.data as String
               : 'Export failed (${e.response?.statusCode ?? 'no response'})');
       messenger.showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: AppColors.error),
+        SnackBar(content: Text(msg), backgroundColor: AppColors.error),  // accent-allowlist: error/destructive - must stay red
       );
     } catch (e) {
       if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(
           content: Text('Export failed: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     } finally {
@@ -370,7 +371,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                   : const Icon(Icons.download),
               label: Text(_isGenerating ? AppLocalizations.of(context).exportDataGenerating : AppLocalizations.of(context).exportDataGenerateExport),
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -410,10 +411,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
               onChanged: (val) {
                 if (val != null) setState(() => _selectedFormat = val);
               },
-              activeColor: AppColors.cyan,
+              activeColor: context.accentColor,
               title: Row(
                 children: [
-                  Icon(_formats[i].icon, size: 18, color: AppColors.cyan),
+                  Icon(_formats[i].icon, size: 18, color: context.accentColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -461,7 +462,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Row(
               children: [
-                Icon(Icons.calendar_month, color: AppColors.cyan, size: 18),
+                Icon(Icons.calendar_month, color: context.accentColor, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -486,7 +487,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 avatar: const Icon(Icons.edit_calendar, size: 16),
                 onPressed: _pickCustomRange,
                 backgroundColor: _selectedRange == _DatePreset.custom
-                    ? AppColors.cyan.withValues(alpha: 0.2)
+                    ? context.accentColor.withValues(alpha: 0.2)
                     : null,
                 side: BorderSide(color: border),
               ),
@@ -504,7 +505,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
       label: Text(label),
       selected: selected,
       onSelected: (_) => setState(() => _selectedRange = preset),
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
       side: BorderSide(color: border),
     );
   }
@@ -525,7 +526,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
             onChanged: cardioOnly
                 ? null
                 : (v) => setState(() => _includeStrength = v),
-            activeColor: AppColors.cyan,
+            activeColor: context.accentColor,
             title: Text(AppLocalizations.of(context).exportDataStrengthHistory, style: TextStyle(color: primary)),
             subtitle: Text(
               cardioOnly
@@ -540,7 +541,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
             onChanged: cardioOnly
                 ? null
                 : (v) => setState(() => _includeCardio = v),
-            activeColor: AppColors.cyan,
+            activeColor: context.accentColor,
             title: Text(AppLocalizations.of(context).exportDataCardioSessions, style: TextStyle(color: primary)),
             subtitle: Text(
               cardioOnly
@@ -555,7 +556,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
             onChanged: cardioOnly
                 ? null
                 : (v) => setState(() => _includeTemplates = v),
-            activeColor: AppColors.cyan,
+            activeColor: context.accentColor,
             title: Text(AppLocalizations.of(context).exportDataProgramTemplates, style: TextStyle(color: primary)),
             subtitle: Text(
               cardioOnly
@@ -580,7 +581,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.shield_outlined, color: AppColors.cyan, size: 20),
+          Icon(Icons.shield_outlined, color: context.accentColor, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Column(

@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/ai_split_preset.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Compact training split card (110px height vs old 160px).
 ///
 /// Color-coded by category:
@@ -70,7 +71,7 @@ class CompactSplitCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
-                      color: (isDark ? AppColors.orange : AppColorsLight.orange).withOpacity(0.25),
+                      color: (isDark ? context.accentColor : context.accentColor).withOpacity(0.25),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -78,7 +79,7 @@ class CompactSplitCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        color: isDark ? AppColors.orange : AppColorsLight.orange,
+                        color: isDark ? context.accentColor : context.accentColor,
                       ),
                     ),
                   ),
@@ -121,13 +122,13 @@ class CompactSplitCard extends StatelessWidget {
     switch (preset.category) {
       case 'ai_powered':
         return (
-          isDark ? AppColors.orange : AppColorsLight.orange,
-          isDark ? AppColors.coral : AppColorsLight.coral,
+          isDark ? AppColors.orange : AppColorsLight.orange,  // accent-allowlist: no BuildContext available in this scope (helper without context param) — category gradient identity
+          isDark ? AppColors.coral : AppColorsLight.coral,  // accent-allowlist: no BuildContext available in this scope (helper without context param) — category gradient identity
         );
       case 'specialty':
         return (
-          isDark ? AppColors.purple : AppColorsLight.purple,
-          const Color(0xFF4338CA), // indigo
+          isDark ? AppColors.purple : AppColorsLight.purple,  // accent-allowlist: no BuildContext available in this scope (helper without context param) — category gradient identity
+          const Color(0xFF4338CA), // indigo  // accent-allowlist: informational state — must stay blue regardless of accent
         );
       default: // classic
         return (

@@ -175,7 +175,7 @@ class _FilteredMessagesTab extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   backgroundImage: otherUserAvatar != null
                       ? NetworkImage(otherUserAvatar)
                       : null,

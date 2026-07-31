@@ -31,8 +31,8 @@ class _MetricDetailScreenState extends ConsumerState<MetricDetailScreen> {
   PremiumChartType? _chartType;
   MetricSubView? _subView;
 
-  static const _metColor = Color(0xFF37D67A);
-  static const _missColor = Color(0xFFFF9F43);
+  static const _metColor = Color(0xFF37D67A);  // accent-allowlist: goal-met/missed legend colour -- met
+  static const _missColor = Color(0xFFFF9F43);  // accent-allowlist: goal-met/missed legend colour -- missed
 
   @override
   Widget build(BuildContext context) {
@@ -227,20 +227,20 @@ class _MetricDetailScreenState extends ConsumerState<MetricDetailScreen> {
           child: Container(
             width: 38,
             height: 38,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFFFD86B), Color(0xFFFF9F1C)],
+                colors: [c.accent.withValues(alpha: 0.75), c.accent],
               ),
               boxShadow: [
                 BoxShadow(
-                    color: Color(0x66FF9F1C), blurRadius: 14, offset: Offset(0, 4)),
+                    color: c.accent.withValues(alpha: 0.4), blurRadius: 14, offset: const Offset(0, 4)),
               ],
             ),
             child: const Icon(Icons.auto_awesome_rounded,
-                size: 18, color: Color(0xFF3A2400)),
+                size: 18, color: Colors.white),
           ),
         ),
       );
@@ -278,8 +278,8 @@ class _MetricDetailScreenState extends ConsumerState<MetricDetailScreen> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   gradient: _range == r
-                      ? const LinearGradient(
-                          colors: [Color(0xFF9AF23A), Color(0xFF5FD11E)])
+                      ? LinearGradient(
+                          colors: [c.accent.withValues(alpha: 0.85), c.accent])
                       : null,
                   color: _range == r ? null : c.surface,
                   borderRadius: BorderRadius.circular(12),

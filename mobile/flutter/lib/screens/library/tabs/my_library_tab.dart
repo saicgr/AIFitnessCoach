@@ -17,6 +17,7 @@ import '../providers/library_providers.dart';
 import '../../workout/exercise_browse.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';
 import '../../common/app_refresh_indicator.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 part 'my_library_tab_part_custom_exercises_section.dart';
 part 'my_library_tab_part_history_timeline_card.dart';

@@ -18,6 +18,7 @@ import 'exercise_queue_screen.dart';
 import 'avoided_exercises_screen.dart';
 import 'avoided_muscles_screen.dart';
 import '../../common/app_refresh_indicator.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Unified screen for all exercise preferences with a flat tab bar.
 /// Tabs: Favorites (0), Staples (1), Avoided (2), Queue (3), Custom (4)
@@ -136,11 +137,11 @@ class _FloatingPillTabs extends StatelessWidget {
   });
 
   static List<_PillItem> _items(BuildContext context) => [
-    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: AppLocalizations.of(context).myExercisesFavorites, accent: AppColors.error),
-    _PillItem(icon: Icons.push_pin_outlined, selectedIcon: Icons.push_pin, label: AppLocalizations.of(context).myExercisesStaples, accent: AppColors.cyan),
-    _PillItem(icon: Icons.block_outlined, selectedIcon: Icons.block, label: AppLocalizations.of(context).myExercisesAvoided, accent: AppColors.orange),
-    _PillItem(icon: Icons.bookmark_border, selectedIcon: Icons.bookmark, label: AppLocalizations.of(context).myExercisesQueue, accent: AppColors.cyan),
-    _PillItem(icon: Icons.tune, selectedIcon: Icons.tune, label: AppLocalizations.of(context).myExercisesCustom, accent: AppColors.cyan),
+    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: AppLocalizations.of(context).myExercisesFavorites, accent: AppColors.error),  // accent-allowlist: error/destructive - must stay red
+    _PillItem(icon: Icons.push_pin_outlined, selectedIcon: Icons.push_pin, label: AppLocalizations.of(context).myExercisesStaples, accent: context.accentColor),
+    _PillItem(icon: Icons.block_outlined, selectedIcon: Icons.block, label: AppLocalizations.of(context).myExercisesAvoided, accent: context.accentColor),
+    _PillItem(icon: Icons.bookmark_border, selectedIcon: Icons.bookmark, label: AppLocalizations.of(context).myExercisesQueue, accent: context.accentColor),
+    _PillItem(icon: Icons.tune, selectedIcon: Icons.tune, label: AppLocalizations.of(context).myExercisesCustom, accent: context.accentColor),
   ];
 
   @override
@@ -315,7 +316,7 @@ class _AvoidedTabState extends ConsumerState<_AvoidedTab>
                   label: AppLocalizations.of(context).authIntroExercises,
                   icon: Icons.block,
                   isSelected: _selectedSegment == 0,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   onTap: () => setState(() => _selectedSegment = 0),
                   isDark: isDark,
                 ),
@@ -324,7 +325,7 @@ class _AvoidedTabState extends ConsumerState<_AvoidedTab>
                   label: AppLocalizations.of(context).myExercisesMuscles,
                   icon: Icons.accessibility_new,
                   isSelected: _selectedSegment == 1,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () => setState(() => _selectedSegment = 1),
                   isDark: isDark,
                 ),
@@ -466,7 +467,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
                   .read(customExercisesProvider.notifier)
                   .deleteExercise(exercise.id);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -480,7 +481,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(customExercisesProvider);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     // Listen for success/error messages
     ref.listen<CustomExercisesState>(customExercisesProvider, (previous, next) {
@@ -489,7 +490,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.successMessage!),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green,  // accent-allowlist: success/positive state - must stay green regardless of accent
             duration: const Duration(seconds: 2),
           ),
         );
@@ -499,7 +500,7 @@ class _CustomTabState extends ConsumerState<_CustomTab>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error!),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
             duration: const Duration(seconds: 3),
           ),
         );

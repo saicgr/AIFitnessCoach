@@ -4,6 +4,21 @@ enum ChatActionBehavior { sendPrompt, openMediaPicker }
 
 enum ChatMediaMode { camera, gallery, multipleImages, video, recordVideo }
 
+// E2E register row 15: this registry used to hand each of the 25+ chips its
+// own private hex (cyan/purple/teal/blue/pink/indigo/...), so the coach quick
+// action grid rendered as a rainbow independent of the app's accent setting —
+// named by the accent gate as the reason coach chips render cyan/teal/violet/
+// pink in a single grid. `color` below is now single-sourced to
+// [_defaultChipColor] instead of a distinct value per chip.
+//
+// This registry is a top-level `const` map with no `BuildContext`, so it
+// cannot read `context.accentColor` itself. `copyWith` exists so a
+// context-aware call site CAN re-tint a chip with the live accent
+// (`action.copyWith(color: context.accentColor)`) once the consumer widgets
+// (lib/screens/chat/ — outside this pass's file ownership) are wired to do
+// so; today they still render the single default colour below.
+const _defaultChipColor = Color(0xFFF97316); // accent-allowlist: const registry has no BuildContext to read the live accent from; single-sourced default (was 25 distinct per-chip hexes) pending a context-aware override at the lib/screens/chat/ consumer via copyWith
+
 class ChatQuickAction {
   final String id;
   final String label;
@@ -28,6 +43,34 @@ class ChatQuickAction {
     this.mediaMode,
     this.examplePrompt,
   });
+
+  /// Lets a context-aware caller re-tint this chip (e.g. with
+  /// `context.accentColor`) without the model itself needing a BuildContext.
+  ChatQuickAction copyWith({
+    String? id,
+    String? label,
+    String? description,
+    String? category,
+    IconData? icon,
+    Color? color,
+    ChatActionBehavior? behavior,
+    String? prompt,
+    ChatMediaMode? mediaMode,
+    String? examplePrompt,
+  }) {
+    return ChatQuickAction(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      icon: icon ?? this.icon,
+      color: color ?? this.color,
+      behavior: behavior ?? this.behavior,
+      prompt: prompt ?? this.prompt,
+      mediaMode: mediaMode ?? this.mediaMode,
+      examplePrompt: examplePrompt ?? this.examplePrompt,
+    );
+  }
 }
 
 const chatQuickActionRegistry = <String, ChatQuickAction>{
@@ -37,7 +80,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Record an exercise for AI form feedback',
     category: 'Form Analysis',
     icon: Icons.videocam_outlined,
-    color: Color(0xFFF97316),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.openMediaPicker,
     mediaMode: ChatMediaMode.video,
     examplePrompt: 'Please check my exercise form',
@@ -48,7 +91,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Snap a photo for instant calorie estimates',
     category: 'Nutrition',
     icon: Icons.camera_alt_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.openMediaPicker,
     mediaMode: ChatMediaMode.camera,
     examplePrompt: 'Analyze this food and estimate calories',
@@ -59,7 +102,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Photograph a menu for smart picks',
     category: 'Nutrition',
     icon: Icons.menu_book_outlined,
-    color: Color(0xFF14B8A6),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.openMediaPicker,
     mediaMode: ChatMediaMode.gallery,
     examplePrompt: 'Analyze this menu and suggest healthy options',
@@ -70,7 +113,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Generate a fast workout on the fly',
     category: 'Workout',
     icon: Icons.flash_on_outlined,
-    color: Color(0xFF06B6D4),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Create a quick 15-minute workout for me',
   ),
@@ -80,7 +123,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Get personalized nutrition guidance',
     category: 'Nutrition',
     icon: Icons.restaurant_outlined,
-    color: Color(0xFFA855F7),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'What should I eat based on my fitness goals?',
   ),
@@ -90,7 +133,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Compare two videos of the same exercise',
     category: 'Form Analysis',
     icon: Icons.compare_outlined,
-    color: Color(0xFFF97316),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.openMediaPicker,
     mediaMode: ChatMediaMode.video,
     examplePrompt: 'Compare my exercise form between these videos',
@@ -101,7 +144,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Get recovery and rest day advice',
     category: 'Recovery',
     icon: Icons.self_improvement_outlined,
-    color: Color(0xFF3B82F6),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'I need recovery advice for my muscles',
   ),
@@ -111,7 +154,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Plan your meals for the week',
     category: 'Workout',
     icon: Icons.lunch_dining_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Give me a simple high-protein meal prep plan',
   ),
@@ -121,7 +164,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Get guidance on pain and injuries',
     category: 'Recovery',
     icon: Icons.healing_outlined,
-    color: Color(0xFFEF4444),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'I have pain in my body, what should I do?',
   ),
@@ -131,7 +174,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Quick photo calorie estimate',
     category: 'Nutrition',
     icon: Icons.local_fire_department_outlined,
-    color: Color(0xFFF59E0B),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.openMediaPicker,
     mediaMode: ChatMediaMode.camera,
     examplePrompt: 'How many calories are in this food?',
@@ -149,7 +192,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: "Snap any gym machine — coach finds matching exercises",
     category: 'Workout',
     icon: Icons.camera_alt_outlined,
-    color: Color(0xFF06B6D4),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.openMediaPicker,
     mediaMode: ChatMediaMode.camera,
     examplePrompt: "[intent:identify_equipment] What's this machine?",
@@ -161,7 +204,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Switch between dark and light theme',
     category: 'App Control',
     icon: Icons.dark_mode_outlined,
-    color: Color(0xFF6366F1),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Toggle dark mode',
   ),
@@ -171,7 +214,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Mute or unmute all workout sounds',
     category: 'App Control',
     icon: Icons.volume_off_outlined,
-    color: Color(0xFF8B5CF6),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Toggle workout sounds',
   ),
@@ -181,7 +224,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Turn voice coach on or off during workouts',
     category: 'App Control',
     icon: Icons.record_voice_over_outlined,
-    color: Color(0xFFEC4899),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Toggle voice announcements',
   ),
@@ -192,7 +235,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Open your stats and progress dashboard',
     category: 'Navigation',
     icon: Icons.bar_chart_outlined,
-    color: Color(0xFF10B981),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Take me to my stats',
   ),
@@ -202,7 +245,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Browse 500+ exercises with form videos',
     category: 'Navigation',
     icon: Icons.fitness_center_outlined,
-    color: Color(0xFF0EA5E9),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Open the exercise library',
   ),
@@ -212,7 +255,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'View and manage your workout schedule',
     category: 'Navigation',
     icon: Icons.calendar_month_outlined,
-    color: Color(0xFFF59E0B),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Show me my weekly schedule',
   ),
@@ -223,7 +266,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Track your water intake',
     category: 'Tracking',
     icon: Icons.water_drop_outlined,
-    color: Color(0xFF06B6D4),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'I drank a glass of water',
   ),
@@ -233,7 +276,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Change your daily water intake target',
     category: 'Tracking',
     icon: Icons.flag_outlined,
-    color: Color(0xFF14B8A6),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Set my daily water goal to 8 glasses',
   ),
@@ -244,7 +287,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'View your AI-generated weekly summary',
     category: 'Stats & Reports',
     icon: Icons.summarize_outlined,
-    color: Color(0xFF8B5CF6),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Show me my weekly report',
   ),
@@ -254,7 +297,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'See this week at a glance',
     category: 'Stats & Reports',
     icon: Icons.dashboard_outlined,
-    color: Color(0xFF6366F1),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Show me my dashboard',
   ),
@@ -264,7 +307,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Check your workout completion rate',
     category: 'Stats & Reports',
     icon: Icons.track_changes_outlined,
-    color: Color(0xFF10B981),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'How am I doing with my workout compliance this week?',
   ),
@@ -274,7 +317,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'View body measurement trends',
     category: 'Stats & Reports',
     icon: Icons.straighten_outlined,
-    color: Color(0xFFF59E0B),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Show me my body measurement trends',
   ),
@@ -285,7 +328,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Get AI assessment of your overall progress',
     category: 'Coach Insights',
     icon: Icons.trending_up_outlined,
-    color: Color(0xFF22C55E),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Give me an overall progress check - how am I doing?',
   ),
@@ -295,7 +338,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Check if you need a recovery week',
     category: 'Coach Insights',
     icon: Icons.battery_charging_full_outlined,
-    color: Color(0xFFEF4444),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Based on my readiness and training volume, do I need a deload week?',
   ),
@@ -305,7 +348,7 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     description: 'Ask AI to modify intensity based on recovery',
     category: 'Coach Insights',
     icon: Icons.tune_outlined,
-    color: Color(0xFF06B6D4),
+    color: _defaultChipColor,
     behavior: ChatActionBehavior.sendPrompt,
     prompt: 'Based on my readiness scores and recent workouts, should you adjust my training intensity?',
   ),

@@ -121,7 +121,7 @@ class _AllLevelsSheet extends ConsumerWidget {
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 12, 8),
                   child: Row(
                     children: [
-                      Icon(Icons.stairs, color: AppColors.gamGold, size: 22),
+                      Icon(Icons.stairs, color: AppColors.gamGold, size: 22), // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -225,7 +225,7 @@ class _AllLevelsSheet extends ConsumerWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: AppColors.gamGold),
+        Icon(icon, size: 13, color: AppColors.gamGold), // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
         const SizedBox(width: 4),
         Text(label, style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2)),
       ],
@@ -238,18 +238,18 @@ class _AllLevelsSheet extends ConsumerWidget {
     Color getRewardColor() {
       if (level.reward == null) return Colors.grey;
       if (level.reward!.contains('Crate') || level.reward!.contains('crate')) {
-        if (level.reward!.contains('Diamond')) return const Color(0xFF00BCD4);
-        if (level.reward!.contains('Legendary')) return const Color(0xFFFF9800);
-        if (level.reward!.contains('Fitness')) return const Color(0xFF4CAF50);
-        return const Color(0xFF9C27B0);
+        if (level.reward!.contains('Diamond')) return const Color(0xFF00BCD4); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+        if (level.reward!.contains('Legendary')) return const Color(0xFFFF9800); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+        if (level.reward!.contains('Fitness')) return const Color(0xFF4CAF50); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+        return const Color(0xFF9C27B0); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
       }
-      if (level.reward!.contains('Frame')) return const Color(0xFFFF8F00);
+      if (level.reward!.contains('Frame')) return const Color(0xFFFF8F00); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
       if (level.reward!.contains('Badge')) return titleColor;
-      if (level.reward!.contains('Theme')) return const Color(0xFF9C27B0);
-      if (level.reward!.contains('T-Shirt') || level.reward!.contains('Hoodie') || level.reward!.contains('Shaker')) return const Color(0xFFE91E63);
-      if (level.reward!.contains('XP')) return const Color(0xFFFF8F00);
-      if (level.reward!.contains('Shield')) return const Color(0xFF2196F3);
-      if (level.reward!.contains('Token')) return const Color(0xFF9C27B0);
+      if (level.reward!.contains('Theme')) return const Color(0xFF9C27B0); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      if (level.reward!.contains('T-Shirt') || level.reward!.contains('Hoodie') || level.reward!.contains('Shaker')) return const Color(0xFFE91E63); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      if (level.reward!.contains('XP')) return const Color(0xFFFF8F00); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      if (level.reward!.contains('Shield')) return const Color(0xFF2196F3); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      if (level.reward!.contains('Token')) return const Color(0xFF9C27B0); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
       return accentColor;
     }
 
@@ -266,7 +266,7 @@ class _AllLevelsSheet extends ConsumerWidget {
     final strongBorder = isCurrentLevel
         ? accentColor.withValues(alpha: isDark ? 0.7 : 0.8)
         : isCompleted
-            ? AppColors.green.withValues(alpha: isDark ? 0.5 : 0.6)
+            ? AppColors.green.withValues(alpha: isDark ? 0.5 : 0.6) // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
             : isBigMilestone
                 ? rewardColor.withValues(alpha: isDark ? 0.6 : 0.7)
                 : isDark ? borderColor : Colors.grey.shade300;
@@ -315,7 +315,7 @@ class _AllLevelsSheet extends ConsumerWidget {
                       children: [
                         Flexible(child: Text(level.levelName, style: TextStyle(fontSize: isBigMilestone ? 15 : 14, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87), overflow: TextOverflow.ellipsis)),
                         if (isCurrentLevel) ...[const SizedBox(width: 6), Builder(builder: (ctx) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: accentColor, borderRadius: BorderRadius.circular(4)), child: Text(AppLocalizations.of(ctx)!.xpGoalsScreenYouBadge, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))))],
-                        if (isBigMilestone && !isCurrentLevel) ...[const SizedBox(width: 6), Builder(builder: (ctx) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.amber.shade600, Colors.orange.shade600]), borderRadius: BorderRadius.circular(4)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.star, size: 10, color: Colors.white), const SizedBox(width: 2), Text(level.level == 250 ? AppLocalizations.of(ctx)!.xpGoalsScreenLegendary : AppLocalizations.of(ctx)!.xpGoalsScreenMilestone, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))])))],
+                        if (isBigMilestone && !isCurrentLevel) ...[const SizedBox(width: 6), Builder(builder: (ctx) => Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.amber.shade600, Colors.orange.shade600]), borderRadius: BorderRadius.circular(4)), child: Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.star, size: 10, color: Colors.white), const SizedBox(width: 2), Text(level.level == 250 ? AppLocalizations.of(ctx)!.xpGoalsScreenLegendary : AppLocalizations.of(ctx)!.xpGoalsScreenMilestone, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.white))])))], // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -365,7 +365,7 @@ class _AllLevelsSheet extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(AppLocalizations.of(ctx)!.xpGoalsScreenReward, style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: rewardColor, letterSpacing: 1)), const SizedBox(height: 2), Text(level.reward!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? textColor : Colors.black87))])),
                   if (!isCompleted) Icon(Icons.lock_outline, size: 18, color: isDark ? textMuted.withValues(alpha: 0.5) : Colors.grey.shade500),
-                  if (isCompleted) const Icon(Icons.check_circle, size: 18, color: AppColors.green),
+                  if (isCompleted) const Icon(Icons.check_circle, size: 18, color: AppColors.green), // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
                 ],
               )),
             ),
@@ -378,16 +378,16 @@ class _AllLevelsSheet extends ConsumerWidget {
   Color _getTitleColor(String title) {
     switch (title) {
       case 'Beginner': return const Color(0xFF9E9E9E);
-      case 'Novice': return const Color(0xFF8BC34A);
-      case 'Apprentice': return const Color(0xFF4CAF50);
-      case 'Athlete': return const Color(0xFF2196F3);
-      case 'Elite': return const Color(0xFF9C27B0);
-      case 'Master': return const Color(0xFFFF9800);
-      case 'Champion': return const Color(0xFFFF5722);
-      case 'Legend': return const Color(0xFFFFD700);
-      case 'Mythic': return const Color(0xFFE040FB);
-      case 'Immortal': return const Color(0xFF00E5FF);
-      case 'Transcendent': return const Color(0xFFFF1744);
+      case 'Novice': return const Color(0xFF8BC34A); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Apprentice': return const Color(0xFF4CAF50); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Athlete': return const Color(0xFF2196F3); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Elite': return const Color(0xFF9C27B0); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Master': return const Color(0xFFFF9800); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Champion': return const Color(0xFFFF5722); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Legend': return const Color(0xFFFFD700); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Mythic': return const Color(0xFFE040FB); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Immortal': return const Color(0xFF00E5FF); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
+      case 'Transcendent': return const Color(0xFFFF1744); // accent-allowlist: reward-type identity (crate/frame/badge/theme/token) and level-title rarity ladder (Beginner..Transcendent), gamification not accent
       default: return const Color(0xFF9E9E9E);
     }
   }

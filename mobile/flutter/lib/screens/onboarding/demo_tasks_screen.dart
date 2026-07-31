@@ -9,6 +9,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/providers/demo_tasks_seen_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Demo Tasks Screen — Onboarding v5 (LEGACY chooser hub as of v7)
 ///
 /// Two optional pre-signup demos. Users self-select through action: those
@@ -120,14 +121,14 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2ECC71).withValues(alpha: 0.15),
+                    color: const Color(0xFF2ECC71).withValues(alpha: 0.15),  // accent-allowlist: success/positive state (completed task) - same family as AppColors.success
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.check_circle_rounded,
-                          color: Color(0xFF2ECC71), size: 16),
+                          color: Color(0xFF2ECC71), size: 16),  // accent-allowlist: success/positive state (completed task) - same family as AppColors.success
                       const SizedBox(width: 6),
                       Text(
                         completionCount == 2
@@ -136,7 +137,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                         style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF2ECC71),
+                          color: Color(0xFF2ECC71),  // accent-allowlist: success/positive state (completed task) - same family as AppColors.success
                         ),
                       ),
                     ],
@@ -152,7 +153,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                     _DemoCard(
                       delay: 350,
                       icon: Icons.fitness_center_rounded,
-                      iconColor: const Color(0xFF00BCD4),
+                      iconColor: const Color(0xFF00BCD4),  // accent-allowlist: distinct preview colour per demo-card feature (Workout/Nutrition) - categorical, helps distinguish cards at a glance
                       label: 'Workout',
                       detail: AppLocalizations.of(context).demoTasksSeeHowTrainingWorks,
                       duration: '~45 sec',
@@ -167,7 +168,7 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                     _DemoCard(
                       delay: 500,
                       icon: Icons.restaurant_menu_rounded,
-                      iconColor: const Color(0xFF2ECC71),
+                      iconColor: const Color(0xFF2ECC71),  // accent-allowlist: distinct preview colour per demo-card feature (Workout/Nutrition) - categorical, helps distinguish cards at a glance
                       label: 'Nutrition',
                       detail: AppLocalizations.of(context).demoTasksSnapAMenuLog,
                       duration: '~30 sec',
@@ -189,8 +190,8 @@ class _DemoTasksScreenState extends ConsumerState<DemoTasksScreen> {
                   height: 56,
                   margin: const EdgeInsets.symmetric(vertical: 16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+                    gradient: LinearGradient(
+                      colors: [AppColors.onboardingAccent, context.accentColor],
                     ),
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
@@ -261,7 +262,7 @@ class _DemoCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: done
-                ? const Color(0xFF2ECC71).withValues(alpha: 0.5)
+                ? const Color(0xFF2ECC71).withValues(alpha: 0.5)  // accent-allowlist: success/positive state (completed task) - same family as AppColors.success
                 : iconColor.withValues(alpha: 0.25),
             width: done ? 1.5 : 1,
           ),
@@ -298,7 +299,7 @@ class _DemoCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2ECC71),
+                            color: const Color(0xFF2ECC71),  // accent-allowlist: success/positive state (completed task) - same family as AppColors.success
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
@@ -338,7 +339,7 @@ class _DemoCard extends StatelessWidget {
               done
                   ? Icons.check_circle_rounded
                   : Icons.arrow_forward_ios_rounded,
-              color: done ? const Color(0xFF2ECC71) : textSecondary,
+              color: done ? const Color(0xFF2ECC71) : textSecondary,  // accent-allowlist: success/positive state (completed task) - same family as AppColors.success
               size: done ? 24 : 16,
             ),
           ],

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../widgets/glass_sheet.dart';
 import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../../../core/theme/accent_color_provider.dart';
 
 /// Shows a bottom sheet with a slider for editing a single value.
 Future<void> showSliderDialog({
@@ -46,16 +47,16 @@ Future<void> showSliderDialog({
                       style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           fontFamily: 'monospace')),
                   const SizedBox(height: 8),
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: AppColors.orange,
+                      activeTrackColor: context.accentColor,
                       inactiveTrackColor:
-                          AppColors.orange.withValues(alpha: 0.2),
-                      thumbColor: AppColors.orange,
-                      overlayColor: AppColors.orange.withValues(alpha: 0.1),
+                          context.accentColor.withValues(alpha: 0.2),
+                      thumbColor: context.accentColor,
+                      overlayColor: context.accentColor.withValues(alpha: 0.1),
                       trackHeight: 4,
                     ),
                     child: Slider(

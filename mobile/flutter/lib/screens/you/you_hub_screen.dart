@@ -347,7 +347,7 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                 maxBlastForce: 18,
                 minBlastForce: 6,
                 gravity: 0.25,
-                colors: [accent, Colors.amber, Colors.white],
+                colors: [accent, Colors.amber, Colors.white], // accent-allowlist: confetti burst — leads with the live accent, then amber/white purely for celebratory variety; a monochrome burst reads as cheap, so the extra hues are decoration rather than meaning
               ),
             ),
           ],

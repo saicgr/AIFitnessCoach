@@ -306,7 +306,7 @@ class _CycleOnboardingSheetState extends ConsumerState<CycleOnboardingSheet> {
               Text(
                 _error!,
                 style: const TextStyle(
-                    fontSize: 12.5, color: AppColors.error),
+                    fontSize: 12.5, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
               ),
               const SizedBox(height: 10),
             ],

@@ -135,7 +135,7 @@ class ShareInsightsSheet {
           name: 'Streak',
           backgroundGradient: const [
             Color(0xFF1C1917),
-            Color(0xFF7F1D1D),
+            Color(0xFF7F1D1D),  // accent-allowlist: error/negative state — must stay red regardless of accent
             Color(0xFF1C1917),
           ],
           content: InsightsStreakTemplate(

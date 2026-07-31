@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Inline theme selector with 3 buttons: System, Light, Dark
 /// Provides immediate feedback without requiring a bottom sheet
 class InlineThemeSelector extends StatelessWidget {
@@ -20,7 +21,7 @@ class InlineThemeSelector extends StatelessWidget {
     final backgroundColor = isDark
         ? AppColors.pureBlack.withValues(alpha: 0.5)
         : AppColorsLight.cardBorder.withValues(alpha: 0.5);
-    final selectedColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final selectedColor = isDark ? context.accentColor : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(

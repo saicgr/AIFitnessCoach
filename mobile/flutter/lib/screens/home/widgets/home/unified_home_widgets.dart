@@ -43,6 +43,8 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../week_calendar_strip.dart';
 import '../workout_options_sheet.dart';
+import '../../../../data/providers/root_messenger.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// ============================================================================
 /// Unified home (v27) section widgets.
@@ -1236,7 +1238,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
     );
     if (shareable == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(
                 AppLocalizations.of(context).heroWorkoutCardNothingToShareYet),
@@ -1598,7 +1600,7 @@ class HomeFuelStrip extends ConsumerWidget {
             Row(
               children: [
                 _FuelMacroLeft(
-                  color: AppColors.macroProtein,
+                  color: AppColors.macroProtein,  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
                   letter: 'P',
                   eaten: eatenP,
                   target: pTarget,
@@ -1606,7 +1608,7 @@ class HomeFuelStrip extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 _FuelMacroLeft(
-                  color: AppColors.macroCarbs,
+                  color: AppColors.macroCarbs,  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces
                   letter: 'C',
                   eaten: eatenC,
                   target: cTarget,
@@ -1614,7 +1616,7 @@ class HomeFuelStrip extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 _FuelMacroLeft(
-                  color: AppColors.macroFat,
+                  color: AppColors.macroFat,  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
                   letter: 'F',
                   eaten: eatenF,
                   target: fTarget,
@@ -1903,7 +1905,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                         color: c.textMuted)),
                 const Spacer(),
                 _PlusButton(
-                  color: AppColors.macroFat,
+                  color: AppColors.macroFat,  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
                   // The "+" opens the food-log sheet directly. Switch to the
                   // Nutrition branch FIRST (`go`, not `push` — /nutrition is a
                   // shell nav tab; pushing stacks a 2nd NutritionScreen and
@@ -1967,21 +1969,21 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                 label: AppLocalizations.of(context)!.unifiedHomeWidgetsProtein,
                 eaten: eatenP,
                 goal: proteinTarget,
-                color: AppColors.macroProtein,
+                color: AppColors.macroProtein,  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
                 c: c),
             const SizedBox(height: 7),
             _MacroBar(
                 label: AppLocalizations.of(context)!.unifiedHomeWidgetsCarbs,
                 eaten: eatenC,
                 goal: carbsTarget,
-                color: AppColors.macroCarbs,
+                color: AppColors.macroCarbs,  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces
                 c: c),
             const SizedBox(height: 7),
             _MacroBar(
                 label: AppLocalizations.of(context)!.unifiedHomeWidgetsFat,
                 eaten: eatenF,
                 goal: fatTarget,
-                color: AppColors.macroFat,
+                color: AppColors.macroFat,  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
                 c: c),
             // P5 §2: small inline chip at 20:00+ when hydration < 60%.
             if (showLateDayChip && cupsLeftLateDay > 0) ...[
@@ -1990,7 +1992,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.14),
+                  color: context.accentColor.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Row(
@@ -2003,7 +2005,7 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                       style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     ),
                   ],
@@ -2023,12 +2025,12 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
                     child: _NutriTileShell(
                       c: c,
                       iconName: 'water',
-                      tint: AppColors.cyan,
+                      tint: context.accentColor,
                       label: AppLocalizations.of(context)!.unifiedHomeWidgetsWater,
                       fraction: cupGoal > 0 ? cups / cupGoal : 0,
                       onTap: () => context.go('/nutrition'),
                       trailing: _PlusButton(
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         onTap: () {
                           HapticService.light();
                           if (userId != null) {
@@ -2169,7 +2171,7 @@ class _NutritionFastingTile extends ConsumerWidget {
     return _NutriTileShell(
       c: c,
       iconName: 'fasting',
-      tint: AppColors.cyan,
+      tint: context.accentColor,
       label: AppLocalizations.of(context)!.unifiedHomeWidgetsFasting,
       fraction: fraction,
       value: value,
@@ -2388,7 +2390,7 @@ class HomeMetricTrio extends ConsumerWidget {
             child: _MetricTile(
               c: c,
               iconName: 'activity',
-              tint: AppColors.success,
+              tint: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
               label: AppLocalizations.of(context)!.unifiedHomeWidgetsActivity,
               value: _fmt(steps),
               sub: AppLocalizations.of(context)!.unifiedHomeWidgetsKcalBurned(burned),
@@ -2438,7 +2440,7 @@ class _SleepTile extends StatelessWidget {
         loading: () => _MetricTile(
           c: c,
           iconName: 'sleep',
-          tint: AppColors.macroProtein,
+          tint: AppColors.macroProtein,  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
           label: AppLocalizations.of(context)!.unifiedHomeWidgetsSleep,
           value: '…',
           sub: AppLocalizations.of(context)!.unifiedHomeWidgetsLastNight,
@@ -2447,7 +2449,7 @@ class _SleepTile extends StatelessWidget {
         error: (_, __) => _MetricTile(
           c: c,
           iconName: 'sleep',
-          tint: AppColors.macroProtein,
+          tint: AppColors.macroProtein,  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
           label: AppLocalizations.of(context)!.unifiedHomeWidgetsSleep,
           value: AppLocalizations.of(context)!.unifiedHomeWidgetsNoData,
           sub: AppLocalizations.of(context)!.unifiedHomeWidgetsLastNight,
@@ -2466,7 +2468,7 @@ class _SleepTile extends StatelessWidget {
       return _MetricTile(
         c: c,
         iconName: 'sleep',
-        tint: AppColors.macroProtein,
+        tint: AppColors.macroProtein,  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
         label: l10n.unifiedHomeWidgetsSleep,
         value: l10n.unifiedHomeWidgetsNoData,
         sub: l10n.unifiedHomeWidgetsLastNight,
@@ -2529,10 +2531,10 @@ class _HealthConnectPrompt extends ConsumerWidget {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.16),
+                color: AppColors.success.withValues(alpha: 0.16),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: LineIcon('activity', size: 22, color: AppColors.success),
+              child: LineIcon('activity', size: 22, color: AppColors.success),  // accent-allowlist: success/positive state -- must stay green regardless of accent
             ),
             const SizedBox(width: 12),
             Expanded(

@@ -82,7 +82,7 @@ class _TrialProgressWidgetState extends ConsumerState<TrialProgressWidget> {
           end: Alignment.bottomRight,
           colors: [
             AppColors.onboardingAccent.withValues(alpha: 0.12),
-            const Color(0xFFFF6B00).withValues(alpha: 0.06),
+            const Color(0xFFFF6B00).withValues(alpha: 0.06),  // accent-allowlist: onboarding funnel's own fixed branding gradient (partner stop of AppColors.onboardingAccent), not the live app accent
           ],
         ),
         borderRadius: BorderRadius.circular(16),

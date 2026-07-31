@@ -88,11 +88,11 @@ extension ImportEffortMapping on ImportEffort {
   Color color(BuildContext context) {
     switch (this) {
       case ImportEffort.light:
-        return const Color(0xFF22C55E); // green
+        return const Color(0xFF22C55E); // green  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
       case ImportEffort.moderate:
-        return const Color(0xFFF59E0B); // amber
+        return const Color(0xFFF59E0B); // amber  // accent-allowlist: warning severity (amber-500)
       case ImportEffort.hard:
-        return const Color(0xFFEF4444); // red
+        return const Color(0xFFEF4444); // red  // accent-allowlist: error/destructive -- must stay red (red-500)
     }
   }
 }
@@ -582,20 +582,20 @@ class _ExternalWorkoutImportSheetState
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEF4444).withValues(alpha: 0.12),
+                      color: const Color(0xFFEF4444).withValues(alpha: 0.12),  // accent-allowlist: error/destructive -- must stay red (red-500)
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.error_outline_rounded,
-                            color: Color(0xFFEF4444), size: 18),
+                            color: Color(0xFFEF4444), size: 18),  // accent-allowlist: error/destructive -- must stay red (red-500)
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _error!,
                             style: const TextStyle(
                               fontSize: 13,
-                              color: Color(0xFFEF4444),
+                              color: Color(0xFFEF4444),  // accent-allowlist: error/destructive -- must stay red (red-500)
                             ),
                           ),
                         ),
@@ -675,20 +675,20 @@ class _ExternalWorkoutImportSheetState
       case 'running':
       case 'walking':
       case 'hiking':
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E);  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
       case 'cycling':
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6);  // accent-allowlist: informational (blue-500)
       case 'swimming':
       case 'rowing':
-        return const Color(0xFF06B6D4);
+        return const Color(0xFF06B6D4);  // accent-allowlist: workout-type categorical colour legend (_iconAccent: running/walking/hiking=green, cycling=blue, swimming/rowing=cyan, strength/hiit=red, yoga/pilates=violet)
       case 'hiit':
       case 'strength':
-        return const Color(0xFFEF4444);
+        return const Color(0xFFEF4444);  // accent-allowlist: error/destructive -- must stay red (red-500)
       case 'yoga':
       case 'pilates':
-        return const Color(0xFF8B5CF6);
+        return const Color(0xFF8B5CF6);  // accent-allowlist: workout-type categorical colour legend (_iconAccent: running/walking/hiking=green, cycling=blue, swimming/rowing=cyan, strength/hiit=red, yoga/pilates=violet)
       default:
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E);  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
     }
   }
 }

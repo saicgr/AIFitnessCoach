@@ -6,6 +6,7 @@ import '../../../../data/models/exercise.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/image_url_cache.dart';
 import '../../../../widgets/exercise_image.dart' show kExercisePlaceholderIcon;
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// A thumbnail widget for displaying exercise images
 /// Loads images from the API and caches them for performance
@@ -119,7 +120,7 @@ class _ExerciseImageThumbnailState
     if (widget.size < 32) {
       return Icon(
         kExercisePlaceholderIcon,
-        color: AppColors.cyan.withOpacity(0.7),
+        color: context.accentColor.withOpacity(0.7),
         size: widget.size * 0.5,
       );
     }
@@ -129,7 +130,7 @@ class _ExerciseImageThumbnailState
         style: TextStyle(
           fontSize: widget.size * 0.42,
           fontWeight: FontWeight.w700,
-          color: AppColors.cyan.withOpacity(0.85),
+          color: context.accentColor.withOpacity(0.85),
         ),
       ),
     );
@@ -137,13 +138,13 @@ class _ExerciseImageThumbnailState
 
   Widget _buildContent() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: SizedBox(
           width: 16,
           height: 16,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.cyan,
+            color: context.accentColor,
           ),
         ),
       );
@@ -160,13 +161,13 @@ class _ExerciseImageThumbnailState
     return CachedNetworkImage(
       imageUrl: _imageUrl!,
       fit: BoxFit.cover,
-      placeholder: (_, __) => const Center(
+      placeholder: (_, __) => Center(
         child: SizedBox(
           width: 16,
           height: 16,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.cyan,
+            color: context.accentColor,
           ),
         ),
       ),

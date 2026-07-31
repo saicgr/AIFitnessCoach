@@ -128,7 +128,7 @@ class _ImportEquipmentResultSheetState
               '${_customAdded.isNotEmpty ? ' (+${_customAdded.length} custom)' : ''}'),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: Colors.green.shade700,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           duration: const Duration(seconds: 3),
         ),
       );
@@ -185,22 +185,22 @@ class _ImportEquipmentResultSheetState
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/destructive -- must stay red
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                          color: Colors.red.withValues(alpha: 0.3)),
+                          color: Colors.red.withValues(alpha: 0.3)),  // accent-allowlist: error/destructive -- must stay red
                     ),
                     child: Row(
                       children: [
                         Icon(Icons.error_outline_rounded,
-                            color: Colors.red.shade400, size: 18),
+                            color: Colors.red.shade400, size: 18),  // accent-allowlist: error/destructive -- must stay red
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Save failed: $_saveError',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.red.shade400,
+                              color: Colors.red.shade400,  // accent-allowlist: error/destructive -- must stay red
                             ),
                           ),
                         ),
@@ -223,7 +223,7 @@ class _ImportEquipmentResultSheetState
       child: Row(
         children: [
           Icon(Icons.check_circle_rounded,
-              color: Colors.green.shade500, size: 24),
+              color: Colors.green.shade500, size: 24),  // accent-allowlist: success/positive state -- must stay green regardless of accent
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -344,7 +344,7 @@ class _ImportEquipmentResultSheetState
         Row(
           children: [
             Icon(Icons.check_circle_rounded,
-                color: Colors.green.shade500, size: 18),
+                color: Colors.green.shade500, size: 18),  // accent-allowlist: success/positive state -- must stay green regardless of accent
             const SizedBox(width: 6),
             Text(
               'Matched ($matchedKeptCount/$totalMatched)',
@@ -393,7 +393,7 @@ class _ImportEquipmentResultSheetState
         Row(
           children: [
             Icon(Icons.help_outline_rounded,
-                color: Colors.amber.shade600, size: 18),
+                color: Colors.amber.shade600, size: 18),  // accent-allowlist: warning severity
             const SizedBox(width: 6),
             Text(
               'Unmatched (${widget.result.unmatched.length})',
@@ -418,10 +418,10 @@ class _ImportEquipmentResultSheetState
             padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: 0.10),
+              color: Colors.amber.withValues(alpha: 0.10),  // accent-allowlist: warning severity
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                  color: Colors.amber.withValues(alpha: 0.35), width: 1),
+                  color: Colors.amber.withValues(alpha: 0.35), width: 1),  // accent-allowlist: warning severity
             ),
             child: Row(
               children: [
@@ -450,7 +450,7 @@ class _ImportEquipmentResultSheetState
                 if (added)
                   _smallAction(
                     label: AppLocalizations.of(context).importEquipmentResultCustom,
-                    color: Colors.green.shade600,
+                    color: Colors.green.shade600,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     onTap: () => setState(() => _customAdded.remove(item.raw)),
                   )
                 else ...[
@@ -599,15 +599,15 @@ class _MatchedChip extends StatelessWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     final bg = kept
-        ? Colors.green.withValues(alpha: 0.14)
+        ? Colors.green.withValues(alpha: 0.14)  // accent-allowlist: success/positive state -- must stay green regardless of accent
         : (isDark
             ? Colors.white.withValues(alpha: 0.05)
             : Colors.black.withValues(alpha: 0.05));
     final border = kept
-        ? Colors.green.withValues(alpha: 0.45)
+        ? Colors.green.withValues(alpha: 0.45)  // accent-allowlist: success/positive state -- must stay green regardless of accent
         : textSecondary.withValues(alpha: 0.3);
     final fg = kept
-        ? Colors.green.shade600
+        ? Colors.green.shade600  // accent-allowlist: success/positive state -- must stay green regardless of accent
         : textSecondary;
 
     final extras = <String>[];

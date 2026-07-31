@@ -63,7 +63,7 @@ class WeighInDayChip extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           HapticService.light();
-          context.push('/weight/log');
+          context.push('/profile?tab=measurements&action=weigh_in');
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

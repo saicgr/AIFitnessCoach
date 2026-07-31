@@ -19,6 +19,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 class ContributeFoodDataSection extends ConsumerStatefulWidget {
   const ContributeFoodDataSection({super.key});
 
@@ -101,7 +102,7 @@ class _ContributeFoodDataSectionState
             child: Text(AppLocalizations.of(context).buttonCancel),
           ),
           TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
@@ -143,7 +144,7 @@ class _ContributeFoodDataSectionState
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accent = context.accentColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -205,7 +206,7 @@ class _ContributeFoodDataSectionState
             const SizedBox(height: 8),
             Text(
               _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: const TextStyle(color: Colors.red, fontSize: 12),  // accent-allowlist: error/destructive - must stay red
             ),
           ],
           const SizedBox(height: 16),
@@ -219,8 +220,8 @@ class _ContributeFoodDataSectionState
                 : const Icon(Icons.delete_outline, size: 18),
             label: Text(AppLocalizations.of(context).contributeFoodDataDeleteMyFoodContributions),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: const BorderSide(color: Colors.red, width: 1),
+              foregroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
+              side: const BorderSide(color: Colors.red, width: 1),  // accent-allowlist: error/destructive - must stay red
               minimumSize: const Size.fromHeight(44),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

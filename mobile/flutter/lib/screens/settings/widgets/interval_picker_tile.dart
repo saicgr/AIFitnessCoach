@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A tile for selecting an interval duration.
 ///
@@ -56,7 +57,7 @@ class IntervalPickerTile extends StatelessWidget {
             value: minutes,
             underline: const SizedBox(),
             isDense: true,
-            icon: Icon(Icons.arrow_drop_down, color: AppColors.cyan),
+            icon: Icon(Icons.arrow_drop_down, color: context.accentColor),
             dropdownColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
             items: intervals.map((m) {
               final hours = m ~/ 60;
@@ -71,7 +72,7 @@ class IntervalPickerTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               );

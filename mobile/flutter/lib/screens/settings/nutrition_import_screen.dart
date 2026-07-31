@@ -219,7 +219,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded, color: AppColors.error, size: 56),
+              Icon(Icons.error_outline_rounded, color: AppColors.error, size: 56),  // accent-allowlist: error/destructive - must stay red
               const SizedBox(height: 16),
               Text(
                 'Import failed',
@@ -257,7 +257,7 @@ class _NutritionImportScreenState extends ConsumerState<NutritionImportScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 56),
+            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 56),  // accent-allowlist: success/positive state - must stay green regardless of accent
             const SizedBox(height: 16),
             Text(
               'All set',

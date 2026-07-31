@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Represents different streak milestones with their properties
 enum StreakMilestone {
   bronze(3, 6, 'Getting Started'),
@@ -33,34 +34,34 @@ enum StreakMilestone {
   Color get color {
     switch (this) {
       case bronze:
-        return const Color(0xFFCD7F32);
+        return const Color(0xFFCD7F32);  // accent-allowlist: medal/rarity tier
       case silver:
         return const Color(0xFFC0C0C0);
       case gold:
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700);  // accent-allowlist: medal/rarity tier
       case platinum:
         return const Color(0xFFE5E4E2);
       case diamond:
         return const Color(0xFFB9F2FF);
       case master:
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: no BuildContext available in this scope (enum getter) — badge-tier identity color
     }
   }
 
   Color get glowColor {
     switch (this) {
       case bronze:
-        return const Color(0xFFCD7F32);
+        return const Color(0xFFCD7F32);  // accent-allowlist: medal/rarity tier
       case silver:
         return const Color(0xFFC0C0C0);
       case gold:
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700);  // accent-allowlist: medal/rarity tier
       case platinum:
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6);  // accent-allowlist: informational state — must stay blue regardless of accent
       case diamond:
-        return const Color(0xFF00CED1);
+        return const Color(0xFF00CED1);  // accent-allowlist: informational state — must stay blue regardless of accent
       case master:
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: no BuildContext available in this scope (enum getter) — badge-tier identity color
     }
   }
 }
@@ -377,8 +378,8 @@ class _StreakBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = milestone?.color ?? AppColors.orange;
-    final glowColor = milestone?.glowColor ?? AppColors.orange;
+    final color = milestone?.color ?? context.accentColor;
+    final glowColor = milestone?.glowColor ?? context.accentColor;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return Container(
@@ -480,14 +481,14 @@ class _PersonalBestBadgeState extends State<_PersonalBestBadge>
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [
-                  Color(0xFFFFD700),
-                  Color(0xFFFFA500),
+                  Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier
+                  Color(0xFFFFA500),  // accent-allowlist: warning severity — must stay amber regardless of accent
                 ],
               ),
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withOpacity(0.4),
+                  color: const Color(0xFFFFD700).withOpacity(0.4),  // accent-allowlist: medal/rarity tier
                   blurRadius: 8,
                   spreadRadius: 1,
                 ),

@@ -59,14 +59,14 @@ class HeartRateChart extends StatelessWidget {
             child: Row(
               children: [
                 if (avgBpm != null)
-                  _buildStatChip('Avg', avgBpm!, const Color(0xFF2196F3)),
+                  _buildStatChip('Avg', avgBpm!, const Color(0xFF2196F3)), // accent-allowlist: heart-rate metric identity color (avg/peak/min), matches heart_rate_chart_part_heart_rate_summary_card.dart convention
                 if (maxBpm != null) ...[
                   const SizedBox(width: 8),
-                  _buildStatChip('Peak', maxBpm!, const Color(0xFFF44336)),
+                  _buildStatChip('Peak', maxBpm!, const Color(0xFFF44336)), // accent-allowlist: heart-rate metric identity color (avg/peak/min), matches heart_rate_chart_part_heart_rate_summary_card.dart convention
                 ],
                 if (minBpm != null) ...[
                   const SizedBox(width: 8),
-                  _buildStatChip('Min', minBpm!, const Color(0xFF4CAF50)),
+                  _buildStatChip('Min', minBpm!, const Color(0xFF4CAF50)), // accent-allowlist: heart-rate metric identity color (avg/peak/min), matches heart_rate_chart_part_heart_rate_summary_card.dart convention
                 ],
               ],
             ),
@@ -182,7 +182,7 @@ class HeartRateChart extends StatelessWidget {
                   spots: spots,
                   isCurved: true,
                   curveSmoothness: 0.2,
-                  color: const Color(0xFFF44336),
+                  color: const Color(0xFFF44336), // accent-allowlist: heart-rate metric identity color (avg/peak/min), matches heart_rate_chart_part_heart_rate_summary_card.dart convention
                   barWidth: 2.5,
                   isStrokeCapRound: true,
                   dotData: const FlDotData(show: false),
@@ -190,8 +190,8 @@ class HeartRateChart extends StatelessWidget {
                     show: true,
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFFF44336).withValues(alpha: 0.3),
-                        const Color(0xFFF44336).withValues(alpha: 0.05),
+                        const Color(0xFFF44336).withValues(alpha: 0.3), // accent-allowlist: heart-rate metric identity color (avg/peak/min), matches heart_rate_chart_part_heart_rate_summary_card.dart convention
+                        const Color(0xFFF44336).withValues(alpha: 0.05), // accent-allowlist: heart-rate metric identity color (avg/peak/min), matches heart_rate_chart_part_heart_rate_summary_card.dart convention
                       ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,

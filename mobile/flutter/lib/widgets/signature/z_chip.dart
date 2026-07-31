@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
 
 /// A signature-v2 pill chip with a Barlow-Condensed uppercase label.
@@ -41,7 +42,7 @@ class ZChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = AppColors.orange;
+    final accent = context.accentColor;
     final borderColor = selected ? accent : AppColors.cardBorder;
     final textColor = selected ? accent : AppColors.textSecondary;
 

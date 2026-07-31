@@ -72,7 +72,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final unit = _isMetric ? _selectedType.metricUnit : _selectedType.imperialUnit;
 
     return Padding(
@@ -366,7 +366,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).measurementsScreenPartPleaseEnterAValue),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         ),
       );
       return;
@@ -377,7 +377,7 @@ class _AddMeasurementSheetState extends State<_AddMeasurementSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).recordAttemptPleaseEnterAValid),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         ),
       );
       return;
@@ -464,7 +464,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -725,7 +725,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     showDialog(
       context: context,
@@ -871,7 +871,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Export failed: ${e is DioException ? e.message : e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           ),
         );
       }

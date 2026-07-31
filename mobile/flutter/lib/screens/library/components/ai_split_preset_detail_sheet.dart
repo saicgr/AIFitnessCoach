@@ -12,6 +12,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/schedule_mismatch_dialog.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Bottom sheet showing AI Split Preset details
 class AISplitPresetDetailSheet extends ConsumerStatefulWidget {
   final AISplitPreset preset;
@@ -39,9 +40,9 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final green = isDark ? AppColors.green : AppColorsLight.green;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final orange = isDark ? context.accentColor : context.accentColor;
+    final green = isDark ? AppColors.green : AppColorsLight.green;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final purple = isDark ? context.accentColor : context.accentColor;
 
     return Container(
       constraints: BoxConstraints(
@@ -200,10 +201,10 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.coral.withValues(alpha: 0.1),
+                        color: context.accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.coral.withValues(alpha: 0.3),
+                          color: context.accentColor.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -212,7 +213,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                           Icon(
                             Icons.warning_amber_rounded,
                             size: 18,
-                            color: AppColors.coral,
+                            color: context.accentColor,
                           ),
                           const SizedBox(width: 10),
                           Expanded(
@@ -220,7 +221,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
                               widget.preset.warning!,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.coral,
+                                color: context.accentColor,
                                 height: 1.4,
                               ),
                             ),
@@ -443,7 +444,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
   }) async {
     if (!mounted) return;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     setState(() => _isLoading = true);
 
@@ -545,7 +546,7 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to update: ${e.toString()}'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),

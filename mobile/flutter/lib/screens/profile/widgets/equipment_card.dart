@@ -101,7 +101,7 @@ class EquipmentCard extends StatelessWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     final rawEquipment = user?.equipmentList ?? ['bodyweight'];
     final equipment = _getDisplayEquipment(rawEquipment);

@@ -17,6 +17,7 @@ import 'widgets/empty_state_with_suggestions.dart';
 import 'widgets/exercise_picker_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'staple_exercises_screen_part_staple_exercise_tile.dart';
 
 
@@ -78,7 +79,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ? AppLocalizations.of(context)!.stapleExercisesScreenAddedAsAStaple(result.exerciseName)
                   : 'Failed to add exercise',
             ),
-            backgroundColor: success ? AppColors.success : AppColors.error,
+            backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -102,7 +103,7 @@ class StapleExercisesScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.stapleExercisesScreenIsAlreadyAStaple(suggestion.name)),
-          backgroundColor: AppColors.cyan,
+          backgroundColor: context.accentColor,
         ),
       );
       return;
@@ -137,7 +138,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                 ? AppLocalizations.of(context)!.stapleExercisesScreenAddedAsAStaple2(suggestion.name)
                 : 'Failed to add exercise',
           ),
-          backgroundColor: success ? AppColors.success : AppColors.error,
+          backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     }
@@ -185,7 +186,7 @@ class StapleExercisesScreen extends ConsumerWidget {
           HapticService.light();
           _showAddExercisePicker(context, ref);
         },
-        backgroundColor: AppColors.cyan,
+        backgroundColor: context.accentColor,
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: body,
@@ -216,7 +217,7 @@ class StapleExercisesScreen extends ConsumerWidget {
   Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
     return EmptyStateWithSuggestions(
       heroIcon: Icons.push_pin_rounded,
-      accentColor: AppColors.cyan,
+      accentColor: context.accentColor,
       heroTitle: 'Lock in your core lifts',
       heroSubtitle:
           'Staples never rotate out. Pick the lifts you want to hit every week — your plan will build around them.',
@@ -247,17 +248,17 @@ class StapleExercisesScreen extends ConsumerWidget {
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: (isDark ? AppColors.purple : AppColorsLight.purple).withValues(alpha: 0.1),
+            color: (context.accentColor).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: (isDark ? AppColors.purple : AppColorsLight.purple).withValues(alpha: 0.3),
+              color: (context.accentColor).withValues(alpha: 0.3),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 Icons.push_pin,
-                color: isDark ? AppColors.purple : AppColorsLight.purple,
+                color: context.accentColor,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -501,7 +502,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                             onSelected: (_) {
                               setSheetState(() => selectedSection = s);
                             },
-                            selectedColor: AppColors.cyan,
+                            selectedColor: context.accentColor,
                             labelStyle: TextStyle(
                               color: isSelected ? Colors.white : textMuted,
                               fontSize: 13,
@@ -812,11 +813,11 @@ class StapleExercisesScreen extends ConsumerWidget {
                                 padding: const EdgeInsets.symmetric(vertical: 10),
                                 decoration: BoxDecoration(
                                   color: dayTargetMode == entry.$1
-                                      ? AppColors.cyan.withValues(alpha: 0.15)
+                                      ? context.accentColor.withValues(alpha: 0.15)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(10),
                                   border: dayTargetMode == entry.$1
-                                      ? Border.all(color: AppColors.cyan.withValues(alpha: 0.3))
+                                      ? Border.all(color: context.accentColor.withValues(alpha: 0.3))
                                       : null,
                                 ),
                                 alignment: Alignment.center,
@@ -854,7 +855,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                               }
                             });
                           },
-                          selectedColor: AppColors.cyan,
+                          selectedColor: context.accentColor,
                           checkmarkColor: Colors.white,
                           labelStyle: TextStyle(
                             color: isSelected ? Colors.white : textMuted,
@@ -863,7 +864,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                           backgroundColor: elevatedColor,
                           side: BorderSide(
                             color: isWorkoutDay && !isSelected
-                                ? AppColors.cyan.withValues(alpha: 0.4)
+                                ? context.accentColor.withValues(alpha: 0.4)
                                 : Colors.transparent,
                           ),
                           shape: RoundedRectangleBorder(
@@ -889,7 +890,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(sheetContext, true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -975,7 +976,7 @@ class StapleExercisesScreen extends ConsumerWidget {
                   ? AppLocalizations.of(context)!.stapleExercisesScreenUpdated(staple.exerciseName)
                   : 'Failed to update exercise',
             ),
-            backgroundColor: success ? AppColors.success : AppColors.error,
+            backgroundColor: success ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -1020,7 +1021,7 @@ class StapleExercisesScreen extends ConsumerWidget {
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               AppLocalizations.of(context).workoutPlanDrawerRemove,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],

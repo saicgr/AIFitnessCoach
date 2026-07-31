@@ -20,7 +20,7 @@ class AppSnackBar {
       context,
       message: message,
       icon: Icons.check_circle_rounded,
-      backgroundColor: AppColors.success,
+      backgroundColor: AppColors.success, // accent-allowlist: snackbar success/error/info type color, semantic
       duration: const Duration(seconds: 3),
     );
   }
@@ -31,7 +31,7 @@ class AppSnackBar {
       context,
       message: message,
       icon: Icons.error_rounded,
-      backgroundColor: AppColors.error,
+      backgroundColor: AppColors.error, // accent-allowlist: snackbar success/error/info type color, semantic
       duration: const Duration(seconds: 5),
     );
   }
@@ -42,7 +42,7 @@ class AppSnackBar {
       context,
       message: message,
       icon: Icons.info_rounded,
-      backgroundColor: AppColors.info,
+      backgroundColor: AppColors.info, // accent-allowlist: snackbar success/error/info type color, semantic
       duration: const Duration(seconds: 3),
     );
   }

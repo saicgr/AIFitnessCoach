@@ -53,7 +53,7 @@ class WrappedRecordsCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFFFD700).withValues(alpha: 0.15),
+                        const Color(0xFFFFD700).withValues(alpha: 0.15), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                         Colors.transparent,
                       ],
                     ),
@@ -74,7 +74,7 @@ class WrappedRecordsCard extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).weeklyPrsTemplatePersonalRecords.toUpperCase(),
                     style: ZType.lbl(16,
-                        color: const Color(0xFFFFD700),
+                        color: const Color(0xFFFFD700), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                         weight: FontWeight.w700,
                         letterSpacing: 6),
                   ),
@@ -91,13 +91,13 @@ class WrappedRecordsCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFFFFD700),
-                          Color(0xFFFFA500),
+                          Color(0xFFFFD700), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
+                          Color(0xFFFFA500), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.4), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                           blurRadius: 40,
                           spreadRadius: 10,
                         ),
@@ -137,10 +137,10 @@ class WrappedRecordsCard extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.08),
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.08), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFFFD700).withValues(alpha: 0.2),
+                          color: const Color(0xFFFFD700).withValues(alpha: 0.2), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                         ),
                       ),
                       child: Column(
@@ -148,7 +148,7 @@ class WrappedRecordsCard extends StatelessWidget {
                           Text(
                             AppLocalizations.of(context).recordsCardBestPr.toUpperCase(),
                             style: ZType.lbl(12,
-                                color: const Color(0xFFFFD700)
+                                color: const Color(0xFFFFD700) // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                                     .withValues(alpha: 0.7),
                                 weight: FontWeight.w700,
                                 letterSpacing: 3),
@@ -168,7 +168,7 @@ class WrappedRecordsCard extends StatelessWidget {
                             Text(
                               '$bestPrValue $bestPrUnit',
                               style: ZType.disp(24,
-                                  color: const Color(0xFFFFD700),
+                                  color: const Color(0xFFFFD700), // accent-allowlist: Wrapped card visual identity (records=gold), deliberate design not accent
                                   height: 0.86,
                                   letterSpacing: 0),
                             ),

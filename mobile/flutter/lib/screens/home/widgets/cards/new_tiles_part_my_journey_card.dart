@@ -205,7 +205,7 @@ class MyJourneyCard extends ConsumerWidget {
                   icon: Icons.local_fire_department,
                   value: '$currentStreak',
                   label: AppLocalizations.of(context)!.myJourneyCardDayStreak,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   textMuted: textMuted,
                   textColor: textColor,
                 ),
@@ -214,7 +214,7 @@ class MyJourneyCard extends ConsumerWidget {
                   icon: Icons.check_circle,
                   value: '$workoutsThisWeek/$targetWorkoutsPerWeek',
                   label: AppLocalizations.of(context)!.myJourneyCardThisWeek,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   textMuted: textMuted,
                   textColor: textColor,
                 ),
@@ -223,7 +223,7 @@ class MyJourneyCard extends ConsumerWidget {
                   icon: Icons.emoji_events,
                   value: '$totalCompleted',
                   label: AppLocalizations.of(context)!.myJourneyCardTotal,
-                  color: const Color(0xFFFFD700),
+                  color: const Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier -- gold
                   textMuted: textMuted,
                   textColor: textColor,
                 ),
@@ -512,7 +512,7 @@ class ProgressChartsTile extends ConsumerWidget {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = AppColors.success;
+    final accentColor = AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
 
     return GestureDetector(
       onTap: () {

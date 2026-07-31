@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A tile for selecting a day of the week.
 ///
@@ -62,7 +63,7 @@ class DayPickerTile extends StatelessWidget {
             value: day,
             underline: const SizedBox(),
             isDense: true,
-            icon: Icon(Icons.arrow_drop_down, color: AppColors.cyan),
+            icon: Icon(Icons.arrow_drop_down, color: context.accentColor),
             dropdownColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
             items: List.generate(7, (i) {
               return DropdownMenuItem(
@@ -72,7 +73,7 @@ class DayPickerTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               );

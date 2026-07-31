@@ -25,7 +25,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFB300).withValues(alpha: 0.18),
+          color: const Color(0xFFFFB300).withValues(alpha: 0.18),  // accent-allowlist: warning severity — must stay amber regardless of accent
           borderRadius: BorderRadius.circular(5),
         ),
         child: const Text(
@@ -33,7 +33,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
           style: TextStyle(
             fontSize: 9,
             fontWeight: FontWeight.w700,
-            color: Color(0xFFB07800),
+            color: Color(0xFFB07800),  // accent-allowlist: warning severity — must stay amber regardless of accent
           ),
         ),
       );
@@ -47,13 +47,13 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.arrow_drop_up, size: 16, color: Color(0xFF4CAF50)),
+          const Icon(Icons.arrow_drop_up, size: 16, color: Color(0xFF4CAF50)),  // accent-allowlist: success/positive state — must stay green regardless of accent
           Text(
             '+$change',
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF4CAF50),
+              color: Color(0xFF4CAF50),  // accent-allowlist: success/positive state — must stay green regardless of accent
             ),
           ),
         ],
@@ -276,7 +276,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
                     margin: EdgeInsetsDirectional.only(start: i > 0 ? 1 : 0),
                     decoration: BoxDecoration(
                       color: i < 3
-                          ? const Color(0xFF22C55E)
+                          ? const Color(0xFF22C55E)  // accent-allowlist: success/positive state — must stay green regardless of accent
                           : colorScheme.outline.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(1),
                     ),

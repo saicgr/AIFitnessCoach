@@ -11,9 +11,6 @@ import 'widgets/price_comparison.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
-/// Signature v2 single orange accent — used for the headline + CTA styling.
-const Color _kSigAccent = Color(0xFFF97316);
-
 /// Goal-mirrored headline line 2 — reflecting the user's own quiz goal back at
 /// them converts far better than a generic capability line (2026 paywall
 /// research: surface the goal from step 1 directly in the paywall headline).
@@ -130,11 +127,11 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                   Text(
                     _goalHeadline(ref.watch(preAuthQuizProvider).goal),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Anton',
                       fontSize: 24,
                       height: 1.05,
-                      color: _kSigAccent,
+                      color: colors.accent,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -219,7 +216,7 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
                 // content twice in a row.
                 onPressed: () => context.push('/paywall-pricing'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kSigAccent,
+                  backgroundColor: colors.accent,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -322,11 +319,11 @@ class _PaywallFeaturesScreenState extends ConsumerState<PaywallFeaturesScreen> {
         ),
         Text(
           _goalHeadline(ref.watch(preAuthQuizProvider).goal),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Anton',
             fontSize: 28,
             height: 1.05,
-            color: _kSigAccent,
+            color: colors.accent,
           ),
         ),
         const SizedBox(height: 20),
@@ -479,12 +476,12 @@ class _FeatureChip extends StatelessWidget {
         // borderRadius throws "borderRadius can only be given on borders with
         // uniform colors" at paint time. Tint the whole hairline with the
         // accent for the signature-v2 look without the crash.
-        border: Border.all(color: _kSigAccent.withValues(alpha: 0.22)),
+        border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(feat.$1, size: 16, color: _kSigAccent),
+          Icon(feat.$1, size: 16, color: colors.accent),
           const SizedBox(width: 7),
           Text(
             feat.$2.toUpperCase(),

@@ -11,6 +11,7 @@ import '../../data/services/notification_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Pre-permission screen explaining *why* we use notifications, shown once
 /// after paywall / onboarding and before landing on /home. The OS prompt only
 /// fires if the user opts in on this screen — matching the iOS-standard
@@ -77,7 +78,7 @@ class _NotificationPrimeScreenState
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,

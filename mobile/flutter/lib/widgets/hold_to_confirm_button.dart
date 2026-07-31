@@ -231,9 +231,9 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     // Animate the gradient stops with progress so the fill looks like it's
     // sweeping/charging, not just statically wider. The accent shifts to a
     // brighter hot-orange as it nears completion.
-    final hot = committed ? const Color(0xFF22C55E) : const Color(0xFFFF7A1A);
+    final hot = committed ? const Color(0xFF22C55E) : const Color(0xFFFF7A1A); // accent-allowlist: onboarding hold-to-confirm charge/commit visual (hot-orange charging to green on commit) - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
     final base = committed
-        ? const Color(0xFF16A34A)
+        ? const Color(0xFF16A34A) // accent-allowlist: onboarding hold-to-confirm charge/commit visual (hot-orange charging to green on commit) - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
         : AppColors.onboardingAccent;
 
     return Opacity(
@@ -268,7 +268,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                       gradient: LinearGradient(
                         colors: [
                           AppColors.onboardingAccent.withValues(alpha: 0.30),
-                          const Color(0xFFFF6B00).withValues(alpha: 0.30),
+                          const Color(0xFFFF6B00).withValues(alpha: 0.30), // accent-allowlist: onboarding hold-to-confirm charge/commit visual (hot-orange charging to green on commit) - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
                         ],
                       ),
                     ),

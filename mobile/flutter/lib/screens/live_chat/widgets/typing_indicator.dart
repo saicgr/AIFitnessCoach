@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Typing indicator widget showing animated dots when agent is typing
@@ -29,7 +30,7 @@ class AgentTypingIndicator extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.teal],
+                colors: [context.accentColor, AppColors.teal],
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
               ),
@@ -97,7 +98,7 @@ class _AnimatedDots extends StatelessWidget {
           height: 6,
           margin: const EdgeInsets.symmetric(horizontal: 2),
           decoration: BoxDecoration(
-            color: AppColors.cyan,
+            color: context.accentColor,
             shape: BoxShape.circle,
           ),
         )
@@ -211,14 +212,14 @@ class TypingStatusBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.cyan.withOpacity(0.1),
+      color: context.accentColor.withOpacity(0.1),
       child: Row(
         children: [
           Container(
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: AppColors.cyan,
+              color: context.accentColor,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -237,7 +238,7 @@ class TypingStatusBanner extends StatelessWidget {
             AppLocalizations.of(context)!.typingIndicatorIsTyping3(agentName),
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
         ],

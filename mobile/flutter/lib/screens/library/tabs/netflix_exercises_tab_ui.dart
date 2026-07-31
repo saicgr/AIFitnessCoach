@@ -7,7 +7,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
   Widget _buildCustomExercisesSection(bool isDark, Color textMuted) {
     final customExercisesState = ref.watch(customExercisesProvider);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     final exercises = customExercisesState.exercises;
 
@@ -223,7 +223,7 @@ extension _NetflixExercisesTabStateUI on _NetflixExercisesTabState {
   /// Build the "Gravl Splits" section with AI Split Presets carousel
   Widget _buildGravlSplitsSection(bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = isDark ? context.accentColor : context.accentColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

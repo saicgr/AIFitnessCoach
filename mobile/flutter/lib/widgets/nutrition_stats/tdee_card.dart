@@ -74,9 +74,9 @@ class TDEECard extends StatelessWidget {
           final avgIntake =
               weeklySummary.valueOrNull?.avgCalories ?? 0;
           final confidenceColor = switch (tdee.confidenceLevel) {
-            'high' => const Color(0xFF4CAF50),
-            'medium' => const Color(0xFFFF9800),
-            _ => const Color(0xFFF44336),
+            'high' => const Color(0xFF4CAF50), // accent-allowlist: TDEE confidence-level severity scale (high/medium/low)
+            'medium' => const Color(0xFFFF9800), // accent-allowlist: TDEE confidence-level severity scale (high/medium/low)
+            _ => const Color(0xFFF44336), // accent-allowlist: TDEE confidence-level severity scale (high/medium/low)
           };
 
           return Column(
@@ -152,10 +152,10 @@ class TDEECard extends StatelessWidget {
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: (avgIntake - tdee.tdee).abs() < 100
-                            ? const Color(0xFF4CAF50)
+                            ? const Color(0xFF4CAF50) // accent-allowlist: intake-vs-TDEE delta status color (on-target/over/under)
                             : (avgIntake > tdee.tdee
-                                ? const Color(0xFFFF9800)
-                                : const Color(0xFF42A5F5)),
+                                ? const Color(0xFFFF9800) // accent-allowlist: intake-vs-TDEE delta status color (on-target/over/under)
+                                : const Color(0xFF42A5F5)), // accent-allowlist: intake-vs-TDEE delta status color (on-target/over/under)
                       ),
                     ),
                   ],
@@ -187,13 +187,13 @@ class TDEECard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                    color: const Color(0xFFFF9800).withValues(alpha: 0.1), // accent-allowlist: metabolic adaptation warning color
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.warning_amber,
-                          size: 16, color: Color(0xFFFF9800)),
+                          size: 16, color: Color(0xFFFF9800)), // accent-allowlist: metabolic adaptation warning color
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -201,7 +201,7 @@ class TDEECard extends StatelessWidget {
                               'Metabolic adaptation detected',
                           style: const TextStyle(
                             fontSize: 12,
-                            color: Color(0xFFFF9800),
+                            color: Color(0xFFFF9800), // accent-allowlist: metabolic adaptation warning color
                           ),
                         ),
                       ),

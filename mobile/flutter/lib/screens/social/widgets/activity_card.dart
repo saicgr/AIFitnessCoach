@@ -18,6 +18,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'activity_card_part_reaction_type.dart';
 part 'activity_card_part_challenge_leaderboard.dart';
 
@@ -135,10 +136,10 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 border: Border(
                   bottom: BorderSide(
-                    color: AppColors.orange.withValues(alpha: 0.3),
+                    color: context.accentColor.withValues(alpha: 0.3),
                     width: 1,
                   ),
                 ),
@@ -149,7 +150,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                   Icon(
                     Icons.push_pin_rounded,
                     size: 14,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -157,7 +158,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   ),
                 ],
@@ -268,7 +269,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
                             Icon(
                               widget.hasUserReacted ? Icons.favorite : Icons.favorite_border,
                               size: 18,
-                              color: widget.hasUserReacted ? AppColors.pink : AppColors.textMuted,
+                              color: widget.hasUserReacted ? AppColors.pink : AppColors.textMuted,  // accent-allowlist: reaction type identity — Heart reaction color, matches ReactionType.heart, not tied to accent
                             ),
                           const SizedBox(width: 4),
                           Text(
@@ -402,8 +403,8 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               // Delete option (own post only)
               if (widget.onDelete != null)
                 ListTile(
-                  leading: const Icon(Icons.delete_outline_rounded, color: AppColors.red),
-                  title: Text(AppLocalizations.of(context).activityCardDeletePost, style: TextStyle(color: AppColors.red)),
+                  leading: const Icon(Icons.delete_outline_rounded, color: AppColors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
+                  title: Text(AppLocalizations.of(context).activityCardDeletePost, style: TextStyle(color: AppColors.red)),  // accent-allowlist: error/negative state — must stay red regardless of accent
                   onTap: () {
                     Navigator.pop(context);
                     _showDeleteConfirmDialog(context);
@@ -446,11 +447,11 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               ListTile(
                 leading: Icon(
                   widget.isPinned ? Icons.push_pin_outlined : Icons.push_pin_rounded,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
                 title: Text(
                   widget.isPinned ? AppLocalizations.of(context).activityCardUnpinPost : AppLocalizations.of(context).activityCardPinToTop,
-                  style: const TextStyle(color: AppColors.orange),
+                  style: TextStyle(color: context.accentColor),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -504,7 +505,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               Navigator.pop(context);
               widget.onDelete?.call();
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -779,13 +780,13 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
   }
 
   Color _getReactionColor(String? reactionType) {
-    if (reactionType == null) return AppColors.pink;
+    if (reactionType == null) return AppColors.pink;  // accent-allowlist: reaction type identity — default/heart reaction color, matches ReactionType.heart, not tied to accent
     try {
       return ReactionType.values
           .firstWhere((r) => r.value == reactionType)
           .color;
     } catch (_) {
-      return AppColors.pink;
+      return AppColors.pink;  // accent-allowlist: reaction type identity — default/heart reaction color, matches ReactionType.heart, not tied to accent
     }
   }
 
@@ -822,12 +823,12 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
   }
 
   /// Vibrant flair colors — always colorful regardless of monochrome theme
-  static const Color _flairCyan = Color(0xFF06B6D4);
-  static const Color _flairGreen = Color(0xFF22C55E);
-  static const Color _flairOrange = Color(0xFFF97316);
-  static const Color _flairPurple = Color(0xFFA855F7);
-  static const Color _flairYellow = Color(0xFFEAB308);
-  static const Color _flairBlue = Color(0xFF3B82F6);
+  static const Color _flairCyan = Color(0xFF06B6D4);  // accent-allowlist: flair badge identity — fixed 6-color palette for post flair tags, recoloring collides tags together, not tied to accent
+  static const Color _flairGreen = Color(0xFF22C55E);  // accent-allowlist: flair badge identity — fixed 6-color palette for post flair tags, recoloring collides tags together, not tied to accent
+  static const Color _flairOrange = Color(0xFFF97316);  // accent-allowlist: flair badge identity — fixed 6-color palette for post flair tags, recoloring collides tags together, not tied to accent
+  static const Color _flairPurple = Color(0xFFA855F7);  // accent-allowlist: flair badge identity — fixed 6-color palette for post flair tags, recoloring collides tags together, not tied to accent
+  static const Color _flairYellow = Color(0xFFEAB308);  // accent-allowlist: flair badge identity — fixed 6-color palette for post flair tags, recoloring collides tags together, not tied to accent
+  static const Color _flairBlue = Color(0xFF3B82F6);  // accent-allowlist: flair badge identity — fixed 6-color palette for post flair tags, recoloring collides tags together, not tied to accent
 
   Color _getFlairColor(String flair) {
     switch (flair) {

@@ -44,6 +44,10 @@ class BannerNotificationMapper {
         return healthCoachingType;
       case BannerType.streakAtRisk:
         return 'streak_at_risk';
+      case BannerType.calibration:
+        return 'calibration';
+      case BannerType.ratingPrompt:
+        return 'rating_prompt';
     }
   }
 

@@ -35,11 +35,11 @@ enum DayType {
   Color get color {
     switch (this) {
       case DayType.training:
-        return const Color(0xFF4CAF50);
+        return const Color(0xFF4CAF50); // accent-allowlist: day-type identity color (training/rest/activeRecovery)
       case DayType.rest:
         return const Color(0xFF9E9E9E);
       case DayType.activeRecovery:
-        return const Color(0xFF2196F3);
+        return const Color(0xFF2196F3); // accent-allowlist: day-type identity color (training/rest/activeRecovery)
     }
   }
 }
@@ -227,11 +227,11 @@ class CoordinationNote {
   Color get severityColor {
     switch (severity?.toLowerCase()) {
       case 'warning':
-        return Colors.orange;
+        return Colors.orange; // accent-allowlist: severity color (warning/error/info)
       case 'error':
-        return Colors.red;
+        return Colors.red; // accent-allowlist: severity color (warning/error/info)
       default:
-        return Colors.blue;
+        return Colors.blue; // accent-allowlist: severity color (warning/error/info)
     }
   }
 

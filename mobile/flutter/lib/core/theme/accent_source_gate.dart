@@ -263,12 +263,19 @@ void main(List<String> args) {
     exit(0);
   }
 
-  final baseline = _readBaseline(baselineFile);
-  if (baseline.isEmpty) {
+  // A MISSING baseline is a setup error. An EMPTY one is the goal state — the
+  // whole backlog has been migrated or allowlisted, so every finding is new by
+  // construction. Those two were conflated (`baseline.isEmpty`), which meant
+  // the gate started erroring out the moment the sweep actually succeeded.
+  // E2E register row 15: the sweep took this from 10,537 findings across 1,212
+  // files to 0, and this branch is what it hit on arrival.
+  if (!baselineFile.existsSync()) {
     stderr.writeln('❌ no baseline at ${baselineFile.path}. '
         'Run with --refresh-baseline once, and commit it.');
     exit(2);
   }
+
+  final baseline = _readBaseline(baselineFile);
 
   final regressions = <String>[];
   for (final entry in counts.entries) {

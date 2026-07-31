@@ -200,7 +200,7 @@ class _PerDayWorkoutOverridesSheetState
         content: Text(_draft.isEmpty
             ? 'Per-day customization cleared — AI decides each day'
             : 'Per-day customization saved (${_draft.length} day${_draft.length == 1 ? '' : 's'})'),
-        backgroundColor: AppColors.cyan,
+        backgroundColor: context.accentColor,
         duration: const Duration(seconds: 3),
       ),
     );

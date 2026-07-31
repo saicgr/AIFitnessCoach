@@ -237,7 +237,7 @@ class _TrophyCeremonyScreenState
                     ),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.amber,
+                    foregroundColor: Colors.amber, // accent-allowlist: bonus-round button, matches gold trophy reward theme
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                   ),
@@ -331,7 +331,7 @@ class _TrophySlide extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: ShaderMask(
             shaderCallback: (rect) => const LinearGradient(
-              colors: [Color(0xFF4ADE80), Color(0xFF22D3EE)],
+              colors: [Color(0xFF4ADE80), Color(0xFF22D3EE)], // accent-allowlist: trophy ceremony reference-art gradient (green to cyan), fixed by design, not accent
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ).createShader(rect),
@@ -596,16 +596,16 @@ _TierPalette _tierPalette(String tier) {
         plateLight: Color(0xFFF3F4F6),
         plateDark: Color(0xFFD1D5DB),
         glyph: Color(0xFF1F2937),
-        sunburst: Color(0xFFFBBF24),
+        sunburst: Color(0xFFFBBF24), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
       );
     case 'gold':
       return const _TierPalette(
-        rimLight: Color(0xFFFCD34D),
-        rimDark: Color(0xFF92400E),
-        plateLight: Color(0xFFFDE68A),
-        plateDark: Color(0xFFF59E0B),
-        glyph: Color(0xFF78350F),
-        sunburst: Color(0xFFFBBF24),
+        rimLight: Color(0xFFFCD34D), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        rimDark: Color(0xFF92400E), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        plateLight: Color(0xFFFDE68A), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        plateDark: Color(0xFFF59E0B), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        glyph: Color(0xFF78350F), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        sunburst: Color(0xFFFBBF24), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
       );
     case 'silver':
       return const _TierPalette(
@@ -614,17 +614,17 @@ _TierPalette _tierPalette(String tier) {
         plateLight: Color(0xFFF3F4F6),
         plateDark: Color(0xFF9CA3AF),
         glyph: Color(0xFF1F2937),
-        sunburst: Color(0xFFFBBF24),
+        sunburst: Color(0xFFFBBF24), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
       );
     case 'bronze':
     default:
       return const _TierPalette(
-        rimLight: Color(0xFFF59E0B),
-        rimDark: Color(0xFF78350F),
-        plateLight: Color(0xFFFCD34D),
-        plateDark: Color(0xFFB45309),
+        rimLight: Color(0xFFF59E0B), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        rimDark: Color(0xFF78350F), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        plateLight: Color(0xFFFCD34D), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
+        plateDark: Color(0xFFB45309), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
         glyph: Color(0xFF451A03),
-        sunburst: Color(0xFFFBBF24),
+        sunburst: Color(0xFFFBBF24), // accent-allowlist: medal rarity tier (platinum/gold/silver/bronze)
       );
   }
 }

@@ -412,7 +412,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
 
 
   Widget _buildProgressIndicator(bool isDark) {
-    final accentColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final accentColor = _selectedCoach?.primaryColor ?? context.accentColor;
     final inactiveColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     const currentStep = 4; // Coach is step 5 (0-based: 4), all complete
 
@@ -501,7 +501,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
 
 
   Widget _buildHeader(Color textPrimary, Color textSecondary) {
-    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final coachColor = _selectedCoach?.primaryColor ?? context.accentColor;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -558,7 +558,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
   /// Compact custom coach toggle for use below the PageView
   Widget _buildCompactCustomToggle(bool isDark, Color textPrimary, Color textSecondary) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final coachColor = _selectedCoach?.primaryColor ?? context.accentColor;
 
     return GestureDetector(
       onTap: _showCustomCoachPreview,
@@ -595,7 +595,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
 
   Widget _buildContinueButton(bool isDark, bool canContinue) {
     final isEnabled = canContinue && !_isLoading;
-    final coachColor = _selectedCoach?.primaryColor ?? const Color(0xFFF97316);
+    final coachColor = _selectedCoach?.primaryColor ?? context.accentColor;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 

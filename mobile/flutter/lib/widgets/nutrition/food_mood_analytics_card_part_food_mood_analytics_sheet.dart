@@ -20,7 +20,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentTint = context.accentColor;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.85,
@@ -34,12 +34,12 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: purple.withOpacity(0.1),
+                    color: accentTint.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.mood,
-                    color: purple,
+                    color: accentTint,
                     size: 24,
                   ),
                 ),
@@ -73,7 +73,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
                 textPrimary,
                 textMuted,
                 cardBorder,
-                purple,
+                accentTint,
               ),
             ),
           ),
@@ -89,7 +89,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
     Color textPrimary,
     Color textMuted,
     Color cardBorder,
-    Color purple,
+    Color accentTint,
   ) {
     final l10n = AppLocalizations.of(context);
     if (!analytics.hasData) {
@@ -169,7 +169,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildFoodCorrelations(
               analytics.positiveCorrelations,
-              const Color(0xFF6BCB77),
+              const Color(0xFF6BCB77), // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
               elevated,
               textPrimary,
               textMuted,
@@ -192,7 +192,7 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
             const SizedBox(height: 12),
             _buildFoodCorrelations(
               analytics.negativeCorrelations,
-              const Color(0xFFFF6B6B),
+              const Color(0xFFFF6B6B), // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
               elevated,
               textPrimary,
               textMuted,
@@ -244,21 +244,21 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
           _buildOverviewStat(
             '${(analytics.moodImprovementRate * 100).toStringAsFixed(0)}%',
             l10n.foodMoodAnalyticsMoodImproved,
-            const Color(0xFF6BCB77),
+            const Color(0xFF6BCB77), // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
             textMuted,
           ),
           Container(width: 1, height: 50, color: cardBorder),
           _buildOverviewStat(
             '${(analytics.moodTrackingRate * 100).toStringAsFixed(0)}%',
             l10n.foodMoodAnalyticsTrackingRate,
-            const Color(0xFF3498DB),
+            const Color(0xFF3498DB), // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
             textMuted,
           ),
           Container(width: 1, height: 50, color: cardBorder),
           _buildOverviewStat(
             '${analytics.logsWithMood}',
             l10n.foodMoodAnalyticsMealsTracked,
-            const Color(0xFF9B59B6),
+            const Color(0xFF9B59B6), // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
             textMuted,
           ),
         ],
@@ -508,10 +508,10 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
           final isLast = entry.key == mealTypeMoods.keys.last;
           final emoji = _getMealTypeEmoji(stats.mealType);
           final color = stats.positiveRate > 0.7
-              ? const Color(0xFF6BCB77)
+              ? const Color(0xFF6BCB77) // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
               : stats.positiveRate > 0.4
-                  ? const Color(0xFFF39C12)
-                  : const Color(0xFFFF6B6B);
+                  ? const Color(0xFFF39C12) // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
+                  : const Color(0xFFFF6B6B); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
 
           return Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -558,38 +558,38 @@ class _FoodMoodAnalyticsSheet extends ConsumerWidget {
   Color _getMoodColor(FoodMood mood) {
     switch (mood) {
       case FoodMood.great:
-        return const Color(0xFF6BCB77);
+        return const Color(0xFF6BCB77); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.good:
-        return const Color(0xFF4ECDC4);
+        return const Color(0xFF4ECDC4); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.neutral:
-        return const Color(0xFF95A5A6);
+        return const Color(0xFF95A5A6); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.tired:
-        return const Color(0xFF9B59B6);
+        return const Color(0xFF9B59B6); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.stressed:
-        return const Color(0xFFE74C3C);
+        return const Color(0xFFE74C3C); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.hungry:
-        return const Color(0xFFFF6B6B);
+        return const Color(0xFFFF6B6B); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.satisfied:
-        return const Color(0xFF3498DB);
+        return const Color(0xFF3498DB); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case FoodMood.bloated:
-        return const Color(0xFFF39C12);
+        return const Color(0xFFF39C12); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
     }
   }
 
   Color _getEnergyColor(int level) {
     switch (level) {
       case 1:
-        return const Color(0xFFE74C3C);
+        return const Color(0xFFE74C3C); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case 2:
-        return const Color(0xFFF39C12);
+        return const Color(0xFFF39C12); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case 3:
-        return const Color(0xFFFFEB3B);
+        return const Color(0xFFFFEB3B); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case 4:
-        return const Color(0xFF4ECDC4);
+        return const Color(0xFF4ECDC4); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       case 5:
-        return const Color(0xFF6BCB77);
+        return const Color(0xFF6BCB77); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
       default:
-        return const Color(0xFF95A5A6);
+        return const Color(0xFF95A5A6); // accent-allowlist: food-mood and energy-level identity/severity color coding (chart-legend style categorical encoding, matches macroProtein/macroCarbs/macroFat convention)
     }
   }
 

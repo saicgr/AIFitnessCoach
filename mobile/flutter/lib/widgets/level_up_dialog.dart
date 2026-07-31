@@ -177,6 +177,9 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
     final items = <_Accomplishment>[];
     final level = widget.event.newLevel;
     final titleXP = _titleForLevel(level);
+    // Dialog always renders over a dark overlay regardless of system theme —
+    // force the dark-mode accent variant, matching build()'s accentColor.
+    final accentColor = ref.read(accentColorProvider).getColor(true);
 
     // 1. Level reward
     final reward = LevelRewards.getRewardForLevel(level);
@@ -221,7 +224,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
         title: AppLocalizations.of(context).levelUpWhatSNext,
         subtitle: tips.first,
         xpText: '${titleXP.displayName.toUpperCase()} TIER',
-        color: Colors.green.shade400,
+        color: accentColor,
       ));
     }
 
@@ -236,7 +239,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
             title: 'NEXT MILESTONE: LEVEL $m',
             subtitle: unlock,
             xpText: '${m - level} LEVELS TO GO',
-            color: Colors.amber,
+            color: accentColor,
           ));
           break;
         }
@@ -248,10 +251,10 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
 
   Color _rewardColor(String type) {
     switch (type) {
-      case 'fitness_crate': return Colors.orange;
-      case 'premium_crate': return Colors.purple;
-      case 'streak_shield': return Colors.blue;
-      case 'xp_token_2x': return Colors.amber;
+      case 'fitness_crate': return Colors.orange; // accent-allowlist: per-reward-type identity colour, matches inventory rarity/crate-type convention
+      case 'premium_crate': return Colors.purple; // accent-allowlist: per-reward-type identity colour, matches inventory rarity/crate-type convention
+      case 'streak_shield': return Colors.blue; // accent-allowlist: per-reward-type identity colour, matches inventory rarity/crate-type convention
+      case 'xp_token_2x': return Colors.amber; // accent-allowlist: per-reward-type identity colour, matches inventory rarity/crate-type convention
       default: return Colors.white54;
     }
   }
@@ -401,7 +404,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                 minBlastForce: 5,
                 emissionFrequency: 0.08,
                 gravity: 0.2,
-                colors: [titleColor, accentColor, Colors.amber, Colors.white],
+                colors: [titleColor, accentColor, Colors.amber, Colors.white], // accent-allowlist: confetti burst needs colour variety for festivity — accentColor is already one of the particles, amber/white are decorative variety not app identity
               ),
             ),
 
@@ -454,11 +457,11 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                         style: TextStyle(
                           fontSize: compact ? 22 : 26,
                           fontWeight: FontWeight.w900,
-                          color: Colors.amber,
+                          color: accentColor,
                           letterSpacing: 4,
                           decoration: TextDecoration.none,
                           shadows: [
-                            Shadow(color: Colors.amber.withValues(alpha: 0.6), blurRadius: 20),
+                            Shadow(color: accentColor.withValues(alpha: 0.6), blurRadius: 20),
                           ],
                         ),
                       ),
@@ -601,7 +604,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                                 size: const Size(double.infinity, 16),
                                 painter: _ChevronBarPainter(
                                   progress: progress,
-                                  fillColor: Colors.green,
+                                  fillColor: accentColor,
                                 ),
                               ),
                             ),
@@ -664,10 +667,10 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.amber,
+                              foregroundColor: accentColor,
                               side: BorderSide(
                                   color:
-                                      Colors.amber.withValues(alpha: 0.5)),
+                                      accentColor.withValues(alpha: 0.5)),
                               padding:
                                   EdgeInsets.symmetric(vertical: compact ? 8 : 10),
                               shape: RoundedRectangleBorder(

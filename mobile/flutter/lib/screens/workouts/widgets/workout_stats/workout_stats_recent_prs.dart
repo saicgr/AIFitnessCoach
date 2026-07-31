@@ -131,7 +131,7 @@ class _PrChip extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
 
     // Lift shown in lbs to match the project rule for lifted weight.
     final liftLbs = _kgToLbs(pr.weightKg);

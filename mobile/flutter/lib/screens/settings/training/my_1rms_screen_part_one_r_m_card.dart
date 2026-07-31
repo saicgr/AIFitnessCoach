@@ -45,11 +45,11 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
   Color get _sourceColor {
     switch (widget.oneRM.source) {
       case 'tested':
-        return Colors.green;
+        return Colors.green;  // accent-allowlist: success/positive state - must stay green regardless of accent
       case 'calculated':
-        return Colors.orange;
+        return Colors.orange;  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
       default:
-        return AppColors.cyan;
+        return context.accentColor;
     }
   }
 
@@ -80,7 +80,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.1),
+                      color: context.accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -90,7 +90,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                         ),
                         Text(
@@ -143,7 +143,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.purple.withValues(alpha: 0.1),
+                                color: context.accentColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -152,7 +152,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                                   Icon(
                                     Icons.link,
                                     size: 12,
-                                    color: Colors.purple,
+                                    color: context.accentColor,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -160,14 +160,14 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.purple,
+                                      color: context.accentColor,
                                     ),
                                   ),
                                   const SizedBox(width: 2),
                                   Icon(
                                     _isExpanded ? Icons.expand_less : Icons.expand_more,
                                     size: 14,
-                                    color: Colors.purple,
+                                    color: context.accentColor,
                                   ),
                                 ],
                               ),
@@ -209,8 +209,8 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
             Container(
               decoration: BoxDecoration(
                 color: widget.isDark
-                    ? Colors.purple.withValues(alpha: 0.05)
-                    : Colors.purple.withValues(alpha: 0.03),
+                    ? context.accentColor.withValues(alpha: 0.05)
+                    : context.accentColor.withValues(alpha: 0.03),
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(12),
                   bottomRight: Radius.circular(12),
@@ -274,7 +274,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
             child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
@@ -403,7 +403,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
         content: Text(AppLocalizations.of(context)!
             .my1rmsScreenPartOneRMCardLinkedTo(
                 linkedName, widget.primaryExerciseName)),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.green,  // accent-allowlist: success/positive state - must stay green regardless of accent
       ),
     );
   }
@@ -490,7 +490,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.cyan),
+                  borderSide: BorderSide(color: context.accentColor),
                 ),
               ),
               textCapitalization: TextCapitalization.words,
@@ -535,7 +535,7 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
               AppLocalizations.of(context)!.my1rmsScreenPartOneRMCardDerivedRmKg(derivedWeight),
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
             ),
             Slider(
@@ -594,9 +594,9 @@ class _LinkExerciseSheetState extends ConsumerState<_LinkExerciseSheet> {
               child: ElevatedButton(
                 onPressed: _isValid && !_isSaving ? _save : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.5),
+                  disabledBackgroundColor: context.accentColor.withValues(alpha: 0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -647,8 +647,8 @@ class _RelationshipChip extends StatelessWidget {
       label: Text(label),
       selected: selected,
       onSelected: (_) => onSelected(),
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.cyan,
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
+      checkmarkColor: context.accentColor,
     );
   }
 }
@@ -783,7 +783,7 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.cyan),
+                  borderSide: BorderSide(color: context.accentColor),
                 ),
               ),
               textCapitalization: TextCapitalization.words,
@@ -811,7 +811,7 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.cyan),
+                  borderSide: BorderSide(color: context.accentColor),
                 ),
               ),
             ),
@@ -852,9 +852,9 @@ class _AddEditOneRMSheetState extends State<_AddEditOneRMSheet> {
               child: ElevatedButton(
                 onPressed: _isValid && !_isSaving ? _save : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.5),
+                  disabledBackgroundColor: context.accentColor.withValues(alpha: 0.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -912,8 +912,8 @@ class _SourceChip extends StatelessWidget {
       ),
       selected: isSelected,
       onSelected: (_) => onTap(),
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.cyan,
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
+      checkmarkColor: context.accentColor,
     );
   }
 }

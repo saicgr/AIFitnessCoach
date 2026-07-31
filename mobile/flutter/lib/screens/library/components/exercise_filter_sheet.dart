@@ -11,6 +11,7 @@ import '../../../widgets/signature/signature.dart';
 import '../providers/library_providers.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Signature-v2 filter sheet for the Exercise Library.
 ///
@@ -34,7 +35,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
     final selectedAvoid = ref.watch(selectedAvoidSetProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const accent = AppColors.orange;
+    final accent = context.accentColor;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return DraggableScrollableSheet(
@@ -109,7 +110,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                 // Filter content
                 Expanded(
                   child: filterOptionsAsync.when(
-                    loading: () => const Center(
+                    loading: () => Center(
                       child: CircularProgressIndicator(color: accent),
                     ),
                     error: (e, _) => Center(
@@ -437,13 +438,13 @@ class _FacetKicker extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.18),
+              color: context.accentColor.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               '$count',
               style: ZType.lbl(10.5,
-                  color: AppColors.orange, letterSpacing: 0.5),
+                  color: context.accentColor, letterSpacing: 0.5),
             ),
           ),
         ],

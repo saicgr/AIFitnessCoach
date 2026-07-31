@@ -43,6 +43,7 @@ import 'workout_card/workout_card_mode.dart' show WorkoutCardMode;
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'home_schedule_dates.dart';
+import '../../../data/providers/root_messenger.dart';
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
 part 'hero_workout_card_part_stat_chip.dart';
 
@@ -387,10 +388,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardCouldnTRegenerateWorkout),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -399,10 +400,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
     if (newWorkout != null && mounted) {
       // Provider refresh already handled by showRegenerateWorkoutSheet
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutRegenerated),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
         ),
       );
     }
@@ -429,7 +430,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
         ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
               backgroundColor: AppColors.textMuted,
@@ -439,10 +440,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotSkipWorkout),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -479,7 +480,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         unawaited(refreshAfterWorkoutMutation(
             source: 'uncomplete', workoutId: widget.workout.id));
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).heroWorkoutCardWorkoutUnmarked),
               backgroundColor: AppColors.textMuted,
@@ -489,10 +490,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardCouldNotUndoCompletion),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -531,7 +532,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     );
     if (shareable == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context).heroWorkoutCardNothingToShareYet)),
         );
       }
@@ -589,7 +590,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       currentStreak: streak > 0 ? streak : null,
     );
     if (shareable == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).heroWorkoutCardNothingToShareYet)),
       );
       return;
@@ -629,10 +630,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (updatedWorkout != null && mounted) {
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
       ref.read(workoutsProvider.notifier).silentRefresh();
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).heroWorkoutCardExerciseAdded),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
         ),
       );
     }
@@ -935,12 +936,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           debugPrint(
                             '⚠️ [HeroWorkoutCard] Workout has no exercises!',
                           );
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          rootSnackBar(
                             SnackBar(
                               content: Text(
                                 AppLocalizations.of(context).heroWorkoutCardWorkoutIsNotReady,
                               ),
-                              backgroundColor: AppColors.warning,
+                              backgroundColor: AppColors.warning,  // accent-allowlist: warning severity
                               behavior: SnackBarBehavior.floating,
                               margin: const EdgeInsets.only(
                                 bottom: 120,
@@ -1040,14 +1041,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                           end: Alignment.bottomCenter,
                           colors: isDark
                               ? [
-                                  AppColors.error.withValues(alpha: 0.35),
+                                  AppColors.error.withValues(alpha: 0.35),  // accent-allowlist: error/destructive -- must stay red
                                   Colors.black.withValues(alpha: 0.62),
-                                  AppColors.error.withValues(alpha: 0.35),
+                                  AppColors.error.withValues(alpha: 0.35),  // accent-allowlist: error/destructive -- must stay red
                                 ]
                               : [
-                                  AppColors.error.withValues(alpha: 0.25),
+                                  AppColors.error.withValues(alpha: 0.25),  // accent-allowlist: error/destructive -- must stay red
                                   Colors.white.withValues(alpha: 0.85),
-                                  AppColors.error.withValues(alpha: 0.25),
+                                  AppColors.error.withValues(alpha: 0.25),  // accent-allowlist: error/destructive -- must stay red
                                 ],
                           stops: const [0.0, 0.5, 1.0],
                         ),
@@ -1060,14 +1061,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                             height: 60,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.error, width: 3),
+                              border: Border.all(color: AppColors.error, width: 3),  // accent-allowlist: error/destructive -- must stay red
                               // Solid red fill + white X — matches the
                               // Workout-Complete green tick treatment so
                               // the icon isn't tinted-on-tinted.
-                              color: AppColors.error,
+                              color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.error.withValues(alpha: 0.45),
+                                  color: AppColors.error.withValues(alpha: 0.45),  // accent-allowlist: error/destructive -- must stay red
                                   blurRadius: 18,
                                 ),
                               ],

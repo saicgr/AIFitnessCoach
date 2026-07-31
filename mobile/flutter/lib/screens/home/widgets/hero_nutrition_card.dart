@@ -283,12 +283,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
         netCalorieRemainder != null;
 
     final proteinColor = isDark
-        ? AppColors.macroProtein
-        : AppColorsLight.macroProtein;
+        ? AppColors.macroProtein  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
+        : AppColorsLight.macroProtein;  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
     final carbsColor = isDark
-        ? AppColors.macroCarbs
-        : AppColorsLight.macroCarbs;
-    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+        ? AppColors.macroCarbs  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces
+        : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
     // Primary CTA: the one place this screen spends the reserved accent (the
     // Signature "solid accent exactly once per screen"). Foreground flips by
     // accent luminance so the label stays legible across accent themes.
@@ -928,7 +928,7 @@ class _MacrosPage extends StatelessWidget {
                           size: Size.infinite,
                           painter: _CalorieRingPainter(
                             progress: calorieProgress * t,
-                            color: over ? AppColors.error : accent,
+                            color: over ? AppColors.error : accent,  // accent-allowlist: error/destructive -- must stay red
                             trackColor: (isDark ? Colors.white : Colors.black)
                                 .withValues(alpha: 0.08),
                           ),
@@ -991,7 +991,7 @@ class _MacrosPage extends StatelessWidget {
                                   maxLines: 1,
                                   style: ZType.disp(
                                     30,
-                                    color: over ? AppColors.error : textPrimary,
+                                    color: over ? AppColors.error : textPrimary,  // accent-allowlist: error/destructive -- must stay red
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -1146,7 +1146,7 @@ class _NetRemainingRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: over ? AppColors.error : textPrimary,
+                color: over ? AppColors.error : textPrimary,  // accent-allowlist: error/destructive -- must stay red
               ),
             ),
             Text('·', style: detailStyle),

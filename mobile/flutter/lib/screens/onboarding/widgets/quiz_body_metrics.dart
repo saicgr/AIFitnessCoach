@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import 'scroll_hint_arrow.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'quiz_body_metrics_ui.dart';
 
 part 'quiz_body_metrics_ext.dart';
@@ -296,7 +297,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
     final now = DateTime.now();
     final initialDate = widget.dateOfBirth ?? DateTime(now.year - 25, now.month, now.day);
-    const orange = Color(0xFFF97316); // App accent color
+    final orange = context.accentColor; // App accent color
 
     final picked = await showDatePicker(
       context: context,
@@ -486,9 +487,9 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
   }
 
   Widget _buildAmountUnitToggle(bool isDark, Color cardBg, Color cardBorder) {
-    const orange = Color(0xFFF97316);
-    const orangeGradient = LinearGradient(
-      colors: [orange, Color(0xFFEA580C)],
+    final orange = context.accentColor;
+    final orangeGradient = LinearGradient(
+      colors: [orange, orange.withValues(alpha: 0.85)],
       begin: AlignmentDirectional.topStart,
       end: AlignmentDirectional.bottomEnd,
     );
@@ -566,7 +567,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
   /// Get health-aware color for weight change amount
   Color _getWeightChangeColor(double amount) {
-    if (widget.weightKg == null || widget.weightKg! <= 0) return const Color(0xFFF97316);
+    if (widget.weightKg == null || widget.weightKg! <= 0) return context.accentColor;
 
     final currentWeightInUnit = _weightInMetric
         ? widget.weightKg!
@@ -575,15 +576,15 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
 
     if (widget.weightDirection == 'gain') {
       // Gain: green up to 10%, orange up to 20%, red beyond
-      if (percent <= 15) return const Color(0xFF22C55E);
-      if (percent <= 30) return const Color(0xFFF97316);
-      return const Color(0xFFEF4444);
+      if (percent <= 15) return const Color(0xFF22C55E);  // accent-allowlist: success/positive state - same value as AppColors.success
+      if (percent <= 30) return context.accentColor;
+      return const Color(0xFFEF4444);  // accent-allowlist: error/destructive - same value as AppColors.error
     }
 
     // Lose: green up to 10%, orange up to 20%, red beyond
-    if (percent <= 15) return const Color(0xFF22C55E);
-    if (percent <= 30) return const Color(0xFFF97316);
-    return const Color(0xFFEF4444);
+    if (percent <= 15) return const Color(0xFF22C55E);  // accent-allowlist: success/positive state - same value as AppColors.success
+    if (percent <= 30) return context.accentColor;
+    return const Color(0xFFEF4444);  // accent-allowlist: error/destructive - same value as AppColors.error
   }
 
   /// Get health label for current weight change amount
@@ -790,10 +791,10 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               autofocus: true,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFF97316),
+                color: context.accentColor,
               ),
               decoration: InputDecoration(
                 suffixText: unit,
@@ -803,11 +804,11 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFF97316)),
+                  borderSide: BorderSide(color: context.accentColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFF97316), width: 2),
+                  borderSide: BorderSide(color: context.accentColor, width: 2),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
@@ -846,7 +847,7 @@ class _QuizBodyMetricsState extends State<QuizBodyMetrics> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF97316),
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

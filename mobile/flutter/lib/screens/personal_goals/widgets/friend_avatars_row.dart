@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/goal_social_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -52,7 +53,7 @@ class FriendAvatarsRow extends StatelessWidget {
                         width: 2,
                       ),
                     ),
-                    child: _buildAvatar(friend, avatarSize - 4),
+                    child: _buildAvatar(context, friend, avatarSize - 4),
                   ),
                 );
               }),
@@ -70,7 +71,7 @@ class FriendAvatarsRow extends StatelessWidget {
                     : '$totalCount friend${totalCount > 1 ? 's' : ''}',
                 style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -94,7 +95,7 @@ class FriendAvatarsRow extends StatelessWidget {
     );
   }
 
-  Widget _buildAvatar(FriendGoalProgress friend, double size) {
+  Widget _buildAvatar(BuildContext context, FriendGoalProgress friend, double size) {
     if (friend.avatarUrl != null && friend.avatarUrl!.isNotEmpty) {
       return CircleAvatar(
         radius: size / 2,
@@ -111,12 +112,12 @@ class FriendAvatarsRow extends StatelessWidget {
 
     return CircleAvatar(
       radius: size / 2,
-      backgroundColor: AppColors.purple.withValues(alpha: 0.2),
+      backgroundColor: context.accentColor.withValues(alpha: 0.2),
       child: Text(
         friend.name.isNotEmpty ? friend.name[0].toUpperCase() : '?',
         style: TextStyle(
           fontSize: size * 0.4,
-          color: AppColors.purple,
+          color: context.accentColor,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -144,24 +145,24 @@ class FriendCountBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.purple.withValues(alpha: 0.15),
+          color: context.accentColor.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.people,
               size: 14,
-              color: AppColors.purple,
+              color: context.accentColor,
             ),
             const SizedBox(width: 4),
             Text(
               '$count',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ),
           ],

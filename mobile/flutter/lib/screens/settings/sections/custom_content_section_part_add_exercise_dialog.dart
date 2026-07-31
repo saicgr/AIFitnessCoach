@@ -252,7 +252,7 @@ class _AddExerciseDialogState extends State<_AddExerciseDialog> {
         ElevatedButton(
           onPressed: _isLoading ? null : _submit,
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.purple,
+            backgroundColor: context.accentColor,
             foregroundColor: Colors.white,
           ),
           child: _isLoading

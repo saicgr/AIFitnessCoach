@@ -5,6 +5,7 @@ import '../../../data/models/milestone.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Full-screen celebration dialog for newly achieved milestones.
 /// Shows confetti animation and allows sharing to social platforms.
@@ -81,12 +82,12 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
   void _generateConfetti() {
     _particles.clear();
     final colors = [
-      AppColors.purple,
-      AppColors.cyan,
-      AppColors.orange,
-      AppColors.yellow,
-      AppColors.coral,
-      AppColors.green,
+      context.accentColor,
+      context.accentColor,
+      context.accentColor,
+      AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
+      context.accentColor,
+      AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
     ];
 
     for (int i = 0; i < 100; i++) {
@@ -164,7 +165,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.yellow,
+                              color: AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                               letterSpacing: 4,
                             ),
                           ),
@@ -283,9 +284,9 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.yellow.withOpacity(0.2),
+                                  color: AppColors.yellow.withOpacity(0.2),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                                   borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: AppColors.yellow),
+                                  border: Border.all(color: AppColors.yellow),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -293,7 +294,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                                     const Icon(
                                       Icons.stars,
                                       size: 16,
-                                      color: AppColors.yellow,
+                                      color: AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
@@ -301,7 +302,7 @@ class _MilestoneCelebrationDialogState extends State<MilestoneCelebrationDialog>
                                       style: const TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                        color: AppColors.yellow,
+                                        color: AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                                         letterSpacing: 1,
                                       ),
                                     ),

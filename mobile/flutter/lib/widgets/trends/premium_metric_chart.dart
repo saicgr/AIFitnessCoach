@@ -175,8 +175,8 @@ class _PremiumChartPainter extends CustomPainter {
   final int? scrubIndex;
   final ThemeColors colors;
 
-  static const Color _met = Color(0xFF37D67A);
-  static const Color _missed = Color(0xFFFF9F43);
+  static const Color _met = Color(0xFF37D67A); // accent-allowlist: metric trend chart series color
+  static const Color _missed = Color(0xFFFF9F43); // accent-allowlist: metric trend chart series color
 
   _PremiumChartPainter({
     required this.points,
@@ -345,10 +345,10 @@ class _PremiumChartPainter extends CustomPainter {
       for (var i = 0; i < smooth.length; i++) Offset(xOf(i), yOf(smooth[i].value))
     ];
     final path = _smoothPath(pts);
-    _drawProgressPath(canvas, plot, path, const Color(0xFFFFB43A),
+    _drawProgressPath(canvas, plot, path, const Color(0xFFFFB43A), // accent-allowlist: metric trend chart series color
         width: 2.6, glow: true);
     // dots
-    final dotPaint = Paint()..color = const Color(0xFFFFB43A);
+    final dotPaint = Paint()..color = const Color(0xFFFFB43A); // accent-allowlist: metric trend chart series color
     final ring = Paint()
       ..color = colors.background
       ..style = PaintingStyle.stroke

@@ -124,8 +124,8 @@ class _RecoveryPill extends StatelessWidget {
   Widget build(BuildContext context) {
     // Color = green ≥85% (ready), amber 50-84 (partial), red <50 (don't load).
     final Color color = scorePct >= 85
-        ? const Color(0xFF22C55E)
-        : (scorePct >= 50 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
+        ? const Color(0xFF22C55E)  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
+        : (scorePct >= 50 ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));  // accent-allowlist: warning severity (amber-500); error/destructive -- must stay red (red-500)
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

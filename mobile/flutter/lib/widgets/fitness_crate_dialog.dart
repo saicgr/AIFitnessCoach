@@ -300,9 +300,9 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
             colors: [
               crateColor,
               accentColor,
-              Colors.amber,
-              Colors.orange,
-              Colors.pink,
+              Colors.amber, // accent-allowlist: loot-crate reward rarity color
+              Colors.orange, // accent-allowlist: loot-crate reward rarity color
+              Colors.pink, // accent-allowlist: loot-crate reward rarity color
             ],
             numberOfParticles: 40,
             maxBlastForce: 25,
@@ -473,7 +473,7 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
             // Header
             ShaderMask(
               shaderCallback: (bounds) => LinearGradient(
-                colors: [crateColor, Colors.amber, crateColor],
+                colors: [crateColor, Colors.amber, crateColor], // accent-allowlist: loot-crate reward rarity color
               ).createShader(bounds),
               child: Text(
                 AppLocalizations.of(context).fitnessCrateRewards,
@@ -531,11 +531,11 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: reward.isRare
-            ? Colors.amber.withValues(alpha: 0.1)
+            ? Colors.amber.withValues(alpha: 0.1) // accent-allowlist: loot-crate reward rarity color
             : textSecondary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: reward.isRare
-            ? Border.all(color: Colors.amber.withValues(alpha: 0.4))
+            ? Border.all(color: Colors.amber.withValues(alpha: 0.4)) // accent-allowlist: loot-crate reward rarity color
             : null,
       ),
       child: Row(
@@ -555,7 +555,7 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.2),
+                          color: Colors.amber.withValues(alpha: 0.2), // accent-allowlist: loot-crate reward rarity color
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
@@ -563,7 +563,7 @@ class _FitnessCrateDialogState extends ConsumerState<FitnessCrateDialog>
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: Colors.amber,
+                            color: Colors.amber, // accent-allowlist: loot-crate reward rarity color
                           ),
                         ),
                       ),

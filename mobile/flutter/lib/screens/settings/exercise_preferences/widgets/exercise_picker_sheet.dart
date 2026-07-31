@@ -15,6 +15,7 @@ import '../../../../widgets/glass_sheet.dart';
 import '../../../custom_exercises/widgets/create_exercise_sheet.dart';
 import '../../../workout/exercise_browse.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 part 'exercise_picker_sheet_part_exercise_picker_sheet.dart';
 part 'exercise_picker_sheet_part_exercise_picker_sheet_state.dart';

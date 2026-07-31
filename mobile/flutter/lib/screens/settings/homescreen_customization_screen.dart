@@ -7,6 +7,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Provider for homescreen card visibility settings
 final homescreenCardsProvider =
     StateNotifierProvider<HomescreenCardsNotifier, HomescreenCardsState>((ref) {
@@ -209,7 +210,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).strengthFitnessScore,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationOverallFitnessStrengthNu,
                   icon: Icons.insights,
-                  iconColor: AppColors.cyan,
+                  iconColor: context.accentColor,
                   value: cardsState.showFitnessScoreCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -227,7 +228,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).homescreenCustomizationMoodCheckIn,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationQuickMoodPickerFor,
                   icon: Icons.wb_sunny_outlined,
-                  iconColor: AppColors.orange,
+                  iconColor: context.accentColor,
                   value: cardsState.showMoodPickerCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -245,7 +246,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).neatDashboardDailyActivity,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationHealthDeviceActivitySummary,
                   icon: Icons.watch,
-                  iconColor: AppColors.green,
+                  iconColor: context.accentColor,
                   value: cardsState.showDailyActivityCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -263,7 +264,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).mainShellPartQuickActions,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationLogFoodStatsShare,
                   icon: Icons.apps,
-                  iconColor: AppColors.purple,
+                  iconColor: context.accentColor,
                   value: cardsState.showQuickActionsRow,
                   onChanged: (value) {
                     HapticService.light();
@@ -281,7 +282,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).homescreenCustomizationUpcomingFeatures,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationFeatureVotingAndRoadmap,
                   icon: Icons.new_releases_outlined,
-                  iconColor: AppColors.yellow,
+                  iconColor: context.accentColor,
                   value: cardsState.showUpcomingFeaturesCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -304,7 +305,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).homescreenCustomizationWeekChanges,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationExerciseVariationThisWeek,
                   icon: Icons.swap_horiz,
-                  iconColor: AppColors.cyan,
+                  iconColor: context.accentColor,
                   value: cardsState.showWeekChangesCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -322,7 +323,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).homescreenCustomizationWeeklyProgress,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationWorkoutCompletionProgressRi,
                   icon: Icons.donut_large,
-                  iconColor: AppColors.green,
+                  iconColor: context.accentColor,
                   value: cardsState.showWeeklyProgressCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -340,7 +341,7 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                   title: AppLocalizations.of(context).weeklyGoalsCardWeeklyGoals,
                   subtitle: AppLocalizations.of(context).homescreenCustomizationGoalsAndMilestonesFor,
                   icon: Icons.flag_outlined,
-                  iconColor: AppColors.orange,
+                  iconColor: context.accentColor,
                   value: cardsState.showWeeklyGoalsCard,
                   onChanged: (value) {
                     HapticService.light();
@@ -361,14 +362,14 @@ class HomescreenCustomizationScreen extends ConsumerWidget {
                     color: elevatedColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.cyan.withOpacity(0.2),
+                      color: context.accentColor.withOpacity(0.2),
                     ),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.info_outline,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         size: 20,
                       ),
                       const SizedBox(width: 12),

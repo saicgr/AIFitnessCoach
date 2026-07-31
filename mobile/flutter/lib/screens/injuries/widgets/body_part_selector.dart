@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/injury.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -116,17 +117,17 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
                 duration: const Duration(milliseconds: 200),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.coral.withValues(alpha: 0.15)
+                      ? context.accentColor.withValues(alpha: 0.15)
                       : elevated,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected ? AppColors.coral : cardBorder,
+                    color: isSelected ? context.accentColor : cardBorder,
                     width: isSelected ? 2 : 1,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: AppColors.coral.withValues(alpha: 0.3),
+                            color: context.accentColor.withValues(alpha: 0.3),
                             blurRadius: 12,
                             spreadRadius: 0,
                           ),
@@ -139,7 +140,7 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
                     Icon(
                       _getBodyPartIcon(bodyPart.id),
                       size: 32,
-                      color: isSelected ? AppColors.coral : textMuted,
+                      color: isSelected ? context.accentColor : textMuted,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -147,7 +148,7 @@ class _BodyPartSelectorState extends State<BodyPartSelector> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? AppColors.coral : textPrimary,
+                        color: isSelected ? context.accentColor : textPrimary,
                       ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
@@ -199,11 +200,11 @@ class CompactBodyPartSelector extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.coral.withValues(alpha: 0.15)
+                  ? context.accentColor.withValues(alpha: 0.15)
                   : elevated,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isSelected ? AppColors.coral : cardBorder,
+                color: isSelected ? context.accentColor : cardBorder,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -211,10 +212,10 @@ class CompactBodyPartSelector extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isSelected) ...[
-                  const Icon(
+                  Icon(
                     Icons.check_circle,
                     size: 16,
-                    color: AppColors.coral,
+                    color: context.accentColor,
                   ),
                   const SizedBox(width: 6),
                 ],
@@ -223,7 +224,7 @@ class CompactBodyPartSelector extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? AppColors.coral : textPrimary,
+                    color: isSelected ? context.accentColor : textPrimary,
                   ),
                 ),
               ],

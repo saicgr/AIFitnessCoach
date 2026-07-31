@@ -141,7 +141,7 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
             minBlastForce: 12,
             gravity: 0.2,
             shouldLoop: false,
-            colors: [tierHeroColor, accent, AppColors.cyan, Colors.white],
+            colors: [tierHeroColor, accent, AppColors.cyan, Colors.white], // accent-allowlist: confetti burst palette - already includes the live accent + tier color; cyan is a fixed richness stop, matches streak_milestone_dialog confetti convention
           ),
           // Main card
           Center(
@@ -360,7 +360,7 @@ class _DeltaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final up = delta > 0;
-    final color = up ? const Color(0xFF39C96B) : const Color(0xFFE05A5A);
+    final color = up ? const Color(0xFF39C96B) : const Color(0xFFE05A5A); // accent-allowlist: trend up/down indicator (green=improved, red=declined), semantic
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -715,7 +715,7 @@ class _MovementRow extends StatelessWidget {
               icon: Icons.arrow_upward,
               label: AppLocalizations.of(context).weeklyRecapPassed,
               value: passes,
-              color: const Color(0xFF39C96B),
+              color: const Color(0xFF39C96B), // accent-allowlist: trend up/down indicator (green=improved, red=declined), semantic
               textColor: textColor,
               textMuted: textMuted,
             ),
@@ -727,7 +727,7 @@ class _MovementRow extends StatelessWidget {
               icon: Icons.arrow_downward,
               label: AppLocalizations.of(context).weeklyRecapPassedBy,
               value: overtaken,
-              color: const Color(0xFFE05A5A),
+              color: const Color(0xFFE05A5A), // accent-allowlist: trend up/down indicator (green=improved, red=declined), semantic
               textColor: textColor,
               textMuted: textMuted,
             ),

@@ -10,6 +10,7 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Home-screen entry point into Reports & Insights.
 ///
 /// Shows a compact this-week progress ring + current streak + PR count and
@@ -31,8 +32,8 @@ class WeeklyReportCard extends ConsumerWidget {
     final consistencyState = ref.watch(consistencyProvider);
     final streak = consistencyState.currentStreak;
 
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = context.accentColor;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -138,7 +139,7 @@ class WeeklyReportCard extends ConsumerWidget {
                               _Chip(
                                 icon: Icons.local_fire_department_rounded,
                                 label: '$streak day streak',
-                                color: const Color(0xFFF97316),
+                                color: context.accentColor,
                               ),
                               const SizedBox(width: 6),
                             ],

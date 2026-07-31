@@ -9,6 +9,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../data/repositories/workout_repository.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Mood picker card for home screen.
 /// Allows users to select a mood and instantly generate a tailored workout.
 class MoodPickerCard extends ConsumerStatefulWidget {
@@ -82,18 +83,18 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    AppColors.purple.withOpacity(0.08),
-                    AppColors.cyan.withOpacity(0.05),
+                    context.accentColor.withOpacity(0.08),
+                    context.accentColor.withOpacity(0.05),
                   ]
                 : [
-                    AppColors.purple.withOpacity(0.04),
-                    AppColors.cyan.withOpacity(0.02),
+                    context.accentColor.withOpacity(0.04),
+                    context.accentColor.withOpacity(0.02),
                   ],
           ),
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: AppColors.purple.withOpacity(0.15),
+              color: context.accentColor.withOpacity(0.15),
               blurRadius: 16,
               offset: const Offset(0, 8),
               spreadRadius: 1,
@@ -118,12 +119,12 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.wb_sunny_outlined,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         size: 20,
                       ),
                     ),
@@ -314,7 +315,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
   Widget _buildErrorCard(BuildContext context, String error, bool isDark) {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final errorColor = Colors.red.shade400;
+    final errorColor = Colors.red.shade400;  // accent-allowlist: error/destructive -- must stay red
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -534,13 +535,13 @@ class _MoodWorkoutGeneratingOverlay extends ConsumerWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 32),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.2),
+                    color: Colors.red.withOpacity(0.2),  // accent-allowlist: error/destructive -- must stay red
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withOpacity(0.5)),
+                    border: Border.all(color: Colors.red.withOpacity(0.5)),  // accent-allowlist: error/destructive -- must stay red
                   ),
                   child: Column(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red, size: 32),
+                      const Icon(Icons.error_outline, color: Colors.red, size: 32),  // accent-allowlist: error/destructive -- must stay red
                       const SizedBox(height: 8),
                       Text(
                         state.error ?? AppLocalizations.of(context).workoutGenerationSomethingWentWrong,

@@ -20,11 +20,11 @@ class _LeaderboardRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: isCurrentUser
-            ? AppColors.cyan.withOpacity(0.1)
+            ? context.accentColor.withOpacity(0.1)
             : tc.surface,
         borderRadius: BorderRadius.circular(12),
         border: isCurrentUser
-            ? Border.all(color: AppColors.cyan.withOpacity(0.3))
+            ? Border.all(color: context.accentColor.withOpacity(0.3))
             : null,
       ),
       child: Row(
@@ -110,7 +110,7 @@ class _RankBadge extends StatelessWidget {
 
     switch (rank) {
       case 1:
-        badgeColor = AppColors.yellow;
+        badgeColor = AppColors.yellow;  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
         medal = '\u{1F947}'; // Gold medal
         break;
       case 2:
@@ -118,7 +118,7 @@ class _RankBadge extends StatelessWidget {
         medal = '\u{1F948}'; // Silver medal
         break;
       case 3:
-        badgeColor = const Color(0xFFCD7F32); // Bronze
+        badgeColor = const Color(0xFFCD7F32); // Bronze  // accent-allowlist: medal/rarity tier
         medal = '\u{1F949}'; // Bronze medal
         break;
       default:

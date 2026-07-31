@@ -57,7 +57,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                             label: AppLocalizations.of(context).shareBodyAnalyzerBodyFat,
                             value: '${(snapshot.bodyFatPercent ?? 0).toStringAsFixed(0)}%',
                             fill: ((snapshot.bodyFatPercent ?? 0) / 40).clamp(0.0, 1.0),
-                            color: const Color(0xFF3498DB),
+                            color: const Color(0xFF3498DB),  // accent-allowlist: one of three ScoreRing metrics (body-fat/muscle-mass/symmetry) shown side by side as a fixed categorical trio
                             isDark: isDark,
                           ),
                         ),
@@ -67,7 +67,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                             label: AppLocalizations.of(context).shareBodyAnalyzerMuscleMass,
                             value: '${(snapshot.muscleMassPercent ?? 0).toStringAsFixed(0)}%',
                             fill: ((snapshot.muscleMassPercent ?? 0) / 60).clamp(0.0, 1.0),
-                            color: const Color(0xFFF5A623),
+                            color: const Color(0xFFF5A623),  // accent-allowlist: one of three ScoreRing metrics (body-fat/muscle-mass/symmetry) shown side by side as a fixed categorical trio
                             isDark: isDark,
                           ),
                         ),
@@ -77,7 +77,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                             label: AppLocalizations.of(context).shareBodyAnalyzerSymmetry,
                             value: '${((snapshot.symmetryScore ?? 0) / 10).round()}/10',
                             fill: ((snapshot.symmetryScore ?? 0) / 100).clamp(0.0, 1.0),
-                            color: const Color(0xFFB24BF3),
+                            color: const Color(0xFFB24BF3),  // accent-allowlist: one of three ScoreRing metrics (body-fat/muscle-mass/symmetry) shown side by side as a fixed categorical trio
                             isDark: isDark,
                           ),
                         ),

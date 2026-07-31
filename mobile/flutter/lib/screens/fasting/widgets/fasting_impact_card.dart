@@ -60,7 +60,7 @@ class FastingImpactCard extends StatelessWidget {
     final monoAccent = isDark ? AppColors.accent : AppColorsLight.accent;
 
     final accentColor = positiveColor ??
-        (isPositive ? AppColors.success : AppColors.orange);
+        (isPositive ? AppColors.success : AppColors.orange); // accent-allowlist: fasting impact status severity
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -120,9 +120,9 @@ class FastingImpactCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 color: correlation!.isPositive
-                    ? AppColors.success
+                    ? AppColors.success // accent-allowlist: fasting impact status severity
                     : correlation!.isNegative
-                        ? AppColors.error
+                        ? AppColors.error // accent-allowlist: fasting impact status severity
                         : textMuted,
               ),
             ),

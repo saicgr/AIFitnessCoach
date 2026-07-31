@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 /// Modal progress dialog for the Delete Account flow.
@@ -45,11 +46,11 @@ class DeleteAccountProgressDialog extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(
+                  SizedBox(
                     width: 36,
                     height: 36,
                     child: CircularProgressIndicator(
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       strokeWidth: 3,
                     ),
                   ),

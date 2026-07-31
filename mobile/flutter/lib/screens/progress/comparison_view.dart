@@ -221,7 +221,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
         return BoxDecoration(
           gradient: const LinearGradient(
             begin: Alignment.topLeft, end: Alignment.bottomRight,
-            colors: [Color(0xFF2d1b3d), Color(0xFF6b2737), Color(0xFFc94b4b)],
+            colors: [Color(0xFF2d1b3d), Color(0xFF6b2737), Color(0xFFc94b4b)],  // accent-allowlist: error/negative state — must stay red regardless of accent
           ),
           borderRadius: BorderRadius.circular(4),
         );
@@ -521,7 +521,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
             ),
           ),
         if (isSelected)
-          IgnorePointer(child: Container(decoration: BoxDecoration(border: Border.all(color: AppColors.green, width: 2.5), borderRadius: br))),
+          IgnorePointer(child: Container(decoration: BoxDecoration(border: Border.all(color: AppColors.green, width: 2.5), borderRadius: br))),  // accent-allowlist: success/positive state — must stay green regardless of accent
         if (isSelected)
           Positioned(
             top: 4, right: 4,
@@ -663,9 +663,9 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
     switch (hex) {
       case '#FFFFFF': return Colors.white;
       case '#000000': return Colors.black;
-      case '#4CAF50': return const Color(0xFF4CAF50);
-      case '#2196F3': return const Color(0xFF2196F3);
-      case '#FF9800': return const Color(0xFFFF9800);
+      case '#4CAF50': return const Color(0xFF4CAF50);  // accent-allowlist: success/positive state — must stay green regardless of accent
+      case '#2196F3': return const Color(0xFF2196F3);  // accent-allowlist: informational state — must stay blue regardless of accent
+      case '#FF9800': return const Color(0xFFFF9800);  // accent-allowlist: warning severity — must stay amber regardless of accent
       default: return Colors.white;
     }
   }
@@ -885,7 +885,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
   }
 
   List<Widget> _buildBorderColorDots(ColorScheme colorScheme) {
-    final colors = <MapEntry<Color, String>>[const MapEntry(Colors.white, '#FFFFFF'), const MapEntry(Colors.black, '#000000'), const MapEntry(Color(0xFF4CAF50), '#4CAF50'), const MapEntry(Color(0xFF2196F3), '#2196F3'), const MapEntry(Color(0xFFFF9800), '#FF9800')];
+    final colors = <MapEntry<Color, String>>[const MapEntry(Colors.white, '#FFFFFF'), const MapEntry(Colors.black, '#000000'), const MapEntry(Color(0xFF4CAF50), '#4CAF50'), const MapEntry(Color(0xFF2196F3), '#2196F3'), const MapEntry(Color(0xFFFF9800), '#FF9800')];  // accent-allowlist: success/positive state — must stay green regardless of accent; informational state — must stay blue regardless of accent; warning severity — must stay amber regardless of accent
     return colors.map((entry) {
       final isSelected = _photoBorderColor.value == entry.key.value;
       return Padding(padding: const EdgeInsets.only(right: 4), child: GestureDetector(onTap: () => setState(() => _photoBorderColor = entry.key), child: Container(width: 20, height: 20, decoration: BoxDecoration(color: entry.key, shape: BoxShape.circle, border: Border.all(color: isSelected ? colorScheme.primary : colorScheme.outlineVariant, width: isSelected ? 2 : 1)))));
@@ -906,7 +906,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
       const SizedBox(width: 4),
       _buildGradientDot(colors: const [Color(0xFF0f2027), Color(0xFF2c5364)], isSelected: _settings.backgroundColor == 'gradient_ocean', onTap: () => setState(() => _settings = _settings.copyWith(backgroundColor: 'gradient_ocean'))),
       const SizedBox(width: 4),
-      _buildGradientDot(colors: const [Color(0xFF2d1b3d), Color(0xFFc94b4b)], isSelected: _settings.backgroundColor == 'gradient_ember', onTap: () => setState(() => _settings = _settings.copyWith(backgroundColor: 'gradient_ember'))),
+      _buildGradientDot(colors: const [Color(0xFF2d1b3d), Color(0xFFc94b4b)], isSelected: _settings.backgroundColor == 'gradient_ember', onTap: () => setState(() => _settings = _settings.copyWith(backgroundColor: 'gradient_ember'))),  // accent-allowlist: error/negative state — must stay red regardless of accent
       const SizedBox(width: 4),
       _buildGradientDot(colors: const [Color(0xFF0a1612), Color(0xFF2d5a42)], isSelected: _settings.backgroundColor == 'gradient_forest', onTap: () => setState(() => _settings = _settings.copyWith(backgroundColor: 'gradient_forest'))),
     ]);
@@ -1059,10 +1059,10 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               begin: Alignment.topLeft, end: Alignment.bottomRight,
-              colors: [Color(0xFFFF4D8D), Color(0xFFFF8A00), Color(0xFFFFD600)],
+              colors: [Color(0xFFFF4D8D), Color(0xFFFF8A00), Color(0xFFFFD600)],  // accent-allowlist: fixed decorative gradient — progress-photo comparison badge design, not tied to accent; warning severity — must stay amber regardless of accent
             ),
             borderRadius: BorderRadius.circular(999),
-            boxShadow: [BoxShadow(color: const Color(0xFFFF4D8D).withOpacity(0.6), blurRadius: 18, spreadRadius: 1)],
+            boxShadow: [BoxShadow(color: const Color(0xFFFF4D8D).withOpacity(0.6), blurRadius: 18, spreadRadius: 1)],  // accent-allowlist: fixed decorative gradient — progress-photo comparison badge design, not tied to accent
           ),
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             const Icon(Icons.link, size: 18, color: Colors.white),
@@ -1075,7 +1075,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
           clipper: _TicketClipper(),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-            color: const Color(0xFFFFD166),
+            color: const Color(0xFFFFD166),  // accent-allowlist: warning severity — must stay amber regardless of accent
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.bolt, size: 18, color: Colors.black),
               const SizedBox(width: 6),
@@ -1092,7 +1092,7 @@ class _ComparisonViewState extends ConsumerState<ComparisonView> {
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft, end: Alignment.bottomRight,
-                colors: [Color(0xFFFF6B6B), Color(0xFFFF9F43)],
+                colors: [Color(0xFFFF6B6B), Color(0xFFFF9F43)],  // accent-allowlist: fixed decorative gradient — progress-photo comparison badge design, not tied to accent; warning severity — must stay amber regardless of accent
               ),
               shape: BoxShape.circle,
             ),

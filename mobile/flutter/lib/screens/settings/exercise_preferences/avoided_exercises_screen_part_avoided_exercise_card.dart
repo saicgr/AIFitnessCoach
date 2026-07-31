@@ -37,12 +37,12 @@ class _AvoidedExerciseCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.15),
+                  color: AppColors.error.withValues(alpha: 0.15),  // accent-allowlist: error/destructive - must stay red
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.block,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   size: 20,
                 ),
               ),
@@ -74,13 +74,13 @@ class _AvoidedExerciseCard extends ConsumerWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.timer, size: 12, color: AppColors.orange),
+                          Icon(Icons.timer, size: 12, color: context.accentColor),
                           const SizedBox(width: 4),
                           Text(
                             'Until ${exercise.endDate!.day}/${exercise.endDate!.month}/${exercise.endDate!.year}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                             ),
                           ),
                         ],
@@ -91,7 +91,7 @@ class _AvoidedExerciseCard extends ConsumerWidget {
               ),
               // Edit button
               IconButton(
-                icon: Icon(Icons.edit_outlined, color: AppColors.cyan, size: 20),
+                icon: Icon(Icons.edit_outlined, color: context.accentColor, size: 20),
                 onPressed: onEdit,
                 tooltip: AppLocalizations.of(context).commonEdit,
               ),
@@ -110,21 +110,21 @@ class _AvoidedExerciseCard extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+                border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.swap_horiz, size: 16, color: AppColors.cyan),
+                  Icon(Icons.swap_horiz, size: 16, color: context.accentColor),
                   const SizedBox(width: 6),
                   Text(
                     AppLocalizations.of(context).avoidedExercisesScreenViewSafeAlternatives,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   ),
                 ],
@@ -222,10 +222,10 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withValues(alpha: 0.15),
+                        color: context.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(Icons.swap_horiz, color: AppColors.cyan, size: 24),
+                      child: Icon(Icons.swap_horiz, color: context.accentColor, size: 24),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -257,20 +257,20 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.1),
+                      color: context.accentColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.medical_services, size: 14, color: AppColors.orange),
+                        Icon(Icons.medical_services, size: 14, color: context.accentColor),
                         const SizedBox(width: 6),
                         Text(
                           widget.reason!,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                       ],
@@ -296,7 +296,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                              Icon(Icons.error_outline, size: 48, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
                               const SizedBox(height: 16),
                               Text(AppLocalizations.of(context).avoidedExercisesScreenErrorLoadingAlternatives, style: TextStyle(color: textMuted)),
                             ],
@@ -338,7 +338,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                                   color: elevatedColor,
                                   borderRadius: BorderRadius.circular(12),
                                   border: sub.isSafeForReason
-                                      ? Border.all(color: AppColors.green.withValues(alpha: 0.3))
+                                      ? Border.all(color: AppColors.green.withValues(alpha: 0.3))  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                       : null,
                                 ),
                                 child: Row(
@@ -346,12 +346,12 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                                     Container(
                                       padding: const EdgeInsets.all(8),
                                       decoration: BoxDecoration(
-                                        color: AppColors.green.withValues(alpha: 0.15),
+                                        color: AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Icon(
                                         Icons.check_circle,
-                                        color: AppColors.green,
+                                        color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                         size: 20,
                                       ),
                                     ),
@@ -389,7 +389,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: AppColors.green.withValues(alpha: 0.15),
+                                          color: AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                           borderRadius: BorderRadius.circular(12),
                                         ),
                                         child: Text(
@@ -397,7 +397,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.green,
+                                            color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                                           ),
                                         ),
                                       ),

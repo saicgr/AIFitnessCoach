@@ -91,7 +91,7 @@ class _WorkoutDaysSelectorSheetState
         scaffold.showSnackBar(
           SnackBar(
             content: Text('Failed to update workout days: $msg'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
             duration: const Duration(seconds: 5),
           ),
         );
@@ -103,7 +103,7 @@ class _WorkoutDaysSelectorSheetState
     scaffold.showSnackBar(
       SnackBar(
         content: Text(l10n.settingsCardWorkoutDaysUpdatedTo(dayNamesList.join(', '))),
-        backgroundColor: AppColors.cyan,
+        backgroundColor: context.accentColor,
         duration: const Duration(seconds: 3),
       ),
     );
@@ -159,17 +159,17 @@ class _WorkoutDaysSelectorSheetState
                     height: 60,
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.cyan
+                          ? context.accentColor
                           : (isDark ? AppColors.elevated : AppColorsLight.elevated),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.cyan : cardBorder,
+                        color: isSelected ? context.accentColor : cardBorder,
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppColors.cyan.withValues(alpha: 0.4),
+                                color: context.accentColor.withValues(alpha: 0.4),
                                 blurRadius: 12,
                                 spreadRadius: 0,
                               ),
@@ -210,7 +210,7 @@ class _WorkoutDaysSelectorSheetState
               AppLocalizations.of(context).settingsCardNDaysSelected(_selectedDays.length),
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -220,17 +220,17 @@ class _WorkoutDaysSelectorSheetState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
+                  color: context.accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -256,7 +256,7 @@ class _WorkoutDaysSelectorSheetState
                   _errorMessage!,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.error,
+                    color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   ),
                 ),
               ),
@@ -267,9 +267,9 @@ class _WorkoutDaysSelectorSheetState
               child: ElevatedButton(
                 onPressed: (_isLoading || !hasChanges) ? null : _saveWorkoutDays,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.3),
+                  disabledBackgroundColor: context.accentColor.withValues(alpha: 0.3),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

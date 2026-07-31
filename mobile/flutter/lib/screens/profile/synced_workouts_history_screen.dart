@@ -775,7 +775,7 @@ class _PersonalRecordsRow extends StatelessWidget {
             child: Row(
               children: [
                 Icon(Icons.emoji_events_rounded,
-                    color: const Color(0xFFEAB308), size: 18),
+                    color: const Color(0xFFEAB308), size: 18),  // accent-allowlist: warning severity — must stay amber regardless of accent
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).syncedWorkoutsHistoryYourRecords,

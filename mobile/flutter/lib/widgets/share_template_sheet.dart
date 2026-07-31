@@ -192,7 +192,7 @@ class _ShareTemplateSheetState extends State<ShareTemplateSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error, // accent-allowlist: error/success state, semantic
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -203,7 +203,7 @@ class _ShareTemplateSheetState extends State<ShareTemplateSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success, // accent-allowlist: error/success state, semantic
         behavior: SnackBarBehavior.floating,
       ),
     );

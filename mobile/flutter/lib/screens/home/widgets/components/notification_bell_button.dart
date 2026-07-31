@@ -6,6 +6,7 @@ import '../../../../data/providers/unified_notifications_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Notification bell button with unread count badge
 /// Used in the home screen header
 class NotificationBellButton extends ConsumerWidget {
@@ -28,7 +29,7 @@ class NotificationBellButton extends ConsumerWidget {
         IconButton(
           icon: Icon(
             unreadCount > 0 ? Icons.notifications : Icons.notifications_outlined,
-            color: unreadCount > 0 ? AppColors.cyan : textMuted,
+            color: unreadCount > 0 ? context.accentColor : textMuted,
             size: 24,
           ),
           tooltip: AppLocalizations.of(context).permissionsPrimerNotifications,
@@ -45,7 +46,7 @@ class NotificationBellButton extends ConsumerWidget {
               width: 10,
               height: 10,
               decoration: BoxDecoration(
-                color: AppColors.error,
+                color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,

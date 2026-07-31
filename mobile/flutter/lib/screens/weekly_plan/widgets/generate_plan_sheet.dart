@@ -83,7 +83,7 @@ class _GeneratePlanSheetState extends ConsumerState<GeneratePlanSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).generatePlanWeeklyPlanGenerated),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.green, // accent-allowlist: success snackbar, semantic
         ),
       );
     }

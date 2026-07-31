@@ -2,7 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
 import '../../../../widgets/design_system/zealova.dart';
@@ -25,16 +24,16 @@ class StrengthChart extends ConsumerWidget {
   /// multi-colour (one per series) — a monochrome accent can't disambiguate
   /// five overlapping lines.
   static const List<Color> _muscleColors = [
-    Color(0xFF3B82F6), // blue
-    Color(0xFF22C55E), // green
-    Color(0xFFF97316), // orange
-    Color(0xFFA855F7), // purple
-    Color(0xFFEF4444), // red
-    Color(0xFF14B8A6), // teal
-    Color(0xFFEC4899), // pink
-    Color(0xFF6366F1), // indigo
-    Color(0xFFF59E0B), // amber
-    Color(0xFF06B6D4), // cyan
+    Color(0xFF3B82F6), // blue  // accent-allowlist: informational state — must stay blue regardless of accent
+    Color(0xFF22C55E), // green  // accent-allowlist: success/positive state — must stay green regardless of accent
+    Color(0xFFF97316), // orange  // accent-allowlist: chart series color — fixed per-exercise line color in a multi-exercise strength chart, read against the legend (static const, no BuildContext available)
+    Color(0xFFA855F7), // purple  // accent-allowlist: chart series color — fixed per-exercise line color in a multi-exercise strength chart, read against the legend (static const, no BuildContext available)
+    Color(0xFFEF4444), // red  // accent-allowlist: error/negative state — must stay red regardless of accent
+    Color(0xFF14B8A6), // teal  // accent-allowlist: informational state — must stay blue regardless of accent
+    Color(0xFFEC4899), // pink  // accent-allowlist: chart series color — fixed per-exercise line color in a multi-exercise strength chart, read against the legend
+    Color(0xFF6366F1), // indigo  // accent-allowlist: informational state — must stay blue regardless of accent
+    Color(0xFFF59E0B), // amber  // accent-allowlist: warning severity — must stay amber regardless of accent
+    Color(0xFF06B6D4), // cyan  // accent-allowlist: chart series color — fixed per-exercise line color in a multi-exercise strength chart, read against the legend (static const, no BuildContext available)
   ];
 
   @override

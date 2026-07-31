@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'lottie_animations.dart';
 
@@ -33,7 +34,7 @@ class EmptyState extends StatelessWidget {
       subtitle: l10n.emptyStateYourWorkoutScheduleIs,
       actionLabel: l10n.emptyStateCreateProgram,
       onAction: onAction,
-      iconColor: AppColors.cyan,
+      iconColor: context.accentColor,
     );
   }
 
@@ -45,7 +46,7 @@ class EmptyState extends StatelessWidget {
       subtitle: l10n.emptyStateTryAdjustingYourFilters,
       actionLabel: l10n.emptyStateClearFilters,
       onAction: onAction,
-      iconColor: AppColors.purple,
+      iconColor: context.accentColor,
     );
   }
 
@@ -55,7 +56,7 @@ class EmptyState extends StatelessWidget {
       icon: Icons.history,
       title: l10n.emptyStateNoWorkoutHistory,
       subtitle: l10n.emptyStateCompleteYourFirstWorkout,
-      iconColor: AppColors.orange,
+      iconColor: context.accentColor,
     );
   }
 
@@ -77,7 +78,7 @@ class EmptyState extends StatelessWidget {
       subtitle: l10n.emptyStatePleaseCheckYourInternet,
       actionLabel: l10n.buttonRetry,
       onAction: onRetry,
-      iconColor: AppColors.error,
+      iconColor: AppColors.error, // accent-allowlist: offline/no-connection state, error semantic
     );
   }
 
@@ -86,7 +87,7 @@ class EmptyState extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final effectiveIconColor = iconColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan);
+    final effectiveIconColor = iconColor ?? context.accentColor;
 
     return Center(
       child: Padding(

@@ -10,6 +10,7 @@ import '../../../../data/services/health_service.dart';
 import '../../../../widgets/charts/mini_sparkline.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Composite "Today's Health" card matching the level of polish competitors
 /// (GymBeat, FitOn) ship: a hero steps progress block with the gap-to-goal
 /// readout, then a 3-up row of metric tiles for active calories, average
@@ -84,11 +85,11 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.success.withValues(alpha: 0.18),
+                    color: AppColors.success.withValues(alpha: 0.18),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.favorite_rounded,
-                      color: AppColors.success, size: 18),
+                      color: AppColors.success, size: 18),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -170,11 +171,11 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                     height: 36,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.success.withValues(alpha: 0.18),
+                      color: AppColors.success.withValues(alpha: 0.18),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(Icons.favorite_rounded,
-                        color: AppColors.success, size: 18),
+                        color: AppColors.success, size: 18),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   ),
                   const SizedBox(width: 10),
                   Text(
@@ -285,7 +286,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                         minHeight: 6,
                         backgroundColor: cardBorder.withValues(alpha: 0.4),
                         valueColor:
-                            AlwaysStoppedAnimation<Color>(AppColors.success),
+                            AlwaysStoppedAnimation<Color>(AppColors.success),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       ),
                     ),
                     // ─── Inline trend sparklines (steps + resting HR). Render
@@ -299,7 +300,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                               child: _TrendSpark(
                                 label: 'Steps · 14d',
                                 values: stepsSeries,
-                                color: AppColors.success,
+                                color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                                 textMuted: textMuted,
                               ),
                             ),
@@ -324,7 +325,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                         Expanded(
                           child: _MetricTile(
                             icon: Icons.local_fire_department_rounded,
-                            iconColor: AppColors.orange,
+                            iconColor: context.accentColor,
                             value: activeCal != null ? '$activeCal' : '—',
                             unit: 'cal',
                             label: AppLocalizations.of(context).todaysHealthCardActiveEnergy,
@@ -335,7 +336,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                         Expanded(
                           child: _MetricTile(
                             icon: Icons.favorite_rounded,
-                            iconColor: AppColors.error,
+                            iconColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                             value: avgHr != null ? '$avgHr' : '—',
                             unit: 'bpm',
                             label: AppLocalizations.of(context).workoutDayDetailAvgHr,
@@ -350,7 +351,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                         Expanded(
                           child: _MetricTile(
                             icon: Icons.show_chart_rounded,
-                            iconColor: AppColors.purple,
+                            iconColor: context.accentColor,
                             value: hasHrRange ? '$minHr–$maxHr' : '—',
                             unit: 'bpm',
                             label: AppLocalizations.of(context).todaysHealthCardHrRange,

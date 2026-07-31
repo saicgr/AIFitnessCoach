@@ -37,7 +37,7 @@ class HeartRateSummaryCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: hasData
-                ? const Color(0xFFF44336).withValues(alpha: 0.3)
+                ? const Color(0xFFF44336).withValues(alpha: 0.3) // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                 : Colors.grey.withValues(alpha: 0.2),
           ),
         ),
@@ -51,14 +51,14 @@ class HeartRateSummaryCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: (hasData ? const Color(0xFFF44336) : Colors.grey)
+                    color: (hasData ? const Color(0xFFF44336) : Colors.grey) // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                         .withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.favorite,
                     size: 20,
-                    color: hasData ? const Color(0xFFF44336) : Colors.grey,
+                    color: hasData ? const Color(0xFFF44336) : Colors.grey, // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -175,7 +175,7 @@ class HeartRateSummaryCard extends StatelessWidget {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.3,
-            color: const Color(0xFFF44336),
+            color: const Color(0xFFF44336), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
             barWidth: 2,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
@@ -183,8 +183,8 @@ class HeartRateSummaryCard extends StatelessWidget {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFF44336).withValues(alpha: 0.2),
-                  const Color(0xFFF44336).withValues(alpha: 0.0),
+                  const Color(0xFFF44336).withValues(alpha: 0.2), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
+                  const Color(0xFFF44336).withValues(alpha: 0.0), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -278,7 +278,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
             color: cardBg,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFF44336).withValues(alpha: 0.2),
+              color: const Color(0xFFF44336).withValues(alpha: 0.2), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
             ),
           ),
           child: Column(
@@ -318,9 +318,9 @@ class HeartRateWorkoutChart extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        _buildStatChip(l10n.heartRateChartSummaryAvg, stats.avg, const Color(0xFF2196F3)),
-        _buildStatChip(l10n.heartRateChartSummaryPeak, stats.max, const Color(0xFFF44336), icon: Icons.arrow_upward),
-        _buildStatChip(l10n.heartRateChartSummaryMin, stats.min, const Color(0xFF4CAF50), icon: Icons.arrow_downward),
+        _buildStatChip(l10n.heartRateChartSummaryAvg, stats.avg, const Color(0xFF2196F3)), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
+        _buildStatChip(l10n.heartRateChartSummaryPeak, stats.max, const Color(0xFFF44336), icon: Icons.arrow_upward), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
+        _buildStatChip(l10n.heartRateChartSummaryMin, stats.min, const Color(0xFF4CAF50), icon: Icons.arrow_downward), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
       ],
     );
   }
@@ -543,7 +543,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.2,
-            color: const Color(0xFFF44336),
+            color: const Color(0xFFF44336), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
             barWidth: 2.5,
             isStrokeCapRound: true,
             dotData: FlDotData(
@@ -561,14 +561,14 @@ class HeartRateWorkoutChart extends StatelessWidget {
                 if (isPeak) {
                   return FlDotCirclePainter(
                     radius: 5,
-                    color: const Color(0xFFF44336),
+                    color: const Color(0xFFF44336), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                     strokeWidth: 2,
                     strokeColor: Colors.white,
                   );
                 } else if (isValley) {
                   return FlDotCirclePainter(
                     radius: 5,
-                    color: const Color(0xFF4CAF50),
+                    color: const Color(0xFF4CAF50), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                     strokeWidth: 2,
                     strokeColor: Colors.white,
                   );
@@ -580,8 +580,8 @@ class HeartRateWorkoutChart extends StatelessWidget {
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFF44336).withValues(alpha: 0.3),
-                  const Color(0xFFF44336).withValues(alpha: 0.05),
+                  const Color(0xFFF44336).withValues(alpha: 0.3), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
+                  const Color(0xFFF44336).withValues(alpha: 0.05), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -611,7 +611,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF4CAF50).withValues(alpha: 0.3),
+          color: const Color(0xFF4CAF50).withValues(alpha: 0.3), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
         ),
       ),
       child: Row(
@@ -620,13 +620,13 @@ class HeartRateWorkoutChart extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+              color: const Color(0xFF4CAF50).withValues(alpha: 0.15), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.local_fire_department,
               size: 24,
-              color: Color(0xFF4CAF50),
+              color: Color(0xFF4CAF50), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
             ),
           ),
           const SizedBox(width: 16),
@@ -656,7 +656,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                     AppLocalizations.of(context).heartRateChartFatCalories(fatCalories),
                     style: TextStyle(
                       fontSize: 12,
-                      color: const Color(0xFF4CAF50),
+                      color: const Color(0xFF4CAF50), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -682,7 +682,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF2196F3).withValues(alpha: 0.3),
+          color: const Color(0xFF2196F3).withValues(alpha: 0.3), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
         ),
       ),
       child: Column(
@@ -694,13 +694,13 @@ class HeartRateWorkoutChart extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2196F3).withValues(alpha: 0.15),
+                  color: const Color(0xFF2196F3).withValues(alpha: 0.15), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(
                   Icons.trending_up,
                   size: 24,
-                  color: Color(0xFF2196F3),
+                  color: Color(0xFF2196F3), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                 ),
               ),
               const SizedBox(width: 16),
@@ -722,7 +722,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                   AppLocalizations.of(context).heartRateChartAerobic,
                   stats.aerobicTE,
                   stats.aerobicTELabel,
-                  const Color(0xFF2196F3),
+                  const Color(0xFF2196F3), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                   isDark,
                 ),
               ),
@@ -732,7 +732,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                   AppLocalizations.of(context).heartRateChartAnaerobic,
                   stats.anaerobicTE,
                   stats.anaerobicTELabel,
-                  const Color(0xFFFF9800),
+                  const Color(0xFFFF9800), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                   isDark,
                 ),
               ),
@@ -798,7 +798,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF9C27B0).withValues(alpha: 0.3),
+          color: const Color(0xFF9C27B0).withValues(alpha: 0.3), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
         ),
       ),
       child: Row(
@@ -807,13 +807,13 @@ class HeartRateWorkoutChart extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFF9C27B0).withValues(alpha: 0.15),
+              color: const Color(0xFF9C27B0).withValues(alpha: 0.15), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.air,
               size: 24,
-              color: Color(0xFF9C27B0),
+              color: Color(0xFF9C27B0), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
             ),
           ),
           const SizedBox(width: 16),
@@ -838,14 +838,14 @@ class HeartRateWorkoutChart extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF9C27B0),
+                          color: Color(0xFF9C27B0), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF9C27B0).withValues(alpha: 0.15),
+                          color: const Color(0xFF9C27B0).withValues(alpha: 0.15), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -853,7 +853,7 @@ class HeartRateWorkoutChart extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF9C27B0),
+                            color: Color(0xFF9C27B0), // accent-allowlist: heart-rate metric identity color (avg/peak/min, aerobic/anaerobic training effect, recovery) - each metric card needs a stable distinct color, not accent
                           ),
                         ),
                       ),

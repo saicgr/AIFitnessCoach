@@ -40,17 +40,17 @@ class StatsWeeklyReportTemplate extends StatelessWidget {
   Color get _gradeColor {
     switch (_grade) {
       case 'A+':
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E);  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'A':
-        return const Color(0xFF4ADE80);
+        return const Color(0xFF4ADE80);  // accent-allowlist: success/positive state — must stay green regardless of accent
       case 'B+':
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6);  // accent-allowlist: informational state — must stay blue regardless of accent
       case 'B':
-        return const Color(0xFF60A5FA);
+        return const Color(0xFF60A5FA);  // accent-allowlist: informational state — must stay blue regardless of accent
       case 'C':
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B);  // accent-allowlist: warning severity — must stay amber regardless of accent
       default:
-        return const Color(0xFFEF4444);
+        return const Color(0xFFEF4444);  // accent-allowlist: error/negative state — must stay red regardless of accent
     }
   }
 

@@ -92,7 +92,7 @@ class ReportNewspaperTemplate extends StatelessWidget {
                 fontFamily: 'Times New Roman',
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF8B0000),
+                color: Color(0xFF8B0000),  // accent-allowlist: fixed vintage-newspaper share-template masthead color (deliberate print aesthetic), not accent
                 letterSpacing: 2,
               ),
             ),

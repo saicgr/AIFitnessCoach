@@ -6,6 +6,7 @@ import '../../../../../widgets/glass_sheet.dart';
 import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class TemplateEditorSheet extends StatefulWidget {
   final WorkoutTemplate? existing;
   final BeastModeConfigNotifier notifier;
@@ -117,7 +118,7 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
             child: ElevatedButton(
               onPressed: _save,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -166,7 +167,7 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.orange),
+          borderSide: BorderSide(color: context.accentColor),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       ),

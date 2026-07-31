@@ -54,12 +54,12 @@ class _CurrentGlucoseCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.bloodtype,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 20,
                 ),
               ),
@@ -236,7 +236,7 @@ class _QuickActionsRow extends StatelessWidget {
           child: _QuickActionButton(
             icon: Icons.bloodtype,
             label: AppLocalizations.of(context).diabetesDashboardScreenLogGlucose,
-            color: AppColors.cyan,
+            color: context.accentColor,
             onTap: onLogGlucose,
             elevatedColor: elevatedColor,
             textPrimary: textPrimary,
@@ -248,7 +248,7 @@ class _QuickActionsRow extends StatelessWidget {
           child: _QuickActionButton(
             icon: Icons.medication,
             label: AppLocalizations.of(context).diabetesDashboardScreenLogInsulin,
-            color: AppColors.purple,
+            color: context.accentColor,
             onTap: onLogInsulin,
             elevatedColor: elevatedColor,
             textPrimary: textPrimary,
@@ -370,7 +370,7 @@ class _TimeInRangeCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.show_chart,
-                color: AppColors.success,
+                color: AppColors.success, // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -406,18 +406,18 @@ class _TimeInRangeCard extends StatelessWidget {
                   if (data.percentBelow > 0)
                     Flexible(
                       flex: (data.percentBelow * 10).round(),
-                      child: Container(color: AppColors.error),
+                      child: Container(color: AppColors.error), // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                     ),
                   // In range
                   Flexible(
                     flex: (data.percentInRange * 10).round(),
-                    child: Container(color: AppColors.success),
+                    child: Container(color: AppColors.success), // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                   ),
                   // Above range
                   if (data.percentAbove > 0)
                     Flexible(
                       flex: (data.percentAbove * 10).round(),
-                      child: Container(color: AppColors.warning),
+                      child: Container(color: AppColors.warning), // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                     ),
                 ],
               ),
@@ -431,7 +431,7 @@ class _TimeInRangeCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _RangeLegendItem(
-                color: AppColors.error,
+                color: AppColors.error, // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                 label: AppLocalizations.of(context).diabetesDashboardScreenBelow,
                 percentage: data.percentBelow,
                 range: '<70',
@@ -439,7 +439,7 @@ class _TimeInRangeCard extends StatelessWidget {
                 textMuted: textMuted,
               ),
               _RangeLegendItem(
-                color: AppColors.success,
+                color: AppColors.success, // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                 label: AppLocalizations.of(context).diabetesDashboardScreenInRange,
                 percentage: data.percentInRange,
                 range: '70-140',
@@ -447,7 +447,7 @@ class _TimeInRangeCard extends StatelessWidget {
                 textMuted: textMuted,
               ),
               _RangeLegendItem(
-                color: AppColors.warning,
+                color: AppColors.warning, // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                 label: AppLocalizations.of(context).diabetesDashboardScreenAbove,
                 percentage: data.percentAbove,
                 range: '>140',
@@ -464,8 +464,8 @@ class _TimeInRangeCard extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: (data.percentInRange >= 70
-                      ? AppColors.success
-                      : AppColors.info)
+                      ? AppColors.success // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
+                      : AppColors.info) // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                   .withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -476,8 +476,8 @@ class _TimeInRangeCard extends StatelessWidget {
                       ? Icons.check_circle
                       : Icons.info_outline,
                   color: data.percentInRange >= 70
-                      ? AppColors.success
-                      : AppColors.info,
+                      ? AppColors.success // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
+                      : AppColors.info, // accent-allowlist: glucose time-in-range severity scale (below/in-range/above) + target recommendation status
                   size: 16,
                 ),
                 const SizedBox(width: 8),
@@ -608,7 +608,7 @@ class _InsulinSummaryCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.medication,
-                color: AppColors.purple,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -640,7 +640,7 @@ class _InsulinSummaryCard extends StatelessWidget {
                 child: _InsulinStat(
                   label: AppLocalizations.of(context).statsStreakFireTotal,
                   value: '${summary.totalUnits.toStringAsFixed(1)}U',
-                  color: AppColors.purple,
+                  color: AppColors.purple, // accent-allowlist: insulin-type identity color (total/rapid/long), matches the insulin type selector convention
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -654,7 +654,7 @@ class _InsulinSummaryCard extends StatelessWidget {
                 child: _InsulinStat(
                   label: AppLocalizations.of(context).diabetesDashboardScreenRapid,
                   value: '${summary.totalRapidUnits.toStringAsFixed(1)}U',
-                  color: AppColors.cyan,
+                  color: AppColors.cyan, // accent-allowlist: insulin-type identity color (total/rapid/long), matches the insulin type selector convention
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -668,7 +668,7 @@ class _InsulinSummaryCard extends StatelessWidget {
                 child: _InsulinStat(
                   label: AppLocalizations.of(context).diabetesDashboardScreenLong,
                   value: '${summary.totalLongUnits.toStringAsFixed(1)}U',
-                  color: AppColors.purple,
+                  color: AppColors.purple, // accent-allowlist: insulin-type identity color (total/rapid/long), matches the insulin type selector convention
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),

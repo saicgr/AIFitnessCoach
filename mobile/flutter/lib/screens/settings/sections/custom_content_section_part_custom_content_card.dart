@@ -22,7 +22,7 @@ class _CustomContentCard extends ConsumerWidget {
             icon: Icons.fitness_center,
             title: AppLocalizations.of(context).trainingPreferencesMyEquipment,
             subtitle: AppLocalizations.of(context).trainingSetupCardAddEquipmentNotIn,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             onTap: () => _showEquipmentSheet(context, ref),
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
@@ -32,7 +32,7 @@ class _CustomContentCard extends ConsumerWidget {
             icon: Icons.sports_gymnastics,
             title: AppLocalizations.of(context).workoutSettingsMyExercises,
             subtitle: AppLocalizations.of(context).customContentSectionCreateCustomComboExercise,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             onTap: () => context.push('/custom-exercises'),
           ),
         ],
@@ -63,7 +63,7 @@ class _CustomContentCard extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.fitness_center, color: AppColors.cyan),
+                      Icon(Icons.fitness_center, color: context.accentColor),
                       const SizedBox(width: 12),
                       Text(
                         AppLocalizations.of(context).trainingSetupCardMyCustomEquipment,
@@ -125,8 +125,8 @@ class _CustomContentCard extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.sports_gymnastics,
-                          color: AppColors.purple),
+                      Icon(Icons.sports_gymnastics,
+                          color: context.accentColor),
                       const SizedBox(width: 12),
                       Text(
                         AppLocalizations.of(context).netflixExercisesTabMyCustomExercises,
@@ -354,7 +354,7 @@ class _CustomEquipmentManagerState
             SnackBar(
               content: Text('Failed to save: $e'),
               behavior: SnackBarBehavior.floating,
-              backgroundColor: AppColors.red,
+              backgroundColor: AppColors.red,  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
             ),
           );
         }
@@ -389,7 +389,7 @@ class _CustomEquipmentManagerState
         SnackBar(
           content: Text('Added "$trimmed" to your equipment'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.cyan.withValues(alpha: 0.9),
+          backgroundColor: context.accentColor.withValues(alpha: 0.9),
         ),
       );
     }
@@ -450,7 +450,7 @@ class _CustomEquipmentManagerState
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.cyan),
+                      borderSide: BorderSide(color: context.accentColor),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -464,7 +464,7 @@ class _CustomEquipmentManagerState
               ElevatedButton(
                 onPressed: () => _addEquipment(_textController.text),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -534,12 +534,12 @@ class _CustomEquipmentManagerState
                         leading: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.cyan.withValues(alpha: 0.15),
+                            color: context.accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.fitness_center,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                             size: 20,
                           ),
                         ),
@@ -553,7 +553,7 @@ class _CustomEquipmentManagerState
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.delete_outline,
-                            color: AppColors.red,
+                            color: AppColors.red,  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
                             size: 22,
                           ),
                           onPressed: () => _removeEquipment(equipment),
@@ -668,7 +668,7 @@ class _CustomExercisesManagerState
           SnackBar(
             content: Text('Added "${exerciseData['name']}"'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.purple.withValues(alpha: 0.9),
+            backgroundColor: context.accentColor.withValues(alpha: 0.9),
           ),
         );
       }
@@ -680,7 +680,7 @@ class _CustomExercisesManagerState
           SnackBar(
             content: Text('Error: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.red,
+            backgroundColor: AppColors.red,  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
           ),
         );
       }
@@ -702,7 +702,7 @@ class _CustomExercisesManagerState
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.red),
+            style: TextButton.styleFrom(foregroundColor: AppColors.red),  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -749,7 +749,7 @@ class _CustomExercisesManagerState
           SnackBar(
             content: Text('Error: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.red,
+            backgroundColor: AppColors.red,  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
           ),
         );
       }
@@ -772,7 +772,7 @@ class _CustomExercisesManagerState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 48, color: AppColors.red),
+            Icon(Icons.error_outline, size: 48, color: AppColors.red),  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context).netflixExercisesFailedToLoadExercises,
@@ -800,7 +800,7 @@ class _CustomExercisesManagerState
               icon: const Icon(Icons.add),
               label: Text(AppLocalizations.of(context).customContentSectionAddCustomExercise),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.purple,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
@@ -866,12 +866,12 @@ class _CustomExercisesManagerState
                         leading: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.purple.withValues(alpha: 0.15),
+                            color: context.accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.sports_gymnastics,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                             size: 24,
                           ),
                         ),
@@ -889,13 +889,13 @@ class _CustomExercisesManagerState
                               Flexible(
                                 child: _ExerciseTag(
                                     label: exercise.primaryMuscle,
-                                    color: AppColors.cyan),
+                                    color: context.accentColor),
                               ),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: _ExerciseTag(
                                     label: exercise.equipment,
-                                    color: AppColors.orange),
+                                    color: context.accentColor),
                               ),
                             ],
                           ),
@@ -903,7 +903,7 @@ class _CustomExercisesManagerState
                         trailing: IconButton(
                           icon: const Icon(
                             Icons.delete_outline,
-                            color: AppColors.red,
+                            color: AppColors.red,  // accent-allowlist: error/destructive - same value as AppColors.error (0xFFEF4444)
                             size: 22,
                           ),
                           onPressed: () => _deleteExercise(exercise),

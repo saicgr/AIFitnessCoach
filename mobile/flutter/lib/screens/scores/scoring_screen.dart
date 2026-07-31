@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -179,7 +180,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
         color: elevatedColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.2),
+          color: context.accentColor.withOpacity(0.2),
         ),
       ),
       child: Column(
@@ -189,7 +190,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             children: [
               Icon(
                 Icons.info_outline,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -230,7 +231,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: AppColors.cyan,
+              color: context.accentColor,
               shape: BoxShape.circle,
             ),
           ),
@@ -249,7 +250,7 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
         ],

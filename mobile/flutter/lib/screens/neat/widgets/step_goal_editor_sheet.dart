@@ -101,7 +101,7 @@ class _StepGoalEditorSheetState extends State<StepGoalEditorSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final electricBlue = isDark ? AppColors.electricBlue : AppColorsLight.electricBlue;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     return GlassSheet(
           padding: EdgeInsets.fromLTRB(

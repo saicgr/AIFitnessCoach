@@ -15,6 +15,7 @@ import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
@@ -443,7 +444,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
             AppLocalizations.of(context).emailSignInIfAnAccountExists,
           ),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           duration: const Duration(seconds: 4),
         ),
       );
@@ -633,14 +634,14 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
-                                      color: AppColors.error,
+                                      color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                       width: 1.5,
                                     ),
                                   ),
                                   focusedErrorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
-                                      color: AppColors.error,
+                                      color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                       width: 2.5,
                                     ),
                                   ),
@@ -730,14 +731,14 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                   errorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
-                                      color: AppColors.error,
+                                      color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                       width: 1.5,
                                     ),
                                   ),
                                   focusedErrorBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
-                                      color: AppColors.error,
+                                      color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                       width: 2.5,
                                     ),
                                   ),
@@ -785,17 +786,17 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: AppColors.error.withOpacity(0.2),
+                                    color: AppColors.error.withOpacity(0.2),  // accent-allowlist: error/destructive -- must stay red
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: AppColors.error.withOpacity(0.4),
+                                      color: AppColors.error.withOpacity(0.4),  // accent-allowlist: error/destructive -- must stay red
                                     ),
                                   ),
                                   child: Row(
                                     children: [
                                       const Icon(
                                         Icons.error_outline,
-                                        color: AppColors.error,
+                                        color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                         size: 20,
                                       ),
                                       const SizedBox(width: 8),
@@ -803,7 +804,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                         child: Text(
                                           _errorMessage!,
                                           style: const TextStyle(
-                                            color: AppColors.error,
+                                            color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                                             fontSize: 14,
                                           ),
                                         ),
@@ -830,16 +831,16 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                       end: AlignmentDirectional.bottomEnd,
                                       colors: _isLoading
                                           ? [
-                                              AppColors.orange.withValues(
+                                              context.accentColor.withValues(
                                                 alpha: 0.55,
                                               ),
                                               const Color(
                                                 0xFFFFB366,
                                               ).withValues(alpha: 0.55),
                                             ]
-                                          : const [
-                                              Color(0xFFFFB366),
-                                              AppColors.orange,
+                                          : [
+                                              context.accentColor.withValues(alpha: 0.7),
+                                              context.accentColor,
                                             ],
                                     ),
                                     borderRadius: BorderRadius.circular(16),
@@ -847,7 +848,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                                         ? null
                                         : [
                                             BoxShadow(
-                                              color: AppColors.orange
+                                              color: context.accentColor
                                                   .withValues(alpha: 0.35),
                                               blurRadius: 14,
                                               offset: const Offset(0, 6),

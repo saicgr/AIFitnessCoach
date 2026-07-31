@@ -59,9 +59,9 @@ class RankDeltaChip extends StatelessWidget {
       );
     }
     final color = d > 0
-        ? const Color(0xFF39C96B)   // green — rank improved (smaller number)
+        ? const Color(0xFF39C96B)   // green — rank improved (smaller number)  // accent-allowlist: rank-change framing -- improved is green (see inline comment)
         : d < 0
-            ? const Color(0xFFE05A5A) // red — rank worsened
+            ? const Color(0xFFE05A5A) // red — rank worsened  // accent-allowlist: rank-change framing -- worsened is red (see inline comment)
             : Colors.grey;
 
     final arrow = d > 0 ? '↑' : (d < 0 ? '↓' : '·');
@@ -112,7 +112,7 @@ class StreakFlame extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.local_fire_department, size: 13, color: Color(0xFFFF8A3D)),
+          const Icon(Icons.local_fire_department, size: 13, color: Color(0xFFFF8A3D)),  // accent-allowlist: streak flame -- universal fire/orange streak convention
           if (!compact) ...[
             const SizedBox(width: 1),
             Text(
@@ -120,7 +120,7 @@ class StreakFlame extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
-                color: textColor ?? const Color(0xFFFF8A3D),
+                color: textColor ?? const Color(0xFFFF8A3D),  // accent-allowlist: streak flame -- universal fire/orange streak convention
               ),
             ),
           ],
@@ -224,7 +224,7 @@ class ActivityPulse extends StatelessWidget {
       child: Container(
         width: 8, height: 8,
         decoration: BoxDecoration(
-          color: const Color(0xFF39C96B),
+          color: const Color(0xFF39C96B),  // accent-allowlist: activity pulse -- online/active status indicator, green
           shape: BoxShape.circle,
           border: Border.all(
             color: Theme.of(context).scaffoldBackgroundColor,

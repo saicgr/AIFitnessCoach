@@ -393,7 +393,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
                     if (_progress >= 1.0)
                       Icon(
                         Icons.check_circle_rounded,
-                        color: AppColors.success,
+                        color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                         size: 32,
                       )
                     else
@@ -491,12 +491,12 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
+                color: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.error_outline,
-                color: AppColors.error,
+                color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                 size: 48,
               ),
             ),

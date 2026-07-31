@@ -370,7 +370,7 @@ class _TemplatePreviewScreenState extends State<_TemplatePreviewScreen> {
   void _snack(String m, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(m),
-      backgroundColor: isError ? AppColors.error : AppColors.success,
+      backgroundColor: isError ? AppColors.error : AppColors.success,  // accent-allowlist: error/destructive state — must stay red regardless of accent; success/positive state — must stay green regardless of accent
       behavior: SnackBarBehavior.floating,
     ));
   }

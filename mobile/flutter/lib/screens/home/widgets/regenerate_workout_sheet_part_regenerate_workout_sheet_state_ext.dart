@@ -114,7 +114,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to regenerate: ${progress.message}'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
             ),
           );
           return;
@@ -140,7 +140,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
               const SnackBar(
                 content: Text(
                     'Preview not supported by server. Please update the app or contact support.'),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
               ),
             );
             return;
@@ -212,7 +212,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
                     SnackBar(
                       content: const Text(
                           "Couldn't keep your original workout — only the new one is visible."),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                       duration: const Duration(seconds: 5),
                     ),
                   );
@@ -252,7 +252,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to regenerate: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -328,7 +328,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Failed to apply suggestion: ${progress.message}'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
             ),
           );
           return;
@@ -351,7 +351,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
               const SnackBar(
                 content: Text(
                     'Preview not supported by server. Please update the app or contact support.'),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
               ),
             );
             return;
@@ -416,7 +416,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
                     SnackBar(
                       content: const Text(
                           "Couldn't keep your original workout — only the new one is visible."),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                       duration: const Duration(seconds: 5),
                     ),
                   );
@@ -451,7 +451,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to apply suggestion: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }

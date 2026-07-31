@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -34,17 +33,10 @@ class GymProfileSwitcher extends ConsumerStatefulWidget {
   /// Callback when profile is switched
   final VoidCallback? onProfileSwitched;
 
-  /// When true the active gym name renders as the big Anton masthead hero
-  /// (with a larger dropdown chevron and no time-slot sub-label) — used on the
-  /// Workouts tab so the gym leads the header instead of the date. Tap still
-  /// opens the same profile picker.
-  final bool large;
-
   const GymProfileSwitcher({
     super.key,
     this.collapsed = false,
     this.onProfileSwitched,
-    this.large = false,
   });
 
   @override
@@ -254,22 +246,19 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
           // overflow in the Workouts masthead's gym switcher).
           Flexible(
             child: Text(
-              widget.large ? activeProfile.name.toUpperCase() : activeProfile.name,
+              activeProfile.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: widget.large
-                  ? ZType.disp(30, color: textColor, letterSpacing: 0.5)
-                  : TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
             ),
           ),
-          // Show time slot indicator if set (suppressed in large/masthead mode
-          // — the hero shows just the gym name + chevron).
-          if (!widget.large && activeProfile.hasTimePreference) ...[
+          // Show time slot indicator if set.
+          if (activeProfile.hasTimePreference) ...[
             const SizedBox(width: 6),
             Icon(
               activeProfile.timeSlotIcon,
@@ -293,10 +282,10 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
               ),
             ),
           ],
-          SizedBox(width: widget.large ? 2 : 4),
+          const SizedBox(width: 4),
           Icon(
             Icons.keyboard_arrow_down_rounded,
-            size: widget.large ? 30 : 20,
+            size: 20,
             color: secondaryColor,
           ),
         ],
@@ -953,15 +942,15 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.red.withValues(alpha: 0.1),
+                          color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/destructive -- must stay red
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                            color: Colors.red.withValues(alpha: 0.3),
+                            color: Colors.red.withValues(alpha: 0.3),  // accent-allowlist: error/destructive -- must stay red
                           ),
                         ),
                         child: Icon(
                           Icons.delete_outline_rounded,
-                          color: Colors.red.shade400,
+                          color: Colors.red.shade400,  // accent-allowlist: error/destructive -- must stay red
                           size: 16,
                         ),
                       ),
@@ -1077,7 +1066,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                   ),
                   errorBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.red.shade400),
+                    borderSide: BorderSide(color: Colors.red.shade400),  // accent-allowlist: error/destructive -- must stay red
                   ),
                 ),
                 onChanged: (value) {
@@ -1172,7 +1161,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                 onPressed: () => Navigator.pop(context, true),
                 child: Text(
                   AppLocalizations.of(context).buttonDelete,
-                  style: TextStyle(color: Colors.red.shade400),
+                  style: TextStyle(color: Colors.red.shade400),  // accent-allowlist: error/destructive -- must stay red
                 ),
               ),
             ],

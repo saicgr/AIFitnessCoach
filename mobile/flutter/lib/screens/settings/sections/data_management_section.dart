@@ -17,6 +17,7 @@ import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The data management section for import/export functionality.
 class DataManagementSection extends ConsumerWidget {
   const DataManagementSection({super.key});
@@ -316,12 +317,12 @@ class _UpcomingRenewalCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   isLifetime ? Icons.workspace_premium : Icons.autorenew,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 22,
                 ),
               ),
@@ -352,7 +353,7 @@ class _UpcomingRenewalCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -360,7 +361,7 @@ class _UpcomingRenewalCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   ),
                 ),
@@ -426,14 +427,14 @@ class _UpcomingRenewalCard extends StatelessWidget {
                 Icon(
                   Icons.check_circle,
                   size: 16,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                 ),
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context).dataManagementNoUpcomingChargesYou,
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.green,
+                    color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                   ),
                 ),
               ],

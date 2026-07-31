@@ -13,6 +13,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Provider for avoided muscles list
 final avoidedMusclesProvider =
     FutureProvider.family<List<AvoidedMuscle>, String>((ref, userId) async {
@@ -87,7 +88,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              Icon(Icons.error_outline, size: 48, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
               const SizedBox(height: 16),
               Text(AppLocalizations.of(context).avoidedMusclesErrorLoadingMuscles, style: TextStyle(color: textMuted)),
               const SizedBox(height: 8),
@@ -170,7 +171,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             runSpacing: 8,
                             children: avoidedMuscles.map((muscle) {
                               final isAvoid = muscle.severity == 'avoid';
-                              final severityColor = isAvoid ? AppColors.error : AppColors.orange;
+                              final severityColor = isAvoid ? AppColors.error : context.accentColor;  // accent-allowlist: error/destructive - must stay red
                               return GestureDetector(
                                 onTap: () => _showEditSheet(context, userId, muscle),
                                 child: Container(
@@ -239,7 +240,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.cyan.withValues(alpha: 0.15),
+                                color: context.accentColor.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -266,7 +267,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                               icon: const Icon(Icons.block, size: 18),
                               label: Text(AppLocalizations.of(context).menuFilterAvoid),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.error,
+                                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
@@ -284,7 +285,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                               icon: const Icon(Icons.remove_circle_outline, size: 18),
                               label: Text(AppLocalizations.of(context).avoidedMusclesReduce),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.orange,
+                                backgroundColor: context.accentColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
@@ -364,7 +365,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
               _removeMuscle(userId, muscle);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               foregroundColor: Colors.white,
             ),
             child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
@@ -392,7 +393,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         child: StatefulBuilder(
           builder: (context, setSheetState) {
             final isAvoid = selectedSeverity == 'avoid';
-            final severityColor = isAvoid ? AppColors.error : AppColors.orange;
+            final severityColor = isAvoid ? AppColors.error : context.accentColor;  // accent-allowlist: error/destructive - must stay red
             final hasChanged = selectedSeverity != muscle.severity;
 
             return Column(
@@ -443,12 +444,12 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: isAvoid
-                                  ? AppColors.error.withValues(alpha: 0.15)
+                                  ? AppColors.error.withValues(alpha: 0.15)  // accent-allowlist: error/destructive - must stay red
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
                               border: isAvoid
                                   ? Border.all(
-                                      color: AppColors.error.withValues(alpha: 0.3))
+                                      color: AppColors.error.withValues(alpha: 0.3))  // accent-allowlist: error/destructive - must stay red
                                   : null,
                             ),
                             child: Row(
@@ -456,7 +457,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                               children: [
                                 Icon(Icons.block,
                                     size: 16,
-                                    color: isAvoid ? AppColors.error : textMuted),
+                                    color: isAvoid ? AppColors.error : textMuted),  // accent-allowlist: error/destructive - must stay red
                                 const SizedBox(width: 6),
                                 Text(
                                   AppLocalizations.of(context).menuFilterAvoid,
@@ -484,12 +485,12 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: !isAvoid
-                                  ? AppColors.orange.withValues(alpha: 0.15)
+                                  ? context.accentColor.withValues(alpha: 0.15)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
                               border: !isAvoid
                                   ? Border.all(
-                                      color: AppColors.orange.withValues(alpha: 0.3))
+                                      color: context.accentColor.withValues(alpha: 0.3))
                                   : null,
                             ),
                             child: Row(
@@ -497,7 +498,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                               children: [
                                 Icon(Icons.remove_circle_outline,
                                     size: 16,
-                                    color: !isAvoid ? AppColors.orange : textMuted),
+                                    color: !isAvoid ? context.accentColor : textMuted),
                                 const SizedBox(width: 6),
                                 Text(
                                   AppLocalizations.of(context).avoidedMusclesReduce,
@@ -561,8 +562,8 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                           icon: const Icon(Icons.delete_outline, size: 18),
                           label: Text(AppLocalizations.of(context).avoidedMusclesRemoveFromAvoidList),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.error,
-                            side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),
+                            foregroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
+                            side: BorderSide(color: AppColors.error.withValues(alpha: 0.5)),  // accent-allowlist: error/destructive - must stay red
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -577,7 +578,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                           icon: const Icon(Icons.delete_outline),
                           label: Text(AppLocalizations.of(context).avoidedMusclesRemoveFromAvoidList),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.error,
+                            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
@@ -622,7 +623,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
             content: Text(
               'Updated "${muscle.displayName}" to ${newSeverity == 'avoid' ? 'Avoid' : 'Reduce'}',
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
           ),
         );
       }
@@ -631,7 +632,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -672,7 +673,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
                   ? AppLocalizations.of(context).avoidedMusclesReplacedExercisesTargetingT
                   : 'Replaced exercises targeting $count muscles in upcoming workouts',
             ),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
           ),
         );
       }
@@ -681,7 +682,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -704,7 +705,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Removed "${muscle.displayName}"'),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
           ),
         );
       }
@@ -713,7 +714,7 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }

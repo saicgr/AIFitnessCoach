@@ -33,7 +33,7 @@ class QuizFitnessLevel extends StatelessWidget {
       'id': 'beginner',
       'label': l10n.quizFitnessLevelBeginner,
       'icon': Icons.eco_outlined,
-      'color': AppColors.green,
+      'color': AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       'description': l10n.quizFitnessLevelBeginnerDesc,
     },
     {
@@ -47,7 +47,7 @@ class QuizFitnessLevel extends StatelessWidget {
       'id': 'advanced',
       'label': l10n.quizFitnessLevelAdvanced,
       'icon': Icons.rocket_launch_outlined,
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       'description': l10n.quizFitnessLevelAdvancedDesc,
     },
   ];

@@ -66,8 +66,8 @@ extension _PhotosTabStateUI on _PhotosTabState {
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: (comparison.weightChangeKg ?? 0) < 0
-                            ? (isDark ? AppColors.success : AppColorsLight.success)
-                            : (isDark ? AppColors.orange : AppColorsLight.orange),
+                            ? (isDark ? AppColors.success : AppColorsLight.success)  // accent-allowlist: success/positive state — must stay green regardless of accent
+                            : (isDark ? context.accentColor : context.accentColor),
                       ),
                     ),
                   if (comparison.formattedDuration != null)
@@ -159,7 +159,7 @@ extension _PhotosTabStateUI on _PhotosTabState {
                         ),
                         errorWidget: (_, __, ___) => Container(
                           color: elevated,
-                          child: const Icon(Icons.broken_image, color: Colors.red),
+                          child: const Icon(Icons.broken_image, color: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
                         ),
                       ),
                       // Dim overlay when selected

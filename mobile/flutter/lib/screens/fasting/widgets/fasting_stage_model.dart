@@ -38,7 +38,7 @@ enum FastingStage {
     tagline: 'Digesting & absorbing',
     startHour: 0,
     endHour: 4,
-    color: Color(0xFF7C8B9E),
+    color: Color(0xFF7C8B9E), // accent-allowlist: fasting metabolic-stage taxonomy (Fed) — compile-time enum const, no BuildContext
     icon: Icons.restaurant_rounded,
     description:
         'Your body is digesting food. Insulin is elevated and energy comes '
@@ -57,7 +57,7 @@ enum FastingStage {
     tagline: 'Insulin falling',
     startHour: 4,
     endHour: 8,
-    color: Color(0xFF4D9BE0),
+    color: Color(0xFF4D9BE0), // accent-allowlist: fasting metabolic-stage taxonomy (Blood Sugar Drops) — compile-time enum const, no BuildContext
     icon: Icons.water_drop_rounded,
     description:
         'Digestion is complete and blood sugar is normalizing. Insulin '
@@ -75,7 +75,7 @@ enum FastingStage {
     tagline: 'Glycogen depleting',
     startHour: 8,
     endHour: 12,
-    color: Color(0xFF2BB0A4),
+    color: Color(0xFF2BB0A4), // accent-allowlist: fasting metabolic-stage taxonomy (Fat Burning Begins) — compile-time enum const, no BuildContext
     icon: Icons.local_fire_department_outlined,
     description:
         'Glycogen stores are running low. Your body starts the metabolic '
@@ -94,7 +94,7 @@ enum FastingStage {
     tagline: 'Ketones rising',
     startHour: 12,
     endHour: 16,
-    color: Color(0xFF4CAF50),
+    color: Color(0xFF4CAF50), // accent-allowlist: fasting metabolic-stage taxonomy (Ketosis Ramping) — compile-time enum const, no BuildContext
     icon: Icons.local_fire_department_rounded,
     description:
         'Fat is now a primary fuel. Your liver is converting fat stores '
@@ -113,7 +113,7 @@ enum FastingStage {
     tagline: 'Fat-adapted fuel',
     startHour: 16,
     endHour: 18,
-    color: Color(0xFFFF9800),
+    color: Color(0xFFFF9800), // accent-allowlist: fasting metabolic-stage taxonomy (Ketosis) — compile-time enum const, no BuildContext
     icon: Icons.bolt_rounded,
     description:
         'You are in full ketosis. Ketone bodies are powering your muscles, '
@@ -131,7 +131,7 @@ enum FastingStage {
     tagline: 'Cellular cleanup',
     startHour: 18,
     endHour: 24,
-    color: Color(0xFFE0518A),
+    color: Color(0xFFE0518A), // accent-allowlist: fasting metabolic-stage taxonomy (Autophagy) — compile-time enum const, no BuildContext
     icon: Icons.auto_awesome_rounded,
     description:
         'Autophagy is intensifying — your cells are recycling damaged '
@@ -150,7 +150,7 @@ enum FastingStage {
     tagline: 'Growth hormone surge',
     startHour: 24,
     endHour: 72,
-    color: Color(0xFF9B59E0),
+    color: Color(0xFF9B59E0), // accent-allowlist: fasting metabolic-stage taxonomy (Deep Autophagy) — compile-time enum const, no BuildContext
     icon: Icons.spa_rounded,
     description:
         'Deep autophagy. Cellular cleanup is at high efficiency and growth '
@@ -205,7 +205,7 @@ enum FastingStage {
           'Generally safe for healthy adults. Expect hunger waves and lower '
           'energy — drink water and add a pinch of salt for electrolytes.',
       // Deep periwinkle indigo — first step past the live stages.
-      color: Color(0xFF7C6FE8),
+      color: Color(0xFF7C6FE8), // accent-allowlist: extended-fast educational timeline mark (24h) — compile-time const, no BuildContext
     ),
     (
       hourOffset: 48,
@@ -217,7 +217,7 @@ enum FastingStage {
           'Only for experienced fasters. Electrolytes (sodium, potassium, '
           'magnesium) become important. Stop if dizzy or unwell.',
       // Royal indigo.
-      color: Color(0xFF6A4FD4),
+      color: Color(0xFF6A4FD4), // accent-allowlist: extended-fast educational timeline mark (48h) — compile-time const, no BuildContext
     ),
     (
       hourOffset: 72,
@@ -229,7 +229,7 @@ enum FastingStage {
           'Do this only under medical supervision. Not for anyone who is '
           'pregnant, underweight, or managing a chronic condition.',
       // Deep violet.
-      color: Color(0xFF8B47C9),
+      color: Color(0xFF8B47C9), // accent-allowlist: extended-fast educational timeline mark (72h) — compile-time const, no BuildContext
     ),
     (
       hourOffset: 168,
@@ -241,7 +241,7 @@ enum FastingStage {
           'Medically supervised fasts only. Refeeding must be slow and '
           'careful to avoid refeeding syndrome.',
       // Mulberry / plum.
-      color: Color(0xFFA63CB8),
+      color: Color(0xFFA63CB8), // accent-allowlist: extended-fast educational timeline mark (7 days) — compile-time const, no BuildContext
     ),
     (
       hourOffset: 336,
@@ -253,7 +253,7 @@ enum FastingStage {
           'Never attempt without a clinician. Risk of muscle loss, nutrient '
           'depletion and electrolyte imbalance is significant.',
       // Deep magenta.
-      color: Color(0xFFB52F8C),
+      color: Color(0xFFB52F8C), // accent-allowlist: extended-fast educational timeline mark (14 days) — compile-time const, no BuildContext
     ),
     (
       hourOffset: 720,
@@ -265,7 +265,7 @@ enum FastingStage {
           'Not a self-directed protocol under any circumstances. Shown here '
           'for education only — Zealova does not recommend fasts this long.',
       // Deepest crimson-magenta — the far end of the journey.
-      color: Color(0xFFC0285E),
+      color: Color(0xFFC0285E), // accent-allowlist: extended-fast educational timeline mark (30 days) — compile-time const, no BuildContext
     ),
   ];
 

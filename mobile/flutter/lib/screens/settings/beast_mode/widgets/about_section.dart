@@ -55,8 +55,8 @@ class AboutSection extends ConsumerWidget {
               icon: const Icon(Icons.lock_outline, size: 18),
               label: Text(AppLocalizations.of(context).aboutDisableBeastMode),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: const BorderSide(color: AppColors.error),
+                foregroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
+                side: const BorderSide(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),

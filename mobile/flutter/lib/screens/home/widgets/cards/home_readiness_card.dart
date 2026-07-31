@@ -9,6 +9,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Compact readiness indicator card for home screen
 /// Shows today's readiness score or prompts for check-in
 class HomeReadinessCard extends ConsumerStatefulWidget {
@@ -204,7 +205,7 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = AppColors.cyan;
+    final accentColor = context.accentColor;
 
     final recovery = ref.watch(recoveryProvider).valueOrNull;
     final sleep = ref.watch(sleepProvider).valueOrNull;
@@ -363,17 +364,17 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
     switch (quality) {
       case 'excellent':
       case 'good':
-        return const Color(0xFF4CAF50);
+        return const Color(0xFF4CAF50);  // accent-allowlist: sleep-quality / resting-HR score-band traffic light (green/amber/red)
       case 'fair':
-        return const Color(0xFFFF9800);
+        return const Color(0xFFFF9800);  // accent-allowlist: sleep-quality / resting-HR score-band traffic light (green/amber/red)
       default:
-        return const Color(0xFFF44336);
+        return const Color(0xFFF44336);  // accent-allowlist: sleep-quality / resting-HR score-band traffic light (green/amber/red)
     }
   }
 
   Color _restingHRColor(int recoveryScore) {
-    if (recoveryScore >= 60) return const Color(0xFF4CAF50);
-    if (recoveryScore >= 40) return const Color(0xFFFF9800);
-    return const Color(0xFFF44336);
+    if (recoveryScore >= 60) return const Color(0xFF4CAF50);  // accent-allowlist: sleep-quality / resting-HR score-band traffic light (green/amber/red)
+    if (recoveryScore >= 40) return const Color(0xFFFF9800);  // accent-allowlist: sleep-quality / resting-HR score-band traffic light (green/amber/red)
+    return const Color(0xFFF44336);  // accent-allowlist: sleep-quality / resting-HR score-band traffic light (green/amber/red)
   }
 }

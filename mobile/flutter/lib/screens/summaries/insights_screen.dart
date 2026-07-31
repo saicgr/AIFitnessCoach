@@ -19,6 +19,7 @@ import 'widgets/weekly_percentile_hero.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'insights_screen_part_period_selector.dart';
 part 'insights_screen_part_body_card.dart';
 
@@ -98,7 +99,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
 
     return Scaffold(
       backgroundColor: backgroundColor,

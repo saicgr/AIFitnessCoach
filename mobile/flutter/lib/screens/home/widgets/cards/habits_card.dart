@@ -8,6 +8,7 @@ import '../../../../data/providers/habit_provider.dart';
 import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 /// ============================================================
 /// HABITS CARD
@@ -106,7 +107,7 @@ class HabitsCard extends ConsumerWidget {
           border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.green.withOpacity(0.15),
+              color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
@@ -188,7 +189,7 @@ class HabitsCard extends ConsumerWidget {
           border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
-              color: AppColors.green.withOpacity(0.15),
+              color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
@@ -202,7 +203,7 @@ class HabitsCard extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            Icon(Icons.error_outline, color: AppColors.error, size: 40),
+            Icon(Icons.error_outline, color: AppColors.error, size: 40),  // accent-allowlist: error/destructive -- must stay red
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context)!.habitsCardFailedToLoadHabits,
@@ -215,7 +216,7 @@ class HabitsCard extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               error,
-              style: TextStyle(fontSize: 12, color: AppColors.error),
+              style: TextStyle(fontSize: 12, color: AppColors.error),  // accent-allowlist: error/destructive -- must stay red
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -226,8 +227,8 @@ class HabitsCard extends ConsumerWidget {
                 ref.read(habitsProvider(userId).notifier).refresh();
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: BorderSide(color: AppColors.error),
+                foregroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
+                side: BorderSide(color: AppColors.error),  // accent-allowlist: error/destructive -- must stay red
               ),
               child: Text(AppLocalizations.of(context)!.habitsCardTryAgain),
             ),
@@ -261,7 +262,7 @@ class HabitsCard extends ConsumerWidget {
             border: Border.all(color: AppColors.cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
-                color: AppColors.green.withOpacity(0.15),
+                color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 blurRadius: 16,
                 offset: const Offset(0, 6),
                 spreadRadius: 1,
@@ -427,7 +428,7 @@ class HabitsCard extends ConsumerWidget {
             border: Border.all(color: AppColors.cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
-                color: AppColors.green.withOpacity(0.15),
+                color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 blurRadius: 16,
                 offset: const Offset(0, 6),
                 spreadRadius: 1,
@@ -509,14 +510,14 @@ class HabitsCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.green.withValues(alpha: 0.1),
+                    color: AppColors.green.withValues(alpha: 0.1),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
                       Icon(
                         Icons.check_circle,
-                        color: AppColors.green,
+                        color: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                         size: 24,
                       ),
                       const SizedBox(width: 12),
@@ -529,7 +530,7 @@ class HabitsCard extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.green,
+                                color: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                               ),
                             ),
                             Text(
@@ -611,7 +612,7 @@ class HabitsCard extends ConsumerWidget {
     Color accentColor,
   ) {
     final isComplete = completed == total && total > 0;
-    final ringColor = isComplete ? AppColors.green : accentColor;
+    final ringColor = isComplete ? AppColors.green : accentColor;  // accent-allowlist: success/positive state -- must stay green regardless of accent
 
     return SizedBox(
       width: 48,
@@ -698,7 +699,7 @@ class HabitsCard extends ConsumerWidget {
                     Icon(
                       Icons.local_fire_department,
                       size: 12,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                     const SizedBox(width: 2),
                     Text(
@@ -727,12 +728,12 @@ class HabitsCard extends ConsumerWidget {
             height: 36,
             decoration: BoxDecoration(
               color: habit.todayCompleted
-                  ? AppColors.green
+                  ? AppColors.green  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   : habitColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: habit.todayCompleted
-                    ? AppColors.green
+                    ? AppColors.green  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     : habitColor.withValues(alpha: 0.4),
                 width: 2,
               ),
@@ -761,8 +762,8 @@ class HabitsCard extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.orange.withValues(alpha: 0.15),
-            AppColors.orange.withValues(alpha: 0.05),
+            context.accentColor.withValues(alpha: 0.15),
+            context.accentColor.withValues(alpha: 0.05),
           ],
           begin: AlignmentDirectional.centerStart,
           end: AlignmentDirectional.centerEnd,
@@ -785,7 +786,7 @@ class HabitsCard extends ConsumerWidget {
                     text: l10n.habitsCardDayStreak(habit.currentStreak),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   ),
                   const TextSpan(text: ' on '),

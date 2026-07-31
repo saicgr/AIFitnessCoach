@@ -13,6 +13,7 @@ import '../../widgets/exercise_image.dart';
 import '../../data/models/exercise.dart';
 import '../workout/widgets/exercise_info_sheet.dart';
 import 'preview_exercise_catalog.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'plan_preview_screen_ui.dart';
 
 /// Signature v2 type system (docs/planning/app-redesign-2026-06/signature-v2.html):
@@ -20,7 +21,7 @@ part 'plan_preview_screen_ui.dart';
 /// kickers/labels/CTAs, single orange accent (AppColors.orange ≈ #F97316).
 const String _kSigDisplay = 'Anton';
 const String _kSigLabel = 'Barlow Condensed';
-const Color _kSigAccent = Color(0xFFF97316);
+const Color _kSigAccent = Color(0xFFF97316);  // accent-allowlist: no BuildContext available in this scope (top-level const) — fixed signature-style accent for this screen's typography system
 
 /// Full Plan Preview Screen
 /// Shows the user's complete personalized 4-week workout plan BEFORE asking them to subscribe
@@ -146,7 +147,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                     children: [
                       Icon(
                         Icons.check_circle,
-                        color: AppColors.success,
+                        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         size: 18,
                       ),
                       const SizedBox(width: 8),
@@ -293,13 +294,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.15),
+                        color: Colors.green.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.visibility, color: Colors.green, size: 12),
+                          Icon(Icons.visibility, color: Colors.green, size: 12),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           const SizedBox(width: 4),
                           Text(
                             AppLocalizations.of(context).planPreviewFreePreview,
@@ -308,7 +309,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 2,
-                              color: Colors.green,
+                              color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                             ),
                           ),
                         ],
@@ -349,7 +350,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.orange : Colors.transparent,
+                  color: isSelected ? context.accentColor : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
@@ -641,7 +642,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'push',
               'name': 'Push',
               'icon': Icons.fitness_center,
-              'color': AppColors.purple,
+              'color': context.accentColor,
             },
             {
               'id': 'pull',
@@ -659,7 +660,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'upper',
               'name': 'Upper',
               'icon': Icons.fitness_center,
-              'color': AppColors.purple,
+              'color': context.accentColor,
             },
             {
               'id': 'lower',
@@ -671,13 +672,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'full',
               'name': 'Full Body',
               'icon': Icons.accessibility_new,
-              'color': AppColors.orange,
+              'color': context.accentColor,
             },
             {
               'id': 'arms',
               'name': 'Arms',
               'icon': Icons.fitness_center,
-              'color': AppColors.coral,
+              'color': context.accentColor,
             },
           ];
         } else {
@@ -686,7 +687,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'upper',
               'name': 'Upper Body',
               'icon': Icons.fitness_center,
-              'color': AppColors.purple,
+              'color': context.accentColor,
             },
             {
               'id': 'lower',
@@ -698,7 +699,7 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
               'id': 'full',
               'name': 'Full Body',
               'icon': Icons.accessibility_new,
-              'color': AppColors.orange,
+              'color': context.accentColor,
             },
           ];
         }
@@ -709,25 +710,25 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'hiit',
             'name': 'HIIT',
             'icon': Icons.flash_on,
-            'color': AppColors.coral,
+            'color': context.accentColor,
           },
           {
             'id': 'strength',
             'name': 'Strength',
             'icon': Icons.fitness_center,
-            'color': AppColors.purple,
+            'color': context.accentColor,
           },
           {
             'id': 'cardio',
             'name': 'Cardio',
             'icon': Icons.directions_run,
-            'color': AppColors.orange,
+            'color': context.accentColor,
           },
           {
             'id': 'hiit',
             'name': 'HIIT',
             'icon': Icons.flash_on,
-            'color': AppColors.coral,
+            'color': context.accentColor,
           },
           {
             'id': 'full',
@@ -739,13 +740,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'recovery',
             'name': 'Active Recovery',
             'icon': Icons.self_improvement,
-            'color': AppColors.success,
+            'color': AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           },
           {
             'id': 'cardio',
             'name': 'Cardio',
             'icon': Icons.directions_run,
-            'color': AppColors.orange,
+            'color': context.accentColor,
           },
         ];
 
@@ -755,13 +756,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'cardio',
             'name': 'Cardio',
             'icon': Icons.directions_run,
-            'color': AppColors.orange,
+            'color': context.accentColor,
           },
           {
             'id': 'intervals',
             'name': 'Intervals',
             'icon': Icons.timer,
-            'color': AppColors.coral,
+            'color': context.accentColor,
           },
           {
             'id': 'endurance',
@@ -779,19 +780,19 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'long',
             'name': 'Long Run',
             'icon': Icons.directions_run,
-            'color': AppColors.orange,
+            'color': context.accentColor,
           },
           {
             'id': 'recovery',
             'name': 'Recovery',
             'icon': Icons.self_improvement,
-            'color': AppColors.success,
+            'color': AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           },
           {
             'id': 'cross',
             'name': 'Cross Train',
             'icon': Icons.pool,
-            'color': AppColors.purple,
+            'color': context.accentColor,
           },
         ];
 
@@ -801,13 +802,13 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'full',
             'name': 'Full Body',
             'icon': Icons.accessibility_new,
-            'color': AppColors.purple,
+            'color': context.accentColor,
           },
           {
             'id': 'cardio',
             'name': 'Cardio',
             'icon': Icons.directions_run,
-            'color': AppColors.orange,
+            'color': context.accentColor,
           },
           {
             'id': 'strength',
@@ -825,19 +826,19 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             'id': 'hiit',
             'name': 'HIIT',
             'icon': Icons.flash_on,
-            'color': AppColors.coral,
+            'color': context.accentColor,
           },
           {
             'id': 'active',
             'name': 'Active',
             'icon': Icons.directions_walk,
-            'color': AppColors.success,
+            'color': AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           },
           {
             'id': 'core',
             'name': 'Core',
             'icon': Icons.circle_outlined,
-            'color': AppColors.purple,
+            'color': context.accentColor,
           },
         ];
     }

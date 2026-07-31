@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../features/feature_voting_screen.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -27,7 +28,7 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
           // Open the in-app feature-request board (submit, vote, discuss).
           PillAppBarAction(
             icon: Icons.how_to_vote_outlined,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const FeatureVotingScreen()),
@@ -118,8 +119,14 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           ),
         ),
 
+        // E2E register row 15: phase headers + per-feature icon dots used to
+        // hand ~30 roadmap items one of a dozen arbitrary bucket colors with
+        // no real per-feature meaning. Consolidated to the live accent so the
+        // whole roadmap follows the user's accent choice like every other
+        // screen (see notifications_screen_part_empty_notifications_view.dart
+        // for the same consolidation on notification types).
         // ── Phase 1: Q2 2026 ──
-        _buildPhaseHeader('Q2 2026', 'Apr \u2013 Jun', AppColors.green, textPrimary, textMuted),
+        _buildPhaseHeader('Q2 2026', 'Apr \u2013 Jun', context.accentColor, textPrimary, textMuted),
         const SizedBox(height: 12),
 
         _buildSectionLabel('PLATFORM', textMuted),
@@ -130,9 +137,9 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.watch_outlined, AppColors.info, 'Wear OS & Apple Watch', 'Log workouts, track heart rate & get rest timers from your wrist', eta: 'Q2 2026'),
-            _Feature(Icons.web_outlined, AppColors.cyan, 'Web App', 'Plan & review workouts from your browser', eta: 'Q2 2026'),
-            _Feature(Icons.cloud_off_outlined, AppColors.teal, 'Offline Mode', 'Train without internet connection', eta: 'Q2 2026'),
+            _Feature(Icons.watch_outlined, context.accentColor, 'Wear OS & Apple Watch', 'Log workouts, track heart rate & get rest timers from your wrist', eta: 'Q2 2026'),
+            _Feature(Icons.web_outlined, context.accentColor, 'Web App', 'Plan & review workouts from your browser', eta: 'Q2 2026'),
+            _Feature(Icons.cloud_off_outlined, context.accentColor, 'Offline Mode', 'Train without internet connection', eta: 'Q2 2026'),
           ],
         ),
 
@@ -146,9 +153,9 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.timer_outlined, AppColors.teal, 'Intermittent Fasting', 'Track fasting windows, get AI insights & monitor your fasting streaks', eta: 'Q2 2026'),
-            _Feature(Icons.restaurant_outlined, AppColors.purple, 'AI Meal Plans', 'Personalized daily meal plans based on your macros & goals', eta: 'Q2 2026'),
-            _Feature(Icons.menu_book_outlined, AppColors.orange, 'AI Recipe Suggestions', 'Get recipe ideas that fit your diet, culture & eating window', eta: 'Q2 2026'),
+            _Feature(Icons.timer_outlined, context.accentColor, 'Intermittent Fasting', 'Track fasting windows, get AI insights & monitor your fasting streaks', eta: 'Q2 2026'),
+            _Feature(Icons.restaurant_outlined, context.accentColor, 'AI Meal Plans', 'Personalized daily meal plans based on your macros & goals', eta: 'Q2 2026'),
+            _Feature(Icons.menu_book_outlined, context.accentColor, 'AI Recipe Suggestions', 'Get recipe ideas that fit your diet, culture & eating window', eta: 'Q2 2026'),
           ],
         ),
 
@@ -162,9 +169,9 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.add_circle_outline, AppColors.coral, 'Custom Exercises', 'Create your own exercises with custom tracking', eta: 'Q2 2026'),
-            _Feature(Icons.show_chart_outlined, AppColors.green, 'Inline Progress Charts', 'Exercise progress graphs inside workout view', eta: 'Q2 2026'),
-            _Feature(Icons.tune_outlined, AppColors.purple, 'Per-Exercise RIR Ranges', 'Customize RIR targets for individual exercises — override the default goal/equipment-based calculation', eta: 'Q2 2026'),
+            _Feature(Icons.add_circle_outline, context.accentColor, 'Custom Exercises', 'Create your own exercises with custom tracking', eta: 'Q2 2026'),
+            _Feature(Icons.show_chart_outlined, context.accentColor, 'Inline Progress Charts', 'Exercise progress graphs inside workout view', eta: 'Q2 2026'),
+            _Feature(Icons.tune_outlined, context.accentColor, 'Per-Exercise RIR Ranges', 'Customize RIR targets for individual exercises — override the default goal/equipment-based calculation', eta: 'Q2 2026'),
           ],
         ),
 
@@ -178,14 +185,14 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.people_outline, AppColors.purple, 'Social & Challenges', 'Connect with friends, join challenges, and share progress', eta: 'Q3 2026'),
+            _Feature(Icons.people_outline, context.accentColor, 'Social & Challenges', 'Connect with friends, join challenges, and share progress', eta: 'Q3 2026'),
           ],
         ),
 
         const SizedBox(height: 32),
 
         // ── Phase 2: Q3 2026 ──
-        _buildPhaseHeader('Q3 2026', 'Jul \u2013 Sep', AppColors.orange, textPrimary, textMuted),
+        _buildPhaseHeader('Q3 2026', 'Jul \u2013 Sep', context.accentColor, textPrimary, textMuted),
         const SizedBox(height: 12),
 
         _buildSectionLabel('SOCIAL', textMuted),
@@ -196,11 +203,11 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.person_search_outlined, AppColors.purple, 'Friend Profiles', 'View detailed friend profiles and stats', eta: 'Q3 2026'),
-            _Feature(Icons.leaderboard_outlined, AppColors.yellow, 'Exercise Leaderboard', 'Compare lifts with friends', eta: 'Q3 2026'),
-            _Feature(Icons.emoji_events_outlined, AppColors.orange, 'Community Challenges', 'Create and host public fitness challenges', eta: 'Q3 2026'),
-            _Feature(Icons.photo_library_outlined, AppColors.cyan, 'Photo Timeline', 'Track your transformation visually over weeks and months', eta: 'Q3 2026'),
-            _Feature(Icons.share_outlined, AppColors.teal, 'Custom Exercise Sharing', 'Publish your custom exercises so the community can discover them', eta: 'Q3 2026'),
+            _Feature(Icons.person_search_outlined, context.accentColor, 'Friend Profiles', 'View detailed friend profiles and stats', eta: 'Q3 2026'),
+            _Feature(Icons.leaderboard_outlined, context.accentColor, 'Exercise Leaderboard', 'Compare lifts with friends', eta: 'Q3 2026'),
+            _Feature(Icons.emoji_events_outlined, context.accentColor, 'Community Challenges', 'Create and host public fitness challenges', eta: 'Q3 2026'),
+            _Feature(Icons.photo_library_outlined, context.accentColor, 'Photo Timeline', 'Track your transformation visually over weeks and months', eta: 'Q3 2026'),
+            _Feature(Icons.share_outlined, context.accentColor, 'Custom Exercise Sharing', 'Publish your custom exercises so the community can discover them', eta: 'Q3 2026'),
           ],
         ),
 
@@ -214,9 +221,9 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.smart_toy_outlined, AppColors.purple, 'Custom AI Coach', 'Personalize your coach\'s personality & style', eta: 'Q3 2026'),
-            _Feature(Icons.record_voice_over_outlined, AppColors.cyan, 'AI Coach Workout Audio', 'Real-time voice encouragement, form cues, exercise transitions & PR celebrations during workouts', eta: 'Q3 2026'),
-            _Feature(Icons.memory_outlined, AppColors.teal, 'On-Device AI', 'AI coaching without internet', eta: 'Q3 2026'),
+            _Feature(Icons.smart_toy_outlined, context.accentColor, 'Custom AI Coach', 'Personalize your coach\'s personality & style', eta: 'Q3 2026'),
+            _Feature(Icons.record_voice_over_outlined, context.accentColor, 'AI Coach Workout Audio', 'Real-time voice encouragement, form cues, exercise transitions & PR celebrations during workouts', eta: 'Q3 2026'),
+            _Feature(Icons.memory_outlined, context.accentColor, 'On-Device AI', 'AI coaching without internet', eta: 'Q3 2026'),
           ],
         ),
 
@@ -230,16 +237,16 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.healing_outlined, AppColors.orange, 'Injury Tracker', 'Log and manage active injuries', eta: 'Q3 2026'),
-            _Feature(Icons.directions_walk_outlined, AppColors.green, 'Daily Activity (NEAT)', 'Non-exercise activity tracking', eta: 'Q3 2026'),
-            _Feature(Icons.trending_flat_outlined, AppColors.info, 'Plateau Detection', 'Detect and break through plateaus', eta: 'Q3 2026'),
+            _Feature(Icons.healing_outlined, context.accentColor, 'Injury Tracker', 'Log and manage active injuries', eta: 'Q3 2026'),
+            _Feature(Icons.directions_walk_outlined, context.accentColor, 'Daily Activity (NEAT)', 'Non-exercise activity tracking', eta: 'Q3 2026'),
+            _Feature(Icons.trending_flat_outlined, context.accentColor, 'Plateau Detection', 'Detect and break through plateaus', eta: 'Q3 2026'),
           ],
         ),
 
         const SizedBox(height: 32),
 
         // ── Phase 3: Q4 2026+ ──
-        _buildPhaseHeader('Q4 2026+', 'Oct onward', AppColors.purple, textPrimary, textMuted),
+        _buildPhaseHeader('Q4 2026+', 'Oct onward', context.accentColor, textPrimary, textMuted),
         const SizedBox(height: 12),
 
         _buildSectionLabel('TRAINING', textMuted),
@@ -250,10 +257,10 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.fitness_center_outlined, AppColors.orange, 'Branded Programs', 'Follow structured training programs', eta: 'Q4 2026'),
-            _Feature(Icons.trending_up_outlined, AppColors.limeGreen, 'Skill Progressions', 'Track bodyweight skill mastery', eta: 'Q4 2026'),
-            _Feature(Icons.event_outlined, AppColors.magenta, 'Event-Based Training', 'Train for marathons, Hyrox, etc.', eta: 'Q4 2026'),
-            _Feature(Icons.store_outlined, AppColors.green, 'Restaurant Chain Menus', 'Your favorite restaurant chains & foods', eta: 'Q4 2026'),
+            _Feature(Icons.fitness_center_outlined, context.accentColor, 'Branded Programs', 'Follow structured training programs', eta: 'Q4 2026'),
+            _Feature(Icons.trending_up_outlined, context.accentColor, 'Skill Progressions', 'Track bodyweight skill mastery', eta: 'Q4 2026'),
+            _Feature(Icons.event_outlined, context.accentColor, 'Event-Based Training', 'Train for marathons, Hyrox, etc.', eta: 'Q4 2026'),
+            _Feature(Icons.store_outlined, context.accentColor, 'Restaurant Chain Menus', 'Your favorite restaurant chains & foods', eta: 'Q4 2026'),
           ],
         ),
 
@@ -267,14 +274,14 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.battery_charging_full, const Color(0xFF22C55E), 'Recovery Score', 'AI-calculated recovery readiness based on training load', eta: 'Q4 2026'),
-            _Feature(Icons.bedtime_outlined, const Color(0xFF6366F1), 'Sleep Trend Analysis', 'Track sleep patterns and their impact on performance', eta: 'Q4 2026'),
-            _Feature(Icons.local_fire_department, const Color(0xFFF97316), 'Check-in Streaks', 'Build consistency with daily check-in streaks', eta: 'Q4 2026'),
-            _Feature(Icons.schedule, const Color(0xFF06B6D4), 'Smart Notification Timing', 'AI-optimized reminder timing based on your habits', eta: 'Q4 2026'),
-            _Feature(Icons.monitor_heart_outlined, const Color(0xFFEF4444), 'Wearable HRV Integration', 'Heart rate variability data from your wearable device', eta: 'Q4 2026'),
-            _Feature(Icons.speed, const Color(0xFF8B5CF6), 'Tempo Analysis', 'Track set speed and rep tempo patterns across workouts', eta: 'Q3 2026'),
-            _Feature(Icons.show_chart, const Color(0xFF14B8A6), 'Work Capacity Trends', 'Monitor total volume and work capacity over time', eta: 'Q3 2026'),
-            _Feature(Icons.compress, const Color(0xFFEC4899), 'Training Density', 'Track more work in less time — the ultimate progress metric', eta: 'Q3 2026'),
+            _Feature(Icons.battery_charging_full, context.accentColor, 'Recovery Score', 'AI-calculated recovery readiness based on training load', eta: 'Q4 2026'),
+            _Feature(Icons.bedtime_outlined, context.accentColor, 'Sleep Trend Analysis', 'Track sleep patterns and their impact on performance', eta: 'Q4 2026'),
+            _Feature(Icons.local_fire_department, context.accentColor, 'Check-in Streaks', 'Build consistency with daily check-in streaks', eta: 'Q4 2026'),
+            _Feature(Icons.schedule, context.accentColor, 'Smart Notification Timing', 'AI-optimized reminder timing based on your habits', eta: 'Q4 2026'),
+            _Feature(Icons.monitor_heart_outlined, context.accentColor, 'Wearable HRV Integration', 'Heart rate variability data from your wearable device', eta: 'Q4 2026'),
+            _Feature(Icons.speed, context.accentColor, 'Tempo Analysis', 'Track set speed and rep tempo patterns across workouts', eta: 'Q3 2026'),
+            _Feature(Icons.show_chart, context.accentColor, 'Work Capacity Trends', 'Monitor total volume and work capacity over time', eta: 'Q3 2026'),
+            _Feature(Icons.compress, context.accentColor, 'Training Density', 'Track more work in less time — the ultimate progress metric', eta: 'Q3 2026'),
           ],
         ),
 
@@ -288,9 +295,9 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.accessibility_new_outlined, AppColors.cyan, 'AI Pose Detection', 'Auto-verify form from progress photos', eta: 'Q4 2026'),
-            _Feature(Icons.science_outlined, AppColors.cyan, 'Exercise Science Insights', 'Evidence-based training recommendations', eta: 'Q4 2026'),
-            _Feature(Icons.shield_outlined, AppColors.warning, 'Strain Prevention', 'Prevent overtraining and strain', eta: 'Q4 2026'),
+            _Feature(Icons.accessibility_new_outlined, context.accentColor, 'AI Pose Detection', 'Auto-verify form from progress photos', eta: 'Q4 2026'),
+            _Feature(Icons.science_outlined, context.accentColor, 'Exercise Science Insights', 'Evidence-based training recommendations', eta: 'Q4 2026'),
+            _Feature(Icons.shield_outlined, context.accentColor, 'Strain Prevention', 'Prevent overtraining and strain', eta: 'Q4 2026'),
           ],
         ),
 
@@ -304,13 +311,13 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.star_outline, AppColors.yellow, 'Rate & Review', 'Rate ${Branding.appName} on the App Store & Play Store', eta: 'After Launch'),
-            _Feature(Icons.bloodtype_outlined, AppColors.error, 'Diabetes Dashboard', 'Track glucose and insulin levels', eta: '2027'),
-            _Feature(Icons.accessibility_new_outlined, AppColors.purple, 'Senior Mode', 'Simplified interface with larger text & easier navigation', eta: '2027'),
-            _Feature(Icons.child_care_outlined, AppColors.green, 'Kids Mode', 'Age-appropriate fitness tracking', eta: '2027'),
-            _Feature(Icons.location_on_outlined, AppColors.magenta, 'Custom Environments', 'Save training locations with equipment', eta: '2027'),
-            _Feature(Icons.map_outlined, AppColors.orange, 'Gym Location Map', 'Map-based gym location picker', eta: '2027'),
-            _Feature(Icons.translate_outlined, AppColors.purple, 'More Languages', 'Additional language support', eta: '2027'),
+            _Feature(Icons.star_outline, context.accentColor, 'Rate & Review', 'Rate ${Branding.appName} on the App Store & Play Store', eta: 'After Launch'),
+            _Feature(Icons.bloodtype_outlined, context.accentColor, 'Diabetes Dashboard', 'Track glucose and insulin levels', eta: '2027'),
+            _Feature(Icons.accessibility_new_outlined, context.accentColor, 'Senior Mode', 'Simplified interface with larger text & easier navigation', eta: '2027'),
+            _Feature(Icons.child_care_outlined, context.accentColor, 'Kids Mode', 'Age-appropriate fitness tracking', eta: '2027'),
+            _Feature(Icons.location_on_outlined, context.accentColor, 'Custom Environments', 'Save training locations with equipment', eta: '2027'),
+            _Feature(Icons.map_outlined, context.accentColor, 'Gym Location Map', 'Map-based gym location picker', eta: '2027'),
+            _Feature(Icons.translate_outlined, context.accentColor, 'More Languages', 'Additional language support', eta: '2027'),
           ],
         ),
 

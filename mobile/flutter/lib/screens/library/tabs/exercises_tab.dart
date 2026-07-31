@@ -340,7 +340,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           children: [
             Icon(
               Icons.error_outline,
-              color: isDark ? AppColors.error : AppColorsLight.error,
+              color: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
               size: 48,
             ),
             const SizedBox(height: 16),

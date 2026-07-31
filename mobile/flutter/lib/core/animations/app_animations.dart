@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sprung/sprung.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../theme/accent_color_provider.dart';
 
 /// Centralized animation constants for ultra-smooth 120fps animations.
 /// Uses aggressive spring physics and short durations for instant, snappy feel.
@@ -312,7 +313,10 @@ class AnimatedGradientBorder extends StatefulWidget {
   final Widget child;
   final double borderWidth;
   final BorderRadius borderRadius;
-  final List<Color> colors;
+  /// Sweep gradient stops. Defaults to null — the border then shimmers
+  /// around the live app accent (`context.accentColor`) instead of a fixed
+  /// cyan/purple pair, so it stays in sync with the user's accent choice.
+  final List<Color>? colors;
   final Duration duration;
 
   const AnimatedGradientBorder({
@@ -320,7 +324,7 @@ class AnimatedGradientBorder extends StatefulWidget {
     required this.child,
     this.borderWidth = 2,
     this.borderRadius = const BorderRadius.all(Radius.circular(16)),
-    this.colors = const [Color(0xFF0891B2), Color(0xFF8B5CF6), Color(0xFF0891B2)],
+    this.colors,
     this.duration = const Duration(seconds: 2),
   });
 
@@ -347,6 +351,12 @@ class _AnimatedGradientBorderState extends State<AnimatedGradientBorder>
 
   @override
   Widget build(BuildContext context) {
+    final colors = widget.colors ??
+        [
+          context.accentColor,
+          context.accentColor.withValues(alpha: 0.4),
+          context.accentColor,
+        ];
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -354,7 +364,7 @@ class _AnimatedGradientBorderState extends State<AnimatedGradientBorder>
           decoration: BoxDecoration(
             borderRadius: widget.borderRadius,
             gradient: SweepGradient(
-              colors: widget.colors,
+              colors: colors,
               transform: GradientRotation(_controller.value * 2 * 3.14159),
             ),
           ),

@@ -10,6 +10,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Vacation Mode settings page.
 ///
 /// Lets the user pause non-critical push notifications + emails. Critical
@@ -136,7 +137,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).vacationModeVacationStartMustBe),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -197,7 +198,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to save: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -269,7 +270,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
     final l10n = AppLocalizations.of(context);
     if (active) {
       icon = Icons.beach_access_rounded;
-      accent = const Color(0xFF4FC3F7);
+      accent = const Color(0xFF4FC3F7);  // accent-allowlist: Vacation Mode's own thematic feature colour (beach blue), consistent within this feature, not the app accent
       title = l10n.vacationModeBannerActive;
       final end = _currentEnd();
       subtitle = end != null
@@ -277,12 +278,12 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
           : l10n.vacationModeBannerPausedNoEnd;
     } else if (enabled) {
       icon = Icons.event_rounded;
-      accent = AppColors.orange;
+      accent = context.accentColor;
       title = l10n.vacationModeBannerScheduled;
       subtitle = l10n.vacationModeBannerStartsOn(_formatDisplay(_currentStart()));
     } else {
       icon = Icons.notifications_active_rounded;
-      accent = AppColors.success;
+      accent = AppColors.success;  // accent-allowlist: success/positive state - must stay green regardless of accent
       title = l10n.vacationModeBannerOn;
       subtitle = l10n.vacationModeBannerOnSubtitle;
     }
@@ -346,7 +347,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
           Icon(
             Icons.beach_access_rounded,
             size: 20,
-            color: enabled ? const Color(0xFF4FC3F7) : textMuted,
+            color: enabled ? const Color(0xFF4FC3F7) : textMuted,  // accent-allowlist: Vacation Mode's own thematic feature colour (beach blue), consistent within this feature, not the app accent
           ),
           const SizedBox(width: 14),
           Expanded(

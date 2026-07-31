@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Animated progress bar for quiz screens.
 ///
@@ -85,11 +85,11 @@ class QuizProgressBar extends StatelessWidget {
                   // pre-auth funnel CTAs so the progress bar reads as part
                   // of the same visual system. Light → deep orange so the
                   // bar visibly "warms up" as the user gets closer to done.
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     colors: [
-                      Color(0xFFFFB366), // light orange
-                      AppColors.orange,  // brand orange
-                      Color(0xFFFF6B00), // deep orange
+                      context.accentColor, // light orange
+                      context.accentColor,  // brand orange
+                      context.accentColor, // deep orange
                     ],
                     stops: [0.0, 0.55, 1.0],
                     begin: AlignmentDirectional.centerStart,
@@ -98,7 +98,7 @@ class QuizProgressBar extends StatelessWidget {
                   borderRadius: BorderRadius.circular(3),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.orange.withValues(alpha: 0.35),
+                      color: context.accentColor.withValues(alpha: 0.35),
                       blurRadius: 10,
                       spreadRadius: 0,
                     ),

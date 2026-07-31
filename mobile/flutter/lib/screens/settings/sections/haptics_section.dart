@@ -5,6 +5,7 @@ import '../../../data/services/haptic_service.dart';
 import '../widgets/section_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The haptics section for configuring haptic feedback settings.
 ///
 /// Allows users to select their preferred haptic feedback intensity.
@@ -93,13 +94,13 @@ class _HapticsSettingsCard extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? (isDark
-                              ? AppColors.cyan.withOpacity(0.2)
+                              ? context.accentColor.withOpacity(0.2)
                               : AppColorsLight.cyan.withOpacity(0.15))
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
-                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                            ? (isDark ? context.accentColor : AppColorsLight.cyan)
                             : cardBorder,
                         width: isSelected ? 1.5 : 1,
                       ),
@@ -110,7 +111,7 @@ class _HapticsSettingsCard extends ConsumerWidget {
                           _getIconForLevel(level),
                           size: 20,
                           color: isSelected
-                              ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                              ? (isDark ? context.accentColor : AppColorsLight.cyan)
                               : textMuted,
                         ),
                         const SizedBox(height: 4),
@@ -120,7 +121,7 @@ class _HapticsSettingsCard extends ConsumerWidget {
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                             color: isSelected
-                                ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                                ? (isDark ? context.accentColor : AppColorsLight.cyan)
                                 : textSecondary,
                           ),
                         ),

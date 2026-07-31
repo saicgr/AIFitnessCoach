@@ -8,6 +8,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// ROI Summary Card for home screen.
 /// Shows "Your Fitness Journey" with key ROI metrics.
 /// Taps to navigate to the full milestones screen.
@@ -71,11 +72,11 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.purple.withOpacity(0.3),
+                color: context.accentColor.withOpacity(0.3),
               ),
               gradient: LinearGradient(
                 colors: [
-                  AppColors.purple.withOpacity(0.05),
+                  context.accentColor.withOpacity(0.05),
                   Colors.transparent,
                 ],
                 begin: AlignmentDirectional.topStart,
@@ -91,12 +92,12 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withOpacity(0.15),
+                        color: context.accentColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.trending_up,
-                        color: AppColors.purple,
+                        color: context.accentColor,
                         size: 20,
                       ),
                     ),
@@ -118,7 +119,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                               roi.motivationalMessage,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.purple,
+                                color: context.accentColor,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -140,7 +141,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                       icon: Icons.fitness_center,
                       value: '${roi.totalWorkouts}',
                       label: AppLocalizations.of(context).workoutListTitle,
-                      iconColor: AppColors.cyan,
+                      iconColor: context.accentColor,
                       isDark: isDark,
                     ),
                     _StatDivider(isDark: isDark),
@@ -148,7 +149,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                       icon: Icons.schedule,
                       value: '${roi.totalHoursInvested.toStringAsFixed(1)}h',
                       label: AppLocalizations.of(context).roiSummaryCardInvested,
-                      iconColor: AppColors.orange,
+                      iconColor: context.accentColor,
                       isDark: isDark,
                     ),
                     _StatDivider(isDark: isDark),
@@ -156,7 +157,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                       icon: Icons.local_fire_department,
                       value: _formatCalories(roi.estimatedCaloriesBurned),
                       label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-                      iconColor: AppColors.coral,
+                      iconColor: context.accentColor,
                       isDark: isDark,
                     ),
                   ],
@@ -199,7 +200,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.green.withOpacity(0.15),
+                      color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -208,7 +209,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                         Icon(
                           Icons.arrow_upward,
                           size: 14,
-                          color: AppColors.green,
+                          color: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -216,7 +217,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.green,
+                            color: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                           ),
                         ),
                       ],
@@ -252,7 +253,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.purple.withOpacity(0.2),
+              color: context.accentColor.withOpacity(0.2),
             ),
           ),
           child: Column(
@@ -262,7 +263,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                 height: 24,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.purple),
+                  valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
                 ),
               ),
               const SizedBox(height: 12),
@@ -302,7 +303,7 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.purple.withOpacity(0.2),
+                color: context.accentColor.withOpacity(0.2),
               ),
             ),
             child: Row(
@@ -310,12 +311,12 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.rocket_launch,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -443,12 +444,12 @@ class _SmallStat extends StatelessWidget {
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    final color = highlighted ? AppColors.orange : textMuted;
+    final color = highlighted ? context.accentColor : textMuted;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: highlighted ? AppColors.orange.withOpacity(0.1) : glassSurface,
+        color: highlighted ? context.accentColor.withOpacity(0.1) : glassSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

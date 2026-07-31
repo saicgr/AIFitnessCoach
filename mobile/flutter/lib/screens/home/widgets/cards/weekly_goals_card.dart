@@ -9,6 +9,7 @@ import '../../../../data/services/personal_goals_service.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// A card displaying weekly personal goals summary on the home screen
 class WeeklyGoalsCard extends ConsumerStatefulWidget {
   final bool isDark;
@@ -172,8 +173,8 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
                 top: -2,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
-                    color: AppColors.orange,
+                  decoration: BoxDecoration(
+                    color: context.accentColor,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
@@ -208,7 +209,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
                   '$activeGoals active ${activeGoals == 1 ? 'goal' : 'goals'}${prsThisWeek > 0 ? ' • $prsThisWeek new PR${prsThisWeek == 1 ? '' : 's'}!' : ''}',
                   style: TextStyle(
                     fontSize: 14,
-                    color: prsThisWeek > 0 ? AppColors.orange : textSecondary,
+                    color: prsThisWeek > 0 ? context.accentColor : textSecondary,
                     fontWeight: prsThisWeek > 0 ? FontWeight.w500 : FontWeight.normal,
                   ),
                 )
@@ -223,9 +224,9 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
                     if (prsThisWeek > 0)
                       Text(
                         '🏆 $prsThisWeek new PR!',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -283,7 +284,7 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
             value: (progress / 100).clamp(0.0, 1.0),
             backgroundColor: mutedColor.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation<Color>(
-              progress >= 100 ? AppColors.green : ref.colors(context).accent,
+              progress >= 100 ? AppColors.green : ref.colors(context).accent,  // accent-allowlist: success/positive state -- must stay green regardless of accent
             ),
             minHeight: 4,
           ),

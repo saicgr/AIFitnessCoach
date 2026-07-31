@@ -72,7 +72,7 @@ class GlowButton extends StatefulWidget {
       key: key,
       onTap: onTap,
       color: AppColors.glowGreen,
-      secondaryColor: const Color(0xFF00C853),
+      secondaryColor: const Color(0xFF00C853), // accent-allowlist: log-set confirm glow button, success/confirm semantic (glowGreen)
       width: width,
       height: 52,
       icon: Icons.check_rounded,

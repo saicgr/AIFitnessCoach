@@ -155,7 +155,7 @@ class FastingStatsCard extends StatelessWidget {
                         : Icons.arrow_downward_rounded,
                     size: 12,
                     color:
-                        scoreTrend!.isUp ? AppColors.success : AppColors.coral,
+                        scoreTrend!.isUp ? AppColors.success : AppColors.coral, // accent-allowlist: fasting stats status severity
                   ),
                 ],
               ],
@@ -198,7 +198,7 @@ class FastingStatsCard extends StatelessWidget {
               l10n.fastingStatsCardFastsProgress(fastsThisWeek, weeklyGoal),
               style: ZType.data(
                 13,
-                color: complete ? AppColors.success : tc.textPrimary,
+                color: complete ? AppColors.success : tc.textPrimary, // accent-allowlist: fasting stats status severity
               ),
             ),
             if (complete) ...[
@@ -206,7 +206,7 @@ class FastingStatsCard extends StatelessWidget {
               const Icon(
                 Icons.check_circle,
                 size: 14,
-                color: AppColors.success,
+                color: AppColors.success, // accent-allowlist: fasting stats status severity
               ),
             ],
           ],
@@ -219,7 +219,7 @@ class FastingStatsCard extends StatelessWidget {
             minHeight: 6,
             backgroundColor: AppColors.hairlineStrong,
             valueColor: AlwaysStoppedAnimation<Color>(
-              complete ? AppColors.success : tc.accent,
+              complete ? AppColors.success : tc.accent, // accent-allowlist: fasting stats status severity
             ),
           ),
         ),
@@ -299,11 +299,11 @@ class FastingStatsCard extends StatelessWidget {
       final diff = avgFasting - avgNonFasting;
       if (diff < -0.1) {
         correlationText = l10n.fastingStatsCardFastingHelps;
-        correlationColor = AppColors.success;
+        correlationColor = AppColors.success; // accent-allowlist: fasting stats status severity
         correlationIcon = Icons.trending_down_rounded;
       } else if (diff > 0.1) {
         correlationText = l10n.fastingStatsCardMixedResults;
-        correlationColor = AppColors.warning;
+        correlationColor = AppColors.warning; // accent-allowlist: fasting stats status severity
         correlationIcon = Icons.trending_flat_rounded;
       } else {
         correlationText = l10n.fastingStatsCardNeutral;
@@ -399,7 +399,7 @@ class _WeightStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    final accentColor = isPositive ? AppColors.success : tc.textPrimary;
+    final accentColor = isPositive ? AppColors.success : tc.textPrimary; // accent-allowlist: fasting stats status severity
 
     return Container(
       padding: const EdgeInsets.all(12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../data/services/personal_goals_service.dart';
 
@@ -338,13 +339,13 @@ class ExpandedSuggestionCard extends StatelessWidget {
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.people, size: 16, color: AppColors.purple),
+                Icon(Icons.people, size: 16, color: context.accentColor),
                 const SizedBox(width: 8),
                 Text(
                   '${suggestion.friendsCount} friend${suggestion.friendsCount > 1 ? 's' : ''} doing this',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

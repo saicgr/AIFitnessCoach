@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/constants/goal_unit.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/app_snackbar.dart';
@@ -158,7 +159,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).buttonCancel)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: Colors.red)),
+            child: Text(AppLocalizations.of(context).buttonDelete, style: TextStyle(color: Colors.red)), // accent-allowlist: destructive delete action
           ),
         ],
       ),
@@ -177,7 +178,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Failed to delete: $e'), backgroundColor: Colors.red), // accent-allowlist: error snackbar
         );
       }
     }
@@ -218,17 +219,19 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
   }
 
   void _showSuggestionDetail(GoalSuggestionItem suggestion) {
-    // Determine accent color based on category
+    // Category color mirrors the server-driven per-category color used in
+    // SuggestionCarousel (category.accentColor) — a categorical encoding for
+    // the 3 suggestion buckets, not the app accent.
     Color accentColor;
     switch (suggestion.category) {
       case SuggestionCategory.beatYourRecords:
-        accentColor = AppColors.orange;
+        accentColor = AppColors.orange; // accent-allowlist: categorical suggestion-type identity, matches carousel category colors
         break;
       case SuggestionCategory.popularWithFriends:
-        accentColor = AppColors.purple;
+        accentColor = AppColors.purple; // accent-allowlist: categorical suggestion-type identity, matches carousel category colors
         break;
       case SuggestionCategory.newChallenges:
-        accentColor = AppColors.cyan;
+        accentColor = AppColors.cyan; // accent-allowlist: categorical suggestion-type identity, matches carousel category colors
         break;
     }
 
@@ -340,7 +343,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           ? null
           : FloatingActionButton.extended(
               onPressed: _showCreateGoalSheet,
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
               label: Text(AppLocalizations.of(context).personalGoalsNewGoal),
@@ -372,7 +375,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)),
+          Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)), // accent-allowlist: genuine data-load error state
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
@@ -513,19 +516,20 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    final accent = context.accentColor;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withValues(alpha: 0.15),
-            AppColors.purple.withValues(alpha: 0.1),
+            accent.withValues(alpha: 0.15),
+            accent.withValues(alpha: 0.05),
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -534,7 +538,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             icon: Icons.flag,
             value: '$activeGoals',
             label: AppLocalizations.of(context).personalGoalsActiveGoals,
-            color: AppColors.cyan,
+            color: accent,
           ),
           Container(
             width: 1,
@@ -545,7 +549,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             icon: Icons.emoji_events,
             value: '$prsThisWeek',
             label: AppLocalizations.of(context).personalGoalsNewPrs,
-            color: AppColors.orange,
+            color: accent,
           ),
         ],
       ),
@@ -631,7 +635,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
             icon: const Icon(Icons.add),
             label: Text(AppLocalizations.of(context).personalGoalsSetYourFirstGoal),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
@@ -651,6 +655,7 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     final exerciseName = record['exercise_name'] ?? 'Exercise';
     final goalType = PersonalGoalType.fromString(record['goal_type'] ?? 'single_max');
     final recordValue = record['record_value'] ?? 0;
+    final accent = context.accentColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -665,12 +670,12 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.15),
+              color: accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.emoji_events,
-              color: AppColors.orange,
+              color: accent,
               size: 20,
             ),
           ),
@@ -698,10 +703,10 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
           ),
           Text(
             '$recordValue',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppColors.orange,
+              color: accent,
             ),
           ),
           Text(

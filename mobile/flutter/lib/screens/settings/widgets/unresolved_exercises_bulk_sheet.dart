@@ -209,7 +209,7 @@ class _BulkBodyState extends State<_BulkBody> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.check_circle_rounded,
-                            color: Colors.green.shade600, size: 48),
+                            color: Colors.green.shade600, size: 48),  // accent-allowlist: success/positive state - must stay green regardless of accent
                         const SizedBox(height: 12),
                         Text(
                           AppLocalizations.of(context).unresolvedExercisesBulkNothingToFixEvery,

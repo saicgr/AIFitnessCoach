@@ -1177,7 +1177,8 @@ class _CycleHubRow extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.favorite_rounded,
-                    color: AppColors.pink, size: 16),
+                    color: AppColors.pink, // accent-allowlist: cycle-tracking domain identity (the same pink used across cycle/hormonal-health surfaces), deliberately a semantic signal like the macro dots — see the comment above; following the app accent would erase the domain cue
+                    size: 16),  // accent-allowlist: cycle-feature domain signal, see comment above
               ),
               const SizedBox(width: 12),
               Expanded(

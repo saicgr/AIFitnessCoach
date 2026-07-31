@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Grade levels for NEAT score
 enum NeatGrade {
   poor(0, 49, 'Poor', Icons.sentiment_very_dissatisfied),
@@ -30,15 +31,15 @@ enum NeatGrade {
   Color get color {
     switch (this) {
       case poor:
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
       case fair:
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: no BuildContext available in this scope (enum getter) — grade-tier identity color
       case good:
-        return AppColors.yellow;
+        return AppColors.yellow;  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
       case excellent:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: no BuildContext available in this scope (enum getter) — grade-tier identity color
       case perfect:
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
     }
   }
 }
@@ -63,9 +64,9 @@ enum ScoreTrend {
   Color get color {
     switch (this) {
       case up:
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       case down:
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
       case stable:
         return AppColors.textMuted;
     }
@@ -505,7 +506,7 @@ class _BreakdownSection extends StatelessWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Padding(
       padding: const EdgeInsets.only(top: 16),

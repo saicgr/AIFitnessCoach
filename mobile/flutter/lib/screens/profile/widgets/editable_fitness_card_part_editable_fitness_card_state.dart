@@ -181,7 +181,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).editableFitnessCardFitnessSettingsUpdatedWor),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           ),
         );
       }
@@ -192,7 +192,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).editableFitnessCardFailedToUpdate(e.toString())),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           ),
         );
       }
@@ -235,11 +235,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Duration (editable range)
           _buildEditableRow(
             icon: Icons.timer_outlined,
-            iconColor: AppColors.cyan,
+            iconColor: context.accentColor,
             label: l10n.editableFitnessCardDuration,
             value: _formatDurationDisplay(),
             isEditing: _isEditing,
-            editWidget: _buildDurationRangeSelector(AppColors.cyan),
+            editWidget: _buildDurationRangeSelector(context.accentColor),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -248,11 +248,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Warmup Duration
           _buildEditableRow(
             icon: Icons.whatshot_outlined,
-            iconColor: AppColors.orange,
+            iconColor: context.accentColor,
             label: l10n.editableFitnessCardWarmup,
             value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin(_selectedWarmupDuration),
             isEditing: _isEditing,
-            editWidget: _buildWarmupSelector(AppColors.orange, cardBorder, textSecondary),
+            editWidget: _buildWarmupSelector(context.accentColor, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -261,11 +261,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Stretch Duration
           _buildEditableRow(
             icon: Icons.self_improvement_outlined,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             label: l10n.editableFitnessCardStretch,
             value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin2(_selectedStretchDuration),
             isEditing: _isEditing,
-            editWidget: _buildStretchSelector(AppColors.purple, cardBorder, textSecondary),
+            editWidget: _buildStretchSelector(context.accentColor, cardBorder, textSecondary),
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -279,11 +279,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // the row is the editor.
           _buildEditableRow(
             icon: Icons.flag,
-            iconColor: AppColors.green,
+            iconColor: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             label: l10n.editableFitnessCardGoal,
             value: _selectedGoal,
             isEditing: _isEditing,
-            editWidget: _buildGoalSelector(AppColors.green, cardBorder, textSecondary),
+            editWidget: _buildGoalSelector(AppColors.green, cardBorder, textSecondary),  // accent-allowlist: success/positive state — must stay green regardless of accent
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -292,11 +292,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Level
           _buildEditableRow(
             icon: Icons.signal_cellular_alt,
-            iconColor: AppColors.info,
+            iconColor: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
             label: l10n.editableFitnessCardLevel,
             value: _selectedLevel,
             isEditing: _isEditing,
-            editWidget: _buildLevelSelector(AppColors.info, cardBorder, textSecondary),
+            editWidget: _buildLevelSelector(AppColors.info, cardBorder, textSecondary),  // accent-allowlist: informational state — must stay blue regardless of accent
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -305,13 +305,13 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Workout Days (restored)
           _buildEditableRow(
             icon: Icons.calendar_today,
-            iconColor: AppColors.yellow,
+            iconColor: AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
             label: l10n.editableFitnessCardWorkoutDays,
             value: _selectedDays.isEmpty
                 ? l10n.editableFitnessCardNotSet
                 : _selectedDays.map((d) => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d]).join(', '),
             isEditing: _isEditing,
-            editWidget: _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),
+            editWidget: _buildDaysSelector(AppColors.yellow, cardBorder, textSecondary),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -320,11 +320,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Daily Steps Goal
           _buildEditableRow(
             icon: Icons.directions_walk,
-            iconColor: AppColors.green,
+            iconColor: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             label: l10n.editableFitnessCardDailySteps,
             value: _formatStepGoal(_selectedStepGoal),
             isEditing: _isEditing,
-            editWidget: _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),
+            editWidget: _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),  // accent-allowlist: success/positive state — must stay green regardless of accent
             isDark: isDark,
             textMuted: textMuted,
           ),
@@ -333,7 +333,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           // Injuries
           _buildEditableRow(
             icon: Icons.healing,
-            iconColor: AppColors.error,
+            iconColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             label: l10n.editableFitnessCardInjuries,
             value: _selectedInjuries.isEmpty
                 ? l10n.editableFitnessCardNone
@@ -783,15 +783,15 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.error.withOpacity(0.15) : Colors.transparent,
+              color: isSelected ? AppColors.error.withOpacity(0.15) : Colors.transparent,  // accent-allowlist: error/destructive state — must stay red regardless of accent
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: isSelected ? AppColors.error : cardBorder),
+              border: Border.all(color: isSelected ? AppColors.error : cardBorder),  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
             child: Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected ? AppColors.error : textSecondary,
+                color: isSelected ? AppColors.error : textSecondary,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
@@ -835,13 +835,13 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
       margin: const EdgeInsets.all(10),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.1),
+        color: context.accentColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+        border: Border.all(color: context.accentColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: AppColors.orange, size: 16),
+          Icon(Icons.info_outline, color: context.accentColor, size: 16),
           const SizedBox(width: 8),
           Expanded(
             child: Text(

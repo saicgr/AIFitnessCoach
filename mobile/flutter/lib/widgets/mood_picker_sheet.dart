@@ -475,7 +475,7 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
               label: _difficultyLabel(d),
               icon: _difficultyIcon(d),
               isSelected: isSel,
-              accent: isHell ? AppColors.error : accent,
+              accent: isHell ? AppColors.error : accent, // accent-allowlist: error state, semantic
               border: border,
               textColor: textColor,
               textMuted: textMuted,

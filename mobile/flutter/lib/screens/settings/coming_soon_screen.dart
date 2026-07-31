@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Screen showing upcoming features that are planned but not yet available.
 class ComingSoonScreen extends StatelessWidget {
@@ -41,12 +42,12 @@ class ComingSoonScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.rocket_launch_rounded,
-                      color: AppColors.purple,
+                      color: context.accentColor,
                       size: 28,
                     ),
                   ),
@@ -123,7 +124,7 @@ class _ComingSoonFeature {
 const _comingSoonFeatures = [
   _ComingSoonFeature(
     icon: Icons.receipt_long_rounded,
-    color: AppColors.orange,
+    color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Recipe Import',
     description:
         'Paste any recipe link or screenshot — Zealova will extract the '
@@ -132,7 +133,7 @@ const _comingSoonFeatures = [
   ),
   _ComingSoonFeature(
     icon: Icons.restaurant_menu_rounded,
-    color: AppColors.orange,
+    color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Food Preferences',
     description:
         'Meal pattern, allergens, cooking skill, budget, and dietary '
@@ -141,147 +142,147 @@ const _comingSoonFeatures = [
   ),
   _ComingSoonFeature(
     icon: Icons.public_rounded,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Recipe Discovery Feed',
     description:
         'Browse, like, and remix recipes shared by the community. Coming with the Social tab.',
   ),
   _ComingSoonFeature(
     icon: Icons.restaurant_menu,
-    color: AppColors.orange,
+    color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'What Should I Eat? Widget',
     description:
         'One tap on your home or lock screen for an AI meal idea with calories & macros — plus a "Log it" button',
   ),
   _ComingSoonFeature(
     icon: Icons.insights,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Fitness Score',
     description: 'Overall fitness, strength & nutrition scores',
   ),
   _ComingSoonFeature(
     icon: Icons.directions_walk,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Daily Stats',
     description: 'Steps count and calorie deficit tracking',
   ),
   _ComingSoonFeature(
     icon: Icons.monitor_weight,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Weight Tracker',
     description: 'Recent weight with trend arrow',
   ),
   _ComingSoonFeature(
     icon: Icons.restaurant,
-    color: AppColors.orange,
+    color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Calories Summary',
     description: "Today's intake vs target at a glance",
   ),
   _ComingSoonFeature(
     icon: Icons.pie_chart,
-    color: AppColors.orange,
+    color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Macro Rings',
     description: 'Visual donut charts for protein, carbs & fat',
   ),
   _ComingSoonFeature(
     icon: Icons.show_chart,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Progress Charts',
     description: 'Strength and volume charts over time',
   ),
   _ComingSoonFeature(
     icon: Icons.accessibility_new,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Muscle Heatmap',
     description: 'Muscle groups trained recently',
   ),
   _ComingSoonFeature(
     icon: Icons.straighten,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Quick Measurements',
     description: 'Track body measurements easily',
   ),
   _ComingSoonFeature(
     icon: Icons.swap_horiz,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Week Changes',
     description: 'Exercise variation this week',
   ),
   _ComingSoonFeature(
     icon: Icons.wb_sunny_outlined,
-    color: AppColors.yellow,
+    color: AppColors.yellow,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Mood Check-in',
     description: 'Quick mood picker for instant workouts',
   ),
   _ComingSoonFeature(
     icon: Icons.watch,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Daily Activity',
     description: 'Health device activity summary',
   ),
   _ComingSoonFeature(
     icon: Icons.route,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'My Journey',
     description: 'Your fitness journey progress',
   ),
   _ComingSoonFeature(
     icon: Icons.trending_up,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Your Journey ROI',
     description: 'Total workouts, time invested, and milestones',
   ),
   _ComingSoonFeature(
     icon: Icons.calendar_view_week,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Weekly Plan',
     description: 'Holistic plan with workouts, nutrition & fasting',
   ),
   _ComingSoonFeature(
     icon: Icons.spa,
-    color: AppColors.yellow,
+    color: AppColors.yellow,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Rest Day Tips',
     description: 'Recovery tips for rest days',
   ),
   _ComingSoonFeature(
     icon: Icons.military_tech,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Active Challenges',
     description: 'Challenge progress mini-card',
   ),
   _ComingSoonFeature(
     icon: Icons.leaderboard,
-    color: AppColors.purple,
+    color: AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Leaderboard',
     description: 'Your position on the leaderboard',
   ),
   _ComingSoonFeature(
     icon: Icons.people,
-    color: AppColors.purple,
+    color: AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Friend Activity',
     description: 'See what friends are doing',
   ),
   _ComingSoonFeature(
     icon: Icons.compare,
-    color: AppColors.green,
+    color: AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Photo Compare',
     description: 'Before/after progress comparison',
   ),
   _ComingSoonFeature(
     icon: Icons.calendar_month,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Mini Calendar',
     description: 'Mini calendar with workout days',
   ),
   _ComingSoonFeature(
     icon: Icons.play_circle_filled,
-    color: AppColors.cyan,
+    color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Quick Start',
     description: 'One-tap to start today\'s workout',
   ),
   _ComingSoonFeature(
     icon: Icons.favorite_rounded,
-    color: AppColors.pink,
+    color: AppColors.pink,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     title: 'Bluetooth Heart Rate Hardware',
     description:
         'Pair BLE chest straps & heart rate monitors for live in-workout BPM',

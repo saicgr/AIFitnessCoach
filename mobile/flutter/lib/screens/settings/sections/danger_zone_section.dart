@@ -9,6 +9,7 @@ import '../../../widgets/delete_account_flow.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The danger zone section containing destructive actions.
 class DangerZoneSection extends ConsumerWidget {
   const DangerZoneSection({super.key});
@@ -49,7 +50,7 @@ class DangerZoneSection extends ConsumerWidget {
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Row(
           children: [
-            Icon(Icons.refresh, color: AppColors.orange, size: 24),
+            Icon(Icons.refresh, color: context.accentColor, size: 24),
             const SizedBox(width: 12),
             Text(
               AppLocalizations.of(context).dangerZoneResetProgram2,
@@ -73,17 +74,17 @@ class DangerZoneSection extends ConsumerWidget {
             const SizedBox(height: 12),
             DialogBulletPoint(
               text: 'Delete all your current workouts',
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               isDark: isDark,
             ),
             DialogBulletPoint(
               text: 'Take you through onboarding again',
-              color: AppColors.orange,
+              color: context.accentColor,
               isDark: isDark,
             ),
             DialogBulletPoint(
               text: 'Keep your account and sign-in',
-              color: AppColors.success,
+              color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
               isDark: isDark,
             ),
             const SizedBox(height: 16),
@@ -113,7 +114,7 @@ class DangerZoneSection extends ConsumerWidget {
             },
             child: Text(
               AppLocalizations.of(context).dangerZoneResetProgram,
-              style: TextStyle(color: AppColors.orange),
+              style: TextStyle(color: context.accentColor),
             ),
           ),
         ],
@@ -126,8 +127,8 @@ class DangerZoneSection extends ConsumerWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(
-        child: CircularProgressIndicator(color: AppColors.cyan),
+      builder: (context) => Center(
+        child: CircularProgressIndicator(color: context.accentColor),
       ),
     );
 
@@ -169,7 +170,7 @@ class DangerZoneSection extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }

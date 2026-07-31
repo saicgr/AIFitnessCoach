@@ -101,15 +101,15 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   Color _presetTint(String key) {
     switch (key) {
       case 'commercial_gym':
-        return const Color(0xFFB366FF); // violet — matches existing accent
+        return const Color(0xFFB366FF); // violet — matches existing accent  // accent-allowlist: gym-preset type identity colour (categorical, one fixed colour per preset in _presetTint), not the app accent
       case 'home_gym':
-        return const Color(0xFF22C55E); // green
+        return const Color(0xFF22C55E); // green  // accent-allowlist: success/positive state -- must stay green regardless of accent (green-500)
       case 'home':
-        return const Color(0xFF0EA5E9); // sky blue
+        return const Color(0xFF0EA5E9); // sky blue  // accent-allowlist: gym-preset type identity colour (categorical, one fixed colour per preset in _presetTint), not the app accent
       case 'hotel':
-        return const Color(0xFFF59E0B); // amber
+        return const Color(0xFFF59E0B); // amber  // accent-allowlist: warning severity (amber-500)
       case 'outdoors':
-        return const Color(0xFF10B981); // emerald
+        return const Color(0xFF10B981); // emerald  // accent-allowlist: gym-preset type identity colour (categorical, one fixed colour per preset in _presetTint), not the app accent
       default:
         return const Color(0xFF64748B); // slate fallback
     }
@@ -322,7 +322,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
           SnackBar(
             content: Text('Could not save profile before import: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: Colors.red.shade700,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -437,7 +437,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
               Navigator.of(ctx).pop();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.orange,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -504,7 +504,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
             duration: const Duration(seconds: 3),
-            backgroundColor: Colors.green.shade700,
+            backgroundColor: Colors.green.shade700,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           ),
         );
       }
@@ -516,7 +516,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             content: Text(errorL10n.addGymSheetFailedToCreate(e.toString())),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
-            backgroundColor: Colors.red.shade700,
+            backgroundColor: Colors.red.shade700,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -533,7 +533,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return GlassSheet(
       showHandle: false,

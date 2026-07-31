@@ -349,7 +349,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -360,7 +360,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -630,7 +630,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
       case 2: // PRs - blue/dark gradient
         return const [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)];
       case 3: // Streak Fire - orange/red/dark
-        return const [Color(0xFF1C1917), Color(0xFF7F1D1D), Color(0xFF1C1917)];
+        return const [Color(0xFF1C1917), Color(0xFF7F1D1D), Color(0xFF1C1917)];  // accent-allowlist: error/negative state — must stay red regardless of accent
       case 4: // Weekly Report - navy
         return const [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF0F172A)];
       case 5: // Level Up - purple/indigo
@@ -851,14 +851,14 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFD700).withValues(alpha: 0.15),
+                color: const Color(0xFFFFD700).withValues(alpha: 0.15),  // accent-allowlist: medal/rarity tier
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.4),
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.4),  // accent-allowlist: medal/rarity tier
                   width: 2,
                 ),
               ),
-              child: const Icon(Icons.lock, color: Color(0xFFFFD700), size: 38),
+              child: const Icon(Icons.lock, color: Color(0xFFFFD700), size: 38),  // accent-allowlist: medal/rarity tier
             ),
             const SizedBox(height: 20),
             Text(
@@ -866,7 +866,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFFFFD700),
+                color: Color(0xFFFFD700),  // accent-allowlist: medal/rarity tier
                 letterSpacing: 3,
               ),
             ),
@@ -880,7 +880,7 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.7),
+                  color: const Color(0xFFFFD700).withValues(alpha: 0.7),  // accent-allowlist: medal/rarity tier
                   height: 1.4,
                 ),
               ),

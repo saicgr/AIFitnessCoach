@@ -377,9 +377,9 @@ class XPProgressCard extends ConsumerWidget {
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [
-                  Color(0xFFE040FB),
-                  Color(0xFF7C4DFF),
-                  Color(0xFF00BCD4),
+                  Color(0xFFE040FB), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
+                  Color(0xFF7C4DFF), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
+                  Color(0xFF00BCD4), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
                 ],
               ),
               borderRadius: BorderRadius.circular(8),
@@ -430,10 +430,10 @@ class XPProgressCard extends ConsumerWidget {
         gradient: isPrestige
             ? const LinearGradient(
                 colors: [
-                  Color(0xFFE040FB),
-                  Color(0xFF7C4DFF),
-                  Color(0xFF00BCD4),
-                  Color(0xFFE040FB),
+                  Color(0xFFE040FB), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
+                  Color(0xFF7C4DFF), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
+                  Color(0xFF00BCD4), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
+                  Color(0xFFE040FB), // accent-allowlist: prestige/mythic tier rainbow gradient - rarity identity, not accent
                 ],
                 stops: [0.0, 0.33, 0.66, 1.0],
               )
@@ -662,7 +662,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
               icon: Icons.date_range,
               label: AppLocalizations.of(context).xpProgressCardWeekly,
               value: '$weeklyCompleted/$weeklyTotal',
-              color: AppColors.orange,
+              color: accentColor,
               progress: weeklyTotal > 0 ? weeklyCompleted / weeklyTotal : 0,
             ),
           ),
@@ -754,7 +754,7 @@ class _GoalsPreviewRow extends ConsumerWidget {
             Icon(
               Icons.local_fire_department,
               size: 14,
-              color: streak > 0 ? Colors.orange : textMuted,
+              color: streak > 0 ? Colors.orange : textMuted, // accent-allowlist: streak-flame icon, consistent fire theme regardless of accent
             ),
             const SizedBox(width: 4),
             Text(
@@ -784,19 +784,19 @@ class _GoalsPreviewRow extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.2),
+                  color: Colors.amber.withValues(alpha: 0.2), // accent-allowlist: double-XP bonus badge, gamification reward color (amber)
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.bolt, size: 10, color: Colors.amber),
+                    Icon(Icons.bolt, size: 10, color: Colors.amber), // accent-allowlist: double-XP bonus badge, gamification reward color (amber)
                     Text(
                       '2x',
                       style: TextStyle(
                         fontSize: 8,
                         fontWeight: FontWeight.bold,
-                        color: Colors.amber,
+                        color: Colors.amber, // accent-allowlist: double-XP bonus badge, gamification reward color (amber)
                       ),
                     ),
                   ],

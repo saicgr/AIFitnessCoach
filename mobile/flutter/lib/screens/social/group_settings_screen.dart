@@ -11,6 +11,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/nav_bar_hider_mixin.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Group settings/info screen (F12)
 /// - Edit group name (if admin)
 /// - Member list with roles (admin/member)
@@ -123,7 +124,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
@@ -221,7 +222,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).groupSettingsLeave),
           ),
         ],
@@ -283,12 +284,12 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
                   // Group Avatar
                   CircleAvatar(
                     radius: 44,
-                    backgroundColor: AppColors.purple.withValues(alpha: 0.2),
+                    backgroundColor: context.accentColor.withValues(alpha: 0.2),
                     backgroundImage: widget.groupAvatar != null
                         ? NetworkImage(widget.groupAvatar!)
                         : null,
                     child: widget.groupAvatar == null
-                        ? const Icon(Icons.group_rounded, size: 40, color: AppColors.purple)
+                        ? Icon(Icons.group_rounded, size: 40, color: context.accentColor)
                         : null,
                   ),
                   const SizedBox(height: 16),
@@ -458,7 +459,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
                       trailing: (_isAdmin && !isCurrentUser)
                           ? IconButton(
                               onPressed: () => _handleRemoveMember(memberId, memberName),
-                              icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                              icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),  // accent-allowlist: error/negative state — must stay red regardless of accent
                             )
                           : null,
                     );
@@ -476,8 +477,8 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
                 icon: const Icon(Icons.exit_to_app_rounded),
                 label: Text(AppLocalizations.of(context).groupSettingsLeaveGroup),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
+                  foregroundColor: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
+                  side: const BorderSide(color: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),

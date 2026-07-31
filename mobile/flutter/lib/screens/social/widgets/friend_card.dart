@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Friend Card - Displays a user profile card
 class FriendCard extends StatelessWidget {
   final String name;
@@ -57,15 +58,15 @@ class FriendCard extends StatelessWidget {
                   // Avatar
                   CircleAvatar(
                     radius: 28,
-                    backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                    backgroundColor: context.accentColor.withValues(alpha: 0.2),
                     backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
                     child: avatarUrl == null
                         ? Text(
                             name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           )
                         : null,
@@ -93,7 +94,7 @@ class FriendCard extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.cyan.withValues(alpha: 0.2),
+                                  color: context.accentColor.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -101,7 +102,7 @@ class FriendCard extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.cyan,
+                                    color: context.accentColor,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -133,21 +134,21 @@ class FriendCard extends StatelessWidget {
                     child: _buildStatItem(
                       icon: Icons.local_fire_department,
                       label: '$currentStreak day streak',
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   ),
                   Expanded(
                     child: _buildStatItem(
                       icon: Icons.fitness_center_rounded,
                       label: '$totalWorkouts workouts',
-                      color: AppColors.purple,
+                      color: context.accentColor,
                     ),
                   ),
                   Expanded(
                     child: _buildStatItem(
                       icon: Icons.emoji_events_rounded,
                       label: '$totalAchievements badges',
-                      color: AppColors.pink,
+                      color: AppColors.pink,  // accent-allowlist: decorative stat-icon tint — not one of the app's default accent values, kept distinct for visual variety
                     ),
                   ),
                 ],
@@ -162,10 +163,10 @@ class FriendCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.1),
+                    color: context.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.cyan.withValues(alpha: 0.3),
+                      color: context.accentColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -174,7 +175,7 @@ class FriendCard extends StatelessWidget {
                       Icon(
                         Icons.verified_rounded,
                         size: 18,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -182,7 +183,7 @@ class FriendCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                       ),
                     ],
@@ -199,11 +200,11 @@ class FriendCard extends StatelessWidget {
                     ),
                     label: Text(isFollowing ? AppLocalizations.of(context).friendCardUnfollow : AppLocalizations.of(context).friendProfileFollow),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: isFollowing ? AppColors.textMuted : AppColors.cyan,
+                      foregroundColor: isFollowing ? AppColors.textMuted : context.accentColor,
                       side: BorderSide(
                         color: isFollowing
                             ? AppColors.textMuted.withValues(alpha: 0.3)
-                            : AppColors.cyan.withValues(alpha: 0.5),
+                            : context.accentColor.withValues(alpha: 0.5),
                       ),
                     ),
                   ),

@@ -12,6 +12,7 @@ import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'demo_workout_screen_ui.dart';
 
 
@@ -188,7 +189,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(color: AppColors.cyan),
+              CircularProgressIndicator(color: context.accentColor),
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context).demoWorkoutCreatingYourPersonalizedWor,
@@ -210,7 +211,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: AppColors.error),
+              Icon(Icons.error_outline, size: 48, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context).workoutDetailFailedToLoadWorkout,
@@ -352,7 +353,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
             icon: Icons.timer_outlined,
             value: '$_durationMinutes',
             label: 'min',
-            color: AppColors.cyan,
+            color: context.accentColor,
             backgroundColor: elevatedColor,
           ),
           const SizedBox(width: 12),
@@ -360,7 +361,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
             icon: Icons.fitness_center,
             value: '$exerciseCount',
             label: 'exercises',
-            color: AppColors.purple,
+            color: context.accentColor,
             backgroundColor: elevatedColor,
           ),
           const SizedBox(width: 12),
@@ -368,7 +369,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
             icon: Icons.local_fire_department,
             value: '$_caloriesEstimate',
             label: 'cal',
-            color: AppColors.orange,
+            color: context.accentColor,
             backgroundColor: elevatedColor,
           ),
         ],
@@ -435,10 +436,10 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.2),
+              color: context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.fitness_center, color: AppColors.purple, size: 16),
+            child: Icon(Icons.fitness_center, color: context.accentColor, size: 16),
           ),
           const SizedBox(width: 12),
           Text(
@@ -454,15 +455,15 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.2),
+              color: context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               '$exerciseCount',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ),
           ),
@@ -527,7 +528,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [AppColors.cyan, AppColors.teal],
+                                colors: [context.accentColor, AppColors.teal],
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -547,7 +548,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                             height: 50,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [AppColors.cyan, AppColors.teal],
+                                colors: [context.accentColor, AppColors.teal],
                               ),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -570,7 +571,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                         height: 50,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.cyan, AppColors.teal],
+                            colors: [context.accentColor, AppColors.teal],
                           ),
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -608,12 +609,12 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                               _buildExerciseChip(
                                 Icons.fitness_center,
                                 muscleGroup,
-                                AppColors.cyan,
+                                context.accentColor,
                               ),
                               _buildExerciseChip(
                                 Icons.sports_gymnastics,
                                 equipmentUsed,
-                                AppColors.purple,
+                                context.accentColor,
                               ),
                             ],
                           ),
@@ -626,20 +627,20 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.success.withOpacity(0.2),
+                          color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.play_circle_outline, size: 12, color: AppColors.success),
+                            Icon(Icons.play_circle_outline, size: 12, color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
                             const SizedBox(width: 2),
                             Text(
                               AppLocalizations.of(context).workoutShowcaseVideo,
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.success,
+                                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                             ),
                           ],
@@ -674,19 +675,19 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                   _buildSummaryChip(
                     Icons.repeat,
                     '$sets sets',
-                    AppColors.cyan,
+                    context.accentColor,
                   ),
                   const SizedBox(width: 12),
                   _buildSummaryChip(
                     Icons.fitness_center,
                     '$reps reps',
-                    AppColors.purple,
+                    context.accentColor,
                   ),
                   const SizedBox(width: 12),
                   _buildSummaryChip(
                     Icons.timer_outlined,
                     _formatRestTime(restSeconds),
-                    AppColors.orange,
+                    context.accentColor,
                   ),
                 ],
               ),
@@ -723,9 +724,9 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                             width: double.infinity,
                             height: 200,
                             color: glassSurface,
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 strokeWidth: 2,
                               ),
                             ),
@@ -757,7 +758,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                         Icon(
                           Icons.info_outline,
                           size: 16,
-                          color: AppColors.cyan,
+                          color: context.accentColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -765,7 +766,7 @@ class _DemoWorkoutScreenState extends ConsumerState<DemoWorkoutScreen> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                         ),
                       ],

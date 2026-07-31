@@ -56,10 +56,10 @@ class SleepHypnogram extends StatelessWidget {
 
     // Signature stage legend colours: Awake amber, REM cyan, Light a
     // violet-translucent rung, Deep the full violet (the sleep family hue).
-    const awakeColor = Color(0xFFFFD54A);
-    final remColor = AppColors.macroCarbs; // cyan #06B6D4
-    final lightColor = AppColors.macroProtein.withValues(alpha: 0.55);
-    const deepColor = AppColors.macroProtein; // violet #A855F7
+    const awakeColor = Color(0xFFFFD54A); // accent-allowlist: sleep-stage identity color in hypnogram chart
+    final remColor = AppColors.macroCarbs; // cyan #06B6D4 // accent-allowlist: sleep-stage identity color in hypnogram chart
+    final lightColor = AppColors.macroProtein.withValues(alpha: 0.55); // accent-allowlist: sleep-stage identity color in hypnogram chart
+    const deepColor = AppColors.macroProtein; // violet #A855F7 // accent-allowlist: sleep-stage identity color in hypnogram chart
     final span = _spanTotal(deep, light, rem, awake);
 
     return Column(

@@ -124,19 +124,19 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                       return Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withValues(alpha: 0.1),
+                          color: Colors.orange.withValues(alpha: 0.1),  // accent-allowlist: quota-reached notice -- warning framing
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline, color: Colors.orange),
+                            const Icon(Icons.info_outline, color: Colors.orange),  // accent-allowlist: quota-reached notice -- warning framing
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'You\'ve used all $used of your $used suggestions. Vote on existing features instead!',
                                 style: const TextStyle(
                                   fontSize: 13,
-                                  color: Colors.orange,
+                                  color: Colors.orange,  // accent-allowlist: quota-reached notice -- warning framing
                                 ),
                               ),
                             ),
@@ -293,7 +293,7 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).suggestFeatureYouHaveReachedThe),
-          backgroundColor: Colors.orange,
+          backgroundColor: Colors.orange,  // accent-allowlist: quota-reached snackbar -- warning framing
         ),
       );
       return;
@@ -317,7 +317,7 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).suggestFeatureFeatureSuggestionSubmittedS),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.green,  // accent-allowlist: success snackbar -- success semantic
         ),
       );
 
@@ -329,7 +329,7 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red,  // accent-allowlist: error snackbar -- error semantic
         ),
       );
     } finally {

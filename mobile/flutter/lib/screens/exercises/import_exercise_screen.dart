@@ -877,19 +877,19 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.12),
+        color: AppColors.error.withOpacity(0.12),  // accent-allowlist: error banner -- error semantic
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.error.withOpacity(0.35)),
+        border: Border.all(color: AppColors.error.withOpacity(0.35)),  // accent-allowlist: error banner -- error semantic
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 18),  // accent-allowlist: error banner -- error semantic
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
               style: const TextStyle(
-                color: AppColors.error,
+                color: AppColors.error,  // accent-allowlist: error banner -- error semantic
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -897,7 +897,7 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
           ),
           GestureDetector(
             onTap: () => setState(() => _error = null),
-            child: const Icon(Icons.close, color: AppColors.error, size: 16),
+            child: const Icon(Icons.close, color: AppColors.error, size: 16),  // accent-allowlist: error banner -- error semantic
           ),
         ],
       ),

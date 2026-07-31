@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/wrapped_data.dart';
 import '../../data/services/share_service.dart';
 import '../../utils/image_capture_utils.dart';
@@ -174,7 +175,7 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error, // accent-allowlist: error/success snackbar, semantic
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -185,7 +186,7 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success, // accent-allowlist: error/success snackbar, semantic
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -264,7 +265,7 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
                       Icon(
                         Icons.branding_watermark_rounded,
                         size: 18,
-                        color: _showWatermark ? AppColors.cyan : Colors.grey,
+                        color: _showWatermark ? context.accentColor : Colors.grey,
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -281,7 +282,7 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
                           HapticFeedback.lightImpact();
                           setState(() => _showWatermark = value);
                         },
-                        activeTrackColor: AppColors.cyan,
+                        activeTrackColor: context.accentColor,
                         activeThumbColor: Colors.white,
                       ),
                     ],
@@ -386,7 +387,7 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
       return ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.cyan,
+          backgroundColor: context.accentColor,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
@@ -419,8 +420,8 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
     return OutlinedButton(
       onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.cyan,
-        side: BorderSide(color: AppColors.cyan.withValues(alpha: 0.5)),
+        foregroundColor: context.accentColor,
+        side: BorderSide(color: context.accentColor.withValues(alpha: 0.5)),
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
@@ -432,7 +433,7 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation(context.accentColor),
               ),
             )
           : Row(

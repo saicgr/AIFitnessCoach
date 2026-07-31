@@ -60,7 +60,7 @@ class _EmailVerificationBannerState
       SnackBar(
         content: Text(messages[status] ?? messages['error']!),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: status == 'error' ? Colors.red.shade700 : null,
+        backgroundColor: status == 'error' ? Colors.red.shade700 : null, // accent-allowlist: error snackbar, semantic
       ),
     );
   }
@@ -77,7 +77,7 @@ class _EmailVerificationBannerState
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         height: show ? null : 0,
-        color: const Color(0xFF0E7490), // cyan-700 — distinct from offline orange
+        color: const Color(0xFF0E7490), // cyan-700 — distinct from offline orange // accent-allowlist: banner-type identity color, deliberately distinct from the offline banner's orange (see inline comment)
         child: show
             ? SafeArea(
                 bottom: false,

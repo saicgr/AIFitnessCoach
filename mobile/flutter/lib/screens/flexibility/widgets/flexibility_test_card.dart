@@ -133,13 +133,13 @@ class FlexibilityTestCard extends StatelessWidget {
   Color _getRatingColor(String? rating) {
     switch (rating?.toLowerCase()) {
       case 'excellent':
-        return Colors.green;
+        return Colors.green; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'good':
-        return Colors.lightGreen;
+        return Colors.lightGreen; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'fair':
-        return Colors.amber;
+        return Colors.amber; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'poor':
-        return Colors.red;
+        return Colors.red; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       default:
         return Colors.grey;
     }

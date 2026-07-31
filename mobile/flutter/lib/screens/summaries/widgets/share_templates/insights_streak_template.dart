@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Instagram-Story template: streak + consistency.
 /// Big {PERIOD} / STREAK title, oversize streak number, flame flourish,
 /// and completion/total badges. Reads maxStreak from the period's totals —
@@ -37,7 +38,7 @@ class InsightsStreakTemplate extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             Color(0xFF1C1917),
-            Color(0xFF7F1D1D),
+            Color(0xFF7F1D1D),  // accent-allowlist: error/negative state — must stay red regardless of accent
             Color(0xFF1C1917),
           ],
         ),
@@ -55,8 +56,8 @@ class InsightsStreakTemplate extends StatelessWidget {
                   children: [
                     Text(
                       periodName,
-                      style: const TextStyle(
-                        color: Color(0xFFF97316),
+                      style: TextStyle(
+                        color: context.accentColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 6,
@@ -90,7 +91,7 @@ class InsightsStreakTemplate extends StatelessWidget {
                       children: [
                         const Icon(
                           Icons.local_fire_department_rounded,
-                          color: Color(0xFFFB923C),
+                          color: Color(0xFFFB923C),  // accent-allowlist: warning severity — must stay amber regardless of accent
                           size: 72,
                         ),
                         const SizedBox(height: 8),
@@ -109,7 +110,7 @@ class InsightsStreakTemplate extends StatelessWidget {
                               ? (maxStreak == 1 ? 'DAY STREAK' : 'DAYS STREAK')
                               : 'LET\'S START ONE',
                           style: TextStyle(
-                            color: const Color(0xFFF97316)
+                            color: context.accentColor
                                 .withValues(alpha: 0.85),
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
@@ -130,7 +131,7 @@ class InsightsStreakTemplate extends StatelessWidget {
                         value: workoutsScheduled > 0
                             ? '$workoutsCompleted / $workoutsScheduled'
                             : '$workoutsCompleted',
-                        color: const Color(0xFFFBBF24),
+                        color: const Color(0xFFFBBF24),  // accent-allowlist: warning severity — must stay amber regardless of accent
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -141,7 +142,7 @@ class InsightsStreakTemplate extends StatelessWidget {
                         value: workoutsScheduled > 0
                             ? '${(workoutsCompleted / workoutsScheduled * 100).round()}%'
                             : '—',
-                        color: const Color(0xFF22C55E),
+                        color: const Color(0xFF22C55E),  // accent-allowlist: success/positive state — must stay green regardless of accent
                       ),
                     ),
                   ],
@@ -221,7 +222,7 @@ class _EmberPainter extends CustomPainter {
     final glow = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFFF97316).withValues(alpha: 0.22),
+          const Color(0xFFF97316).withValues(alpha: 0.22),  // accent-allowlist: fixed decorative template palette — ember-glow fire aesthetic (see class doc above), not tied to accent
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(
@@ -231,7 +232,7 @@ class _EmberPainter extends CustomPainter {
     canvas.drawRect(Offset.zero & size, glow);
 
     final dot = Paint()
-      ..color = const Color(0xFFFB923C).withValues(alpha: 0.25)
+      ..color = const Color(0xFFFB923C).withValues(alpha: 0.25)  // accent-allowlist: warning severity — must stay amber regardless of accent
       ..style = PaintingStyle.fill;
     const points = <Offset>[
       Offset(0.18, 0.12), Offset(0.82, 0.18), Offset(0.12, 0.32),

@@ -22,7 +22,7 @@ class QuickStatsCard extends StatelessWidget {
         icon: Icons.favorite,
         label: AppLocalizations.of(context).quickStatsCardCycleTracking,
         value: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
-        color: Colors.pink,
+        color: Colors.pink,  // accent-allowlist: quick-stat legend colour -- cycle tracking
       ));
     }
 
@@ -31,7 +31,7 @@ class QuickStatsCard extends StatelessWidget {
         icon: Icons.trending_up,
         label: AppLocalizations.of(context).quickStatsCardTOptimization,
         value: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
-        color: Colors.blue,
+        color: Colors.blue,  // accent-allowlist: quick-stat legend colour -- T optimization
       ));
     }
 
@@ -40,7 +40,7 @@ class QuickStatsCard extends StatelessWidget {
         icon: Icons.fitness_center,
         label: AppLocalizations.of(context).quickStatsCardCycleSyncedWorkouts,
         value: AppLocalizations.of(context).quickStatsCardOn,
-        color: Colors.green,
+        color: Colors.green,  // accent-allowlist: quick-stat legend colour -- cycle-synced workouts
       ));
     }
 
@@ -49,7 +49,7 @@ class QuickStatsCard extends StatelessWidget {
         icon: Icons.restaurant,
         label: AppLocalizations.of(context).quickStatsCardCycleSyncedNutrition,
         value: AppLocalizations.of(context).quickStatsCardOn,
-        color: Colors.orange,
+        color: Colors.orange,  // accent-allowlist: quick-stat legend colour -- cycle-synced nutrition
       ));
     }
 
@@ -58,7 +58,7 @@ class QuickStatsCard extends StatelessWidget {
         icon: Icons.health_and_safety,
         label: AppLocalizations.of(context).quickStatsCardPcosSupport,
         value: AppLocalizations.of(context).quickStatsCardEnabled,
-        color: Colors.purple,
+        color: Colors.purple,  // accent-allowlist: quick-stat legend colour -- PCOS support
       ));
     }
 

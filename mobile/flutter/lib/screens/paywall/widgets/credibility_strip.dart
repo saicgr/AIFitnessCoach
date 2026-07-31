@@ -7,7 +7,7 @@ import '../../../widgets/citation_link.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Standard gold used for rating stars across app stores.
-const Color _kStarGold = Color(0xFFF5A623);
+const Color _kStarGold = Color(0xFFF5A623); // accent-allowlist: universal app-store star-rating gold, not the app accent
 
 /// Trust / credibility block for the paywall surfaces.
 ///

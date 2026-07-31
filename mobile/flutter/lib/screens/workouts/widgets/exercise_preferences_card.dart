@@ -19,6 +19,7 @@ import '../../../widgets/weight_increments_sheet.dart';
 import '../../settings/pages/workout_ui_mode_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Expandable card showing exercise preferences in the Workouts screen
 class ExercisePreferencesCard extends ConsumerStatefulWidget {
   /// Optional margin override. Defaults to horizontal 16px.
@@ -397,42 +398,42 @@ class _ExercisePreferencesCardState
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    const helpItems = <Map<String, dynamic>>[
+    final helpItems = <Map<String, dynamic>>[
       {
         'icon': Icons.favorite,
         'title': 'Favorite Exercises',
         'description': 'Exercises you enjoy. The AI gives these a priority boost (2.5x) so they appear more often in your workouts — but they can still be rotated out for variety.',
-        'color': AppColors.error,
+        'color': AppColors.error,  // accent-allowlist: error/destructive -- must stay red
       },
       {
         'icon': Icons.lock,
         'title': 'Staple Exercises',
         'description': 'Core lifts that are GUARANTEED in every workout for their muscle group. They never rotate out regardless of your variety setting. Scoped to specific gym profiles for equipment compatibility.',
-        'color': AppColors.purple,
+        'color': context.accentColor,
       },
       {
         'icon': Icons.playlist_add,
         'title': 'Exercise Queue',
         'description': 'One-time requests. Queued exercises are included in your next workout, then automatically removed from the queue. Great for trying a new exercise.',
-        'color': AppColors.cyan,
+        'color': context.accentColor,
       },
       {
         'icon': Icons.block,
         'title': 'Exercises to Avoid',
         'description': 'Blacklisted exercises the AI will NEVER include in any workout. Use for exercises that cause pain, discomfort, or you simply dislike.',
-        'color': AppColors.error,
+        'color': AppColors.error,  // accent-allowlist: error/destructive -- must stay red
       },
       {
         'icon': Icons.accessibility_new,
         'title': 'Muscles to Avoid',
         'description': 'Muscle groups to skip entirely ("avoid") or reduce volume for ("reduce"). Useful for injuries or letting a muscle group recover.',
-        'color': AppColors.orange,
+        'color': context.accentColor,
       },
       {
         'icon': Icons.tune,
         'title': 'Weight Increments',
         'description': 'Customize the +/- weight step for each equipment type. For example, set barbell increments to 2.5 kg or dumbbell increments to 1 kg.',
-        'color': AppColors.cyan,
+        'color': context.accentColor,
       },
     ];
 
@@ -456,12 +457,12 @@ class _ExercisePreferencesCardState
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.2),
+                      color: context.accentColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.lightbulb_outline_rounded,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 20,
                     ),
                   ),
@@ -712,7 +713,7 @@ class _ExercisePreferencesCardState
     bool isLast = false,
   }) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = context.accentColor;
 
     return Column(
       children: [

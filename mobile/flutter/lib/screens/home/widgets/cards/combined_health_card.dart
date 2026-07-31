@@ -49,12 +49,12 @@ class CombinedHealthCard extends ConsumerWidget {
       caption = '${recovery.label} recovery'
           '${recovery.restingHR != null ? ' · resting HR ${recovery.restingHR}' : ''}';
       accent = recovery.score >= 80
-          ? AppColors.success
+          ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
           : recovery.score >= 60
               ? AppColors.teal
               : recovery.score >= 40
-                  ? AppColors.warning
-                  : AppColors.error;
+                  ? AppColors.warning  // accent-allowlist: warning severity
+                  : AppColors.error;  // accent-allowlist: error/destructive -- must stay red
     } else {
       caption = 'Steps, heart rate, sleep and recovery';
       accent = AppColors.teal;

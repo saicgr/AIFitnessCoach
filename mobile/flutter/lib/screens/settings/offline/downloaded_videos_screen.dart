@@ -8,6 +8,7 @@ import '../../../data/services/video_cache_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Screen for managing downloaded exercise videos
 class DownloadedVideosScreen extends ConsumerWidget {
   const DownloadedVideosScreen({super.key});
@@ -68,7 +69,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
           children: [
             Icon(
               Icons.warning_amber_rounded,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -103,13 +104,13 @@ class DownloadedVideosScreen extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(AppLocalizations.of(context).downloadedVideosAllDownloadsCleared),
-                  backgroundColor: AppColors.success,
+                  backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                 ),
               );
             },
             child: Text(
               AppLocalizations.of(context).foodSearchBarClearAll,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],
@@ -123,7 +124,7 @@ class DownloadedVideosScreen extends ConsumerWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(AppLocalizations.of(context)!.downloadedVideosScreenDeleted(video.exerciseName)),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
       ),
     );
   }
@@ -162,12 +163,12 @@ class _StorageInfoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.folder,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 24,
                 ),
               ),
@@ -198,7 +199,7 @@ class _StorageInfoCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.1),
+                  color: context.accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -206,7 +207,7 @@ class _StorageInfoCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ),
@@ -218,9 +219,9 @@ class _StorageInfoCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: usagePercent.clamp(0.0, 1.0),
-              backgroundColor: AppColors.cyan.withOpacity(0.1),
+              backgroundColor: context.accentColor.withOpacity(0.1),
               valueColor: AlwaysStoppedAnimation<Color>(
-                usagePercent > 0.9 ? AppColors.error : AppColors.cyan,
+                usagePercent > 0.9 ? AppColors.error : context.accentColor,  // accent-allowlist: error/destructive - must stay red
               ),
               minHeight: 6,
             ),
@@ -232,7 +233,7 @@ class _StorageInfoCard extends StatelessWidget {
                 : 'Videos are cached for offline viewing.',
             style: TextStyle(
               fontSize: 12,
-              color: usagePercent > 0.9 ? AppColors.error : textMuted,
+              color: usagePercent > 0.9 ? AppColors.error : textMuted,  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],
@@ -304,7 +305,7 @@ class _EmptyState extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -382,7 +383,7 @@ class _HowToCard extends StatelessWidget {
           width: 22,
           height: 22,
           decoration: BoxDecoration(
-            color: AppColors.cyan.withOpacity(0.18),
+            color: AppColors.cyan.withOpacity(0.18),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -391,7 +392,7 @@ class _HowToCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: AppColors.cyan,
+              color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
             ),
           ),
         ),
@@ -462,12 +463,12 @@ class _CachedVideoTile extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.purple.withOpacity(0.15),
+            color: context.accentColor.withOpacity(0.15),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             Icons.play_circle_filled,
-            color: AppColors.purple,
+            color: context.accentColor,
             size: 28,
           ),
         ),
@@ -490,7 +491,7 @@ class _CachedVideoTile extends StatelessWidget {
         trailing: IconButton(
           icon: Icon(
             Icons.delete_outline,
-            color: AppColors.error.withOpacity(0.8),
+            color: AppColors.error.withOpacity(0.8),  // accent-allowlist: error/destructive - must stay red
           ),
           onPressed: onDelete,
           tooltip: AppLocalizations.of(context).buttonDelete,

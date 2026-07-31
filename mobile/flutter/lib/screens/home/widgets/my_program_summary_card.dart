@@ -6,6 +6,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A compact, always-visible card showing the user's workout program settings.
 /// Displays workout days, experience level, and primary goal with tap-to-edit.
 class MyProgramSummaryCard extends ConsumerWidget {
@@ -43,7 +44,7 @@ class MyProgramSummaryCard extends ConsumerWidget {
             color: cardBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.purple.withValues(alpha: 0.3),
+              color: context.accentColor.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -53,12 +54,12 @@ class MyProgramSummaryCard extends ConsumerWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
                   Icons.tune_rounded,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   size: 20,
                 ),
               ),
@@ -92,7 +93,7 @@ class MyProgramSummaryCard extends ConsumerWidget {
               // Edit arrow
               Icon(
                 Icons.chevron_right,
-                color: AppColors.purple,
+                color: context.accentColor,
                 size: 20,
               ),
             ],

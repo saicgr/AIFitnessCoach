@@ -42,10 +42,10 @@ class _CheckInSheetState extends State<_CheckInSheet> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final painColor = _painLevel <= 3
-        ? AppColors.success
+        ? AppColors.success // accent-allowlist: pain-level severity scale
         : _painLevel <= 6
-            ? AppColors.warning
-            : AppColors.error;
+            ? AppColors.warning // accent-allowlist: pain-level severity scale
+            : AppColors.error; // accent-allowlist: pain-level severity scale
 
     return Padding(
       padding: EdgeInsets.only(
@@ -138,7 +138,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.coral, width: 2),
+                    borderSide: BorderSide(color: context.accentColor, width: 2),
                   ),
                 ),
               ),
@@ -162,7 +162,7 @@ class _CheckInSheetState extends State<_CheckInSheet> {
                           }
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.coral,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

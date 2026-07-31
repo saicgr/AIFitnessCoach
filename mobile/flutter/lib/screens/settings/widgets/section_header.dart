@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A styled section header for the settings screen.
 ///
 /// Displays a muted, uppercase label to group related settings.
@@ -65,14 +66,14 @@ class SectionHeader extends StatelessWidget {
                       Icon(
                         Icons.help_outline_rounded,
                         size: 16,
-                        color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                        color: isDark ? context.accentColor : AppColorsLight.cyan,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         AppLocalizations.of(context).sectionHeaderWhatSThis,
                         style: TextStyle(
                           fontSize: 11,
-                          color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                          color: isDark ? context.accentColor : AppColorsLight.cyan,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -126,12 +127,12 @@ class SectionHeader extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.2),
+                      color: context.accentColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.lightbulb_outline_rounded,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 20,
                     ),
                   ),
@@ -164,7 +165,7 @@ class SectionHeader extends StatelessWidget {
                   final icon = item['icon'] as IconData? ?? Icons.info_outline;
                   final itemTitle = item['title'] as String? ?? '';
                   final description = item['description'] as String? ?? '';
-                  final color = item['color'] as Color? ?? AppColors.cyan;
+                  final color = item['color'] as Color? ?? context.accentColor;
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),

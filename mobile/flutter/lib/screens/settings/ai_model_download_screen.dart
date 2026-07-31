@@ -8,6 +8,7 @@ import '../../services/device_capability_service.dart';
 import '../../services/model_download_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Dedicated screen for managing on-device AI model downloads.
 ///
@@ -123,7 +124,7 @@ class _AiModelDownloadScreenState
                       )
                     else if (_tokenSaved)
                       const Icon(Icons.check_circle_rounded,
-                          color: Colors.green, size: 20),
+                          color: Colors.green, size: 20),  // accent-allowlist: success/positive state - must stay green regardless of accent
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -136,7 +137,7 @@ class _AiModelDownloadScreenState
                   Row(
                     children: [
                       const Icon(Icons.vpn_key_rounded,
-                          color: Colors.green, size: 16),
+                          color: Colors.green, size: 16),  // accent-allowlist: success/positive state - must stay green regardless of accent
                       const SizedBox(width: 8),
                       Text(AppLocalizations.of(context).aiModelDownloadTokenSavedSecurely,
                           style: TextStyle(
@@ -147,7 +148,7 @@ class _AiModelDownloadScreenState
                       TextButton(
                         onPressed: _clearToken,
                         child: Text(AppLocalizations.of(context).aiModelDownloadRemove,
-                            style: TextStyle(color: Colors.red, fontSize: 13)),
+                            style: TextStyle(color: Colors.red, fontSize: 13)),  // accent-allowlist: error/destructive - must stay red
                       ),
                     ],
                   ),
@@ -189,7 +190,7 @@ class _AiModelDownloadScreenState
                         child: ElevatedButton(
                           onPressed: _saveToken,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.orange,
+                            backgroundColor: context.accentColor,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -212,9 +213,9 @@ class _AiModelDownloadScreenState
                     AppLocalizations.of(context).aiModelDownloadGetYourTokenAt,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.blue.shade400,
+                      color: Colors.blue.shade400,  // accent-allowlist: informational state - must stay blue regardless of accent
                       decoration: TextDecoration.underline,
-                      decorationColor: Colors.blue.shade400,
+                      decorationColor: Colors.blue.shade400,  // accent-allowlist: informational state - must stay blue regardless of accent
                     ),
                   ),
                 ),
@@ -290,15 +291,15 @@ class _AiModelDownloadScreenState
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.amber.withOpacity(0.1),
+              color: Colors.amber.withOpacity(0.1),  // accent-allowlist: warning severity - must stay amber regardless of accent
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              border: Border.all(color: Colors.amber.withOpacity(0.3)),  // accent-allowlist: warning severity - must stay amber regardless of accent
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.battery_alert_rounded,
-                    color: Colors.amber, size: 20),
+                    color: Colors.amber, size: 20),  // accent-allowlist: warning severity - must stay amber regardless of accent
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
@@ -396,8 +397,8 @@ class _AiModelDownloadScreenState
                         AppLocalizations.of(context).aiModelDownloadDeleteModelFree(downloadState.model?.formattedSize ?? ''),
                         style: const TextStyle(fontSize: 13)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.15),
-                      foregroundColor: Colors.red,
+                      backgroundColor: Colors.red.withOpacity(0.15),  // accent-allowlist: error/destructive - must stay red
+                      foregroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -419,7 +420,7 @@ class _AiModelDownloadScreenState
                 label: Text(
                     AppLocalizations.of(context).aiModelDownloadDownloadModel(downloadState.model?.displayName ?? AppLocalizations.of(context).aiModelDownloadSelectAModel)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -433,7 +434,7 @@ class _AiModelDownloadScreenState
             const SizedBox(height: 8),
             Text(
               downloadState.error!,
-              style: const TextStyle(color: Colors.red, fontSize: 12),
+              style: const TextStyle(color: Colors.red, fontSize: 12),  // accent-allowlist: error/destructive - must stay red
             ),
           ],
         ],
@@ -542,7 +543,7 @@ class _CompatibilityRow extends StatelessWidget {
       children: [
         Icon(
           isGood ? Icons.check_circle_rounded : Icons.warning_rounded,
-          color: isGood ? Colors.green : Colors.orange,
+          color: isGood ? Colors.green : Colors.orange,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
           size: 18,
         ),
         const SizedBox(width: 8),
@@ -638,13 +639,13 @@ class _ModelOptionTile extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.15),
+                              color: Colors.blue.withOpacity(0.15),  // accent-allowlist: informational state - must stay blue regardless of accent
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(AppLocalizations.of(context).aiModelDownloadImages,
                                 style: const TextStyle(
                                     fontSize: 9,
-                                    color: Colors.blue,
+                                    color: Colors.blue,  // accent-allowlist: informational state - must stay blue regardless of accent
                                     fontWeight: FontWeight.w600)),
                           ),
                         ],
@@ -658,25 +659,25 @@ class _ModelOptionTile extends StatelessWidget {
                       children: [
                         Icon(Icons.memory_rounded,
                             size: 12,
-                            color: isEnabled ? textMuted : Colors.orange.shade700),
+                            color: isEnabled ? textMuted : Colors.orange.shade700),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                         const SizedBox(width: 4),
                         Text(
                           AppLocalizations.of(context).aiModelDownloadRequiresRam(ramLabel),
                           style: TextStyle(
                             fontSize: 11,
-                            color: isEnabled ? textMuted : Colors.orange.shade700,
+                            color: isEnabled ? textMuted : Colors.orange.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                           ),
                         ),
                         const SizedBox(width: 12),
                         Icon(Icons.storage_rounded,
                             size: 12,
-                            color: isEnabled ? textMuted : Colors.orange.shade700),
+                            color: isEnabled ? textMuted : Colors.orange.shade700),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                         const SizedBox(width: 4),
                         Text(
                           AppLocalizations.of(context).aiModelDownloadSizeStorage(size),
                           style: TextStyle(
                             fontSize: 11,
-                            color: isEnabled ? textMuted : Colors.orange.shade700,
+                            color: isEnabled ? textMuted : Colors.orange.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                           ),
                         ),
                       ],
@@ -688,7 +689,7 @@ class _ModelOptionTile extends StatelessWidget {
                             style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.orange.shade700)),
+                                color: Colors.orange.shade700)),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                       ),
                   ],
                 ),
@@ -718,19 +719,19 @@ class _BadgeChip extends StatelessWidget {
     final String displayLabel;
     switch (label) {
       case 'Recommended':
-        color = Colors.green;
+        color = Colors.green;  // accent-allowlist: success/positive state - must stay green regardless of accent
         displayLabel = l10n.aiModelDownloadRecommended;
         break;
       case 'Multimodal':
-        color = Colors.blue;
+        color = Colors.blue;  // accent-allowlist: informational state - must stay blue regardless of accent
         displayLabel = l10n.aiModelDownloadMultimodal;
         break;
       case 'Best Quality':
-        color = Colors.purple;
+        color = Colors.purple;  // accent-allowlist: categorical model-quality badge colour (Recommended/Multimodal/Best Quality/Search each need a distinct colour)
         displayLabel = l10n.aiModelDownloadBestQuality;
         break;
       case 'Search':
-        color = Colors.teal;
+        color = Colors.teal;  // accent-allowlist: categorical model-quality badge colour (Recommended/Multimodal/Best Quality/Search each need a distinct colour)
         displayLabel = l10n.aiModelDownloadSearch;
         break;
       default:

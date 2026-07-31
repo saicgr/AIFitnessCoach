@@ -254,7 +254,7 @@ class _ProgressCenter extends StatelessWidget {
 
     if (errorMessage != null) {
       icon = Icons.warning_amber_rounded;
-      tint = Colors.orange;
+      tint = Colors.orange;  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
       title = 'Network hiccup';
       detail = 'Retrying — the import is still running on the server.';
     }
@@ -286,13 +286,13 @@ class _ProgressCenter extends StatelessWidget {
         break;
       case WorkoutImportJobStatus.completed:
         icon = Icons.check_circle_rounded;
-        tint = Colors.green.shade600;
+        tint = Colors.green.shade600;  // accent-allowlist: success/positive state - must stay green regardless of accent
         title = 'Import complete!';
         detail = 'Opening summary…';
         break;
       case WorkoutImportJobStatus.failed:
         icon = Icons.error_outline_rounded;
-        tint = Colors.red.shade500;
+        tint = Colors.red.shade500;  // accent-allowlist: error/destructive - must stay red
         title = 'Import failed';
         detail = job?.errorMessage ?? 'An unexpected error stopped the import.';
         break;

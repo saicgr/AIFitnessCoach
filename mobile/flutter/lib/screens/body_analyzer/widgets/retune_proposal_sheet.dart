@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/body_analyzer.dart';
 import '../../../data/repositories/body_analyzer_repository.dart';
 
@@ -122,7 +123,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.auto_awesome, color: Color(0xFFB24BF3)),
+                  Icon(Icons.auto_awesome, color: context.accentColor),
                   const SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context).retuneProposalRetuneProposal,
@@ -151,7 +152,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                   spacing: 6,
                   runSpacing: 6,
                   children: priority
-                      .map((m) => _chip(m, const Color(0xFFB24BF3), isDark))
+                      .map((m) => _chip(m, context.accentColor, isDark))
                       .toList(),
                 ),
                 const SizedBox(height: 16),
@@ -165,7 +166,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                   children: mfp.entries
                       .map((e) => _chip(
                             '${e.key} ${e.value}',
-                            const Color(0xFF2ECC71),
+                            context.accentColor,
                             isDark,
                           ))
                       .toList(),
@@ -187,7 +188,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                   children: postureTags
                       .map((t) => _chip(
                             t.replaceAll('_', ' '),
-                            const Color(0xFFF5A623),
+                            const Color(0xFFF5A623),  // accent-allowlist: posture-issue warning framing, matches PostureFindingsCard convention
                             isDark,
                           ))
                       .toList(),
@@ -226,7 +227,7 @@ class _RetuneProposalSheetState extends ConsumerState<RetuneProposalSheet> {
                           : const Icon(Icons.check_rounded, size: 18),
                       label: Text(_applying ? AppLocalizations.of(context).retuneProposalApplying : AppLocalizations.of(context).retuneProposalApplyChanges),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFB24BF3),
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(

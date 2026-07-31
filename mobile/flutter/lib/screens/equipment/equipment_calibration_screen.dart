@@ -115,7 +115,7 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),  // accent-allowlist: destructive remove action -- error semantic
             child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
@@ -674,7 +674,7 @@ class _CalibrationEditorSheetState
                 const SizedBox(height: 12),
                 Text(
                   _error!,
-                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 12),  // accent-allowlist: error text -- error semantic
                 ),
               ],
               const SizedBox(height: 20),

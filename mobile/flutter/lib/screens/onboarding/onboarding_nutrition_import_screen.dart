@@ -67,7 +67,7 @@ const _kOnboardingSources = <_OnboardingImportSource>[
 class _OnboardingNutritionImportScreenState
     extends ConsumerState<OnboardingNutritionImportScreen> {
   static const String _nextRoute = '/permissions-primer';
-  static const Color _accent = AppColors.purple; // matches the HC step accent
+  static const Color _accent = AppColors.purple; // matches the HC step accent  // accent-allowlist: no BuildContext available at this site (static field initializer) - see accent rules edge case
 
   bool _advancing = false;
 

@@ -1354,10 +1354,10 @@ class _ActivityBanner extends StatelessWidget {
         );
       case SourceImportPhase.success:
         return _shell(
-          border: AppColors.success.withValues(alpha: 0.4),
-          fill: AppColors.success.withValues(alpha: 0.1),
+          border: AppColors.success.withValues(alpha: 0.4),  // accent-allowlist: success/positive state — must stay green regardless of accent
+          fill: AppColors.success.withValues(alpha: 0.1),  // accent-allowlist: success/positive state — must stay green regardless of accent
           leading: const Icon(Icons.check_circle_rounded,
-              color: AppColors.success, size: 22),
+              color: AppColors.success, size: 22),  // accent-allowlist: success/positive state — must stay green regardless of accent
           title: '${activity.sourceLabel} import complete',
           body: activity.resultLines.isEmpty
               ? 'Nothing new to import.'
@@ -1370,10 +1370,10 @@ class _ActivityBanner extends StatelessWidget {
         );
       case SourceImportPhase.error:
         return _shell(
-          border: AppColors.error.withValues(alpha: 0.4),
-          fill: AppColors.error.withValues(alpha: 0.1),
+          border: AppColors.error.withValues(alpha: 0.4),  // accent-allowlist: error/destructive state — must stay red regardless of accent
+          fill: AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error/destructive state — must stay red regardless of accent
           leading: const Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 22),
+              color: AppColors.error, size: 22),  // accent-allowlist: error/destructive state — must stay red regardless of accent
           title: '${activity.sourceLabel} import failed',
           body: activity.message,
           trailing: Row(
@@ -1706,14 +1706,14 @@ class _ImportsRowCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.error_outline, size: 14, color: AppColors.error),
+                        const Icon(Icons.error_outline, size: 14, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             row.errorMessage ?? AppLocalizations.of(context).importsRowImportFailed,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.error),
+                            style: const TextStyle(fontSize: 12, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
                           ),
                         ),
                         TextButton(

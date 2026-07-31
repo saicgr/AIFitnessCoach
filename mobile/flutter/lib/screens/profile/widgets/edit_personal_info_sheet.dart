@@ -179,7 +179,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                 ),
                 if (_currentPhotoUrl != null || _selectedPhotoFile != null)
                   ListTile(
-                    leading: Icon(Icons.delete, color: AppColors.error),
+                    leading: Icon(Icons.delete, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
                     title: Text(AppLocalizations.of(context).editPersonalInfoRemovePhoto),
                     onTap: () {
                       Navigator.pop(context);

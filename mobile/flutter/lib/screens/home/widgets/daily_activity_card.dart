@@ -6,6 +6,7 @@ import '../../../data/services/health_service.dart';
 import '../../../widgets/health_connect_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 class DailyActivityCard extends ConsumerStatefulWidget {
   const DailyActivityCard({super.key});
 
@@ -68,12 +69,12 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.directions_run,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     size: 20,
                   ),
                 ),
@@ -106,7 +107,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   )
                 else
@@ -130,7 +131,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                     icon: Icons.directions_walk,
                     value: _formatNumber(activity?.steps ?? 0),
                     label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
                   ),
@@ -149,7 +150,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                     icon: Icons.local_fire_department,
                     value: _formatNumber(activity?.caloriesBurned.toInt() ?? 0),
                     label: AppLocalizations.of(context).dailyActivityCardActiveCal,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     textPrimary: textPrimary,
                     textMuted: textMuted,
                   ),
@@ -173,7 +174,7 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                       icon: Icons.favorite,
                       value: '${activity!.restingHeartRate}',
                       label: AppLocalizations.of(context).todaysHealthCardRestingHr,
-                      color: AppColors.error,
+                      color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                       textPrimary: textPrimary,
                       textMuted: textMuted,
                     ),
@@ -289,7 +290,7 @@ class _StepsProgressBar extends StatelessWidget {
             minHeight: 6,
             backgroundColor: textMuted.withValues(alpha: 0.2),
             valueColor: AlwaysStoppedAnimation(
-              progress >= 1.0 ? AppColors.success : AppColors.cyan,
+              progress >= 1.0 ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state -- must stay green regardless of accent
             ),
           ),
         ),
@@ -345,12 +346,12 @@ class _NotConnectedCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Platform.isAndroid ? Icons.watch : Icons.favorite,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   size: 24,
                 ),
               ),

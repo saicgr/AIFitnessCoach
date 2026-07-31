@@ -36,7 +36,7 @@ class _StreakTimeframeSheetState extends ConsumerState<StreakTimeframeSheet> {
   static const _labels = {'week': 'Week', 'month': 'Month', 'all': 'All time'};
   String _selected = 'week';
 
-  static const Color _ice = Color(0xFF4FC3F7);
+  static const Color _ice = Color(0xFF4FC3F7); // accent-allowlist: streak stat identity (current/longest/active) + freeze/fire theme, matches streak_saved_dialog.dart convention
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +138,7 @@ class _StreakTimeframeSheetState extends ConsumerState<StreakTimeframeSheet> {
               child: _StatTile(
                 value: '${data.currentStreak}',
                 label: 'Current',
-                accent: const Color(0xFFFF7043),
+                accent: const Color(0xFFFF7043), // accent-allowlist: streak stat identity (current/longest/active) + freeze/fire theme, matches streak_saved_dialog.dart convention
                 c: c,
               ),
             ),
@@ -147,7 +147,7 @@ class _StreakTimeframeSheetState extends ConsumerState<StreakTimeframeSheet> {
               child: _StatTile(
                 value: '${data.longestStreak}',
                 label: 'Longest',
-                accent: const Color(0xFFFFD700),
+                accent: const Color(0xFFFFD700), // accent-allowlist: streak stat identity (current/longest/active) + freeze/fire theme, matches streak_saved_dialog.dart convention
                 c: c,
               ),
             ),
@@ -156,7 +156,7 @@ class _StreakTimeframeSheetState extends ConsumerState<StreakTimeframeSheet> {
               child: _StatTile(
                 value: '${data.activeDays}/${data.totalDays}',
                 label: 'Active',
-                accent: const Color(0xFF66BB6A),
+                accent: const Color(0xFF66BB6A), // accent-allowlist: streak stat identity (current/longest/active) + freeze/fire theme, matches streak_saved_dialog.dart convention
                 c: c,
               ),
             ),
@@ -367,9 +367,9 @@ class _DayGrid extends StatelessWidget {
         Color fill;
         Color border = Colors.transparent;
         if (d.frozen) {
-          fill = const Color(0xFF4FC3F7).withValues(alpha: 0.35);
+          fill = const Color(0xFF4FC3F7).withValues(alpha: 0.35); // accent-allowlist: streak stat identity (current/longest/active) + freeze/fire theme, matches streak_saved_dialog.dart convention
         } else if (d.active) {
-          fill = const Color(0xFFFF7043);
+          fill = const Color(0xFFFF7043); // accent-allowlist: streak stat identity (current/longest/active) + freeze/fire theme, matches streak_saved_dialog.dart convention
         } else {
           fill = c.textSecondary.withValues(alpha: 0.12);
         }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Instagram-Story template: period-level summary (1W / 1M / 3M / 6M / 1Y).
 /// 2x2 grid of big numbers with previous-period deltas.
 ///
@@ -84,17 +85,17 @@ class InsightsSummaryTemplate extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00D9FF).withValues(alpha: 0.15),
+                        color: const Color(0xFF00D9FF).withValues(alpha: 0.15),  // accent-allowlist: fixed decorative template accent (summary-card cyan) — not tied to accent
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color:
-                              const Color(0xFF00D9FF).withValues(alpha: 0.5),
+                              const Color(0xFF00D9FF).withValues(alpha: 0.5),  // accent-allowlist: fixed decorative template accent (summary-card cyan) — not tied to accent
                         ),
                       ),
                       child: Text(
                         periodLabel.toUpperCase(),
                         style: const TextStyle(
-                          color: Color(0xFF00D9FF),
+                          color: Color(0xFF00D9FF),  // accent-allowlist: fixed decorative template accent (summary-card cyan) — not tied to accent
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 2,
@@ -136,7 +137,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                   label: AppLocalizations.of(context).weeklyRecapTemplateWorkouts,
                   value: '$workoutsCompleted',
                   delta: _calcDelta(workoutsCompleted, prevWorkouts),
-                  color: const Color(0xFF00D9FF),
+                  color: const Color(0xFF00D9FF),  // accent-allowlist: fixed decorative template accent (summary-card cyan) — not tied to accent
                 ),
                 const SizedBox(height: 10),
                 _BigStatTile(
@@ -144,7 +145,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                   label: 'TIME',
                   value: _fmtTime(totalTimeMinutes),
                   delta: _calcDelta(totalTimeMinutes, prevTimeMinutes),
-                  color: const Color(0xFF60A5FA),
+                  color: const Color(0xFF60A5FA),  // accent-allowlist: informational state — must stay blue regardless of accent
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -154,7 +155,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                         icon: Icons.local_fire_department_rounded,
                         label: AppLocalizations.of(context).retro80sTemplateCalories,
                         value: _fmtCalories(totalCalories),
-                        color: const Color(0xFFF97316),
+                        color: context.accentColor,
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -163,7 +164,7 @@ class InsightsSummaryTemplate extends StatelessWidget {
                         icon: Icons.emoji_events_rounded,
                         label: AppLocalizations.of(context).weeklyWrappedPrs,
                         value: '$totalPrs',
-                        color: const Color(0xFFFBBF24),
+                        color: const Color(0xFFFBBF24),  // accent-allowlist: warning severity — must stay amber regardless of accent
                       ),
                     ),
                   ],
@@ -324,7 +325,7 @@ class _DeltaPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444);
+        isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444);  // accent-allowlist: success/positive state — must stay green regardless of accent; error/negative state — must stay red regardless of accent
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

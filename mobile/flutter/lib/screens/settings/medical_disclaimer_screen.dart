@@ -5,6 +5,7 @@ import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Screen displaying the medical disclaimer for AI-generated fitness content.
 class MedicalDisclaimerScreen extends StatelessWidget {
   const MedicalDisclaimerScreen({super.key});
@@ -34,10 +35,10 @@ class MedicalDisclaimerScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
+                color: AppColors.warning.withValues(alpha: 0.1),  // accent-allowlist: warning severity - must stay amber regardless of accent
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.warning.withValues(alpha: 0.3),
+                  color: AppColors.warning.withValues(alpha: 0.3),  // accent-allowlist: warning severity - must stay amber regardless of accent
                 ),
               ),
               child: Column(
@@ -45,12 +46,12 @@ class MedicalDisclaimerScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.15),
+                      color: AppColors.warning.withValues(alpha: 0.15),  // accent-allowlist: warning severity - must stay amber regardless of accent
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(
                       Icons.medical_information_outlined,
-                      color: AppColors.warning,
+                      color: AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                       size: 36,
                     ),
                   ),
@@ -82,7 +83,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // Not Medical Advice
             _buildDisclaimerCard(
               icon: Icons.info_outlined,
-              iconColor: AppColors.info,
+              iconColor: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
               title: AppLocalizations.of(context).medicalDisclaimerNotMedicalAdvice,
               content: AppLocalizations.of(context)!.medicalDisclaimerScreenProvidesAiGeneratedFitness(Branding.appName),
               elevated: elevated,
@@ -96,7 +97,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // Consult Your Doctor
             _buildDisclaimerCard(
               icon: Icons.local_hospital_outlined,
-              iconColor: AppColors.error,
+              iconColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               title: AppLocalizations.of(context).medicalDisclaimerConsultYourDoctor,
               content: AppLocalizations.of(context).medicalDisclaimerAlwaysSeekTheAdvice,
               elevated: elevated,
@@ -110,7 +111,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // Listen to Your Body
             _buildDisclaimerCard(
               icon: Icons.monitor_heart_outlined,
-              iconColor: AppColors.success,
+              iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
               title: AppLocalizations.of(context).medicalDisclaimerListenToYourBody,
               content: AppLocalizations.of(context).medicalDisclaimerStopExercisingImmediatelyIf,
               elevated: elevated,
@@ -124,7 +125,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // AI Limitations
             _buildDisclaimerCard(
               icon: Icons.psychology_outlined,
-              iconColor: AppColors.purple,
+              iconColor: context.accentColor,
               title: AppLocalizations.of(context).medicalDisclaimerAiRecommendations,
               content: AppLocalizations.of(context).medicalDisclaimerWorkoutRecommendationsAreGe,
               elevated: elevated,
@@ -138,7 +139,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // Assumption of Risk
             _buildDisclaimerCard(
               icon: Icons.warning_amber_outlined,
-              iconColor: AppColors.warning,
+              iconColor: AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
               title: AppLocalizations.of(context).medicalDisclaimerAssumptionOfRisk,
               content: AppLocalizations.of(context)!.medicalDisclaimerScreenPhysicalExerciseInvolvesInherent(Branding.appName),
               elevated: elevated,

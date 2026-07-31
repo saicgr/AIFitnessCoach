@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// A prominent card for quick access to the exercise library
 class LibraryQuickAccessCard extends StatelessWidget {
   /// Whether the current theme is dark
@@ -32,14 +33,14 @@ class LibraryQuickAccessCard extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.purple.withOpacity(0.3),
+              color: context.accentColor.withOpacity(0.3),
             ),
             gradient: LinearGradient(
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
               colors: [
                 elevatedColor,
-                AppColors.purple.withOpacity(0.05),
+                context.accentColor.withOpacity(0.05),
               ],
             ),
           ),
@@ -49,8 +50,8 @@ class LibraryQuickAccessCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.purple, AppColors.cyan],
+                  gradient: LinearGradient(
+                    colors: [context.accentColor, context.accentColor.withValues(alpha: 0.7)],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -83,10 +84,10 @@ class LibraryQuickAccessCard extends StatelessWidget {
               ),
 
               // Arrow
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios,
                 size: 18,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
             ],
           ),

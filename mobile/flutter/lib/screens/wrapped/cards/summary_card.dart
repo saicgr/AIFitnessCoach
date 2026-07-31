@@ -53,7 +53,7 @@ class WrappedSummaryCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFA855F7).withValues(alpha: 0.08),
+                        const Color(0xFFA855F7).withValues(alpha: 0.08), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
                         Colors.transparent,
                       ],
                     ),
@@ -74,7 +74,7 @@ class WrappedSummaryCard extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).wrappedSummaryYourMonthInReview.toUpperCase(),
                     style: ZType.lbl(14,
-                        color: const Color(0xFFC084FC),
+                        color: const Color(0xFFC084FC), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
                         weight: FontWeight.w700,
                         letterSpacing: 4),
                   ),
@@ -108,7 +108,7 @@ class WrappedSummaryCard extends StatelessWidget {
                         children: [
                           Icon(
                             Icons.format_quote,
-                            color: const Color(0xFFC084FC)
+                            color: const Color(0xFFC084FC) // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
                                 .withValues(alpha: 0.5),
                             size: 24,
                           ),
@@ -159,37 +159,37 @@ class WrappedSummaryCard extends StatelessWidget {
         icon: Icons.fitness_center,
         value: '${data.totalWorkouts}',
         label: l10n.wrappedSummaryStatWorkouts,
-        color: const Color(0xFFA855F7),
+        color: const Color(0xFFA855F7), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
       ),
       _StatItem(
         icon: Icons.scale,
         value: NumberFormat.compact().format(data.totalVolumeLbs),
         label: l10n.wrappedSummaryStatVolumeLbs,
-        color: const Color(0xFF3B82F6),
+        color: const Color(0xFF3B82F6), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
       ),
       _StatItem(
         icon: Icons.emoji_events,
         value: '${data.personalRecordsCount}',
         label: l10n.wrappedSummaryStatPrs,
-        color: const Color(0xFFFFD700),
+        color: const Color(0xFFFFD700), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
       ),
       _StatItem(
         icon: Icons.local_fire_department,
         value: '${data.streakBest}',
         label: l10n.wrappedSummaryStatBestStreak,
-        color: const Color(0xFFF97316),
+        color: const Color(0xFFF97316), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
       ),
       _StatItem(
         icon: Icons.schedule,
         value: _formattedHours,
         label: l10n.wrappedSummaryStatHours,
-        color: const Color(0xFF6366F1),
+        color: const Color(0xFF6366F1), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
       ),
       _StatItem(
         icon: Icons.sports_gymnastics,
         value: '${data.totalExercises}',
         label: l10n.wrappedSummaryStatExercises,
-        color: const Color(0xFF14B8A6),
+        color: const Color(0xFF14B8A6), // accent-allowlist: Wrapped card per-stat color story (deliberate design not accent)
       ),
     ];
 

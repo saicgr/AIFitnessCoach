@@ -18,11 +18,11 @@ class ProgramCard extends StatelessWidget {
   Color _getCategoryColor(String? category, bool isDark) {
     switch (category?.toLowerCase()) {
       case 'celebrity workout':
-        return isDark ? AppColors.purple : AppColorsLight.purple;
+        return isDark ? AppColors.purple : AppColorsLight.purple;  // accent-allowlist: no BuildContext available in this scope (helper without context param) — category identity color
       case 'goal-based':
-        return isDark ? AppColors.cyan : AppColorsLight.cyan;
+        return isDark ? AppColors.cyan : AppColorsLight.cyan;  // accent-allowlist: no BuildContext available in this scope (helper without context param) — category identity color
       case 'sport training':
-        return isDark ? AppColors.success : AppColorsLight.success;
+        return isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       default:
         return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     }

@@ -81,7 +81,7 @@ class _PRCardShareSheetState extends State<PRCardShareSheet> {
                     icon: const Icon(Icons.share, size: 18),
                     label: Text(_sharing ? AppLocalizations.of(context).prCardSharePreparing : AppLocalizations.of(context).prCardShareSharePr),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber.shade700,
+                      backgroundColor: Colors.amber.shade700,  // accent-allowlist: PR/achievement share card -- medal-gold framing, matches gamification convention
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -155,8 +155,8 @@ class _PRCardCanvas extends StatelessWidget {
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
           colors: [
-            Colors.amber.shade400,
-            Colors.deepOrange.shade400,
+            Colors.amber.shade400,  // accent-allowlist: PR/achievement share card background -- medal-gold framing
+            Colors.deepOrange.shade400,  // accent-allowlist: PR/achievement share card background -- medal-gold framing
           ],
         ),
         borderRadius: BorderRadius.circular(20),

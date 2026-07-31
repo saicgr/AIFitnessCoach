@@ -6,6 +6,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../widgets/stat_badge.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Bottom sheet showing detailed exercise statistics
 class ExerciseStatsSheet extends StatelessWidget {
   final String exerciseName;
@@ -22,11 +23,11 @@ class ExerciseStatsSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.surface : AppColorsLight.surface;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
-    final error = isDark ? AppColors.error : AppColorsLight.error;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    final error = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

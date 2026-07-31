@@ -418,11 +418,11 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
   // ─── Color Helpers ─────────────────────────────────────────────────
 
   Color _scoreOverlayColor(int score) {
-    if (score >= 80) return const Color(0xFF4A8B5C); // deep sage
-    if (score >= 60) return const Color(0xFF6AAD7B); // sage green
-    if (score >= 45) return const Color(0xFFD4C36A); // warm sand
-    if (score >= 25) return const Color(0xFFD4956A); // soft peach
-    return const Color(0xFFD4726A); // dusty rose
+    if (score >= 80) return const Color(0xFF4A8B5C); // deep sage  // accent-allowlist: score-band color — strength score performance scale (heat-map style, best→worst), not tied to accent
+    if (score >= 60) return const Color(0xFF6AAD7B); // sage green  // accent-allowlist: score-band color — strength score performance scale (heat-map style, best→worst), not tied to accent
+    if (score >= 45) return const Color(0xFFD4C36A); // warm sand  // accent-allowlist: score-band color — strength score performance scale (heat-map style, best→worst), not tied to accent
+    if (score >= 25) return const Color(0xFFD4956A); // soft peach  // accent-allowlist: score-band color — strength score performance scale (heat-map style, best→worst), not tied to accent
+    return const Color(0xFFD4726A); // dusty rose  // accent-allowlist: score-band color — strength score performance scale (heat-map style, best→worst), not tied to accent
   }
 
   // ─── Score Info Bottom Sheet ────────────────────────────────────────
@@ -482,10 +482,10 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 const SizedBox(height: 8),
 
                 _buildLevelRow('Beginner', '0-24', 'Building your base', const Color(0xFF9E9E9E), colorScheme),
-                _buildLevelRow('Novice', '25-49', 'Solid foundation', const Color(0xFFFF9800), colorScheme),
-                _buildLevelRow('Intermediate', '50-69', 'Trained and consistent', const Color(0xFF4CAF50), colorScheme),
-                _buildLevelRow('Advanced', '70-89', 'Strong and well-developed', const Color(0xFF2196F3), colorScheme),
-                _buildLevelRow('Elite', '90-100', 'Top-tier strength', const Color(0xFF9C27B0), colorScheme),
+                _buildLevelRow('Novice', '25-49', 'Solid foundation', const Color(0xFFFF9800), colorScheme),  // accent-allowlist: warning severity — must stay amber regardless of accent
+                _buildLevelRow('Intermediate', '50-69', 'Trained and consistent', const Color(0xFF4CAF50), colorScheme),  // accent-allowlist: success/positive state — must stay green regardless of accent
+                _buildLevelRow('Advanced', '70-89', 'Strong and well-developed', const Color(0xFF2196F3), colorScheme),  // accent-allowlist: informational state — must stay blue regardless of accent
+                _buildLevelRow('Elite', '90-100', 'Top-tier strength', const Color(0xFF9C27B0), colorScheme),  // accent-allowlist: strength-level tier color — fixed rank/tier identity, like a rarity tier, not tied to accent
 
                 const SizedBox(height: 16),
 
@@ -528,7 +528,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                       margin: const EdgeInsets.only(top: 2),
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFB300).withValues(alpha: 0.18),
+                        color: const Color(0xFFFFB300).withValues(alpha: 0.18),  // accent-allowlist: warning severity — must stay amber regardless of accent
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Text(
@@ -536,7 +536,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFFB07800),
+                          color: Color(0xFFB07800),  // accent-allowlist: warning severity — must stay amber regardless of accent
                         ),
                       ),
                     ),
@@ -787,13 +787,13 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
   Color _getLevelColor(StrengthLevel level) {
     switch (level) {
       case StrengthLevel.elite:
-        return const Color(0xFF9C27B0);
+        return const Color(0xFF9C27B0);  // accent-allowlist: strength-level tier color — fixed rank/tier identity, like a rarity tier, not tied to accent
       case StrengthLevel.advanced:
-        return const Color(0xFF2196F3);
+        return const Color(0xFF2196F3);  // accent-allowlist: informational state — must stay blue regardless of accent
       case StrengthLevel.intermediate:
-        return const Color(0xFF4CAF50);
+        return const Color(0xFF4CAF50);  // accent-allowlist: success/positive state — must stay green regardless of accent
       case StrengthLevel.novice:
-        return const Color(0xFFFF9800);
+        return const Color(0xFFFF9800);  // accent-allowlist: warning severity — must stay amber regardless of accent
       case StrengthLevel.beginner:
         return const Color(0xFF9E9E9E);
     }

@@ -50,12 +50,12 @@ class _NeatScoreCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.insights,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 20,
                 ),
               ),
@@ -116,7 +116,7 @@ class _NeatScoreCard extends StatelessWidget {
                 icon: Icons.directions_walk,
                 value: _formatNumber(score.steps),
                 label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
               ),
@@ -129,7 +129,7 @@ class _NeatScoreCard extends StatelessWidget {
                 icon: Icons.schedule,
                 value: '${score.activeHours}',
                 label: AppLocalizations.of(context).neatDashboardScreenActiveHours,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 textPrimary: textPrimary,
                 textMuted: textMuted,
               ),
@@ -142,7 +142,7 @@ class _NeatScoreCard extends StatelessWidget {
                 icon: Icons.local_fire_department,
                 value: '${((score.steps * 0.04).round())}',
                 label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-                color: AppColors.orange,
+                color: context.accentColor,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
               ),
@@ -350,7 +350,7 @@ class _StepGoalCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.flag,
-                color: isComplete ? AppColors.success : AppColors.cyan,
+                color: isComplete ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -368,7 +368,7 @@ class _StepGoalCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -376,7 +376,7 @@ class _StepGoalCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.purple,
+                      color: context.accentColor,
                     ),
                   ),
                 ),
@@ -387,7 +387,7 @@ class _StepGoalCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.success.withOpacity(0.15),
+                    color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -395,7 +395,7 @@ class _StepGoalCard extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.check_circle,
-                        color: AppColors.success,
+                        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         size: 14,
                       ),
                       const SizedBox(width: 4),
@@ -404,7 +404,7 @@ class _StepGoalCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ),
                     ],
@@ -451,7 +451,7 @@ class _StepGoalCard extends StatelessWidget {
               minHeight: 10,
               backgroundColor: textMuted.withOpacity(0.2),
               valueColor: AlwaysStoppedAnimation(
-                isComplete ? AppColors.success : AppColors.cyan,
+                isComplete ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             ),
           ),
@@ -466,7 +466,7 @@ class _StepGoalCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isComplete ? AppColors.success : AppColors.cyan,
+                  color: isComplete ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
               const Spacer(),
@@ -545,7 +545,7 @@ class _HourlyActivityCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.timeline,
-                color: AppColors.purple,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -563,13 +563,13 @@ class _HourlyActivityCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _LegendItem(
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     label: '250+',
                     textMuted: textMuted,
                   ),
                   const SizedBox(width: 12),
                   _LegendItem(
-                    color: AppColors.error,
+                    color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                     label: '<250',
                     textMuted: textMuted,
                   ),
@@ -599,9 +599,9 @@ class _HourlyActivityCard extends StatelessWidget {
                   if (activity.steps == 0) {
                     barColor = textMuted.withOpacity(0.3);
                   } else if (isActive) {
-                    barColor = AppColors.success;
+                    barColor = AppColors.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
                   } else if (isSedentary) {
-                    barColor = AppColors.error;
+                    barColor = AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
                   } else {
                     barColor = textMuted.withOpacity(0.5);
                   }
@@ -618,7 +618,7 @@ class _HourlyActivityCard extends StatelessWidget {
                             height: 6,
                             margin: const EdgeInsets.only(bottom: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                               shape: BoxShape.circle,
                             ),
                           )
@@ -633,7 +633,7 @@ class _HourlyActivityCard extends StatelessWidget {
                             color: barColor,
                             borderRadius: BorderRadius.circular(4),
                             border: isCurrentHour
-                                ? Border.all(color: AppColors.cyan, width: 2)
+                                ? Border.all(color: context.accentColor, width: 2)
                                 : null,
                           ),
                         ),
@@ -646,7 +646,7 @@ class _HourlyActivityCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9,
                             color:
-                                isCurrentHour ? AppColors.cyan : textMuted,
+                                isCurrentHour ? context.accentColor : textMuted,
                             fontWeight: isCurrentHour
                                 ? FontWeight.bold
                                 : FontWeight.normal,
@@ -749,7 +749,7 @@ class _ActiveHoursCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: isGoalMet
-              ? AppColors.success.withOpacity(0.3)
+              ? AppColors.success.withOpacity(0.3)  // accent-allowlist: success/positive state — must stay green regardless of accent
               : cardBorder,
         ),
       ),
@@ -761,7 +761,7 @@ class _ActiveHoursCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.schedule,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -794,7 +794,7 @@ class _ActiveHoursCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 48,
                   fontWeight: FontWeight.bold,
-                  color: isGoalMet ? AppColors.success : textPrimary,
+                  color: isGoalMet ? AppColors.success : textPrimary,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
               const SizedBox(width: 8),
@@ -829,7 +829,7 @@ class _ActiveHoursCard extends StatelessWidget {
                       height: 12,
                       decoration: BoxDecoration(
                         color: activity.isActive
-                            ? AppColors.success
+                            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                             : activity.steps > 0
                                 ? textMuted.withOpacity(0.3)
                                 : textMuted.withOpacity(0.1),
@@ -848,7 +848,7 @@ class _ActiveHoursCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: (isGoalMet ? AppColors.success : AppColors.info)
+              color: (isGoalMet ? AppColors.success : AppColors.info)  // accent-allowlist: success/positive state — must stay green regardless of accent; informational state — must stay blue regardless of accent
                   .withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -856,7 +856,7 @@ class _ActiveHoursCard extends StatelessWidget {
               children: [
                 Icon(
                   isGoalMet ? Icons.check_circle : Icons.info_outline,
-                  color: isGoalMet ? AppColors.success : AppColors.info,
+                  color: isGoalMet ? AppColors.success : AppColors.info,  // accent-allowlist: success/positive state — must stay green regardless of accent; informational state — must stay blue regardless of accent
                   size: 18,
                 ),
                 const SizedBox(width: 8),

@@ -717,7 +717,7 @@ class _CreatePostSheetState extends ConsumerState<CreatePostSheet> {
   }
 
   Widget _buildStatPill(_StatPillData stat, bool isEnabled, bool isDark, Color cardBorder) {
-    final cyanAccent = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final cyanAccent = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity — carbs is always the same colour across every nutrition surface
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return GestureDetector(

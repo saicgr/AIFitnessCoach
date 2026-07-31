@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Tab displaying skill progressions
 class SkillsTab extends StatelessWidget {
   const SkillsTab({super.key});
@@ -9,7 +10,7 @@ class SkillsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;

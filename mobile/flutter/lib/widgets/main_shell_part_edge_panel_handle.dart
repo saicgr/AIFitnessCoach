@@ -727,7 +727,7 @@ class _FloatingBackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyanColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyanColor = context.accentColor;
 
     return GestureDetector(
       onTap: () {
@@ -775,7 +775,7 @@ class _PlusButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final purpleColor = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purpleColor = context.accentColor;
 
     return Semantics(
       label: AppLocalizations.of(context).mainShellPartQuickActions,
@@ -950,7 +950,7 @@ class _ElevatedFAB extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Use app's purple color for the FAB
-    final fabColor = isDark ? AppColors.purple : AppColorsLight.purple;
+    final fabColor = context.accentColor;
 
     return Semantics(
       label: AppLocalizations.of(context).mainShellPartQuickActions,
@@ -996,7 +996,7 @@ class _AnchoredBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cyanColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyanColor = context.accentColor;
 
     return GestureDetector(
       onTap: () {

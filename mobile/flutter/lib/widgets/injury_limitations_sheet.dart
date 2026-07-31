@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
 import '../core/constants/injury_options.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/repositories/auth_repository.dart';
 import 'glass_sheet.dart';
 
@@ -111,7 +112,7 @@ class _InjuryLimitationsSheetState
               Row(
                 children: [
                   const Icon(Icons.healing_rounded,
-                      color: AppColors.error, size: 22),
+                      color: AppColors.error, size: 22), // accent-allowlist: injury severity/warning color, semantic
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -158,17 +159,17 @@ class _InjuryLimitationsSheetState
                               horizontal: 14, vertical: 9),
                           decoration: BoxDecoration(
                             color: isSel
-                                ? AppColors.error.withOpacity(0.15)
+                                ? AppColors.error.withOpacity(0.15) // accent-allowlist: injury severity/warning color, semantic
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                                color: isSel ? AppColors.error : cardBorder),
+                                color: isSel ? AppColors.error : cardBorder), // accent-allowlist: injury severity/warning color, semantic
                           ),
                           child: Text(
                             opt.$2,
                             style: TextStyle(
                               fontSize: 13,
-                              color: isSel ? AppColors.error : textSecondary,
+                              color: isSel ? AppColors.error : textSecondary, // accent-allowlist: injury severity/warning color, semantic
                               fontWeight:
                                   isSel ? FontWeight.w600 : FontWeight.normal,
                             ),
@@ -185,7 +186,7 @@ class _InjuryLimitationsSheetState
                 child: FilledButton(
                   onPressed: (_saving || !_changed) ? null : _save,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: _saving

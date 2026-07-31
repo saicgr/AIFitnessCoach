@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/fasting_impact.dart';
@@ -168,7 +169,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = context.accentColor;
 
     final state = ref.watch(fastingImpactProvider);
 
@@ -270,7 +271,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     // `data` is the effective payload — provider data when present, else the
     // disk snapshot. `hasEnoughData` is derived from it directly so the
@@ -489,9 +490,9 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     final score = data.overallCorrelationScore;
 
     Color getCorrelationColor() {
-      if (correlation.isPositive) return AppColors.success;
-      if (correlation.isNegative) return AppColors.coral;
-      return AppColors.warning;
+      if (correlation.isPositive) return AppColors.success; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
+      if (correlation.isNegative) return AppColors.coral; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
+      return AppColors.warning; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
     }
 
     IconData getCorrelationIcon() {
@@ -629,13 +630,13 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     Color getInsightColor() {
       switch (insight.insightType) {
         case 'positive':
-          return AppColors.success;
+          return AppColors.success; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
         case 'warning':
-          return AppColors.coral;
+          return AppColors.coral; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
         case 'suggestion':
-          return AppColors.cyan;
+          return AppColors.cyan; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
         default:
-          return isDark ? AppColors.purple : AppColorsLight.purple;
+          return isDark ? AppColors.purple : AppColorsLight.purple; // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
       }
     }
 
@@ -755,7 +756,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
         children: [
           Icon(
             Icons.info_outline,
-            color: AppColors.warning,
+            color: AppColors.warning, // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
             size: 24,
           ),
           const SizedBox(width: 12),
@@ -803,7 +804,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.coral,
+              color: AppColors.coral, // accent-allowlist: fasting insight-type severity scale (positive/warning/suggestion/default)
             ),
             const SizedBox(height: 16),
             Text(

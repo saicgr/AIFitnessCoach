@@ -226,9 +226,13 @@ class XPNotifier extends StateNotifier<XPState> {
     }
 
     try {
-      // Capture old level/title before fetching to detect level-ups
+      // Capture old level/title/XP before fetching to detect level-ups and
+      // compute how much XP was actually earned (E2E #115 — the level-up
+      // card used to always show "+0 XP EARNED" because no caller threaded
+      // a real value through LevelUpEvent.xpEarned).
       final oldLevel = state.userXp?.currentLevel;
       final oldTitle = state.userXp?.title;
+      final oldTotalXp = state.userXp?.totalXp;
 
       final userXp = await _repository.getUserXP(uid);
 
@@ -266,6 +270,9 @@ class XPNotifier extends StateNotifier<XPState> {
           oldTitle: oldTitle,
           newTitle: userXp.title != oldTitle ? userXp.title : null,
           totalXp: userXp.totalXp,
+          xpEarned: oldTotalXp != null
+              ? (userXp.totalXp - oldTotalXp).clamp(0, userXp.totalXp)
+              : 0,
         );
         await _writePendingLevelUpFrom(uid, null);
         debugPrint(
@@ -281,6 +288,9 @@ class XPNotifier extends StateNotifier<XPState> {
             oldTitle: oldTitle,
             newTitle: userXp.title != oldTitle ? userXp.title : null,
             totalXp: userXp.totalXp,
+            xpEarned: oldTotalXp != null
+                ? (userXp.totalXp - oldTotalXp).clamp(0, userXp.totalXp)
+                : 0,
           );
           debugPrint(
               '🎯 [XPProvider] Level-up detected! $oldLevel → ${userXp.currentLevel} '

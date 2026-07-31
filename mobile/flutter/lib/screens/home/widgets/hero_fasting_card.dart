@@ -12,6 +12,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Hero fasting card - prominent action-focused fasting display
 /// Shows current fast progress or start fast button.
 ///
@@ -97,7 +98,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
     final zone = activeFast?.currentZone;
 
     // Ring goes accent until the goal is reached, then success.
-    final ringColor = progress >= 1.0 ? AppColors.success : tc.accent;
+    final ringColor = progress >= 1.0 ? AppColors.success : tc.accent;  // accent-allowlist: success/positive state -- must stay green regardless of accent
 
     // "EAT AT h:mm a" — the moment the fasting window closes. Derived from the
     // fast's start time + the target window so it stays stable across ticks.
@@ -121,7 +122,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               decoration: BoxDecoration(
-                color: (hasFast ? AppColors.success : tc.accent)
+                color: (hasFast ? AppColors.success : tc.accent)  // accent-allowlist: success/positive state -- must stay green regardless of accent
                     .withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(999),
               ),
@@ -131,7 +132,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
                     : AppLocalizations.of(context).heroFastingCardNotFasting,
                 style: ZType.lbl(
                   11,
-                  color: hasFast ? AppColors.success : tc.accent,
+                  color: hasFast ? AppColors.success : tc.accent,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   letterSpacing: 1.8,
                 ),
               ),
@@ -223,7 +224,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
               _FastingActionButton(
                 label: AppLocalizations.of(context).heroFastingCardEndFast,
                 icon: Icons.check_circle_outline,
-                background: AppColors.success,
+                background: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                 onPressed: _userId == null
                     ? null
                     : () async {
@@ -291,7 +292,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
               _FastingActionButton(
                 label: AppLocalizations.of(context).heroFastingCardStartFast,
                 icon: Icons.play_arrow_rounded,
-                background: AppColors.orange,
+                background: context.accentColor,
                 onPressed: _userId == null
                     ? null
                     : () async {

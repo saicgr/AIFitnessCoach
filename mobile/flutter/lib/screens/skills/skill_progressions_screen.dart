@@ -376,7 +376,7 @@ class _SkillProgressionsScreenState
             Icon(
               Icons.error_outline_rounded,
               size: 40,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error state -- error semantic
             ),
             const SizedBox(height: 16),
             Text(

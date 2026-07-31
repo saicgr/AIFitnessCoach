@@ -16,7 +16,12 @@ import '../../../l10n/generated/app_localizations.dart';
 /// validate against /onboarding/validate-referral, and have the discount
 /// applied. No standalone screen needed.
 class InlineReferralExpander extends ConsumerStatefulWidget {
-  const InlineReferralExpander({super.key});
+  /// Passed by the caller so this widget uses the paywall's own fixed
+  /// warm-orange accent (see `_paywallAccent` in paywall_pricing_screen.dart)
+  /// rather than a hardcoded literal or the app's user-selectable accent.
+  final Color accent;
+
+  const InlineReferralExpander({super.key, required this.accent});
 
   @override
   ConsumerState<InlineReferralExpander> createState() =>
@@ -130,7 +135,7 @@ class _InlineReferralExpanderState
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color:
-                          _success != null ? const Color(0xFF2ECC71) : textPrimary,
+                          _success != null ? const Color(0xFF2ECC71) : textPrimary, // accent-allowlist: referral code success/error feedback state, semantic
                     ),
                   ),
                   const Spacer(),
@@ -197,8 +202,8 @@ class _InlineReferralExpanderState
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                color: AppColors.orange,
+                              borderSide: BorderSide(
+                                color: widget.accent,
                                 width: 1.5,
                               ),
                             ),
@@ -213,10 +218,10 @@ class _InlineReferralExpanderState
                           padding:
                               const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [
-                                Color(0xFFFFB366),
-                                AppColors.orange,
+                                const Color(0xFFFFB366), // accent-allowlist: gradient lighter-stop for the paywall's fixed accent, must NOT follow the app accent
+                                widget.accent,
                               ],
                             ),
                             borderRadius: BorderRadius.circular(10),
@@ -250,11 +255,11 @@ class _InlineReferralExpanderState
                     Row(
                       children: [
                         const Icon(Icons.error_outline,
-                            size: 13, color: Color(0xFFE74C3C)),
+                            size: 13, color: Color(0xFFE74C3C)), // accent-allowlist: referral code success/error feedback state, semantic
                         const SizedBox(width: 4),
                         Text(_error!,
                             style: const TextStyle(
-                                fontSize: 12, color: Color(0xFFE74C3C))),
+                                fontSize: 12, color: Color(0xFFE74C3C))), // accent-allowlist: referral code success/error feedback state, semantic
                       ],
                     ),
                   ],
@@ -263,14 +268,14 @@ class _InlineReferralExpanderState
                     Row(
                       children: [
                         const Icon(Icons.check_circle,
-                            size: 13, color: Color(0xFF2ECC71)),
+                            size: 13, color: Color(0xFF2ECC71)), // accent-allowlist: referral code success/error feedback state, semantic
                         const SizedBox(width: 4),
                         Text(
                           _success!,
                           style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF2ECC71)),
+                              color: Color(0xFF2ECC71)), // accent-allowlist: referral code success/error feedback state, semantic
                         ),
                       ],
                     ),

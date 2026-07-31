@@ -14,6 +14,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
   const WeeklySummaryScreen({super.key});
 
@@ -50,7 +51,7 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -106,7 +107,7 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).weeklySummaryWeeklySummaryGenerated),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -126,8 +127,8 @@ class _SummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? context.accentColor : context.accentColor;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -234,7 +235,7 @@ class _SummaryCard extends StatelessWidget {
                   icon: Icons.timer,
                   value: '${summary.totalTimeMinutes}',
                   label: 'minutes',
-                  color: isDark ? AppColors.orange : AppColorsLight.orange,
+                  color: isDark ? context.accentColor : context.accentColor,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 12),
@@ -242,7 +243,7 @@ class _SummaryCard extends StatelessWidget {
                   icon: Icons.local_fire_department,
                   value: '${summary.caloriesBurnedEstimate}',
                   label: 'calories',
-                  color: isDark ? AppColors.coral : AppColorsLight.coral,
+                  color: isDark ? context.accentColor : context.accentColor,
                   isDark: isDark,
                 ),
               ],
@@ -352,9 +353,9 @@ class _SummaryCard extends StatelessWidget {
   }
 
   Color _getCompletionColor(double rate, bool isDark) {
-    if (rate >= 80) return isDark ? AppColors.success : AppColorsLight.success;
-    if (rate >= 50) return isDark ? AppColors.warning : AppColorsLight.warning;
-    return isDark ? AppColors.error : AppColorsLight.error;
+    if (rate >= 80) return isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (rate >= 50) return isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: warning severity — must stay amber regardless of accent
+    return isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
   }
 }
 
@@ -419,7 +420,7 @@ class _StreakBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    final orange = isDark ? context.accentColor : context.accentColor;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -458,7 +459,7 @@ class _PRBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -522,10 +523,10 @@ class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
+    final purple = isDark ? context.accentColor : context.accentColor;
+    final orange = isDark ? context.accentColor : context.accentColor;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final sheetBackground =
         isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -801,7 +802,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = isDark ? context.accentColor : context.accentColor;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;

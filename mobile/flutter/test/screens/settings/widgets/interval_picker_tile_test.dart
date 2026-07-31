@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitwiz/core/theme/accent_color_provider.dart';
 import 'package:fitwiz/screens/settings/widgets/interval_picker_tile.dart';
 import 'package:fitwiz/core/constants/app_colors.dart';
 
@@ -90,9 +91,21 @@ void main() {
       expect(find.byIcon(Icons.arrow_drop_down), findsOneWidget);
     });
 
-    testWidgets('dropdown has cyan color', (tester) async {
+    testWidgets('dropdown has the app accent colour', (tester) async {
+      // E2E register row 15. This test used to assert the literal
+      // `AppColors.cyan` — i.e. it encoded the defect: a control painted a
+      // fixed cyan while the app accent was orange. The widget now reads the
+      // accent, so the test drives a NON-DEFAULT accent through
+      // AccentColorScope and asserts the control follows it. Asserting a
+      // different literal would just re-freeze the bug at a new colour.
+      const scoped = AccentColor.cyan;
+      // These widgets are rendered with isDark: true, so resolve the dark shade.
+      final expected = scoped.getColor(true);
+
       await tester.pumpWidget(
-        MaterialApp(
+        AccentColorScope(
+          accent: scoped,
+          child: MaterialApp(
           home: Scaffold(
             body: IntervalPickerTile(
               label: 'Test',
@@ -102,10 +115,11 @@ void main() {
             ),
           ),
         ),
+        ),
       );
 
       final dropdown = tester.widget<DropdownButton<int>>(find.byType(DropdownButton<int>));
-      expect((dropdown.icon as Icon).color, AppColors.cyan);
+      expect((dropdown.icon as Icon).color, expected);
     });
 
     testWidgets('uses custom intervals when provided', (tester) async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Large, accessible button for Senior Mode
@@ -31,7 +32,7 @@ class SeniorButton extends StatelessWidget {
     final bgColor = backgroundColor ??
         (isOutlined
             ? Colors.transparent
-            : (isDark ? AppColors.cyan : const Color(0xFF0088AA)));
+            : context.accentColor);
 
     final fgColor = textColor ??
         (isOutlined
@@ -144,7 +145,7 @@ class SeniorQuickButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 48,
-                color: iconColor ?? AppColors.cyan,
+                color: iconColor ?? context.accentColor,
               ),
               const SizedBox(height: 12),
               Text(
@@ -189,7 +190,7 @@ class SeniorModeSelectionButton extends StatelessWidget {
 
     return Material(
       color: isSelected
-          ? AppColors.cyan.withOpacity(0.15)
+          ? context.accentColor.withOpacity(0.15)
           : (isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF5F5F5)),
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
@@ -201,7 +202,7 @@ class SeniorModeSelectionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isSelected
-                  ? AppColors.cyan
+                  ? context.accentColor
                   : (isDark
                       ? const Color(0xFF444444)
                       : const Color(0xFFDDDDDD)),
@@ -217,7 +218,7 @@ class SeniorModeSelectionButton extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.cyan
+                          ? context.accentColor
                           : (isDark
                               ? const Color(0xFF333333)
                               : const Color(0xFFEEEEEE)),
@@ -239,7 +240,7 @@ class SeniorModeSelectionButton extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF4CAF50),
+                        color: const Color(0xFF4CAF50), // accent-allowlist: "Recommended" badge, success semantic
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -255,7 +256,7 @@ class SeniorModeSelectionButton extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

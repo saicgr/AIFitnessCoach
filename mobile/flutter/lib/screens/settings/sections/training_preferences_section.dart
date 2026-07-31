@@ -26,73 +26,73 @@ class TrainingPreferencesSection extends StatelessWidget {
       'icon': Icons.speed,
       'title': 'My 1RMs (One Rep Max)',
       'description': 'Your maximum weight for one rep on key lifts. The AI uses this to calculate appropriate weights for your workouts.',
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.percent,
       'title': 'Training Intensity',
       'description': 'The percentage of your max weight you train at. Lower percentages (60-70%) for endurance, higher (80-90%) for strength.',
-      'color': AppColors.orange,
+      'color': AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.trending_up,
       'title': 'Progression Pace',
       'description': 'How quickly the AI increases your weights. "Slow" for beginners or recovery, "Fast" for experienced lifters pushing limits.',
-      'color': AppColors.cyan,
+      'color': AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.fitness_center,
       'title': 'Workout Type',
       'description': 'Choose between strength training, cardio, or mixed workouts based on your fitness goals.',
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.calendar_month,
       'title': 'Workout Days',
       'description': 'Select which days of the week you want to work out. The AI will schedule workouts on your chosen days.',
-      'color': AppColors.cyan,
+      'color': AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.shuffle,
       'title': 'Exercise Consistency',
       'description': 'Control how often exercises change. "Consistent" repeats exercises for progressive overload, "Varied" keeps workouts fresh.',
-      'color': AppColors.success,
+      'color': AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
     },
     {
       'icon': Icons.tune,
       'title': 'Weekly Variety',
       'description': 'Adjust how much your weekly exercises differ. Higher variety prevents boredom but may slow muscle adaptation.',
-      'color': AppColors.cyan,
+      'color': AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.favorite,
       'title': 'Favorite Exercises',
       'description': 'Exercises you enjoy. The AI gives these a priority boost so they appear more often — but they can still be rotated out for variety.',
-      'color': AppColors.error,
+      'color': AppColors.error,  // accent-allowlist: error/destructive - must stay red
     },
     {
       'icon': Icons.lock,
       'title': 'Staple Exercises',
       'description': 'Core lifts that are GUARANTEED in every workout for their muscle group. They never rotate out and can be scoped to specific gym profiles.',
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.queue,
       'title': 'Exercise Queue',
       'description': 'Request specific exercises for your next workout. The AI will incorporate them when possible.',
-      'color': AppColors.cyan,
+      'color': AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.block,
       'title': 'Exercises to Avoid',
       'description': 'Exercises that cause pain or you dislike. The AI will never include these in your workouts.',
-      'color': AppColors.error,
+      'color': AppColors.error,  // accent-allowlist: error/destructive - must stay red
     },
     {
       'icon': Icons.accessibility_new,
       'title': 'Muscles to Avoid',
       'description': 'Muscle groups with injuries or that you want to rest. The AI will skip or reduce exercises targeting them.',
-      'color': AppColors.orange,
+      'color': AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
   ];
 

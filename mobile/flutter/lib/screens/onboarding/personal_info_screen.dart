@@ -18,6 +18,7 @@ import 'cycle_onboarding_sheet.dart';
 import 'pre_auth_quiz_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Personal Info — name + date-of-birth, collected post-sign-in.
 ///
@@ -165,9 +166,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           children: [
             const SizedBox(height: 8),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.camera_alt_outlined,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
               title: const Text('Take a photo'),
               onTap: () {
@@ -176,9 +177,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(
+              leading: Icon(
                 Icons.photo_library_outlined,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
               title: const Text('Choose from gallery'),
               onTap: () {
@@ -190,7 +191,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               ListTile(
                 leading: const Icon(
                   Icons.delete_outline,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                 ),
                 title: const Text('Remove photo'),
                 onTap: () {
@@ -383,7 +384,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -473,10 +474,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
           decoration: BoxDecoration(
-            color: accent ? AppColors.orange.withValues(alpha: 0.12) : fill,
+            color: accent ? context.accentColor.withValues(alpha: 0.12) : fill,
             borderRadius: BorderRadius.circular(9),
             border: Border.all(
-              color: accent ? AppColors.orange.withValues(alpha: 0.4) : border,
+              color: accent ? context.accentColor.withValues(alpha: 0.4) : border,
             ),
           ),
           child: Text(
@@ -484,7 +485,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: accent ? AppColors.orange : textSecondary,
+              color: accent ? context.accentColor : textSecondary,
             ),
           ),
         ),
@@ -607,7 +608,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                                       color: fill,
                                       border: Border.all(
                                         color: _selectedPhotoFile != null
-                                            ? AppColors.orange
+                                            ? context.accentColor
                                             : border,
                                         width: 2,
                                       ),
@@ -634,7 +635,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
-                                        color: AppColors.orange,
+                                        color: context.accentColor,
                                         shape: BoxShape.circle,
                                         border: Border.all(
                                           color: isDark
@@ -717,8 +718,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.orange,
+                            borderSide: BorderSide(
+                              color: context.accentColor,
                               width: 1.5,
                             ),
                           ),
@@ -785,7 +786,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           AppLocalizations.of(context).personalInfoYouMustBeAt,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.error,
+                            color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                           ),
                         ),
                       ],
@@ -809,8 +810,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 child: FilledButton(
                   onPressed: _canContinue ? _save : null,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.orange,
-                    disabledBackgroundColor: AppColors.orange.withValues(
+                    backgroundColor: context.accentColor,
+                    disabledBackgroundColor: context.accentColor.withValues(
                       alpha: 0.3,
                     ),
                     shape: RoundedRectangleBorder(

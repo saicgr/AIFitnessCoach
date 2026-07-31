@@ -78,7 +78,7 @@ class _FastingHydrationRowState extends ConsumerState<FastingHydrationRow> {
     final hydration = ref.watch(hydrationProvider);
     final summary = hydration.todaySummary;
     final waterBlue =
-        colors.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
+        colors.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue; // accent-allowlist: hydration water-blue identity, universal water convention
 
     final totalMl = summary?.totalMl ?? 0;
     final goalMl = (summary?.goalMl ?? hydration.dailyGoalMl);

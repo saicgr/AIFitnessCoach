@@ -54,7 +54,7 @@ class WeeklyHighlightsTemplate extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFA78BFA).withValues(alpha: 0.2),
+                        color: const Color(0xFFA78BFA).withValues(alpha: 0.2),  // accent-allowlist: fixed decorative template accent (highlights-card violet) — not tied to accent
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -96,7 +96,7 @@ class WeeklyHighlightsTemplate extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).xpHeroTileThisWeek,
                     style: TextStyle(
-                      color: Color(0xFFA78BFA),
+                      color: Color(0xFFA78BFA),  // accent-allowlist: fixed decorative template accent (highlights-card violet) — not tied to accent
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 2.5,
@@ -190,7 +190,7 @@ class _HighlightBullet extends StatelessWidget {
           width: 6,
           height: 6,
           decoration: const BoxDecoration(
-            color: Color(0xFFFBBF24),
+            color: Color(0xFFFBBF24),  // accent-allowlist: warning severity — must stay amber regardless of accent
             shape: BoxShape.circle,
           ),
         ),
@@ -224,20 +224,20 @@ class _EncouragementCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF22C55E).withValues(alpha: 0.15),
-            const Color(0xFFA78BFA).withValues(alpha: 0.15),
+            const Color(0xFF22C55E).withValues(alpha: 0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
+            const Color(0xFFA78BFA).withValues(alpha: 0.15),  // accent-allowlist: fixed decorative template accent (highlights-card violet) — not tied to accent
           ],
         ),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: const Color(0xFF22C55E).withValues(alpha: 0.4),
+          color: const Color(0xFF22C55E).withValues(alpha: 0.4),  // accent-allowlist: success/positive state — must stay green regardless of accent
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.favorite_rounded,
-              color: Color(0xFF22C55E), size: 14),
+              color: Color(0xFF22C55E), size: 14),  // accent-allowlist: success/positive state — must stay green regardless of accent
           const SizedBox(width: 8),
           Expanded(
             child: Text(

@@ -335,7 +335,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],
+          colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],  // accent-allowlist: Body Analyzer feature badge — fixed pink-violet gradient used consistently as this feature's visual identity across screens, not tied to accent
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

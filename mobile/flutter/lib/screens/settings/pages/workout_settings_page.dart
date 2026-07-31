@@ -16,6 +16,7 @@ import '../../../widgets/weight_increments_sheet.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Sub-page for Workout Settings + Exercise Preferences.
 class WorkoutSettingsPage extends ConsumerStatefulWidget {
   const WorkoutSettingsPage({super.key});
@@ -77,21 +78,21 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: AppLocalizations.of(context).workoutSettingsWorkoutType,
                     subtitle: AppLocalizations.of(context).workoutSettingsStrengthCardioOrMixed,
                     isWorkoutTypeSelector: true,
-                    iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                    iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
                   ),
                   SettingItemData(
                     icon: Icons.view_week,
                     title: AppLocalizations.of(context).workoutSettingsTrainingSplit,
                     subtitle: AppLocalizations.of(context).workoutSettingsPushPullLegsFull,
                     isTrainingSplitSelector: true,
-                    iconColor: isDark ? AppColors.waterBlue : AppColorsLight.waterBlue,
+                    iconColor: isDark ? AppColors.waterBlue : AppColorsLight.waterBlue,  // accent-allowlist: hydration tracker fill - always blue regardless of theme/accent
                   ),
                   SettingItemData(
                     icon: Icons.calendar_month,
                     title: AppLocalizations.of(context).workoutSettingsWorkoutDays,
                     subtitle: AppLocalizations.of(context).workoutSettingsWhichDaysYouTrain,
                     isWorkoutDaysSelector: true,
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                    iconColor: context.accentColor,
                   ),
                   // Per-day customization — assign focus + duration + intensity
                   // to each training day so the AI plan generator respects per-day
@@ -101,7 +102,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: 'Per-day customization',
                     subtitle: 'Focus, duration, intensity per training day',
                     isPerDayOverridesSelector: true,
-                    iconColor: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,
+                    iconColor: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,  // accent-allowlist: macro identity - protein is always the same colour across every nutrition surface
                   ),
                 ],
               ),
@@ -128,28 +129,28 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: AppLocalizations.of(context).workoutSettingsMy1rms,
                     subtitle: AppLocalizations.of(context).workoutSettingsViewAndEditYour,
                     isMyOneRMsScreen: true,
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                    iconColor: context.accentColor,
                   ),
                   SettingItemData(
                     icon: Icons.percent,
                     title: AppLocalizations.of(context).workoutSettingsTrainingIntensity,
                     subtitle: AppLocalizations.of(context).workoutSettingsWorkAtAPercentage,
                     isTrainingIntensitySelector: true,
-                    iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+                    iconColor: context.accentColor,
                   ),
                   SettingItemData(
                     icon: Icons.trending_up,
                     title: AppLocalizations.of(context).workoutSettingsProgressionPace,
                     subtitle: AppLocalizations.of(context).workoutSettingsHowFastToIncrease,
                     isProgressionPaceSelector: true,
-                    iconColor: isDark ? AppColors.green : AppColorsLight.green,
+                    iconColor: context.accentColor,
                   ),
                   SettingItemData(
                     icon: Icons.tune,
                     title: AppLocalizations.of(context).workoutSettingsWeeklyVariety,
                     subtitle: AppLocalizations.of(context).workoutSettingsHowMuchExercisesChange,
                     isVariationSlider: true,
-                    iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+                    iconColor: context.accentColor,
                   ),
                   SettingItemData(
                     icon: Icons.replay_circle_filled_outlined,
@@ -157,7 +158,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     subtitle: AppLocalizations.of(context).workoutSettingsAutoDeloadDeloadFrequency,
                     onTap: () =>
                         GoRouter.of(context).push('/settings/progression-pace'),
-                    iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                    iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
                   ),
                 ],
               ),
@@ -239,7 +240,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: AppLocalizations.of(context).workoutSettingsWorkoutWeightUnit,
                     subtitle: ref.watch(workoutWeightUnitProvider) == 'kg' ? 'Kilograms (kg)' : 'Pounds (lbs)',
                     onTap: () => _showWorkoutWeightUnitSelector(context, ref),
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                    iconColor: context.accentColor,
                   ),
                   SettingItemData(
                     icon: Icons.tune,
@@ -253,7 +254,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: AppLocalizations.of(context).workoutSettingsProgressCharts,
                     subtitle: AppLocalizations.of(context).workoutSettingsVisualizeStrengthVolumeOv,
                     isProgressChartsScreen: true,
-                    iconColor: isDark ? AppColors.green : AppColorsLight.green,
+                    iconColor: context.accentColor,
                   ),
                 ],
               ),
@@ -274,7 +275,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     subtitle: AppLocalizations.of(context).workoutSettingsFavoritesAvoidedAndQueue,
                     onTap: () =>
                         GoRouter.of(context).push('/settings/my-exercises'),
-                    iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                    iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
                   ),
                   SettingItemData(
                     icon: Icons.history,
@@ -296,7 +297,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
   void _showWorkoutWeightUnitSelector(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentUnit = ref.read(workoutWeightUnitProvider);
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
     final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -359,7 +360,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                         ScaffoldMessenger.of(this.context).showSnackBar(
                           SnackBar(
                             content: Text('Workout weight unit → ${opt['label']}'),
-                            backgroundColor: AppColors.cyan,
+                            backgroundColor: context.accentColor,
                             duration: const Duration(seconds: 2),
                           ),
                         );

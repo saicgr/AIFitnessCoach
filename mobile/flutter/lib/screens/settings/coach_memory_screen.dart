@@ -160,7 +160,7 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: isDark ? AppColors.error : AppColorsLight.error,
+              foregroundColor: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive - must stay red
             ),
             child: const Text('Forget it'),
           ),
@@ -203,7 +203,7 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: isDark ? AppColors.error : AppColorsLight.error,
+              foregroundColor: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive - must stay red
             ),
             child: const Text('Forget everything'),
           ),
@@ -372,12 +372,12 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
                 child: TextButton.icon(
                   onPressed: _forgetEverything,
                   icon: Icon(Icons.delete_sweep_outlined,
-                      color: isDark ? AppColors.error : AppColorsLight.error),
+                      color: isDark ? AppColors.error : AppColorsLight.error),  // accent-allowlist: error/destructive - must stay red
                   label: Text(
                     'Forget everything',
                     style: ZType.lbl(
                       13,
-                      color: isDark ? AppColors.error : AppColorsLight.error,
+                      color: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive - must stay red
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -598,7 +598,7 @@ class _MemoryTile extends StatelessWidget {
                 if (memory.isOpenLoop)
                   _Chip(
                     label: 'following up',
-                    color: isDark ? AppColors.warning : AppColorsLight.warning,
+                    color: isDark ? AppColors.warning : AppColorsLight.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                     isDark: isDark,
                     icon: Icons.flag_outlined,
                   ),
@@ -635,7 +635,7 @@ class _MemoryTile extends StatelessWidget {
                   icon: Icon(
                     Icons.delete_outline,
                     size: 20,
-                    color: isDark ? AppColors.error : AppColorsLight.error,
+                    color: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive - must stay red
                   ),
                 ),
               ],

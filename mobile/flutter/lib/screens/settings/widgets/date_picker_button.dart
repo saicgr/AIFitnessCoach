@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A button for selecting a date.
 ///
@@ -70,7 +71,7 @@ class DatePickerButton extends StatelessWidget {
                 Icon(
                   Icons.calendar_today,
                   size: 14,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 6),
                 Expanded(

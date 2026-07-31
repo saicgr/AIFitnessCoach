@@ -18,19 +18,19 @@ Color tierColor(String? tier, bool isDark) {
     case 'legendary':
       // Gold — richest prestige color. Slightly warmer in dark mode so it
       // pops against near-black surfaces.
-      return isDark ? const Color(0xFFFFD369) : const Color(0xFFD99A00);
+      return isDark ? const Color(0xFFFFD369) : const Color(0xFFD99A00); // accent-allowlist: leaderboard rarity/tier color (gold/purple/cyan/green tiers)
     case 'top5':
     case 'top':
       // Purple — distinct from XP-Goals accent but sits in the same family.
-      return isDark ? const Color(0xFFC28DFF) : const Color(0xFF7B2CBF);
+      return isDark ? const Color(0xFFC28DFF) : const Color(0xFF7B2CBF); // accent-allowlist: leaderboard rarity/tier color (gold/purple/cyan/green tiers)
     case 'top10':
     case 'elite':
       // Cyan-blue — reads as "elevated" without overpowering gold/purple.
-      return isDark ? const Color(0xFF66D9EF) : const Color(0xFF0A7EA4);
+      return isDark ? const Color(0xFF66D9EF) : const Color(0xFF0A7EA4); // accent-allowlist: leaderboard rarity/tier color (gold/purple/cyan/green tiers)
     case 'top25':
     case 'rising':
       // Green — associates with growth / "on the rise".
-      return isDark ? const Color(0xFF7ED88A) : const Color(0xFF1F8A3C);
+      return isDark ? const Color(0xFF7ED88A) : const Color(0xFF1F8A3C); // accent-allowlist: leaderboard rarity/tier color (gold/purple/cyan/green tiers)
     case 'active':
       // Neutral blue-gray — signals "still on the board" without ranking.
       return isDark ? const Color(0xFF93A1B1) : const Color(0xFF586069);

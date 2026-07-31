@@ -143,7 +143,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                   AppLocalizations.of(context).moodCardResetAll,
                   style: TextStyle(
                     fontSize: 13,
-                    color: Colors.red.shade400,
+                    color: Colors.red.shade400,  // accent-allowlist: error/destructive -- must stay red
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -443,7 +443,7 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                               child: Icon(
                                 Icons.warning_amber_rounded,
                                 size: 12,
-                                color: Colors.orange.shade400,
+                                color: Colors.orange.shade400,  // accent-allowlist: warning severity
                               ),
                             ),
                           ),
@@ -463,14 +463,14 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.orange.withValues(alpha: 0.10),
+              color: Colors.orange.withValues(alpha: 0.10),  // accent-allowlist: warning severity
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),  // accent-allowlist: warning severity
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.orange.shade400, size: 18),
+                Icon(Icons.warning_amber_rounded, color: Colors.orange.shade400, size: 18),  // accent-allowlist: warning severity
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -847,13 +847,13 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
                   gradient: _usingCustomColor
                       ? null
                       : const SweepGradient(colors: [
-                          Color(0xFFFF0000),
-                          Color(0xFFFFFF00),
-                          Color(0xFF00FF00),
-                          Color(0xFF00FFFF),
-                          Color(0xFF0000FF),
-                          Color(0xFFFF00FF),
-                          Color(0xFFFF0000),
+                          Color(0xFFFF0000),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFFFFFF00),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFF00FF00),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFF00FFFF),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFF0000FF),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFFFF00FF),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFFFF0000),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
                         ]),
                   color: _usingCustomColor ? GymProfileColors.fromHex(_selectedColor) : null,
                   border: Border.all(

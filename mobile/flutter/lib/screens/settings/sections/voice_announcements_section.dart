@@ -7,6 +7,7 @@ import '../../../data/providers/voice_set_logging_provider.dart';
 import '../widgets/section_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// The voice announcements section for configuring TTS settings.
 ///
 /// Allows users to enable/disable voice announcements during workouts.
@@ -37,7 +38,7 @@ class _VoiceAnnouncementsCard extends ConsumerWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Material(
       color: elevatedColor,

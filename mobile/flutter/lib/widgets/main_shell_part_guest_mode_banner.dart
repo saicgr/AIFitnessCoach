@@ -12,6 +12,7 @@ class _GuestModeBanner extends ConsumerWidget {
     final usage = ref.watch(guestUsageLimitsProvider);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accentColor = context.accentColor;
 
     return SafeArea(
       bottom: false,
@@ -21,13 +22,13 @@ class _GuestModeBanner extends ConsumerWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              AppColors.orange.withOpacity(0.15),
-              AppColors.purple.withOpacity(0.1),
+              accentColor.withOpacity(0.15),
+              accentColor.withOpacity(0.1),
             ],
           ),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.orange.withOpacity(0.3),
+            color: accentColor.withOpacity(0.3),
           ),
         ),
         child: Row(
@@ -36,12 +37,12 @@ class _GuestModeBanner extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: AppColors.orange.withOpacity(0.2),
+                color: accentColor.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.person_outline,
-                color: AppColors.orange,
+                color: accentColor,
                 size: 18,
               ),
             ),
@@ -66,15 +67,15 @@ class _GuestModeBanner extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.cyan.withOpacity(0.2),
+                          color: accentColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           AppLocalizations.of(context)!.mainShellPartChatsLeftToday(usage.remainingChatMessages),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.cyan,
+                            color: accentColor,
                           ),
                         ),
                       ),
@@ -102,7 +103,7 @@ class _GuestModeBanner extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan,
+                  color: accentColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

@@ -162,7 +162,7 @@ class VolumeAlertCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.1),
+                      color: Colors.blue.withValues(alpha: 0.1), // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -171,7 +171,7 @@ class VolumeAlertCard extends StatelessWidget {
                         Icon(
                           Icons.lightbulb_outline,
                           size: 18,
-                          color: Colors.blue.shade700,
+                          color: Colors.blue.shade700, // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -179,7 +179,7 @@ class VolumeAlertCard extends StatelessWidget {
                             alert.recommendation,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.blue.shade700,
+                              color: Colors.blue.shade700, // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -254,13 +254,13 @@ class VolumeAlertCard extends StatelessWidget {
   Color _getAlertColor(String alertType) {
     switch (alertType.toLowerCase()) {
       case 'critical':
-        return const Color(0xFF7C3AED); // Purple
+        return const Color(0xFF7C3AED); // Purple // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
       case 'danger':
-        return const Color(0xFFEF4444); // Red
+        return const Color(0xFFEF4444); // Red // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
       case 'warning':
-        return const Color(0xFFF59E0B); // Amber
+        return const Color(0xFFF59E0B); // Amber // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
       default:
-        return const Color(0xFFF59E0B); // Amber default
+        return const Color(0xFFF59E0B); // Amber default // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
     }
   }
 
@@ -302,7 +302,7 @@ class VolumeAlertBanner extends StatelessWidget {
     if (alerts.isEmpty) return const SizedBox.shrink();
 
     final alertColor = alerts.length > 1
-        ? const Color(0xFFEF4444)
+        ? const Color(0xFFEF4444) // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
         : _getAlertColor(alerts.first.alertType);
 
     return InkWell(
@@ -381,13 +381,13 @@ class VolumeAlertBanner extends StatelessWidget {
   Color _getAlertColor(String alertType) {
     switch (alertType.toLowerCase()) {
       case 'critical':
-        return const Color(0xFF7C3AED);
+        return const Color(0xFF7C3AED); // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
       case 'danger':
-        return const Color(0xFFEF4444);
+        return const Color(0xFFEF4444); // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
       case 'warning':
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B); // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
       default:
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF59E0B); // accent-allowlist: volume alert severity scale (critical/danger/warning) and info blue
     }
   }
 }

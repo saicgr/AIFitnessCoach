@@ -120,7 +120,7 @@ class TimeScheduleRow extends StatelessWidget {
               Icon(
                 Icons.flag_outlined,
                 size: 18,
-                color: AppColors.success,
+                color: AppColors.success, // accent-allowlist: schedule status success semantic
               ),
               const SizedBox(width: 6),
               Flexible(

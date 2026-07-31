@@ -123,7 +123,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
       style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: delta > 0 ? const Color(0xFF2C8A54) : c.textSecondary,
+        color: delta > 0 ? const Color(0xFF2C8A54) : c.textSecondary,  // accent-allowlist: success/positive state -- momentum delta, must stay green regardless of accent
       ),
     );
   }

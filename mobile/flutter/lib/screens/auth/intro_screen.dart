@@ -12,6 +12,7 @@ import '../onboarding/onboarding_experiments.dart';
 import 'intro_demo/demo_clock.dart';
 import 'intro_demo/demo_scenes.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Intro Screen — first-run redesign v7 ("V1b full-bleed demo").
 ///
@@ -276,16 +277,16 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                           // Clarity + a contrast word ("NOT") land the moat in
                           // <1s (the demo supplies the motion). The price anchor
                           // on the paywall later proves the "not five" claim.
-                          const Text.rich(
+                          Text.rich(
                             TextSpan(
                               children: [
-                                TextSpan(
+                                const TextSpan(
                                   text: 'ONE APP. ',
                                   style: TextStyle(color: Color(0xFFFAFAFA)),
                                 ),
                                 TextSpan(
                                   text: 'NOT FIVE.',
-                                  style: TextStyle(color: AppColors.orange),
+                                  style: TextStyle(color: context.accentColor),
                                 ),
                               ],
                             ),
@@ -329,11 +330,11 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                               width: double.infinity,
                               height: 58,
                               decoration: BoxDecoration(
-                                color: AppColors.orange,
+                                color: context.accentColor,
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.orange.withValues(
+                                    color: context.accentColor.withValues(
                                       alpha: 0.35,
                                     ),
                                     blurRadius: 26,
@@ -450,7 +451,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                         widthFactor: DemoClock.sceneFraction(tMs),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
@@ -492,11 +493,11 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
             radius: 1.2,
             colors: isDark
                 ? [
-                    AppColors.orange.withValues(alpha: 0.15),
+                    context.accentColor.withValues(alpha: 0.15),
                     AppColors.pureBlack,
                   ]
                 : [
-                    AppColors.orange.withValues(alpha: 0.08),
+                    context.accentColor.withValues(alpha: 0.08),
                     AppColorsLight.pureWhite,
                   ],
           ),
@@ -576,7 +577,7 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                         borderRadius: BorderRadius.circular(34),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.orange.withValues(
+                            color: context.accentColor.withValues(
                               alpha: 0.35 + (_pulseController.value * 0.25),
                             ),
                             blurRadius: 50 + (_pulseController.value * 20),
@@ -611,10 +612,10 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                 const SizedBox(height: 4),
                 Text(
                   l10n.introYourTimeline,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: -1.5,
                     height: 1.0,
                   ),
@@ -652,19 +653,19 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                       _StatPill(
                         value: '1,700+',
                         label: l10n.authIntroExercises,
-                        color: const Color(0xFF00BCD4),
+                        color: context.accentColor,
                       ),
                       _Divider(),
                       _StatPill(
                         value: '1M+',
                         label: l10n.authIntroFoods,
-                        color: const Color(0xFF2ECC71),
+                        color: context.accentColor,
                       ),
                       _Divider(),
                       _StatPill(
                         value: '24/7',
                         label: l10n.authIntroAiCoach,
-                        color: AppColors.orange,
+                        color: context.accentColor,
                       ),
                     ],
                   ),
@@ -676,18 +677,18 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
                     width: double.infinity,
                     height: 60,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: AlignmentDirectional.topStart,
                         end: AlignmentDirectional.bottomEnd,
                         colors: [
-                          Color(0xFFFFB366), // orangeLight
-                          AppColors.orange,
+                          context.accentColor.withValues(alpha: 0.7), // orangeLight
+                          context.accentColor,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.orange.withValues(alpha: 0.4),
+                          color: context.accentColor.withValues(alpha: 0.4),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),

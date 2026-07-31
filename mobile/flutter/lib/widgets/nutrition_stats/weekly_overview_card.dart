@@ -77,7 +77,7 @@ class WeeklyOverviewCard extends StatelessWidget {
                     label: AppLocalizations.of(context).weeklyCheckinSheetDaysLogged,
                     value: '${data.daysLogged}/7',
                     icon: Icons.calendar_today,
-                    color: const Color(0xFF4CAF50),
+                    color: const Color(0xFF4CAF50), // accent-allowlist: weekly nutrition metric identity color (chart-legend style)
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
@@ -85,7 +85,7 @@ class WeeklyOverviewCard extends StatelessWidget {
                     label: AppLocalizations.of(context).weeklyCheckinSheetAvgCalories,
                     value: '${data.avgCalories}',
                     icon: Icons.local_fire_department,
-                    color: const Color(0xFFFF9800),
+                    color: const Color(0xFFFF9800), // accent-allowlist: weekly nutrition metric identity color (chart-legend style)
                     isDark: isDark,
                   ),
                   const SizedBox(width: 8),
@@ -93,7 +93,7 @@ class WeeklyOverviewCard extends StatelessWidget {
                     label: AppLocalizations.of(context).weeklyCheckinSheetAvgProtein,
                     value: '${data.avgProtein}g',
                     icon: Icons.fitness_center,
-                    color: const Color(0xFF009688),
+                    color: const Color(0xFF009688), // accent-allowlist: weekly nutrition metric identity color (chart-legend style)
                     isDark: isDark,
                   ),
                   if (data.weightChange != null) ...[
@@ -107,7 +107,7 @@ class WeeklyOverviewCard extends StatelessWidget {
                           : data.weightChange! < 0
                               ? Icons.trending_down
                               : Icons.trending_flat,
-                      color: const Color(0xFF2196F3),
+                      color: const Color(0xFF2196F3), // accent-allowlist: weekly nutrition metric identity color (chart-legend style)
                       isDark: isDark,
                     ),
                   ],

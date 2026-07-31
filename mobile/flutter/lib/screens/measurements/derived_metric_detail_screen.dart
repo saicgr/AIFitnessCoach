@@ -14,6 +14,7 @@ import '../../widgets/trends/trend_correlation.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'derived_metric_detail_screen_part_derived_metric_type.dart';
 part 'derived_metric_detail_screen_part_stat_item.dart';
 
@@ -70,7 +71,7 @@ class _DerivedMetricDetailScreenState
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     final heightCm = auth.user?.heightCm;
     final gender = auth.user?.gender;
@@ -548,7 +549,7 @@ class _DerivedMetricDetailScreenState
         return (
           value: lbm,
           label: AppLocalizations.of(context).derivedMetricDetailLeanMass,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'Your lean body mass is the total weight minus fat. Higher lean mass generally indicates more muscle.',
         );
@@ -631,28 +632,28 @@ class _DerivedMetricDetailScreenState
     if (bmi < 18.5) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailUnderweight,
-        color: AppColors.orange,
+        color: context.accentColor,
         info:
             'A BMI below 18.5 is considered underweight. Consider consulting a healthcare professional about nutrition strategies.',
       );
     } else if (bmi < 25) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailNormal,
-        color: AppColors.success,
+        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailABmiBetween18,
       );
     } else if (bmi < 30) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailOverweight,
-        color: AppColors.orange,
+        color: context.accentColor,
         info:
             AppLocalizations.of(context).derivedMetricDetailABmiBetween25,
       );
     } else {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailObese,
-        color: AppColors.error,
+        color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailABmiOf30,
       );
@@ -665,21 +666,21 @@ class _DerivedMetricDetailScreenState
       if (whr < 0.90) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailLowRisk,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'A WHR below 0.90 for men indicates low cardiovascular risk. WHO considers this a healthy range.',
         );
       } else if (whr < 1.0) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailModerateRisk,
-          color: AppColors.orange,
+          color: context.accentColor,
           info:
               'A WHR between 0.90 and 1.0 for men indicates moderate health risk. Focus on waist-reducing exercises.',
         );
       } else {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailHighRisk,
-          color: AppColors.error,
+          color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           info:
               'A WHR above 1.0 for men indicates increased cardiovascular risk. Consider lifestyle changes.',
         );
@@ -688,21 +689,21 @@ class _DerivedMetricDetailScreenState
       if (whr < 0.80) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailLowRisk,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'A WHR below 0.80 for women indicates low cardiovascular risk. WHO considers this a healthy range.',
         );
       } else if (whr < 0.85) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailModerateRisk,
-          color: AppColors.orange,
+          color: context.accentColor,
           info:
               'A WHR between 0.80 and 0.85 for women indicates moderate health risk. Focus on waist-reducing exercises.',
         );
       } else {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailHighRisk,
-          color: AppColors.error,
+          color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           info:
               'A WHR above 0.85 for women indicates increased cardiovascular risk. Consider lifestyle changes.',
         );
@@ -714,28 +715,28 @@ class _DerivedMetricDetailScreenState
     if (whtr < 0.4) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailUnderweight,
-        color: AppColors.orange,
+        color: context.accentColor,
         info:
             'A WHtR below 0.4 may indicate being underweight. Consider consulting a healthcare professional.',
       );
     } else if (whtr < 0.5) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailHealthy,
-        color: AppColors.success,
+        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailAWhtrBetween0,
       );
     } else if (whtr < 0.6) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailOverweight,
-        color: AppColors.orange,
+        color: context.accentColor,
         info:
             AppLocalizations.of(context).derivedMetricDetailAWhtrBetween02,
       );
     } else {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailObese,
-        color: AppColors.error,
+        color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailAWhtrAbove0,
       );
@@ -748,35 +749,35 @@ class _DerivedMetricDetailScreenState
       if (ffmi < 18) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailBelowAverage,
-          color: AppColors.orange,
+          color: context.accentColor,
           info:
               'An FFMI below 18 for men is below average. Focus on progressive overload and adequate protein.',
         );
       } else if (ffmi < 20) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAverage,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'An FFMI of 18-20 for men is average. You have a solid foundation of muscle.',
         );
       } else if (ffmi < 22) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAboveAverage,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'An FFMI of 20-22 for men is above average. You have notably more muscle than most.',
         );
       } else if (ffmi < 25) {
         return (
           label: AppLocalizations.of(context).scoreColorsExcellent,
-          color: AppColors.info,
+          color: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
           info:
               'An FFMI of 22-25 for men is excellent, near the natural limit. Outstanding muscular development.',
         );
       } else {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailSuperior,
-          color: AppColors.purple,
+          color: context.accentColor,
           info:
               'An FFMI above 25 for men exceeds the typical natural limit (~25). Exceptional muscularity.',
         );
@@ -785,35 +786,35 @@ class _DerivedMetricDetailScreenState
       if (ffmi < 14) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailBelowAverage,
-          color: AppColors.orange,
+          color: context.accentColor,
           info:
               'An FFMI below 14 for women is below average. Focus on resistance training and nutrition.',
         );
       } else if (ffmi < 16) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAverage,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'An FFMI of 14-16 for women is average. You have a solid foundation of muscle.',
         );
       } else if (ffmi < 18) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAboveAverage,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'An FFMI of 16-18 for women is above average. Impressive muscular development.',
         );
       } else if (ffmi < 21) {
         return (
           label: AppLocalizations.of(context).scoreColorsExcellent,
-          color: AppColors.info,
+          color: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
           info:
               'An FFMI of 18-21 for women is excellent. Outstanding lean mass for your height.',
         );
       } else {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailSuperior,
-          color: AppColors.purple,
+          color: context.accentColor,
           info:
               'An FFMI above 21 for women is exceptional. Elite-level muscularity.',
         );
@@ -828,21 +829,21 @@ class _DerivedMetricDetailScreenState
       if (ratio < 1.4) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailNarrow,
-          color: AppColors.orange,
+          color: context.accentColor,
           info:
               'A shoulder-to-waist ratio below 1.4 for men indicates a narrow frame. Target shoulder exercises to build width.',
         );
       } else if (ratio < 1.6) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAverage,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'A shoulder-to-waist ratio of 1.4-1.6 for men is average. Good overall proportions.',
         );
       } else {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailVTaper,
-          color: AppColors.info,
+          color: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
           info:
               'A shoulder-to-waist ratio above 1.6 for men indicates a strong V-taper. Excellent aesthetics!',
         );
@@ -851,21 +852,21 @@ class _DerivedMetricDetailScreenState
       if (ratio < 1.3) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailNarrow,
-          color: AppColors.orange,
+          color: context.accentColor,
           info:
               'A shoulder-to-waist ratio below 1.3 for women indicates narrower shoulders relative to waist.',
         );
       } else if (ratio < 1.5) {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAverage,
-          color: AppColors.success,
+          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
           info:
               'A shoulder-to-waist ratio of 1.3-1.5 for women is average. Well-balanced proportions.',
         );
       } else {
         return (
           label: AppLocalizations.of(context).derivedMetricDetailAthletic,
-          color: AppColors.info,
+          color: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
           info:
               'A shoulder-to-waist ratio above 1.5 for women indicates athletic build with broader shoulders.',
         );
@@ -878,21 +879,21 @@ class _DerivedMetricDetailScreenState
     if (ratio < 1.1) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailNarrow,
-        color: AppColors.orange,
+        color: context.accentColor,
         info:
             AppLocalizations.of(context).derivedMetricDetailAChestToWaist,
       );
     } else if (ratio < 1.3) {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailAverage,
-        color: AppColors.success,
+        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailAChestToWaist2,
       );
     } else {
       return (
         label: AppLocalizations.of(context).derivedMetricDetailAthletic,
-        color: AppColors.info,
+        color: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailAChestToWaist3,
       );
@@ -904,28 +905,28 @@ class _DerivedMetricDetailScreenState
     if (symmetry >= 97) {
       return (
         label: AppLocalizations.of(context).scoreColorsExcellent,
-        color: AppColors.success,
+        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailNearPerfectSymmetry97,
       );
     } else if (symmetry >= 93) {
       return (
         label: AppLocalizations.of(context).scoreExplainGood,
-        color: AppColors.success,
+        color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailGoodSymmetry9397,
       );
     } else if (symmetry >= 88) {
       return (
         label: AppLocalizations.of(context).scoreExplainModerate,
-        color: AppColors.orange,
+        color: context.accentColor,
         info:
             AppLocalizations.of(context).derivedMetricDetailModerateAsymmetry8893,
       );
     } else {
       return (
         label: AppLocalizations.of(context).muscleBalanceChartImbalanced,
-        color: AppColors.error,
+        color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         info:
             AppLocalizations.of(context).derivedMetricDetailSignificantAsymmetryBelow8,
       );

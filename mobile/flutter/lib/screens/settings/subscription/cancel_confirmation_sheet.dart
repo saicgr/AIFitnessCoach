@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Retention offer model
 class RetentionOffer {
   final String id;
@@ -148,7 +149,7 @@ class _CancelConfirmationSheetState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${offer.name} applied successfully!'),
-              backgroundColor: AppColors.green,
+              backgroundColor: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
             ),
           );
         }
@@ -159,7 +160,7 @@ class _CancelConfirmationSheetState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to apply offer: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -235,12 +236,12 @@ class _CancelConfirmationSheetState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.warning_amber_rounded,
-                    color: Colors.red.shade400,
+                    color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                     size: 24,
                   ),
                 ),
@@ -355,7 +356,7 @@ class _CancelConfirmationSheetState
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.cyan),
+                borderSide: BorderSide(color: context.accentColor),
               ),
               filled: true,
               fillColor:
@@ -386,11 +387,11 @@ class _CancelConfirmationSheetState
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withValues(alpha: 0.1)
+              ? context.accentColor.withValues(alpha: 0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -399,7 +400,7 @@ class _CancelConfirmationSheetState
             Icon(
               reason.icon,
               size: 20,
-              color: isSelected ? AppColors.cyan : textSecondary,
+              color: isSelected ? context.accentColor : textSecondary,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -408,7 +409,7 @@ class _CancelConfirmationSheetState
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? AppColors.cyan : textPrimary,
+                  color: isSelected ? context.accentColor : textPrimary,
                 ),
               ),
             ),
@@ -416,7 +417,7 @@ class _CancelConfirmationSheetState
               Icon(
                 Icons.check_circle,
                 size: 20,
-                color: AppColors.cyan,
+                color: context.accentColor,
               ),
           ],
         ),
@@ -437,10 +438,10 @@ class _CancelConfirmationSheetState
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.red.withValues(alpha: 0.08),
+            color: Colors.red.withValues(alpha: 0.08),  // accent-allowlist: error/destructive - must stay red
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.red.withValues(alpha: 0.2),
+              color: Colors.red.withValues(alpha: 0.2),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
           child: Column(
@@ -448,14 +449,14 @@ class _CancelConfirmationSheetState
             children: [
               Row(
                 children: [
-                  Icon(Icons.warning_amber, size: 20, color: Colors.red.shade400),
+                  Icon(Icons.warning_amber, size: 20, color: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
                   const SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context).cancelConfirmationWhatYouLlLose,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: Colors.red.shade400,
+                      color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                     ),
                   ),
                 ],
@@ -473,10 +474,10 @@ class _CancelConfirmationSheetState
 
         // Retention offers
         if (_isLoadingOffers)
-          const Center(
+          Center(
             child: Padding(
               padding: EdgeInsets.all(20),
-              child: CircularProgressIndicator(color: AppColors.cyan),
+              child: CircularProgressIndicator(color: context.accentColor),
             ),
           )
         else if (_retentionOffers.isNotEmpty) ...[
@@ -509,7 +510,7 @@ class _CancelConfirmationSheetState
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(Icons.remove_circle_outline, size: 16, color: Colors.red.shade300),
+          Icon(Icons.remove_circle_outline, size: 16, color: Colors.red.shade300),  // accent-allowlist: error/destructive - must stay red
           const SizedBox(width: 8),
           Text(
             text,
@@ -533,22 +534,22 @@ class _CancelConfirmationSheetState
     switch (offer.type) {
       case 'discount':
         icon = Icons.local_offer;
-        color = AppColors.green;
+        color = AppColors.green;  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
         badge = '${offer.discountPercent}% OFF';
         break;
       case 'free_period':
         icon = Icons.card_giftcard;
-        color = AppColors.purple;
+        color = context.accentColor;
         badge = 'FREE';
         break;
       case 'pause':
         icon = Icons.pause_circle;
-        color = Colors.amber.shade700;
+        color = Colors.amber.shade700;  // accent-allowlist: warning severity - must stay amber regardless of accent
         badge = 'PAUSE';
         break;
       default:
         icon = Icons.star;
-        color = AppColors.cyan;
+        color = context.accentColor;
         badge = 'SPECIAL';
     }
 
@@ -646,10 +647,10 @@ class _CancelConfirmationSheetState
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.amber.withValues(alpha: 0.1),
+        color: Colors.amber.withValues(alpha: 0.1),  // accent-allowlist: warning severity - must stay amber regardless of accent
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.amber.withValues(alpha: 0.3),
+          color: Colors.amber.withValues(alpha: 0.3),  // accent-allowlist: warning severity - must stay amber regardless of accent
         ),
       ),
       child: Material(
@@ -667,12 +668,12 @@ class _CancelConfirmationSheetState
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.2),
+                    color: Colors.amber.withValues(alpha: 0.2),  // accent-allowlist: warning severity - must stay amber regardless of accent
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.pause_circle_outline,
-                    color: Colors.amber.shade700,
+                    color: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                     size: 24,
                   ),
                 ),
@@ -701,7 +702,7 @@ class _CancelConfirmationSheetState
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: Colors.amber.shade700,
+                  color: Colors.amber.shade700,  // accent-allowlist: warning severity - must stay amber regardless of accent
                 ),
               ],
             ),
@@ -720,9 +721,9 @@ class _CancelConfirmationSheetState
           child: ElevatedButton(
             onPressed: _selectedReason != null ? _proceedToNextStep : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.cyan.withValues(alpha: 0.3),
+              disabledBackgroundColor: context.accentColor.withValues(alpha: 0.3),
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -761,8 +762,8 @@ class _CancelConfirmationSheetState
           child: OutlinedButton(
             onPressed: _isProcessing ? null : _confirmCancellation,
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red.shade400,
-              side: BorderSide(color: Colors.red.shade400),
+              foregroundColor: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
+              side: BorderSide(color: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -791,7 +792,7 @@ class _CancelConfirmationSheetState
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
         ),

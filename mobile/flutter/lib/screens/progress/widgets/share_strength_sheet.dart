@@ -58,13 +58,13 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
   Color _getLevelColor(StrengthLevel level) {
     switch (level) {
       case StrengthLevel.elite:
-        return const Color(0xFF9C27B0);
+        return const Color(0xFF9C27B0);  // accent-allowlist: strength-level tier color — fixed rank/tier identity, like a rarity tier, not tied to accent
       case StrengthLevel.advanced:
-        return const Color(0xFF2196F3);
+        return const Color(0xFF2196F3);  // accent-allowlist: informational state — must stay blue regardless of accent
       case StrengthLevel.intermediate:
-        return const Color(0xFF4CAF50);
+        return const Color(0xFF4CAF50);  // accent-allowlist: success/positive state — must stay green regardless of accent
       case StrengthLevel.novice:
-        return const Color(0xFFFF9800);
+        return const Color(0xFFFF9800);  // accent-allowlist: warning severity — must stay amber regardless of accent
       case StrengthLevel.beginner:
         return const Color(0xFF9E9E9E);
     }
@@ -160,7 +160,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -171,7 +171,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         behavior: SnackBarBehavior.floating,
       ),
     );

@@ -489,7 +489,7 @@ class _PresetThumbnail extends StatelessWidget {
           height: 11,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFE89A3E), Color(0xFFC96E18)],
+              colors: [Color(0xFFE89A3E), Color(0xFFC96E18)],  // accent-allowlist: intensity/flame gauge colour, matches strain_coach_card.dart convention
             ),
             borderRadius: BorderRadius.circular(3),
           ),
@@ -498,9 +498,9 @@ class _PresetThumbnail extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: const [
-            _MiniBar(Color(0xFF8B5CF6)),
+            _MiniBar(Color(0xFF8B5CF6)),  // accent-allowlist: macro identity -- protein colour, mini preview of the nutrition card's macro bars
             SizedBox(height: 2),
-            _MiniBar(Color(0xFF2BB6C4)),
+            _MiniBar(Color(0xFF2BB6C4)),  // accent-allowlist: macro identity -- carbs colour, mini preview of the nutrition card's macro bars
           ],
         );
       case HomeSection.quickActions:
@@ -511,7 +511,7 @@ class _PresetThumbnail extends StatelessWidget {
           height: 9,
           width: 28,
           decoration: BoxDecoration(
-            color: const Color(0xFFE89A3E).withValues(alpha: 0.6),
+            color: const Color(0xFFE89A3E).withValues(alpha: 0.6),  // accent-allowlist: intensity/flame gauge colour, matches strain_coach_card.dart convention
             borderRadius: BorderRadius.circular(999),
           ),
         );
@@ -568,7 +568,7 @@ class _PresetThumbnail extends StatelessWidget {
         return Container(
           height: 11,
           decoration: BoxDecoration(
-            color: const Color(0xFFE5567B).withValues(alpha: 0.7),
+            color: const Color(0xFFE5567B).withValues(alpha: 0.7),  // accent-allowlist: cycle-tracking feature's own dedicated pink brand accent (comment: "matching the feature accent"), not the app accent
             borderRadius: BorderRadius.circular(3),
           ),
         );
@@ -582,7 +582,7 @@ class _PresetThumbnail extends StatelessWidget {
               width: 11,
               height: 11,
               decoration: const BoxDecoration(
-                color: Color(0xFF4CAF50),
+                color: Color(0xFF4CAF50),  // accent-allowlist: success/positive state -- readiness traffic-light dot, must stay green regardless of accent
                 shape: BoxShape.circle,
               ),
             ),

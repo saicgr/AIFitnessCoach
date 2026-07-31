@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';

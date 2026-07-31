@@ -18,10 +18,10 @@ import '../../data/models/hormonal_health.dart';
 class CyclePhaseColors {
   CyclePhaseColors._();
 
-  static const Color menstrual = Color(0xFFE5567B); // deep rose
-  static const Color follicular = Color(0xFF66BB6A); // fresh green
-  static const Color ovulation = Color(0xFFFFB300); // warm amber
-  static const Color luteal = Color(0xFF7E8CE0); // soft indigo
+  static const Color menstrual = Color(0xFFE5567B); // deep rose  // accent-allowlist: cycle-phase legend colour -- menstrual, see class doc
+  static const Color follicular = Color(0xFF66BB6A); // fresh green  // accent-allowlist: cycle-phase legend colour -- follicular, see class doc
+  static const Color ovulation = Color(0xFFFFB300); // warm amber  // accent-allowlist: cycle-phase legend colour -- ovulation, see class doc
+  static const Color luteal = Color(0xFF7E8CE0); // soft indigo  // accent-allowlist: cycle-phase legend colour -- luteal, see class doc
   static const Color unknown = Color(0xFF9E9E9E);
 
   static Color of(CyclePhase? phase) {
@@ -204,11 +204,11 @@ class CycleConfidence {
   static Color color(String confidence) {
     switch (confidence) {
       case 'high':
-        return const Color(0xFF66BB6A);
+        return const Color(0xFF66BB6A);  // accent-allowlist: confidence-band colour -- high, matches phase palette
       case 'medium':
-        return const Color(0xFFFFB300);
+        return const Color(0xFFFFB300);  // accent-allowlist: confidence-band colour -- medium, matches phase palette
       default:
-        return const Color(0xFFE5567B);
+        return const Color(0xFFE5567B);  // accent-allowlist: confidence-band colour -- low, matches phase palette
     }
   }
 

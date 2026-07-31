@@ -8,6 +8,7 @@ import '../../../core/services/posthog_service.dart';
 import '../widgets/exercise_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Screen showing all exercises for a specific category
 class CategoryExercisesScreen extends ConsumerStatefulWidget {
   final String categoryName;
@@ -169,7 +170,7 @@ class _CategoryExercisesScreenState
     final backgroundColor =
         isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Scaffold(
       backgroundColor: backgroundColor,

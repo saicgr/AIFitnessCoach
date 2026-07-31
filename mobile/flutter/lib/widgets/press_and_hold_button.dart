@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core/theme/accent_color_provider.dart';
 import '../l10n/generated/app_localizations.dart';
 /// A button that requires a press-and-hold gesture to confirm an action.
 /// Shows a progress fill expanding left-to-right as the user holds.
@@ -67,7 +68,7 @@ class _PressAndHoldButtonState extends State<PressAndHoldButton>
 
   @override
   Widget build(BuildContext context) {
-    final buttonColor = widget.color ?? const Color(0xFFF97316);
+    final buttonColor = widget.color ?? context.accentColor;
     final fillColor = HSLColor.fromColor(buttonColor)
         .withLightness(
             (HSLColor.fromColor(buttonColor).lightness + 0.15).clamp(0.0, 1.0))

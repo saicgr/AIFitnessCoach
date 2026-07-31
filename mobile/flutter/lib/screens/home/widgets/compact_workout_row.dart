@@ -7,6 +7,7 @@ import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'home_schedule_dates.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Compact workout row - minimal workout display with quick start
 /// Used below nutrition/fasting hero cards when workout isn't primary focus
 class CompactWorkoutRow extends ConsumerWidget {
@@ -79,13 +80,13 @@ class CompactWorkoutRow extends ConsumerWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       color: isToday
-                          ? AppColors.cyan.withValues(alpha: 0.15)
-                          : AppColors.purple.withValues(alpha: 0.15),
+                          ? context.accentColor.withValues(alpha: 0.15)
+                          : context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.fitness_center,
-                      color: isToday ? AppColors.cyan : AppColors.purple,
+                      color: context.accentColor,
                       size: 20,
                     ),
                   ),
@@ -105,7 +106,7 @@ class CompactWorkoutRow extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: isToday ? AppColors.cyan : AppColors.purple,
+                                  color: context.accentColor,
                                 ),
                               ),
                               Text(
@@ -147,7 +148,7 @@ class CompactWorkoutRow extends ConsumerWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: isToday ? AppColors.cyan : AppColors.purple,
+                      color: context.accentColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: IconButton(

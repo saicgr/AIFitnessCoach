@@ -144,7 +144,7 @@ class CycleTrackerWidget extends StatelessWidget {
                   Icons.check_circle,
                   'Good for now',
                   cycleInfo!.recommendedExercises.take(3).join(', '),
-                  Colors.green,
+                  Colors.green,  // accent-allowlist: recommended-for-phase framing -- success/positive
                 ),
               if (cycleInfo!.avoidExercises.isNotEmpty)
                 _buildRecommendationRow(
@@ -152,7 +152,7 @@ class CycleTrackerWidget extends StatelessWidget {
                   Icons.remove_circle,
                   'Consider avoiding',
                   cycleInfo!.avoidExercises.take(3).join(', '),
-                  Colors.orange,
+                  Colors.orange,  // accent-allowlist: avoid-for-phase framing -- warning
                 ),
             ],
           ],
@@ -273,13 +273,13 @@ class CycleTrackerWidget extends StatelessWidget {
   Color _getPhaseColor(CyclePhase? phase) {
     switch (phase) {
       case CyclePhase.menstrual:
-        return const Color(0xFFE57373);
+        return const Color(0xFFE57373);  // accent-allowlist: cycle-phase legend colour -- menstrual
       case CyclePhase.follicular:
-        return const Color(0xFF81C784);
+        return const Color(0xFF81C784);  // accent-allowlist: cycle-phase legend colour -- follicular
       case CyclePhase.ovulation:
-        return const Color(0xFFFFD54F);
+        return const Color(0xFFFFD54F);  // accent-allowlist: cycle-phase legend colour -- ovulation
       case CyclePhase.luteal:
-        return const Color(0xFF64B5F6);
+        return const Color(0xFF64B5F6);  // accent-allowlist: cycle-phase legend colour -- luteal
       default:
         return Colors.grey;
     }

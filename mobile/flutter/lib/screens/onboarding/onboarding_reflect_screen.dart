@@ -11,6 +11,7 @@ import 'weight_projection_screen.dart' show WeightProjectionCalculator;
 import 'widgets/onboarding_theme.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Onboarding conversion v6 — acknowledgment interstitial.
 ///
 /// Shown right after the quiz, before /onboarding-blocker. No input: it
@@ -278,8 +279,8 @@ class _ReflectContinueButton extends StatelessWidget {
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+            gradient: LinearGradient(
+              colors: [AppColors.onboardingAccent, context.accentColor],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
@@ -658,7 +659,7 @@ class _TrajectoryPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..shader = LinearGradient(
-        colors: [accent, const Color(0xFFEA580C)],
+        colors: [accent, Color(0xFFEA580C)],  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       ).createShader(Offset.zero & size);
     canvas.drawPath(drawnPath, linePaint);
 

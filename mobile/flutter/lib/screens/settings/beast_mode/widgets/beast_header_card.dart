@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class BeastHeaderCard extends StatelessWidget {
   final bool isDark;
   const BeastHeaderCard({super.key, required this.isDark});
@@ -15,14 +16,14 @@ class BeastHeaderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            AppColors.orange.withValues(alpha: isDark ? 0.25 : 0.15),
-            AppColors.orange.withValues(alpha: isDark ? 0.10 : 0.05),
+            context.accentColor.withValues(alpha: isDark ? 0.25 : 0.15),
+            context.accentColor.withValues(alpha: isDark ? 0.10 : 0.05),
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -31,12 +32,12 @@ class BeastHeaderCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.2),
+              color: context.accentColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.local_fire_department,
-              color: AppColors.orange,
+              color: context.accentColor,
               size: 28,
             ),
           ),
@@ -50,7 +51,7 @@ class BeastHeaderCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: 1.2,
                   ),
                 ),

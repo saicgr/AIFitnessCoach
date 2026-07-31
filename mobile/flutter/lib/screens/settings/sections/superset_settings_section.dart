@@ -6,6 +6,7 @@ import '../../../core/providers/superset_preferences_provider.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Simplified superset settings section with basic enable/disable controls.
 ///
 /// Advanced superset algorithm tuning (compound sets, max supersets, rest times,
@@ -18,13 +19,13 @@ class SupersetSettingsSection extends ConsumerWidget {
       'icon': Icons.sync_alt,
       'title': 'What are Supersets?',
       'description': 'Supersets are pairs of exercises performed back-to-back with minimal rest. They save time and increase workout intensity.',
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.compare_arrows,
       'title': 'Antagonist Pairs',
       'description': 'Exercises targeting opposing muscle groups (e.g., chest press + rows, bicep curls + tricep extensions). Allows one muscle to rest while the other works.',
-      'color': AppColors.cyan,
+      'color': AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
   ];
 
@@ -128,8 +129,8 @@ class _SupersetToggleTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: AppColors.cyan,
-            activeTrackColor: AppColors.cyan.withValues(alpha: 0.5),
+            activeThumbColor: context.accentColor,
+            activeTrackColor: context.accentColor.withValues(alpha: 0.5),
           ),
         ],
       ),

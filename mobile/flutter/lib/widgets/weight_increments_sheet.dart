@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
 import '../core/providers/weight_increments_provider.dart';
+import '../core/theme/accent_color_provider.dart';
 import 'glass_sheet.dart';
 
 import '../l10n/generated/app_localizations.dart';
@@ -67,7 +68,7 @@ class _WeightIncrementsSheetState extends ConsumerState<WeightIncrementsSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accentColor = context.accentColor;
     final isKg = state.unit == 'kg';
 
     return SafeArea(

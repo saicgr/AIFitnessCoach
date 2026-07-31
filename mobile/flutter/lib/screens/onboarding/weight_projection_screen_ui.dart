@@ -46,7 +46,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
               color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.green.withValues(alpha: 0.3),
+                color: AppColors.green.withValues(alpha: 0.3),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
               ),
             ),
             child: Row(
@@ -54,7 +54,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
               children: [
                 const Icon(
                   Icons.check_circle,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                   size: 24,
                 ),
                 const SizedBox(width: 12),
@@ -94,8 +94,8 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                             begin: AlignmentDirectional.topStart,
                             end: AlignmentDirectional.bottomEnd,
                             colors: [
-                              AppColors.green.withValues(alpha: 0.2),
-                              AppColors.orange.withValues(alpha: 0.2),
+                              AppColors.green.withValues(alpha: 0.2),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
+                              context.accentColor.withValues(alpha: 0.2),
                             ],
                           ),
                           shape: BoxShape.circle,
@@ -131,7 +131,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                           color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: AppColors.green.withValues(alpha: 0.3),
+                            color: AppColors.green.withValues(alpha: 0.3),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                           ),
                         ),
                         child: Row(
@@ -139,7 +139,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                           children: [
                             const Icon(
                               Icons.check_circle,
-                              color: AppColors.green,
+                              color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                               size: 24,
                             ),
                             const SizedBox(width: 12),
@@ -181,7 +181,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                   Icons.fitness_center,
                   'Build Strength',
                   'Gain muscle while maintaining weight',
-                  AppColors.purple,
+                  context.accentColor,
                   600,
                 ),
                 const SizedBox(height: 12),
@@ -192,7 +192,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                   Icons.bolt,
                   'Boost Energy',
                   'Optimize nutrition for peak performance',
-                  AppColors.orange,
+                  context.accentColor,
                   700,
                 ),
                 const SizedBox(height: 12),
@@ -203,7 +203,7 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                   Icons.favorite,
                   'Stay Healthy',
                   'Balanced lifestyle for long-term wellness',
-                  AppColors.coral,
+                  context.accentColor,
                   800,
                 ),
 
@@ -240,15 +240,15 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [AppColors.orange, Color(0xFFEA580C)],
+                      gradient: LinearGradient(
+                        colors: [context.accentColor.withValues(alpha: 0.85), context.accentColor],
                         begin: AlignmentDirectional.topStart,
                         end: AlignmentDirectional.bottomEnd,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.orange.withValues(alpha: 0.4),
+                          color: context.accentColor.withValues(alpha: 0.4),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),

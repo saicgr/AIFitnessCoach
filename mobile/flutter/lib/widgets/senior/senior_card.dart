@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Simplified card for Senior Mode with large text and easy tap targets
@@ -53,13 +53,13 @@ class SeniorCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: (iconColor ?? AppColors.cyan).withOpacity(0.15),
+                        color: (iconColor ?? context.accentColor).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Icon(
                         icon,
                         size: 36,
-                        color: iconColor ?? AppColors.cyan,
+                        color: iconColor ?? context.accentColor,
                       ),
                     ),
                     const SizedBox(width: 20),
@@ -140,13 +140,13 @@ class SeniorWorkoutCard extends StatelessWidget {
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
           colors: [
-            AppColors.cyan.withOpacity(0.2),
-            AppColors.purple.withOpacity(0.1),
+            context.accentColor.withOpacity(0.2),
+            context.accentColor.withValues(alpha: 0.7).withOpacity(0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.5),
+          color: context.accentColor.withOpacity(0.5),
           width: 2,
         ),
       ),
@@ -158,13 +158,13 @@ class SeniorWorkoutCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.2),
+                  color: context.accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center,
                   size: 36,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
               const SizedBox(width: 16),
@@ -173,7 +173,7 @@ class SeniorWorkoutCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -226,7 +226,7 @@ class SeniorWorkoutCard extends StatelessWidget {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(36),
@@ -276,7 +276,7 @@ class SeniorStatCard extends StatelessWidget {
           Icon(
             icon,
             size: 40,
-            color: iconColor ?? AppColors.cyan,
+            color: iconColor ?? context.accentColor,
           ),
           const SizedBox(height: 12),
           Text(

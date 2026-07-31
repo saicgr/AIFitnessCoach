@@ -312,7 +312,7 @@ class _WarningsBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final warn = Colors.amber.shade700;
+    final warn = Colors.amber.shade700;  // accent-allowlist: warning severity - must stay amber regardless of accent
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -366,7 +366,7 @@ class _UnresolvedBlock extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.25),
+                color: Colors.amber.withValues(alpha: 0.25),  // accent-allowlist: warning severity - must stay amber regardless of accent
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -392,7 +392,7 @@ class _UnresolvedBlock extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.18),
+                  color: Colors.amber.withValues(alpha: 0.18),  // accent-allowlist: warning severity - must stay amber regardless of accent
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(n, style: theme.textTheme.labelMedium),

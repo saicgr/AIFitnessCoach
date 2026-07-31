@@ -354,7 +354,7 @@ class _ImportExercisePreviewSheetState
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(AppLocalizations.of(context).syncDetailsDiscard,
-                style: TextStyle(color: AppColors.error)),
+                style: TextStyle(color: AppColors.error)),  // accent-allowlist: destructive discard action -- error semantic
           ),
         ],
       ),
@@ -598,22 +598,22 @@ class _ImportExercisePreviewSheetState
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.orange.withOpacity(0.15),
+        color: AppColors.orange.withOpacity(0.15),  // accent-allowlist: duplicate-exercise notice banner -- warning/info framing
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.orange.withOpacity(0.4)),
+        border: Border.all(color: AppColors.orange.withOpacity(0.4)),  // accent-allowlist: duplicate-exercise notice banner -- warning/info framing
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.info_outline,
-              color: AppColors.orange, size: 18),
+              color: AppColors.orange, size: 18),  // accent-allowlist: duplicate-exercise notice banner -- warning/info framing
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               "You already have '$name' in your exercises. Viewing the "
               "existing copy — fields are read-only.",
               style: const TextStyle(
-                color: AppColors.orange,
+                color: AppColors.orange,  // accent-allowlist: duplicate-exercise notice banner -- warning/info framing
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -627,8 +627,8 @@ class _ImportExercisePreviewSheetState
   Widget _confidenceChip(Color accent, bool isDark) {
     final pct = (_confidence * 100).round();
     final color = _confidence >= 0.8
-        ? AppColors.success
-        : (_confidence >= 0.5 ? AppColors.orange : AppColors.error);
+        ? AppColors.success  // accent-allowlist: AI confidence-score band -- high/medium/low
+        : (_confidence >= 0.5 ? AppColors.orange : AppColors.error);  // accent-allowlist: AI confidence-score band -- high/medium/low
     return Row(
       children: [
         Container(
@@ -658,14 +658,14 @@ class _ImportExercisePreviewSheetState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.success.withOpacity(0.15),
+              color: AppColors.success.withOpacity(0.15),  // accent-allowlist: AI-searchable positive status badge -- success semantic
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               AppLocalizations.of(context).importExercisePreviewAiSearchable,
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: AI-searchable positive status badge -- success semantic
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -887,7 +887,7 @@ class _ImportExercisePreviewSheetState
                 if (!widget.duplicate && _instructionCtrls.length > 1)
                   IconButton(
                     icon: const Icon(Icons.remove_circle_outline,
-                        color: AppColors.error),
+                        color: AppColors.error),  // accent-allowlist: destructive remove-step action -- error semantic
                     onPressed: () => setState(() {
                       _instructionCtrls.removeAt(i).dispose();
                     }),
@@ -982,13 +982,13 @@ class _ImportExercisePreviewSheetState
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.delete_outline,
-                            color: AppColors.error),
+                            color: AppColors.error),  // accent-allowlist: destructive discard action -- error semantic
                     label: Text(
                       AppLocalizations.of(context).syncDetailsDiscard,
-                      style: TextStyle(color: AppColors.error),
+                      style: TextStyle(color: AppColors.error),  // accent-allowlist: destructive discard action -- error semantic
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.error.withOpacity(0.6)),
+                      side: BorderSide(color: AppColors.error.withOpacity(0.6)),  // accent-allowlist: destructive discard action -- error semantic
                     ),
                   ),
                 ),

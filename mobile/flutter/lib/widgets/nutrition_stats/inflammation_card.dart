@@ -217,9 +217,9 @@ class _Meter extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   gradient: LinearGradient(colors: [
-                    AppColors.success.withValues(alpha: 0.55),
-                    AppColors.orange.withValues(alpha: 0.55),
-                    AppColors.error.withValues(alpha: 0.55),
+                    AppColors.success.withValues(alpha: 0.55), // accent-allowlist: inflammation-level severity scale (low/med/high)
+                    AppColors.orange.withValues(alpha: 0.55), // accent-allowlist: inflammation-level severity scale (low/med/high)
+                    AppColors.error.withValues(alpha: 0.55), // accent-allowlist: inflammation-level severity scale (low/med/high)
                   ]),
                   color: track,
                 ),

@@ -8,6 +8,8 @@ import '../../../widgets/glass_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../data/providers/root_messenger.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Banner showing missed workout(s) with quick action buttons
 ///
 /// Displays when user has missed workout(s) from the past 3 days.
@@ -115,7 +117,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
 
       if (success && mounted) {
         _dismiss();
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
             backgroundColor: AppColors.elevated,
@@ -199,12 +201,12 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
           color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.orange.withOpacity(0.3),
+            color: context.accentColor.withOpacity(0.3),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.orange.withOpacity(0.1),
+              color: context.accentColor.withOpacity(0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -221,12 +223,12 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.schedule_rounded,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                       size: 20,
                     ),
                   ),
@@ -240,7 +242,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -318,7 +320,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                     child: ElevatedButton(
                       onPressed: isLoading ? null : () => _handleDoToday(workout),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(

@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'pre_auth_quiz_screen.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Program summary screen shown after workout generation completes.
 ///
@@ -47,8 +48,8 @@ class ProgramSummaryScreen extends ConsumerWidget {
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
                               colors: [
-                                AppColors.success.withValues(alpha: 0.2),
-                                AppColors.success.withValues(alpha: 0.08),
+                                AppColors.success.withValues(alpha: 0.2),  // accent-allowlist: success/positive state - must stay green regardless of accent
+                                AppColors.success.withValues(alpha: 0.08),  // accent-allowlist: success/positive state - must stay green regardless of accent
                               ],
                               begin: AlignmentDirectional.topStart,
                               end: AlignmentDirectional.bottomEnd,
@@ -56,7 +57,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
                           ),
                           child: const Icon(
                             Icons.check_rounded,
-                            color: AppColors.success,
+                            color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                             size: 40,
                           ),
                         ),
@@ -132,7 +133,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
             Expanded(
               child: _buildSummaryTile(
                 icon: Icons.flag_rounded,
-                iconColor: AppColors.orange,
+                iconColor: context.accentColor,
                 label: AppLocalizations.of(context)!.challengeCreateFieldGoal,
                 value: goalLabel,
                 isDark: isDark,
@@ -145,7 +146,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
             Expanded(
               child: _buildSummaryTile(
                 icon: Icons.fitness_center_rounded,
-                iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
                 label: AppLocalizations.of(context)!.programSummaryEquipment,
                 value: equipmentLabel,
                 isDark: isDark,
@@ -162,7 +163,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
             Expanded(
               child: _buildSummaryTile(
                 icon: Icons.trending_up_rounded,
-                iconColor: AppColors.green,
+                iconColor: AppColors.green,  // accent-allowlist: categorical per-summary-tile icon colour, distinct from neighbouring tiles for visual scanning
                 label: AppLocalizations.of(context)!.programSummaryLevel,
                 value: levelLabel,
                 isDark: isDark,
@@ -175,7 +176,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
             Expanded(
               child: _buildSummaryTile(
                 icon: Icons.calendar_today_rounded,
-                iconColor: const Color(0xFFA855F7),
+                iconColor: const Color(0xFFA855F7),  // accent-allowlist: categorical per-summary-tile icon colour, distinct from neighbouring tiles for visual scanning
                 label: AppLocalizations.of(context)!.navWorkouts,
                 value: daysLabel,
                 isDark: isDark,
@@ -294,10 +295,10 @@ class ProgramSummaryScreen extends ConsumerWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.1),
+                    color: context.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(prop.icon, color: AppColors.orange, size: 18),
+                  child: Icon(prop.icon, color: context.accentColor, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -358,10 +359,10 @@ class ProgramSummaryScreen extends ConsumerWidget {
                 context.go('/home');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 elevation: 2,
-                shadowColor: AppColors.orange.withValues(alpha: 0.4),
+                shadowColor: context.accentColor.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -546,11 +547,11 @@ class _PlanRevealConfettiState extends State<_PlanRevealConfetti> {
         gravity: 0.25,
         shouldLoop: false,
         colors: const [
-          Color(0xFF22C55E),
-          Color(0xFF3B82F6),
-          Color(0xFFF59E0B),
-          Color(0xFFEC4899),
-          Color(0xFF8B5CF6),
+          Color(0xFF22C55E),  // accent-allowlist: success/positive state - same value as AppColors.success
+          Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
+          Color(0xFFF59E0B),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
+          Color(0xFFEC4899),  // accent-allowlist: celebratory confetti burst - decorative multi-colour variety by design
+          Color(0xFF8B5CF6),  // accent-allowlist: celebratory confetti burst - decorative multi-colour variety by design
         ],
       ),
     );

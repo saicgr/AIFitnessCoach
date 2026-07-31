@@ -87,10 +87,10 @@ class LeagueRankTile extends ConsumerWidget {
   }
 
   _League _leagueForLevel(int level) {
-    if (level >= 40) return const _League('Diamond', '💎', Color(0xFF7FD8FF));
-    if (level >= 25) return const _League('Gold', '🥇', Color(0xFFFFD27A));
+    if (level >= 40) return const _League('Diamond', '💎', Color(0xFF7FD8FF));  // accent-allowlist: league/rank tier identity colour (Diamond/Gold/Silver/Bronze)
+    if (level >= 25) return const _League('Gold', '🥇', Color(0xFFFFD27A));  // accent-allowlist: league/rank tier identity colour (Diamond/Gold/Silver/Bronze)
     if (level >= 12) return const _League('Silver', '🥈', Color(0xFFCBCBCB));
-    return const _League('Bronze', '🥉', Color(0xFFCD9367));
+    return const _League('Bronze', '🥉', Color(0xFFCD9367));  // accent-allowlist: league/rank tier identity colour (Diamond/Gold/Silver/Bronze)
   }
 }
 

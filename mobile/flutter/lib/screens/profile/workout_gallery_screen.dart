@@ -19,6 +19,7 @@ import 'package:dio/dio.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Full Workout Gallery Screen
 ///
 /// Shows all workout gallery images in a scrollable grid with:
@@ -197,10 +198,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
         setState(() => _selectedFilter = selected ? type : null);
         _loadImages();
       },
-      selectedColor: AppColors.cyan.withValues(alpha: 0.2),
-      checkmarkColor: AppColors.cyan,
+      selectedColor: context.accentColor.withValues(alpha: 0.2),
+      checkmarkColor: context.accentColor,
       labelStyle: TextStyle(
-        color: isSelected ? AppColors.cyan : null,
+        color: isSelected ? context.accentColor : null,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
       ),
     );
@@ -356,10 +357,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (image.sharedToFeed)
-                      _buildBadge(Icons.feed_rounded, AppColors.cyan),
+                      _buildBadge(Icons.feed_rounded, context.accentColor),
                     if (image.sharedExternally) ...[
                       const SizedBox(width: 4),
-                      _buildBadge(Icons.share_rounded, AppColors.purple),
+                      _buildBadge(Icons.share_rounded, context.accentColor),
                     ],
                   ],
                 ),
@@ -495,13 +496,13 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
   Color _getTemplateColor(GalleryTemplateType type) {
     switch (type) {
       case GalleryTemplateType.stats:
-        return AppColors.cyan;
+        return context.accentColor;
       case GalleryTemplateType.prs:
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700);  // accent-allowlist: medal/rarity tier
       case GalleryTemplateType.photoOverlay:
-        return AppColors.purple;
+        return context.accentColor;
       case GalleryTemplateType.motivational:
-        return AppColors.orange;
+        return context.accentColor;
     }
   }
 
@@ -547,7 +548,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.share_rounded, color: AppColors.cyan),
+                leading: Icon(Icons.share_rounded, color: context.accentColor),
                 title: Text(AppLocalizations.of(context).workoutGalleryShareAgain),
                 onTap: () async {
                   Navigator.pop(context);
@@ -565,10 +566,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
               //     },
               //   ),
               ListTile(
-                leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),
+                leading: Icon(Icons.delete_outline_rounded, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
                 title: Text(
                   AppLocalizations.of(context).buttonDelete,
-                  style: TextStyle(color: AppColors.error),
+                  style: TextStyle(color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -664,7 +665,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
               _showSuccess('Image deleted');
             },
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
+              foregroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
@@ -677,7 +678,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
       ),
     );
   }
@@ -686,7 +687,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.success,
+        backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
       ),
     );
   }

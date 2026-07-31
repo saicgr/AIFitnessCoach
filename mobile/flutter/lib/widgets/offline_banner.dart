@@ -55,7 +55,7 @@ class OfflineBanner extends ConsumerWidget {
       message =
           '$deadLetterCount change${deadLetterCount == 1 ? '' : 's'} couldn\'t sync. Tap to view details.';
       icon = Icons.error_outline_rounded;
-      backgroundColor = Colors.red.shade700;
+      backgroundColor = Colors.red.shade700; // accent-allowlist: connection status severity scale (offline/reconnecting/online)
       onTap = () {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const SyncDetailsScreen()),
@@ -64,18 +64,18 @@ class OfflineBanner extends ConsumerWidget {
     } else if (isOffline) {
       message = 'You\'re offline';
       icon = Icons.cloud_off_rounded;
-      backgroundColor = Colors.orange.shade700;
+      backgroundColor = Colors.orange.shade700; // accent-allowlist: connection status severity scale (offline/reconnecting/online)
       onTap = null;
     } else if (isSyncing && hasPending) {
       message =
           'Syncing ${syncState.pendingCount} change${syncState.pendingCount == 1 ? '' : 's'}...';
       icon = Icons.sync_rounded;
-      backgroundColor = Colors.blue.shade700;
+      backgroundColor = Colors.blue.shade700; // accent-allowlist: connection status severity scale (offline/reconnecting/online)
       onTap = null;
     } else {
       message = '';
       icon = Icons.cloud_off_rounded;
-      backgroundColor = Colors.orange.shade700;
+      backgroundColor = Colors.orange.shade700; // accent-allowlist: connection status severity scale (offline/reconnecting/online)
       onTap = null;
     }
 

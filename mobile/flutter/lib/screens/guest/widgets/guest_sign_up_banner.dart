@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A persistent banner prompting guests to sign up for full access
 class GuestSignUpBanner extends StatelessWidget {
   /// Callback when sign up is tapped
@@ -24,15 +25,15 @@ class GuestSignUpBanner extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withOpacity(0.2),
-            AppColors.purple.withOpacity(0.15),
+            context.accentColor.withOpacity(0.2),
+            context.accentColor.withOpacity(0.15),
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
+          color: context.accentColor.withOpacity(0.3),
         ),
       ),
       child: Material(
@@ -52,12 +53,12 @@ class GuestSignUpBanner extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.2),
+                    color: context.accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.rocket_launch,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 )
@@ -91,7 +92,7 @@ class GuestSignUpBanner extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.2),
+                              color: Colors.green.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -99,7 +100,7 @@ class GuestSignUpBanner extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.green,
+                                color: Colors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
                               ),
                             ),
                           ),
@@ -126,7 +127,7 @@ class GuestSignUpBanner extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(

@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Animated splash screen shown while app initializes and checks auth state.
 /// This prevents the login screen flash when user is already authenticated.
@@ -97,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen>
                     borderRadius: BorderRadius.circular(21),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.orange.withValues(
+                        color: context.accentColor.withValues(
                           alpha: _pulseController.isAnimating
                               ? _pulse.value
                               : 0.35,
@@ -137,6 +138,7 @@ class _SplashScreenState extends State<SplashScreen>
                       glow: _pulseController.isAnimating
                           ? 0.6 + _pulse.value * 0.5
                           : 1.0,
+                      color: context.accentColor,
                     ),
                   ),
                 ),
@@ -153,8 +155,9 @@ class _SplashScreenState extends State<SplashScreen>
 class _PulseLinePainter extends CustomPainter {
   final double progress;
   final double glow;
+  final Color color;
 
-  _PulseLinePainter({required this.progress, required this.glow});
+  _PulseLinePainter({required this.progress, required this.glow, required this.color});
 
   // Normalized to a 320×60 design box (the approved mockup waveform):
   // flat lead-in, small beat, big center spike, medium trailing beat.
@@ -204,7 +207,7 @@ class _PulseLinePainter extends CustomPainter {
       ..strokeWidth = 7
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..color = AppColors.orange.withValues(alpha: 0.45 * glow)
+      ..color = color.withValues(alpha: 0.45 * glow)
       ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 7);
 
     final corePaint = Paint()
@@ -212,7 +215,7 @@ class _PulseLinePainter extends CustomPainter {
       ..strokeWidth = 2.5
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
-      ..color = AppColors.orange;
+      ..color = color;
 
     canvas.drawPath(revealed, glowPaint);
     canvas.drawPath(revealed, corePaint);
@@ -220,7 +223,9 @@ class _PulseLinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_PulseLinePainter oldDelegate) =>
-      progress != oldDelegate.progress || glow != oldDelegate.glow;
+      progress != oldDelegate.progress ||
+      glow != oldDelegate.glow ||
+      color != oldDelegate.color;
 }
 
 /// Draws the Zealova "Z" mark tracing itself in as [outlineProgress] (0..1)

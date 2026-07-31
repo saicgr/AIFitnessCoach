@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// "Coach is learning you" banner on Home for new accounts.
 ///
@@ -109,9 +110,9 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
             child: CircularProgressIndicator(
               value: progress,
               strokeWidth: 2.5,
-              backgroundColor: AppColors.cyan.withValues(alpha: 0.18),
+              backgroundColor: context.accentColor.withValues(alpha: 0.18),
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                  AlwaysStoppedAnimation<Color>(context.accentColor),
             ),
           ),
           Container(
@@ -119,13 +120,13 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
             height: 26,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.cyan.withValues(alpha: 0.20),
+              color: context.accentColor.withValues(alpha: 0.20),
             ),
             alignment: Alignment.center,
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome_rounded,
               size: 15,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
         ],
@@ -182,10 +183,10 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
             ? const EdgeInsets.fromLTRB(12, 8, 8, 8)
             : const EdgeInsets.fromLTRB(14, 12, 8, 12),
         decoration: BoxDecoration(
-          color: AppColors.cyan.withValues(alpha: 0.10),
+          color: context.accentColor.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppColors.cyan.withValues(alpha: 0.32),
+            color: context.accentColor.withValues(alpha: 0.32),
             width: 1,
           ),
         ),
@@ -226,10 +227,10 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
           ),
           Text(
             '$ready/$total',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
           Icon(Icons.keyboard_arrow_down_rounded,
@@ -279,7 +280,7 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
                             : Icons.circle_outlined,
                         size: 13,
                         color: sig.isReady
-                            ? AppColors.cyan
+                            ? context.accentColor
                             : textSecondary.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 6),
@@ -302,7 +303,7 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: sig.isReady ? AppColors.cyan : textSecondary,
+                          color: sig.isReady ? context.accentColor : textSecondary,
                         ),
                       ),
                     ],

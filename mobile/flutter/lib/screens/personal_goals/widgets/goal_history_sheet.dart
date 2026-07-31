@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/personal_goals_service.dart';
 import 'goal_history_chart.dart';
@@ -112,12 +113,12 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.timeline,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 24,
                     ),
                   ),
@@ -209,7 +210,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
               label: AppLocalizations.of(context).workoutCompleteThisWeek,
               value: '${widget.currentValue}',
               unit: 'reps',
-              color: AppColors.cyan,
+              color: context.accentColor,
               cardBorder: cardBorder,
             ),
           ),
@@ -221,7 +222,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
               label: AppLocalizations.of(context).goalHistoryChartAllTimeBest,
               value: '$_allTimeBest',
               unit: 'reps',
-              color: AppColors.orange,
+              color: context.accentColor,
               cardBorder: cardBorder,
             ),
           ),
@@ -292,7 +293,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
           Icon(
             Icons.error_outline,
             size: 48,
-            color: AppColors.error.withValues(alpha: 0.5),
+            color: AppColors.error.withValues(alpha: 0.5), // accent-allowlist: genuine data-load error state
           ),
           const SizedBox(height: 12),
           Text(
@@ -329,7 +330,7 @@ class _GoalHistorySheetState extends ConsumerState<GoalHistorySheet> {
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb_outline, size: 18, color: AppColors.yellow),
+              Icon(Icons.lightbulb_outline, size: 18, color: context.accentColor),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).goalHistoryTipsForBeatingYour,

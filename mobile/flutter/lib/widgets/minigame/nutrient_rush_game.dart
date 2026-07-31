@@ -223,7 +223,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
   double _powerUpBannerLife = 0;
   String _powerUpBannerText = '';
   IconData _powerUpBannerIcon = Icons.bolt_rounded;
-  Color _powerUpBannerColor = Colors.amber;
+  Color _powerUpBannerColor = Colors.amber; // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
 
   // ── Juice ──
   double _shake = 0; // screen-shake magnitude, decays each frame
@@ -614,7 +614,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         x: at.dx,
         y: at.dy,
         count: 22,
-        color: const Color(0xFFFFD54F),
+        color: const Color(0xFFFFD54F), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         speed: 230,
         maxLife: 0.7,
         sizeMax: 6,
@@ -643,7 +643,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         x: at.dx,
         y: at.dy,
         count: 8 + math.min(10, _combo),
-        color: const Color(0xFF66E08A),
+        color: const Color(0xFF66E08A), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         speed: 150 + math.min(120, _combo * 12.0),
       );
       if (_combo > 0 && _combo % 5 == 0) {
@@ -656,12 +656,12 @@ class _NutrientRushGameState extends State<NutrientRushGame>
       if (_hasPowerUp(PowerUpKind.shield)) {
         // Shield absorbs this hit — consume the shield, lose no life.
         _activePowerUps.removeWhere((p) => p.kind == PowerUpKind.shield);
-        _pops.add(_Pop(at, 'BLOCKED', const Color(0xFF66BB6A), 0));
+        _pops.add(_Pop(at, 'BLOCKED', const Color(0xFF66BB6A), 0)); // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         _particles.burst(
           x: at.dx,
           y: at.dy,
           count: 16,
-          color: const Color(0xFF66BB6A),
+          color: const Color(0xFF66BB6A), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
           speed: 200,
         );
         HapticService.medium();
@@ -669,12 +669,12 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         _lives -= 1;
         _combo = 0;
         _shake = 14; // screen shake on a real hit
-        _pops.add(_Pop(at, '-1 ❤', const Color(0xFFFF5252), 0));
+        _pops.add(_Pop(at, '-1 ❤', const Color(0xFFFF5252), 0)); // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         _particles.burst(
           x: at.dx,
           y: at.dy,
           count: 18,
-          color: const Color(0xFFFF5252),
+          color: const Color(0xFFFF5252), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
           speed: 210,
         );
         HapticService.error();
@@ -698,7 +698,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         x: _playSize.width / 2,
         y: _playSize.height * 0.18,
         count: 34,
-        color: const Color(0xFFFFC107),
+        color: const Color(0xFFFFC107), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         speed: 280,
         maxLife: 0.9,
         sizeMax: 6,
@@ -813,7 +813,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
               _hudChip(
                 icon: Icons.layers_rounded,
                 label: 'S$_stageNumber',
-                color: const Color(0xFF7E9CFF),
+                color: const Color(0xFF7E9CFF), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
               ),
               const SizedBox(width: 6),
               // Combo (only once it's meaningful)
@@ -821,7 +821,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
                 _hudChip(
                   icon: Icons.local_fire_department_rounded,
                   label: 'x$_combo',
-                  color: Colors.orange,
+                  color: Colors.orange, // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                 ),
               const Spacer(),
               // Lives as hearts (supports the up-to-5 life-back bonus).
@@ -837,7 +837,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
                           : Icons.favorite_border_rounded,
                       size: 18,
                       color: filled
-                          ? const Color(0xFFFF5252)
+                          ? const Color(0xFFFF5252) // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                           : Colors.white24,
                     ),
                   );
@@ -881,7 +881,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     final frac = hasBest ? (_score / best).clamp(0.0, 1.0) : 1.0;
     final beaten = _beatBestThisRun || !hasBest;
     final fillColor =
-        beaten ? const Color(0xFFFFC107) : widget.accentColor;
+        beaten ? const Color(0xFFFFC107) : widget.accentColor; // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
     final label = !hasBest
         ? 'No best yet — set one!'
         : (beaten ? 'NEW BEST! $_score' : 'Best $best');
@@ -1157,15 +1157,15 @@ class _NutrientRushGameState extends State<NutrientRushGame>
               padding:
                   const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFC107).withValues(alpha: 0.16),
+                color: const Color(0xFFFFC107).withValues(alpha: 0.16), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: const Color(0xFFFFC107),
+                  color: const Color(0xFFFFC107), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                   width: 2,
                 ),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x66FFC107),
+                    color: Color(0x66FFC107), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                     blurRadius: 28,
                     spreadRadius: 2,
                   ),
@@ -1174,7 +1174,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
               child: Text(
                 AppLocalizations.of(context).nutrientRushGameNewBest,
                 style: TextStyle(
-                  color: Color(0xFFFFD54F),
+                  color: Color(0xFFFFD54F), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2,
@@ -1203,7 +1203,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         // Legend with REAL in-game sizing so the player knows what to expect.
         _sizedLegendRow(_healthy, 'Catch — score points', widget.accentColor),
         const SizedBox(height: 8),
-        _sizedLegendRow(_junk, 'Dodge — costs a life', const Color(0xFFFF5252)),
+        _sizedLegendRow(_junk, 'Dodge — costs a life', const Color(0xFFFF5252)), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         const SizedBox(height: 10),
         // Power-up explainer.
         _powerUpLegend(),
@@ -1254,10 +1254,10 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFC107).withValues(alpha: 0.10),
+        color: const Color(0xFFFFC107).withValues(alpha: 0.10), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFFFC107).withValues(alpha: 0.4),
+          color: const Color(0xFFFFC107).withValues(alpha: 0.4), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         ),
       ),
       child: Column(
@@ -1281,7 +1281,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
                 child: Text(
                   AppLocalizations.of(context).nutrientRushGameCatchTheGoldenZealova,
                   style: TextStyle(
-                    color: Color(0xFFFFD54F),
+                    color: Color(0xFFFFD54F), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
                     decoration: TextDecoration.none,
@@ -1328,22 +1328,22 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFC107).withValues(alpha: 0.14),
+        color: const Color(0xFFFFC107).withValues(alpha: 0.14), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: const Color(0xFFFFC107).withValues(alpha: 0.55),
+          color: const Color(0xFFFFC107).withValues(alpha: 0.55), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.emoji_events_rounded,
-              size: 16, color: Color(0xFFFFD54F)),
+              size: 16, color: Color(0xFFFFD54F)), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
           const SizedBox(width: 6),
           Text(
             'Your best: $best',
             style: const TextStyle(
-              color: Color(0xFFFFD54F),
+              color: Color(0xFFFFD54F), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
               fontSize: 14,
               fontWeight: FontWeight.w900,
               decoration: TextDecoration.none,
@@ -1438,7 +1438,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
   /// Game-over line showing how the run compares to the previous best.
   Widget _deltaLine(int delta) {
     final beat = delta > 0;
-    final color = beat ? const Color(0xFF66E08A) : Colors.white54;
+    final color = beat ? const Color(0xFF66E08A) : Colors.white54; // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
     final text = beat
         ? '+$delta over your old best!'
         : (delta == 0
@@ -1471,15 +1471,15 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFC107).withValues(alpha: 0.18),
+        color: const Color(0xFFFFC107).withValues(alpha: 0.18), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         borderRadius: BorderRadius.circular(20),
         border:
-            Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.6)),
+            Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.6)), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
       ),
       child: Text(
         AppLocalizations.of(context).nutrientRushGameNewPersonalBest,
         style: TextStyle(
-          color: Color(0xFFFFC107),
+          color: Color(0xFFFFC107), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
           fontSize: 12,
           fontWeight: FontWeight.w900,
           letterSpacing: 1,
@@ -1739,7 +1739,7 @@ class _GamePainter extends CustomPainter {
     if (hasSlowMo) {
       canvas.drawRect(
         Offset.zero & size,
-        Paint()..color = const Color(0xFF26C6DA).withValues(alpha: 0.06),
+        Paint()..color = const Color(0xFF26C6DA).withValues(alpha: 0.06), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
       );
     }
 
@@ -1815,7 +1815,7 @@ class _GamePainter extends CustomPainter {
   void _drawFallingFood(Canvas canvas, _FallingItem item) {
     // Size-scaled soft halo: green-ish for healthy, red-ish for junk.
     final halo = Paint()
-      ..color = (item.healthy ? accent : const Color(0xFFFF5252))
+      ..color = (item.healthy ? accent : const Color(0xFFFF5252)) // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
           .withValues(alpha: 0.13)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9);
     canvas.drawCircle(Offset(item.x, item.y), item.halo, halo);
@@ -1834,14 +1834,14 @@ class _GamePainter extends CustomPainter {
       c,
       item.halo + 8,
       Paint()
-        ..color = const Color(0xFFFFD54F).withValues(alpha: 0.30 * pulse)
+        ..color = const Color(0xFFFFD54F).withValues(alpha: 0.30 * pulse) // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
     );
     canvas.drawCircle(
       c,
       item.halo,
       Paint()
-        ..color = const Color(0xFFFFC107).withValues(alpha: 0.22)
+        ..color = const Color(0xFFFFC107).withValues(alpha: 0.22) // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
     );
     // The painted Zealova sparkle mark, spinning gently.
@@ -1917,7 +1917,7 @@ class _GamePainter extends CustomPainter {
             end: Alignment.bottomCenter,
             colors: [
               accent.withValues(alpha: 0.9),
-              const Color(0xFF7E9CFF).withValues(alpha: 0.0),
+              const Color(0xFF7E9CFF).withValues(alpha: 0.0), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
             ],
           ).createShader(
               Rect.fromLTWH(base.dx - 4, base.dy, 8, len)),
@@ -1972,7 +1972,7 @@ class _GamePainter extends CustomPainter {
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3
           ..strokeCap = StrokeCap.round
-          ..color = const Color(0xFF66BB6A).withValues(alpha: 0.85),
+          ..color = const Color(0xFF66BB6A).withValues(alpha: 0.85), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
       );
     }
 
@@ -1985,7 +1985,7 @@ class _GamePainter extends CustomPainter {
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2
-          ..color = const Color(0xFF42A5F5).withValues(alpha: mp),
+          ..color = const Color(0xFF42A5F5).withValues(alpha: mp), // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
       );
     }
   }
@@ -2018,8 +2018,8 @@ void _paintSparkleMark(
   Color accent, {
   bool golden = false,
 }) {
-  final tip = golden ? const Color(0xFFFFE082) : accent;
-  final core = golden ? const Color(0xFFFFC107) : accent;
+  final tip = golden ? const Color(0xFFFFE082) : accent; // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
+  final core = golden ? const Color(0xFFFFC107) : accent; // accent-allowlist: Nutrient Rush minigame visual identity - falling-item categories, hit/miss feedback, power-up and score/coin colors are game assets, not the app accent
   // A 4-point star: long arms on the axes, short waist between.
   final waist = armLength * 0.30;
   final path = Path();

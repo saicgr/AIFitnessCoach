@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import '../models/home_layout.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import 'share_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -104,12 +105,12 @@ class LayoutPreviewWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.2),
+                    color: context.accentColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.dashboard_customize,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -149,7 +150,7 @@ class LayoutPreviewWidget extends StatelessWidget {
                 Icon(
                   Icons.fitness_center,
                   size: 16,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -157,7 +158,7 @@ class LayoutPreviewWidget extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ],
@@ -325,17 +326,17 @@ class LayoutPreviewWidget extends StatelessWidget {
   Color _getColorForTile(TileType type) {
     switch (type.category) {
       case TileCategory.workout:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: tile-category legend colour (workout/tools=cyan, progress=green, nutrition=orange, social=purple, wellness=yellow) — differentiates categories side-by-side in the preview grid, not the app accent
       case TileCategory.progress:
-        return AppColors.green;
+        return AppColors.green;  // accent-allowlist: tile-category legend colour, see workout case above
       case TileCategory.nutrition:
-        return AppColors.orange;
+        return AppColors.orange;  // accent-allowlist: tile-category legend colour, see workout case above
       case TileCategory.social:
-        return AppColors.purple;
+        return AppColors.purple;  // accent-allowlist: tile-category legend colour, see workout case above
       case TileCategory.wellness:
-        return AppColors.yellow;
+        return AppColors.yellow;  // accent-allowlist: tile-category legend colour, see workout case above
       case TileCategory.tools:
-        return AppColors.cyan;
+        return AppColors.cyan;  // accent-allowlist: tile-category legend colour, see workout case above
     }
   }
 }
@@ -399,7 +400,7 @@ class _ShareLayoutSheetState extends State<ShareLayoutSheet> {
                   child: _ShareOption(
                     icon: Icons.camera_alt,
                     label: 'Instagram',
-                    color: const Color(0xFFE1306C),
+                    color: const Color(0xFFE1306C),  // accent-allowlist: third-party brand mark -- Instagram
                     isLoading: _isSharing,
                     onTap: () => _shareToInstagram(),
                   ),
@@ -409,7 +410,7 @@ class _ShareLayoutSheetState extends State<ShareLayoutSheet> {
                   child: _ShareOption(
                     icon: Icons.share,
                     label: 'Share',
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     isLoading: _isSharing,
                     onTap: () => _shareGeneric(),
                   ),
@@ -419,7 +420,7 @@ class _ShareLayoutSheetState extends State<ShareLayoutSheet> {
                   child: _ShareOption(
                     icon: Icons.save_alt,
                     label: 'Save',
-                    color: AppColors.green,
+                    color: context.accentColor,
                     isLoading: _isSharing,
                     onTap: () => _saveToGallery(),
                   ),
@@ -510,14 +511,14 @@ class _ShareLayoutSheetState extends State<ShareLayoutSheet> {
       messenger.showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
         ),
       );
     } else {
       messenger.showSnackBar(
         SnackBar(
           content: Text(result.error ?? 'Failed to share'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
         ),
       );
     }

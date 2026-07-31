@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/saved_workouts_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Schedule Workout Dialog - date picker with conflict detection.
 ///
 /// Extracted from ActivityCard so it can be reused by SharedWorkoutDetailScreen.
@@ -89,7 +90,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
               '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
             ),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.cyan,
+              foregroundColor: context.accentColor,
             ),
           ),
           if (_isCheckingConflicts) ...[
@@ -101,7 +102,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -120,10 +121,10 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.orange.withValues(alpha: 0.3),
+                  color: context.accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -131,7 +132,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded, color: AppColors.orange, size: 18),
+                      Icon(Icons.warning_amber_rounded, color: context.accentColor, size: 18),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -139,7 +140,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                       ),
@@ -198,7 +199,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                     content: Text(
                       'Workout scheduled for ${_selectedDate.month}/${_selectedDate.day}!',
                     ),
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: context.accentColor,
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -209,7 +210,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Failed to schedule workout: $e'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Colors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
@@ -217,7 +218,7 @@ class _ScheduleWorkoutDialogState extends State<ScheduleWorkoutDialog> {
             }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.orange,
+            backgroundColor: context.accentColor,
           ),
           child: Text(AppLocalizations.of(context).scheduleWorkoutSchedule),
         ),

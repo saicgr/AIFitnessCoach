@@ -12,6 +12,7 @@ import '../widgets/widgets.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'export_dialog_part_export_data_dialog.dart';
 
 
@@ -89,7 +90,7 @@ Future<void> _exportData(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(color: AppColors.cyan),
+          CircularProgressIndicator(color: context.accentColor),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).exportExportingYourData,
@@ -158,7 +159,7 @@ Future<void> _exportData(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportUserDataNotFound),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -166,7 +167,7 @@ Future<void> _exportData(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('Server error: ${response.statusCode}'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -190,14 +191,14 @@ Future<void> _exportData(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportDataExportedSuccessfully),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
         ),
       );
     } else {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportNoDataReceivedFrom),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     }
@@ -216,7 +217,7 @@ Future<void> _exportData(
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text(errorMessage),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   } catch (e) {
@@ -225,7 +226,7 @@ Future<void> _exportData(
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text('Export failed: ${e.toString()}'),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   }
@@ -250,7 +251,7 @@ Future<void> _exportDataAsText(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(color: AppColors.cyan),
+          CircularProgressIndicator(color: context.accentColor),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).exportExportingYourDataAs,
@@ -316,7 +317,7 @@ Future<void> _exportDataAsText(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportUserDataNotFound),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -324,7 +325,7 @@ Future<void> _exportDataAsText(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('Server error: ${response.statusCode}'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -350,14 +351,14 @@ Future<void> _exportDataAsText(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportDataExportedAsText),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
         ),
       );
     } else {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportNoDataReceivedFrom),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     }
@@ -376,7 +377,7 @@ Future<void> _exportDataAsText(
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text(errorMessage),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   } catch (e) {
@@ -385,7 +386,7 @@ Future<void> _exportDataAsText(
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text('Export failed: ${e.toString()}'),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   }
@@ -433,7 +434,7 @@ Future<void> _exportDataWithFormat(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircularProgressIndicator(color: AppColors.cyan),
+          CircularProgressIndicator(color: context.accentColor),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).exportExportingYourData,
@@ -497,7 +498,7 @@ Future<void> _exportDataWithFormat(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportUserDataNotFound),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -505,7 +506,7 @@ Future<void> _exportDataWithFormat(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('Server error: ${response.statusCode}'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
       return;
@@ -532,14 +533,14 @@ Future<void> _exportDataWithFormat(
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportDataExportedSuccessfully),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
         ),
       );
     } else {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).exportNoDataReceivedFrom),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         ),
       );
     }
@@ -558,7 +559,7 @@ Future<void> _exportDataWithFormat(
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text(errorMessage),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   } catch (e) {
@@ -567,7 +568,7 @@ Future<void> _exportDataWithFormat(
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: Text('Export failed: ${e.toString()}'),
-        backgroundColor: AppColors.error,
+        backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
       ),
     );
   }

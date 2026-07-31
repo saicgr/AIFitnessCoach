@@ -452,7 +452,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not open $url'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           ),
         );
       }
@@ -623,7 +623,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.speed,
-            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).workoutSettingsWorkoutSettings,
             value: '$splitName \u00B7 $daysPerWeek days',
             route: '/settings/workout-settings',
@@ -631,7 +631,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.storefront_outlined,
-            iconColor: isDark ? AppColors.green : AppColorsLight.green,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsMyGyms,
             value: gymProfileName,
             sectionKeys: const ['training', 'gym', 'equipment', 'location'],
@@ -645,7 +645,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.fitness_center,
-            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsExercisePrefs,
             value: AppLocalizations.of(context).settingsFavoritesAvoidedQueue,
             route: '/settings/my-exercises',
@@ -653,7 +653,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.trending_up,
-            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
             title: AppLocalizations.of(context).trainingMethodsTrainingMethods,
             value: AppLocalizations.of(context).settingsSetProgressionResearch,
             route: '/settings/training-methods',
@@ -661,7 +661,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.fitness_center,
-            iconColor: isDark ? AppColors.success : AppColorsLight.success,
+            iconColor: isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             title: AppLocalizations.of(context).trainingSetupCardEquipment,
             value: gymProfileName,
             route: '/settings/equipment',
@@ -669,7 +669,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.ios_share,
-            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
             title: AppLocalizations.of(context).settingsImportsTitle,
             value: AppLocalizations.of(context).settingsImportsSubtitle,
             route: '/imports',
@@ -682,7 +682,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         rows: [
           _SettingsRow(
             icon: Icons.auto_awesome,
-            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).authIntroAiCoach,
             value: AppLocalizations.of(context).settingsVoicePersonality,
             route: '/settings/ai-coach',
@@ -690,7 +690,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.psychology_outlined,
-            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            iconColor: context.accentColor,
             title: 'Coach memory',
             value: 'View & manage what your AI coach remembers',
             route: '/settings/coach-memory',
@@ -700,7 +700,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.hub_outlined,
-            iconColor: isDark ? AppColors.info : AppColorsLight.info,
+            iconColor: isDark ? AppColors.info : AppColorsLight.info,  // accent-allowlist: informational state - must stay blue regardless of accent
             title: 'AI Integrations',
             value: 'Claude, ChatGPT, Cursor',
             route: '/settings/ai-integrations',
@@ -708,7 +708,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.palette_outlined,
-            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
             title: AppLocalizations.of(context).settingsAppearance,
             route: '/settings/appearance',
             sectionKeys: const ['preferences', 'haptics', 'app_mode', 'accessibility'],
@@ -716,7 +716,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.language_rounded,
-            iconColor: isDark ? AppColors.green : AppColorsLight.green,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsLanguage,
             value: appLocaleName,
             sectionKeys: const ['app_language'],
@@ -724,7 +724,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.smart_toy_rounded,
-            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsChatLanguageTitle,
             value: chatLocaleName,
             sectionKeys: const ['chat_language'],
@@ -732,7 +732,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.notifications_outlined,
-            iconColor: isDark ? AppColors.info : AppColorsLight.info,
+            iconColor: isDark ? AppColors.info : AppColorsLight.info,  // accent-allowlist: informational state - must stay blue regardless of accent
             title: AppLocalizations.of(context).settingsSoundNotifs,
             value: AppLocalizations.of(context).settingsVoiceAudioReminders,
             route: '/settings/sound-notifications',
@@ -740,7 +740,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.beach_access_rounded,
-            iconColor: const Color(0xFF4FC3F7),
+            iconColor: const Color(0xFF4FC3F7),  // accent-allowlist: Vacation Mode's own thematic feature colour (beach blue), consistent within this feature, not the app accent
             title: 'Vacation Mode',
             value: vacationModeValue,
             route: '/settings/vacation-mode',
@@ -748,7 +748,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.alarm_rounded,
-            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsMealReminders,
             value: AppLocalizations.of(context).settingsRecipeSchedulesSharingV,
             sectionKeys: const [
@@ -761,7 +761,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.bloodtype_outlined,
-            iconColor: const Color(0xFFE5567B),
+            iconColor: const Color(0xFFE5567B),  // accent-allowlist: cycle-tracking feature's own thematic colour, not the app accent
             title: AppLocalizations.of(context).settingsCycleTrackingTitle,
             value: AppLocalizations.of(context).settingsCycleTrackingSubtitle,
             route: '/settings/cycle',
@@ -771,7 +771,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.rocket_launch_rounded,
-            iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsComingSoon,
             value: AppLocalizations.of(context).settings24UpcomingFeatures,
             sectionKeys: const [
@@ -790,7 +790,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         rows: [
           _SettingsRow(
             icon: Icons.favorite_outline,
-            iconColor: isDark ? AppColors.error : AppColorsLight.error,
+            iconColor: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive - must stay red
             title: AppLocalizations.of(context).settingsHealthDevices,
             value: Platform.isIOS ? AppLocalizations.of(context).workoutHistoryImportAppleHealth : AppLocalizations.of(context).settingsHealthConnect,
             route: '/settings/health-devices',
@@ -803,7 +803,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         rows: [
           _SettingsRow(
             icon: Icons.diamond_outlined,
-            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
             title: AppLocalizations.of(context).settingsSubscription,
             value: subscriptionValue,
             route: '/subscription-management',
@@ -824,7 +824,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         rows: [
           _SettingsRow(
             icon: Icons.email_outlined,
-            iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+            iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
             title: AppLocalizations.of(context).settingsContactSupport,
             value: AppLinks.supportEmail,
             sectionKeys: const ['help_center', 'report_issue', 'support'],
@@ -836,7 +836,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // sheet with both flows clearly labeled.
           _SettingsRow(
             icon: Icons.play_circle_outline_rounded,
-            iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).settingsTutorialsHints,
             value: AppLocalizations.of(context).settingsReplayToursOrReset,
             sectionKeys: const ['tutorial', 'tips', 'help_center'],
@@ -856,7 +856,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.science_outlined,
-            iconColor: isDark ? AppColors.info : AppColorsLight.info,
+            iconColor: isDark ? AppColors.info : AppColorsLight.info,  // accent-allowlist: informational state - must stay blue regardless of accent
             title: AppLocalizations.of(context).settingsResearchScience,
             route: '/settings/research',
             sectionKeys: const ['research'],
@@ -877,7 +877,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           _SettingsRow(
             icon: Icons.star_outline,
-            iconColor: isDark ? AppColors.warning : AppColorsLight.warning,
+            iconColor: isDark ? AppColors.warning : AppColorsLight.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
             title: AppLocalizations.of(context).settingsRateApp,
             sectionKeys: const ['rate_app'],
             onTap: () => _launchExternalUrl(
@@ -942,10 +942,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       child: Column(
                         children: [
                           ListTile(
-                            leading: Icon(Icons.military_tech_rounded, color: Colors.amber),
+                            leading: Icon(Icons.military_tech_rounded, color: Colors.amber),  // accent-allowlist: warning severity - must stay amber regardless of accent
                             title: Text(AppLocalizations.of(context).settingsTestLevelUpLevel, style: TextStyle(color: textPrimary, fontSize: 14)),
                             subtitle: Text(AppLocalizations.of(context).settingsSingleLevelWithCrate, style: TextStyle(color: textMuted, fontSize: 12)),
-                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
+                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),  // accent-allowlist: success/positive state - must stay green regardless of accent
                             onTap: () {
                               showLevelUpDialog(
                                 context,
@@ -962,10 +962,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           Divider(height: 1, color: cardBorder),
                           ListTile(
-                            leading: Icon(Icons.stars_rounded, color: Colors.purple),
+                            leading: Icon(Icons.stars_rounded, color: context.accentColor),
                             title: Text(AppLocalizations.of(context).settingsTestLevelUpLevel2, style: TextStyle(color: textPrimary, fontSize: 14)),
                             subtitle: Text(AppLocalizations.of(context).settingsTitleChangeBeginnerNovic, style: TextStyle(color: textMuted, fontSize: 12)),
-                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
+                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),  // accent-allowlist: success/positive state - must stay green regardless of accent
                             onTap: () {
                               showLevelUpDialog(
                                 context,
@@ -984,10 +984,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                           Divider(height: 1, color: cardBorder),
                           ListTile(
-                            leading: Icon(Icons.rocket_launch_rounded, color: Colors.orange),
+                            leading: Icon(Icons.rocket_launch_rounded, color: Colors.orange),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                             title: Text(AppLocalizations.of(context).settingsTestMultiLevel1, style: TextStyle(color: textPrimary, fontSize: 14)),
                             subtitle: Text(AppLocalizations.of(context).settingsWithCascadeOverlayDialog, style: TextStyle(color: textMuted, fontSize: 12)),
-                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),
+                            trailing: Icon(Icons.play_arrow_rounded, color: Colors.green),  // accent-allowlist: success/positive state - must stay green regardless of accent
                             onTap: () {
                               showLevelUpDialog(
                                 context,
@@ -1016,7 +1016,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       [
                         _SettingsRow(
                           icon: Icons.local_fire_department,
-                          iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                          iconColor: context.accentColor,
                           title: AppLocalizations.of(context).settingsBeastMode,
                           value: AppLocalizations.of(context).settingsPowerUserTools,
                           route: '/settings/beast-mode',
@@ -1051,7 +1051,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: Text(
                           AppLocalizations.of(context).settingsDeleteAccount,
                           style: TextStyle(
-                            color: (isDark ? AppColors.error : AppColorsLight.error)
+                            color: (isDark ? AppColors.error : AppColorsLight.error)  // accent-allowlist: error/destructive - must stay red
                                 .withValues(alpha: 0.7),
                             fontSize: 14,
                           ),

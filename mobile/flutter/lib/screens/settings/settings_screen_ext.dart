@@ -440,10 +440,10 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.10),
+                      color: context.accentColor.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: AppColors.orange.withValues(alpha: 0.30),
+                        color: context.accentColor.withValues(alpha: 0.30),
                       ),
                     ),
                     child: Row(
@@ -457,7 +457,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                             errorBuilder: (_, __, ___) => Container(
                               width: 32,
                               height: 32,
-                              color: AppColors.orange.withValues(alpha: 0.2),
+                              color: context.accentColor.withValues(alpha: 0.2),
                               alignment: Alignment.center,
                               child: const Text(
                                 'C',
@@ -481,7 +481,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.orange,
+                                  color: context.accentColor,
                                   letterSpacing: 0.3,
                                 ),
                               ),
@@ -499,7 +499,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                         ),
                         Icon(
                           Icons.chevron_right_rounded,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           size: 18,
                         ),
                       ],
@@ -523,10 +523,10 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.10),
+                      color: context.accentColor.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: AppColors.orange.withValues(alpha: 0.30),
+                        color: context.accentColor.withValues(alpha: 0.30),
                       ),
                     ),
                     child: Row(
@@ -536,13 +536,13 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                           height: 32,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.orange.withValues(alpha: 0.18),
+                            color: context.accentColor.withValues(alpha: 0.18),
                           ),
                           alignment: Alignment.center,
-                          child: const FaIcon(
+                          child: FaIcon(
                             FontAwesomeIcons.mapLocationDot,
                             size: 14,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -553,10 +553,10 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                             children: [
                               Text(
                                 AppLocalizations.of(context).founderNoteRoadmap,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.orange,
+                                  color: context.accentColor,
                                   letterSpacing: 0.3,
                                 ),
                               ),
@@ -574,9 +574,9 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                             ],
                           ),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.open_in_new_rounded,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           size: 16,
                         ),
                       ],
@@ -593,7 +593,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
             child: Text(
               AppLocalizations.of(context).commonClose,
               style: TextStyle(
-                color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                color: isDark ? context.accentColor : AppColorsLight.cyan,
               ),
             ),
           ),

@@ -63,14 +63,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   Text(AppLocalizations.of(context).inventory2xXpActivatedFor),
                 ],
               ),
-              backgroundColor: Color(0xFF9C27B0),
+              backgroundColor: Color(0xFF9C27B0),  // accent-allowlist: 2x XP Token consumable's own identity colour, matches its icon at line 472
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).inventoryFailedToActivate2x),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
             ),
           );
         }
@@ -92,7 +92,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result.message ?? AppLocalizations.of(context).inventoryFailedToOpenCrate),
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
             ),
           );
         }
@@ -125,14 +125,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
                   colors: isPremium
-                      ? [const Color(0xFFFFD700), const Color(0xFFFF8C00)]
-                      : [const Color(0xFF4CAF50), const Color(0xFF2E7D32)],
+                      ? [const Color(0xFFFFD700), const Color(0xFFFF8C00)]  // accent-allowlist: crate-type identity colour (premium=gold, fitness=green), matches _ConsumableCard icon colours below
+                      : [const Color(0xFF4CAF50), const Color(0xFF2E7D32)],  // accent-allowlist: crate-type identity colour (premium=gold, fitness=green), matches _ConsumableCard icon colours below
                   begin: AlignmentDirectional.topStart,
                   end: AlignmentDirectional.bottomEnd,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: (isPremium ? const Color(0xFFFFD700) : const Color(0xFF4CAF50))
+                    color: (isPremium ? const Color(0xFFFFD700) : const Color(0xFF4CAF50))  // accent-allowlist: crate-type identity colour (premium=gold, fitness=green), matches _ConsumableCard icon colours below
                         .withValues(alpha: 0.4),
                     blurRadius: 20,
                     spreadRadius: 4,
@@ -189,7 +189,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             child: ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: isPremium ? const Color(0xFFFFD700) : const Color(0xFF4CAF50),
+                backgroundColor: isPremium ? const Color(0xFFFFD700) : const Color(0xFF4CAF50),  // accent-allowlist: crate-type identity colour (premium=gold, fitness=green), matches _ConsumableCard icon colours below
                 foregroundColor: Colors.black,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -236,7 +236,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.verified_user, color: const Color(0xFF3B82F6)),
+            Icon(Icons.verified_user, color: const Color(0xFF3B82F6)),  // accent-allowlist: trust-level tier colour, matches level rows below (grey/blue/green progression)
             const SizedBox(width: 8),
             Text(
               AppLocalizations.of(context).inventoryTrustLevels,
@@ -263,7 +263,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               name: 'Verified',
               multiplier: '1.0x',
               description: 'Regular XP rate',
-              color: const Color(0xFF3B82F6),
+              color: const Color(0xFF3B82F6),  // accent-allowlist: trust-level tier colour -- Verified tier
               textColor: textColor,
               textMuted: textMuted,
             ),
@@ -273,7 +273,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               name: 'Trusted',
               multiplier: '1.2x',
               description: '7+ day streak',
-              color: const Color(0xFF22C55E),
+              color: const Color(0xFF22C55E),  // accent-allowlist: trust-level tier colour -- Trusted tier
               textColor: textColor,
               textMuted: textMuted,
             ),
@@ -469,7 +469,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       // 2x XP Tokens
                       _ConsumableCard(
                         icon: Icons.flash_on,
-                        iconColor: const Color(0xFF9C27B0),
+                        iconColor: const Color(0xFF9C27B0),  // accent-allowlist: 2x XP Token consumable's own identity colour
                         name: '2x XP Token',
                         description: 'Double XP for 24 hours',
                         count: consumables?.xpToken2x ?? 0,
@@ -489,7 +489,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       // Streak Shields
                       _ConsumableCard(
                         icon: Icons.shield,
-                        iconColor: const Color(0xFF2196F3),
+                        iconColor: const Color(0xFF2196F3),  // accent-allowlist: Streak Shield consumable's own identity colour
                         name: 'Streak Shield',
                         description: 'Protect your streak for 1 missed day',
                         count: consumables?.streakShield ?? 0,
@@ -525,7 +525,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       // Fitness Crates
                       _ConsumableCard(
                         icon: Icons.inventory_2,
-                        iconColor: const Color(0xFF4CAF50),
+                        iconColor: const Color(0xFF4CAF50),  // accent-allowlist: Fitness Crate's own identity colour
                         name: 'Fitness Crate',
                         description: 'Contains 25-75 XP or items',
                         count: consumables?.fitnessCrate ?? 0,
@@ -543,7 +543,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       // Premium Crates
                       _ConsumableCard(
                         icon: Icons.workspace_premium,
-                        iconColor: const Color(0xFFFFD700),
+                        iconColor: const Color(0xFFFFD700),  // accent-allowlist: Premium Crate's own identity colour
                         name: 'Premium Crate',
                         description: 'Contains 100-250 XP or rare items',
                         count: consumables?.premiumCrate ?? 0,
@@ -667,8 +667,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final remainingSecs = remaining?.inSeconds ?? 0;
     final fractionRemaining =
         (remainingSecs / totalDuration.inSeconds).clamp(0.0, 1.0);
-    const boostColor = Color(0xFF9C27B0);
-    const boostHighlight = Color(0xFFE040FB);
+    const boostColor = Color(0xFF9C27B0);  // accent-allowlist: 2x XP boost banner's own identity colour, matches the 2x XP Token consumable colour
+    const boostHighlight = Color(0xFFE040FB);  // accent-allowlist: 2x XP boost banner's own identity colour, matches the 2x XP Token consumable colour
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -855,7 +855,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: pendingCount > 0
-                ? Colors.amber.withValues(alpha: 0.6)
+                ? Colors.amber.withValues(alpha: 0.6)  // accent-allowlist: pending-claim attention badge -- warning severity
                 : accentColor.withValues(alpha: 0.3),
             width: pendingCount > 0 ? 1.5 : 1,
           ),
@@ -893,7 +893,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.amber,
+                            color: Colors.amber,  // accent-allowlist: pending-claim attention badge -- warning severity
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -1073,7 +1073,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.lightbulb_outline, color: AppColors.warning, size: 20),
+              Icon(Icons.lightbulb_outline, color: AppColors.warning, size: 20),  // accent-allowlist: tip/info icon -- warning/info semantic
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).inventoryHowToEarnItems,

@@ -9,6 +9,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../progress/log_measurement_sheet.dart';
+import '../../../../data/providers/root_messenger.dart';
 
 /// Quick Log Measurements Tile - Shows key body measurements
 /// Displays waist, chest, hips with last update and quick update button
@@ -382,7 +383,7 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
     final userId = authState.user?.id;
 
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.quickLogMeasurementsPleaseSignInTo)),
       );
       return;

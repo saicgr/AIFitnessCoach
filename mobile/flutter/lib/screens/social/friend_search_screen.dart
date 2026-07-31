@@ -499,7 +499,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             Icon(
               Icons.error_outline_rounded,
               size: 48,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
             const SizedBox(height: 16),
             Text(
@@ -601,7 +601,7 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
             Icon(
               Icons.error_outline_rounded,
               size: 48,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
             const SizedBox(height: 16),
             Text(

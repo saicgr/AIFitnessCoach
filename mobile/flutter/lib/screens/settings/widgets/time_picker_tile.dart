@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A tile for selecting a time value.
 ///
@@ -58,14 +59,14 @@ class TimePickerTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
                 const SizedBox(width: 4),
                 Icon(
                   Icons.access_time,
                   size: 16,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ],
             ),
@@ -100,7 +101,7 @@ class TimePickerTile extends StatelessWidget {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.cyan,
+              primary: context.accentColor,
               onPrimary: Colors.white,
               surface: isDark ? AppColors.elevated : AppColorsLight.elevated,
               onSurface: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,

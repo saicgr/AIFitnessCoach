@@ -15,18 +15,27 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show Color;
 import 'package:dio/dio.dart';
-import '../constants/app_colors.dart';
 import '../../data/models/rest_suggestion.dart';
 import '../../data/models/smart_weight_suggestion.dart';
 
-/// RPE (Rate of Perceived Exertion) scale with user-friendly descriptions
+/// RPE (Rate of Perceived Exertion) scale with user-friendly descriptions.
+///
+/// Colors form a light→max-effort intensity gradient (green → lime → amber →
+/// orange → red), the same convention as the RIR pill scale in
+/// `workout_design.dart` (`rirMax`/`rir1`/`rir2`/`rir3+`). Previously rpe7/8/9
+/// borrowed `AppColors.cyan`/`.orange`/`.purple` — the app's ACCENT palette —
+/// as arbitrary scale steps with no relation to the accent's meaning, which
+/// is exactly the "colour stopped carrying meaning" failure mode (E2E
+/// register row 15): an unrelated 5-step effort scale rendered in the same
+/// hues as the accent setting.
 enum RpeLevel {
-  rpe6(6, 'Light', 'Could do 4+ more reps easily', AppColors.success),
-  rpe7(7, 'Moderate', 'Could do 3 more reps', AppColors.cyan),
-  rpe8(8, 'Challenging', 'Could do 2 more reps', AppColors.orange),
-  rpe9(9, 'Hard', 'Could do 1 more rep', AppColors.purple),
-  rpe10(10, 'Max Effort', 'Could not do another rep', AppColors.error);
+  rpe6(6, 'Light', 'Could do 4+ more reps easily', Color(0xFF22C55E)), // accent-allowlist: RPE effort severity scale (light) - matches RIR3+ green
+  rpe7(7, 'Moderate', 'Could do 3 more reps', Color(0xFF84CC16)), // accent-allowlist: RPE effort severity scale (moderate) - lime step between green and amber
+  rpe8(8, 'Challenging', 'Could do 2 more reps', Color(0xFFEAB308)), // accent-allowlist: RPE effort severity scale (challenging) - matches RIR2 amber
+  rpe9(9, 'Hard', 'Could do 1 more rep', Color(0xFFF97316)), // accent-allowlist: RPE effort severity scale (hard) - matches RIR1 orange
+  rpe10(10, 'Max Effort', 'Could not do another rep', Color(0xFFEF4444)); // accent-allowlist: RPE effort severity scale (max) - matches RIRmax red
 
   final int value;
   final String label;

@@ -94,7 +94,7 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red, // accent-allowlist: destructive/error state, semantic
           ),
         );
       }

@@ -99,7 +99,7 @@ class AppDialog {
       title: title,
       message: message,
       icon: icon ?? Icons.warning_amber_rounded,
-      iconColor: AppColors.error,
+      iconColor: AppColors.error, // accent-allowlist: destructive dialog action, error semantic
       actions: (isDark, accent, dialogContext) => [
         _DialogButton(
           text: cancelText,
@@ -113,7 +113,7 @@ class AppDialog {
           onTap: () => Navigator.of(dialogContext).pop(true),
           isPrimary: true,
           isDark: isDark,
-          color: AppColors.error,
+          color: AppColors.error, // accent-allowlist: destructive dialog action, error semantic
         ),
       ],
     );

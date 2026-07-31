@@ -7,6 +7,7 @@ import '../../data/services/notification_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Screen for testing all notification types via Firebase
 class NotificationTestScreen extends ConsumerStatefulWidget {
   const NotificationTestScreen({super.key});
@@ -93,13 +94,13 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _lastResult!.startsWith('✅')
-                    ? AppColors.success.withValues(alpha: 0.2)
-                    : AppColors.error.withValues(alpha: 0.2),
+                    ? AppColors.success.withValues(alpha: 0.2)  // accent-allowlist: success/positive state - must stay green regardless of accent
+                    : AppColors.error.withValues(alpha: 0.2),  // accent-allowlist: error/destructive - must stay red
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: _lastResult!.startsWith('✅')
-                      ? AppColors.success
-                      : AppColors.error,
+                      ? AppColors.success  // accent-allowlist: success/positive state - must stay green regardless of accent
+                      : AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   width: 1,
                 ),
               ),
@@ -107,7 +108,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                 children: [
                   Icon(
                     _lastResult!.startsWith('✅') ? Icons.check_circle : Icons.error,
-                    color: _lastResult!.startsWith('✅') ? AppColors.success : AppColors.error,
+                    color: _lastResult!.startsWith('✅') ? AppColors.success : AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -128,13 +129,13 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withValues(alpha: 0.1),
+              color: context.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+              border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.cyan),
+                Icon(Icons.info_outline, color: context.accentColor),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -148,7 +149,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           const SizedBox(height: 24),
 
           // Workout Notifications
-          _buildSectionHeader('Workout Notifications', Icons.fitness_center, AppColors.cyan, textPrimary),
+          _buildSectionHeader('Workout Notifications', Icons.fitness_center, context.accentColor, textPrimary),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -161,7 +162,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.alarm,
                   title: AppLocalizations.of(context).notificationTestWorkoutReminder,
                   subtitle: AppLocalizations.of(context).notificationTestTimeToTrain,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Workout Reminder', 'workout-reminder'),
                   isLoading: _sendingType == 'Workout Reminder',
                   textPrimary: textPrimary,
@@ -172,7 +173,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.sentiment_dissatisfied,
                   title: AppLocalizations.of(context).notificationTestGuilt1DayMissed,
                   subtitle: AppLocalizations.of(context).notificationTestYourMusclesMissYou,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Guilt (1 day)', 'guilt', queryParams: {'days_missed': 1}),
                   isLoading: _sendingType == 'Guilt (1 day)',
                   textPrimary: textPrimary,
@@ -183,7 +184,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.sentiment_very_dissatisfied,
                   title: AppLocalizations.of(context).notificationTestGuilt2DaysMissed,
                   subtitle: AppLocalizations.of(context).notificationTestYourAiCoachIs,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Guilt (2 days)', 'guilt', queryParams: {'days_missed': 2}),
                   isLoading: _sendingType == 'Guilt (2 days)',
                   textPrimary: textPrimary,
@@ -194,7 +195,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.warning_amber,
                   title: AppLocalizations.of(context).notificationTestGuilt3DaysMissed,
                   subtitle: AppLocalizations.of(context).notificationTestItSBeenX,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   onTap: () => _sendNotification('Guilt (3+ days)', 'guilt', queryParams: {'days_missed': 5}),
                   isLoading: _sendingType == 'Guilt (3+ days)',
                   textPrimary: textPrimary,
@@ -207,7 +208,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           const SizedBox(height: 24),
 
           // Nutrition Notifications
-          _buildSectionHeader('Nutrition Notifications', Icons.restaurant, AppColors.green, textPrimary),
+          _buildSectionHeader('Nutrition Notifications', Icons.restaurant, context.accentColor, textPrimary),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -220,7 +221,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.free_breakfast,
                   title: AppLocalizations.of(context).notificationTestBreakfastReminder,
                   subtitle: AppLocalizations.of(context).notificationTestTimeToLogYour,
-                  color: AppColors.green,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Breakfast Reminder', 'nutrition-reminder', queryParams: {'meal_type': 'breakfast'}),
                   isLoading: _sendingType == 'Breakfast Reminder',
                   textPrimary: textPrimary,
@@ -231,7 +232,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.lunch_dining,
                   title: AppLocalizations.of(context).notificationTestLunchReminder,
                   subtitle: AppLocalizations.of(context).notificationTestTimeToLogYour2,
-                  color: AppColors.green,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Lunch Reminder', 'nutrition-reminder', queryParams: {'meal_type': 'lunch'}),
                   isLoading: _sendingType == 'Lunch Reminder',
                   textPrimary: textPrimary,
@@ -242,7 +243,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.dinner_dining,
                   title: AppLocalizations.of(context).notificationTestDinnerReminder,
                   subtitle: AppLocalizations.of(context).notificationTestTimeToLogYour3,
-                  color: AppColors.green,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Dinner Reminder', 'nutrition-reminder', queryParams: {'meal_type': 'dinner'}),
                   isLoading: _sendingType == 'Dinner Reminder',
                   textPrimary: textPrimary,
@@ -292,7 +293,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           const SizedBox(height: 24),
 
           // Other Notifications
-          _buildSectionHeader('Other Notifications', Icons.notifications, AppColors.purple, textPrimary),
+          _buildSectionHeader('Other Notifications', Icons.notifications, context.accentColor, textPrimary),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -305,7 +306,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.auto_awesome,
                   title: AppLocalizations.of(context).notificationTestAiCoachMessage,
                   subtitle: AppLocalizations.of(context).notificationTestHeyYourAiCoach,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   onTap: () => _sendAiCoachNotification(),
                   isLoading: _sendingType == 'AI Coach Message',
                   textPrimary: textPrimary,
@@ -316,7 +317,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.science_outlined,
                   title: AppLocalizations.of(context).notificationTestBasicTest,
                   subtitle: AppLocalizations.of(context).notificationTestYourAiCoachIs2,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   onTap: () => _sendTestNotification(),
                   isLoading: _sendingType == 'Basic Test',
                   textPrimary: textPrimary,
@@ -329,18 +330,18 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           const SizedBox(height: 24),
 
           // Local Notification Tests
-          _buildSectionHeader('Local Notification Tests', Icons.phone_android, AppColors.orange, textPrimary),
+          _buildSectionHeader('Local Notification Tests', Icons.phone_android, context.accentColor, textPrimary),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.1),
+              color: context.accentColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+              border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline, color: AppColors.orange, size: 20),
+                Icon(Icons.info_outline, color: context.accentColor, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -363,7 +364,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.bolt,
                   title: AppLocalizations.of(context).notificationTestImmediateLocalNotification,
                   subtitle: AppLocalizations.of(context).notificationTestShowsANotificationRight,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () => _testImmediateLocalNotification(),
                   isLoading: _sendingType == 'Immediate Local',
                   textPrimary: textPrimary,
@@ -374,7 +375,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.timer,
                   title: AppLocalizations.of(context).notificationTestScheduleIn10Seconds,
                   subtitle: AppLocalizations.of(context).notificationTestTestsScheduledNotificationD,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () => _testScheduledLocalNotification(10),
                   isLoading: _sendingType == 'Scheduled 10s',
                   textPrimary: textPrimary,
@@ -385,7 +386,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.schedule,
                   title: AppLocalizations.of(context).notificationTestScheduleIn60Seconds,
                   subtitle: AppLocalizations.of(context).notificationTestTestsScheduledNotificationD,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                   onTap: () => _testScheduledLocalNotification(60),
                   isLoading: _sendingType == 'Scheduled 60s',
                   textPrimary: textPrimary,
@@ -398,7 +399,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           const SizedBox(height: 24),
 
           // Debug Info
-          _buildSectionHeader('Debug Info', Icons.bug_report, AppColors.error, textPrimary),
+          _buildSectionHeader('Debug Info', Icons.bug_report, AppColors.error, textPrimary),  // accent-allowlist: error/destructive - must stay red
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -411,7 +412,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.list,
                   title: AppLocalizations.of(context).notificationTestViewPendingNotifications,
                   subtitle: AppLocalizations.of(context).notificationTestShowsAllScheduledNotificati,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   onTap: () => _loadPendingNotifications(),
                   isLoading: _sendingType == 'Loading Pending',
                   textPrimary: textPrimary,
@@ -422,7 +423,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.access_time,
                   title: AppLocalizations.of(context).notificationTestViewTimezoneInfo,
                   subtitle: AppLocalizations.of(context).notificationTestShowsCurrentTimezoneSetting,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   onTap: () => _loadTimezoneInfo(),
                   isLoading: _sendingType == 'Loading TZ',
                   textPrimary: textPrimary,
@@ -476,14 +477,14 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.cyan.withValues(alpha: 0.2),
+                              color: context.accentColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               'ID: ${notif.id}',
                               style: TextStyle(
                                 fontSize: 11,
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

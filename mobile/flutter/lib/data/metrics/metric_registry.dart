@@ -20,7 +20,7 @@ final Map<String, MetricDescriptor> metricRegistry = {
     id: kTodayMetricId,
     title: 'Today Score',
     icon: Icons.bolt_rounded,
-    color: const Color(0xFF7AD228),
+    color: const Color(0xFF7AD228),  // accent-allowlist: Today Score's own metric-identity colour, consistent with every other RingKind legend entry in this registry
     unit: '',
     agg: MetricAgg.latest,
     defaultChart: PremiumChartType.area,

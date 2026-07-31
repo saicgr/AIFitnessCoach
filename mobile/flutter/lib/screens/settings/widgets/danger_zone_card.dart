@@ -47,7 +47,7 @@ class DangerZoneCard extends StatelessWidget {
         color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.error.withOpacity(0.2),
+          color: AppColors.error.withOpacity(0.2),  // accent-allowlist: error/destructive - must stay red
         ),
       ),
       child: Column(
@@ -71,12 +71,12 @@ class DangerZoneCard extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.1),
+                          color: AppColors.error.withOpacity(0.1),  // accent-allowlist: error/destructive - must stay red
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           item.icon,
-                          color: AppColors.error,
+                          color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                           size: 20,
                         ),
                       ),

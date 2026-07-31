@@ -190,7 +190,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
                   context,
                 ).aiIntegrationsCouldNotCreateConnection,
           ),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: Colors.red.shade700,  // accent-allowlist: error/destructive - must stay red
           behavior: SnackBarBehavior.floating,
           action: upgradeUrl != null
               ? SnackBarAction(
@@ -258,7 +258,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red.shade400),
+              style: TextButton.styleFrom(foregroundColor: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
               child: Text(
                 AppLocalizations.of(context).googleCalendarConnectDisconnect,
               ),
@@ -287,7 +287,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
         ),
         backgroundColor: ok
             ? accent.withValues(alpha: 0.9)
-            : Colors.red.shade700,
+            : Colors.red.shade700,  // accent-allowlist: error/destructive - must stay red
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -684,10 +684,10 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.shade400.withValues(alpha: 0.1),
+                color: Colors.orange.shade400.withValues(alpha: 0.1),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Colors.orange.shade400.withValues(alpha: 0.4),
+                  color: Colors.orange.shade400.withValues(alpha: 0.4),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                 ),
               ),
               child: Row(
@@ -696,7 +696,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                   Icon(
                     Icons.warning_amber_rounded,
                     size: 18,
-                    color: Colors.orange.shade400,
+                    color: Colors.orange.shade400,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -707,7 +707,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.4,
-                        color: Colors.orange.shade400,
+                        color: Colors.orange.shade400,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                       ),
                     ),
                   ),
@@ -1035,10 +1035,10 @@ class _IntegrationCard extends StatelessWidget {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.red.shade400,
+                        color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                       ),
                     )
-                  : Icon(Icons.link_off, size: 18, color: Colors.red.shade400),
+                  : Icon(Icons.link_off, size: 18, color: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
               label: Text(
                 isDisconnecting
                     ? AppLocalizations.of(context).aiIntegrationsDisconnecting
@@ -1047,13 +1047,13 @@ class _IntegrationCard extends StatelessWidget {
                       ).googleCalendarConnectDisconnect,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: Colors.red.shade400,
+                  color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                 ),
               ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 side: BorderSide(
-                  color: Colors.red.shade400.withValues(alpha: 0.5),
+                  color: Colors.red.shade400.withValues(alpha: 0.5),  // accent-allowlist: error/destructive - must stay red
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -1253,20 +1253,20 @@ class _InlineErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.shade400.withValues(alpha: 0.1),
+        color: Colors.red.shade400.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.red.shade400.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.red.shade400.withValues(alpha: 0.4)),  // accent-allowlist: error/destructive - must stay red
       ),
       child: Row(
         children: [
-          Icon(Icons.error_outline, color: Colors.red.shade400, size: 18),
+          Icon(Icons.error_outline, color: Colors.red.shade400, size: 18),  // accent-allowlist: error/destructive - must stay red
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.red.shade400,
+                color: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1276,7 +1276,7 @@ class _InlineErrorBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             child: Padding(
               padding: const EdgeInsets.all(4),
-              child: Icon(Icons.close, size: 16, color: Colors.red.shade400),
+              child: Icon(Icons.close, size: 16, color: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
             ),
           ),
         ],

@@ -160,7 +160,7 @@ const List<LayoutPreset> layoutPresets = [
     name: 'Gym Focused',
     description: 'Workout-centric with personal records and coaching',
     icon: Icons.fitness_center,
-    color: Color(0xFF00BCD4),
+    color: Color(0xFF00BCD4), // accent-allowlist: home layout preset identity swatch - one distinct color per preset shown in the layout picker so presets are visually distinguishable from each other
     tiles: [
       TileType.nextWorkout,
       TileType.quickActions,
@@ -174,7 +174,7 @@ const List<LayoutPreset> layoutPresets = [
     name: 'Fat Loss Focus',
     description: 'Weight logging, habits, and achievements',
     icon: Icons.trending_down,
-    color: Color(0xFFF97316),
+    color: Color(0xFFF97316), // accent-allowlist: home layout preset identity swatch - one distinct color per preset shown in the layout picker so presets are visually distinguishable from each other
     tiles: [
       TileType.nextWorkout,
       TileType.quickLogWeight,
@@ -188,7 +188,7 @@ const List<LayoutPreset> layoutPresets = [
     name: 'Tracker Only',
     description: 'Simple progress tracking with goals',
     icon: Icons.insights,
-    color: Color(0xFFA855F7),
+    color: Color(0xFFA855F7), // accent-allowlist: home layout preset identity swatch - one distinct color per preset shown in the layout picker so presets are visually distinguishable from each other
     tiles: [
       TileType.nextWorkout,
       TileType.quickLogWeight,
@@ -202,7 +202,7 @@ const List<LayoutPreset> layoutPresets = [
     name: 'Nutrition Focus',
     description: 'Calories, macros, fasting, and food patterns front and center',
     icon: Icons.restaurant_menu,
-    color: Color(0xFFFF9800),
+    color: Color(0xFFFF9800), // accent-allowlist: home layout preset identity swatch - one distinct color per preset shown in the layout picker so presets are visually distinguishable from each other
     tiles: [
       TileType.caloriesSummary,
       TileType.macroRings,
@@ -218,7 +218,7 @@ const List<LayoutPreset> layoutPresets = [
     name: 'Bare Bones',
     description: 'Just the essentials - workout and actions only',
     icon: Icons.view_agenda,
-    color: Color(0xFF00BCD4),
+    color: Color(0xFF00BCD4), // accent-allowlist: home layout preset identity swatch - one distinct color per preset shown in the layout picker so presets are visually distinguishable from each other
     tiles: [
       TileType.nextWorkout,
       TileType.quickActions,
@@ -229,7 +229,7 @@ const List<LayoutPreset> layoutPresets = [
     name: 'All In',
     description: 'Everything enabled - all available widgets',
     icon: Icons.dashboard,
-    color: Color(0xFF3B82F6),
+    color: Color(0xFF3B82F6), // accent-allowlist: home layout preset identity swatch - one distinct color per preset shown in the layout picker so presets are visually distinguishable from each other
     tiles: [
       TileType.nextWorkout,
       TileType.quickActions,

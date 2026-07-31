@@ -13,7 +13,7 @@ class SocialProofBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeColor = color ?? const Color(0xFF2ECC71);
+    final badgeColor = color ?? const Color(0xFF2ECC71);  // accent-allowlist: success/positive default badge colour - same family as AppColors.success
 
     return Transform.rotate(
       angle: -0.087, // ~-5 degrees

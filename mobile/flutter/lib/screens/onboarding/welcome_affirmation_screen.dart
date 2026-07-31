@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Welcome Affirmation — Onboarding v5 / Cal AI pattern
 ///
 /// Single affirming screen shown immediately after the user taps
@@ -51,7 +52,7 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.orange.withValues(alpha: 0.4),
+                      color: context.accentColor.withValues(alpha: 0.4),
                       blurRadius: 36,
                       spreadRadius: 4,
                       offset: const Offset(0, 14),
@@ -112,7 +113,7 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
                       : AppColorsLight.glassSurface,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
+                    color: context.accentColor.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -121,18 +122,18 @@ class WelcomeAffirmationScreen extends ConsumerWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           begin: AlignmentDirectional.topStart,
                           end: AlignmentDirectional.bottomEnd,
                           colors: [
-                            Color(0xFFFFB366), // orangeLight
-                            AppColors.orange,  // brand orange
+                            context.accentColor, // orangeLight
+                            context.accentColor,  // brand orange
                           ],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.orange.withValues(alpha: 0.3),
+                            color: context.accentColor.withValues(alpha: 0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
@@ -217,18 +218,18 @@ class _ContinueButton extends StatelessWidget {
         width: double.infinity,
         height: 58,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
+          gradient: LinearGradient(
             begin: AlignmentDirectional.topStart,
             end: AlignmentDirectional.bottomEnd,
             colors: [
-              Color(0xFFFFB366), // orangeLight
-              AppColors.orange,  // brand orange — clean warm gradient
+              context.accentColor, // orangeLight
+              context.accentColor,  // brand orange — clean warm gradient
             ],
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.orange.withValues(alpha: 0.35),
+              color: context.accentColor.withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),

@@ -210,7 +210,7 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
               ),
               if (_error != null) ...[
                 const SizedBox(height: 8),
-                Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+                Text(_error!, style: const TextStyle(color: Colors.redAccent)),  // accent-allowlist: error/negative state — must stay red regardless of accent
               ],
               const SizedBox(height: 12),
               FilledButton(

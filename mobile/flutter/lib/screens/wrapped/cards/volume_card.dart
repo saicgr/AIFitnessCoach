@@ -63,7 +63,7 @@ class WrappedVolumeCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                        const Color(0xFF3B82F6).withValues(alpha: 0.15), // accent-allowlist: Wrapped card visual identity (volume=blue), deliberate design not accent
                         Colors.transparent,
                       ],
                     ),
@@ -85,16 +85,16 @@ class WrappedVolumeCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                      color: const Color(0xFF3B82F6).withValues(alpha: 0.15), // accent-allowlist: Wrapped card visual identity (volume=blue), deliberate design not accent
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                        color: const Color(0xFF3B82F6).withValues(alpha: 0.3), // accent-allowlist: Wrapped card visual identity (volume=blue), deliberate design not accent
                       ),
                     ),
                     child: Text(
                       AppLocalizations.of(context).volumeCardTotalVolumeLifted.toUpperCase(),
                       style: ZType.lbl(13,
-                          color: const Color(0xFF60A5FA),
+                          color: const Color(0xFF60A5FA), // accent-allowlist: Wrapped card visual identity (volume=blue), deliberate design not accent
                           weight: FontWeight.w700,
                           letterSpacing: 4),
                     ),
@@ -138,7 +138,7 @@ class WrappedVolumeCard extends StatelessWidget {
                         children: [
                           const Icon(
                             Icons.fitness_center,
-                            color: Color(0xFF60A5FA),
+                            color: Color(0xFF60A5FA), // accent-allowlist: Wrapped card visual identity (volume=blue), deliberate design not accent
                             size: 20,
                           ),
                           const SizedBox(width: 10),

@@ -219,14 +219,14 @@ class _TierChip extends StatelessWidget {
       // Soft red — clear "stop today". Not alarmist, just a flag.
       StrainTier.rest => (
           'REST',
-          const Color(0xFFE5567B).withValues(alpha: 0.18),
-          const Color(0xFFE5567B),
+          const Color(0xFFE5567B).withValues(alpha: 0.18),  // accent-allowlist: strain/intensity tier colour (categorical severity ladder: rest=red, light=amber, ...)
+          const Color(0xFFE5567B),  // accent-allowlist: strain/intensity tier colour (categorical severity ladder: rest=red, light=amber, ...)
         ),
       // Amber-ish — "go easy".
       StrainTier.light => (
           'LIGHT',
-          const Color(0xFFE89A3E).withValues(alpha: 0.18),
-          const Color(0xFFC96E18),
+          const Color(0xFFE89A3E).withValues(alpha: 0.18),  // accent-allowlist: strain/intensity tier colour (categorical severity ladder: rest=red, light=amber, ...)
+          const Color(0xFFC96E18),  // accent-allowlist: strain/intensity tier colour (categorical severity ladder: rest=red, light=amber, ...)
         ),
       // Neutral — "train normally".
       StrainTier.moderate => (

@@ -16,6 +16,7 @@ import 'exercise_image_thumbnail.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../home_schedule_dates.dart';
+import '../../../../data/providers/root_messenger.dart';
 /// The main workout card showing the next scheduled workout
 /// Displays workout details with start, customize, and skip actions
 class NextWorkoutCard extends ConsumerStatefulWidget {
@@ -126,10 +127,10 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
     // If a new workout was returned, refresh the list
     if (newWorkout != null && mounted) {
       // Provider refresh already handled by showRegenerateWorkoutSheet
-      ScaffoldMessenger.of(context).showSnackBar(
+      rootSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutRegenerated),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
         ),
       );
     }
@@ -158,7 +159,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
         // Refresh workouts silently (no loading flash)
         await ref.read(workoutsProvider.notifier).silentRefresh();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
               backgroundColor: AppColors.textMuted,
@@ -168,10 +169,10 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).nextWorkoutCardCouldNotSkipWorkout),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
@@ -83,7 +84,7 @@ class _FloatingChatBubbleState extends ConsumerState<FloatingChatBubble> {
                     end: Alignment.topCenter,
                     colors: [
                       (chatState.isOverDismissZone
-                              ? Colors.red
+                              ? Colors.red // accent-allowlist: drag-to-dismiss danger-zone indicator (red), destructive semantic
                               : (isDark ? Colors.white : Colors.black))
                           .withValues(alpha: chatState.isOverDismissZone ? 0.25 : 0.10),
                       Colors.transparent,
@@ -102,7 +103,7 @@ class _FloatingChatBubbleState extends ConsumerState<FloatingChatBubble> {
                         height: 48,
                         decoration: BoxDecoration(
                           color: chatState.isOverDismissZone
-                              ? Colors.red
+                              ? Colors.red // accent-allowlist: drag-to-dismiss danger-zone indicator (red), destructive semantic
                               : (isDark
                                   ? Colors.white.withValues(alpha: 0.15)
                                   : Colors.black.withValues(alpha: 0.08)),
@@ -427,8 +428,8 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = context.accentColor;
+    final purple = context.accentColor.withValues(alpha: 0.7);
 
     // Get coach persona from AI settings
     final aiSettings = ref.watch(aiSettingsProvider);
@@ -490,8 +491,8 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                         style: TextStyle(
                           fontSize: 12,
                           color: _isLoading
-                              ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                              : (isDark ? AppColors.success : AppColorsLight.success),
+                              ? (isDark ? AppColors.orange : AppColorsLight.orange) // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
+                              : (isDark ? AppColors.success : AppColorsLight.success), // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
                         ),
                       ),
                     ],
@@ -527,7 +528,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.error_outline,
-                        color: isDark ? AppColors.error : AppColorsLight.error,
+                        color: isDark ? AppColors.error : AppColorsLight.error, // accent-allowlist: error state icon, semantic
                         size: 40),
                     const SizedBox(height: 12),
                     Text(AppLocalizations.of(context).globalChatBubbleErrorLoadingMessages, style: TextStyle(color: textMuted)),
@@ -634,7 +635,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     // Get coach persona
     final aiSettings = ref.watch(aiSettingsProvider);
@@ -719,7 +720,7 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
 
     if (isError) {
@@ -732,11 +733,11 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08),
+            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08), // accent-allowlist: error chat bubble, semantic error state
             borderRadius: BorderRadius.circular(16).copyWith(
               bottomLeft: const Radius.circular(4),
             ),
-            border: Border.all(color: Colors.red.withOpacity(0.3)),
+            border: Border.all(color: Colors.red.withOpacity(0.3)), // accent-allowlist: error chat bubble, semantic error state
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -744,13 +745,13 @@ class _ChatModalState extends ConsumerState<_ChatModal> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 2, right: 8),
-                child: Icon(Icons.error_outline, color: Colors.red, size: 16),
+                child: Icon(Icons.error_outline, color: Colors.red, size: 16), // accent-allowlist: error chat bubble, semantic error state
               ),
               Flexible(
                 child: Text(
                   message.content,
                   style: TextStyle(
-                    color: Colors.red[isDark ? 300 : 700],
+                    color: Colors.red[isDark ? 300 : 700], // accent-allowlist: error chat bubble, semantic error state
                     fontSize: 13,
                     height: 1.4,
                   ),

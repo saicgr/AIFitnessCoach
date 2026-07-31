@@ -48,8 +48,8 @@ class SplitsChart extends StatelessWidget {
     final clamped = delta.clamp(-0.2, 0.2);
     final t = (clamped.abs() / 0.2).clamp(0.0, 1.0);
     final target = clamped < 0
-        ? const Color(0xFF22C55E) // green-500
-        : const Color(0xFFEF4444); // red-500
+        ? const Color(0xFF22C55E) // green-500 // accent-allowlist: pace split faster/slower color, chart series
+        : const Color(0xFFEF4444); // red-500 // accent-allowlist: pace split faster/slower color, chart series
     return Color.lerp(base, target, t * 0.55)!;
   }
 

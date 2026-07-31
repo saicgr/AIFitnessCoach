@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/providers/beast_mode_provider.dart';
 import '../../../../../data/services/haptic_service.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class RestTimerCard extends ConsumerStatefulWidget {
   final BeastThemeData theme;
 
@@ -27,10 +27,10 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
 
   SliderThemeData _orangeSliderTheme(BuildContext context) {
     return SliderTheme.of(context).copyWith(
-      activeTrackColor: AppColors.orange,
-      inactiveTrackColor: AppColors.orange.withValues(alpha: 0.15),
-      thumbColor: AppColors.orange,
-      overlayColor: AppColors.orange.withValues(alpha: 0.08),
+      activeTrackColor: context.accentColor,
+      inactiveTrackColor: context.accentColor.withValues(alpha: 0.15),
+      thumbColor: context.accentColor,
+      overlayColor: context.accentColor.withValues(alpha: 0.08),
       trackHeight: 3,
       thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
     );
@@ -80,13 +80,13 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
               return ChoiceChip(
                 label: Text(e.value),
                 selected: isSelected,
-                selectedColor: AppColors.orange.withValues(alpha: 0.2),
+                selectedColor: context.accentColor.withValues(alpha: 0.2),
                 labelStyle: TextStyle(
-                  color: isSelected ? AppColors.orange : t.textMuted,
+                  color: isSelected ? context.accentColor : t.textMuted,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 12,
                 ),
-                side: BorderSide(color: isSelected ? AppColors.orange.withValues(alpha: 0.5) : t.cardBorder),
+                side: BorderSide(color: isSelected ? context.accentColor.withValues(alpha: 0.5) : t.cardBorder),
                 onSelected: (_) {
                   HapticService.selection();
                   notifier.updateRestTimerMode(e.key);
@@ -109,7 +109,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
                 hintText: 'base * (rpe / 7) * multiplier',
                 hintStyle: TextStyle(color: t.textMuted.withValues(alpha: 0.5), fontSize: 11),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: t.cardBorder)),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.orange)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: context.accentColor)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               onChanged: (v) => notifier.updateRestTimerCustomFormula(v),
@@ -152,8 +152,8 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
       children: [
         Row(
           children: [
-            const Icon(Icons.monitor_heart_outlined,
-                size: 16, color: AppColors.orange),
+            Icon(Icons.monitor_heart_outlined,
+                size: 16, color: context.accentColor),
             const SizedBox(width: 6),
             Text('Heart-rate-aware rest',
                 style: TextStyle(
@@ -172,15 +172,15 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
             return ChoiceChip(
               label: Text(e.value),
               selected: isSelected,
-              selectedColor: AppColors.orange.withValues(alpha: 0.2),
+              selectedColor: context.accentColor.withValues(alpha: 0.2),
               labelStyle: TextStyle(
-                color: isSelected ? AppColors.orange : t.textMuted,
+                color: isSelected ? context.accentColor : t.textMuted,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 fontSize: 12,
               ),
               side: BorderSide(
                   color: isSelected
-                      ? AppColors.orange.withValues(alpha: 0.5)
+                      ? context.accentColor.withValues(alpha: 0.5)
                       : t.cardBorder),
               onSelected: (_) {
                 HapticService.selection();
@@ -213,7 +213,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
                 ),
               ),
             ),
-            SizedBox(width: 40, child: Text('${e.value}s', style: TextStyle(fontSize: 11, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
+            SizedBox(width: 40, child: Text('${e.value}s', style: TextStyle(fontSize: 11, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
           ],
         ),
       );
@@ -235,7 +235,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
               ),
             ),
           ),
-          SizedBox(width: 40, child: Text('${config.restTimerBaseRest.round()}s', style: TextStyle(fontSize: 11, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
+          SizedBox(width: 40, child: Text('${config.restTimerBaseRest.round()}s', style: TextStyle(fontSize: 11, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
         ],
       ),
       Row(
@@ -251,7 +251,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
               ),
             ),
           ),
-          SizedBox(width: 40, child: Text('${config.restTimerMultiplier.toStringAsFixed(2)}x', style: TextStyle(fontSize: 11, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
+          SizedBox(width: 40, child: Text('${config.restTimerMultiplier.toStringAsFixed(2)}x', style: TextStyle(fontSize: 11, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600))),
         ],
       ),
       Text('Formula: BaseRest * (RPE / 7) * Multiplier', style: TextStyle(fontSize: 11, color: t.textMuted, fontFamily: 'monospace')),
@@ -282,7 +282,7 @@ class _RestTimerCardState extends ConsumerState<RestTimerCard> {
                 child: Row(
                   children: [
                     SizedBox(width: 140, child: Text(s.$1, style: TextStyle(fontSize: 12, color: t.textPrimary, fontFamily: 'monospace'))),
-                    Text('${s.$2}s', style: TextStyle(fontSize: 12, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600)),
+                    Text('${s.$2}s', style: TextStyle(fontSize: 12, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600)),
                   ],
                 ),
               )),

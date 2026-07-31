@@ -56,7 +56,7 @@ class LiveCaloriesDisplay extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(Icons.local_fire_department,
-            size: iconSize, color: const Color(0xFFFF6B35)),
+            size: iconSize, color: const Color(0xFFFF6B35)), // accent-allowlist: calories fire icon, consistent regardless of accent
         const SizedBox(width: 4),
         Text(
           '$kcal',

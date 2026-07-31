@@ -68,7 +68,7 @@ class StickyWearableTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           HapticService.light();
-          context.push('/settings/wearables');
+          context.push('/settings/health-devices');
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

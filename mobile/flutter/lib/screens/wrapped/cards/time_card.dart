@@ -71,7 +71,7 @@ class WrappedTimeCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF6366F1).withValues(alpha: 0.12),
+                        const Color(0xFF6366F1).withValues(alpha: 0.12), // accent-allowlist: Wrapped card visual identity (time=indigo), deliberate design not accent
                         Colors.transparent,
                       ],
                     ),
@@ -92,7 +92,7 @@ class WrappedTimeCard extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).timeCardYourTime.toUpperCase(),
                     style: ZType.lbl(16,
-                        color: const Color(0xFF818CF8).withValues(alpha: 0.9),
+                        color: const Color(0xFF818CF8).withValues(alpha: 0.9), // accent-allowlist: Wrapped card visual identity (time=indigo), deliberate design not accent
                         weight: FontWeight.w700,
                         letterSpacing: 6),
                   ),
@@ -102,7 +102,7 @@ class WrappedTimeCard extends StatelessWidget {
                   // Clock icon
                   Icon(
                     Icons.schedule,
-                    color: const Color(0xFF818CF8).withValues(alpha: 0.6),
+                    color: const Color(0xFF818CF8).withValues(alpha: 0.6), // accent-allowlist: Wrapped card visual identity (time=indigo), deliberate design not accent
                     size: 48,
                   ),
                   const SizedBox(height: 20),
@@ -174,17 +174,17 @@ class WrappedTimeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF6366F1).withValues(alpha: 0.08),
+        color: const Color(0xFF6366F1).withValues(alpha: 0.08), // accent-allowlist: Wrapped card visual identity (time=indigo), deliberate design not accent
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+          color: const Color(0xFF6366F1).withValues(alpha: 0.2), // accent-allowlist: Wrapped card visual identity (time=indigo), deliberate design not accent
         ),
       ),
       child: Column(
         children: [
           Icon(
             icon,
-            color: const Color(0xFF818CF8),
+            color: const Color(0xFF818CF8), // accent-allowlist: Wrapped card visual identity (time=indigo), deliberate design not accent
             size: 22,
           ),
           const SizedBox(height: 8),

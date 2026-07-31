@@ -151,7 +151,7 @@ class _MuscleBalanceCard extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: (isDark ? AppColors.warning : AppColorsLight.warning)
+                color: (isDark ? AppColors.warning : AppColorsLight.warning)  // accent-allowlist: warning severity
                     .withValues(alpha: isDark ? 0.14 : 0.10),
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -161,7 +161,7 @@ class _MuscleBalanceCard extends ConsumerWidget {
                   Icon(Icons.info_outline,
                       size: 16,
                       color:
-                          isDark ? AppColors.warning : AppColorsLight.warning),
+                          isDark ? AppColors.warning : AppColorsLight.warning),  // accent-allowlist: warning severity
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -225,9 +225,9 @@ enum _BandStatus { low, optimal, high }
 Color _bandColor(_BandStatus status, bool isDark) {
   switch (status) {
     case _BandStatus.optimal:
-      return isDark ? AppColors.success : AppColorsLight.success;
+      return isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     case _BandStatus.high:
-      return isDark ? AppColors.warning : AppColorsLight.warning;
+      return isDark ? AppColors.warning : AppColorsLight.warning;  // accent-allowlist: warning severity
     case _BandStatus.low:
       return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
   }

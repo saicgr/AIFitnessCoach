@@ -38,9 +38,9 @@ class ComplianceRingCard extends ConsumerWidget {
 
   Color _complianceColor(Color accent) {
     final pct = _progress;
-    if (pct >= 0.75) return const Color(0xFF4CAF50); // green
-    if (pct >= 0.50) return const Color(0xFFFFC107); // yellow/amber
-    return const Color(0xFFEF5350); // red
+    if (pct >= 0.75) return const Color(0xFF4CAF50); // green  // accent-allowlist: compliance score-band traffic light (green/amber/red)
+    if (pct >= 0.50) return const Color(0xFFFFC107); // yellow/amber  // accent-allowlist: compliance score-band traffic light (green/amber/red)
+    return const Color(0xFFEF5350); // red  // accent-allowlist: compliance score-band traffic light (green/amber/red)
   }
 
   @override

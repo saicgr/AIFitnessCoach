@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Instagram-Story template: AI narrative (period insights).
 /// Text-dominant layout — aiSummary as the hero quote, followed by the top
 /// highlights and a single "next step" tip.
@@ -57,19 +58,19 @@ class InsightsNarrativeTemplate extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF06B6D4).withValues(alpha: 0.2),
+                        color: context.accentColor.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.auto_awesome_rounded,
-                              size: 12, color: Color(0xFF67E8F9)),
+                              size: 12, color: Color(0xFF67E8F9)),  // accent-allowlist: fixed decorative template accent (narrative-card cyan) — not tied to accent
                           const SizedBox(width: 4),
                           Text(
                             AppLocalizations.of(context)!.insightsNarrativeTemplateAi(periodName),
                             style: const TextStyle(
-                              color: Color(0xFF67E8F9),
+                              color: Color(0xFF67E8F9),  // accent-allowlist: fixed decorative template accent (narrative-card cyan) — not tied to accent
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               letterSpacing: 2,
@@ -94,7 +95,7 @@ class InsightsNarrativeTemplate extends StatelessWidget {
                 Text(
                   '"',
                   style: TextStyle(
-                    color: const Color(0xFF67E8F9).withValues(alpha: 0.7),
+                    color: const Color(0xFF67E8F9).withValues(alpha: 0.7),  // accent-allowlist: fixed decorative template accent (narrative-card cyan) — not tied to accent
                     fontSize: 64,
                     fontWeight: FontWeight.w900,
                     height: 0.5,
@@ -119,7 +120,7 @@ class InsightsNarrativeTemplate extends StatelessWidget {
                 if (highlight != null) ...[
                   _BannerCard(
                     icon: Icons.star_rounded,
-                    iconColor: const Color(0xFFFBBF24),
+                    iconColor: const Color(0xFFFBBF24),  // accent-allowlist: warning severity — must stay amber regardless of accent
                     label: 'HIGHLIGHT',
                     text: highlight,
                   ),
@@ -128,7 +129,7 @@ class InsightsNarrativeTemplate extends StatelessWidget {
                 if (tip != null)
                   _BannerCard(
                     icon: Icons.arrow_forward_rounded,
-                    iconColor: const Color(0xFF22C55E),
+                    iconColor: const Color(0xFF22C55E),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     label: 'NEXT',
                     text: tip,
                   ),
@@ -211,7 +212,7 @@ class _WavesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFF06B6D4).withValues(alpha: 0.08)
+      ..color = const Color(0xFF06B6D4).withValues(alpha: 0.08)  // accent-allowlist: fixed decorative template palette — "Flowing cyan waves for the AI / ocean aesthetic" (see class doc above), not tied to accent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 

@@ -23,6 +23,7 @@ import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
@@ -349,18 +350,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         margin: const EdgeInsets.only(top: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.2),
+          color: AppColors.error.withOpacity(0.2),  // accent-allowlist: error/destructive -- must stay red
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.error.withOpacity(0.4)),
+          border: Border.all(color: AppColors.error.withOpacity(0.4)),  // accent-allowlist: error/destructive -- must stay red
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: AppColors.error, size: 20),
+            const Icon(Icons.error_outline, color: AppColors.error, size: 20),  // accent-allowlist: error/destructive -- must stay red
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 authState.errorMessage!,
-                style: const TextStyle(color: AppColors.error, fontSize: 13),
+                style: const TextStyle(color: AppColors.error, fontSize: 13),  // accent-allowlist: error/destructive -- must stay red
               ),
             ),
           ],
@@ -497,7 +498,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         // progress pill occupied the header, so the hero scene inset below
         // still clears it.
         const SizedBox(height: 30),
-        // Pulsing app icon
+        // Pulsing brand mark — E2E #109: the old treatment rendered the
+        // app-icon TILE (a Z knocked out of a flat near-black rounded
+        // square, background baked in) inside a glass card, so it read as
+        // an icon floating on the screen rather than a logo. The asset
+        // itself was already current (md5-identical to the brand Z used
+        // elsewhere) — only the treatment was stale. `zealova_z_mark.png`
+        // is a deterministic alpha-keyed version of that same asset (the
+        // near-black background luma-keyed to transparent; see
+        // scripts/ or the generation note in docs/planning if regenerated)
+        // rendered bare, with no glass card / ClipRRect chain. Tinted via
+        // `t.textPrimary` (already the screen's light/dark-aware ink color)
+        // so the mark reads correctly on both the near-black dark-mode
+        // background and the near-white light-mode one.
         AnimatedBuilder(
           animation: _pulseController,
           builder: (context, child) {
@@ -506,8 +519,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
               child: Container(
                 width: 100,
                 height: 100,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(28),
+                  shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
                       color: t.textPrimary.withOpacity(
@@ -518,28 +532,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                     ),
                   ],
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: t.cardFill,
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: t.borderDefault),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: Image.asset(
-                          'assets/images/app_icon.png',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Icon(
-                            Icons.fitness_center,
-                            color: t.textPrimary,
-                            size: 48,
-                          ),
-                        ),
-                      ),
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(t.textPrimary, BlendMode.srcIn),
+                  child: Image.asset(
+                    'assets/images/zealova_z_mark.png',
+                    width: 72,
+                    height: 72,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.fitness_center,
+                      color: t.textPrimary,
+                      size: 48,
                     ),
                   ),
                 ),
@@ -1029,7 +1032,7 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
       width: 14,
       height: 14,
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.55),
+        color: context.accentColor.withValues(alpha: 0.55),
         shape: BoxShape.circle,
       ),
     );
@@ -1075,7 +1078,7 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
                   top: 0,
                   left: 0,
                   right: 40,
-                  child: _row(color: AppColors.orange, opacity: 0.32),
+                  child: _row(color: context.accentColor, opacity: 0.32),
                 ),
                 Positioned(
                   top: 22,
@@ -1087,7 +1090,7 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
                   top: 44,
                   left: 0,
                   right: 40,
-                  child: _row(color: AppColors.orange, opacity: 0.32),
+                  child: _row(color: context.accentColor, opacity: 0.32),
                 ),
                 Positioned(top: 0, right: 0, child: _dot()),
                 Positioned(top: 44, right: 0, child: _dot()),
@@ -1108,15 +1111,15 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _chartBar(26, AppColors.purple),
+                  _chartBar(26, context.accentColor),
                   const SizedBox(width: 8),
-                  _chartBar(42, AppColors.purple),
+                  _chartBar(42, context.accentColor),
                   const SizedBox(width: 8),
-                  _chartBar(34, AppColors.purple),
+                  _chartBar(34, context.accentColor),
                   const SizedBox(width: 8),
-                  _chartBar(58, AppColors.cyan),
+                  _chartBar(58, context.accentColor),
                   const SizedBox(width: 8),
-                  _chartBar(46, AppColors.purple),
+                  _chartBar(46, context.accentColor),
                 ],
               ),
             ),
@@ -1146,7 +1149,7 @@ class _HeroSceneBackgroundState extends State<_HeroSceneBackground>
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     color: on
-                                        ? AppColors.orange.withValues(
+                                        ? context.accentColor.withValues(
                                             alpha: 0.50,
                                           )
                                         : neutral.withValues(alpha: 0.12),
@@ -1211,10 +1214,10 @@ class _ConsentDisclosure extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = TextStyle(fontSize: 11, color: t.textSecondary, height: 1.45);
     final link = base.copyWith(
-      color: AppColors.orange,
+      color: context.accentColor,
       fontWeight: FontWeight.w700,
       decoration: TextDecoration.underline,
-      decorationColor: AppColors.orange,
+      decorationColor: context.accentColor,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),

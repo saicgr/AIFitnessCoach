@@ -11,6 +11,7 @@ import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 part 'custom_content_section_part_custom_content_card.dart';
 part 'custom_content_section_part_add_exercise_dialog.dart';
 
@@ -27,19 +28,19 @@ class CustomContentSection extends StatelessWidget {
       'icon': Icons.fitness_center,
       'title': 'My Equipment',
       'description': 'Add equipment that is not in our standard list. The AI will then be able to suggest exercises using your custom equipment in your workouts.',
-      'color': AppColors.cyan,
+      'color': AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.sports_gymnastics,
       'title': 'My Exercises',
       'description': 'Create custom exercises or combine existing ones into supersets. These can be included in your AI-generated workouts alongside standard exercises.',
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
     {
       'icon': Icons.auto_awesome,
       'title': 'How It Works',
       'description': 'When the AI generates your workouts, it considers your custom equipment and exercises, mixing them with our exercise library to create personalized workouts.',
-      'color': AppColors.orange,
+      'color': AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
   ];
 

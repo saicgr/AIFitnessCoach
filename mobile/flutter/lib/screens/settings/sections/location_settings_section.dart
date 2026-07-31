@@ -9,6 +9,7 @@ import '../../../data/services/haptic_service.dart';
 import '../widgets/section_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Location settings section for auto-switch gym profiles
 ///
 /// Allows users to enable/disable location-based and time-based automatic gym profile switching.
@@ -41,7 +42,7 @@ class _LocationSettingsCard extends ConsumerWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.cyan;
 
     final autoSwitchEnabled = ref.watch(autoSwitchEnabledProvider);
     final autoSwitchProfiles = ref.watch(autoSwitchProfilesProvider);
@@ -232,12 +233,12 @@ class _LocationSettingsCard extends ConsumerWidget {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.15),
+                                color: Colors.orange.withOpacity(0.15),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: const Icon(
                                 Icons.warning_amber_rounded,
-                                color: Colors.orange,
+                                color: Colors.orange,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                                 size: 18,
                               ),
                             ),
@@ -258,7 +259,7 @@ class _LocationSettingsCard extends ConsumerWidget {
                                     AppLocalizations.of(context).locationSettingsTapToGrantPermission,
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.orange[700],
+                                      color: Colors.orange[700],  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                                     ),
                                   ),
                                 ],
@@ -288,7 +289,7 @@ class _LocationSettingsCard extends ConsumerWidget {
   void _showPermissionDialog(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.cyan;
 
     showDialog(
       context: context,
@@ -369,7 +370,7 @@ class _TimeSettingsCard extends ConsumerWidget {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.cyan;
 
     final timeAutoSwitchEnabled = ref.watch(timeAutoSwitchEnabledProvider);
     final profilesWithTime = ref.watch(profilesWithTimePreferenceProvider);

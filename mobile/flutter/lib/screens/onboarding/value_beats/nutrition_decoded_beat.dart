@@ -104,8 +104,8 @@ class _MacroRings extends StatelessWidget {
               track: t.borderDefault,
               // Macro-specific colors: P (orange-brand), C (amber), F (teal).
               protein: t.accent,
-              carbs: const Color(0xFFFBBF24),
-              fat: const Color(0xFF2DD4BF),
+              carbs: const Color(0xFFFBBF24),  // accent-allowlist: medal/rarity tier accent - same value as AppColors.gamGold/rarityGold
+              fat: const Color(0xFF2DD4BF),  // accent-allowlist: macro identity - fat colour in the documented P/C/F demo palette
             ),
             child: Center(
               child: Icon(

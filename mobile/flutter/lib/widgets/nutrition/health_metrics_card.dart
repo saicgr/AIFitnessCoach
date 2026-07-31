@@ -66,12 +66,12 @@ class HealthMetricsCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                    color: const Color(0xFFFF6B6B).withOpacity(0.1), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
                     Icons.bloodtype_outlined,
-                    color: Color(0xFFFF6B6B),
+                    color: Color(0xFFFF6B6B), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                     size: 20,
                   ),
                 ),
@@ -212,7 +212,7 @@ class HealthMetricsCard extends ConsumerWidget {
             _buildStatPill(
               '${summary.timeInRange.toStringAsFixed(0)}%',
               AppLocalizations.of(context).healthMetricsCardInRange,
-              const Color(0xFF6BCB77),
+              const Color(0xFF6BCB77), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
               textPrimary,
             ),
             const SizedBox(height: 4),
@@ -286,12 +286,12 @@ class HealthMetricsCard extends ConsumerWidget {
           LineChartBarData(
             spots: spots,
             isCurved: true,
-            color: const Color(0xFFFF6B6B),
+            color: const Color(0xFFFF6B6B), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
             barWidth: 2,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: const Color(0xFFFF6B6B).withOpacity(0.1),
+              color: const Color(0xFFFF6B6B).withOpacity(0.1), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
             ),
           ),
           // Target range indicator lines
@@ -317,11 +317,11 @@ class HealthMetricsCard extends ConsumerWidget {
   }
 
   Color _getStatusColor(double glucose) {
-    if (glucose < 70) return const Color(0xFFE74C3C); // Low - red
-    if (glucose <= 100) return const Color(0xFF6BCB77); // Normal - green
-    if (glucose <= 125) return const Color(0xFFF39C12); // Elevated - yellow/orange
-    if (glucose <= 180) return const Color(0xFFFF6B6B); // High - coral
-    return const Color(0xFFE74C3C); // Very high - red
+    if (glucose < 70) return const Color(0xFFE74C3C); // Low - red // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    if (glucose <= 100) return const Color(0xFF6BCB77); // Normal - green // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    if (glucose <= 125) return const Color(0xFFF39C12); // Elevated - yellow/orange // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    if (glucose <= 180) return const Color(0xFFFF6B6B); // High - coral // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    return const Color(0xFFE74C3C); // Very high - red // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
   }
 
   void _showHealthMetricsSheet(BuildContext context, WidgetRef ref) {
@@ -366,12 +366,12 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B6B).withOpacity(0.1),
+                    color: const Color(0xFFFF6B6B).withOpacity(0.1), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.bloodtype_outlined,
-                    color: Color(0xFFFF6B6B),
+                    color: Color(0xFFFF6B6B), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                     size: 24,
                   ),
                 ),
@@ -612,7 +612,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                   flex: (summary.timeBelowRange * 10).round(),
                   child: Container(
                     height: 8,
-                    color: const Color(0xFFE74C3C),
+                    color: const Color(0xFFE74C3C), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                   ),
                 ),
               // In range (green)
@@ -621,7 +621,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                   flex: (summary.timeInRange * 10).round(),
                   child: Container(
                     height: 8,
-                    color: const Color(0xFF6BCB77),
+                    color: const Color(0xFF6BCB77), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                   ),
                 ),
               // Above range (orange)
@@ -630,7 +630,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                   flex: (summary.timeAboveRange * 10).round(),
                   child: Container(
                     height: 8,
-                    color: const Color(0xFFF39C12),
+                    color: const Color(0xFFF39C12), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
                   ),
                 ),
             ],
@@ -640,9 +640,9 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardBelow, summary.timeBelowRange, const Color(0xFFE74C3C), textMuted),
-            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardInRange, summary.timeInRange, const Color(0xFF6BCB77), textMuted),
-            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardAbove, summary.timeAboveRange, const Color(0xFFF39C12), textMuted),
+            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardBelow, summary.timeBelowRange, const Color(0xFFE74C3C), textMuted), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardInRange, summary.timeInRange, const Color(0xFF6BCB77), textMuted), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+            _buildRangeLegend(AppLocalizations.of(context).healthMetricsCardAbove, summary.timeAboveRange, const Color(0xFFF39C12), textMuted), // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
           ],
         ),
       ],
@@ -775,12 +775,12 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3498DB).withOpacity(0.1),
+                    color: const Color(0xFF3498DB).withOpacity(0.1), // accent-allowlist: insulin/medication dose entry icon identity - consistent blue across all dose displays, not accent chrome
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(
                     Icons.medication_outlined,
-                    color: Color(0xFF3498DB),
+                    color: Color(0xFF3498DB), // accent-allowlist: insulin/medication dose entry icon identity - consistent blue across all dose displays, not accent chrome
                     size: 16,
                   ),
                 ),
@@ -804,7 +804,7 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF3498DB),
+                    color: const Color(0xFF3498DB), // accent-allowlist: insulin/medication dose entry icon identity - consistent blue across all dose displays, not accent chrome
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -894,10 +894,10 @@ class _HealthMetricsDetailSheet extends ConsumerWidget {
   }
 
   Color _getStatusColor(double glucose) {
-    if (glucose < 70) return const Color(0xFFE74C3C);
-    if (glucose <= 100) return const Color(0xFF6BCB77);
-    if (glucose <= 125) return const Color(0xFFF39C12);
-    if (glucose <= 180) return const Color(0xFFFF6B6B);
-    return const Color(0xFFE74C3C);
+    if (glucose < 70) return const Color(0xFFE74C3C); // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    if (glucose <= 100) return const Color(0xFF6BCB77); // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    if (glucose <= 125) return const Color(0xFFF39C12); // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    if (glucose <= 180) return const Color(0xFFFF6B6B); // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
+    return const Color(0xFFE74C3C); // accent-allowlist: blood glucose severity scale (low/normal/elevated/high/very-high) - health severity, not accent
   }
 }

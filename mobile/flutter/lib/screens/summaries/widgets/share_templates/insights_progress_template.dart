@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Instagram-Story template: body + readiness + nutrition snapshot for the
 /// selected insights period. Values are optional — empty rows are skipped
 /// rather than showing "--" placeholders.
@@ -44,7 +45,7 @@ class InsightsProgressTemplate extends StatelessWidget {
         label: AppLocalizations.of(context).insightsProgressTemplateWeight,
         value: '${displayValue >= 0 ? '+' : ''}'
             '${displayValue.toStringAsFixed(1)} $weightUnit',
-        color: const Color(0xFFE879F9),
+        color: const Color(0xFFE879F9),  // accent-allowlist: fixed decorative template accent (progress-card fuchsia) — not tied to accent
         isPositive: weightChangeKg! < 0, // loss is "good" for most; neutral tag
         showDirection: true,
       ));
@@ -55,7 +56,7 @@ class InsightsProgressTemplate extends StatelessWidget {
         label: AppLocalizations.of(context).insightsProgressTemplateBodyFat,
         value: '${bodyFatChange! >= 0 ? '+' : ''}'
             '${bodyFatChange!.toStringAsFixed(1)}%',
-        color: const Color(0xFFFB7185),
+        color: const Color(0xFFFB7185),  // accent-allowlist: error/negative state — must stay red regardless of accent
         isPositive: bodyFatChange! < 0,
         showDirection: true,
       ));
@@ -65,7 +66,7 @@ class InsightsProgressTemplate extends StatelessWidget {
         icon: Icons.bolt_rounded,
         label: AppLocalizations.of(context).insightsProgressTemplateReadiness,
         value: '${avgReadiness!.round()} / 100',
-        color: const Color(0xFF60A5FA),
+        color: const Color(0xFF60A5FA),  // accent-allowlist: informational state — must stay blue regardless of accent
         showDirection: false,
       ));
     }
@@ -74,7 +75,7 @@ class InsightsProgressTemplate extends StatelessWidget {
         icon: Icons.restaurant_rounded,
         label: AppLocalizations.of(context).unifiedHomeWidgetsNutrition,
         value: '${avgNutritionAdherence!.round()}%',
-        color: const Color(0xFF34D399),
+        color: const Color(0xFF34D399),  // accent-allowlist: success/positive state — must stay green regardless of accent
         showDirection: false,
       ));
     }
@@ -82,7 +83,7 @@ class InsightsProgressTemplate extends StatelessWidget {
       icon: Icons.local_fire_department_rounded,
       label: AppLocalizations.of(context).insightsReportCardMaxStreak,
       value: AppLocalizations.of(context)!.insightsProgressTemplateDays(maxStreak),
-      color: const Color(0xFFF97316),
+      color: context.accentColor,
       showDirection: false,
     ));
 
@@ -115,7 +116,7 @@ class InsightsProgressTemplate extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE879F9).withValues(alpha: 0.2),
+                        color: const Color(0xFFE879F9).withValues(alpha: 0.2),  // accent-allowlist: fixed decorative template accent (progress-card fuchsia) — not tied to accent
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -196,7 +197,7 @@ class _MetricRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final valueColor = showDirection
-        ? (isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444))
+        ? (isPositive ? const Color(0xFF22C55E) : const Color(0xFFEF4444))  // accent-allowlist: success/positive state — must stay green regardless of accent; error/negative state — must stay red regardless of accent
         : Colors.white;
 
     return Container(
@@ -250,7 +251,7 @@ class _HaloPainter extends CustomPainter {
     final paint = Paint()
       ..shader = RadialGradient(
         colors: [
-          const Color(0xFFE879F9).withValues(alpha: 0.2),
+          const Color(0xFFE879F9).withValues(alpha: 0.2),  // accent-allowlist: fixed decorative template accent (progress-card fuchsia) — not tied to accent
           Colors.transparent,
         ],
       ).createShader(Rect.fromCircle(

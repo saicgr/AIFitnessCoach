@@ -73,14 +73,14 @@ class _ChallengeLeaderboardState extends State<_ChallengeLeaderboard> {
           children: [
             Row(
               children: [
-                Icon(Icons.leaderboard_rounded, size: 16, color: AppColors.orange),
+                Icon(Icons.leaderboard_rounded, size: 16, color: context.accentColor),
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context).statsRewardsLeaderboard,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -107,7 +107,7 @@ class _ChallengeLeaderboardState extends State<_ChallengeLeaderboard> {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: index == 0 ? const Color(0xFFFFD700) : AppColors.textMuted,
+                          color: index == 0 ? const Color(0xFFFFD700) : AppColors.textMuted,  // accent-allowlist: medal/rarity tier
                         ),
                       ),
                     ),
@@ -127,7 +127,7 @@ class _ChallengeLeaderboardState extends State<_ChallengeLeaderboard> {
                     if (didBeat)
                       Padding(
                         padding: const EdgeInsetsDirectional.only(end: 8),
-                        child: Icon(Icons.check_circle, size: 14, color: Colors.green),
+                        child: Icon(Icons.check_circle, size: 14, color: Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
                       ),
                     // Stats
                     if (duration != null)

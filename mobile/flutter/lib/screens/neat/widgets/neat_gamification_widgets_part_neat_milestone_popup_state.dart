@@ -58,12 +58,12 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
   void _generateConfetti() {
     _particles.clear();
     final colors = [
-      AppColors.purple,
-      AppColors.cyan,
-      AppColors.orange,
-      AppColors.yellow,
-      AppColors.coral,
-      AppColors.green,
+      context.accentColor,
+      context.accentColor,
+      context.accentColor,
+      AppColors.yellow,  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
+      context.accentColor,
+      AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
     ];
 
     for (int i = 0; i < 100; i++) {
@@ -95,7 +95,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = widget.newLevel?.color ?? AppColors.cyan;
+    final accentColor = widget.newLevel?.color ?? context.accentColor;
     final emoji = widget.achievementEmoji ?? widget.newLevel?.emoji ?? '\u{1F389}';
 
     return Dialog(
@@ -128,7 +128,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                   if (widget.newLevel != null)
                     Text(
                       AppLocalizations.of(context)!.neatGamificationWidgetsLevelUp,
-                      style: ZType.lbl(16, color: AppColors.yellow, letterSpacing: 4),
+                      style: ZType.lbl(16, color: AppColors.yellow, letterSpacing: 4),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                     )
                   else
                     Text(
@@ -217,9 +217,9 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.yellow.withOpacity(0.2),
+                      color: AppColors.yellow.withOpacity(0.2),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                       borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: AppColors.yellow),
+                      border: Border.all(color: AppColors.yellow),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -231,7 +231,7 @@ class _NeatMilestonePopupState extends State<NeatMilestonePopup>
                         const SizedBox(width: 8),
                         Text(
                           '+${widget.xpEarned} XP',
-                          style: ZType.data(16, color: AppColors.yellow),
+                          style: ZType.data(16, color: AppColors.yellow),  // accent-allowlist: warning severity — must stay yellow/amber regardless of accent
                         ),
                       ],
                     ),
@@ -346,7 +346,7 @@ class CompactNeatStatsCard extends StatelessWidget {
                 value: '$todaySteps',
                 subValue: l10n.neatGamificationWidgetsStepGoal(stepGoal),
                 progress: stepProgress,
-                progressColor: AppColors.cyan,
+                progressColor: context.accentColor,
               ),
             ),
             Container(
@@ -378,7 +378,7 @@ class CompactNeatStatsCard extends StatelessWidget {
                 value: '$neatScore',
                 subValue: l10n.neatGamificationWidgetsScore,
                 progress: (neatScore / 100).clamp(0.0, 1.0),
-                progressColor: AppColors.orange,
+                progressColor: context.accentColor,
               ),
             ),
           ],

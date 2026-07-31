@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -63,14 +64,14 @@ class ChallengeCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                    backgroundColor: context.accentColor.withValues(alpha: 0.2),
                     backgroundImage: userAvatar != null ? NetworkImage(userAvatar) : null,
                     child: userAvatar == null
                         ? Text(
                             userName[0].toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           )
                         : null,
@@ -106,7 +107,7 @@ class ChallengeCard extends StatelessWidget {
               // Challenge title
               Row(
                 children: [
-                  const Icon(Icons.emoji_events, color: AppColors.orange, size: 20),
+                  Icon(Icons.emoji_events, color: context.accentColor, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -124,10 +125,10 @@ class ChallengeCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 workoutName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.orange,
+                  color: context.accentColor,
                 ),
               ),
 
@@ -152,10 +153,10 @@ class ChallengeCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.1),
+                    color: context.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.orange.withValues(alpha: 0.3),
+                      color: context.accentColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -194,8 +195,8 @@ class ChallengeCard extends StatelessWidget {
                           onDecline?.call();
                         },
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
+                          foregroundColor: Colors.red, // accent-allowlist: decline (destructive) button, semantic
+                          side: BorderSide(color: Colors.red.withValues(alpha: 0.5)), // accent-allowlist: decline (destructive) button, semantic
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         child: Text(AppLocalizations.of(context).challengeCardDecline),
@@ -210,7 +211,7 @@ class ChallengeCard extends StatelessWidget {
                           onAccept?.call();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.orange,
+                          backgroundColor: context.accentColor,
                           padding: const EdgeInsets.symmetric(vertical: 10),
                         ),
                         icon: const Icon(Icons.check, size: 18),
@@ -231,13 +232,13 @@ class ChallengeCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: challenge['did_beat'] == true
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : Colors.orange.withValues(alpha: 0.1),
+                        ? Colors.green.withValues(alpha: 0.1) // accent-allowlist: did_beat win indicator (green), semantic win state
+                        : context.accentColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: challenge['did_beat'] == true
-                          ? Colors.green.withValues(alpha: 0.3)
-                          : Colors.orange.withValues(alpha: 0.3),
+                          ? Colors.green.withValues(alpha: 0.3) // accent-allowlist: did_beat win indicator (green), semantic win state
+                          : context.accentColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -246,7 +247,7 @@ class ChallengeCard extends StatelessWidget {
                         challenge['did_beat'] == true
                             ? Icons.emoji_events
                             : Icons.fitness_center,
-                        color: challenge['did_beat'] == true ? Colors.green : AppColors.orange,
+                        color: challenge['did_beat'] == true ? Colors.green : context.accentColor, // accent-allowlist: did_beat win indicator (green), semantic win state
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -263,7 +264,7 @@ class ChallengeCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: challenge['did_beat'] == true ? Colors.green : AppColors.orange,
+                            color: challenge['did_beat'] == true ? Colors.green : context.accentColor, // accent-allowlist: did_beat win indicator (green), semantic win state
                           ),
                         ),
                       ),
@@ -322,13 +323,13 @@ class ChallengeCard extends StatelessWidget {
   Color _getStatusColor(String status) {
     switch (status) {
       case 'pending':
-        return AppColors.orange;
+        return AppColors.orange; // accent-allowlist: challenge status badge identity (pending/accepted/completed/declined/expired)
       case 'accepted':
-        return AppColors.cyan;
+        return AppColors.cyan; // accent-allowlist: challenge status badge identity (pending/accepted/completed/declined/expired)
       case 'completed':
-        return Colors.green;
+        return Colors.green; // accent-allowlist: challenge status badge identity (pending/accepted/completed/declined/expired)
       case 'declined':
-        return Colors.red;
+        return Colors.red; // accent-allowlist: challenge status badge identity (pending/accepted/completed/declined/expired)
       case 'expired':
         return AppColors.textMuted;
       default:
@@ -360,14 +361,14 @@ class ChallengeCard extends StatelessWidget {
     if (remaining.isNegative) {
       return Row(
         children: [
-          Icon(Icons.timer_off, size: 14, color: Colors.red),
+          Icon(Icons.timer_off, size: 14, color: Colors.red), // accent-allowlist: expiry countdown urgency severity scale (red<24h/orange<48h/muted)
           const SizedBox(width: 4),
           Text(
             AppLocalizations.of(context).challengeCardExpired,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.red,
+              color: Colors.red, // accent-allowlist: expiry countdown urgency severity scale (red<24h/orange<48h/muted)
             ),
           ),
         ],
@@ -381,9 +382,9 @@ class ChallengeCard extends StatelessWidget {
     // Color based on urgency
     Color countdownColor;
     if (remaining.inHours < 24) {
-      countdownColor = Colors.red;
+      countdownColor = Colors.red; // accent-allowlist: expiry countdown urgency severity scale (red<24h/orange<48h/muted)
     } else if (remaining.inHours < 48) {
-      countdownColor = AppColors.orange;
+      countdownColor = AppColors.orange; // accent-allowlist: expiry countdown urgency severity scale (red<24h/orange<48h/muted)
     } else {
       countdownColor = AppColors.textMuted;
     }

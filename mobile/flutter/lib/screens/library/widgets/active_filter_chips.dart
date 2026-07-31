@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../providers/library_providers.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Single active filter chip with remove button
 class ActiveFilterChip extends StatelessWidget {
   final String label;
@@ -18,7 +19,7 @@ class ActiveFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Padding(
       padding: const EdgeInsetsDirectional.only(end: 8),

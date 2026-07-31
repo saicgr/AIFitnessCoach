@@ -16,6 +16,7 @@ import '../ai_settings/ai_settings_screen.dart';
 import 'onboarding_experiments.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Unified pre-permission rationale screen for the four most-used
 /// runtime permissions: camera, photos, microphone, and notifications.
 /// Replaces the previous two-screen flow (NotificationPrimeScreen +
@@ -151,7 +152,7 @@ class _PermissionsPrimerScreenState
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accent = isDark ? context.accentColor : AppColorsLight.cyan;
 
     // Resolve the user's selected coach persona for the sample coach
     // notification — never hardcode "Coach" (feedback_coach_voice_naming).

@@ -22,7 +22,7 @@ class FastingTypesSection extends StatelessWidget {
   static const _types = <_FastingType>[
     _FastingType(
       icon: Icons.schedule_rounded,
-      accent: Color(0xFF10B981),
+      accent: Color(0xFF10B981), // accent-allowlist: fasting-style taxonomy (TRE) — compile-time const list, no BuildContext
       title: 'Time-Restricted Eating (TRE)',
       tagline: 'The everyday approach',
       intensity: 1,
@@ -41,7 +41,7 @@ class FastingTypesSection extends StatelessWidget {
     ),
     _FastingType(
       icon: Icons.wb_sunny_rounded,
-      accent: Color(0xFFF59E0B),
+      accent: Color(0xFFF59E0B), // accent-allowlist: fasting-style taxonomy (Circadian TRE) — compile-time const list, no BuildContext
       title: 'Circadian / Early TRE',
       tagline: 'Eat with your body clock',
       intensity: 2,
@@ -60,7 +60,7 @@ class FastingTypesSection extends StatelessWidget {
     ),
     _FastingType(
       icon: Icons.calendar_view_week_rounded,
-      accent: Color(0xFF8B5CF6),
+      accent: Color(0xFF8B5CF6), // accent-allowlist: fasting-style taxonomy (5:2) — compile-time const list, no BuildContext
       title: '5:2 — The Fast Diet',
       tagline: '5 normal days, 2 light days',
       intensity: 2,
@@ -78,7 +78,7 @@ class FastingTypesSection extends StatelessWidget {
     ),
     _FastingType(
       icon: Icons.swap_horiz_rounded,
-      accent: Color(0xFF3B82F6),
+      accent: Color(0xFF3B82F6), // accent-allowlist: fasting-style taxonomy (ADF) — compile-time const list, no BuildContext
       title: 'Alternate-Day Fasting (ADF)',
       tagline: 'Fast every other day',
       intensity: 3,
@@ -96,7 +96,7 @@ class FastingTypesSection extends StatelessWidget {
     ),
     _FastingType(
       icon: Icons.restaurant_rounded,
-      accent: Color(0xFFEC4899),
+      accent: Color(0xFFEC4899), // accent-allowlist: fasting-style taxonomy (Eat-Stop-Eat) — compile-time const list, no BuildContext
       title: 'Eat-Stop-Eat',
       tagline: 'A full 24h fast, 1–2× a week',
       intensity: 3,
@@ -114,7 +114,7 @@ class FastingTypesSection extends StatelessWidget {
     ),
     _FastingType(
       icon: Icons.water_drop_rounded,
-      accent: Color(0xFFEF4444),
+      accent: Color(0xFFEF4444), // accent-allowlist: fasting-style taxonomy (Extended/Multi-Day) — compile-time const list, no BuildContext
       title: 'Extended / Multi-Day Fasting',
       tagline: '24h+ water fasts',
       intensity: 4,

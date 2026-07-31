@@ -86,7 +86,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).reportInjuryPleaseSelectABody),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error, // accent-allowlist: error/success states + injury severity scale
         ),
       );
       return;
@@ -133,7 +133,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).reportInjuryInjuryReportedSuccessfully),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success, // accent-allowlist: error/success states + injury severity scale
           ),
         );
         context.pop();
@@ -143,7 +143,7 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to report injury: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error, // accent-allowlist: error/success states + injury severity scale
           ),
         );
       }
@@ -363,9 +363,9 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
 
   Widget _buildSeveritySelector(Color elevated, Color cardBorder, Color textPrimary) {
     final severities = [
-      ('mild', 'Mild', 'Minor discomfort', AppColors.success),
-      ('moderate', 'Moderate', 'Noticeable pain', AppColors.warning),
-      ('severe', 'Severe', 'Significant pain', AppColors.error),
+      ('mild', 'Mild', 'Minor discomfort', AppColors.success), // accent-allowlist: error/success states + injury severity scale
+      ('moderate', 'Moderate', 'Noticeable pain', AppColors.warning), // accent-allowlist: error/success states + injury severity scale
+      ('severe', 'Severe', 'Significant pain', AppColors.error), // accent-allowlist: error/success states + injury severity scale
     ];
 
     return Row(
@@ -435,15 +435,15 @@ class _ReportInjuryScreenState extends ConsumerState<ReportInjuryScreen> {
     IconData painIcon;
 
     if (_painLevel <= 3) {
-      painColor = AppColors.success;
+      painColor = AppColors.success; // accent-allowlist: error/success states + injury severity scale
       painDescription = 'Mild discomfort';
       painIcon = Icons.sentiment_satisfied;
     } else if (_painLevel <= 6) {
-      painColor = AppColors.warning;
+      painColor = AppColors.warning; // accent-allowlist: error/success states + injury severity scale
       painDescription = 'Moderate pain';
       painIcon = Icons.sentiment_neutral;
     } else {
-      painColor = AppColors.error;
+      painColor = AppColors.error; // accent-allowlist: error/success states + injury severity scale
       painDescription = 'Severe pain';
       painIcon = Icons.sentiment_very_dissatisfied;
     }

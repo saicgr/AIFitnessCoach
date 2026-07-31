@@ -8,6 +8,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 
 part 'neat_gamification_widgets_part_neat_level.dart';

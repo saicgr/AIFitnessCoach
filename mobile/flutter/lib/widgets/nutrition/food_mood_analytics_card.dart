@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -300,7 +301,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final accentTint = context.accentColor;
 
     return GestureDetector(
       onTap: () => _showAnalyticsSheet(context, ref),
@@ -319,12 +320,12 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: purple.withOpacity(0.1),
+                    color: accentTint.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.mood,
-                    color: purple,
+                    color: accentTint,
                     size: 20,
                   ),
                 ),
@@ -352,9 +353,9 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
               error: (_, __) => _buildErrorState(context, textMuted),
               data: (analytics) {
                 if (!analytics.hasData) {
-                  return _buildNoDataState(context, textMuted, purple);
+                  return _buildNoDataState(context, textMuted, accentTint);
                 }
-                return _buildSummary(context, analytics, textPrimary, textMuted, purple);
+                return _buildSummary(context, analytics, textPrimary, textMuted, accentTint);
               },
             ),
           ],
@@ -387,7 +388,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildNoDataState(BuildContext context, Color textMuted, Color purple) {
+  Widget _buildNoDataState(BuildContext context, Color textMuted, Color accentTint) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -408,17 +409,17 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: purple.withOpacity(0.1),
+            color: accentTint.withOpacity(0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.tips_and_updates, size: 14, color: purple),
+              Icon(Icons.tips_and_updates, size: 14, color: accentTint),
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.of(context).foodMoodAnalyticsAvailableWhenLoggingMeals,
-                style: TextStyle(fontSize: 11, color: purple),
+                style: TextStyle(fontSize: 11, color: accentTint),
               ),
             ],
           ),
@@ -432,7 +433,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
     FoodMoodAnalytics analytics,
     Color textPrimary,
     Color textMuted,
-    Color purple,
+    Color accentTint,
   ) {
     final l10n = AppLocalizations.of(context);
     return Column(
@@ -444,7 +445,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
               child: _buildStatItem(
                 '${(analytics.moodImprovementRate * 100).toStringAsFixed(0)}%',
                 l10n.foodMoodAnalyticsMoodImproved,
-                const Color(0xFF6BCB77),
+                const Color(0xFF6BCB77), // accent-allowlist: mood/energy analytics stat tile color coding (chart-legend style categorical encoding)
               ),
             ),
             Container(width: 1, height: 40, color: textMuted.withOpacity(0.2)),
@@ -452,7 +453,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
               child: _buildStatItem(
                 analytics.averageEnergy.toStringAsFixed(1),
                 l10n.foodMoodAnalyticsAvgEnergy,
-                const Color(0xFFF39C12),
+                const Color(0xFFF39C12), // accent-allowlist: mood/energy analytics stat tile color coding (chart-legend style categorical encoding)
               ),
             ),
             Container(width: 1, height: 40, color: textMuted.withOpacity(0.2)),
@@ -460,7 +461,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
               child: _buildStatItem(
                 '${analytics.logsWithMood}',
                 l10n.foodMoodAnalyticsTrackedMeals,
-                purple,
+                accentTint,
               ),
             ),
           ],
@@ -471,7 +472,7 @@ class FoodMoodAnalyticsCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF6BCB77).withOpacity(0.1),
+              color: const Color(0xFF6BCB77).withOpacity(0.1), // accent-allowlist: mood/energy analytics stat tile color coding (chart-legend style categorical encoding)
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

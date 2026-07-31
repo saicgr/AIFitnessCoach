@@ -16,6 +16,7 @@ import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 /// Shared loading placeholder for the preference sub-screens. Keeps the app bar
 /// (back button + title) visible instantly and shows a layout-matched skeleton
@@ -75,7 +76,7 @@ class NutritionPreferencesScreen extends ConsumerWidget {
 
   Widget _tile(BuildContext ctx, String title, IconData icon, String subtitle, VoidCallback onTap) {
     return ListTile(
-      leading: Icon(icon, color: AppColors.orange),
+      leading: Icon(icon, color: AppColors.orange),  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.chevron_right, size: 20),
@@ -324,7 +325,7 @@ class InflammationToleranceScreen extends ConsumerWidget {
             value: prefs.inflammationSensitivity.toDouble(),
             min: 1, max: 5, divisions: 4,
             label: '${prefs.inflammationSensitivity}',
-            activeColor: AppColors.orange,
+            activeColor: context.accentColor,
             onChanged: (v) {
               final next = prefs.copyWith(inflammationSensitivity: v.round());
               ref.read(nutritionPreferencesProvider.notifier)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/providers/custom_exercises_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/custom_exercise.dart';
@@ -59,7 +60,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.successMessage!),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green,  // accent-allowlist: success snackbar -- must stay green
             duration: const Duration(seconds: 2),
           ),
         );
@@ -69,7 +70,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.error!),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error snackbar -- must stay red
             duration: const Duration(seconds: 3),
           ),
         );
@@ -110,7 +111,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
       floatingActionButton: state.exercises.isNotEmpty
           ? FloatingActionButton.extended(
               onPressed: () => _showCreateSheet(context),
-              backgroundColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+              backgroundColor: context.accentColor,
               icon: const Icon(Icons.add, color: Colors.black),
               label: Text(
                 AppLocalizations.of(context).netflixExercisesTabCreate,
@@ -327,7 +328,7 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
               Navigator.pop(context);
               ref.read(customExercisesProvider.notifier).deleteExercise(exercise.id);
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: destructive delete action -- error semantic
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -345,7 +346,7 @@ class _ExerciseDetailsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return AlertDialog(
       title: Row(

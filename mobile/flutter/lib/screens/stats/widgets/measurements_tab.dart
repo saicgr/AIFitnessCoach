@@ -420,7 +420,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                             ScaffoldMessenger.of(sheetContext).showSnackBar(
                               SnackBar(
                                 content: Text(AppLocalizations.of(context)!.measurementsTabCouldnTSaveTry(selectedType.displayName.toLowerCase())),
-                                backgroundColor: AppColors.error,
+                                backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                               ),
                             );
                           }
@@ -919,8 +919,8 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
 
   Color _getChangeColor(MeasurementType type, double change) {
     if (type == MeasurementType.weight || type == MeasurementType.bodyFat) {
-      return change < 0 ? AppColors.success : AppColors.error;
+      return change < 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
     }
-    return change > 0 ? AppColors.success : AppColors.error;
+    return change > 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
   }
 }

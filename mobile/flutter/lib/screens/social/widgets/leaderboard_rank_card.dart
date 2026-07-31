@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// User's rank card - displayed at the top of leaderboard
 class LeaderboardRankCard extends StatelessWidget {
   final Map<String, dynamic> userRank;
@@ -29,13 +30,13 @@ class LeaderboardRankCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.orange.withValues(alpha: 0.2),
-            AppColors.cyan.withValues(alpha: 0.2),
+            context.accentColor.withValues(alpha: 0.2),
+            context.accentColor.withValues(alpha: 0.2),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.5),
+          color: context.accentColor.withValues(alpha: 0.5),
           width: 2,
         ),
       ),
@@ -43,7 +44,7 @@ class LeaderboardRankCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.emoji_events, color: AppColors.orange, size: 32),
+              Icon(Icons.emoji_events, color: context.accentColor, size: 32),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -63,7 +64,7 @@ class LeaderboardRankCard extends StatelessWidget {
                           '#$rank',
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.orange,
+                                color: context.accentColor,
                               ),
                         ),
                         const SizedBox(width: 8),
@@ -81,13 +82,13 @@ class LeaderboardRankCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.2),
+                  color: context.accentColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   'Top ${percentile.toStringAsFixed(1)}%',
-                  style: const TextStyle(
-                    color: AppColors.cyan,
+                  style: TextStyle(
+                    color: context.accentColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),

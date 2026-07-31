@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/providers/guest_mode_provider.dart';
@@ -203,8 +204,8 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = context.accentColor;
+    final purple = context.accentColor.withValues(alpha: 0.7);
 
     // Get coach name from AI settings
     final aiSettings = ref.watch(aiSettingsProvider);
@@ -253,8 +254,8 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                               margin: const EdgeInsets.only(right: 6),
                               decoration: BoxDecoration(
                                 color: _isLoading
-                                    ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                                    : (isDark ? AppColors.success : AppColorsLight.success),
+                                    ? (isDark ? AppColors.orange : AppColorsLight.orange) // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
+                                    : (isDark ? AppColors.success : AppColorsLight.success), // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -263,8 +264,8 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _isLoading
-                                    ? (isDark ? AppColors.orange : AppColorsLight.orange)
-                                    : (isDark ? AppColors.success : AppColorsLight.success),
+                                    ? (isDark ? AppColors.orange : AppColorsLight.orange) // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
+                                    : (isDark ? AppColors.success : AppColorsLight.success), // accent-allowlist: typing/online status indicator (orange=typing, green=online), semantic status not accent
                               ),
                             ),
                           ],
@@ -333,7 +334,7 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.error_outline,
-                          color: isDark ? AppColors.error : AppColorsLight.error,
+                          color: isDark ? AppColors.error : AppColorsLight.error, // accent-allowlist: error state icon, semantic
                           size: 40),
                       const SizedBox(height: 12),
                       Text(AppLocalizations.of(context).globalChatBubbleErrorLoadingMessages, style: TextStyle(color: textMuted)),
@@ -574,8 +575,8 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = context.accentColor;
+    final purple = context.accentColor.withValues(alpha: 0.7);
     final userTextColor = isDark ? AppColors.pureBlack : Colors.white;
 
     // Error messages are displayed with red accent on the left side
@@ -589,11 +590,11 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
             maxWidth: MediaQuery.of(context).size.width * 0.75,
           ),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08),
+            color: Colors.red.withOpacity(isDark ? 0.15 : 0.08), // accent-allowlist: error chat bubble, semantic error state
             borderRadius: BorderRadius.circular(16).copyWith(
               bottomLeft: const Radius.circular(4),
             ),
-            border: Border.all(color: Colors.red.withOpacity(0.3)),
+            border: Border.all(color: Colors.red.withOpacity(0.3)), // accent-allowlist: error chat bubble, semantic error state
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -601,13 +602,13 @@ class _ChatBottomSheetState extends ConsumerState<_ChatBottomSheet> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 2, right: 8),
-                child: Icon(Icons.error_outline, color: Colors.red, size: 16),
+                child: Icon(Icons.error_outline, color: Colors.red, size: 16), // accent-allowlist: error chat bubble, semantic error state
               ),
               Flexible(
                 child: Text(
                   message.content,
                   style: TextStyle(
-                    color: Colors.red[isDark ? 300 : 700],
+                    color: Colors.red[isDark ? 300 : 700], // accent-allowlist: error chat bubble, semantic error state
                     fontSize: 13,
                     height: 1.4,
                   ),

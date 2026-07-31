@@ -48,7 +48,7 @@ class WrappedPersonalityCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFFEC4899).withValues(alpha: 0.15),
+                        const Color(0xFFEC4899).withValues(alpha: 0.15), // accent-allowlist: Wrapped card visual identity (personality=pink), deliberate design not accent
                         Colors.transparent,
                       ],
                     ),
@@ -81,11 +81,11 @@ class WrappedPersonalityCard extends StatelessWidget {
                         vertical: 24, horizontal: 16),
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: const Color(0xFFEC4899).withValues(alpha: 0.4),
+                        color: const Color(0xFFEC4899).withValues(alpha: 0.4), // accent-allowlist: Wrapped card visual identity (personality=pink), deliberate design not accent
                         width: 2,
                       ),
                       borderRadius: BorderRadius.circular(20),
-                      color: const Color(0xFFEC4899).withValues(alpha: 0.06),
+                      color: const Color(0xFFEC4899).withValues(alpha: 0.06), // accent-allowlist: Wrapped card visual identity (personality=pink), deliberate design not accent
                     ),
                     child: Column(
                       children: [
@@ -125,10 +125,10 @@ class WrappedPersonalityCard extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEC4899).withValues(alpha: 0.08),
+                        color: const Color(0xFFEC4899).withValues(alpha: 0.08), // accent-allowlist: Wrapped card visual identity (personality=pink), deliberate design not accent
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: const Color(0xFFEC4899)
+                          color: const Color(0xFFEC4899) // accent-allowlist: Wrapped card visual identity (personality=pink), deliberate design not accent
                               .withValues(alpha: 0.2),
                         ),
                       ),
@@ -137,7 +137,7 @@ class WrappedPersonalityCard extends StatelessWidget {
                           Text(
                             AppLocalizations.of(context).personalityCardFunFact.toUpperCase(),
                             style: ZType.lbl(11,
-                                color: const Color(0xFFF472B6)
+                                color: const Color(0xFFF472B6) // accent-allowlist: Wrapped card visual identity (personality=pink), deliberate design not accent
                                     .withValues(alpha: 0.7),
                                 weight: FontWeight.w700,
                                 letterSpacing: 3),

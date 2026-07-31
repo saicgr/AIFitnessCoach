@@ -398,10 +398,10 @@ class _SparseDataBanner extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.12 : 0.10),
+          color: const Color(0xFFF59E0B).withValues(alpha: isDark ? 0.12 : 0.10),  // accent-allowlist: warning severity — must stay amber regardless of accent
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.35),  // accent-allowlist: warning severity — must stay amber regardless of accent
           ),
         ),
         child: Row(
@@ -410,7 +410,7 @@ class _SparseDataBanner extends StatelessWidget {
             const Icon(
               Icons.info_outline_rounded,
               size: 18,
-              color: Color(0xFFF59E0B),
+              color: Color(0xFFF59E0B),  // accent-allowlist: warning severity — must stay amber regardless of accent
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -758,11 +758,11 @@ class _HeartRateSection extends StatelessWidget {
           runSpacing: 8,
           children: [
             if (avg != null)
-              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailAvg, value: avg, color: const Color(0xFFEF4444)),
+              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailAvg, value: avg, color: const Color(0xFFEF4444)),  // accent-allowlist: error/negative state — must stay red regardless of accent
             if (max != null)
-              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailPeak, value: max, color: const Color(0xFFDC2626)),
+              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailPeak, value: max, color: const Color(0xFFDC2626)),  // accent-allowlist: error/negative state — must stay red regardless of accent
             if (min != null)
-              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailMin, value: min, color: const Color(0xFF22C55E)),
+              _HrStatTile(label: AppLocalizations.of(context).syncedWorkoutDetailMin, value: min, color: const Color(0xFF22C55E)),  // accent-allowlist: success/positive state — must stay green regardless of accent
           ],
         ),
       );
@@ -787,7 +787,7 @@ class _HeartRateSection extends StatelessWidget {
       child: WorkoutMetricChart(
         samples: samples,
         label: 'bpm',
-        color: const Color(0xFFEF4444),
+        color: const Color(0xFFEF4444),  // accent-allowlist: error/negative state — must stay red regardless of accent
         stats: stats,
         formatValue: (v) => v.round().toString(),
         height: 200,
@@ -835,11 +835,11 @@ class _HeartRateZonesStrip extends StatelessWidget {
   const _HeartRateZonesStrip({required this.metadata});
 
   static const _zoneColors = [
-    Color(0xFF22C55E),
-    Color(0xFF84CC16),
-    Color(0xFFEAB308),
-    Color(0xFFF97316),
-    Color(0xFFEF4444),
+    Color(0xFF22C55E),  // accent-allowlist: success/positive state — must stay green regardless of accent
+    Color(0xFF84CC16),  // accent-allowlist: success/positive state — must stay green regardless of accent
+    Color(0xFFEAB308),  // accent-allowlist: warning severity — must stay amber regardless of accent
+    Color(0xFFF97316),  // accent-allowlist: no BuildContext available in this scope (static const) — HR-zone heat-map identity color
+    Color(0xFFEF4444),  // accent-allowlist: error/negative state — must stay red regardless of accent
   ];
   static const _zoneLabels = [
     '<60% max',
@@ -1936,7 +1936,7 @@ class _DeleteSheet extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Icon(Icons.delete_outline_rounded, size: 40,
-              color: const Color(0xFFEF4444)),
+              color: const Color(0xFFEF4444)),  // accent-allowlist: error/negative state — must stay red regardless of accent
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context).syncedWorkoutDetailDeleteThisSyncedWorkout,
@@ -1957,7 +1957,7 @@ class _DeleteSheet extends StatelessWidget {
             width: double.infinity,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
+                backgroundColor: const Color(0xFFEF4444),  // accent-allowlist: error/negative state — must stay red regardless of accent
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               onPressed: () => Navigator.of(context).pop(true),

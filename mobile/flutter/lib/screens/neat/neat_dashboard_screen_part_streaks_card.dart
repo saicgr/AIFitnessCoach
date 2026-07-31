@@ -41,7 +41,7 @@ class _StreaksCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.local_fire_department,
-                color: AppColors.orange,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -67,7 +67,7 @@ class _StreaksCard extends StatelessWidget {
                   label: AppLocalizations.of(context).syncedWorkoutDetailSteps,
                   current: streaks.currentStepStreak,
                   longest: streaks.longestStepStreak,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -83,7 +83,7 @@ class _StreaksCard extends StatelessWidget {
                   label: AppLocalizations.of(context).syncedWorkoutsHistoryActive,
                   current: streaks.currentActiveHoursStreak,
                   longest: streaks.longestActiveHoursStreak,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -99,7 +99,7 @@ class _StreaksCard extends StatelessWidget {
                   label: 'NEAT',
                   current: streaks.currentNeatScoreStreak,
                   longest: streaks.longestNeatScoreStreak,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
@@ -116,8 +116,8 @@ class _StreaksCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.orange.withOpacity(0.15),
-                    AppColors.purple.withOpacity(0.15),
+                    context.accentColor.withOpacity(0.15),
+                    context.accentColor.withOpacity(0.15),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(10),
@@ -126,7 +126,7 @@ class _StreaksCard extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.emoji_events,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     size: 24,
                   ),
                   const SizedBox(width: 12),
@@ -190,7 +190,7 @@ class _StreakItem extends StatelessWidget {
           children: [
             Icon(
               Icons.local_fire_department,
-              color: current > 0 ? AppColors.orange : textMuted,
+              color: current > 0 ? context.accentColor : textMuted,
               size: 16,
             ),
             const SizedBox(width: 4),
@@ -277,7 +277,7 @@ class _AchievementsCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.emoji_events,
-                color: AppColors.orange,
+                color: context.accentColor,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -296,7 +296,7 @@ class _AchievementsCard extends StatelessWidget {
                   AppLocalizations.of(context).weightTrackingCardSeeAll,
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ),
@@ -307,7 +307,7 @@ class _AchievementsCard extends StatelessWidget {
             const SizedBox(height: 20),
             Center(
               child: CircularProgressIndicator(
-                color: AppColors.orange,
+                color: context.accentColor,
                 strokeWidth: 2,
               ),
             ),
@@ -387,7 +387,7 @@ class _AchievementItem extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.15),
+            color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(
@@ -396,7 +396,7 @@ class _AchievementItem extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             ),
           ),
@@ -427,7 +427,7 @@ class _AchievementItem extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.15),
+            color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state — must stay green regardless of accent
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
@@ -435,7 +435,7 @@ class _AchievementItem extends StatelessWidget {
             children: [
               Icon(
                 Icons.star,
-                color: AppColors.success,
+                color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 size: 12,
               ),
               const SizedBox(width: 4),
@@ -444,7 +444,7 @@ class _AchievementItem extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
             ],
@@ -511,7 +511,7 @@ class _AchievementProgressItem extends StatelessWidget {
                   value: achievement.progress,
                   minHeight: 6,
                   backgroundColor: textMuted.withOpacity(0.2),
-                  valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+                  valueColor: AlwaysStoppedAnimation(context.accentColor),
                 ),
               ),
             ],
@@ -523,7 +523,7 @@ class _AchievementProgressItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: AppColors.cyan,
+            color: context.accentColor,
           ),
         ),
       ],
@@ -574,7 +574,7 @@ class _MovementReminderCard extends StatelessWidget {
             children: [
               Icon(
                 Icons.notifications_active,
-                color: settings.isEnabled ? AppColors.cyan : textMuted,
+                color: settings.isEnabled ? context.accentColor : textMuted,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -593,7 +593,7 @@ class _MovementReminderCard extends StatelessWidget {
                   HapticService.light();
                   onSettingsChanged(settings.copyWith(isEnabled: value));
                 },
-                activeThumbColor: AppColors.cyan,
+                activeThumbColor: context.accentColor,
               ),
             ],
           ),
@@ -628,9 +628,9 @@ class _MovementReminderCard extends StatelessWidget {
                           );
                         }
                       },
-                      selectedColor: AppColors.cyan.withOpacity(0.2),
+                      selectedColor: context.accentColor.withOpacity(0.2),
                       labelStyle: TextStyle(
-                        color: isSelected ? AppColors.cyan : textSecondary,
+                        color: isSelected ? context.accentColor : textSecondary,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
@@ -658,7 +658,7 @@ class _MovementReminderCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 ),
               ],
@@ -696,7 +696,7 @@ class _MovementReminderCard extends StatelessWidget {
                     HapticService.light();
                     onSettingsChanged(settings.copyWith(workHoursOnly: value));
                   },
-                  activeThumbColor: AppColors.cyan,
+                  activeThumbColor: context.accentColor,
                 ),
               ],
             ),
@@ -720,7 +720,7 @@ class _MovementReminderCard extends StatelessWidget {
                       AppLocalizations.of(context).commonEdit,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     ),
                   ),
@@ -792,15 +792,15 @@ class _AiTipsCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.purple.withOpacity(0.15),
-            AppColors.cyan.withOpacity(0.15),
+            context.accentColor.withOpacity(0.15),
+            context.accentColor.withOpacity(0.15),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.purple.withOpacity(0.3),
+          color: context.accentColor.withOpacity(0.3),
         ),
       ),
       child: Column(
@@ -812,12 +812,12 @@ class _AiTipsCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withOpacity(0.2),
+                  color: context.accentColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   Icons.auto_awesome,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   size: 18,
                 ),
               ),
@@ -827,7 +827,7 @@ class _AiTipsCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                 ),
               ),
             ],

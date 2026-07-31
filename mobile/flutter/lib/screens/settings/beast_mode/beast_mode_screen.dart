@@ -27,6 +27,7 @@ import 'widgets/template_section.dart';
 import 'widgets/volume_progression_card.dart';
 import 'widgets/warmup_cooldown_card.dart';
 import 'widgets/weight_increments_card.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 class BeastModeScreen extends ConsumerWidget {
   const BeastModeScreen({super.key});
@@ -161,7 +162,7 @@ class BeastModeScreen extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.9),
+              color: context.accentColor.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -195,7 +196,7 @@ class BeastModeScreen extends ConsumerWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w700,
-            color: AppColors.orange,
+            color: AppColors.orange,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
             letterSpacing: 1.0,
           ),
         ),

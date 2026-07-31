@@ -32,7 +32,7 @@ class MoodStreakCard extends StatelessWidget {
           Expanded(
             child: _buildStreakItem(
               icon: Icons.local_fire_department,
-              iconColor: streaks.currentStreak > 0 ? Colors.orange : textSecondary,
+              iconColor: streaks.currentStreak > 0 ? Colors.orange : textSecondary,  // accent-allowlist: streak flame -- universal fire/orange streak convention
               value: streaks.currentStreak.toString(),
               label: AppLocalizations.of(context).moodStreakCardCurrentStreak,
               textPrimary: textPrimary,
@@ -49,7 +49,7 @@ class MoodStreakCard extends StatelessWidget {
           Expanded(
             child: _buildStreakItem(
               icon: Icons.emoji_events,
-              iconColor: streaks.longestStreak > 0 ? Colors.amber : textSecondary,
+              iconColor: streaks.longestStreak > 0 ? Colors.amber : textSecondary,  // accent-allowlist: best-streak trophy -- medal/gold convention
               value: streaks.longestStreak.toString(),
               label: AppLocalizations.of(context).summaryCardBestStreak,
               textPrimary: textPrimary,

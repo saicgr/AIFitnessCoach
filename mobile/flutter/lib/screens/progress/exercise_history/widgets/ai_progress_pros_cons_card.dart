@@ -211,7 +211,7 @@ class _GlassShell extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             accent.withValues(alpha: isDark ? 0.10 : 0.07),
-            AppColors.purple.withValues(alpha: isDark ? 0.06 : 0.04),
+            context.accentColor.withValues(alpha: isDark ? 0.06 : 0.04),
           ],
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
@@ -249,7 +249,7 @@ class _Header extends StatelessWidget {
           height: 28,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [accent, AppColors.purple],
+              colors: [accent, context.accentColor],
               begin: AlignmentDirectional.topStart,
               end: AlignmentDirectional.bottomEnd,
             ),
@@ -560,7 +560,7 @@ class _AnalysisReport extends StatelessWidget {
       children.add(_BulletGroup(
         label: 'Pros',
         items: analysis.pros,
-        color: AppColors.green,
+        color: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
         glyph: Icons.check_circle_rounded,
         textPrimary: textPrimary,
       ));
@@ -570,7 +570,7 @@ class _AnalysisReport extends StatelessWidget {
       children.add(_BulletGroup(
         label: 'Watch-outs',
         items: analysis.cons,
-        color: AppColors.orange,
+        color: context.accentColor,
         glyph: Icons.warning_amber_rounded,
         textPrimary: textPrimary,
       ));
@@ -580,7 +580,7 @@ class _AnalysisReport extends StatelessWidget {
       children.add(_BulletGroup(
         label: 'Plateaus',
         items: analysis.plateaus,
-        color: AppColors.purple,
+        color: context.accentColor,
         glyph: Icons.trending_flat_rounded,
         textPrimary: textPrimary,
       ));

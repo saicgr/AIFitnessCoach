@@ -181,31 +181,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final rows = [
       _AccountRowData(
         icon: Icons.auto_awesome_rounded,
-        iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+        iconColor: isDark ? context.accentColor : context.accentColor,
         title: 'Share & Brag',
         onTap: () => context.push('/share-hub'),
       ),
       _AccountRowData(
         icon: Icons.shield_outlined,
-        iconColor: AppColors.info,
+        iconColor: AppColors.info,  // accent-allowlist: informational state — must stay blue regardless of accent
         title: AppLocalizations.of(context).profileAiPrivacy,
         onTap: () => context.push('/settings/ai-data-usage'),
       ),
       _AccountRowData(
         icon: Icons.menu_book,
-        iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+        iconColor: isDark ? context.accentColor : context.accentColor,
         title: AppLocalizations.of(context).profileGlossary,
         onTap: () => context.push('/glossary'),
       ),
       _AccountRowData(
         icon: Icons.how_to_vote_outlined,
-        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+        iconColor: isDark ? context.accentColor : context.accentColor,
         title: 'Feature Requests',
         onTap: () => context.push('/features'),
       ),
       _AccountRowData(
         icon: Icons.card_membership,
-        iconColor: isDark ? AppColors.success : AppColorsLight.success,
+        iconColor: isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
         title: AppLocalizations.of(context).profileManageMembership,
         onTap: () => context.push('/subscription-management'),
       ),
@@ -292,7 +292,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final rows = [
       _AccountRowData(
         icon: Icons.shield_moon_outlined,
-        iconColor: isDark ? AppColors.info : AppColorsLight.info,
+        iconColor: isDark ? AppColors.info : AppColorsLight.info,  // accent-allowlist: informational state — must stay blue regardless of accent
         title: AppLocalizations.of(context).settingsPrivacyData,
         onTap: () => context.push('/settings/privacy-data'),
       ),
@@ -582,7 +582,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Text(
                     AppLocalizations.of(context).settingsDeleteAccount,
                     style: TextStyle(
-                      color: (isDark ? AppColors.error : AppColorsLight.error)
+                      color: (isDark ? AppColors.error : AppColorsLight.error)  // accent-allowlist: error/destructive state — must stay red regardless of accent
                           .withValues(alpha: 0.7),
                       fontSize: 14,
                     ),

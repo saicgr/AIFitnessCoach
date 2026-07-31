@@ -27,8 +27,8 @@ class RhrDeltaCard extends ConsumerWidget {
     final delta = data.deltaBpm ?? 0.0;
     final lower = delta <= -3.0;
     final tint = data.elevated
-        ? const Color(0xFFF87171)
-        : (lower ? const Color(0xFF34D399) : c.accent);
+        ? const Color(0xFFF87171)  // accent-allowlist: resting-heart-rate delta alert colour (elevated=red/lower=green; falls back to accent for the neutral case)
+        : (lower ? const Color(0xFF34D399) : c.accent);  // accent-allowlist: resting-heart-rate delta alert colour (elevated=red/lower=green; falls back to accent for the neutral case)
     final label = data.elevated
         ? 'Elevated — consider an easier session today'
         : (lower

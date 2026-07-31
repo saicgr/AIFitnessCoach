@@ -6,12 +6,12 @@ part 'fasting.g.dart';
 /// Fasting zone representing metabolic stages during a fast
 enum FastingZone {
   fed('Fed State', Color(0xFF9E9E9E), 0),
-  postAbsorptive('Processing', Color(0xFF64B5F6), 4),
-  earlyFasting('Early Fasting', Color(0xFF26A69A), 8),
-  fatBurning('Fat Burning', Color(0xFF66BB6A), 12),
-  ketosis('Ketosis', Color(0xFFFF9800), 16),
-  deepKetosis('Deep Ketosis', Color(0xFFEF5350), 24),
-  extended('Extended', Color(0xFF9C27B0), 48);
+  postAbsorptive('Processing', Color(0xFF64B5F6), 4), // accent-allowlist: fasting-zone identity - each metabolic stage (fed/processing/fat-burning/ketosis/etc.) needs a stable distinct color independent of the accent
+  earlyFasting('Early Fasting', Color(0xFF26A69A), 8), // accent-allowlist: fasting-zone identity - each metabolic stage (fed/processing/fat-burning/ketosis/etc.) needs a stable distinct color independent of the accent
+  fatBurning('Fat Burning', Color(0xFF66BB6A), 12), // accent-allowlist: fasting-zone identity - each metabolic stage (fed/processing/fat-burning/ketosis/etc.) needs a stable distinct color independent of the accent
+  ketosis('Ketosis', Color(0xFFFF9800), 16), // accent-allowlist: fasting-zone identity - each metabolic stage (fed/processing/fat-burning/ketosis/etc.) needs a stable distinct color independent of the accent
+  deepKetosis('Deep Ketosis', Color(0xFFEF5350), 24), // accent-allowlist: fasting-zone identity - each metabolic stage (fed/processing/fat-burning/ketosis/etc.) needs a stable distinct color independent of the accent
+  extended('Extended', Color(0xFF9C27B0), 48); // accent-allowlist: fasting-zone identity - each metabolic stage (fed/processing/fat-burning/ketosis/etc.) needs a stable distinct color independent of the accent
 
   final String displayName;
   final Color color;
@@ -715,10 +715,10 @@ class FastingScore {
 
   /// Get tier color
   Color get tierColor {
-    if (score >= 90) return const Color(0xFFFFD700); // Gold
-    if (score >= 75) return const Color(0xFF9C27B0); // Purple
-    if (score >= 60) return const Color(0xFF2196F3); // Blue
-    if (score >= 40) return const Color(0xFF4CAF50); // Green
+    if (score >= 90) return const Color(0xFFFFD700); // Gold // accent-allowlist: fasting-consistency score tier color (gold/purple/blue/green) - rarity/tier scale, not accent
+    if (score >= 75) return const Color(0xFF9C27B0); // Purple // accent-allowlist: fasting-consistency score tier color (gold/purple/blue/green) - rarity/tier scale, not accent
+    if (score >= 60) return const Color(0xFF2196F3); // Blue // accent-allowlist: fasting-consistency score tier color (gold/purple/blue/green) - rarity/tier scale, not accent
+    if (score >= 40) return const Color(0xFF4CAF50); // Green // accent-allowlist: fasting-consistency score tier color (gold/purple/blue/green) - rarity/tier scale, not accent
     return const Color(0xFF9E9E9E); // Gray
   }
 

@@ -1,7 +1,7 @@
 /// F3.9 — Body Battery tile.
 ///
 /// Garmin-style 0–100 energy reserve. Self-collapses when no data is
-/// available. Tap routes to `/recovery`.
+/// available. Tap routes to `/health/vitals`.
 library;
 
 import 'package:flutter/material.dart';
@@ -38,7 +38,7 @@ class BodyBatteryTile extends ConsumerWidget {
                 : 'Drained';
 
     return GestureDetector(
-      onTap: () => context.go('/recovery'),
+      onTap: () => context.go('/health/vitals'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

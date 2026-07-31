@@ -65,7 +65,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             color: cardBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: widget.nameError != null ? Colors.red.shade400 : cardBorder,
+              color: widget.nameError != null ? Colors.red.shade400 : cardBorder,  // accent-allowlist: error/destructive - must stay red
             ),
           ),
           child: TextField(
@@ -95,11 +95,11 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
           const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.info_outline, size: 14, color: Colors.red.shade400),
+              Icon(Icons.info_outline, size: 14, color: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
               const SizedBox(width: 4),
               Text(
                 widget.nameError!,
-                style: TextStyle(fontSize: 12, color: Colors.red.shade400),
+                style: TextStyle(fontSize: 12, color: Colors.red.shade400),  // accent-allowlist: error/destructive - must stay red
               ),
             ],
           ),
@@ -352,7 +352,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
         decoration: BoxDecoration(
           gradient: isSelected
                   ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      colors: [context.accentColor, context.accentColor.withOpacity(0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
@@ -360,7 +360,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
           color: isSelected ? null : cardBg,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? AppColors.orange : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -392,9 +392,9 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
     required Color cardBg,
     required Color cardBorder,
   }) {
-    const orange = Color(0xFFF97316);
-    const orangeGradient = LinearGradient(
-      colors: [orange, Color(0xFFEA580C)],
+    final orange = context.accentColor;
+    final orangeGradient = LinearGradient(
+      colors: [orange, orange.withValues(alpha: 0.85)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
@@ -479,16 +479,16 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
     Color color;
     if (bmi < 18.5) {
       category = 'Underweight';
-      color = AppColors.warning;
+      color = AppColors.warning;  // accent-allowlist: warning severity - must stay amber regardless of accent
     } else if (bmi < 25) {
       category = 'Normal';
-      color = AppColors.success;
+      color = AppColors.success;  // accent-allowlist: success/positive state - must stay green regardless of accent
     } else if (bmi < 30) {
       category = 'Overweight';
       color = AppColors.accent;
     } else {
       category = 'Obese';
-      color = AppColors.error;
+      color = AppColors.error;  // accent-allowlist: error/destructive - must stay red
     }
 
     return Container(
@@ -547,10 +547,10 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             Container(
               padding: EdgeInsets.all(compact ? 6 : 8),
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.15),
+                color: AppColors.success.withValues(alpha: 0.15),  // accent-allowlist: success/positive state - must stay green regardless of accent
                 borderRadius: BorderRadius.circular(compact ? 8 : 10),
               ),
-              child: Icon(Icons.flag_outlined, color: AppColors.success, size: compact ? 16 : 20),
+              child: Icon(Icons.flag_outlined, color: AppColors.success, size: compact ? 16 : 20),  // accent-allowlist: success/positive state - must stay green regardless of accent
             ),
             SizedBox(width: compact ? 8 : 12),
             Text(
@@ -635,7 +635,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
         decoration: BoxDecoration(
           gradient: isSelected
                   ? LinearGradient(
-                      colors: [AppColors.orange, AppColors.orange.withOpacity(0.8)],
+                      colors: [context.accentColor, context.accentColor.withOpacity(0.8)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     )
@@ -645,7 +645,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
               : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.orange : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -727,7 +727,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
 
     final isValid = goalWeight > 0 && goalWeight < 500;
     final summaryColor = widget.weightDirection == 'maintain'
-        ? const Color(0xFF22C55E)
+        ? const Color(0xFF22C55E)  // accent-allowlist: success/positive state - same value as AppColors.success
         : _getWeightChangeColor(_weightChangeAmount);
 
     return AnimatedContainer(
@@ -736,12 +736,12 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
       decoration: BoxDecoration(
         color: isValid
             ? summaryColor.withValues(alpha: 0.1)
-            : AppColors.error.withValues(alpha: 0.1),
+            : AppColors.error.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isValid
               ? summaryColor.withValues(alpha: 0.3)
-              : AppColors.error.withValues(alpha: 0.3),
+              : AppColors.error.withValues(alpha: 0.3),  // accent-allowlist: error/destructive - must stay red
         ),
       ),
       child: Row(
@@ -750,7 +750,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             widget.weightDirection == 'maintain'
                 ? Icons.check_circle_outline
                 : Icons.trending_flat,
-            color: isValid ? summaryColor : AppColors.error,
+            color: isValid ? summaryColor : AppColors.error,  // accent-allowlist: error/destructive - must stay red
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -780,7 +780,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: isValid ? summaryColor : AppColors.error,
+                          color: isValid ? summaryColor : AppColors.error,  // accent-allowlist: error/destructive - must stay red
                         ),
                       ),
                     ],
@@ -791,7 +791,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isValid ? textSecondary : AppColors.error,
+                    color: isValid ? textSecondary : AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   ),
                 ),
               ],

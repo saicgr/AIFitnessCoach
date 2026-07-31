@@ -127,7 +127,7 @@ class LayoutPreviewIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color = isSelected ? AppColors.green : colorScheme.outline;
+    final color = isSelected ? AppColors.green : colorScheme.outline;  // accent-allowlist: success/positive state — must stay green regardless of accent
 
     return Container(
       width: size,

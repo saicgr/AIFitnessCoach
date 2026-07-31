@@ -59,7 +59,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
         ? (consumed / calorieTarget).clamp(0.0, 1.0)
         : 0.0;
     final isOver = hasTarget && consumed > calorieTarget;
-    final progressColor = isOver ? AppColors.error : accent;
+    final progressColor = isOver ? AppColors.error : accent;  // accent-allowlist: error/destructive -- must stay red
 
     return GestureDetector(
       onTap: () {
@@ -85,7 +85,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
                 Icon(
                   Icons.local_fire_department,
                   size: 16,
-                  color: AppColors.macroFat,
+                  color: AppColors.macroFat,  // accent-allowlist: macro identity -- fat colour is fixed across nutrition surfaces
                 ),
                 const SizedBox(width: 6),
                 Text(
@@ -111,7 +111,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: isOver ? AppColors.error : textColor,
+                      color: isOver ? AppColors.error : textColor,  // accent-allowlist: error/destructive -- must stay red
                       height: 1.0,
                     ),
                     maxLines: 1,
@@ -183,7 +183,7 @@ class _CyclePhaseDeltaChip extends StatelessWidget {
   Widget build(BuildContext context) {
     // Soft luteal blue — same accent used by the weight-trend target-held
     // marker so the two annotations read as one cycle-aware system.
-    const accent = Color(0xFF64B5F6);
+    const accent = Color(0xFF64B5F6);  // accent-allowlist: luteal-phase cycle annotation colour, shared identity with weight_trend_card.dart's target-held marker
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

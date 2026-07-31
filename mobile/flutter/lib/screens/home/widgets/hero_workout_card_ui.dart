@@ -13,7 +13,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
     required bool isDark,
   }) {
     final synced = workout.isSyncedFromHealthApp;
-    final accent = synced ? AppColors.cyan : AppColors.success;
+    final accent = synced ? context.accentColor : AppColors.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     final headline = synced
         ? 'Synced from ${workout.syncedPlatformLabel}'
         : 'Workout Complete';

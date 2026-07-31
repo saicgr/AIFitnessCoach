@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/diabetes_provider.dart';
@@ -123,7 +124,7 @@ class _DiabetesDashboardScreenState
       ),
       body: AppRefreshIndicator(
         onRefresh: _loadData,
-        color: AppColors.cyan,
+        color: context.accentColor,
         backgroundColor: elevatedColor,
         // Cache-first: a cold install shows a card-shaped skeleton; a returning
         // user sees the last dashboard instantly. `DiabetesState` is mapped to
@@ -177,7 +178,7 @@ class _DiabetesDashboardScreenState
             Icon(
               Icons.error_outline,
               size: 64,
-              color: AppColors.error.withOpacity(0.7),
+              color: AppColors.error.withOpacity(0.7), // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
             ),
             const SizedBox(height: 16),
             Text(
@@ -200,7 +201,7 @@ class _DiabetesDashboardScreenState
               icon: const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
               ),
             ),
@@ -365,12 +366,12 @@ class _DiabetesDashboardScreenState
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.bloodtype,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -439,8 +440,8 @@ class _DiabetesDashboardScreenState
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Glucose logged: ${value.toInt()} mg/dL'),
-                          backgroundColor: AppColors.success,
+                          content: Text('Glucose logged: ${value.toInt()} mg/dL'), // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                          backgroundColor: AppColors.success, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -448,7 +449,7 @@ class _DiabetesDashboardScreenState
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -503,12 +504,12 @@ class _DiabetesDashboardScreenState
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.medication,
-                      color: AppColors.purple,
+                      color: context.accentColor,
                       size: 24,
                     ),
                   ),
@@ -539,24 +540,24 @@ class _DiabetesDashboardScreenState
                 children: [
                   _InsulinTypeChip(
                     label: AppLocalizations.of(context).diabetesDashboardScreenRapid,
-                    isSelected: selectedType == 'rapid',
-                    color: AppColors.cyan,
+                    isSelected: selectedType == 'rapid', // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                    color: AppColors.cyan, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
                     onTap: () => setSheetState(() => selectedType = 'rapid'),
                     textMuted: textMuted,
                   ),
                   const SizedBox(width: 8),
                   _InsulinTypeChip(
                     label: AppLocalizations.of(context).diabetesDashboardScreenLong,
-                    isSelected: selectedType == 'long',
-                    color: AppColors.purple,
+                    isSelected: selectedType == 'long', // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                    color: AppColors.purple, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
                     onTap: () => setSheetState(() => selectedType = 'long'),
                     textMuted: textMuted,
                   ),
                   const SizedBox(width: 8),
                   _InsulinTypeChip(
                     label: AppLocalizations.of(context).diabetesDashboardMixed,
-                    isSelected: selectedType == 'mixed',
-                    color: AppColors.orange,
+                    isSelected: selectedType == 'mixed', // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                    color: AppColors.orange, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
                     onTap: () => setSheetState(() => selectedType = 'mixed'),
                     textMuted: textMuted,
                   ),
@@ -619,16 +620,16 @@ class _DiabetesDashboardScreenState
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content:
-                                Text('Insulin logged: ${units.toStringAsFixed(1)} U'),
-                            backgroundColor: AppColors.success,
+                                Text('Insulin logged: ${units.toStringAsFixed(1)} U'), // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                            backgroundColor: AppColors.success, // accent-allowlist: error state / success snackbar / insulin-type identity (rapid/long/mixed)
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.purple,
+                  style: ElevatedButton.styleFrom( // accent-allowlist: insulin-type identity color (rapid/long/mixed selector) + success log-confirmation snackbar
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../widgets/section_header.dart';
 
 /// The Wear OS section for connecting to smartwatch.
@@ -55,12 +56,12 @@ class _WearOSComingSoonCard extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.watch,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 22,
                   ),
                 ),
@@ -234,12 +235,12 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.error.withOpacity(0.15),
+              color: AppColors.error.withOpacity(0.15),  // accent-allowlist: error/destructive - must stay red
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
               Icons.error_outline,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
               size: 22,
             ),
           ),
@@ -336,7 +337,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
                           _getStatusText(status),
                           style: TextStyle(
                             fontSize: 12,
-                            color: status.isConnected ? AppColors.success : textMuted,
+                            color: status.isConnected ? AppColors.success : textMuted,  // accent-allowlist: success/positive state - must stay green regardless of accent
                           ),
                         ),
                       ],
@@ -380,10 +381,10 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
                     : const Icon(Icons.download_rounded, size: 18),
                 label: Text(_isInstalling ? 'Opening Play Store...' : 'Install Zealova on Watch'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  disabledBackgroundColor: AppColors.cyan.withOpacity(0.5),
+                  disabledBackgroundColor: context.accentColor.withOpacity(0.5),
                 ),
               ),
             ),
@@ -396,17 +397,17 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withOpacity(0.1),  // accent-allowlist: success/positive state - must stay green regardless of accent
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.success.withOpacity(0.3),
+                  color: AppColors.success.withOpacity(0.3),  // accent-allowlist: success/positive state - must stay green regardless of accent
                 ),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.check_circle_outline,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                     size: 18,
                   ),
                   const SizedBox(width: 8),
@@ -415,7 +416,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
                       'Workouts and data sync automatically',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.success,
+                        color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                       ),
                     ),
                   ),
@@ -463,13 +464,13 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
   Color _getStatusColor(WatchConnectionStatus status) {
     switch (status.state) {
       case WatchConnectionState.connected:
-        return AppColors.success;
+        return AppColors.success;  // accent-allowlist: success/positive state - must stay green regardless of accent
       case WatchConnectionState.noApp:
-        return AppColors.orange;
+        return context.accentColor;
       case WatchConnectionState.noDevice:
         return AppColors.textMuted;
       case WatchConnectionState.error:
-        return AppColors.error;
+        return AppColors.error;  // accent-allowlist: error/destructive - must stay red
     }
   }
 
@@ -501,7 +502,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Opening Play Store on your watch...'),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
               duration: Duration(seconds: 3),
             ),
           );
@@ -517,7 +518,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Could not open Play Store on watch. Please install manually.'),
-              backgroundColor: AppColors.orange,
+              backgroundColor: context.accentColor,
               duration: Duration(seconds: 4),
             ),
           );
@@ -529,7 +530,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to connect to watch. Please try again.'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
             duration: Duration(seconds: 3),
           ),
         );

@@ -51,14 +51,14 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                   center: Alignment(-0.3, -0.4),
                 ),
                 border: Border.all(
-                  color: AppColors.gamGold.withValues(alpha: 0.55),
+                  color: AppColors.gamGold.withValues(alpha: 0.55), // accent-allowlist: XP level/reward gamification gold + success/earned state
                   width: 1.5,
                 ),
               ),
               child: Text(
                 '$currentLevel',
                 style: ZType.disp(currentLevel >= 100 ? 18 : 24,
-                    color: AppColors.gamGold),
+                    color: AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ),
             const SizedBox(width: 14),
@@ -94,12 +94,12 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                   Icon(
                     Icons.emoji_events_outlined,
                     size: 22,
-                    color: AppColors.gamGold,
+                    color: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '$earnedTrophies',
-                    style: ZType.disp(16, color: AppColors.gamGold, height: 1.0),
+                    style: ZType.disp(16, color: AppColors.gamGold, height: 1.0), // accent-allowlist: XP level/reward gamification gold + success/earned state
                   ),
                 ],
               ),
@@ -129,7 +129,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
             ),
             Text(
               '${(progressFraction * 100).round()}%',
-              style: ZType.data(11, color: AppColors.gamGold),
+              style: ZType.data(11, color: AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
             ),
           ],
         ),
@@ -140,7 +140,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
             value: progressFraction,
             minHeight: 6,
             backgroundColor: AppColors.hairlineStrong,
-            valueColor: const AlwaysStoppedAnimation(AppColors.gamGold),
+            valueColor: const AlwaysStoppedAnimation(AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
           ),
         ),
         const SizedBox(height: 7),
@@ -175,7 +175,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
               children: [
                 Icon(
                   Icons.stairs,
-                  color: AppColors.gamGold,
+                  color: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                   size: 17,
                 ),
                 const SizedBox(width: 8),
@@ -305,7 +305,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                 'XP Today',
                 textColor,
                 textMuted,
-                heroColor: AppColors.gamGold,
+                heroColor: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ],
           ),
@@ -390,7 +390,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
               children: [
                 Text(
                   '$earnedXP',
-                  style: ZType.disp(30, color: AppColors.gamGold, height: 0.9),
+                  style: ZType.disp(30, color: AppColors.gamGold, height: 0.9), // accent-allowlist: XP level/reward gamification gold + success/earned state
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -406,7 +406,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                 value: percentage,
                 minHeight: 6,
                 backgroundColor: AppColors.hairlineStrong,
-                valueColor: const AlwaysStoppedAnimation(AppColors.gamGold),
+                valueColor: const AlwaysStoppedAnimation(AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ),
             const SizedBox(height: 6),
@@ -434,7 +434,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: cp.completed
-                            ? AppColors.green
+                            ? AppColors.green // accent-allowlist: XP level/reward gamification gold + success/earned state
                             : surface,
                         shape: BoxShape.circle,
                         border: cp.completed
@@ -476,7 +476,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                     Text(
                       '+${cp.xpReward}',
                       style: ZType.lbl(11,
-                          color: cp.completed ? AppColors.green : AppColors.gamGold,
+                          color: cp.completed ? AppColors.green : AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                           weight: FontWeight.w800,
                           letterSpacing: 0.5),
                     ),
@@ -546,7 +546,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                   children: [
                     Text(
                       '$earnedXP / $maxXP XP',
-                      style: ZType.data(12, color: AppColors.gamGold),
+                      style: ZType.data(12, color: AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -564,7 +564,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                 value: percentage,
                 minHeight: 6,
                 backgroundColor: AppColors.hairlineStrong,
-                valueColor: const AlwaysStoppedAnimation(AppColors.gamGold),
+                valueColor: const AlwaysStoppedAnimation(AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ),
             const SizedBox(height: 6),
@@ -586,7 +586,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                       height: 28,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: achievement.completed ? AppColors.green : surface,
+                        color: achievement.completed ? AppColors.green : surface, // accent-allowlist: XP level/reward gamification gold + success/earned state
                         shape: BoxShape.circle,
                         border: achievement.completed
                             ? null
@@ -630,7 +630,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                                       alignment: Alignment.centerLeft,
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          color: AppColors.gamGold,
+                                          color: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                                           borderRadius: BorderRadius.circular(2),
                                         ),
                                       ),
@@ -652,7 +652,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                     Text(
                       '+${achievement.xpReward}',
                       style: ZType.lbl(11,
-                          color: achievement.completed ? AppColors.green : AppColors.gamGold,
+                          color: achievement.completed ? AppColors.green : AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                           weight: FontWeight.w800,
                           letterSpacing: 0.5),
                     ),
@@ -703,7 +703,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
           children: [
             Icon(
               Icons.inventory_2_outlined,
-              color: AppColors.gamGold,
+              color: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
               size: 17,
             ),
             const SizedBox(width: 7),
@@ -721,7 +721,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                 height: 20,
                 alignment: Alignment.center,
                 decoration: const BoxDecoration(
-                  color: AppColors.gamGold,
+                  color: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                   shape: BoxShape.circle,
                 ),
                 child: Text(

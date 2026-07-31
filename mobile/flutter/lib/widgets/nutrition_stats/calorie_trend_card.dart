@@ -245,7 +245,7 @@ class _CalorieBarChartState extends State<_CalorieBarChart> {
         barGroups: List.generate(entries.length, (i) {
           final cal = entries[i].calories.toDouble();
           final barColor = cal > 0
-              ? (isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1E88E5))
+              ? (isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1E88E5)) // accent-allowlist: calorie trend line color, chart series not accent
               : Colors.transparent;
           return BarChartGroupData(
             x: i,

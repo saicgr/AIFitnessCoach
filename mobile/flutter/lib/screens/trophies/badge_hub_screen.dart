@@ -335,7 +335,7 @@ class _HelpRow extends StatelessWidget {
           Icon(
             icon,
             size: 22,
-            color: AppColors.gamGold,
+            color: AppColors.gamGold, // accent-allowlist: badge rarity gold
           ),
           const SizedBox(width: 12),
           Expanded(

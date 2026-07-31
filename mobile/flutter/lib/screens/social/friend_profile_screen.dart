@@ -13,6 +13,7 @@ import 'conversation_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 class FriendProfileScreen extends ConsumerStatefulWidget {
   final String targetUserId;
 
@@ -135,7 +136,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                 items: [
                   PopupMenuItem(
                     value: 'block',
-                    child: Text(AppLocalizations.of(context).friendProfileBlockUser, style: TextStyle(color: Colors.red)),
+                    child: Text(AppLocalizations.of(context).friendProfileBlockUser, style: TextStyle(color: Colors.red)),  // accent-allowlist: error/negative state — must stay red regardless of accent
                   ),
                 ],
               );
@@ -154,7 +155,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        style: TextButton.styleFrom(foregroundColor: Colors.red),
+                        style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
                         child: Text(AppLocalizations.of(context).friendProfileBlock),
                       ),
                     ],
@@ -427,13 +428,13 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
       ),
       child: Row(
         children: [
-          _buildStatItem(Icons.fitness_center_rounded, '$workouts', 'Workouts', AppColors.purple, textMuted),
+          _buildStatItem(Icons.fitness_center_rounded, '$workouts', 'Workouts', context.accentColor, textMuted),
           _buildStatDivider(cardBorder),
-          _buildStatItem(Icons.people_rounded, '$friends', 'Friends', AppColors.cyan, textMuted),
+          _buildStatItem(Icons.people_rounded, '$friends', 'Friends', context.accentColor, textMuted),
           _buildStatDivider(cardBorder),
-          _buildStatItem(Icons.emoji_events_rounded, '$trophies', 'Trophies', AppColors.orange, textMuted),
+          _buildStatItem(Icons.emoji_events_rounded, '$trophies', 'Trophies', context.accentColor, textMuted),
           _buildStatDivider(cardBorder),
-          _buildStatItem(Icons.local_fire_department, '$streak', 'Streak', AppColors.pink, textMuted),
+          _buildStatItem(Icons.local_fire_department, '$streak', 'Streak', AppColors.pink, textMuted),  // accent-allowlist: decorative stat-icon tint — not one of the app's default accent values (orange/cyan/purple/coral), kept distinct for visual variety
         ],
       ),
     );

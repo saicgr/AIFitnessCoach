@@ -120,7 +120,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Enter a valid ${_unitLabel()} value'),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           duration: const Duration(seconds: 2),
         ),
       );
@@ -159,7 +159,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).measurementValuePillCouldNotSaveTry),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           duration: Duration(seconds: 2),
         ),
       );
@@ -236,7 +236,7 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
     if (hasData && change != null && change.abs() >= 0.1) {
       final isUp = change > 0;
       final aligned = isUp == _positiveIsGood;
-      final color = aligned ? AppColors.success : AppColors.error;
+      final color = aligned ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
       trendArrow = Padding(
         padding: const EdgeInsetsDirectional.only(start: 2),
         child: Icon(

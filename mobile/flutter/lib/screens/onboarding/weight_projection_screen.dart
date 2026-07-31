@@ -22,6 +22,7 @@ import 'widgets/quiz_weight_rate.dart';
 import 'value_beats/plan_ready_beat.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'weight_projection_screen_part_weight_data_point.dart';
 
 part 'weight_projection_screen_ui.dart';
@@ -208,14 +209,14 @@ class _WeightProjectionScreenState
           divider,
           cell(
             Icons.flag_outlined,
-            AppColors.green,
+            AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
             AppLocalizations.of(context).challengeCreateFieldGoal,
             '${displayGoal.round()} $unit',
           ),
           divider,
           cell(
             isLosingWeight ? Icons.trending_down : Icons.trending_up,
-            AppColors.orange,
+            context.accentColor,
             isLosingWeight
                 ? AppLocalizations.of(context).weightProjectionToLose
                 : AppLocalizations.of(context).weightProjectionToGain,
@@ -224,7 +225,7 @@ class _WeightProjectionScreenState
           divider,
           cell(
             Icons.speed_rounded,
-            isDark ? AppColors.cyan : AppColorsLight.cyan,
+            isDark ? context.accentColor : AppColorsLight.cyan,
             AppLocalizations.of(context).weightProjectionPerWeek,
             displayWeeklyRate != null
                 ? '${displayWeeklyRate.toStringAsFixed(1)} $unit'
@@ -353,15 +354,15 @@ class _WeightProjectionScreenState
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.orange, Color(0xFFEA580C)],
+          gradient: LinearGradient(
+            colors: [context.accentColor.withValues(alpha: 0.85), context.accentColor],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: AppColors.orange.withValues(alpha: 0.4),
+              color: context.accentColor.withValues(alpha: 0.4),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -469,8 +470,8 @@ class _WeightProjectionScreenState
                         const TextSpan(text: "At this rate you'll reach your goal by "),
                         TextSpan(
                           text: formattedGoalDate,
-                          style: const TextStyle(
-                            color: AppColors.orange,
+                          style: TextStyle(
+                            color: context.accentColor,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -684,7 +685,7 @@ class _WeightProjectionScreenState
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.orange.withValues(alpha: 0.05),
+                context.accentColor.withValues(alpha: 0.05),
                 Colors.transparent,
               ],
             ),
@@ -723,10 +724,10 @@ class _WeightProjectionScreenState
                       final dotColor = isSolo
                           ? (isDark ? Colors.white : Colors.black)
                               .withValues(alpha: 0.45)
-                          : AppColors.orange;
+                          : context.accentColor;
                       return TouchedSpotIndicatorData(
                         FlLine(
-                          color: AppColors.orange.withValues(alpha: 0.35),
+                          color: context.accentColor.withValues(alpha: 0.35),
                           strokeWidth: 2,
                           dashArray: const [4, 3],
                         ),
@@ -772,7 +773,7 @@ class _WeightProjectionScreenState
                           TextSpan(
                             text: '\nYour plan  ',
                             style: TextStyle(
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               fontWeight: FontWeight.w700,
                               fontSize: 12,
                             ),
@@ -915,7 +916,7 @@ class _WeightProjectionScreenState
                   BetweenBarsData(
                     fromIndex: 0,
                     toIndex: 1,
-                    color: AppColors.orange.withValues(alpha: 0.12),
+                    color: context.accentColor.withValues(alpha: 0.12),
                   ),
                 ],
                 lineBarsData: [
@@ -960,13 +961,13 @@ class _WeightProjectionScreenState
                     }).toList(),
                     isCurved: true,
                     curveSmoothness: 0.35,
-                    gradient: const LinearGradient(
-                      colors: [AppColors.orange, Color(0xFFEA580C)],
+                    gradient: LinearGradient(
+                      colors: [context.accentColor.withValues(alpha: 0.85), context.accentColor],
                     ),
                     barWidth: 3.5,
                     isStrokeCapRound: true,
                     shadow: Shadow(
-                      color: AppColors.orange.withValues(alpha: 0.45),
+                      color: context.accentColor.withValues(alpha: 0.45),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
@@ -977,7 +978,7 @@ class _WeightProjectionScreenState
                             index == 0 || index == visibleData.length - 1;
                         return FlDotCirclePainter(
                           radius: isEndpoint ? 6 : 4,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           strokeWidth: 2,
                           strokeColor: Colors.white,
                         );
@@ -1009,12 +1010,12 @@ class _WeightProjectionScreenState
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.orange,
+                        color: context.accentColor,
                         borderRadius: BorderRadius.circular(9),
                         boxShadow: [
                           BoxShadow(
                             color:
-                                AppColors.orange.withValues(alpha: 0.45),
+                                context.accentColor.withValues(alpha: 0.45),
                             blurRadius: 16,
                             offset: const Offset(0, 5),
                           ),
@@ -1104,7 +1105,7 @@ class _WeightProjectionScreenState
       children: [
         Row(
           children: [
-            legendLabel(AppColors.orange, 'Your plan', dashed: false),
+            legendLabel(context.accentColor, 'Your plan', dashed: false),
             const SizedBox(width: 16),
             legendLabel(greyLegend, 'On your own', dashed: true),
           ],
@@ -1117,12 +1118,12 @@ class _WeightProjectionScreenState
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.orange.withValues(alpha: 0.18),
-                  AppColors.orange.withValues(alpha: 0.08),
+                  context.accentColor.withValues(alpha: 0.18),
+                  context.accentColor.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.orange.withValues(alpha: 0.30)),
+              border: Border.all(color: context.accentColor.withValues(alpha: 0.30)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1135,9 +1136,9 @@ class _WeightProjectionScreenState
                     children: [
                       TextSpan(
                         text: speed.multiplierLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w900,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           fontSize: 16,
                         ),
                       ),
@@ -1158,7 +1159,7 @@ class _WeightProjectionScreenState
           const SizedBox(height: 8),
           CitationLink(
             citation: speed.citation,
-            accent: AppColors.orange,
+            accent: context.accentColor,
             fontSize: 11,
             leading: 'Why this works — ',
           ),
@@ -1261,7 +1262,7 @@ class _ScrollMoreCue extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.58),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.55)),
+        border: Border.all(color: context.accentColor.withValues(alpha: 0.55)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.35),
@@ -1272,13 +1273,13 @@ class _ScrollMoreCue extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
+        children: [
           Text(
             'See why it works',
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ),
           SizedBox(width: 4),
@@ -1294,9 +1295,9 @@ class _BobbingChevron extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Icon(
+    return Icon(
       Icons.keyboard_arrow_down_rounded,
-      color: AppColors.orange,
+      color: context.accentColor,
       size: 18,
     )
         .animate(onPlay: (c) => c.repeat(reverse: true))

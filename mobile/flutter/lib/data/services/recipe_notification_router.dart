@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../screens/nutrition/grocery/grocery_list_screen.dart';
 import '../repositories/nutrition_repository.dart';
 import 'api_client.dart';
@@ -113,7 +114,7 @@ class _ConfirmLogSheetState extends ConsumerState<_ConfirmLogSheet> {
     final isDark = widget.isDark;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final accent = context.accentColor;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(

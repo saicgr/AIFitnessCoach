@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/repositories/workout_repository.dart';
 import '../data/services/api_client.dart';
 import 'glass_sheet.dart';
@@ -171,12 +172,12 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.fitness_center,
-                    color: AppColors.orange,
+                    color: context.accentColor,
                     size: 24,
                   ),
                 ),
@@ -213,15 +214,15 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.1),
+                  color: context.accentColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                  border: Border.all(color: context.accentColor.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.emoji_events,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -231,9 +232,9 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                     ),
                     Text(
                       AppLocalizations.of(context)!.log1rmSheetKg(widget.current1rm!.toStringAsFixed(1)),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     ),
                   ],
@@ -321,7 +322,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                  borderSide: BorderSide(color: context.accentColor, width: 2),
                 ),
               ),
             ),
@@ -366,7 +367,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cyan, width: 2),
+                    borderSide: BorderSide(color: context.accentColor, width: 2),
                   ),
                 ),
               ),
@@ -442,23 +443,23 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: isPR
-                        ? [AppColors.orange.withOpacity(0.2), AppColors.orange.withOpacity(0.1)]
-                        : [AppColors.cyan.withOpacity(0.2), AppColors.cyan.withOpacity(0.1)],
+                        ? [AppColors.orange.withOpacity(0.2), AppColors.orange.withOpacity(0.1)] // accent-allowlist: PR celebration color, consistent fire/achievement orange regardless of accent
+                        : [context.accentColor.withOpacity(0.2), context.accentColor.withOpacity(0.1)],
                     begin: AlignmentDirectional.topStart,
                     end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isPR
-                        ? AppColors.orange.withOpacity(0.5)
-                        : AppColors.cyan.withOpacity(0.5),
+                        ? AppColors.orange.withOpacity(0.5) // accent-allowlist: PR celebration color, consistent fire/achievement orange regardless of accent
+                        : context.accentColor.withOpacity(0.5),
                   ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       isPR ? Icons.local_fire_department : Icons.calculate,
-                      color: isPR ? AppColors.orange : AppColors.cyan,
+                      color: isPR ? AppColors.orange : context.accentColor, // accent-allowlist: PR branch is a celebration color, consistent fire/achievement orange regardless of accent
                       size: 28,
                     ),
                     const SizedBox(width: 12),
@@ -469,7 +470,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                           Text(
                             isPR ? AppLocalizations.of(context).log1rmNewPr : AppLocalizations.of(context).workoutSummaryAdvancedEstimated1rm,
                             style: TextStyle(
-                              color: isPR ? AppColors.orange : AppColors.cyan,
+                              color: isPR ? AppColors.orange : context.accentColor, // accent-allowlist: PR branch is a celebration color, consistent fire/achievement orange regardless of accent
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
                             ),
@@ -477,7 +478,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                           Text(
                             '${_estimated1rm!.toStringAsFixed(1)} kg',
                             style: TextStyle(
-                              color: isPR ? AppColors.orange : AppColors.cyan,
+                              color: isPR ? AppColors.orange : context.accentColor, // accent-allowlist: PR branch is a celebration color, consistent fire/achievement orange regardless of accent
                               fontWeight: FontWeight.bold,
                               fontSize: 24,
                             ),
@@ -488,7 +489,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
                     if (isPR)
                       const Icon(
                         Icons.emoji_events,
-                        color: AppColors.orange,
+                        color: AppColors.orange, // accent-allowlist: PR celebration color, consistent fire/achievement orange regardless of accent
                         size: 32,
                       ),
                   ],
@@ -502,7 +503,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -560,7 +561,7 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cyan : Colors.transparent,
+          color: isSelected ? context.accentColor : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
@@ -577,12 +578,17 @@ class _Log1RMSheetState extends ConsumerState<Log1RMSheet> {
     );
   }
 
+  // RPE effort severity scale (red=max effort to green=easy) - same
+  // convention as RpeLevel in weight_suggestion_service.dart. Previously the
+  // rpe>=9 and rpe>=7 steps borrowed AppColors.orange/.cyan (the accent
+  // palette) as arbitrary scale colors; now uses a proper intensity gradient
+  // so the scale doesn't shift with the user's accent choice.
   Color _getRpeColor(double rpe) {
-    if (rpe >= 9.5) return Colors.red;
-    if (rpe >= 9) return AppColors.orange;
-    if (rpe >= 8) return Colors.amber;
-    if (rpe >= 7) return AppColors.cyan;
-    return AppColors.success;
+    if (rpe >= 9.5) return Colors.red; // accent-allowlist: RPE effort severity scale (max)
+    if (rpe >= 9) return const Color(0xFFF97316); // accent-allowlist: RPE effort severity scale (hard) - matches RIR1 orange
+    if (rpe >= 8) return Colors.amber; // accent-allowlist: RPE effort severity scale (challenging)
+    if (rpe >= 7) return const Color(0xFF84CC16); // accent-allowlist: RPE effort severity scale (moderate) - lime step between amber and green
+    return AppColors.success; // accent-allowlist: RPE effort severity scale (light)
   }
 
   String _getRpeDescription(double rpe) {

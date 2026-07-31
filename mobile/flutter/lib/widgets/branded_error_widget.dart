@@ -22,7 +22,7 @@ class BrandedErrorWidget extends StatelessWidget {
   const BrandedErrorWidget({super.key, required this.details});
 
   static const _bg = Color(0xFF0E0E11);
-  static const _amber = Color(0xFFF59E0B);
+  static const _amber = Color(0xFFF59E0B); // accent-allowlist: error state color, semantic
   static const _muted = Color(0xFF9CA3AF);
 
   @override
@@ -93,7 +93,7 @@ class BrandedErrorWidget extends StatelessWidget {
                     maxLines: 6,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        color: Color(0xFFEF4444),
+                        color: Color(0xFFEF4444), // accent-allowlist: error state color, semantic
                         fontSize: 11,
                         fontFamily: 'monospace'),
                   ),

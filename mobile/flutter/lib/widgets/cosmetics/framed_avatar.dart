@@ -40,7 +40,7 @@ class FramedAvatar extends StatelessWidget {
       return SizedBox(width: size, height: size, child: ClipOval(child: child));
     }
 
-    final primary = frame!.color ?? Colors.amber;
+    final primary = frame!.color ?? Colors.amber; // accent-allowlist: cosmetic rarity frame color
     final secondary = frame!.gradient ?? primary;
     final borderWidth = size * 0.08;
 

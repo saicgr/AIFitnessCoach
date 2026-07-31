@@ -51,30 +51,30 @@ extension TrophyTierExtension on TrophyTier {
   Color get primaryColor {
     switch (this) {
       case TrophyTier.bronze:
-        return const Color(0xFFCD7F32);
+        return const Color(0xFFCD7F32); // accent-allowlist: medal/rarity tier (bronze/silver/gold)
       case TrophyTier.silver:
         return const Color(0xFFC0C0C0);
       case TrophyTier.gold:
-        return const Color(0xFFFFD700);
+        return const Color(0xFFFFD700); // accent-allowlist: medal/rarity tier (bronze/silver/gold)
       case TrophyTier.platinum:
         return const Color(0xFFE5E4E2);
       case TrophyTier.diamond:
-        return const Color(0xFF00BFFF);
+        return const Color(0xFF00BFFF); // accent-allowlist: medal/rarity tier (bronze/silver/gold)
     }
   }
 
   Color get secondaryColor {
     switch (this) {
       case TrophyTier.bronze:
-        return const Color(0xFF8B4513);
+        return const Color(0xFF8B4513); // accent-allowlist: medal/rarity tier (bronze/silver/gold)
       case TrophyTier.silver:
         return const Color(0xFFE8E8E8);
       case TrophyTier.gold:
-        return const Color(0xFFFFA500);
+        return const Color(0xFFFFA500); // accent-allowlist: medal/rarity tier (bronze/silver/gold)
       case TrophyTier.platinum:
         return const Color(0xFFFFFFFF);
       case TrophyTier.diamond:
-        return const Color(0xFF87CEEB);
+        return const Color(0xFF87CEEB); // accent-allowlist: medal/rarity tier (bronze/silver/gold)
     }
   }
 
@@ -83,9 +83,9 @@ extension TrophyTierExtension on TrophyTier {
     switch (this) {
       case TrophyTier.bronze:
         return [
-          const Color(0xFFCD7F32),
-          const Color(0xFF8B4513),
-          const Color(0xFFCD7F32),
+          const Color(0xFFCD7F32), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
+          const Color(0xFF8B4513), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
+          const Color(0xFFCD7F32), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
         ];
       case TrophyTier.silver:
         return [
@@ -95,9 +95,9 @@ extension TrophyTierExtension on TrophyTier {
         ];
       case TrophyTier.gold:
         return [
-          const Color(0xFFFFD700),
-          const Color(0xFFFFA500),
-          const Color(0xFFFFD700),
+          const Color(0xFFFFD700), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
+          const Color(0xFFFFA500), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
+          const Color(0xFFFFD700), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
         ];
       case TrophyTier.platinum:
         return [
@@ -107,10 +107,10 @@ extension TrophyTierExtension on TrophyTier {
         ];
       case TrophyTier.diamond:
         return [
-          const Color(0xFF00BFFF),
-          const Color(0xFF87CEEB),
+          const Color(0xFF00BFFF), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
+          const Color(0xFF87CEEB), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
           const Color(0xFFE0FFFF),
-          const Color(0xFF00BFFF),
+          const Color(0xFF00BFFF), // accent-allowlist: medal/rarity tier (bronze/silver/gold)
         ];
     }
   }

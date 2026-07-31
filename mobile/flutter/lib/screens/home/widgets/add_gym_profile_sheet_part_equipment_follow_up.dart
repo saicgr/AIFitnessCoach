@@ -96,13 +96,13 @@ class _ColorScalePickerState extends State<_ColorScalePicker> {
                       borderRadius: BorderRadius.circular(18),
                       gradient: const LinearGradient(
                         colors: [
-                          Color(0xFFFF0000),
-                          Color(0xFFFFFF00),
-                          Color(0xFF00FF00),
-                          Color(0xFF00FFFF),
-                          Color(0xFF0000FF),
-                          Color(0xFFFF00FF),
-                          Color(0xFFFF0000),
+                          Color(0xFFFF0000),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFFFFFF00),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFF00FF00),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFF00FFFF),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFF0000FF),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFFFF00FF),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
+                          Color(0xFFFF0000),  // accent-allowlist: full-spectrum hue-wheel picker swatch for the user's custom gym colour, not the app accent
                         ],
                       ),
                     ),

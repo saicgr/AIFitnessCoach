@@ -330,13 +330,13 @@ class _PointsCard extends StatelessWidget {
                   center: Alignment(-0.3, -0.4),
                 ),
                 border: Border.all(
-                  color: AppColors.gamGold.withValues(alpha: 0.55),
+                  color: AppColors.gamGold.withValues(alpha: 0.55),  // accent-allowlist: gamification medal/rarity tier colour
                   width: 1.5,
                 ),
               ),
               child: LottieAchievement(
                 size: 40,
-                color: AppColors.gamGold,
+                color: AppColors.gamGold,  // accent-allowlist: gamification medal/rarity tier colour
               ),
             ),
             const SizedBox(width: 16),
@@ -362,7 +362,7 @@ class _PointsCard extends StatelessWidget {
         const SizedBox(height: 12),
         Text(
           '$totalAchievements Achievements Earned'.toUpperCase(),
-          style: ZType.lbl(9.5, color: AppColors.gamGold, letterSpacing: 1.5),
+          style: ZType.lbl(9.5, color: AppColors.gamGold, letterSpacing: 1.5),  // accent-allowlist: gamification medal/rarity tier colour
         ),
       ],
     );
@@ -411,7 +411,7 @@ class _StreakCard extends StatelessWidget {
               border: Border.all(color: c.cardBorder),
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(_icon, color: AppColors.gamGold, size: 18),
+            child: Icon(_icon, color: AppColors.gamGold, size: 18),  // accent-allowlist: gamification medal/rarity tier colour
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -443,13 +443,13 @@ class _StreakCard extends StatelessWidget {
             children: [
               const Icon(
                 Icons.local_fire_department,
-                color: AppColors.gamGold,
+                color: AppColors.gamGold,  // accent-allowlist: gamification medal/rarity tier colour
                 size: 18,
               ),
               const SizedBox(width: 4),
               Text(
                 '${streak.currentStreak}',
-                style: ZType.disp(22, color: AppColors.gamGold, height: 0.9),
+                style: ZType.disp(22, color: AppColors.gamGold, height: 0.9),  // accent-allowlist: gamification medal/rarity tier colour
               ),
             ],
           ),
@@ -547,15 +547,15 @@ class _AchievementCard extends StatelessWidget {
 Color _tierColor(String tier) {
   switch (tier.toLowerCase()) {
     case 'bronze':
-      return AppColors.rarityBronze;
+      return AppColors.rarityBronze;  // accent-allowlist: rarity tier colour -- bronze
     case 'silver':
       return AppColors.raritySilver;
     case 'gold':
-      return AppColors.rarityGold;
+      return AppColors.rarityGold;  // accent-allowlist: rarity tier colour -- gold
     case 'platinum':
-      return AppColors.rarityPlatinum;
+      return AppColors.rarityPlatinum;  // accent-allowlist: rarity tier colour -- platinum
     default:
-      return AppColors.gamGold;
+      return AppColors.gamGold;  // accent-allowlist: rarity tier colour -- gold
   }
 }
 
@@ -646,7 +646,7 @@ class _PRCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    final success = isDark ? AppColors.success : AppColorsLight.success;
+    final success = isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: personal-record success state -- must stay green
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -667,7 +667,7 @@ class _PRCard extends StatelessWidget {
             ),
             child: const Icon(
               Icons.trending_up,
-              color: AppColors.gamGold,
+              color: AppColors.gamGold,  // accent-allowlist: gamification medal/rarity tier colour
               size: 18,
             ),
           ),
@@ -699,7 +699,7 @@ class _PRCard extends StatelessWidget {
             children: [
               Text(
                 '${record.recordValue.toStringAsFixed(1)} ${record.recordUnit}',
-                style: ZType.data(15, color: AppColors.gamGold),
+                style: ZType.data(15, color: AppColors.gamGold),  // accent-allowlist: gamification medal/rarity tier colour
               ),
               if (record.improvementPercentage != null) ...[
                 const SizedBox(height: 2),
@@ -771,7 +771,7 @@ class _CategoriesGrid extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 '${entry.value}',
-                style: ZType.data(10, color: AppColors.gamGold),
+                style: ZType.data(10, color: AppColors.gamGold),  // accent-allowlist: gamification medal/rarity tier colour
               ),
             ],
           ),

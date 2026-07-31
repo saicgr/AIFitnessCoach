@@ -394,7 +394,7 @@ class _FitnessAssessmentScreenState
                 _buildQuestionCard(
                   index: 1,
                   icon: Icons.sports_gymnastics,
-                  iconColor: AppColors.cyan,
+                  iconColor: context.accentColor,
                   accentColor: accentColor,
                   title: AppLocalizations.of(context).fitnessAssessmentPullUps,
                   subtitle: AppLocalizations.of(context).fitnessAssessmentHowManyPullUps,
@@ -412,7 +412,7 @@ class _FitnessAssessmentScreenState
                 _buildQuestionCard(
                   index: 2,
                   icon: Icons.accessibility_new,
-                  iconColor: AppColors.purple,
+                  iconColor: context.accentColor,
                   accentColor: accentColor,
                   title: AppLocalizations.of(context).fitnessAssessmentPlankHold,
                   subtitle: AppLocalizations.of(context).fitnessAssessmentHowLongCanYou,
@@ -430,7 +430,7 @@ class _FitnessAssessmentScreenState
                 _buildQuestionCard(
                   index: 3,
                   icon: Icons.airline_seat_legroom_extra,
-                  iconColor: AppColors.success,
+                  iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                   accentColor: accentColor,
                   title: AppLocalizations.of(context).fitnessAssessmentBodyweightSquats,
                   subtitle: AppLocalizations.of(context).fitnessAssessmentHowManyCanYou,
@@ -448,7 +448,7 @@ class _FitnessAssessmentScreenState
                 _buildQuestionCard(
                   index: 4,
                   icon: Icons.history,
-                  iconColor: AppColors.warning,
+                  iconColor: AppColors.warning,  // accent-allowlist: warning severity - must stay amber regardless of accent
                   accentColor: accentColor,
                   title: AppLocalizations.of(context).fitnessAssessmentTrainingExperience,
                   subtitle: AppLocalizations.of(context).quizFitnessLevelHowLongHaveYou,
@@ -466,7 +466,7 @@ class _FitnessAssessmentScreenState
                 _buildQuestionCard(
                   index: 5,
                   icon: Icons.directions_run,
-                  iconColor: AppColors.error,
+                  iconColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                   accentColor: accentColor,
                   title: AppLocalizations.of(context).fitnessAssessmentCardioCapacity,
                   subtitle: AppLocalizations.of(context).fitnessAssessmentHowLongCanYou2,

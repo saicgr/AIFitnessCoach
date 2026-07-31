@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'strain_dashboard_screen.dart';
@@ -64,8 +65,8 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
       // Refresh the dashboard
       ref.read(strainDashboardProvider.notifier).loadData();
 
-      if (mounted) { context.pop(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).reportStrainStrainReportSubmitted), backgroundColor: AppColors.success)); }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error)); } finally { if (mounted) setState(() => _isSubmitting = false); }
+      if (mounted) { context.pop(); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).reportStrainStrainReportSubmitted), backgroundColor: AppColors.success)); } // accent-allowlist: error/success state + fatigue/soreness severity scale
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error)); } finally { if (mounted) setState(() => _isSubmitting = false); } // accent-allowlist: error/success state + fatigue/soreness severity scale
   }
 
   @override
@@ -100,16 +101,16 @@ class _ReportStrainScreenState extends ConsumerState<ReportStrainScreen> {
     _selectedMuscles.remove(m);
   } else {
     _selectedMuscles.add(m);
-  } }); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: s ? AppColors.orange.withOpacity(0.15) : el, borderRadius: BorderRadius.circular(12), border: Border.all(color: s ? AppColors.orange : Colors.transparent)), child: Text(m, style: TextStyle(color: s ? AppColors.orange : tm, fontWeight: s ? FontWeight.w600 : FontWeight.normal)))); }).toList());
+  } }); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: s ? context.accentColor.withOpacity(0.15) : el, borderRadius: BorderRadius.circular(12), border: Border.all(color: s ? context.accentColor : Colors.transparent)), child: Text(m, style: TextStyle(color: s ? context.accentColor : tm, fontWeight: s ? FontWeight.w600 : FontWeight.normal)))); }).toList());
 
   Widget _buildSlider(String hint, int value, ValueChanged<int> onChanged, bool d, Color tp, Color tm) {
-    final color = value <= 3 ? AppColors.success : value <= 6 ? AppColors.orange : AppColors.error;
+    final color = value <= 3 ? AppColors.success : value <= 6 ? AppColors.orange : AppColors.error; // accent-allowlist: error/success state + fatigue/soreness severity scale
     return Column(children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('1', style: TextStyle(color: tm)), Text('$value', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)), Text('10', style: TextStyle(color: tm))]), Slider(value: value.toDouble(), min: 1, max: 10, divisions: 9, activeColor: color, onChanged: (v) => onChanged(v.round())), Text(hint, style: TextStyle(fontSize: 12, color: tm))]);
   }
 
-  Widget _buildRestToggle(bool d, Color tp, Color tm, Color el) => Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: el, borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(AppLocalizations.of(context).reportStrainRequestRestDay, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 4), Text(AppLocalizations.of(context).reportStrainAiWillSuggestLighter, style: TextStyle(fontSize: 12, color: tm))])), Switch(value: _needsRest, onChanged: (v) => setState(() => _needsRest = v), activeThumbColor: AppColors.orange)]));
+  Widget _buildRestToggle(bool d, Color tp, Color tm, Color el) => Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: el, borderRadius: BorderRadius.circular(12)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(AppLocalizations.of(context).reportStrainRequestRestDay, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 4), Text(AppLocalizations.of(context).reportStrainAiWillSuggestLighter, style: TextStyle(fontSize: 12, color: tm))])), Switch(value: _needsRest, onChanged: (v) => setState(() => _needsRest = v), activeThumbColor: context.accentColor)]));
 
   Widget _buildNotesField(bool d, Color tp, Color tm, Color el) => TextField(controller: _notesController, maxLines: 3, style: TextStyle(color: tp), decoration: InputDecoration(hintText: 'Any additional details...', hintStyle: TextStyle(color: tm), filled: true, fillColor: el, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)));
 
-  Widget _buildSubmitButton(bool d) => SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: _isSubmitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: _isSubmitting ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(AppLocalizations.of(context).reportStrainSubmitReport, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
+  Widget _buildSubmitButton(bool d) => SizedBox(width: double.infinity, height: 56, child: ElevatedButton(onPressed: _isSubmitting ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: context.accentColor, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: _isSubmitting ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text(AppLocalizations.of(context).reportStrainSubmitReport, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))));
 }

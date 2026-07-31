@@ -430,7 +430,7 @@ class _MyProgramSheetState extends ConsumerState<_MyProgramSheet> {
       );
 
   Widget _chipWrap(ThemeColors tc, List<String> items, {bool warn = false}) {
-    final color = warn ? Colors.orange : tc.accent;
+    final color = warn ? Colors.orange : tc.accent;  // accent-allowlist: warning severity
     return Wrap(
       spacing: 8,
       runSpacing: 8,

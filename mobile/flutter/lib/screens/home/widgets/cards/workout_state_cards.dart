@@ -3,6 +3,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../widgets/empty_state.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Card shown when there are no workouts scheduled
 class EmptyWorkoutCard extends StatelessWidget {
   /// Callback when the generate button is pressed
@@ -187,16 +188,16 @@ class GeneratingWorkoutsCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+          border: Border.all(color: context.accentColor.withOpacity(0.3)),
         ),
         child: Column(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 48,
               height: 48,
               child: CircularProgressIndicator(
                 strokeWidth: 3,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
               ),
             ),
             const SizedBox(height: 16),
@@ -259,13 +260,13 @@ class ErrorCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.error.withOpacity(0.3)),
+          border: Border.all(color: AppColors.error.withOpacity(0.3)),  // accent-allowlist: error/destructive -- must stay red
         ),
         child: Column(
           children: [
             const Icon(
               Icons.error_outline,
-              color: AppColors.error,
+              color: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
               size: 48,
             ),
             const SizedBox(height: 12),
@@ -344,9 +345,9 @@ class MoreWorkoutsLoadingBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final backgroundColor = isDark
-        ? AppColors.cyan.withOpacity(0.1)
-        : AppColors.cyan.withOpacity(0.08);
-    final borderColor = AppColors.cyan.withOpacity(0.3);
+        ? context.accentColor.withOpacity(0.1)
+        : context.accentColor.withOpacity(0.08);
+    final borderColor = context.accentColor.withOpacity(0.3);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -359,12 +360,12 @@ class MoreWorkoutsLoadingBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const SizedBox(
+            SizedBox(
               width: 18,
               height: 18,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
               ),
             ),
             const SizedBox(width: 12),
@@ -415,9 +416,9 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final backgroundColor = isDark
-        ? AppColors.cyan.withOpacity(0.1)
-        : AppColors.cyan.withOpacity(0.08);
-    final borderColor = AppColors.cyan.withOpacity(0.3);
+        ? context.accentColor.withOpacity(0.1)
+        : context.accentColor.withOpacity(0.08);
+    final borderColor = context.accentColor.withOpacity(0.3);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final progress = totalWorkouts > 0 ? currentWorkout / totalWorkouts : 0.0;
@@ -440,12 +441,12 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.2),
+                    color: context.accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.fitness_center,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 20,
                   ),
                 ),
@@ -488,17 +489,17 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
                           child: CircularProgressIndicator(
                             value: value > 0 ? value : null,
                             strokeWidth: 4,
-                            backgroundColor: AppColors.cyan.withOpacity(0.2),
-                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                            backgroundColor: context.accentColor.withOpacity(0.2),
+                            valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
                           ),
                         ),
                         if (totalWorkouts > 0)
                           Text(
                             '$currentWorkout/$totalWorkouts',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                             ),
                           ),
                       ],
@@ -546,8 +547,8 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: value > 0 ? value : null,
-                    backgroundColor: AppColors.cyan.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
+                    backgroundColor: context.accentColor.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(context.accentColor),
                     minHeight: 6,
                   ),
                 );

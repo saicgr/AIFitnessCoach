@@ -53,7 +53,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillOffline,
-          pillColor: AppColors.error,
+          pillColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           body: l10n.heroModesBodyOffline,
           primary: _PrimaryButton(
             label: l10n.heroModesActionRetry,
@@ -73,7 +73,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillLive,
-          pillColor: AppColors.error,
+          pillColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           body:
               '${workout.exerciseCount} exercises · ${workout.formattedDurationShort}',
           primary: _PrimaryButton(
@@ -147,7 +147,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillLighter,
-          pillColor: AppColors.warning,
+          pillColor: AppColors.warning,  // accent-allowlist: warning severity
           body: l10n.heroModesBodyLighter,
           primary: _PrimaryButton(
             label: AppLocalizations.of(context).heroWorkoutCardStartAsPlanned,
@@ -184,7 +184,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillEquipmentGap,
-          pillColor: AppColors.orange,
+          pillColor: context.accentColor,
           body: l10n.heroModesBodyEquipmentGap,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardBodyweightVariant,
@@ -208,7 +208,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillFasted,
-          pillColor: AppColors.info,
+          pillColor: AppColors.info,  // accent-allowlist: informational
           body: l10n.heroModesBodyFasted,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardStartFasted,
@@ -235,7 +235,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillFuelGap,
-          pillColor: AppColors.warning,
+          pillColor: AppColors.warning,  // accent-allowlist: warning severity
           body: l10n.heroModesBodyFuelGap,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardLogASnack,
@@ -286,7 +286,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillPrWindow,
-          pillColor: AppColors.warning,
+          pillColor: AppColors.warning,  // accent-allowlist: warning severity
           chip: l10n.heroModesPillPrWindow,
           body: l10n.heroModesBodyPrWindow,
           primary: _PrimaryButton(
@@ -306,7 +306,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillBodyAsksRest,
-          pillColor: AppColors.error,
+          pillColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           body: l10n.heroModesBodyBodyAsksRest,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardTakeRest,
@@ -329,7 +329,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillRefuelWindow,
-          pillColor: AppColors.success,
+          pillColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           body: l10n.heroModesBodyRefuelWindow,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardLogPostWorkoutMeal,
@@ -369,7 +369,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillYesterday,
-          pillColor: AppColors.warning,
+          pillColor: AppColors.warning,  // accent-allowlist: warning severity
           body: l10n.heroModesBodyYesterday,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardMoveToToday,
@@ -417,7 +417,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
 
   void _showVariantPending(BuildContext context, String which) {
     HapticService.selection();
-    ScaffoldMessenger.of(context).showSnackBar(
+    rootSnackBar(
       SnackBar(
         content: Text(AppLocalizations.of(context)!.heroWorkoutCardModesVariantComingWithThe(which)),
         behavior: SnackBarBehavior.floating,
@@ -428,7 +428,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
 
   Future<void> _markRestDay(BuildContext context) async {
     HapticService.medium();
-    ScaffoldMessenger.of(context).showSnackBar(
+    rootSnackBar(
       SnackBar(
         content: Text(AppLocalizations.of(context).heroWorkoutCardMarkedAsARest),
         behavior: SnackBarBehavior.floating,

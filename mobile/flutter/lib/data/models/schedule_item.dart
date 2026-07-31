@@ -187,15 +187,15 @@ class ScheduleItem {
   Color get typeColor {
     switch (itemType) {
       case ScheduleItemType.workout:
-        return const Color(0xFF06B6D4);
+        return const Color(0xFF06B6D4); // accent-allowlist: schedule item-type identity - distinct color per type (workout/activity/meal/fasting/habit) so entries are visually distinguishable in the schedule view
       case ScheduleItemType.activity:
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6); // accent-allowlist: schedule item-type identity - distinct color per type (workout/activity/meal/fasting/habit) so entries are visually distinguishable in the schedule view
       case ScheduleItemType.meal:
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E); // accent-allowlist: schedule item-type identity - distinct color per type (workout/activity/meal/fasting/habit) so entries are visually distinguishable in the schedule view
       case ScheduleItemType.fasting:
-        return const Color(0xFFF97316);
+        return const Color(0xFFF97316); // accent-allowlist: schedule item-type identity - distinct color per type (workout/activity/meal/fasting/habit) so entries are visually distinguishable in the schedule view
       case ScheduleItemType.habit:
-        return const Color(0xFFA855F7);
+        return const Color(0xFFA855F7); // accent-allowlist: schedule item-type identity - distinct color per type (workout/activity/meal/fasting/habit) so entries are visually distinguishable in the schedule view
     }
   }
 

@@ -57,7 +57,7 @@ void showLivePrSnackBar(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
       side: BorderSide(
-        color: const Color(0xFFFFD700).withOpacity(0.6),
+        color: const Color(0xFFFFD700).withOpacity(0.6), // accent-allowlist: personal-record (PR) celebration gold color
         width: 1.5,
       ),
     ),
@@ -73,13 +73,13 @@ void showLivePrSnackBar(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                colors: [Color(0xFFFFD700), Color(0xFFFFA500)], // accent-allowlist: personal-record (PR) celebration gold color
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withOpacity(0.5),
+                  color: const Color(0xFFFFD700).withOpacity(0.5), // accent-allowlist: personal-record (PR) celebration gold color
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -101,7 +101,7 @@ void showLivePrSnackBar(
                 Text(
                   AppLocalizations.of(context).stackedBannerPanelNewPr,
                   style: TextStyle(
-                    color: Color(0xFFFFD700),
+                    color: Color(0xFFFFD700), // accent-allowlist: personal-record (PR) celebration gold color
                     fontWeight: FontWeight.w700,
                     fontSize: 14,
                     letterSpacing: 0.5,

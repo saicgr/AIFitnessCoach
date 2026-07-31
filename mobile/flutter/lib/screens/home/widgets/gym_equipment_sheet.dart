@@ -9,6 +9,7 @@ import '../../workout/widgets/edit_weights_sheet.dart';
 import 'import_equipment_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Equipment categories and their items - matching gym equipment structure
 const Map<String, List<String>> gymEquipmentCategories = {
   'Free Weights': [
@@ -384,7 +385,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.9,
@@ -437,7 +438,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                                 AppLocalizations.of(context).moodCardResetAll,
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.red.shade400,
+                                  color: Colors.red.shade400,  // accent-allowlist: error/destructive -- must stay red
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -807,7 +808,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
                           AppLocalizations.of(context).commonDelete,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.red.shade400,
+                            color: Colors.red.shade400,  // accent-allowlist: error/destructive -- must stay red
                             decoration: TextDecoration.underline,
                           ),
                         ),
@@ -1123,7 +1124,7 @@ class _CustomEquipmentDialogState extends State<_CustomEquipmentDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final accent = isDark ? context.accentColor : AppColorsLight.accent;
     final textPrimary =
         isDark ? Colors.white : AppColorsLight.textPrimary;
     final isEdit = widget.initial != null;
@@ -1227,7 +1228,7 @@ class _CustomEquipmentDialogState extends State<_CustomEquipmentDialog> {
               const SizedBox(height: 10),
               Text(_error!,
                   style: TextStyle(
-                      color: Colors.red.shade400, fontSize: 12)),
+                      color: Colors.red.shade400, fontSize: 12)),  // accent-allowlist: error/destructive -- must stay red
             ],
           ],
         ),

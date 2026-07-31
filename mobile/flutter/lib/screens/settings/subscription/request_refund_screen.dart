@@ -9,6 +9,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Request Refund Screen
 /// Allows users to request a refund with reason selection and optional comments
 class RequestRefundScreen extends ConsumerStatefulWidget {
@@ -183,7 +184,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                     children: [
                       Icon(
                         Icons.subscriptions,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         size: 24,
                       ),
                       const SizedBox(width: 12),
@@ -308,18 +309,18 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade100,
+                  color: Colors.red.shade100,  // accent-allowlist: error/destructive - must stay red
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),  // accent-allowlist: error/destructive - must stay red
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _error!,
                         style: TextStyle(
-                          color: Colors.red.shade700,
+                          color: Colors.red.shade700,  // accent-allowlist: error/destructive - must stay red
                           fontSize: 13,
                         ),
                       ),
@@ -335,10 +336,10 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.cyan.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.cyan.withValues(alpha: 0.3),
+                  color: context.accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -346,7 +347,7 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 20,
                   ),
                   const SizedBox(width: 12),
@@ -388,9 +389,9 @@ class _RequestRefundScreenState extends ConsumerState<RequestRefundScreen> {
                     ? null
                     : _submitRefundRequest,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade400,
+                  backgroundColor: Colors.red.shade400,  // accent-allowlist: error/destructive - must stay red
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.red.shade200,
+                  disabledBackgroundColor: Colors.red.shade200,  // accent-allowlist: error/destructive - must stay red
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -507,11 +508,11 @@ class _ReasonOptionTile extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.cyan.withValues(alpha: 0.1)
+              ? context.accentColor.withValues(alpha: 0.1)
               : cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.cyan : cardBorder,
+            color: isSelected ? context.accentColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -523,10 +524,10 @@ class _ReasonOptionTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.cyan : cardBorder,
+                  color: isSelected ? context.accentColor : cardBorder,
                   width: 2,
                 ),
-                color: isSelected ? AppColors.cyan : Colors.transparent,
+                color: isSelected ? context.accentColor : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(
@@ -586,13 +587,13 @@ class _RefundSuccessScreen extends StatelessWidget {
                 width: 100,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: AppColors.green.withValues(alpha: 0.15),
+                  color: AppColors.green.withValues(alpha: 0.15),  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.check_circle,
                   size: 60,
-                  color: AppColors.green,
+                  color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                 ),
               ),
               const SizedBox(height: 32),
@@ -644,7 +645,7 @@ class _RefundSuccessScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                         fontFamily: 'monospace',
                       ),
                     ),
@@ -665,14 +666,14 @@ class _RefundSuccessScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.1),
+                  color: context.accentColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.email_outlined, color: AppColors.cyan, size: 20),
+                        Icon(Icons.email_outlined, color: context.accentColor, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           AppLocalizations.of(context).requestRefundCheckYourEmail,
@@ -708,7 +709,7 @@ class _RefundSuccessScreen extends StatelessWidget {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),

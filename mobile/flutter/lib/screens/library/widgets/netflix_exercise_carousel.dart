@@ -13,6 +13,7 @@ import '../screens/category_exercises_screen.dart';
 import '../../workout/exercise_browse.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Netflix-style horizontal carousel for a category of exercises
 /// Shows multiple small cards per row that scroll horizontally
 class NetflixExerciseCarousel extends StatelessWidget {
@@ -63,7 +64,7 @@ class NetflixExerciseCarousel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     if (exercises.isEmpty) return const SizedBox.shrink();
 
@@ -360,8 +361,8 @@ class _NetflixHeroSectionState extends ConsumerState<NetflixHeroSection>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
+    final purple = isDark ? context.accentColor : context.accentColor;
 
     if (widget.exercises.isEmpty) return const SizedBox.shrink();
 
@@ -713,8 +714,8 @@ class _NetflixCard extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final purple = isDark ? context.accentColor : context.accentColor;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return GestureDetector(
       onTap: () => _showExerciseDetail(context),

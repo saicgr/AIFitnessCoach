@@ -43,7 +43,7 @@ class _TravelModeTileState extends ConsumerState<TravelModeTile> {
   bool _busy = false;
 
   // Amber — matches the Travel Mode quick action accent (0xFFF59E0B).
-  static const Color _travelAmber = Color(0xFFF59E0B);
+  static const Color _travelAmber = Color(0xFFF59E0B);  // accent-allowlist: Travel Mode's own established feature identity colour, matches the quick-action tile elsewhere
 
   Future<void> _activate() async {
     if (_busy) return;

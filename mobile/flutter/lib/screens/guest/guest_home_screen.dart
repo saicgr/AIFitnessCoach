@@ -13,6 +13,7 @@ import 'widgets/guest_session_timer.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'guest_home_screen_part_demo_chat_item.dart';
 
 part 'guest_home_screen_ui.dart';
@@ -87,10 +88,10 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.2),
+                  color: AppColors.warning.withOpacity(0.2),  // accent-allowlist: warning severity — must stay amber regardless of accent
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.timer, color: AppColors.warning, size: 24),
+                child: const Icon(Icons.timer, color: AppColors.warning, size: 24),  // accent-allowlist: warning severity — must stay amber regardless of accent
               ),
               const SizedBox(width: 12),
               Text(
@@ -140,7 +141,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 _navigateToSignUp();
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -178,12 +179,12 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.15),
+                  color: context.accentColor.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.celebration,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 48,
                 ),
               ),
@@ -234,7 +235,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   _navigateToSignUp();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -272,7 +273,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   children: [
                     const Icon(
                       Icons.check_circle,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -347,7 +348,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.2),
+                        color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -355,7 +356,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.success,
+                          color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -404,7 +405,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.6),
         decoration: BoxDecoration(
-          color: isUser ? AppColors.cyan.withOpacity(0.2) : AppColors.purple.withOpacity(0.15),
+          color: isUser ? context.accentColor.withOpacity(0.2) : context.accentColor.withOpacity(0.15),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(12),
             topRight: const Radius.circular(12),
@@ -470,7 +471,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(colors: [AppColors.purple, AppColors.cyan]),
+                          gradient: LinearGradient(colors: [context.accentColor, context.accentColor]),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
@@ -528,14 +529,14 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.cyan.withOpacity(0.15), AppColors.purple.withOpacity(0.1)],
+                            colors: [context.accentColor.withOpacity(0.15), context.accentColor.withOpacity(0.1)],
                           ),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                          border: Border.all(color: context.accentColor.withOpacity(0.3)),
                         ),
                         child: Column(
                           children: [
-                            const Icon(Icons.chat_bubble_outline, color: AppColors.cyan, size: 32),
+                            Icon(Icons.chat_bubble_outline, color: context.accentColor, size: 32),
                             const SizedBox(height: 8),
                             Text(
                               AppLocalizations.of(context).guestHomeGetUnlimitedAiCoaching,
@@ -557,7 +558,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                                   _navigateToSignUp();
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.cyan,
+                                  backgroundColor: context.accentColor,
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -590,10 +591,10 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final features = [
-      (Icons.auto_awesome, 'AI Workout Plans', 'Personalized monthly programs', AppColors.cyan),
-      (Icons.restaurant_menu, 'Nutrition Tracking', 'Log meals & track macros', AppColors.orange),
-      (Icons.insights, 'Progress Analytics', 'See your fitness journey', AppColors.purple),
-      (Icons.chat_bubble_outline, '24/7 AI Coach', 'Ask anything, anytime', AppColors.success),
+      (Icons.auto_awesome, 'AI Workout Plans', 'Personalized monthly programs', context.accentColor),
+      (Icons.restaurant_menu, 'Nutrition Tracking', 'Log meals & track macros', context.accentColor),
+      (Icons.insights, 'Progress Analytics', 'See your fitness journey', context.accentColor),
+      (Icons.chat_bubble_outline, '24/7 AI Coach', 'Ask anything, anytime', AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
     ];
 
     return Padding(
@@ -616,7 +617,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.2),
+                  color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -624,7 +625,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.success,
+                    color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -678,7 +679,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                           ],
                         ),
                       ),
-                      Icon(Icons.check_circle, color: AppColors.success, size: 22),
+                      Icon(Icons.check_circle, color: AppColors.success, size: 22),  // accent-allowlist: success/positive state — must stay green regardless of accent
                     ],
                   ),
                 ),
@@ -710,12 +711,12 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.purple.withOpacity(0.2),
+              color: context.accentColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.person_outline,
-              color: AppColors.purple,
+              color: context.accentColor,
               size: 24,
             ),
           ),
@@ -738,7 +739,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.2),
+                        color: context.accentColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -746,7 +747,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -823,12 +824,12 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.fitness_center,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 28,
                   ),
                 ),
@@ -862,7 +863,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.cyan.withOpacity(0.15),
+                              color: context.accentColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -870,7 +871,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.cyan,
+                                color: context.accentColor,
                               ),
                             ),
                           ),

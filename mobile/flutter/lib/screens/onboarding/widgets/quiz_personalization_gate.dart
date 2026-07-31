@@ -2,11 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 import 'quiz_step_header.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Onboarding v5 — Body Metrics + Fast-Path Fork
 ///
@@ -823,14 +823,14 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: _isValid ? AppColors.orange : t.textMuted,
+                        color: _isValid ? context.accentColor : t.textMuted,
                       ),
                     ),
                     const SizedBox(width: 6),
                     Icon(
                       Icons.tune_rounded,
                       size: 14,
-                      color: _isValid ? AppColors.orange : t.textMuted,
+                      color: _isValid ? context.accentColor : t.textMuted,
                     ),
                   ],
                 ),

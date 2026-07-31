@@ -96,7 +96,7 @@ class ProgressShareWatermark extends StatelessWidget {
           height: compact ? 14 : 18,
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Color(0xFFFF6B6B), Color(0xFF9D4EDD)],
+              colors: [Color(0xFFFF6B6B), Color(0xFF9D4EDD)],  // accent-allowlist: fixed decorative template gradient — not tied to accent
             ),
             borderRadius: BorderRadius.circular(4),
           ),

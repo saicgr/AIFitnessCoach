@@ -12,6 +12,7 @@ import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Onboarding conversion v6 — "What's held you back" + acknowledgment.
 ///
 /// Two-stage screen. Stage 1 asks the obstacle question (engagement-only,
@@ -51,7 +52,7 @@ class _OnboardingBlockerScreenState
       'no_time',
       "I couldn't find the time",
       Icons.schedule_rounded,
-      Color(0xFF3B82F6),
+      Color(0xFF3B82F6),  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
       'Time is the one nobody beats with willpower. Your plan is built '
           'around the exact days and session length you picked, and if you '
           'miss one the coach reshapes the week instead of piling on guilt.',
@@ -65,7 +66,7 @@ class _OnboardingBlockerScreenState
       'lost_motivation',
       'I lost motivation',
       Icons.battery_2_bar_rounded,
-      Color(0xFFF59E0B),
+      Color(0xFFF59E0B),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
       'Motivation comes and goes for everyone. That is why the plan runs '
           'on a set schedule and small weekly wins, so showing up does not '
           'depend on feeling motivated that day.',
@@ -80,7 +81,7 @@ class _OnboardingBlockerScreenState
       'no_results',
       "I wasn't seeing results",
       Icons.trending_flat_rounded,
-      Color(0xFFEF4444),
+      Color(0xFFEF4444),  // accent-allowlist: error/destructive - same value as AppColors.error
       'No results usually means the plan stopped progressing. Yours adds '
           'a little every week with progressive overload, and the coach '
           'changes course when something stalls.',
@@ -94,7 +95,7 @@ class _OnboardingBlockerScreenState
       'unsure',
       "I didn't know what to do",
       Icons.help_outline_rounded,
-      Color(0xFF8B5CF6),
+      Color(0xFF8B5CF6),  // accent-allowlist: categorical per-option palette - each blocker option needs a distinct colour for visual scanning; recolouring collapses the distinction
       'Not knowing what to do is a real wall. Every session here is laid '
           'out for you, with form guidance on each move, so there is no '
           'guesswork before you start.',
@@ -108,7 +109,7 @@ class _OnboardingBlockerScreenState
       'injury',
       'I got injured or burned out',
       Icons.healing_rounded,
-      Color(0xFFFF6B6B),
+      Color(0xFFFF6B6B),  // accent-allowlist: categorical per-option palette - each blocker option needs a distinct colour for visual scanning; recolouring collapses the distinction
       'Injury and burnout are setbacks, not the end. Your plan works '
           'around the limitations you told us about and builds intensity '
           'gradually instead of all at once.',
@@ -122,7 +123,7 @@ class _OnboardingBlockerScreenState
       'first_time',
       'This is my first real attempt',
       Icons.flag_rounded,
-      Color(0xFF14B8A6),
+      Color(0xFF14B8A6),  // accent-allowlist: categorical per-option palette - each blocker option needs a distinct colour for visual scanning; recolouring collapses the distinction
       'A first real attempt is a strong place to begin. The plan meets '
           'you where you are today and builds up slowly, so nothing about '
           'week one is overwhelming.',
@@ -494,8 +495,8 @@ class _PrimaryButton extends StatelessWidget {
             width: double.infinity,
             height: 56,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+              gradient: LinearGradient(
+                colors: [AppColors.onboardingAccent, context.accentColor],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: enabled

@@ -296,7 +296,7 @@ class _ExpandedBadge extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.savings_outlined,
-                      color: AppColors.green,
+                      color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -317,7 +317,7 @@ class _ExpandedBadge extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.green,
+                              color: AppColors.green,  // accent-allowlist: success/positive state - same value as AppColors.success (0xFF22C55E)
                             ),
                           ),
                         ],
@@ -443,14 +443,14 @@ IconData _getTierIcon(LifetimeMemberTier? tier) {
 Color _getTierColor(LifetimeMemberTier? tier) {
   switch (tier) {
     case LifetimeMemberTier.veteran:
-      return const Color(0xFFFFD700); // Gold
+      return const Color(0xFFFFD700); // Gold  // accent-allowlist: medal/rarity tier gold
     case LifetimeMemberTier.loyal:
       return const Color(0xFFC0C0C0).withBlue(180); // Silver with blue tint
     case LifetimeMemberTier.established:
-      return const Color(0xFFCD7F32); // Bronze
+      return const Color(0xFFCD7F32); // Bronze  // accent-allowlist: medal/rarity tier bronze - same value as AppColors.rarityBronze
     case LifetimeMemberTier.newMember:
     case null:
-      return AppColors.cyan;
+      return AppColors.cyan;  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
   }
 }
 

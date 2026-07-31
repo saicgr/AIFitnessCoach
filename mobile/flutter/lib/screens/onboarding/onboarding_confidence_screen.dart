@@ -10,6 +10,7 @@ import 'pre_auth_quiz_data.dart';
 import 'widgets/onboarding_theme.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Onboarding conversion v6 — confidence slider (commitment elicitation).
 ///
 /// Shown just before the plan preview / paywall. Asking the user to rate
@@ -89,9 +90,9 @@ class _OnboardingConfidenceScreenState
   }
 
   Color _bandColor(int v) {
-    if (v <= 3) return const Color(0xFF3B82F6); // calm blue, not alarming
+    if (v <= 3) return const Color(0xFF3B82F6); // calm blue, not alarming  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
     if (v <= 6) return AppColors.onboardingAccent;
-    return const Color(0xFF34C759);
+    return const Color(0xFF34C759);  // accent-allowlist: confidence severity band scale (calm/neutral/high), categorical not the app accent
   }
 
   Future<void> _continue() async {
@@ -305,8 +306,8 @@ class _ConfidenceContinueButton extends StatelessWidget {
           width: double.infinity,
           height: 56,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.onboardingAccent, Color(0xFFFF6B00)],
+            gradient: LinearGradient(
+              colors: [AppColors.onboardingAccent, context.accentColor],
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [

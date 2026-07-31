@@ -14,6 +14,7 @@ import 'widgets/preview_tile_mock.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../home/widgets/swipeable_hero_section.dart'
     show HomeFocus, homeFocusProvider;
+import '../../core/theme/accent_color_provider.dart';
 
 part 'layout_editor_screen_part_toggles_tab.dart';
 
@@ -96,7 +97,7 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                    Icon(Icons.error_outline, color: AppColors.error, size: 48),  // accent-allowlist: error/destructive - must stay red
                     const SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context).layoutEditorFailedToLoadLayout,
@@ -199,8 +200,8 @@ class _LayoutEditorScreenState extends ConsumerState<LayoutEditorScreen>
             child: Text(AppLocalizations.of(context).trophyFilterReset,
                 style: TextStyle(
                     color: isDark
-                        ? AppColors.cyan
-                        : _darkenColor(AppColors.cyan))),
+                        ? context.accentColor
+                        : _darkenColor(context.accentColor))),
           ),
         ],
       ),

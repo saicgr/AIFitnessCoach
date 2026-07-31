@@ -97,7 +97,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
     );
   }
 
-  static const List<Map<String, dynamic>> nutritionGoals = [
+  static List<Map<String, dynamic>> nutritionGoals = [
     {
       'id': 'lose_fat',
       'label': 'Lose Fat',
@@ -108,7 +108,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'build_muscle',
       'label': 'Build Muscle',
       'icon': Icons.fitness_center,
-      'color': AppColors.purple,
+      'color': AppColors.purple,  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
     },
     {
       'id': 'maintain',
@@ -126,7 +126,7 @@ class _QuizNutritionGoalsState extends State<QuizNutritionGoals> {
       'id': 'eat_healthier',
       'label': 'Eat Healthier',
       'icon': Icons.eco,
-      'color': AppColors.green,
+      'color': AppColors.green,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
     },
   ];
 

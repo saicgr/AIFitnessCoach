@@ -129,10 +129,10 @@ extension __DerivedMetricDetailScreenStateExt on _DerivedMetricDetailScreenState
     if (_type == DerivedMetricType.bmi ||
         _type == DerivedMetricType.waistToHipRatio ||
         _type == DerivedMetricType.waistToHeightRatio) {
-      return change < 0 ? AppColors.success : AppColors.error;
+      return change < 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
     }
     // For FFMI, lean mass, symmetry, and ratios, increase is good
-    return change > 0 ? AppColors.success : AppColors.error;
+    return change > 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
   }
 
 

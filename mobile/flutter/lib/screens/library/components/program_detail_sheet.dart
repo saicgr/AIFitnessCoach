@@ -11,6 +11,7 @@ import '../widgets/info_badge.dart';
 import 'week_duration_selector.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Bottom sheet showing program details
 class ProgramDetailSheet extends ConsumerStatefulWidget {
   final BrandedProgram program;
@@ -83,11 +84,11 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
   Color _getCategoryColor(String? category, bool isDark) {
     switch (category?.toLowerCase()) {
       case 'celebrity workout':
-        return isDark ? AppColors.purple : AppColorsLight.purple;
+        return isDark ? context.accentColor : context.accentColor;
       case 'goal-based':
-        return isDark ? AppColors.cyan : AppColorsLight.cyan;
+        return isDark ? context.accentColor : AppColorsLight.cyan;
       case 'sport training':
-        return isDark ? AppColors.success : AppColorsLight.success;
+        return isDark ? AppColors.success : AppColorsLight.success;  // accent-allowlist: success/positive state — must stay green regardless of accent
       default:
         return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     }
@@ -118,7 +119,7 @@ class _ProgramDetailSheetState extends ConsumerState<ProgramDetailSheet> {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final categoryColor = _getCategoryColor(program.category, isDark);
 
     return DraggableScrollableSheet(

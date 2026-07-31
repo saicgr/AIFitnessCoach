@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../glass_back_button.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -90,7 +91,7 @@ class _SeniorNavItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final color = isSelected
-        ? AppColors.cyan
+        ? context.accentColor
         : (isDark ? const Color(0xFF666666) : const Color(0xFF999999));
 
     return Expanded(
@@ -107,7 +108,7 @@ class _SeniorNavItem extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.cyan.withValues(alpha: 0.15)
+                        ? context.accentColor.withValues(alpha: 0.15)
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(16),
                   ),

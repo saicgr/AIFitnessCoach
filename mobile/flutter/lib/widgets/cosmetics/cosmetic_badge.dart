@@ -47,7 +47,7 @@ class CosmeticBadgePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = cosmetic.color ?? Colors.amber;
+    final primary = cosmetic.color ?? Colors.amber; // accent-allowlist: cosmetic rarity color
     final secondary = cosmetic.gradient ?? primary;
 
     final pill = Container(

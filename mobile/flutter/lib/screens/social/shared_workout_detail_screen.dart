@@ -13,6 +13,7 @@ import '../../widgets/app_snackbar.dart';
 import 'widgets/schedule_workout_dialog.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Full-screen detail view for a shared/completed workout from the social feed.
 ///
 /// Built entirely from [activityData] — no backend fetch needed since UserB
@@ -104,7 +105,7 @@ class _SharedWorkoutDetailScreenState
                   children: [
                     CircleAvatar(
                       radius: 14,
-                      backgroundColor: AppColors.orange.withValues(alpha: 0.2),
+                      backgroundColor: context.accentColor.withValues(alpha: 0.2),
                       backgroundImage: widget.posterAvatar != null
                           ? NetworkImage(widget.posterAvatar!)
                           : null,
@@ -113,10 +114,10 @@ class _SharedWorkoutDetailScreenState
                               widget.posterName.isNotEmpty
                                   ? widget.posterName[0].toUpperCase()
                                   : '?',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.orange,
+                                color: context.accentColor,
                               ),
                             )
                           : null,
@@ -283,7 +284,7 @@ class _SharedWorkoutDetailScreenState
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
+                      backgroundColor: context.accentColor,
                       foregroundColor: Colors.white,
                       elevation: 2,
                       shape: RoundedRectangleBorder(
@@ -304,19 +305,19 @@ class _SharedWorkoutDetailScreenState
                     icon: Icon(
                       Icons.calendar_month_rounded,
                       size: 20,
-                      color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
+                      color: isDark ? context.accentColor : AppColorsLight.textPrimary,
                     ),
                     label: Text(
                       AppLocalizations.of(context).sharedWorkoutDetailScheduleForLater,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.cyan : AppColorsLight.textPrimary,
+                        color: isDark ? context.accentColor : AppColorsLight.textPrimary,
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
-                        color: (isDark ? AppColors.cyan : AppColorsLight.textPrimary)
+                        color: (isDark ? context.accentColor : AppColorsLight.textPrimary)
                             .withValues(alpha: 0.5),
                       ),
                       shape: RoundedRectangleBorder(
@@ -450,7 +451,7 @@ class _StatChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppColors.cyan),
+          Icon(icon, size: 16, color: context.accentColor),
           const SizedBox(width: 6),
           Text(
             label,
@@ -514,16 +515,16 @@ class _ExerciseTile extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: AppColors.cyan.withValues(alpha: 0.15),
+              color: context.accentColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 '${index + 1}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
             ),

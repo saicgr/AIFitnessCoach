@@ -32,7 +32,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
                 colors: [
-                  AppColors.purple.withOpacity(0.08),
+                  context.accentColor.withOpacity(0.08),
                   Colors.transparent,
                 ],
               ),
@@ -47,7 +47,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                       height: 48,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [AppColors.purple, AppColors.cyan],
+                          colors: [context.accentColor, context.accentColor],
                         ),
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -76,7 +76,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: AppColors.cyan.withOpacity(0.2),
+                                  color: context.accentColor.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -84,7 +84,7 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.cyan,
+                                    color: context.accentColor,
                                   ),
                                 ),
                               ),
@@ -129,13 +129,13 @@ extension _GuestHomeScreenStateUI on _GuestHomeScreenState {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.touch_app, size: 16, color: AppColors.purple),
+                      Icon(Icons.touch_app, size: 16, color: context.accentColor),
                       const SizedBox(width: 6),
                       Text(
                         AppLocalizations.of(context).guestHomeScreenTapToTryAi,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.purple,
+                          color: context.accentColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

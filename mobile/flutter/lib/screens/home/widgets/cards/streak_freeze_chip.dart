@@ -24,6 +24,7 @@ import '../../../../data/providers/streak_freeze_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/freeze_earned_dialog.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 class StreakFreezeChip extends ConsumerStatefulWidget {
   const StreakFreezeChip({super.key});
@@ -134,7 +135,7 @@ class _StreakFreezeChipState extends ConsumerState<StreakFreezeChip> {
                   minHeight: 4,
                   backgroundColor: c.textSecondary.withValues(alpha: 0.15),
                   valueColor:
-                      const AlwaysStoppedAnimation<Color>(Color(0xFF4FC3F7)),
+                      AlwaysStoppedAnimation<Color>(context.accentColor),
                 ),
               ),
             ],

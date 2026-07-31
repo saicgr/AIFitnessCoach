@@ -83,12 +83,12 @@ extension _QuizFastingStateUI on _QuizFastingState {
             decoration: BoxDecoration(
               color: isValid
                   ? t.cardFill
-                  : AppColors.error.withValues(alpha: 0.15),
+                  : AppColors.error.withValues(alpha: 0.15),  // accent-allowlist: error/destructive - must stay red
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isValid
                     ? t.borderDefault
-                    : AppColors.error.withValues(alpha: 0.3),
+                    : AppColors.error.withValues(alpha: 0.3),  // accent-allowlist: error/destructive - must stay red
               ),
             ),
             child: Column(
@@ -100,7 +100,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                       isValid ? Icons.restaurant_menu : Icons.warning_amber_rounded,
                       color: isValid
                           ? t.textPrimary
-                          : AppColors.error,
+                          : AppColors.error,  // accent-allowlist: error/destructive - must stay red
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -114,7 +114,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                           fontWeight: FontWeight.w600,
                           color: isValid
                               ? t.textPrimary
-                              : AppColors.error,
+                              : AppColors.error,  // accent-allowlist: error/destructive - must stay red
                         ),
                       ),
                     ),

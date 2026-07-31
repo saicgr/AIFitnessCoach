@@ -193,17 +193,17 @@ class _PreviousWorkoutsSheet extends ConsumerWidget {
     final Color statusColor;
     final IconData statusIcon;
     if (method == 'tracked') {
-      statusColor = Colors.green;
+      statusColor = Colors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
       statusIcon = Icons.check_circle;
     } else if (method == 'marked_done') {
-      statusColor = Colors.orange;
+      statusColor = Colors.orange;  // accent-allowlist: warning severity
       statusIcon = Icons.check_circle_outline;
     } else if (method == 'quit_early') {
       statusColor = Colors.grey;
       statusIcon = Icons.remove_circle_outline;
     } else {
       // Legacy data or unknown
-      statusColor = Colors.green;
+      statusColor = Colors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
       statusIcon = Icons.check_circle;
     }
 

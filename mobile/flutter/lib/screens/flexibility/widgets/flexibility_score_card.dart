@@ -130,7 +130,7 @@ class FlexibilityScoreCard extends StatelessWidget {
                   Icon(
                     Icons.trending_up,
                     size: 18,
-                    color: Colors.amber.shade700,
+                    color: Colors.amber.shade700, // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -209,22 +209,22 @@ class FlexibilityScoreCard extends StatelessWidget {
   }
 
   Color _getScoreColor(double score) {
-    if (score >= 75) return Colors.green;
-    if (score >= 50) return Colors.lightGreen;
-    if (score >= 25) return Colors.amber;
-    return Colors.red;
+    if (score >= 75) return Colors.green; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
+    if (score >= 50) return Colors.lightGreen; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
+    if (score >= 25) return Colors.amber; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
+    return Colors.red; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
   }
 
   Color _getRatingColor(String rating) {
     switch (rating.toLowerCase()) {
       case 'excellent':
-        return Colors.green;
+        return Colors.green; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'good':
-        return Colors.lightGreen;
+        return Colors.lightGreen; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'fair':
-        return Colors.amber;
+        return Colors.amber; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'poor':
-        return Colors.red;
+        return Colors.red; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       default:
         return Colors.grey;
     }

@@ -330,7 +330,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).merchClaimsKeepIt)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: destructive cancel-reward action -- error semantic
             child: Text(AppLocalizations.of(context).merchClaimsCancelReward),
           ),
         ],
@@ -467,11 +467,11 @@ class _MerchClaimCard extends StatelessWidget {
     final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final statusColor = switch (claim.status) {
-      'pending_address' => Colors.amber,
-      'awaiting_outreach' => Colors.lightBlue,
-      'address_submitted' => Colors.lightBlue,
-      'shipped' => Colors.blue,
-      'delivered' => AppColors.green,
+      'pending_address' => Colors.amber,  // accent-allowlist: claim status lifecycle legend colour -- pending
+      'awaiting_outreach' => Colors.lightBlue,  // accent-allowlist: claim status lifecycle legend colour -- awaiting outreach
+      'address_submitted' => Colors.lightBlue,  // accent-allowlist: claim status lifecycle legend colour -- address submitted
+      'shipped' => Colors.blue,  // accent-allowlist: claim status lifecycle legend colour -- shipped
+      'delivered' => AppColors.green,  // accent-allowlist: claim status lifecycle legend colour -- delivered/success
       'cancelled' => Colors.grey,
       _ => textMuted,
     };
@@ -482,7 +482,7 @@ class _MerchClaimCard extends StatelessWidget {
         color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: claim.isPending ? Colors.amber.withValues(alpha: 0.5) : border,
+          color: claim.isPending ? Colors.amber.withValues(alpha: 0.5) : border,  // accent-allowlist: pending-status border framing, matches status legend
           width: claim.isPending ? 1.5 : 1,
         ),
       ),
@@ -544,13 +544,13 @@ class _MerchClaimCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.lightBlue.withValues(alpha: 0.1),
+                color: Colors.lightBlue.withValues(alpha: 0.1),  // accent-allowlist: awaiting-outreach notice banner, matches status legend colour
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.lightBlue.withValues(alpha: 0.3)),
+                border: Border.all(color: Colors.lightBlue.withValues(alpha: 0.3)),  // accent-allowlist: awaiting-outreach notice banner, matches status legend colour
               ),
               child: Row(
                 children: [
-                  Icon(Icons.mail_outline, size: 18, color: Colors.lightBlue.shade300),
+                  Icon(Icons.mail_outline, size: 18, color: Colors.lightBlue.shade300),  // accent-allowlist: awaiting-outreach notice banner, matches status legend colour
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -579,7 +579,7 @@ class _MerchClaimCard extends StatelessWidget {
               icon: const Icon(Icons.check_circle_outline, size: 18),
               label: Text(AppLocalizations.of(context).merchClaimsAcceptReward),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.amber,
+                backgroundColor: Colors.amber,  // accent-allowlist: accept-reward button, matches pending status legend colour
                 foregroundColor: Colors.black,
               ),
             ),

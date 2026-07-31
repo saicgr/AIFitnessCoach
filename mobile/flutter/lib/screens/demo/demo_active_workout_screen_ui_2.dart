@@ -29,13 +29,13 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.2),
+                  color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.celebration,
                   size: 60,
-                  color: AppColors.success,
+                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ).animate().scale(duration: 500.ms, curve: Curves.elasticOut),
 
@@ -68,19 +68,19 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                           Icons.timer,
                           _formatDuration(_workoutSeconds),
                           'Duration',
-                          AppColors.cyan,
+                          context.accentColor,
                         ),
                         _buildCompletionStat(
                           Icons.fitness_center,
                           '$_totalSetsCompleted',
                           'Sets',
-                          AppColors.purple,
+                          context.accentColor,
                         ),
                         _buildCompletionStat(
                           Icons.repeat,
                           '$_totalRepsCompleted',
                           'Reps',
-                          AppColors.orange,
+                          context.accentColor,
                         ),
                       ],
                     ),
@@ -92,7 +92,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                           Icons.check_circle,
                           '${widget.exercises.length}',
                           'Exercises',
-                          AppColors.success,
+                          AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                         ),
                       ],
                     ),
@@ -108,15 +108,15 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.purple.withOpacity(0.15),
-                      AppColors.cyan.withOpacity(0.1),
+                      context.accentColor.withOpacity(0.15),
+                      context.accentColor.withOpacity(0.1),
                     ],
                     begin: AlignmentDirectional.topStart,
                     end: AlignmentDirectional.bottomEnd,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.purple.withOpacity(0.3),
+                    color: context.accentColor.withOpacity(0.3),
                   ),
                 ),
                 child: Column(
@@ -127,12 +127,12 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.purple.withOpacity(0.2),
+                            color: context.accentColor.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.auto_awesome,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                             size: 20,
                           ),
                         ),
@@ -142,7 +142,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.purple,
+                            color: context.accentColor,
                           ),
                         ),
                       ],
@@ -177,18 +177,18 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.cyan.withOpacity(0.15),
+                      context.accentColor.withOpacity(0.15),
                       AppColors.teal.withOpacity(0.1),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: AppColors.cyan.withOpacity(0.3),
+                    color: context.accentColor.withOpacity(0.3),
                   ),
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.rocket_launch, color: AppColors.cyan, size: 32),
+                    Icon(Icons.rocket_launch, color: context.accentColor, size: 32),
                     const SizedBox(height: 12),
                     Text(
                       AppLocalizations.of(context).demoActiveWorkoutReadyForTheFull,
@@ -221,7 +221,7 @@ extension _DemoActiveWorkoutScreenStateUI2 on _DemoActiveWorkoutScreenState {
                 child: ElevatedButton(
                   onPressed: () => context.go('/pre-auth-quiz'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),

@@ -88,9 +88,9 @@ class StatTrend {
       Theme.of(c).brightness == Brightness.dark;
 
   static Color _success(BuildContext c) =>
-      _isDark(c) ? AppColors.success : AppColorsLight.success;
+      _isDark(c) ? AppColors.success : AppColorsLight.success; // accent-allowlist: success/error semantic trend color, must stay green/red regardless of accent
   static Color _error(BuildContext c) =>
-      _isDark(c) ? AppColors.error : AppColorsLight.error;
+      _isDark(c) ? AppColors.error : AppColorsLight.error; // accent-allowlist: success/error semantic trend color, must stay green/red regardless of accent
   static Color _muted(BuildContext c) =>
       _isDark(c) ? AppColors.textMuted : AppColorsLight.textMuted;
 

@@ -67,7 +67,7 @@ class StrainVolumeChart extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: Colors.red.withValues(alpha: 0.1), // accent-allowlist: overload/risk severity color (red), chart threshold indicator
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -76,7 +76,7 @@ class StrainVolumeChart extends StatelessWidget {
                       Icon(
                         Icons.warning_amber,
                         size: 14,
-                        color: Colors.red.shade700,
+                        color: Colors.red.shade700, // accent-allowlist: overload/risk severity color (red), chart threshold indicator
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -84,7 +84,7 @@ class StrainVolumeChart extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.red.shade700,
+                          color: Colors.red.shade700, // accent-allowlist: overload/risk severity color (red), chart threshold indicator
                         ),
                       ),
                     ],
@@ -122,7 +122,7 @@ class StrainVolumeChart extends StatelessWidget {
                               TextSpan(
                                 text: '\n+${weekData.percentChange?.toStringAsFixed(0) ?? 0}% increase',
                                 style: TextStyle(
-                                  color: Colors.red.shade300,
+                                  color: Colors.red.shade300, // accent-allowlist: overload/risk severity color (red), chart threshold indicator
                                   fontSize: 11,
                                 ),
                               ),
@@ -221,7 +221,7 @@ class StrainVolumeChart extends StatelessWidget {
                         return FlDotCirclePainter(
                           radius: weekData.isDangerousIncrease ? 6 : 4,
                           color: weekData.isDangerousIncrease
-                              ? Colors.red
+                              ? Colors.red // accent-allowlist: overload/risk severity color (red), chart threshold indicator
                               : chartColor,
                           strokeWidth: weekData.isDangerousIncrease ? 2 : 0,
                           strokeColor: Colors.white,
@@ -252,7 +252,7 @@ class StrainVolumeChart extends StatelessWidget {
             children: [
               _buildLegendItem(AppLocalizations.of(context).volumeChartVolume, chartColor, colorScheme),
               const SizedBox(width: 20),
-              _buildLegendItem(AppLocalizations.of(context).volumeChartDangerousIncrease, Colors.red, colorScheme),
+              _buildLegendItem(AppLocalizations.of(context).volumeChartDangerousIncrease, Colors.red, colorScheme), // accent-allowlist: overload/risk severity color (red), chart threshold indicator
             ],
           ),
           const SizedBox(height: 12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Selectable filter chip widget used for category selection
 class FilterChipWidget extends StatelessWidget {
@@ -19,7 +20,7 @@ class FilterChipWidget extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 

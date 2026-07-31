@@ -178,7 +178,7 @@ class _PbTile extends StatelessWidget {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          Color(0x52FBBF24), // gold @ 32%
+                          Color(0x52FBBF24), // gold @ 32% // accent-allowlist: PR celebration gold
                           Colors.transparent,
                         ],
                         stops: [0.0, 0.72],

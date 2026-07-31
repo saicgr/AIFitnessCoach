@@ -10,6 +10,7 @@ import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Settings section for connecting a BLE heart rate monitor.
 ///
 /// Follows the same card pattern as [HealthSyncSection].
@@ -64,10 +65,10 @@ class _BleHrSettingsCard extends ConsumerWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.bluetooth, size: 20, color: AppColors.cyan),
+                  child: Icon(Icons.bluetooth, size: 20, color: context.accentColor),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -93,7 +94,7 @@ class _BleHrSettingsCard extends ConsumerWidget {
                     HapticFeedback.lightImpact();
                     ref.read(bleHrEnabledProvider.notifier).setEnabled(val);
                   },
-                  activeTrackColor: AppColors.cyan,
+                  activeTrackColor: context.accentColor,
                 ),
               ],
             ),
@@ -172,7 +173,7 @@ class _BleHrSettingsCard extends ConsumerWidget {
                         onChanged: (val) {
                           ref.read(bleHrAutoConnectProvider.notifier).setEnabled(val);
                         },
-                        activeTrackColor: AppColors.cyan,
+                        activeTrackColor: context.accentColor,
                       ),
                     ],
                   ),
@@ -233,10 +234,10 @@ class _ConnectionStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (state) {
       BleHrConnectionState.disconnected => ('Not connected', Colors.grey),
-      BleHrConnectionState.scanning => ('Scanning...', Colors.orange),
-      BleHrConnectionState.connecting => ('Connecting...', Colors.orange),
-      BleHrConnectionState.connected => ('Connected${deviceName != null ? ' - $deviceName' : ''}', Colors.green),
-      BleHrConnectionState.error => ('Error', Colors.red),
+      BleHrConnectionState.scanning => ('Scanning...', Colors.orange),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
+      BleHrConnectionState.connecting => ('Connecting...', Colors.orange),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
+      BleHrConnectionState.connected => ('Connected${deviceName != null ? ' - $deviceName' : ''}', Colors.green),  // accent-allowlist: success/positive state - must stay green regardless of accent
+      BleHrConnectionState.error => ('Error', Colors.red),  // accent-allowlist: error/destructive - must stay red
     };
 
     return Row(
@@ -271,13 +272,13 @@ class _DeviceInfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.08),
+        color: Colors.green.withValues(alpha: 0.08),  // accent-allowlist: success/positive state - must stay green regardless of accent
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),  // accent-allowlist: success/positive state - must stay green regardless of accent
       ),
       child: Row(
         children: [
-          const Icon(Icons.bluetooth_connected, size: 20, color: Colors.green),
+          const Icon(Icons.bluetooth_connected, size: 20, color: Colors.green),  // accent-allowlist: success/positive state - must stay green regardless of accent
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -299,7 +300,7 @@ class _DeviceInfoRow extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.check_circle, size: 20, color: Colors.green),
+          const Icon(Icons.check_circle, size: 20, color: Colors.green),  // accent-allowlist: success/positive state - must stay green regardless of accent
         ],
       ),
     );
@@ -336,11 +337,11 @@ class _ActionButton extends StatelessWidget {
     final Color bg;
     final Color fg;
     if (isDestructive) {
-      bg = Colors.red.withValues(alpha: 0.1);
-      fg = Colors.red;
+      bg = Colors.red.withValues(alpha: 0.1);  // accent-allowlist: error/destructive - must stay red
+      fg = Colors.red;  // accent-allowlist: error/destructive - must stay red
     } else if (isPrimary) {
-      bg = AppColors.cyan.withValues(alpha: 0.15);
-      fg = AppColors.cyan;
+      bg = context.accentColor.withValues(alpha: 0.15);
+      fg = context.accentColor;
     } else {
       bg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06);
       fg = isDark ? Colors.white70 : Colors.black54;
@@ -460,7 +461,7 @@ class _ScanDevicesSheetState extends ConsumerState<_ScanDevicesSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Row(
                 children: [
-                  Icon(Icons.bluetooth_searching, color: AppColors.cyan),
+                  Icon(Icons.bluetooth_searching, color: context.accentColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -474,12 +475,12 @@ class _ScanDevicesSheetState extends ConsumerState<_ScanDevicesSheet> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     )
                   else
                     IconButton(
-                      icon: Icon(Icons.refresh, color: AppColors.cyan),
+                      icon: Icon(Icons.refresh, color: context.accentColor),
                       onPressed: _startScan,
                       tooltip: AppLocalizations.of(context).bleHeartRateRescan,
                     ),
@@ -495,7 +496,7 @@ class _ScanDevicesSheetState extends ConsumerState<_ScanDevicesSheet> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (_scanning) ...[
-                            CircularProgressIndicator(color: AppColors.cyan),
+                            CircularProgressIndicator(color: context.accentColor),
                             const SizedBox(height: 16),
                             Text(AppLocalizations.of(context).bleHeartRateSearchingForDevices, style: TextStyle(color: textMuted)),
                           ] else ...[
@@ -575,7 +576,7 @@ class _DeviceTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.bluetooth, size: 24, color: AppColors.cyan),
+          Icon(Icons.bluetooth, size: 24, color: context.accentColor),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -607,14 +608,14 @@ class _DeviceTile extends StatelessWidget {
             SizedBox(
               width: 24,
               height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.cyan),
+              child: CircularProgressIndicator(strokeWidth: 2, color: context.accentColor),
             )
           else
             TextButton(
               onPressed: onConnect,
               style: TextButton.styleFrom(
-                backgroundColor: AppColors.cyan.withValues(alpha: 0.15),
-                foregroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor.withValues(alpha: 0.15),
+                foregroundColor: context.accentColor,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
@@ -641,7 +642,7 @@ class _RssiBars extends StatelessWidget {
             : rssi >= -80
                 ? 2
                 : 1;
-    final color = bars >= 3 ? Colors.green : (bars >= 2 ? Colors.orange : Colors.red);
+    final color = bars >= 3 ? Colors.green : (bars >= 2 ? Colors.orange : Colors.red);  // accent-allowlist: error/destructive - must stay red
 
     return Row(
       mainAxisSize: MainAxisSize.min,

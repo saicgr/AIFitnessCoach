@@ -12,6 +12,11 @@ enum BannerType {
   wrapped,
   healthCoaching,  // Phase C3: proactive readiness briefing / anomaly / activity nudge
   streakAtRisk,    // F3.2 streak-at-risk pre-warning / last-chance
+  calibration,     // "Coach is learning you" — folded in from the standalone
+                    // CalibrationBanner (E2E #150) so at most one status/promo
+                    // card occupies the fold above real content.
+  ratingPrompt,    // In-app rating prompt banner — folded in from the
+                    // standalone RatingPromptBanner (E2E #150).
 }
 
 /// Unified data model for all home screen banner cards.

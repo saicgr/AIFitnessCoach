@@ -2,11 +2,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/services/haptic_service.dart';
 import '../../../../../l10n/generated/app_localizations.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 
 class FreshnessDecayCard extends ConsumerStatefulWidget {
   final BeastThemeData theme;
@@ -56,17 +56,17 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
           Row(
             children: [
               Text(AppLocalizations.of(context)!.freshnessDecayCardK(_freshnessDecay.toStringAsFixed(2)),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.orange, fontFamily: 'monospace')),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.accentColor, fontFamily: 'monospace')),
               const Spacer(),
               Text(AppLocalizations.of(context).freshnessDecayCardRange0100, style: TextStyle(fontSize: 11, color: t.textMuted)),
             ],
           ),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.orange,
-              inactiveTrackColor: AppColors.orange.withValues(alpha: 0.2),
-              thumbColor: AppColors.orange,
-              overlayColor: AppColors.orange.withValues(alpha: 0.1),
+              activeTrackColor: context.accentColor,
+              inactiveTrackColor: context.accentColor.withValues(alpha: 0.2),
+              thumbColor: context.accentColor,
+              overlayColor: context.accentColor.withValues(alpha: 0.1),
               trackHeight: 4,
             ),
             child: Slider(
@@ -107,7 +107,7 @@ class _FreshnessDecayCardState extends ConsumerState<FreshnessDecayCard> {
                               style: TextStyle(fontSize: 12, color: t.textPrimary, fontFamily: 'monospace')),
                         ),
                         Text('freshness: ${(1 - freshness).toStringAsFixed(3)}',
-                            style: TextStyle(fontSize: 12, color: AppColors.orange, fontFamily: 'monospace', fontWeight: FontWeight.w600)),
+                            style: TextStyle(fontSize: 12, color: context.accentColor, fontFamily: 'monospace', fontWeight: FontWeight.w600)),
                       ],
                     ),
                   );

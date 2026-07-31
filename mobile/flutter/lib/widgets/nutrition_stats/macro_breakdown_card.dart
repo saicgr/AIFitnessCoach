@@ -83,9 +83,9 @@ class MacroBreakdownCard extends StatelessWidget {
           final fatPct =
               totalCals > 0 ? (macros.fat * 9 / totalCals * 100) : 0.0;
 
-          const proteinColor = Color(0xFF009688);
-          const carbsColor = Color(0xFF42A5F5);
-          const fatColor = Color(0xFFFF9800);
+          const proteinColor = Color(0xFF009688); // accent-allowlist: macro identity color (protein/carbs/fat)
+          const carbsColor = Color(0xFF42A5F5); // accent-allowlist: macro identity color (protein/carbs/fat)
+          const fatColor = Color(0xFFFF9800); // accent-allowlist: macro identity color (protein/carbs/fat)
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

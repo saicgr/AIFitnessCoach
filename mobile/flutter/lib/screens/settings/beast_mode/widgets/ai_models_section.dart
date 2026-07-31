@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../data/providers/device_capability_provider.dart';
 import '../../../../data/providers/model_download_provider.dart';
 import '../../../../services/device_capability_service.dart';
@@ -11,6 +10,7 @@ import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// On-device AI models management — device capability, model library,
 /// download/delete, and HuggingFace token input.
 class AiModelsSection extends ConsumerStatefulWidget {
@@ -123,9 +123,9 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
             const SizedBox(height: 12),
             LinearProgressIndicator(
               value: downloadState.progress,
-              backgroundColor: AppColors.orange.withValues(alpha: 0.15),
+              backgroundColor: context.accentColor.withValues(alpha: 0.15),
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.orange),
+                  AlwaysStoppedAnimation<Color>(context.accentColor),
             ),
             const SizedBox(height: 6),
             Row(
@@ -142,7 +142,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                   child: Text(AppLocalizations.of(context).buttonCancel,
                       style: TextStyle(
                           fontSize: 11,
-                          color: Colors.red,
+                          color: Colors.red,  // accent-allowlist: error/destructive - must stay red
                           fontWeight: FontWeight.w600)),
                 ),
               ],
@@ -169,8 +169,8 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
+                    foregroundColor: Colors.red,  // accent-allowlist: error/destructive - must stay red
+                    side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),  // accent-allowlist: error/destructive - must stay red
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
@@ -190,7 +190,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                     style: const TextStyle(fontSize: 12),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
@@ -204,7 +204,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
           if (downloadState.error != null) ...[
             const SizedBox(height: 8),
             Text(downloadState.error!,
-                style: const TextStyle(color: Colors.red, fontSize: 11)),
+                style: const TextStyle(color: Colors.red, fontSize: 11)),  // accent-allowlist: error/destructive - must stay red
           ],
 
           const SizedBox(height: 16),
@@ -226,10 +226,10 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
     return capAsync.when(
       data: (cap) {
         final color = switch (cap) {
-          DeviceCapability.incompatible => Colors.red,
-          DeviceCapability.basic => Colors.amber,
-          DeviceCapability.standard => Colors.blue,
-          DeviceCapability.optimal => Colors.green,
+          DeviceCapability.incompatible => Colors.red,  // accent-allowlist: error/destructive - must stay red
+          DeviceCapability.basic => Colors.amber,  // accent-allowlist: warning severity - must stay amber regardless of accent
+          DeviceCapability.standard => Colors.blue,  // accent-allowlist: informational state - must stay blue regardless of accent
+          DeviceCapability.optimal => Colors.green,  // accent-allowlist: success/positive state - must stay green regardless of accent
         };
 
         return Container(
@@ -302,12 +302,12 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
       error: (_, __) => Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.red.withValues(alpha: 0.1),
+          color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/destructive - must stay red
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.red, size: 18),
+            const Icon(Icons.error_outline, color: Colors.red, size: 18),  // accent-allowlist: error/destructive - must stay red
             const SizedBox(width: 10),
             Text(AppLocalizations.of(context).aiModelsCouldNotDetectDevice,
                 style: TextStyle(fontSize: 12, color: t.textMuted)),
@@ -422,7 +422,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                             style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.orange.shade700)),
+                                color: Colors.orange.shade700)),  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
                       ),
                   ],
                 ),
@@ -454,7 +454,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
               )
             else if (_tokenSaved)
               const Icon(Icons.check_circle_rounded,
-                  color: Colors.green, size: 16),
+                  color: Colors.green, size: 16),  // accent-allowlist: success/positive state - must stay green regardless of accent
           ],
         ),
         const SizedBox(height: 4),
@@ -466,7 +466,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
         if (_tokenSaved) ...[
           Row(
             children: [
-              const Icon(Icons.vpn_key_rounded, color: Colors.green, size: 14),
+              const Icon(Icons.vpn_key_rounded, color: Colors.green, size: 14),  // accent-allowlist: success/positive state - must stay green regardless of accent
               const SizedBox(width: 6),
               Text(AppLocalizations.of(context).aiModelsTokenSavedSecurely,
                   style: TextStyle(
@@ -478,7 +478,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
                 onTap: _clearToken,
                 child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove,
                     style: TextStyle(
-                        color: Colors.red,
+                        color: Colors.red,  // accent-allowlist: error/destructive - must stay red
                         fontSize: 12,
                         fontWeight: FontWeight.w500)),
               ),
@@ -521,7 +521,7 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
             child: ElevatedButton(
               onPressed: _saveToken,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
@@ -542,9 +542,9 @@ class _AiModelsSectionState extends ConsumerState<AiModelsSection> {
             AppLocalizations.of(context).aiModelsGetTokenAtHuggingface,
             style: TextStyle(
               fontSize: 11,
-              color: Colors.blue.shade400,
+              color: Colors.blue.shade400,  // accent-allowlist: informational state - must stay blue regardless of accent
               decoration: TextDecoration.underline,
-              decorationColor: Colors.blue.shade400,
+              decorationColor: Colors.blue.shade400,  // accent-allowlist: informational state - must stay blue regardless of accent
             ),
           ),
         ),
@@ -560,10 +560,10 @@ class _BadgeChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color color = switch (label) {
-      'Recommended' => Colors.green,
-      'Multimodal' => Colors.blue,
-      'Best Quality' => Colors.purple,
-      'Search' => Colors.teal,
+      'Recommended' => Colors.green,  // accent-allowlist: success/positive state - must stay green regardless of accent
+      'Multimodal' => Colors.blue,  // accent-allowlist: informational state - must stay blue regardless of accent
+      'Best Quality' => Colors.purple,  // accent-allowlist: categorical model-quality badge colour (Recommended/Multimodal/Best Quality/Search each need a distinct colour)
+      'Search' => Colors.teal,  // accent-allowlist: categorical model-quality badge colour (Recommended/Multimodal/Best Quality/Search each need a distinct colour)
       _ => Colors.grey,
     };
 

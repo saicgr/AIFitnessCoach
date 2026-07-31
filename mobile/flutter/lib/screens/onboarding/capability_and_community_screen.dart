@@ -30,7 +30,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
   const CapabilityAndCommunityScreen({super.key});
 
   // ── Signature v2
-  static const Color _accent = Color(0xFFF97316);
+  static const Color _accent = Color(0xFFF97316);  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -198,7 +198,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                                 child: _SocialChip(
                                   icon: FontAwesomeIcons.discord,
                                   label: l10n.founderNoteDiscord,
-                                  color: const Color(0xFF5865F2),
+                                  color: const Color(0xFF5865F2),  // accent-allowlist: third-party brand colour, legally fixed (Discord)
                                   onTap: () => _open(AppLinks.discord),
                                 ),
                               ),
@@ -207,7 +207,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                                 child: _SocialChip(
                                   icon: FontAwesomeIcons.instagram,
                                   label: l10n.wrappedShareInstagram,
-                                  color: const Color(0xFFE1306C),
+                                  color: const Color(0xFFE1306C),  // accent-allowlist: third-party brand colour, legally fixed (Instagram)
                                   onTap: () => _open(AppLinks.instagram),
                                 ),
                               ),
@@ -216,7 +216,7 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                                 child: _SocialChip(
                                   icon: FontAwesomeIcons.reddit,
                                   label: 'Reddit',
-                                  color: const Color(0xFFFF4500),
+                                  color: const Color(0xFFFF4500),  // accent-allowlist: third-party brand colour, legally fixed (Reddit)
                                   onTap: () => _open(AppLinks.reddit),
                                 ),
                               ),

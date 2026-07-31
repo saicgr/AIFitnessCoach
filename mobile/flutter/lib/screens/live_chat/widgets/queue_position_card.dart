@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -71,7 +72,7 @@ class QueuePositionCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 56,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   height: 1,
                 ),
               ),
@@ -92,7 +93,7 @@ class QueuePositionCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.cyan.withOpacity(0.1),
+              color: context.accentColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -101,14 +102,14 @@ class QueuePositionCard extends StatelessWidget {
                 Icon(
                   Icons.access_time_rounded,
                   size: 20,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Estimated wait: ~$estimatedWaitMinutes min',
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -140,8 +141,8 @@ class QueuePositionCard extends StatelessWidget {
                 onCancel();
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: BorderSide(color: AppColors.error.withOpacity(0.5)),
+                foregroundColor: AppColors.error, // accent-allowlist: queue error/wait-time warning severity
+                side: BorderSide(color: AppColors.error.withOpacity(0.5)), // accent-allowlist: queue error/wait-time warning severity
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -199,7 +200,7 @@ class _PulsingQueueIndicatorState extends State<_PulsingQueueIndicator>
           return CustomPaint(
             painter: _PulsePainter(
               progress: _controller.value,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
             child: child,
           );
@@ -209,7 +210,7 @@ class _PulsingQueueIndicatorState extends State<_PulsingQueueIndicator>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.cyan,
+              color: context.accentColor,
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -273,10 +274,10 @@ class QueuePositionBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.1),
+        color: AppColors.warning.withOpacity(0.1), // accent-allowlist: queue error/wait-time warning severity
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.warning.withOpacity(0.3),
+          color: AppColors.warning.withOpacity(0.3), // accent-allowlist: queue error/wait-time warning severity
         ),
       ),
       child: Row(
@@ -285,14 +286,14 @@ class QueuePositionBadge extends StatelessWidget {
           Icon(
             Icons.hourglass_empty,
             size: 14,
-            color: AppColors.warning,
+            color: AppColors.warning, // accent-allowlist: queue error/wait-time warning severity
           ),
           const SizedBox(width: 6),
           Text(
             '#$position in queue',
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.warning,
+              color: AppColors.warning, // accent-allowlist: queue error/wait-time warning severity
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -339,7 +340,7 @@ class _WaitingAnimationState extends State<WaitingAnimation>
           child: Icon(
             Icons.hourglass_empty,
             size: 24,
-            color: AppColors.warning,
+            color: AppColors.warning, // accent-allowlist: queue error/wait-time warning severity
           ),
         );
       },

@@ -14,6 +14,8 @@ import '../../../../widgets/main_shell.dart';
 import '../edit_program_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../data/providers/root_messenger.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Settings icon button for the home screen header
 /// Navigates directly to settings screen
 class SettingsButton extends StatelessWidget {
@@ -85,7 +87,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.cyan.withOpacity(0.3),
+              color: context.accentColor.withOpacity(0.3),
             ),
           ),
           child: Row(
@@ -97,14 +99,14 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                   ),
                 )
               else
                 Icon(
                   currentProgramName != null ? Icons.fitness_center : Icons.tune,
                   size: 14,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               const SizedBox(width: 6),
               Flexible(
@@ -113,7 +115,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _isRegenerating ? textMuted : AppColors.cyan,
+                    color: _isRegenerating ? textMuted : context.accentColor,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -124,7 +126,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                 Icon(
                   Icons.arrow_drop_down,
                   size: 16,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ],
             ],
@@ -158,7 +160,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    Icon(Icons.fitness_center, color: AppColors.cyan, size: 24),
+                    Icon(Icons.fitness_center, color: context.accentColor, size: 24),
                     const SizedBox(width: 12),
                     Text(
                       AppLocalizations.of(context).programMenuButtonProgramOptions,
@@ -198,21 +200,21 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.orange.withOpacity(0.1),
+                        color: context.accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.orange.withOpacity(0.3)),
+                        border: Border.all(color: context.accentColor.withOpacity(0.3)),
                       ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.orange.withOpacity(0.15),
+                              color: context.accentColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.refresh,
-                              color: AppColors.orange,
+                              color: context.accentColor,
                               size: 22,
                             ),
                           ),
@@ -268,7 +270,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withOpacity(0.1),
+                        color: context.accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: cardBorder),
                       ),
@@ -277,12 +279,12 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.purple.withOpacity(0.15),
+                              color: context.accentColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.tune,
-                              color: AppColors.purple,
+                              color: context.accentColor,
                               size: 22,
                             ),
                           ),
@@ -339,7 +341,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.1),
+                        color: AppColors.success.withOpacity(0.1),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: cardBorder),
                       ),
@@ -348,12 +350,12 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.success.withOpacity(0.15),
+                              color: AppColors.success.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.visibility_outlined,
-                              color: AppColors.success,
+                              color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                               size: 22,
                             ),
                           ),
@@ -412,7 +414,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.cyan.withOpacity(0.1),
+                        color: context.accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: cardBorder),
                       ),
@@ -421,12 +423,12 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.cyan.withOpacity(0.15),
+                              color: context.accentColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Icon(
                               Icons.explore,
-                              color: AppColors.cyan,
+                              color: context.accentColor,
                               size: 22,
                             ),
                           ),
@@ -486,7 +488,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       title: AppLocalizations.of(context).programMenuButtonRegenerateWorkouts,
       message: AppLocalizations.of(context).programMenuButtonThisWillDeleteYour,
       confirmText: 'Regenerate',
-      confirmColor: AppColors.orange,
+      confirmColor: context.accentColor,
       icon: Icons.refresh_rounded,
     );
 
@@ -501,10 +503,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       if (userId == null) {
         if (mounted) {
           setState(() => _isRegenerating = false);
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).programMenuButtonPleaseLogInTo),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -518,10 +520,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       if (result['success'] != true) {
         if (mounted) {
           setState(() => _isRegenerating = false);
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text(result['message'] ?? AppLocalizations.of(context).programMenuButtonFailedToClearWorkouts),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -559,10 +561,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
 
         if (progress.status == WorkoutGenerationStatus.error) {
           setState(() => _isRegenerating = false);
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Text('Error: ${progress.message}'),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -585,7 +587,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
         ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          rootSnackBar(
             SnackBar(
               content: Row(
                 children: [
@@ -598,7 +600,7 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
                   ),
                 ],
               ),
-              backgroundColor: AppColors.success,
+              backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -607,10 +609,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
     } catch (e) {
       if (mounted) {
         setState(() => _isRegenerating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -633,10 +635,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).programMenuButtonProgramUpdatedYourNew),
-            backgroundColor: AppColors.success,
+            backgroundColor: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           ),
         );
       }
@@ -657,7 +659,7 @@ class CustomizeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final purple = context.accentColor;
     final bgColor = purple.withOpacity(isDark ? 0.15 : 0.12);
 
     return GestureDetector(
@@ -728,7 +730,7 @@ class MySpaceButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.purple.withOpacity(0.3),
+              color: context.accentColor.withOpacity(0.3),
             ),
           ),
           child: Row(
@@ -737,7 +739,7 @@ class MySpaceButton extends StatelessWidget {
               Icon(
                 Icons.dashboard_customize_outlined,
                 size: 14,
-                color: AppColors.purple,
+                color: context.accentColor,
               ),
               const SizedBox(width: 6),
               Text(
@@ -745,7 +747,7 @@ class MySpaceButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                 ),
               ),
             ],

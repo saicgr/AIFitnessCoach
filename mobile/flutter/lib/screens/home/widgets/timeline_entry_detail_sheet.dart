@@ -122,9 +122,9 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
                   TextButton.icon(
                     onPressed: () => _onDelete(context, ref),
                     icon: Icon(Icons.delete_outline,
-                        size: 18, color: Colors.redAccent),
+                        size: 18, color: Colors.redAccent),  // accent-allowlist: error/destructive -- must stay red
                     label: Text(AppLocalizations.of(context).buttonDelete,
-                        style: TextStyle(color: Colors.redAccent)),
+                        style: TextStyle(color: Colors.redAccent)),  // accent-allowlist: error/destructive -- must stay red
                   ),
               ],
             ),

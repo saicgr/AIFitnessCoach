@@ -61,15 +61,15 @@ enum MuscleStatus {
   Color get color {
     switch (this) {
       case MuscleStatus.needsWork:
-        return const Color(0xFF3B82F6);
+        return const Color(0xFF3B82F6); // accent-allowlist: muscle recovery status severity scale (needsWork/recovering/ready/needsRest/overtrained)
       case MuscleStatus.recovering:
-        return const Color(0xFFEAB308);
+        return const Color(0xFFEAB308); // accent-allowlist: muscle recovery status severity scale (needsWork/recovering/ready/needsRest/overtrained)
       case MuscleStatus.ready:
-        return const Color(0xFF22C55E);
+        return const Color(0xFF22C55E); // accent-allowlist: muscle recovery status severity scale (needsWork/recovering/ready/needsRest/overtrained)
       case MuscleStatus.needsRest:
-        return const Color(0xFFF97316);
+        return const Color(0xFFF97316); // accent-allowlist: muscle recovery status severity scale (needsWork/recovering/ready/needsRest/overtrained)
       case MuscleStatus.overtrained:
-        return const Color(0xFFEF4444);
+        return const Color(0xFFEF4444); // accent-allowlist: muscle recovery status severity scale (needsWork/recovering/ready/needsRest/overtrained)
     }
   }
 

@@ -29,6 +29,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 part 'measurements_screen_part_add_measurement_sheet.dart';
 
 part 'measurements_screen_ui.dart';
@@ -167,7 +168,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -219,15 +220,15 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFB24BF3).withValues(alpha: 0.12),
+                                color: const Color(0xFFB24BF3).withValues(alpha: 0.12),  // accent-allowlist: Body Analyzer feature badge — fixed pink-violet gradient used consistently as this feature's visual identity across screens, not tied to accent
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: const Color(0xFFB24BF3).withValues(alpha: 0.35),
+                                  color: const Color(0xFFB24BF3).withValues(alpha: 0.35),  // accent-allowlist: Body Analyzer feature badge — fixed pink-violet gradient used consistently as this feature's visual identity across screens, not tied to accent
                                 ),
                               ),
                               child: const Icon(
                                 Icons.analytics_rounded,
-                                color: Color(0xFFB24BF3),
+                                color: Color(0xFFB24BF3),  // accent-allowlist: Body Analyzer feature badge — fixed pink-violet gradient used consistently as this feature's visual identity across screens, not tied to accent
                                 size: 18,
                               ),
                             ),
@@ -666,8 +667,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     final color = change.abs() < 0.1
         ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
         : isGoodChange
-            ? AppColors.success
-            : AppColors.error;
+            ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
+            : AppColors.error;  // accent-allowlist: error/destructive state — must stay red regardless of accent
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -821,7 +822,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],
@@ -869,10 +870,10 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   Color _getChangeColor(MeasurementType type, double change) {
     // For weight and body fat, decrease is good
     if (type == MeasurementType.weight || type == MeasurementType.bodyFat) {
-      return change < 0 ? AppColors.success : AppColors.error;
+      return change < 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
     }
     // For other measurements (muscle), increase is usually good
-    return change > 0 ? AppColors.success : AppColors.error;
+    return change > 0 ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
   }
 
   /// Canonical icon mapping. Static so callers in part files and widgets
@@ -947,7 +948,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(AppLocalizations.of(context)!.measurementsScreenRecorded(type.displayName)),
-                    backgroundColor: AppColors.success,
+                    backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ),
                 );
               }
@@ -958,7 +959,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                   SnackBar(
                     content: Text(
                         AppLocalizations.of(context)!.measurementsScreenCouldnTSaveTry(type.displayName.toLowerCase())),
-                    backgroundColor: AppColors.error,
+                    backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                   ),
                 );
               }

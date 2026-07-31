@@ -248,10 +248,10 @@ class _DifficultyBadge extends StatelessWidget {
   }
 
   Color _getDifficultyColor(int level) {
-    if (level <= 2) return AppColors.green;
+    if (level <= 2) return AppColors.green;  // accent-allowlist: difficulty-tier ramp -- levels 1-2
     if (level <= 4) return AppColors.teal;
-    if (level <= 6) return AppColors.orange;
-    if (level <= 8) return AppColors.coral;
-    return AppColors.purple;
+    if (level <= 6) return AppColors.orange;  // accent-allowlist: difficulty-tier ramp -- levels 5-6
+    if (level <= 8) return AppColors.coral;  // accent-allowlist: difficulty-tier ramp -- levels 7-8
+    return AppColors.purple;  // accent-allowlist: difficulty-tier ramp -- levels 9+
   }
 }

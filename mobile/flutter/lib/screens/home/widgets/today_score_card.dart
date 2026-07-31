@@ -304,7 +304,7 @@ class _RingRow extends ConsumerWidget {
           context.push('/pillar/move');
           break;
         case RingKind.sleep:
-          context.push('/sleep-detail');
+          context.push('/health/sleep');
           break;
         default:
           // Optional rings — no detail screen for v1. Open the day overview
@@ -516,7 +516,7 @@ class _PillarDeltaChip extends ConsumerWidget {
     if (delta == 0) return const SizedBox.shrink();
 
     final isUp = delta > 0;
-    final color = isUp ? const Color(0xFF3FA66B) : const Color(0xFFEC8B2C);
+    final color = isUp ? const Color(0xFF3FA66B) : const Color(0xFFEC8B2C);  // accent-allowlist: score trend delta colour (up/down arrow), reuses the Train/Nourish ring palette convention
     final label = isUp ? '▲${delta.abs()}' : '▼${delta.abs()}';
 
     return Padding(

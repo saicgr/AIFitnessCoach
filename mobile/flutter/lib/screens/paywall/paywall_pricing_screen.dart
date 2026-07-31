@@ -40,7 +40,7 @@ part 'paywall_pricing_screen_part_plan_change_confirmation_dialog.dart';
 
 /// Fixed paywall accent — warm orange (Strava-style).
 /// Research: warm tones outperform cool by 43.9% on mobile (4,100+ A/B tests).
-const _paywallAccent = Color(0xFFFC4C02);
+const _paywallAccent = Color(0xFFFC4C02); // accent-allowlist: deliberate, cited A/B-test-driven paywall brand color — must NOT follow the user's chosen app accent
 // Industry-standard contrast on a brand-fill CTA. Black-on-orange reads
 // bargain; every top fitness paywall (Cal AI, Fastic, Lumen, Centr, Whoop,
 // BetterMe, Noom) uses pure white at weight 700.
@@ -438,7 +438,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.check_circle, color: Colors.green, size: 16),
+                        Icon(Icons.check_circle, color: Colors.green, size: 16), // accent-allowlist: free-trial-included checkmark (success) and destructive cancel action, semantic
                         const SizedBox(width: 6),
                         Text(
                           AppLocalizations.of(
@@ -446,7 +446,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           ).paywallPricing7DayFreeTrial,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.green,
+                            color: Colors.green, // accent-allowlist: free-trial-included checkmark (success) and destructive cancel action, semantic
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -564,7 +564,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     // Badge moved to the Yearly tab pill; keep empty here
                     // so the price doesn't fight a sibling badge.
                     badge: '',
-                    badgeColor: const Color(0xFF16A34A),
+                    badgeColor: const Color(0xFF16A34A), // accent-allowlist: premium-tier badge, matches the green included/positive convention (0xFF16A34A) used elsewhere in this screen
                     accentColor: _paywallAccent,
                     // Anchor: when Yearly is selected, render the full
                     // monthly price as a strikethrough so users perceive
@@ -876,7 +876,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                           AppLocalizations.of(context).buttonCancel,
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.red.shade400,
+                            color: Colors.red.shade400, // accent-allowlist: free-trial-included checkmark (success) and destructive cancel action, semantic
                           ),
                         ),
                       ),
@@ -889,7 +889,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 // where it's reachable but never competes with the CTA.
                 if (!isSubscribed) ...[
                   const SizedBox(height: 8),
-                  const InlineReferralExpander(),
+                  const InlineReferralExpander(accent: _paywallAccent),
                 ],
 
                 const SizedBox(height: 16),
@@ -1247,7 +1247,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
-                                  colors: [Color(0xFFFFB366), _paywallAccent],
+                                  colors: [Color(0xFFFFB366), _paywallAccent], // accent-allowlist: gradient lighter-stop for the fixed paywall accent, same rationale as _paywallAccent above — must NOT follow the app accent
                                 ),
                               ),
                               alignment: Alignment.center,
@@ -1823,7 +1823,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const InlineReferralExpander(),
+                  const InlineReferralExpander(accent: _paywallAccent),
                   const SizedBox(height: 8),
                   // App Store Guideline 3.1.2 + Google Play subscription policy:
                   // auto-renewal AND cancellation terms must be disclosed adjacent to

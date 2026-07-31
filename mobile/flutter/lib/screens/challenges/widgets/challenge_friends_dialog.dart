@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/challenges_service.dart';
 import '../../../data/services/api_client.dart';
 
@@ -68,7 +69,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).challengeFriendsPleaseSelectAtLeast),
-          backgroundColor: Colors.red,
+          backgroundColor: Colors.red, // accent-allowlist: error snackbar, semantic
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -94,7 +95,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('🏆 Challenge sent to ${_selectedFriendIds.length} friend(s)!'),
-            backgroundColor: AppColors.orange,
+            backgroundColor: context.accentColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -107,7 +108,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to send challenges: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red, // accent-allowlist: error snackbar, semantic
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -132,12 +133,12 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.emoji_events, color: AppColors.orange, size: 28),
+                  Icon(Icons.emoji_events, color: context.accentColor, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -153,9 +154,9 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                         const SizedBox(height: 4),
                         Text(
                           widget.workoutName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -175,9 +176,9 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.05),
+                color: context.accentColor.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.orange.withValues(alpha: 0.3)),
+                border: Border.all(color: context.accentColor.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,15 +272,15 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                               : null,
                           secondary: CircleAvatar(
                             radius: 20,
-                            backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                            backgroundColor: context.accentColor.withValues(alpha: 0.2),
                             backgroundImage: friend['avatar_url'] != null
                                 ? NetworkImage(friend['avatar_url'])
                                 : null,
                             child: friend['avatar_url'] == null
                                 ? Text(
                                     (friend['name'] as String)[0].toUpperCase(),
-                                    style: const TextStyle(
-                                      color: AppColors.cyan,
+                                    style: TextStyle(
+                                      color: context.accentColor,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   )
@@ -337,7 +338,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
                     child: ElevatedButton.icon(
                       onPressed: _isSending ? null : _sendChallenges,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.orange,
+                        backgroundColor: context.accentColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -374,7 +375,7 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.1),
+        color: context.accentColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -384,10 +385,10 @@ class _ChallengeFriendsDialogState extends ConsumerState<ChallengeFriendsDialog>
           const SizedBox(width: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.orange,
+              color: context.accentColor,
             ),
           ),
         ],

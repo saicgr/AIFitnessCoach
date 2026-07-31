@@ -29,19 +29,19 @@ Color programDifficultyColor(String? level) {
     case 'beginner':
     case 'easy':
     case 'novice':
-      return const Color(0xFF2ECC71); // green
+      return const Color(0xFF2ECC71); // green // accent-allowlist: program difficulty severity scale (beginner/intermediate/advanced/elite), matches DifficultyUtils convention
     case 'intermediate':
     case 'moderate':
-      return const Color(0xFFFFC54A); // amber
+      return const Color(0xFFFFC54A); // amber // accent-allowlist: program difficulty severity scale (beginner/intermediate/advanced/elite), matches DifficultyUtils convention
     case 'advanced':
     case 'hard':
-      return AppColors.orange; // orange #F97316
+      return AppColors.orange; // orange #F97316 // accent-allowlist: program difficulty severity scale (beginner/intermediate/advanced/elite), matches DifficultyUtils convention
     case 'elite':
     case 'expert':
     case 'hell':
-      return const Color(0xFFEF4444); // red
+      return const Color(0xFFEF4444); // red // accent-allowlist: program difficulty severity scale (beginner/intermediate/advanced/elite), matches DifficultyUtils convention
     default:
-      return const Color(0xFFFFC54A); // amber fallback
+      return const Color(0xFFFFC54A); // amber fallback // accent-allowlist: program difficulty severity scale (beginner/intermediate/advanced/elite), matches DifficultyUtils convention
   }
 }
 
@@ -97,45 +97,45 @@ CategoryTheme categoryTheme(String? programCategory) {
   final key = (programCategory ?? '').toLowerCase().trim();
   if (key.contains('celebrity')) {
     return const CategoryTheme(
-        Color(0xFFEC4899), Color(0xFF8B5CF6), Icons.movie_rounded);
+        Color(0xFFEC4899), Color(0xFF8B5CF6), Icons.movie_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('sport')) {
     return const CategoryTheme(
-        Color(0xFF06B6D4), Color(0xFF2563EB), Icons.sports_basketball_rounded);
+        Color(0xFF06B6D4), Color(0xFF2563EB), Icons.sports_basketball_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('goal')) {
     return const CategoryTheme(
-        Color(0xFFF97316), Color(0xFFE11D48), Icons.flag_rounded);
+        Color(0xFFF97316), Color(0xFFE11D48), Icons.flag_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('special')) {
     return const CategoryTheme(
-        Color(0xFF8B5CF6), Color(0xFF4338CA), Icons.auto_awesome_rounded);
+        Color(0xFF8B5CF6), Color(0xFF4338CA), Icons.auto_awesome_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('yoga')) {
     return const CategoryTheme(
-        Color(0xFF22C55E), Color(0xFF0D9488), Icons.self_improvement_rounded);
+        Color(0xFF22C55E), Color(0xFF0D9488), Icons.self_improvement_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('stretch')) {
     return const CategoryTheme(
-        Color(0xFF14B8A6), Color(0xFF0891B2), Icons.accessibility_new_rounded);
+        Color(0xFF14B8A6), Color(0xFF0891B2), Icons.accessibility_new_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('pain')) {
     return const CategoryTheme(
-        Color(0xFF38BDF8), Color(0xFF1D4ED8), Icons.healing_rounded);
+        Color(0xFF38BDF8), Color(0xFF1D4ED8), Icons.healing_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('women') || key.contains('men') || key.contains('health')) {
     return const CategoryTheme(
-        Color(0xFFF472B6), Color(0xFF9333EA), Icons.favorite_rounded);
+        Color(0xFFF472B6), Color(0xFF9333EA), Icons.favorite_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('cardio')) {
     return const CategoryTheme(
-        Color(0xFFEF4444), Color(0xFFB91C1C), Icons.directions_run_rounded);
+        Color(0xFFEF4444), Color(0xFFB91C1C), Icons.directions_run_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   if (key.contains('strength')) {
     return const CategoryTheme(
-        Color(0xFFF59E0B), Color(0xFFB45309), Icons.fitness_center_rounded);
+        Color(0xFFF59E0B), Color(0xFFB45309), Icons.fitness_center_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
   }
   // Authored / parsed / duplicated / unknown — neutral accent gradient.
   return const CategoryTheme(
-      Color(0xFF6366F1), Color(0xFF312E81), Icons.list_alt_rounded);
+      Color(0xFF6366F1), Color(0xFF312E81), Icons.list_alt_rounded); // accent-allowlist: program category identity gradient - aligned with program_library_card.dart's category theming, categorical encoding not accent
 }

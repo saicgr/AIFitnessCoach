@@ -8,6 +8,7 @@ import '../../../data/services/notification_service.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 class NotificationsSection extends StatelessWidget {
   const NotificationsSection({super.key});
 
@@ -229,7 +230,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           if (isBundleMode) ...[
             _buildBundleTimePicker(
               icon: Icons.wb_sunny_outlined,
-              iconColor: const Color(0xFFFBBF24),
+              iconColor: const Color(0xFFFBBF24),  // accent-allowlist: medal/rarity tier accent - same value as AppColors.gamGold/rarityGold
               label: 'Morning Brief',
               subtitle: AppLocalizations.of(context).notificationsWorkoutBreakfast,
               time: notifPrefs.morningBundleTime,
@@ -241,7 +242,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             Divider(height: 1, color: cardBorder, indent: 50),
             _buildBundleTimePicker(
               icon: Icons.wb_cloudy_outlined,
-              iconColor: const Color(0xFF60A5FA),
+              iconColor: const Color(0xFF60A5FA),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
               label: 'Midday Check',
               subtitle: 'Lunch + Hydration',
               time: notifPrefs.middayBundleTime,
@@ -254,7 +255,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               Divider(height: 1, color: cardBorder, indent: 50),
               _buildBundleTimePicker(
                 icon: Icons.directions_walk_outlined,
-                iconColor: const Color(0xFF34D399),
+                iconColor: const Color(0xFF34D399),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                 label: 'Afternoon Nudge',
                 subtitle: AppLocalizations.of(context).notificationsMovementHydration,
                 time: notifPrefs.afternoonNudgeTime,
@@ -267,7 +268,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             Divider(height: 1, color: cardBorder, indent: 50),
             _buildBundleTimePicker(
               icon: Icons.nights_stay_outlined,
-              iconColor: const Color(0xFFA78BFA),
+              iconColor: const Color(0xFFA78BFA),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
               label: 'Evening Wrap',
               subtitle: 'Dinner + Streak',
               time: notifPrefs.eveningBundleTime,
@@ -367,7 +368,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           _buildNotificationToggleWithTime(
             sectionKey: 'quiet',
             icon: Icons.do_not_disturb_on_outlined,
-            iconColor: const Color(0xFFEF4444),
+            iconColor: const Color(0xFFEF4444),  // accent-allowlist: error/destructive - same value as AppColors.error
             title: 'Quiet Hours',
             subtitle: '${notifPrefs.quietHoursStart} - ${notifPrefs.quietHoursEnd}',
             value: true,
@@ -409,7 +410,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           _buildNotificationToggleWithTime(
             sectionKey: 'weekly',
             icon: Icons.bar_chart,
-            iconColor: AppColors.purple,
+            iconColor: context.accentColor,
             title: AppLocalizations.of(context).notificationsWeeklyReport,
             subtitle: AppLocalizations.of(context).notificationsYourProgressSummary,
             value: notifPrefs.weeklySummary,
@@ -496,7 +497,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'workout',
                   icon: Icons.fitness_center,
-                  iconColor: AppColors.cyan,
+                  iconColor: context.accentColor,
                   title: AppLocalizations.of(context).notificationsWorkoutReminders,
                   subtitle: AppLocalizations.of(context).notificationsRemindOnWorkoutDays,
                   value: notifPrefs.workoutReminders,
@@ -520,7 +521,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'nutrition',
                   icon: Icons.restaurant,
-                  iconColor: AppColors.success,
+                  iconColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                   title: AppLocalizations.of(context).settingsMealReminders,
                   subtitle: AppLocalizations.of(context).notificationsBreakfastLunchDinner,
                   value: notifPrefs.nutritionReminders,
@@ -582,7 +583,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'hydration',
                   icon: Icons.water_drop,
-                  iconColor: Colors.blue,
+                  iconColor: Colors.blue,  // accent-allowlist: informational state - must stay blue regardless of accent
                   title: AppLocalizations.of(context).notificationsWaterReminders,
                   subtitle: AppLocalizations.of(context).notificationsStayHydratedThroughoutThe,
                   value: notifPrefs.hydrationReminders,
@@ -642,7 +643,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'movement',
                   icon: Icons.directions_walk,
-                  iconColor: const Color(0xFFEAB308),
+                  iconColor: const Color(0xFFEAB308),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Movement Reminders',
                   subtitle: AppLocalizations.of(context).notificationsHourlyDuringWorkHours,
                   value: notifPrefs.movementReminders,
@@ -689,7 +690,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'daily_briefing',
                   icon: Icons.wb_twilight,
-                  iconColor: const Color(0xFFFB923C),
+                  iconColor: const Color(0xFFFB923C),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Morning readiness',
                   subtitle: AppLocalizations.of(context).notificationsMorningReadinessCheckIn,
                   value: notifPrefs.dailyBriefingNudge,
@@ -718,7 +719,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'sleep_score',
                   icon: Icons.bedtime_rounded,
-                  iconColor: const Color(0xFF818CF8),
+                  iconColor: const Color(0xFF818CF8),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Sleep score',
                   subtitle: "A morning recap of last night's sleep score",
                   value: notifPrefs.sleepScoreNudge,
@@ -745,7 +746,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'evening_recap',
                   icon: Icons.nightlight_round,
-                  iconColor: const Color(0xFFA78BFA),
+                  iconColor: const Color(0xFFA78BFA),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Evening recap',
                   subtitle: 'A look back at your day and a setup for tomorrow',
                   value: notifPrefs.eveningRecapNudge,
@@ -776,7 +777,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       Icon(
                         Icons.monitor_heart_outlined,
                         color: notifPrefs.healthAnomalyNudge
-                            ? const Color(0xFFEF4444)
+                            ? const Color(0xFFEF4444)  // accent-allowlist: error/destructive - same value as AppColors.error
                             : textMuted,
                         size: 22,
                       ),
@@ -811,7 +812,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 _buildNotificationToggleWithTime(
                   sectionKey: 'activity_nudge',
                   icon: Icons.directions_walk_outlined,
-                  iconColor: const Color(0xFF34D399),
+                  iconColor: const Color(0xFF34D399),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Activity Nudges',
                   subtitle: AppLocalizations.of(context).notificationsReminderWhenYouRe,
                   value: notifPrefs.activityGoalNudge,
@@ -841,7 +842,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 // are event / cooldown driven (no fixed time control).
                 _buildSimpleToggleRow(
                   icon: Icons.calendar_view_week_outlined,
-                  iconColor: const Color(0xFF8B5CF6),
+                  iconColor: const Color(0xFF8B5CF6),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Weekly recap',
                   subtitle: 'Sunday-evening wrap of your training week',
                   value: notifPrefs.weeklyRecapNudge,
@@ -855,7 +856,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 Divider(height: 1, color: cardBorder, indent: 50),
                 _buildSimpleToggleRow(
                   icon: Icons.bedtime_outlined,
-                  iconColor: const Color(0xFF60A5FA),
+                  iconColor: const Color(0xFF60A5FA),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Sleep debt alerts',
                   subtitle: 'A heads up after several short nights in a row',
                   value: notifPrefs.sleepDebtNudge,
@@ -869,7 +870,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 Divider(height: 1, color: cardBorder, indent: 50),
                 _buildSimpleToggleRow(
                   icon: Icons.favorite_border,
-                  iconColor: const Color(0xFFF43F5E),
+                  iconColor: const Color(0xFFF43F5E),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Resting HR trend',
                   subtitle: 'An early signal if your resting heart rate climbs',
                   value: notifPrefs.rhrTrendNudge,
@@ -883,7 +884,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 Divider(height: 1, color: cardBorder, indent: 50),
                 _buildSimpleToggleRow(
                   icon: Icons.egg_alt_outlined,
-                  iconColor: const Color(0xFF10B981),
+                  iconColor: const Color(0xFF10B981),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Protein nudges',
                   subtitle: 'A reminder when protein lands under target',
                   value: notifPrefs.proteinTrendNudge,
@@ -897,7 +898,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 Divider(height: 1, color: cardBorder, indent: 50),
                 _buildSimpleToggleRow(
                   icon: Icons.balance_outlined,
-                  iconColor: const Color(0xFFF59E0B),
+                  iconColor: const Color(0xFFF59E0B),  // accent-allowlist: warning severity - same value as AppColors.warning (dark theme)
                   title: 'Training load balance',
                   subtitle: 'A deload-or-push tip when your weekly volume swings',
                   value: notifPrefs.volumeBalanceNudge,
@@ -914,7 +915,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 // one-tap All better / Still sore / rehab actions.
                 _buildSimpleToggleRow(
                   icon: Icons.healing_outlined,
-                  iconColor: const Color(0xFF14B8A6),
+                  iconColor: const Color(0xFF14B8A6),  // accent-allowlist: distinct colour per notification type - visual scanning aid across a long toggle list, categorical not accent
                   title: 'Injury recovery check-ins',
                   subtitle: 'A follow-up as a logged injury nears recovery',
                   value: notifPrefs.injuryCheckinNudge,
@@ -941,7 +942,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       child: Row(
                         children: [
                           const Icon(Icons.favorite_outline,
-                              color: Color(0xFFEC4899), size: 22),
+                              color: Color(0xFFEC4899), size: 22),  // accent-allowlist: distinct colour per notification-type icon inside expanded row detail, matches the toggle list above
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -972,7 +973,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       Icon(
                         Icons.sentiment_dissatisfied_outlined,
                         color: notifPrefs.guiltNotifications
-                            ? const Color(0xFFF97316)
+                            ? context.accentColor
                             : textMuted,
                         size: 22,
                       ),
@@ -1054,9 +1055,9 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
     required bool isDark,
     bool isRecommended = false,
   }) {
-    final selectedBg = AppColors.cyan.withValues(alpha: 0.15);
+    final selectedBg = context.accentColor.withValues(alpha: 0.15);
     final unselectedBg = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final selectedBorder = AppColors.cyan;
+    final selectedBorder = context.accentColor;
     final unselectedBorder = Colors.transparent;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -1078,7 +1079,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
             children: [
               Icon(
                 icon,
-                color: isSelected ? AppColors.cyan : textMuted,
+                color: isSelected ? context.accentColor : textMuted,
                 size: 24,
               ),
               const SizedBox(height: 6),
@@ -1087,7 +1088,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? AppColors.cyan : (isDark ? Colors.white : Colors.black87),
+                  color: isSelected ? context.accentColor : (isDark ? Colors.white : Colors.black87),
                 ),
               ),
               const SizedBox(height: 2),
@@ -1100,7 +1101,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withValues(alpha: 0.2),
+                    color: context.accentColor.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -1108,7 +1109,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     style: TextStyle(
                       fontSize: 8,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                     ),
                   ),
                 ),
@@ -1216,7 +1217,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                 ),
               ),
             ),

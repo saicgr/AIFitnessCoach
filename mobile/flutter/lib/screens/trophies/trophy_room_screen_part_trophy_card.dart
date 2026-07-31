@@ -29,7 +29,7 @@ class _TrophyCard extends StatelessWidget {
     final isEarned = trophyProgress.isEarned;
     final isMystery = trophyProgress.isMystery;
     final tier = trophy.trophyTier;
-    final primaryColor = isMystery ? AppColors.purple : tier.primaryColor;
+    final primaryColor = isMystery ? AppColors.purple : tier.primaryColor; // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
 
     return InkWell(
       onTap: onTap,
@@ -40,14 +40,14 @@ class _TrophyCard extends StatelessWidget {
           color: isEarned
               ? primaryColor.withValues(alpha: 0.15)
               : isMystery
-                  ? AppColors.purple.withValues(alpha: 0.08)
+                  ? AppColors.purple.withValues(alpha: 0.08) // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                   : elevatedColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isEarned
                 ? primaryColor.withValues(alpha: 0.4)
                 : isMystery
-                    ? AppColors.purple.withValues(alpha: 0.3)
+                    ? AppColors.purple.withValues(alpha: 0.3) // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                     : cardBorder,
             width: isEarned ? 2 : 1,
           ),
@@ -70,7 +70,7 @@ class _TrophyCard extends StatelessWidget {
                 color: isEarned
                     ? null
                     : isMystery
-                        ? AppColors.purple.withValues(alpha: 0.2)
+                        ? AppColors.purple.withValues(alpha: 0.2) // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                         : textMuted.withValues(alpha: 0.2),
                 boxShadow: isEarned
                     ? [
@@ -101,7 +101,7 @@ class _TrophyCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isEarned ? textColor : (isMystery ? AppColors.purple : textMuted),
+                      color: isEarned ? textColor : (isMystery ? AppColors.purple : textMuted), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -130,7 +130,7 @@ class _TrophyCard extends StatelessWidget {
                           color: isEarned
                               ? primaryColor.withValues(alpha: 0.2)
                               : isMystery
-                                  ? AppColors.purple.withValues(alpha: 0.15)
+                                  ? AppColors.purple.withValues(alpha: 0.15) // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                   : textMuted.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -139,7 +139,7 @@ class _TrophyCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: isEarned ? primaryColor : (isMystery ? AppColors.purple : textMuted),
+                            color: isEarned ? primaryColor : (isMystery ? AppColors.purple : textMuted), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                           ),
                         ),
                       ),
@@ -171,7 +171,7 @@ class _TrophyCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: trophyProgress.progressPercentage > 0 ? AppColors.orange : textMuted,
+                            color: trophyProgress.progressPercentage > 0 ? AppColors.orange : textMuted, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                           ),
                         ),
                     ],
@@ -239,7 +239,7 @@ class _TrophyDetailSheet extends StatelessWidget {
     final tier = trophy.trophyTier;
     final isEarned = trophyProgress.isEarned;
     final isMystery = trophyProgress.isMystery;
-    final primaryColor = isMystery ? AppColors.purple : tier.primaryColor;
+    final primaryColor = isMystery ? AppColors.purple : tier.primaryColor; // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
 
     return GlassSheet(
         child: SafeArea(
@@ -262,7 +262,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                           color: isEarned
                               ? null
                               : isMystery
-                                  ? AppColors.purple.withValues(alpha: 0.2)
+                                  ? AppColors.purple.withValues(alpha: 0.2) // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                   : textMuted.withValues(alpha: 0.2),
                           boxShadow: isEarned
                               ? [
@@ -290,7 +290,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: isMystery ? AppColors.purple : textColor,
+                          color: isMystery ? AppColors.purple : textColor, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -341,10 +341,10 @@ class _TrophyDetailSheet extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.green.withValues(alpha: 0.1),
+                            color: AppColors.green.withValues(alpha: 0.1), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.green.withValues(alpha: 0.3),
+                              color: AppColors.green.withValues(alpha: 0.3), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                             ),
                           ),
                           child: Row(
@@ -353,7 +353,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                             children: [
                               const Icon(
                                 Icons.check_circle,
-                                color: AppColors.green,
+                                color: AppColors.green, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -362,7 +362,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.green,
+                                  color: AppColors.green, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                 ),
                               ),
                             ],
@@ -406,10 +406,10 @@ class _TrophyDetailSheet extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.purple.withValues(alpha: 0.1),
+                            color: AppColors.purple.withValues(alpha: 0.1), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.purple.withValues(alpha: 0.3),
+                              color: AppColors.purple.withValues(alpha: 0.3), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                             ),
                           ),
                           child: Row(
@@ -418,7 +418,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                             children: [
                               const Icon(
                                 Icons.help_outline,
-                                color: AppColors.purple,
+                                color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -427,7 +427,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.purple,
+                                  color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                 ),
                               ),
                             ],
@@ -478,7 +478,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.purple.withValues(alpha: 0.15),
+                                color: AppColors.purple.withValues(alpha: 0.15), // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -487,7 +487,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                                   const Icon(
                                     Icons.card_giftcard,
                                     size: 16,
-                                    color: AppColors.purple,
+                                    color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -495,7 +495,7 @@ class _TrophyDetailSheet extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: AppColors.purple,
+                                      color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/tier-badge=orange), consistent status system
                                     ),
                                   ),
                                 ],

@@ -475,7 +475,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
             icon: Icons.emoji_events,
             value: '${summary.earnedTrophies}',
             label: AppLocalizations.of(context).trophyRoomEarned,
-            color: AppColors.green,
+            color: AppColors.green, // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
             textMuted: textMuted,
           ),
           _buildStatDivider(textMuted),
@@ -491,7 +491,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
             icon: Icons.help_outline,
             value: '${summary.secretDiscovered}/${summary.totalSecret}',
             label: AppLocalizations.of(context).trophyRoomMystery,
-            color: AppColors.purple,
+            color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
             textMuted: textMuted,
           ),
           _buildStatDivider(textMuted),
@@ -622,7 +622,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.2),
+                      color: AppColors.purple.withValues(alpha: 0.2), // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Center(
@@ -645,10 +645,10 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            _buildCountBadge('$earnedCount discovered', AppColors.purple),
+                            _buildCountBadge('$earnedCount discovered', AppColors.purple), // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                             const SizedBox(width: 8),
                             if (inProgressCount > 0)
-                              _buildCountBadge('$inProgressCount close', AppColors.orange),
+                              _buildCountBadge('$inProgressCount close', AppColors.orange), // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                           ],
                         ),
                       ],
@@ -657,7 +657,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.15),
+                      color: AppColors.purple.withValues(alpha: 0.15), // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -665,7 +665,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.purple,
+                        color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                       ),
                     ),
                   ),
@@ -755,10 +755,10 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            _buildCountBadge('$earnedCount earned', AppColors.green),
+                            _buildCountBadge('$earnedCount earned', AppColors.green), // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                             const SizedBox(width: 8),
                             if (inProgressCount > 0)
-                              _buildCountBadge('$inProgressCount in progress', AppColors.orange),
+                              _buildCountBadge('$inProgressCount in progress', AppColors.orange), // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                           ],
                         ),
                       ],
@@ -768,7 +768,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: earnedCount > 0
-                          ? AppColors.green.withValues(alpha: 0.15)
+                          ? AppColors.green.withValues(alpha: 0.15) // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                           : textMuted.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -777,7 +777,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: earnedCount > 0 ? AppColors.green : textMuted,
+                        color: earnedCount > 0 ? AppColors.green : textMuted, // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
                       ),
                     ),
                   ),

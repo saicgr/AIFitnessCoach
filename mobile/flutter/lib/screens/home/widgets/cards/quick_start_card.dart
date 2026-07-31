@@ -8,6 +8,7 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Quick Start Card Widget
 ///
 /// A prominent home screen card that enables a "just exercise without thinking"
@@ -186,7 +187,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       ),
       child: Column(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 32),
+          const Icon(Icons.error_outline, color: AppColors.error, size: 32),  // accent-allowlist: error/destructive -- must stay red
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context).todayWorkoutCardCouldNotLoadWorkout,
@@ -404,14 +405,14 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.15),
+                        color: context.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         muscle,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.purple.withValues(alpha: 0.9),
+                          color: context.accentColor.withValues(alpha: 0.9),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -492,12 +493,12 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.purple.withValues(alpha: 0.15),
+              color: context.accentColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.spa,
-              color: AppColors.purple,
+              color: context.accentColor,
               size: 36,
             ),
           ),

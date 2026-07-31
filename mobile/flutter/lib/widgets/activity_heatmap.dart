@@ -690,13 +690,13 @@ class _HeatmapLoading extends StatelessWidget {
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Center(
+      child: Center(
         child: SizedBox(
           width: 24,
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation(AppColors.cyan),
+            valueColor: AlwaysStoppedAnimation(context.accentColor),
           ),
         ),
       ),
@@ -720,13 +720,13 @@ class _HeatmapError extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withOpacity(0.3)),
+        border: Border.all(color: AppColors.error.withOpacity(0.3)), // accent-allowlist: failed-to-load error state, semantic
       ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.error, size: 24),
+            const Icon(Icons.error_outline, color: AppColors.error, size: 24), // accent-allowlist: failed-to-load error state, semantic
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context).myLibraryTabFailedToLoadActivity,

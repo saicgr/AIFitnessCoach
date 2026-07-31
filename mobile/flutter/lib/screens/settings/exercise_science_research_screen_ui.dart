@@ -27,12 +27,12 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.purple.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.cloud_upload_outlined,
-                  color: AppColors.purple,
+                  color: context.accentColor,
                   size: 22,
                 ),
               ),
@@ -69,10 +69,10 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.info.withValues(alpha: 0.08),
+              color: AppColors.info.withValues(alpha: 0.08),  // accent-allowlist: informational state - must stay blue regardless of accent
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.info.withValues(alpha: 0.15),
+                color: AppColors.info.withValues(alpha: 0.15),  // accent-allowlist: informational state - must stay blue regardless of accent
               ),
             ),
             child: Column(
@@ -80,14 +80,14 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
               children: [
                 Row(
                   children: [
-                    Icon(Icons.lightbulb_outline, size: 14, color: AppColors.info),
+                    Icon(Icons.lightbulb_outline, size: 14, color: AppColors.info),  // accent-allowlist: informational state - must stay blue regardless of accent
                     const SizedBox(width: 6),
                     Text(
                       AppLocalizations.of(context).referralsHowItWorks,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.info,
+                        color: AppColors.info,  // accent-allowlist: informational state - must stay blue regardless of accent
                       ),
                     ),
                   ],
@@ -112,15 +112,15 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.08),
+              color: AppColors.success.withValues(alpha: 0.08),  // accent-allowlist: success/positive state - must stay green regardless of accent
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.success.withValues(alpha: 0.15),
+                color: AppColors.success.withValues(alpha: 0.15),  // accent-allowlist: success/positive state - must stay green regardless of accent
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.verified_user, size: 16, color: AppColors.success),
+                Icon(Icons.verified_user, size: 16, color: AppColors.success),  // accent-allowlist: success/positive state - must stay green regardless of accent
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -128,7 +128,7 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.success,
+                      color: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                       height: 1.4,
                     ),
                   ),
@@ -144,10 +144,10 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.error.withValues(alpha: 0.06),
+              color: AppColors.error.withValues(alpha: 0.06),  // accent-allowlist: error/destructive - must stay red
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.error.withValues(alpha: 0.15),
+                color: AppColors.error.withValues(alpha: 0.15),  // accent-allowlist: error/destructive - must stay red
               ),
             ),
             child: Column(
@@ -155,14 +155,14 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
               children: [
                 Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.error),
+                    Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.error),  // accent-allowlist: error/destructive - must stay red
                     const SizedBox(width: 6),
                     Text(
                       AppLocalizations.of(context).exerciseScienceResearchImportantGuidelines,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.error,
+                        color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                       ),
                     ),
                   ],
@@ -204,23 +204,23 @@ extension __ExerciseScienceResearchScreenStateExt on _ExerciseScienceResearchScr
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.purple.withValues(alpha: 0.2),
+                      color: context.accentColor.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.upload_file, color: AppColors.purple, size: 20),
+                      Icon(Icons.upload_file, color: context.accentColor, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context).exerciseScienceResearchUploadData,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.purple,
+                          color: context.accentColor,
                         ),
                       ),
                     ],

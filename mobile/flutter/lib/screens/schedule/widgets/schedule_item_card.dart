@@ -216,15 +216,15 @@ class _ScheduleItemCardState extends State<ScheduleItemCard>
     switch (widget.item.status) {
       case ScheduleItemStatus.completed:
         label = 'Done';
-        badgeColor = const Color(0xFF22C55E);
+        badgeColor = const Color(0xFF22C55E); // accent-allowlist: schedule item status severity (completed=green/skipped=orange/missed=red)
         break;
       case ScheduleItemStatus.skipped:
         label = 'Skipped';
-        badgeColor = const Color(0xFFF97316);
+        badgeColor = const Color(0xFFF97316); // accent-allowlist: schedule item status severity (completed=green/skipped=orange/missed=red)
         break;
       case ScheduleItemStatus.missed:
         label = 'Missed';
-        badgeColor = const Color(0xFFEF4444);
+        badgeColor = const Color(0xFFEF4444); // accent-allowlist: schedule item status severity (completed=green/skipped=orange/missed=red)
         break;
       case ScheduleItemStatus.inProgress:
         label = 'Active';

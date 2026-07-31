@@ -13,6 +13,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Health sync preferences model.
 class HealthSyncPreferences {
   final bool syncSteps;
@@ -203,7 +204,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
               AppLocalizations.of(context).healthSyncSetupGuide,
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.cyan,
+                color: context.accentColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -240,12 +241,12 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1428A0).withOpacity(0.15),
+                          color: const Color(0xFF1428A0).withOpacity(0.15),  // accent-allowlist: third-party brand colour, legally fixed (Samsung Health)
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
                           Icons.watch,
-                          color: Color(0xFF1428A0),
+                          color: Color(0xFF1428A0),  // accent-allowlist: third-party brand colour, legally fixed (Samsung Health)
                           size: 28,
                         ),
                       ),
@@ -306,13 +307,13 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.cyan.withOpacity(0.1),
+                      color: context.accentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
+                      border: Border.all(color: context.accentColor.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline, color: AppColors.cyan, size: 20),
+                        Icon(Icons.info_outline, color: context.accentColor, size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -342,8 +343,8 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                           icon: const Icon(Icons.open_in_new, size: 18),
                           label: Text(AppLocalizations.of(context).healthSyncOpenSamsungHealth),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF1428A0),
-                            side: const BorderSide(color: Color(0xFF1428A0)),
+                            foregroundColor: const Color(0xFF1428A0),  // accent-allowlist: third-party brand colour, legally fixed (Samsung Health)
+                            side: const BorderSide(color: Color(0xFF1428A0)),  // accent-allowlist: third-party brand colour, legally fixed (Samsung Health)
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                         ),
@@ -356,7 +357,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                     child: FilledButton(
                       onPressed: () => Navigator.pop(context),
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
+                        backgroundColor: context.accentColor,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
                       child: Text(AppLocalizations.of(context).weightIncrementsGotIt),
@@ -389,7 +390,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                 width: 28,
                 height: 28,
                 decoration: const BoxDecoration(
-                  color: AppColors.cyan,
+                  color: AppColors.cyan,  // accent-allowlist: no BuildContext available at this site (static/const data) - see accent rules edge case
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -498,13 +499,13 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                     height: 40,
                     decoration: BoxDecoration(
                       color: syncState.isConnected
-                          ? AppColors.success.withOpacity(0.15)
-                          : AppColors.orange.withOpacity(0.15),
+                          ? AppColors.success.withOpacity(0.15)  // accent-allowlist: success/positive state - must stay green regardless of accent
+                          : context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       healthIcon,
-                      color: syncState.isConnected ? AppColors.success : AppColors.orange,
+                      color: syncState.isConnected ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state - must stay green regardless of accent
                       size: 22,
                     ),
                   ),
@@ -527,7 +528,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                               syncState.isConnected ? AppLocalizations.of(context).healthSyncConnected : AppLocalizations.of(context).healthSyncNotConnected,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: syncState.isConnected ? AppColors.success : textMuted,
+                                color: syncState.isConnected ? AppColors.success : textMuted,  // accent-allowlist: success/positive state - must stay green regardless of accent
                               ),
                             ),
                             if (syncState.isConnected && syncState.lastSyncTime != null) ...[
@@ -553,12 +554,12 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                     ),
                   ),
                   if (syncState.isSyncing)
-                    const SizedBox(
+                    SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.cyan,
+                        color: context.accentColor,
                       ),
                     )
                   else
@@ -571,7 +572,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                           await _disconnect();
                         }
                       },
-                      activeThumbColor: AppColors.success,
+                      activeThumbColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                     ),
                 ],
               ),
@@ -593,14 +594,14 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.1),
+                color: AppColors.error.withOpacity(0.1),  // accent-allowlist: error/destructive - must stay red
                 borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
               ),
               child: Text(
                 syncState.error!,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
                 ),
               ),
             ),
@@ -737,8 +738,8 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
               icon: const Icon(Icons.sync, size: 18),
               label: Text(AppLocalizations.of(context).syncStatusSyncNow),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
-                side: BorderSide(color: AppColors.cyan.withOpacity(0.5)),
+                foregroundColor: context.accentColor,
+                side: BorderSide(color: context.accentColor.withOpacity(0.5)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
@@ -760,7 +761,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: isEnabled ? AppColors.cyan : textMuted),
+          Icon(icon, size: 18, color: isEnabled ? context.accentColor : textMuted),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -774,7 +775,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           Switch(
             value: isEnabled,
             onChanged: onChanged,
-            activeThumbColor: AppColors.cyan,
+            activeThumbColor: context.accentColor,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
@@ -835,7 +836,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
               setState(() => _bgHealthSyncEnabled = v);
               BackgroundSyncService.setBackgroundHealthSync(v);
             },
-            activeThumbColor: AppColors.success,
+            activeThumbColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
         ],
@@ -846,7 +847,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
   Widget _buildConsentCard(bool isDark, Color textPrimary, Color textMuted) {
     final consent =
         ref.watch(aiSettingsProvider.select((s) => s.healthDataConsent));
-    final accent = consent ? AppColors.success : AppColors.orange;
+    final accent = consent ? AppColors.success : context.accentColor;  // accent-allowlist: success/positive state - must stay green regardless of accent
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -884,7 +885,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                 onChanged: (v) => ref
                     .read(aiSettingsProvider.notifier)
                     .updateHealthDataConsent(v),
-                activeThumbColor: AppColors.success,
+                activeThumbColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ],
@@ -945,7 +946,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style:
-                FilledButton.styleFrom(backgroundColor: AppColors.success),
+                FilledButton.styleFrom(backgroundColor: AppColors.success),  // accent-allowlist: success/positive state - must stay green regardless of accent
             child: Text(AppLocalizations.of(context).healthSyncEnable),
           ),
         ],
@@ -984,7 +985,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
                 ? AppLocalizations.of(context).healthSyncHealthConnectIsNot
                 : 'Apple Health is not available on this device.',
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
           action: Platform.isAndroid
               ? SnackBarAction(
                   label: AppLocalizations.of(context).healthSyncInstall,
@@ -1008,7 +1009,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Connected to ${Platform.isAndroid ? "Health Connect" : "Apple Health"}'),
-          backgroundColor: AppColors.success,
+          backgroundColor: AppColors.success,  // accent-allowlist: success/positive state - must stay green regardless of accent
         ),
       );
       // Refresh daily activity after connecting
@@ -1024,7 +1025,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Open Health Connect and grant permissions for ${Branding.appName}'),
-          backgroundColor: AppColors.orange,
+          backgroundColor: context.accentColor,
           duration: const Duration(seconds: 6),
           action: SnackBarAction(
             label: AppLocalizations.of(context).recipesOpen,
@@ -1063,7 +1064,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(AppLocalizations.of(context).healthSyncOk, style: TextStyle(color: AppColors.cyan)),
+              child: Text(AppLocalizations.of(context).healthSyncOk, style: TextStyle(color: context.accentColor)),
             ),
           ],
         );
@@ -1096,7 +1097,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Synced ${data.length} health data points'),
-          backgroundColor: data.isNotEmpty ? AppColors.success : AppColors.textMuted,
+          backgroundColor: data.isNotEmpty ? AppColors.success : AppColors.textMuted,  // accent-allowlist: success/positive state - must stay green regardless of accent
         ),
       );
     }

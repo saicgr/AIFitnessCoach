@@ -7,6 +7,7 @@ import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'event_workout_coming_soon_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Profile card previewing the upcoming Event-Based Workout feature.
 /// Shows a hardcoded example event.
 class EventBasedWorkoutCard extends StatelessWidget {
@@ -75,7 +76,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
                           bottom: 6,
                           child: Icon(
                             Icons.local_fire_department,
-                            color: AppColors.orange,
+                            color: context.accentColor,
                             size: 12,
                           ),
                         ),

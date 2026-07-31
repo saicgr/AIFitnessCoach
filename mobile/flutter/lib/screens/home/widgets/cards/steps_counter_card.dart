@@ -105,7 +105,7 @@ class _DailyStepsTileState extends ConsumerState<DailyStepsTile> {
         ref.read(xpProvider.notifier).markStepsGoalHit(steps);
       });
     }
-    final progressColor = goalHit ? AppColors.success : accent;
+    final progressColor = goalHit ? AppColors.success : accent;  // accent-allowlist: success/positive state -- must stay green regardless of accent
     final sourceLabel = Platform.isIOS
         ? 'Apple Health'
         : 'Health Connect';
@@ -198,7 +198,7 @@ class _DailyStepsTileState extends ConsumerState<DailyStepsTile> {
                       : '${_formatCount(dailyGoal - steps)} to go · via $sourceLabel',
                   style: TextStyle(
                     fontSize: 10.5,
-                    color: goalHit ? AppColors.success : textMuted,
+                    color: goalHit ? AppColors.success : textMuted,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   ),
                 ),
               ],

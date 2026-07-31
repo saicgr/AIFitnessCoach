@@ -26,8 +26,6 @@ class PaywallPriceComparison extends StatefulWidget {
 }
 
 class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
-  static const Color _accent = Color(0xFFF97316);
-
   bool _yearly = false;
 
   // name, what it does, monthly, yearly (US 2026 list prices).
@@ -77,7 +75,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: const Border(top: BorderSide(color: _accent, width: 1)),
+        border: Border(top: BorderSide(color: colors.accent, width: 1)),
       ),
       padding: const EdgeInsets.fromLTRB(14, 11, 14, 11),
       child: Column(
@@ -90,16 +88,16 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
             margin: const EdgeInsets.only(bottom: 11),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: _accent.withValues(alpha: 0.08),
+              color: colors.accent.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(9),
-              border: Border.all(color: _accent.withValues(alpha: 0.22)),
+              border: Border.all(color: colors.accent.withValues(alpha: 0.22)),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.workspace_premium_outlined,
                   size: 16,
-                  color: _accent,
+                  color: colors.accent,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -110,29 +108,29 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                         height: 1.3,
                         color: colors.textSecondary,
                       ),
-                      children: const [
-                        TextSpan(text: 'Online 1-on-1 coaching like '),
-                        TextSpan(
+                      children: [
+                        const TextSpan(text: 'Online 1-on-1 coaching like '),
+                        const TextSpan(
                           text: 'Future',
                           style: TextStyle(fontWeight: FontWeight.w800),
                         ),
-                        TextSpan(text: ' runs '),
+                        const TextSpan(text: ' runs '),
                         TextSpan(
                           text: '\$149–199/mo',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: _accent,
+                            color: colors.accent,
                           ),
                         ),
-                        TextSpan(text: '; an in-person trainer is '),
+                        const TextSpan(text: '; an in-person trainer is '),
                         TextSpan(
                           text: '\$60–100+/session',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: _accent,
+                            color: colors.accent,
                           ),
                         ),
-                        TextSpan(text: '. You get a coach + all of this:'),
+                        const TextSpan(text: '. You get a coach + all of this:'),
                       ],
                     ),
                   ),
@@ -143,7 +141,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'WHAT APPS LIKE THESE CHARGE',
                   style: TextStyle(
@@ -151,7 +149,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
                     letterSpacing: 1.6,
-                    color: _accent,
+                    color: colors.accent,
                   ),
                 ),
               ),
@@ -231,12 +229,12 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
           children: [
             Text(
               _expanded ? 'Show fewer' : 'See all ${_rivals.length} apps',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Barlow Condensed',
                 fontWeight: FontWeight.w700,
                 fontSize: 12.5,
                 letterSpacing: 1,
-                color: _accent,
+                color: colors.accent,
               ),
             ),
             const SizedBox(width: 4),
@@ -245,7 +243,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                   ? Icons.keyboard_arrow_up_rounded
                   : Icons.keyboard_arrow_down_rounded,
               size: 18,
-              color: _accent,
+              color: colors.accent,
             ),
           ],
         ),
@@ -281,7 +279,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
         padding: const EdgeInsets.symmetric(horizontal: 9),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: on ? _accent : Colors.transparent,
+          color: on ? colors.accent : Colors.transparent,
           borderRadius: BorderRadius.circular(5),
         ),
         child: Text(
@@ -330,7 +328,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                 style: TextStyle(
                   fontSize: 8.5,
                   height: 1.1,
-                  color: isZealova ? _accent : colors.textMuted,
+                  color: isZealova ? colors.accent : colors.textMuted,
                 ),
               ),
             ],
@@ -345,7 +343,7 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
                 height: 9,
                 decoration: BoxDecoration(
                   color: isZealova
-                      ? _accent
+                      ? colors.accent
                       : colors.textMuted.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(5),
                 ),
@@ -360,10 +358,10 @@ class _PaywallPriceComparisonState extends State<PaywallPriceComparison> {
               ? Text(
                   price,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Anton',
                     fontSize: 17,
-                    color: _accent,
+                    color: colors.accent,
                   ),
                 )
               : Text(

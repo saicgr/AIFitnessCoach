@@ -104,26 +104,26 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
     switch (urgency) {
       case _UrgencyLevel.high:
         backgroundColor = isDark
-            ? AppColors.orange.withValues(alpha: 0.1)
-            : AppColors.orange.withValues(alpha: 0.08);
-        borderColor = AppColors.orange.withValues(alpha: 0.3);
-        iconColor = AppColors.orange;
+            ? AppColors.orange.withValues(alpha: 0.1) // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+            : AppColors.orange.withValues(alpha: 0.08); // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+        borderColor = AppColors.orange.withValues(alpha: 0.3); // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+        iconColor = AppColors.orange; // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
         icon = Icons.restaurant_menu;
         title = 'Time to Refuel!';
       case _UrgencyLevel.medium:
         backgroundColor = isDark
-            ? AppColors.green.withValues(alpha: 0.1)
-            : AppColors.green.withValues(alpha: 0.08);
-        borderColor = AppColors.green.withValues(alpha: 0.3);
-        iconColor = AppColors.green;
+            ? AppColors.green.withValues(alpha: 0.1) // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+            : AppColors.green.withValues(alpha: 0.08); // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+        borderColor = AppColors.green.withValues(alpha: 0.3); // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+        iconColor = AppColors.green; // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
         icon = Icons.restaurant;
         title = 'Post-Workout Nutrition';
       case _UrgencyLevel.low:
         backgroundColor = isDark
-            ? AppColors.cyan.withValues(alpha: 0.1)
-            : AppColors.cyan.withValues(alpha: 0.08);
-        borderColor = AppColors.cyan.withValues(alpha: 0.3);
-        iconColor = AppColors.cyan;
+            ? AppColors.cyan.withValues(alpha: 0.1) // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+            : AppColors.cyan.withValues(alpha: 0.08); // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+        borderColor = AppColors.cyan.withValues(alpha: 0.3); // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
+        iconColor = AppColors.cyan; // accent-allowlist: post-workout refuel urgency scale (high/medium/low)
         icon = Icons.local_dining;
         title = 'Recovery Nutrition';
       case _UrgencyLevel.none:
@@ -191,7 +191,7 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.2),
+                    color: AppColors.orange.withValues(alpha: 0.2), // accent-allowlist: trained-fasted badge, consistent with the high-urgency orange
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -199,7 +199,7 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.orange,
+                      color: AppColors.orange, // accent-allowlist: trained-fasted badge, consistent with the high-urgency orange
                     ),
                   ),
                 ),
@@ -224,17 +224,17 @@ class PostWorkoutNutritionReminder extends ConsumerWidget {
                 _MacroChip(
                   label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   value: '${guidance.proteinTarget}g',
-                  color: AppColors.cyan,
+                  color: AppColors.cyan, // accent-allowlist: macro identity color (protein/carbs/fat) for this reminder's macro chips
                 ),
                 _MacroChip(
                   label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   value: '${guidance.carbsTarget}g',
-                  color: AppColors.purple,
+                  color: AppColors.purple, // accent-allowlist: macro identity color (protein/carbs/fat) for this reminder's macro chips
                 ),
                 _MacroChip(
                   label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   value: '${guidance.fatTarget}g',
-                  color: AppColors.orange,
+                  color: AppColors.orange, // accent-allowlist: macro identity color (protein/carbs/fat) for this reminder's macro chips
                 ),
               ],
             ),

@@ -151,7 +151,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),  // accent-allowlist: error/negative state — must stay red regardless of accent
             child: const Text('Delete'),
           ),
         ],
@@ -386,7 +386,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
                     child: Row(
                       children: [
                         Icon(Icons.delete_outline_rounded,
-                            color: Colors.redAccent, size: 20),
+                            color: Colors.redAccent, size: 20),  // accent-allowlist: error/negative state — must stay red regardless of accent
                         SizedBox(width: 10),
                         Text('Delete'),
                       ],

@@ -124,7 +124,7 @@ class _FullBanner extends StatelessWidget {
                           children: [
                             const Icon(
                               Icons.bolt,
-                              color: Colors.yellow,
+                              color: Colors.yellow, // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
                               size: 18,
                             ),
                             const SizedBox(width: 4),
@@ -230,7 +230,7 @@ class _CompactBanner extends StatelessWidget {
           children: [
             const Icon(
               Icons.bolt,
-              color: Colors.yellow,
+              color: Colors.yellow, // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
               size: 16,
             ),
             const SizedBox(width: 4),
@@ -271,7 +271,7 @@ Color _getBannerColor(XPEvent event) {
     } catch (_) {}
   }
   // Default gradient color for Double XP - purple for that premium XP feel
-  return AppColors.purple;
+  return AppColors.purple; // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
 }
 
 /// A shimmer effect widget for the Double XP banner
@@ -361,14 +361,14 @@ class LoginStreakBadge extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.orange.shade400,
-            Colors.deepOrange.shade500,
+            Colors.orange.shade400, // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
+            Colors.deepOrange.shade500, // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.3),
+            color: Colors.orange.withValues(alpha: 0.3), // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -419,7 +419,7 @@ class XPMultiplierIndicator extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.purple.shade600,
+        color: Colors.purple.shade600, // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -427,7 +427,7 @@ class XPMultiplierIndicator extends ConsumerWidget {
         children: [
           const Icon(
             Icons.bolt,
-            color: Colors.yellow,
+            color: Colors.yellow, // accent-allowlist: double-XP bonus celebration theme (gold/fire), gamification reward color not accent
             size: 14,
           ),
           const SizedBox(width: 2),

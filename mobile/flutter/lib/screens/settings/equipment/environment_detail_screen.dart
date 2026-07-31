@@ -8,6 +8,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Screen showing equipment details for a specific workout environment.
 class EnvironmentDetailScreen extends ConsumerStatefulWidget {
   final WorkoutEnvironment environment;
@@ -60,16 +61,16 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              color: AppColors.cyan.withValues(alpha: 0.1),
+              color: context.accentColor.withValues(alpha: 0.1),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: AppColors.cyan, size: 18),
+                  Icon(Icons.check_circle, color: context.accentColor, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context).environmentDetailThisIsYourActive,
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -115,8 +116,8 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
                       icon: const Icon(Icons.add),
                       label: Text(AppLocalizations.of(context).environmentDetailAddEquipment),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.cyan,
-                        side: BorderSide(color: AppColors.cyan),
+                        foregroundColor: context.accentColor,
+                        side: BorderSide(color: context.accentColor),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -130,7 +131,7 @@ class _EnvironmentDetailScreenState extends ConsumerState<EnvironmentDetailScree
                       child: ElevatedButton(
                         onPressed: _useThisEnvironment,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.cyan,
+                          backgroundColor: context.accentColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -355,7 +356,7 @@ class _EquipmentCard extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Icon(
                     _getEquipmentIcon(item.name),
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 22,
                   ),
                 ),
@@ -393,7 +394,7 @@ class _EquipmentCard extends StatelessWidget {
                   onPressed: onDelete,
                   icon: Icon(
                     Icons.delete_outline,
-                    color: Colors.red.withValues(alpha: 0.7),
+                    color: Colors.red.withValues(alpha: 0.7),  // accent-allowlist: error/destructive - must stay red
                     size: 20,
                   ),
                   visualDensity: VisualDensity.compact,
@@ -572,7 +573,7 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.cyan,
+                          backgroundColor: context.accentColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -618,7 +619,7 @@ class _AddEquipmentSheetState extends State<_AddEquipmentSheet> {
                     return ListTile(
                       title: Text(getEquipmentDisplayName(equip)),
                       leading: Icon(Icons.fitness_center, color: textMuted),
-                      trailing: Icon(Icons.add, color: AppColors.cyan),
+                      trailing: Icon(Icons.add, color: context.accentColor),
                       onTap: () {
                         HapticFeedback.selectionClick();
                         widget.onAdd(EquipmentItem.fromName(equip));
@@ -764,7 +765,7 @@ class _EditEquipmentSheetState extends State<_EditEquipmentSheet> {
               child: ElevatedButton(
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.cyan,
+                  backgroundColor: context.accentColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(

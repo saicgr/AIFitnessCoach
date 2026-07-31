@@ -264,7 +264,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],
+            colors: [Color(0xFFF8A5C2), Color(0xFFB24BF3)],  // accent-allowlist: Body Analyzer feature badge — fixed pink-violet gradient used consistently as this feature's visual identity across screens, not tied to accent
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -820,7 +820,7 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
     // For waist/body fat, decrease is good. For most others, increase could be good.
     // Use neutral colors - just show direction.
     final isPositive = change > 0;
-    final color = isPositive ? Colors.orange : Colors.green;
+    final color = isPositive ? Colors.orange : Colors.green;  // accent-allowlist: caution/negative-trend tone (Colors.orange) paired with success green — matches the explicit ALLOWLIST warning bucket; success/positive state — must stay green regardless of accent
     final icon = isPositive ? Icons.arrow_upward : Icons.arrow_downward;
     final changeStr = change.abs() % 1 == 0
         ? change.abs().toInt().toString()

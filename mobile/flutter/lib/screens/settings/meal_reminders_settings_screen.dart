@@ -227,7 +227,7 @@ class _ScheduleRow extends StatelessWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        color: AppColors.error,
+        color: AppColors.error,  // accent-allowlist: error/destructive - must stay red
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (_) async {

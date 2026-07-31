@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Glassmorphic bottom sheet previewing the Event-Based Workout feature.
 class EventWorkoutComingSoonSheet extends StatelessWidget {
   const EventWorkoutComingSoonSheet({super.key});
@@ -91,7 +92,7 @@ class EventWorkoutComingSoonSheet extends StatelessWidget {
                         child: Icon(
                           Icons.local_fire_department,
                           size: 22,
-                          color: AppColors.orange,
+                          color: context.accentColor,
                         ),
                       ),
                     ],

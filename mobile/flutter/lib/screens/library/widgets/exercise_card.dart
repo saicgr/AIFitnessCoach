@@ -19,6 +19,7 @@ import '../../../widgets/signature/signature.dart';
 import '../../workout/exercise_browse.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Dense signature-v2 exercise row for the Exercise Library list.
 ///
@@ -158,7 +159,7 @@ class ExerciseCard extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
@@ -350,19 +351,19 @@ class _RowAction extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: active
-                ? AppColors.orange.withValues(alpha: 0.10)
+                ? context.accentColor.withValues(alpha: 0.10)
                 : AppColors.surface2,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: active
-                  ? AppColors.orange.withValues(alpha: 0.55)
+                  ? context.accentColor.withValues(alpha: 0.55)
                   : AppColors.cardBorder,
             ),
           ),
           child: Icon(
             icon,
             size: 15,
-            color: active ? AppColors.orange : tc.textMuted,
+            color: active ? context.accentColor : tc.textMuted,
           ),
         ),
       ),
@@ -407,7 +408,7 @@ class _AlternativesSheet extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
             child: Row(
               children: [
-                Icon(Icons.swap_horiz, color: AppColors.orange, size: 20),
+                Icon(Icons.swap_horiz, color: context.accentColor, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -439,11 +440,11 @@ class _AlternativesSheet extends ConsumerWidget {
                     text: 'Alternatives are unavailable for this exercise.',
                   )
                 : ref.watch(exerciseAlternativesProvider(exerciseId)).when(
-                      loading: () => const Padding(
+                      loading: () => Padding(
                         padding: EdgeInsets.all(32),
                         child: Center(
                           child: CircularProgressIndicator(
-                              color: AppColors.orange),
+                              color: context.accentColor),
                         ),
                       ),
                       error: (e, _) => _AltMessage(
@@ -646,7 +647,7 @@ class _AltMessage extends StatelessWidget {
                 child: Text(
                   AppLocalizations.of(context).buttonRetry,
                   style: ZType.lbl(12,
-                      color: AppColors.orange, letterSpacing: 1.0),
+                      color: context.accentColor, letterSpacing: 1.0),
                 ),
               ),
             ],
@@ -688,7 +689,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
             ),
           ],
         ),
-        backgroundColor: AppColors.cyan,
+        backgroundColor: context.accentColor,
       ),
     );
   }
@@ -716,12 +717,12 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.cyan.withOpacity(0.15),
+                    color: context.accentColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     isQueued ? Icons.playlist_add_check : Icons.playlist_add,
-                    color: AppColors.cyan,
+                    color: context.accentColor,
                     size: 20,
                   ),
                 ),
@@ -751,7 +752,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                   ),
                 ),
                 if (isQueued)
-                  Icon(Icons.check_circle, color: AppColors.cyan)
+                  Icon(Icons.check_circle, color: context.accentColor)
                 else
                   Icon(Icons.chevron_right, color: textSecondary),
               ],
@@ -785,7 +786,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Added "${widget.exerciseName}" to ${workout.name}'),
-                backgroundColor: AppColors.success,
+                backgroundColor: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
               ),
             );
           }
@@ -793,7 +794,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).exerciseCardFailedToAddExercise),
-              backgroundColor: AppColors.error,
+              backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             ),
           );
         }
@@ -804,7 +805,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
           ),
         );
       }
@@ -849,7 +850,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.add_circle, color: AppColors.success),
+                const Icon(Icons.add_circle, color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -921,7 +922,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
               loading: () => const Center(
                 child: Padding(
                   padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(color: AppColors.success),
+                  child: CircularProgressIndicator(color: AppColors.success),  // accent-allowlist: success/positive state — must stay green regardless of accent
                 ),
               ),
               error: (error, _) => Center(
@@ -997,13 +998,13 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: (isFirst ? AppColors.success : AppColors.cyan)
+                                    color: (isFirst ? AppColors.success : context.accentColor)  // accent-allowlist: success/positive state — must stay green regardless of accent
                                         .withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Icon(
                                     Icons.fitness_center,
-                                    color: isFirst ? AppColors.success : AppColors.cyan,
+                                    color: isFirst ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                     size: 20,
                                   ),
                                 ),
@@ -1033,7 +1034,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                                                 vertical: 2,
                                               ),
                                               decoration: BoxDecoration(
-                                                color: AppColors.success.withOpacity(0.2),
+                                                color: AppColors.success.withOpacity(0.2),  // accent-allowlist: success/positive state — must stay green regardless of accent
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: Text(
@@ -1041,7 +1042,7 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                                                 style: TextStyle(
                                                   fontSize: 10,
                                                   fontWeight: FontWeight.bold,
-                                                  color: AppColors.success,
+                                                  color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                                 ),
                                               ),
                                             ),
@@ -1065,13 +1066,13 @@ class _AddToWorkoutSheetState extends ConsumerState<_AddToWorkoutSheet> {
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: AppColors.success,
+                                      color: AppColors.success,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                     ),
                                   )
                                 else
                                   Icon(
                                     Icons.add_circle,
-                                    color: isFirst ? AppColors.success : AppColors.cyan,
+                                    color: isFirst ? AppColors.success : context.accentColor,  // accent-allowlist: success/positive state — must stay green regardless of accent
                                   ),
                               ],
                             ),

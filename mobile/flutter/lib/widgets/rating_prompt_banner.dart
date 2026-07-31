@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/services/rating_prompt_service.dart';
 import 'rating_prompt_sheet.dart';
 
@@ -78,13 +79,13 @@ class _RatingPromptBannerState extends ConsumerState<RatingPromptBanner> {
             begin: AlignmentDirectional.topStart,
             end: AlignmentDirectional.bottomEnd,
             colors: [
-              AppColors.orange.withValues(alpha: 0.16),
-              const Color(0xFFFFB366).withValues(alpha: 0.08),
+              context.accentColor.withValues(alpha: 0.16),
+              context.accentColor.withValues(alpha: 0.08),
             ],
           ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: AppColors.orange.withValues(alpha: 0.30),
+            color: context.accentColor.withValues(alpha: 0.30),
             width: 1,
           ),
         ),
@@ -95,7 +96,7 @@ class _RatingPromptBannerState extends ConsumerState<RatingPromptBanner> {
               height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.18),
+                color: context.accentColor.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Text('⭐', style: TextStyle(fontSize: 20)),

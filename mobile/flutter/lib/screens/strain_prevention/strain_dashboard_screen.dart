@@ -479,7 +479,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                     .where((r) => r.riskLevel == 'safe')
                     .length
                     .toString(),
-                Colors.green,
+                Colors.green, // accent-allowlist: strain risk severity scale (green/amber/red)
                 colorScheme,
               ),
               _buildStatusStat(
@@ -488,7 +488,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                     .where((r) => r.riskLevel == 'warning')
                     .length
                     .toString(),
-                Colors.amber,
+                Colors.amber, // accent-allowlist: strain risk severity scale (green/amber/red)
                 colorScheme,
               ),
               _buildStatusStat(
@@ -498,7 +498,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                         r.riskLevel == 'danger' || r.riskLevel == 'critical')
                     .length
                     .toString(),
-                Colors.red,
+                Colors.red, // accent-allowlist: strain risk severity scale (green/amber/red)
                 colorScheme,
               ),
             ],
@@ -563,7 +563,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
           child: _buildQuickActionButton(
             'Report Strain',
             Icons.healing,
-            Colors.red,
+            Colors.red, // accent-allowlist: strain risk severity scale (green/amber/red)
             () => _navigateToReportStrain(),
             colorScheme,
           ),
@@ -668,7 +668,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    Icon(Icons.warning_amber, color: Colors.amber.shade700),
+                    Icon(Icons.warning_amber, color: Colors.amber.shade700), // accent-allowlist: strain risk severity scale (green/amber/red)
                     const SizedBox(width: 8),
                     Text(
                       AppLocalizations.of(context).strainDashboardVolumeAlerts,
@@ -774,7 +774,7 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
               colorScheme,
               valueColor:
                   risk.weeklyIncreasePercent > risk.recommendedMaxIncrease
-                      ? Colors.red
+                      ? Colors.red // accent-allowlist: strain risk severity scale (green/amber/red)
                       : null,
             ),
             _buildDetailRow(

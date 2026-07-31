@@ -8,6 +8,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// "Last Night's Sleep" card matching the GymBeat / FitOn reference: large
 /// duration, time window underneath, and a horizontal stage bar split into
 /// deep / light / REM / awake bands. Reads from the existing
@@ -98,11 +99,11 @@ class LastNightSleepCard extends ConsumerWidget {
                       height: 36,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.18),
+                        color: context.accentColor.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(Icons.bedtime_rounded,
-                          color: AppColors.purple, size: 18),
+                          color: context.accentColor, size: 18),
                     ),
                     const SizedBox(width: 10),
                     Text(
@@ -167,16 +168,16 @@ class LastNightSleepCard extends ConsumerWidget {
                 runSpacing: 6,
                 children: [
                   if (deep > 0)
-                    _legendDot(AppColors.purple, '${_fmtDur(deep)} Deep',
+                    _legendDot(context.accentColor, '${_fmtDur(deep)} Deep',
                         textMuted),
                   if (light > 0)
-                    _legendDot(AppColors.purple.withValues(alpha: 0.5),
+                    _legendDot(context.accentColor.withValues(alpha: 0.5),
                         '${_fmtDur(light)} Light', textMuted),
                   if (rem > 0)
-                    _legendDot(AppColors.cyan, '${_fmtDur(rem)} REM',
+                    _legendDot(context.accentColor, '${_fmtDur(rem)} REM',
                         textMuted),
                   if (awake > 0)
-                    _legendDot(AppColors.warning, '${_fmtDur(awake)} Awake',
+                    _legendDot(AppColors.warning, '${_fmtDur(awake)} Awake',  // accent-allowlist: warning severity
                         textMuted),
                 ],
               ),
@@ -244,20 +245,20 @@ class _SleepStageBar extends StatelessWidget {
             if (deep > 0)
               Expanded(
                 flex: deep,
-                child: Container(color: AppColors.purple),
+                child: Container(color: context.accentColor),
               ),
             if (light > 0)
               Expanded(
                 flex: light,
                 child: Container(
-                  color: AppColors.purple.withValues(alpha: 0.5),
+                  color: context.accentColor.withValues(alpha: 0.5),
                 ),
               ),
             if (rem > 0)
-              Expanded(flex: rem, child: Container(color: AppColors.cyan)),
+              Expanded(flex: rem, child: Container(color: context.accentColor)),
             if (awake > 0)
               Expanded(
-                  flex: awake, child: Container(color: AppColors.warning)),
+                  flex: awake, child: Container(color: AppColors.warning)),  // accent-allowlist: warning severity
           ],
         ),
       ),

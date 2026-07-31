@@ -13,7 +13,7 @@ class ComingSoonOverlay extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: Colors.orange,
+          color: Colors.orange,  // accent-allowlist: warning/highlight tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket, not the app accent
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(

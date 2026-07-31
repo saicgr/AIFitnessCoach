@@ -15,6 +15,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../../l10n/generated/app_localizations.dart';
 import '../common/app_refresh_indicator.dart';
+import '../../core/theme/accent_color_provider.dart';
 /// Challenge History Screen - Shows all challenges with outcomes and retry options
 class ChallengeHistoryScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -308,20 +309,20 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.cyan.withValues(alpha: 0.1),
-            AppColors.purple.withValues(alpha: 0.1),
+            context.accentColor.withValues(alpha: 0.1),
+            context.accentColor.withValues(alpha: 0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withValues(alpha: 0.3),
+          color: context.accentColor.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(Icons.emoji_events, color: AppColors.cyan, size: 24),
+              Icon(Icons.emoji_events, color: context.accentColor, size: 24),
               const SizedBox(width: 10),
               Text(
                 AppLocalizations.of(context).challengeHistoryChallengeStats,
@@ -336,11 +337,11 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatColumn('Won', wonCount, Colors.green),
+              _buildStatColumn('Won', wonCount, Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
               _buildStatDivider(),
-              _buildStatColumn('Lost', lostCount, Colors.red),
+              _buildStatColumn('Lost', lostCount, Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
               _buildStatDivider(),
-              _buildStatColumn('Win Rate', '${winRate.toStringAsFixed(0)}%', AppColors.cyan),
+              _buildStatColumn('Win Rate', '${winRate.toStringAsFixed(0)}%', context.accentColor),
             ],
           ),
         ],
@@ -425,32 +426,32 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
       if (isReceived) {
         if (didBeat) {
           resultText = 'VICTORY!';
-          resultColor = Colors.green;
+          resultColor = Colors.green;  // accent-allowlist: success/positive state — must stay green regardless of accent
           resultIcon = Icons.emoji_events;
         } else {
           resultText = 'Failed to beat';
-          resultColor = Colors.red;
+          resultColor = Colors.red;  // accent-allowlist: error/negative state — must stay red regardless of accent
           resultIcon = Icons.close;
         }
       } else {
         // Sent challenges
         if (didBeat) {
           resultText = 'They won';
-          resultColor = Colors.orange;
+          resultColor = Colors.orange;  // accent-allowlist: challenge-result state tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket, distinct from win(green)/loss(red)
           resultIcon = Icons.person;
         } else {
           resultText = 'They failed';
-          resultColor = Colors.green;
+          resultColor = Colors.green;  // accent-allowlist: success/positive state — must stay green regardless of accent
           resultIcon = Icons.check;
         }
       }
     } else if (status == 'abandoned') {
       resultText = 'QUIT';
-      resultColor = Colors.red;
+      resultColor = Colors.red;  // accent-allowlist: error/negative state — must stay red regardless of accent
       resultIcon = Icons.flag;
     } else if (status == 'accepted') {
       resultText = 'In Progress';
-      resultColor = AppColors.orange;
+      resultColor = context.accentColor;
       resultIcon = Icons.fitness_center;
     } else if (status == 'pending') {
       resultText = 'Pending';
@@ -475,14 +476,14 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                 // Opponent avatar
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.cyan.withValues(alpha: 0.2),
+                  backgroundColor: context.accentColor.withValues(alpha: 0.2),
                   backgroundImage: opponentAvatar != null ? NetworkImage(opponentAvatar) : null,
                   child: opponentAvatar == null
                       ? Text(
                           opponentName[0].toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppColors.cyan,
+                            color: context.accentColor,
                           ),
                         )
                       : null,
@@ -571,7 +572,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.fitness_center, size: 16, color: AppColors.orange),
+                    Icon(Icons.fitness_center, size: 16, color: context.accentColor),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -597,10 +598,10 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/negative state — must stay red regardless of accent
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
+                        color: Colors.red.withValues(alpha: 0.3),  // accent-allowlist: error/negative state — must stay red regardless of accent
                       ),
                     ),
                     child: Row(
@@ -632,8 +633,8 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                       icon: const Icon(Icons.refresh, size: 18),
                       label: Text(AppLocalizations.of(context).challengeHistoryRetryChallenge),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.orange,
-                        side: BorderSide(color: AppColors.orange.withValues(alpha: 0.5)),
+                        foregroundColor: context.accentColor,
+                        side: BorderSide(color: context.accentColor.withValues(alpha: 0.5)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -663,8 +664,8 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: didBeat
-            ? Colors.green.withValues(alpha: 0.1)
-            : Colors.red.withValues(alpha: 0.1),
+            ? Colors.green.withValues(alpha: 0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
+            : Colors.red.withValues(alpha: 0.1),  // accent-allowlist: error/negative state — must stay red regardless of accent
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -700,12 +701,12 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: youWon ? Colors.green : Colors.red,
+                      color: youWon ? Colors.green : Colors.red,  // accent-allowlist: success/positive state — must stay green regardless of accent; error/negative state — must stay red regardless of accent
                     ),
                   ),
                   if (youWon) ...[
                     const SizedBox(width: 4),
-                    const Icon(Icons.check, size: 12, color: Colors.green),
+                    const Icon(Icons.check, size: 12, color: Colors.green),  // accent-allowlist: success/positive state — must stay green regardless of accent
                   ],
                 ],
               ),
@@ -786,7 +787,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),  // accent-allowlist: error/negative state — must stay red regardless of accent
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context).challengeHistoryFailedToLoadChallenges,
@@ -811,7 +812,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
               icon: const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.cyan,
+                backgroundColor: context.accentColor,
               ),
             ),
           ],
@@ -855,7 +856,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(AppLocalizations.of(context).challengeHistoryRetryChallengeSentTime),
-                backgroundColor: AppColors.orange,
+                backgroundColor: context.accentColor,
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -868,7 +869,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Failed to send retry: $e'),
-                backgroundColor: AppColors.red,
+                backgroundColor: AppColors.red,  // accent-allowlist: error/negative state — must stay red regardless of accent
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -923,7 +924,7 @@ class _RetryConfirmationDialog extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.2),
+                color: context.accentColor.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Center(
@@ -956,9 +957,9 @@ class _RetryConfirmationDialog extends StatelessWidget {
                   const TextSpan(text: ' '),
                   TextSpan(
                     text: workoutName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: AppColors.orange,
+                      color: context.accentColor,
                     ),
                   ),
                   const TextSpan(text: ' again?'),
@@ -971,17 +972,17 @@ class _RetryConfirmationDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.orange.withValues(alpha: 0.1),
+                color: context.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
                 children: [
                   if (duration != null)
-                    _buildTargetStat('⏱️', 'Time to Beat', '$duration min'),
+                    _buildTargetStat('⏱️', 'Time to Beat', '$duration min', context.accentColor),
                   if (duration != null && volume != null)
                     const SizedBox(height: 8),
                   if (volume != null)
-                    _buildTargetStat('💪', 'Volume to Beat', '${volume.toStringAsFixed(0)} lbs'),
+                    _buildTargetStat('💪', 'Volume to Beat', '${volume.toStringAsFixed(0)} lbs', context.accentColor),
                 ],
               ),
             ),
@@ -1001,7 +1002,7 @@ class _RetryConfirmationDialog extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: onConfirm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
+                      backgroundColor: context.accentColor,
                     ),
                     child: Text(AppLocalizations.of(context).challengeHistoryLetSGo),
                   ),
@@ -1014,7 +1015,7 @@ class _RetryConfirmationDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildTargetStat(String emoji, String label, String value) {
+  Widget _buildTargetStat(String emoji, String label, String value, Color accent) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -1030,10 +1031,10 @@ class _RetryConfirmationDialog extends StatelessWidget {
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: AppColors.orange,
+            color: accent,
           ),
         ),
       ],

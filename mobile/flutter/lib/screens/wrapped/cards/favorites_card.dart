@@ -73,7 +73,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF14B8A6).withValues(alpha: 0.12),
+                        const Color(0xFF14B8A6).withValues(alpha: 0.12), // accent-allowlist: Wrapped card visual identity (favorites=teal), deliberate design not accent
                         Colors.transparent,
                       ],
                     ),
@@ -94,7 +94,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).favoritesCardYourGoTo,
                     style: ZType.lbl(16,
-                        color: const Color(0xFF5EEAD4).withValues(alpha: 0.9),
+                        color: const Color(0xFF5EEAD4).withValues(alpha: 0.9), // accent-allowlist: Wrapped card visual identity (favorites=teal), deliberate design not accent
                         letterSpacing: 6),
                   ),
 
@@ -132,7 +132,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                     width: 60,
                     height: 2,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF14B8A6).withValues(alpha: 0.4),
+                      color: const Color(0xFF14B8A6).withValues(alpha: 0.4), // accent-allowlist: Wrapped card visual identity (favorites=teal), deliberate design not accent
                       borderRadius: BorderRadius.circular(1),
                     ),
                   ),
@@ -142,7 +142,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                   // Favorite muscle group section
                   Icon(
                     _getMuscleGroupIcon(data.favoriteMuscleGroup),
-                    color: const Color(0xFF5EEAD4).withValues(alpha: 0.8),
+                    color: const Color(0xFF5EEAD4).withValues(alpha: 0.8), // accent-allowlist: Wrapped card visual identity (favorites=teal), deliberate design not accent
                     size: 48,
                   ),
                   const SizedBox(height: 16),
@@ -156,7 +156,7 @@ class WrappedFavoritesCard extends StatelessWidget {
                   Text(
                     data.favoriteMuscleGroup.toUpperCase(),
                     style: ZType.disp(28,
-                        color: const Color(0xFF5EEAD4), letterSpacing: 2),
+                        color: const Color(0xFF5EEAD4), letterSpacing: 2), // accent-allowlist: Wrapped card visual identity (favorites=teal), deliberate design not accent
                   ),
 
                   const Spacer(flex: 2),

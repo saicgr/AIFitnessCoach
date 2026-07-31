@@ -188,13 +188,13 @@ class _FlexibilityProgressChartState extends State<FlexibilityProgressChart> {
           Icon(
             trend.ratingLevelsGained > 0 ? Icons.arrow_upward : Icons.arrow_downward,
             size: 14,
-            color: trend.ratingLevelsGained > 0 ? Colors.green : Colors.red,
+            color: trend.ratingLevelsGained > 0 ? Colors.green : Colors.red, // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
           ),
           const SizedBox(width: 4),
           Text(
             '${trend.ratingLevelsGained.abs()} rating level${trend.ratingLevelsGained.abs() > 1 ? 's' : ''}',
             style: theme.textTheme.bodySmall?.copyWith(
-              color: trend.ratingLevelsGained > 0 ? Colors.green : Colors.red,
+              color: trend.ratingLevelsGained > 0 ? Colors.green : Colors.red, // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -232,7 +232,7 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     Color? valueColor;
     if (isPositive != null) {
-      valueColor = isPositive! ? Colors.green : Colors.red;
+      valueColor = isPositive! ? Colors.green : Colors.red; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
     } else if (rating != null) {
       valueColor = _getRatingColor(rating!);
     }
@@ -296,13 +296,13 @@ class _StatCard extends StatelessWidget {
   Color _getRatingColor(String rating) {
     switch (rating.toLowerCase()) {
       case 'excellent':
-        return Colors.green;
+        return Colors.green; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'good':
-        return Colors.lightGreen;
+        return Colors.lightGreen; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'fair':
-        return Colors.amber;
+        return Colors.amber; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'poor':
-        return Colors.red;
+        return Colors.red; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       default:
         return Colors.grey;
     }
@@ -528,13 +528,13 @@ class _ChartPainter extends CustomPainter {
   Color _getRatingColor(String rating) {
     switch (rating.toLowerCase()) {
       case 'excellent':
-        return Colors.green;
+        return Colors.green; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'good':
-        return Colors.lightGreen;
+        return Colors.lightGreen; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'fair':
-        return Colors.amber;
+        return Colors.amber; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       case 'poor':
-        return Colors.red;
+        return Colors.red; // accent-allowlist: flexibility score severity scale (green/lightGreen/amber/red), semantic
       default:
         return Colors.grey;
     }

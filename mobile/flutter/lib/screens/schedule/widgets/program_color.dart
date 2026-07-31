@@ -17,21 +17,21 @@ class ProgramColors {
   /// Distinct accents assigned by hash. Order is fixed — do not reorder, or
   /// existing programs would silently re-color.
   static const List<Color> palette = [
-    Color(0xFFE8772A), // orange
-    Color(0xFF5B9BFF), // blue
-    Color(0xFF37C7A4), // teal
-    Color(0xFF9B6CFF), // purple
-    Color(0xFFE2574B), // red
-    Color(0xFF8FCF45), // green
-    Color(0xFFF2B13C), // amber
-    Color(0xFFE45B9B), // magenta
+    Color(0xFFE8772A), // orange // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFF5B9BFF), // blue // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFF37C7A4), // teal // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFF9B6CFF), // purple // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFFE2574B), // red // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFF8FCF45), // green // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFFF2B13C), // amber // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
+    Color(0xFFE45B9B), // magenta // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
   ];
 
   /// The always-on AI program lane (ghost cards, AI chip/swatch).
-  static const Color ai = Color(0xFF39C2E0);
+  static const Color ai = Color(0xFF39C2E0); // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
 
   /// Custom user events (non-program schedule items).
-  static const Color custom = Color(0xFF8FCF45);
+  static const Color custom = Color(0xFF8FCF45); // accent-allowlist: deterministic per-program identity palette for a merged multi-program calendar - documented as functionally necessary so simultaneous programs stay visually distinct, not accent
 
   /// Session-scoped slot registry so two DIFFERENT programs can never land on
   /// the same palette color (hash collisions made a 2-program week read as one

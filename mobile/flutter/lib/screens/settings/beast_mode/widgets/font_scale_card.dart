@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/accessibility/accessibility_provider.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../beast_mode_constants.dart';
 import 'shared/beast_card.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 class FontScaleCard extends ConsumerWidget {
   final BeastThemeData theme;
   const FontScaleCard({super.key, required this.theme});
@@ -35,12 +35,12 @@ class FontScaleCard extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.cyan.withValues(alpha: 0.15),
+                  color: context.accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   AppLocalizations.of(context)!.fontScaleCardX(scale.toStringAsFixed(2)),
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.cyan),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: context.accentColor),
                 ),
               ),
             ],
@@ -48,10 +48,10 @@ class FontScaleCard extends ConsumerWidget {
           const SizedBox(height: 16),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.orange,
-              inactiveTrackColor: AppColors.orange.withValues(alpha: 0.2),
-              thumbColor: AppColors.orange,
-              overlayColor: AppColors.orange.withValues(alpha: 0.2),
+              activeTrackColor: context.accentColor,
+              inactiveTrackColor: context.accentColor.withValues(alpha: 0.2),
+              thumbColor: context.accentColor,
+              overlayColor: context.accentColor.withValues(alpha: 0.2),
               trackHeight: 4,
             ),
             child: Slider(

@@ -14,6 +14,7 @@ import '../group_create_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// Messages Tab - Shows direct messages and group conversations
 /// First message for new users is from support@zealova.com
 class MessagesTab extends ConsumerStatefulWidget {
@@ -225,8 +226,8 @@ class _ConversationCard extends StatelessWidget {
                     CircleAvatar(
                       radius: 24,
                       backgroundColor: isGroup
-                          ? AppColors.purple
-                          : (isSupportUser ? AppColors.teal : AppColors.purple),
+                          ? context.accentColor
+                          : (isSupportUser ? AppColors.teal : context.accentColor),
                       backgroundImage: displayAvatar != null
                           ? NetworkImage(displayAvatar)
                           : null,
@@ -270,7 +271,7 @@ class _ConversationCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
-                            color: AppColors.purple,
+                            color: context.accentColor,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: cardBg,

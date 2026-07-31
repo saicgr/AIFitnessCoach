@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../core/providers/user_provider.dart';
 import '../data/providers/gym_profile_provider.dart';
 import '../data/providers/today_workout_provider.dart';
@@ -61,7 +62,7 @@ Future<StapleChoiceResult?> showStapleChoiceSheet(
                     onPressed: () => Navigator.pop(dialogContext, true),
                     child: Text(
                       AppLocalizations.of(context).syncDetailsDiscard,
-                      style: TextStyle(color: AppColors.error),
+                      style: TextStyle(color: AppColors.error), // accent-allowlist: destructive/discard action, error semantic
                     ),
                   ),
                 ],
@@ -318,7 +319,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       final hex = hexColor.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (_) {
-      return AppColors.cyan;
+      return context.accentColor;
     }
   }
 
@@ -520,7 +521,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                       icon: Icons.bolt,
                       label: AppLocalizations.of(context).homeTodaysWorkout,
                       isSelected: _addToday,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
                       onTap: () => setState(() => _addToday = true),
@@ -530,7 +531,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                       icon: Icons.skip_next,
                       label: AppLocalizations.of(context).stapleChoiceNextWorkout,
                       isSelected: !_addToday,
-                      color: AppColors.cyan,
+                      color: context.accentColor,
                       textPrimary: textPrimary,
                       textMuted: textMuted,
                       onTap: () => setState(() => _addToday = false),
@@ -570,10 +571,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            color: isSelected ? AppColors.cyan : cardColor,
+                            color: isSelected ? context.accentColor : cardColor,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: isSelected ? AppColors.cyan : cardBorder,
+                              color: isSelected ? context.accentColor : cardBorder,
                             ),
                           ),
                           alignment: Alignment.center,
@@ -610,7 +611,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                     Navigator.pop(context, _makeResult(addToday: _addToday));
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -657,7 +658,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.tune, color: AppColors.cyan, size: 18),
+                  Icon(Icons.tune, color: context.accentColor, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -867,14 +868,14 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                         height: 40,
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.cyan
+                              ? context.accentColor
                               : Colors.transparent,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: isSelected
-                                ? AppColors.cyan
+                                ? context.accentColor
                                 : isWorkoutDay
-                                    ? AppColors.cyan.withValues(alpha: 0.4)
+                                    ? context.accentColor.withValues(alpha: 0.4)
                                     : textMuted.withValues(alpha: 0.3),
                             width: isWorkoutDay && !isSelected ? 1.5 : 1.0,
                           ),
@@ -898,7 +899,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: isWorkoutDay
-                              ? AppColors.cyan.withValues(alpha: 0.6)
+                              ? context.accentColor.withValues(alpha: 0.6)
                               : Colors.transparent,
                         ),
                       ),
@@ -941,10 +942,10 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.cyan.withValues(alpha: 0.15) : Colors.transparent,
+            color: isSelected ? context.accentColor.withValues(alpha: 0.15) : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
             border: isSelected
-                ? Border.all(color: AppColors.cyan.withValues(alpha: 0.3))
+                ? Border.all(color: context.accentColor.withValues(alpha: 0.3))
                 : null,
           ),
           alignment: Alignment.center,
@@ -987,7 +988,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.swap_horiz, color: AppColors.orange, size: 20),
+                  Icon(Icons.swap_horiz, color: context.accentColor, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -1061,7 +1062,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.science_outlined, color: AppColors.cyan, size: 18),
+                    Icon(Icons.science_outlined, color: context.accentColor, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -1187,12 +1188,12 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
                                 color: isSelected
-                                    ? AppColors.cyan.withValues(alpha: 0.15)
+                                    ? context.accentColor.withValues(alpha: 0.15)
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: isSelected
-                                      ? AppColors.cyan
+                                      ? context.accentColor
                                       : textMuted.withValues(alpha: 0.3),
                                 ),
                               ),
@@ -1201,7 +1202,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  color: isSelected ? AppColors.cyan : textMuted,
+                                  color: isSelected ? context.accentColor : textMuted,
                                 ),
                               ),
                             ),
@@ -1248,7 +1249,7 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: AppColors.cyan),
+                          borderSide: BorderSide(color: context.accentColor),
                         ),
                         contentPadding: const EdgeInsets.all(12),
                         isDense: true,

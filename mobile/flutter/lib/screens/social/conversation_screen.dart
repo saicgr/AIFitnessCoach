@@ -18,6 +18,7 @@ import 'friend_profile_screen.dart';
 import 'group_settings_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/accent_color_provider.dart';
 class ConversationScreen extends ConsumerStatefulWidget {
   final String conversationId;
   final String otherUserId;
@@ -391,18 +392,18 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                color: isDark ? Colors.orange.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.1),
+                color: isDark ? Colors.orange.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.1),  // accent-allowlist: warning/alert banner tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket, not the app accent
                 child: Row(
                   children: [
                     Icon(Icons.info_outline_rounded, size: 16,
-                        color: isDark ? Colors.orange.shade300 : Colors.orange.shade700),
+                        color: isDark ? Colors.orange.shade300 : Colors.orange.shade700),  // accent-allowlist: warning/alert banner tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket, not the app accent
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context).conversationSomeMessagesWereEncrypted,
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark ? Colors.orange.shade300 : Colors.orange.shade700,
+                          color: isDark ? Colors.orange.shade300 : Colors.orange.shade700,  // accent-allowlist: warning/alert banner tone (Colors.orange) — matches the explicit ALLOWLIST warning bucket, not the app accent
                         ),
                       ),
                     ),
@@ -502,7 +503,7 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen>
         children: [
           CircleAvatar(
             radius: 10,
-            backgroundColor: AppColors.purple.withValues(alpha: 0.2),
+            backgroundColor: context.accentColor.withValues(alpha: 0.2),
             backgroundImage: senderAvatar != null ? NetworkImage(senderAvatar) : null,
             child: senderAvatar == null
                 ? Text(

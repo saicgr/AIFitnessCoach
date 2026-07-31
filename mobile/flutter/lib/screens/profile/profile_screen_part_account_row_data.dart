@@ -305,7 +305,7 @@ class _CustomEquipmentManagerState extends State<_CustomEquipmentManager> {
                         trailing: IconButton(
                           icon: Icon(
                             Icons.delete_outline,
-                            color: AppColors.error,
+                            color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                             size: 22,
                           ),
                           onPressed: () => _removeEquipment(equipment),

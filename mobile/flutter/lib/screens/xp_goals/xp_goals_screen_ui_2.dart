@@ -92,7 +92,7 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
                 'of $totalXPAvailable XP',
                 textColor,
                 textMuted,
-                heroColor: AppColors.gamGold,
+                heroColor: AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ],
           ),
@@ -114,16 +114,16 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
                     height: 22,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: bonus.isAwarded ? AppColors.green : surface,
+                      color: bonus.isAwarded ? AppColors.green : surface, // accent-allowlist: XP level/reward gamification gold + success/earned state
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: bonus.isAwarded ? AppColors.green : AppColors.gamGold,
+                        color: bonus.isAwarded ? AppColors.green : AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                         width: 1.5,
                       ),
                     ),
                     child: bonus.isAwarded
                         ? const Icon(Icons.check, size: 12, color: Colors.black)
-                        : Icon(bonus.icon, size: 11, color: AppColors.gamGold),
+                        : Icon(bonus.icon, size: 11, color: AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
                   ),
                   const SizedBox(width: 11),
                   Expanded(
@@ -139,7 +139,7 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
                   Text(
                     '+${bonus.xp}',
                     style: ZType.lbl(11,
-                        color: bonus.isAwarded ? AppColors.green : AppColors.gamGold,
+                        color: bonus.isAwarded ? AppColors.green : AppColors.gamGold, // accent-allowlist: XP level/reward gamification gold + success/earned state
                         weight: FontWeight.w800,
                         letterSpacing: 0.5),
                   ),

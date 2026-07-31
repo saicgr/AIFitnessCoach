@@ -116,23 +116,23 @@ class QuickWorkoutPreset {
   Color get color {
     switch (focus) {
       case 'cardio':
-        return Colors.orange;
+        return Colors.orange;  // accent-allowlist: workout-focus-type legend colour -- cardio
       case 'strength':
-        return Colors.red;
+        return Colors.red;  // accent-allowlist: workout-focus-type legend colour -- strength
       case 'stretch':
-        return Colors.teal;
+        return Colors.teal;  // accent-allowlist: workout-focus-type legend colour -- stretch
       case 'upper_body':
-        return Colors.blue;
+        return Colors.blue;  // accent-allowlist: workout-focus-type legend colour -- upper body
       case 'lower_body':
-        return Colors.green;
+        return Colors.green;  // accent-allowlist: workout-focus-type legend colour -- lower body
       case 'core':
-        return Colors.purple;
+        return Colors.purple;  // accent-allowlist: workout-focus-type legend colour -- core
       case 'emom':
-        return Colors.deepPurple;
+        return Colors.deepPurple;  // accent-allowlist: workout-focus-type legend colour -- emom
       case 'amrap':
-        return Colors.teal;
+        return Colors.teal;  // accent-allowlist: workout-focus-type legend colour -- amrap
       default:
-        return Colors.cyan;
+        return Colors.cyan;  // accent-allowlist: workout-focus-type legend colour -- default
     }
   }
 

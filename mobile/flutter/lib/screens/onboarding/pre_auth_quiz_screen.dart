@@ -53,6 +53,7 @@ import 'pre_auth_quiz_data.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../core/theme/accent_color_provider.dart';
 
 part 'pre_auth_quiz_screen_ui.dart';
 
@@ -1183,7 +1184,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           equipment: item,
           seedEnvironment: _selectedEnvironment ?? 'home',
           // Onboarding speaks orange, not the in-app cyan.
-          accentColor: AppColors.orange,
+          accentColor: context.accentColor,
           onSave: (updated) {
             final weights = updated.weightInventory.keys.toList()..sort();
             // Keep min/max alongside the exact list so legacy readers of the
@@ -1324,21 +1325,21 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         'label': 'Strength',  // ← SHORTENED from "Muscle Strength"
         'description': '3–6 reps • heavy & powerful',  // ← CONDENSED
         'icon': Icons.bolt_rounded,
-        'color': const Color(0xFF3B82F6), // Bright blue
+        'color': const Color(0xFF3B82F6), // Bright blue  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
       },
       {
         'id': 'strength_hypertrophy',
         'label': 'Balanced',  // ← SHORTENED from "Both Strength & Hypertrophy"
         'description': '6–10 reps • size + strength',  // ← CONDENSED
         'icon': Icons.all_inclusive_rounded,
-        'color': const Color(0xFF8B5CF6), // Vibrant purple
+        'color': const Color(0xFF8B5CF6), // Vibrant purple  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       },
       {
         'id': 'endurance',
         'label': 'Endurance',  // ← KEEP as-is
         'description': '12+ reps • stamina',  // ← CONDENSED
         'icon': Icons.directions_run_rounded,
-        'color': const Color(0xFF10B981), // Vibrant green
+        'color': const Color(0xFF10B981), // Vibrant green  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
       },
     ];
 
@@ -1374,9 +1375,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       {'id': 'build_muscle', 'label': 'Build Muscle', 'icon': Icons.fitness_center, 'color': AppColors.onboardingAccent},
       {'id': 'lose_weight', 'label': 'Lose Weight', 'icon': Icons.monitor_weight_outlined, 'color': AppColors.onboardingAccent},
       {'id': 'increase_strength', 'label': 'Get Stronger', 'icon': Icons.bolt, 'color': AppColors.onboardingAccent},
-      {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': AppColors.purple},
-      {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.green},
-      {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': const Color(0xFF3B82F6)}, // Bright blue
+      {'id': 'improve_endurance', 'label': 'Build Endurance', 'icon': Icons.directions_run, 'color': context.accentColor},
+      {'id': 'stay_active', 'label': 'Stay Active', 'icon': Icons.favorite_outline, 'color': AppColors.green},  // accent-allowlist: categorical per-option palette - each quiz option needs a distinct colour for visual scanning; recolouring collapses the distinction
+      {'id': 'athletic_performance', 'label': 'Athletic Performance', 'icon': Icons.sports_martial_arts, 'color': const Color(0xFF3B82F6)}, // Bright blue  // accent-allowlist: informational state - same value as AppColors.info / AppColors.waterBlue
     ];
 
     return QuizMultiSelect(

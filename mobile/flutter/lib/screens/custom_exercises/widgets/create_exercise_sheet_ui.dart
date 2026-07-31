@@ -86,7 +86,7 @@ extension _CreateExerciseSheetStateUI on _CreateExerciseSheetState {
     required void Function(int) onChanged,
     required bool isDark,
   }) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = context.accentColor;
 
     return Container(
       decoration: BoxDecoration(
@@ -155,7 +155,7 @@ extension _CreateExerciseSheetStateUI on _CreateExerciseSheetState {
         ),
         value: value,
         onChanged: onChanged,
-        activeThumbColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+        activeThumbColor: context.accentColor,
       ),
     );
   }

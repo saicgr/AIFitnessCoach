@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// First Action Prompt — Onboarding v5 (Day 0 activation)
 ///
 /// Shown ONCE on first home-screen load after signup. Surfaces a single
@@ -101,7 +102,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
           end: AlignmentDirectional.bottomEnd,
           colors: [
             AppColors.onboardingAccent.withValues(alpha: 0.18),
-            const Color(0xFFFF6B00).withValues(alpha: 0.10),
+            const Color(0xFFFF6B00).withValues(alpha: 0.10),  // accent-allowlist: onboarding funnel's own fixed branding gradient (partner stop of AppColors.onboardingAccent), not the live app accent
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -148,7 +149,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
           const SizedBox(height: 14),
           _ActionRow(
             icon: Icons.restaurant_rounded,
-            iconColor: const Color(0xFF2ECC71),
+            iconColor: context.accentColor,
             label: 'Log a meal',
             detail: 'Type what you ate. Macros appear instantly.',
             onTap: () => _trigger('log_meal', '/log-meal'),
@@ -157,7 +158,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
           const SizedBox(height: 8),
           _ActionRow(
             icon: Icons.favorite_rounded,
-            iconColor: const Color(0xFFE74C3C),
+            iconColor: context.accentColor,
             label: 'Connect Apple Health',
             detail: AppLocalizations.of(context).firstActionPromptPullInYourActivity,
             onTap: () => _trigger('connect_health', '/health-connect-setup'),
@@ -166,7 +167,7 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
           const SizedBox(height: 8),
           _ActionRow(
             icon: Icons.chat_bubble_rounded,
-            iconColor: const Color(0xFF9B59B6),
+            iconColor: context.accentColor,
             label: 'Say hi to your coach',
             detail: AppLocalizations.of(context).firstActionPromptTheyHaveAMessage,
             onTap: () => _trigger('coach_chat', '/chat'),

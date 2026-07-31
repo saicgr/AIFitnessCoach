@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'onboarding_theme.dart';
 import 'quiz_step_header.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Callback for duration range selection (min, max)
 typedef DurationRangeCallback = void Function(int min, int max);
@@ -235,16 +236,16 @@ class QuizDaysSelector extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
+                            gradient: LinearGradient(
                               colors: [
-                                Color(0xFFFFB366),
-                                Color(0xFFF97316),
+                                context.accentColor,
+                                context.accentColor,
                               ],
                             ),
                             borderRadius: BorderRadius.circular(6),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFF97316)
+                                color: context.accentColor
                                     .withValues(alpha: 0.4),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
@@ -401,8 +402,8 @@ class QuizDaysSelector extends StatelessWidget {
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFB366), Color(0xFFF97316)],
+                            gradient: LinearGradient(
+                              colors: [context.accentColor, context.accentColor.withValues(alpha: 0.85)],
                             ),
                             borderRadius: BorderRadius.circular(4),
                           ),

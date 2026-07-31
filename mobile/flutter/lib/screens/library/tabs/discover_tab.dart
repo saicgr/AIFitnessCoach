@@ -794,22 +794,22 @@ final _equipmentTypes = [
   _EquipmentData(
     'Weights',
     Icons.fitness_center,
-    (isDark) => isDark ? AppColors.orange : AppColorsLight.orange,
+    (isDark) => isDark ? AppColors.orange : AppColorsLight.orange,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Bodyweight',
     Icons.self_improvement,
-    (isDark) => isDark ? AppColors.success : AppColorsLight.success,
+    (isDark) => isDark ? AppColors.success : AppColorsLight.success,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Machines',
     Icons.precision_manufacturing,
-    (isDark) => isDark ? AppColors.cyan : AppColorsLight.cyan,
+    (isDark) => isDark ? AppColors.cyan : AppColorsLight.cyan,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Cardio',
     Icons.directions_run,
-    (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),
+    (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
 ];
 
@@ -819,51 +819,51 @@ final _categoryTypes = [
   _EquipmentData(
     'Strength',
     Icons.fitness_center,
-    (isDark) => isDark ? AppColors.orange : AppColorsLight.orange,
+    (isDark) => isDark ? AppColors.orange : AppColorsLight.orange,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Cardio',
     Icons.directions_run,
-    (isDark) => isDark ? AppColors.red : AppColorsLight.coral,
+    (isDark) => isDark ? AppColors.red : AppColorsLight.coral,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Stretching',
     Icons.accessibility_new,
-    (isDark) => isDark ? AppColors.cyan : AppColorsLight.macroCarbs,
+    (isDark) => isDark ? AppColors.cyan : AppColorsLight.macroCarbs,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Core',
     Icons.self_improvement,
-    (isDark) => isDark ? AppColors.purple : AppColorsLight.purple,
+    (isDark) => isDark ? AppColors.purple : AppColorsLight.purple,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Yoga',
     Icons.spa,
-    (isDark) => isDark ? AppColors.green : AppColorsLight.green,
+    (isDark) => isDark ? AppColors.green : AppColorsLight.green,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Plyometric',
     Icons.bolt,
-    (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),
+    (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Power',
     Icons.flash_on,
-    (isDark) => isDark ? AppColors.warning : AppColorsLight.warning,
+    (isDark) => isDark ? AppColors.warning : AppColorsLight.warning,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Conditioning',
     Icons.whatshot,
-    (isDark) => isDark ? AppColors.magenta : AppColorsLight.magenta,
+    (isDark) => isDark ? AppColors.magenta : AppColorsLight.magenta,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Functional',
     Icons.sports_gymnastics,
-    (isDark) => isDark ? AppColors.info : AppColorsLight.info,
+    (isDark) => isDark ? AppColors.info : AppColorsLight.info,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Balance',
     Icons.balance,
-    (isDark) => isDark ? AppColors.pink : AppColorsLight.magenta,
+    (isDark) => isDark ? AppColors.pink : AppColorsLight.magenta,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
 ];

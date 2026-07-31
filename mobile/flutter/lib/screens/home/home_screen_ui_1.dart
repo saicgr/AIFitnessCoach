@@ -62,12 +62,12 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.purple.withValues(alpha: 0.15),
+                    color: context.accentColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     _getIconForTileType(tileType),
-                    color: AppColors.purple,
+                    color: context.accentColor,
                     size: 20,
                   ),
                 ),
@@ -91,15 +91,15 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.cyan.withValues(alpha: 0.2),
+                                color: context.accentColor.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'NEW',
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.cyan,
+                                  color: context.accentColor,
                                 ),
                               ),
                             ),
@@ -121,7 +121,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                 ),
                 Icon(
                   Icons.add_circle_outline,
-                  color: AppColors.cyan,
+                  color: context.accentColor,
                   size: 24,
                 ),
               ],
@@ -165,7 +165,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.purple.withValues(alpha: 0.15),
+                        color: context.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(

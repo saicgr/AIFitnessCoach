@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 
 import '../l10n/generated/app_localizations.dart';
 /// Inspired by GymBeat's pervasive lightbulb tooltips on every empty state.
@@ -415,7 +415,6 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     EmptyStateTip tip,
     Widget measuredCard,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     {
         final mq = MediaQuery.of(context);
         final screenSize = mq.size;
@@ -594,7 +593,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
                         target: showCutout ? effRect : null,
                         padding: tip.targetPadding,
                         radius: tip.targetRadius,
-                        accent: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                        accent: context.accentColor,
                       ),
                     );
                   },
@@ -765,7 +764,7 @@ class _TipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accent = context.accentColor;
     // Fully opaque — the card sits over the dark tour scrim, so any
     // translucency muddies the fill and hurts text contrast. Glass feel
     // still comes from the BackdropFilter blur + shadow.

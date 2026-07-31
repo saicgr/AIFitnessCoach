@@ -8,6 +8,7 @@ import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvid
 import '../../beast_mode_constants.dart';
 
 import '../../../../../l10n/generated/app_localizations.dart';
+import '../../../../../core/theme/accent_color_provider.dart';
 /// Tappable monospace cell for editable table values.
 class TappableCell extends StatelessWidget {
   final String text;
@@ -33,9 +34,9 @@ class TappableCell extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
-          color: AppColors.orange.withValues(alpha: isDark ? 0.06 : 0.04),
+          color: context.accentColor.withValues(alpha: isDark ? 0.06 : 0.04),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: AppColors.orange.withValues(alpha: 0.15)),
+          border: Border.all(color: context.accentColor.withValues(alpha: 0.15)),
         ),
         child: Text(
           text,
@@ -72,9 +73,9 @@ class TappableBiasCell extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         decoration: BoxDecoration(
-          color: AppColors.orange.withValues(alpha: isDark ? 0.06 : 0.04),
+          color: context.accentColor.withValues(alpha: isDark ? 0.06 : 0.04),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: AppColors.orange.withValues(alpha: 0.15)),
+          border: Border.all(color: context.accentColor.withValues(alpha: 0.15)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -84,7 +85,7 @@ class TappableBiasCell extends StatelessWidget {
                   style: TextStyle(fontSize: 10, color: textColor),
                   overflow: TextOverflow.ellipsis),
             ),
-            Icon(Icons.arrow_drop_down, size: 12, color: AppColors.orange),
+            Icon(Icons.arrow_drop_down, size: 12, color: context.accentColor),
           ],
         ),
       ),
@@ -121,12 +122,12 @@ class TappableBiasCell extends StatelessWidget {
                     title: Text(bias,
                         style: TextStyle(
                           fontSize: 14,
-                          color: isSelected ? AppColors.orange : textPrimary,
+                          color: isSelected ? context.accentColor : textPrimary,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.normal,
                         )),
                     trailing: isSelected
-                        ? Icon(Icons.check, color: AppColors.orange, size: 18)
+                        ? Icon(Icons.check, color: context.accentColor, size: 18)
                         : null,
                     onTap: () {
                       HapticService.selection();

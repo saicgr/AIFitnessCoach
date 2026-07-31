@@ -397,7 +397,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           ? 'That\'s +$changeStr since last weigh-in. Double-check this is correct!'
           : 'That\'s -$changeStr since last weigh-in. Double-check this is correct!';
       _feedbackIcon = Icons.warning_amber_rounded;
-      _feedbackColor = const Color(0xFFF59E0B); // amber
+      _feedbackColor = const Color(0xFFF59E0B); // amber // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
       return;
     }
 
@@ -417,31 +417,31 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       if (wantsToLose) {
         _feedbackMessage = 'Down $changeStr — you\'re on track!';
         _feedbackIcon = Icons.trending_down_rounded;
-        _feedbackColor = const Color(0xFF10B981); // green
+        _feedbackColor = const Color(0xFF10B981); // green // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
       } else if (wantsToGain) {
         _feedbackMessage = 'Down $changeStr — make sure you\'re eating enough to support your gains.';
         _feedbackIcon = Icons.trending_down_rounded;
-        _feedbackColor = const Color(0xFFF59E0B); // amber
+        _feedbackColor = const Color(0xFFF59E0B); // amber // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
       } else {
         _feedbackMessage = 'Down $changeStr — keep it up!';
         _feedbackIcon = Icons.trending_down_rounded;
-        _feedbackColor = const Color(0xFF10B981);
+        _feedbackColor = const Color(0xFF10B981); // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
       }
     } else {
       // Weight went up
       if (wantsToGain) {
         _feedbackMessage = 'Up $changeStr — gains are coming!';
         _feedbackIcon = Icons.trending_up_rounded;
-        _feedbackColor = const Color(0xFF10B981);
+        _feedbackColor = const Color(0xFF10B981); // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
       } else if (wantsToLose) {
         if (changeAbs > 2.0) {
           _feedbackMessage = 'Up $changeStr — stay focused, review your meals and activity this week.';
           _feedbackIcon = Icons.trending_up_rounded;
-          _feedbackColor = const Color(0xFFEF4444); // red
+          _feedbackColor = const Color(0xFFEF4444); // red // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
         } else {
           _feedbackMessage = 'Up $changeStr — small fluctuations are normal. Stay consistent!';
           _feedbackIcon = Icons.trending_up_rounded;
-          _feedbackColor = const Color(0xFFF59E0B);
+          _feedbackColor = const Color(0xFFF59E0B); // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
         }
       } else {
         _feedbackMessage = 'Up $changeStr — weight fluctuations are normal.';
@@ -622,13 +622,13 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
           label: 'DOWN',
           value: '-${deltaDisplay.toStringAsFixed(1)} ${unit.label}',
           icon: Icons.trending_down_rounded,
-          accent: const Color(0xFF22C55E),
+          accent: const Color(0xFF22C55E), // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
         ),
       ShareableMetric(
         label: '30-DAY LOW',
         value: '${currentDisplay.toStringAsFixed(1)} ${unit.label}',
         icon: Icons.emoji_events_rounded,
-        accent: const Color(0xFFFFB020),
+        accent: const Color(0xFFFFB020), // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
       ),
     ];
 
@@ -640,7 +640,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       heroUnitSingular: unit.label,
       highlights: highlights,
       subMetrics: subMetrics,
-      accentColor: const Color(0xFF22C55E),
+      accentColor: const Color(0xFF22C55E), // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
     );
 
     Navigator.of(context).pop();
@@ -700,7 +700,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     // Celebration overrides color + title when this is a 30-day low.
     final celebration = _isNewLow;
     final successColor = celebration
-        ? const Color(0xFFFFB020) // amber-gold for the milestone
+        ? const Color(0xFFFFB020) // amber-gold for the milestone // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
         : colors.success;
     final title = celebration ? '🎉 New 30-day low!' : 'Weight Logged!';
 
@@ -1743,9 +1743,9 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     final wantsGain = goals.any((g) => g.contains('muscle') || g.contains('gain'));
     Color c = colors.textSecondary;
     if ((wantsLose && diffKg < 0) || (wantsGain && diffKg > 0)) {
-      c = const Color(0xFF10B981); // green — aligned with goal
+      c = const Color(0xFF10B981); // green — aligned with goal // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
     } else if ((wantsLose && diffKg > 0) || (wantsGain && diffKg < 0)) {
-      c = const Color(0xFFEF4444); // red — opposing goal
+      c = const Color(0xFFEF4444); // red — opposing goal // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
     }
     return Text(
       '$sign${diffDisplay.toStringAsFixed(1)} ${_selectedUnit.label} '
@@ -1786,7 +1786,7 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
               history: recent,
               liveWeightKg: _weightKg,
               lineColor: colors.cyan,
-              dotColor: const Color(0xFFF59E0B),
+              dotColor: const Color(0xFFF59E0B), // accent-allowlist: weight-trend feedback severity scale (on-track/caution/off-track)
               prevColor: colors.cardBorder,
               labelColor: colors.textMuted,
               useKg: _selectedUnit == WeightUnit.kg,

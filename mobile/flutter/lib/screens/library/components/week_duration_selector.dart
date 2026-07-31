@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/branded_program.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/accent_color_provider.dart';
 /// A widget for selecting program duration (weeks) and sessions per week.
 ///
 /// Shows a slider with tick marks at anchor durations and a chip row
@@ -26,7 +27,7 @@ class WeekDurationSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;

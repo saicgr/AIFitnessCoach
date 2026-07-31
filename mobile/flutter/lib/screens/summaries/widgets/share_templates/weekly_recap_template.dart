@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../workout/widgets/share_templates/app_watermark.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 /// Instagram-Story template: "Week Recap"
 /// Dominant circular completion ring + 3-up supporting stats + optional
 /// AI summary teaser. Designed to fit a 320x440 card that the base sheet
@@ -34,9 +35,9 @@ class WeeklyRecapTemplate extends StatelessWidget {
 
   Color get _ringColor {
     final pct = _completionRate * 100;
-    if (pct >= 80) return const Color(0xFF22C55E);
-    if (pct >= 50) return const Color(0xFFF59E0B);
-    return const Color(0xFFEF4444);
+    if (pct >= 80) return const Color(0xFF22C55E);  // accent-allowlist: success/positive state — must stay green regardless of accent
+    if (pct >= 50) return const Color(0xFFF59E0B);  // accent-allowlist: warning severity — must stay amber regardless of accent
+    return const Color(0xFFEF4444);  // accent-allowlist: error/negative state — must stay red regardless of accent
   }
 
   String get _timeLabel {
@@ -117,7 +118,7 @@ class WeeklyRecapTemplate extends StatelessWidget {
                         icon: Icons.timer_rounded,
                         value: _timeLabel,
                         label: 'TIME',
-                        color: const Color(0xFF60A5FA),
+                        color: const Color(0xFF60A5FA),  // accent-allowlist: informational state — must stay blue regardless of accent
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -126,7 +127,7 @@ class WeeklyRecapTemplate extends StatelessWidget {
                         icon: Icons.emoji_events_rounded,
                         value: '$prsAchieved',
                         label: AppLocalizations.of(context).weeklyWrappedPrs,
-                        color: const Color(0xFFFBBF24),
+                        color: const Color(0xFFFBBF24),  // accent-allowlist: warning severity — must stay amber regardless of accent
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -135,7 +136,7 @@ class WeeklyRecapTemplate extends StatelessWidget {
                         icon: Icons.local_fire_department_rounded,
                         value: '$currentStreak',
                         label: AppLocalizations.of(context).weeklyRecapTemplateStreak,
-                        color: const Color(0xFFF97316),
+                        color: context.accentColor,
                       ),
                     ),
                   ],
@@ -292,7 +293,7 @@ class _SummaryBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.auto_awesome_rounded,
-              color: Color(0xFF60A5FA), size: 16),
+              color: Color(0xFF60A5FA), size: 16),  // accent-allowlist: informational state — must stay blue regardless of accent
           const SizedBox(width: 8),
           Expanded(
             child: Text(

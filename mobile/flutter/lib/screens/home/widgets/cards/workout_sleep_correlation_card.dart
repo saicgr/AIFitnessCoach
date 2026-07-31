@@ -109,7 +109,7 @@ class WorkoutSleepCorrelationCard extends ConsumerWidget {
           GestureDetector(
             onTap: () {
               HapticService.light();
-              context.push('/insights/sleep');
+              context.push('/health/sleep');
             },
             child: Text(
               'View sleep insights →',

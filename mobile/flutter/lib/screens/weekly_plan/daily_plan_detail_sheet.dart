@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers/weekly_plan_provider.dart';
 
@@ -176,22 +177,22 @@ class DailyPlanDetailSheet extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.1),
+        color: context.accentColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.withOpacity(0.3)),
+        border: Border.all(color: context.accentColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.fitness_center, color: Colors.green),
+              Icon(Icons.fitness_center, color: context.accentColor),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).navWorkout,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.green,
+                  color: context.accentColor,
                 ),
               ),
               const Spacer(),
@@ -202,7 +203,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: context.accentColor,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -277,8 +278,8 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                 icon: const Icon(Icons.play_arrow),
                 label: Text(AppLocalizations.of(context).warmupPhaseStartWorkout),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.green,
-                  side: const BorderSide(color: Colors.green),
+                  foregroundColor: context.accentColor,
+                  side: BorderSide(color: context.accentColor),
                 ),
               ),
             ),
@@ -318,7 +319,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                   icon: Icons.local_fire_department,
                   label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                   value: '${entry.calorieTarget}',
-                  color: Colors.orange,
+                  color: Colors.orange,  // accent-allowlist: macro/nutrient identity colour -- differentiates macro cards shown side by side
                 ),
               ),
               const SizedBox(width: 12),
@@ -328,7 +329,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                   icon: Icons.egg_alt,
                   label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                   value: '${entry.proteinTargetG.toInt()}g',
-                  color: Colors.red,
+                  color: Colors.red,  // accent-allowlist: macro/nutrient identity colour -- differentiates macro cards shown side by side
                 ),
               ),
             ],
@@ -342,7 +343,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                   icon: Icons.bakery_dining,
                   label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                   value: '${entry.carbsTargetG.toInt()}g',
-                  color: Colors.amber,
+                  color: Colors.amber,  // accent-allowlist: macro/nutrient identity colour -- differentiates macro cards shown side by side
                 ),
               ),
               const SizedBox(width: 12),
@@ -352,7 +353,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                   icon: Icons.water_drop,
                   label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                   value: '${entry.fatTargetG.toInt()}g',
-                  color: Colors.purple,
+                  color: Colors.purple,  // accent-allowlist: macro/nutrient identity colour -- differentiates macro cards shown side by side
                 ),
               ),
             ],
@@ -414,22 +415,22 @@ class DailyPlanDetailSheet extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: context.accentColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        border: Border.all(color: context.accentColor.withOpacity(0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.timer, color: Colors.orange),
+              Icon(Icons.timer, color: context.accentColor),
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).dailyPlanDetailFastingWindow,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.orange,
+                  color: context.accentColor,
                 ),
               ),
               const Spacer(),
@@ -440,13 +441,13 @@ class DailyPlanDetailSheet extends ConsumerWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.2),
+                    color: context.accentColor.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     entry.fastingProtocol!,
-                    style: const TextStyle(
-                      color: Colors.orange,
+                    style: TextStyle(
+                      color: context.accentColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -504,7 +505,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
   }) {
     return Column(
       children: [
-        Icon(icon, size: 24, color: Colors.orange),
+        Icon(icon, size: 24, color: context.accentColor),
         const SizedBox(height: 6),
         Text(
           time,
@@ -644,10 +645,10 @@ class DailyPlanDetailSheet extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildMealMacroChip('${meal.totalCalories ?? 0} cal', Colors.orange),
+              _buildMealMacroChip('${meal.totalCalories ?? 0} cal', Colors.orange),  // accent-allowlist: macro/nutrient identity colour -- differentiates macro cards shown side by side
               const SizedBox(width: 8),
               _buildMealMacroChip(
-                  '${meal.totalProteinG?.toInt() ?? 0}g protein', Colors.red),
+                  '${meal.totalProteinG?.toInt() ?? 0}g protein', Colors.red),  // accent-allowlist: macro/nutrient identity colour -- differentiates macro cards shown side by side
             ],
           ),
         ],
@@ -683,7 +684,7 @@ class DailyPlanDetailSheet extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.info, color: Colors.blue),
+              const Icon(Icons.info, color: Colors.blue),  // accent-allowlist: informational icon -- info semantic
               const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context).dailyPlanDetailNotesWarnings,

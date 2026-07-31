@@ -11,6 +11,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
+import '../../home/widgets/manage_gym_profiles_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Shows the upcoming workouts bottom sheet
@@ -478,7 +479,10 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
                     FilledButton(
                       onPressed: () {
                         Navigator.of(ctx).pop();
-                        context.push('/gym-profiles');
+                        showGlassSheet(
+                          context: context,
+                          builder: (_) => const ManageGymProfilesSheet(),
+                        );
                       },
                       child: Text(AppLocalizations.of(context).upcomingWorkoutsEditGymProfile),
                     ),
@@ -489,7 +493,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Failed to generate workout: ${progress.message}'),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
                 ),
               );
             }
@@ -503,7 +507,7 @@ class _UpcomingWorkoutsSheetState extends ConsumerState<_UpcomingWorkoutsSheet> 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to generate workout: $e'),
-            backgroundColor: AppColors.error,
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }

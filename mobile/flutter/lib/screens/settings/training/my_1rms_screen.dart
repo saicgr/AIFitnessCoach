@@ -17,6 +17,7 @@ import '../../../l10n/generated/app_localizations.dart';
 // Import linked exercises types
 export '../../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
 import '../../common/app_refresh_indicator.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 part 'my_1rms_screen_part_one_r_m_card.dart';
 
@@ -99,7 +100,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
           ? null
           : FloatingActionButton.extended(
               onPressed: () => _showAddOneRMSheet(context),
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
               label: Text(AppLocalizations.of(context).my1rmsScreenAdd1rm),
@@ -175,7 +176,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
                   icon: const Icon(Icons.auto_awesome),
                   label: Text(AppLocalizations.of(context).my1rmsAutoPopulateFromWorkout),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.cyan,
+                    backgroundColor: context.accentColor,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -254,7 +255,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(response.message),
-          backgroundColor: response.count > 0 ? Colors.green : Colors.orange,
+          backgroundColor: response.count > 0 ? Colors.green : Colors.orange,  // accent-allowlist: warning severity - must stay amber regardless of accent (table classifies Material Colors.orange as warning-family, distinct from the app's AppColors.orange accent)
         ),
       );
     }
@@ -316,7 +317,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),  // accent-allowlist: error/destructive - must stay red
             child: Text(AppLocalizations.of(context).buttonDelete),
           ),
         ],

@@ -45,9 +45,9 @@ class _CrateOption {
   Color get typeColor {
     switch (crateType) {
       case 'activity':
-        return const Color(0xFFFFB300);
+        return const Color(0xFFFFB300);  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
       case 'streak':
-        return const Color(0xFFFF7043);
+        return const Color(0xFFFF7043);  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
       default:
         return const Color(0xFF78909C);
     }
@@ -298,7 +298,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context)!.openAllCratesFailedToOpenCrates),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red,  // accent-allowlist: error/destructive -- must stay red
           ),
         );
       }
@@ -399,7 +399,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFFFFB300),
+                                  color: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                                 ),
                               ),
                             ),
@@ -418,7 +418,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: CrateOpeningPlay(
-                    color: const Color(0xFFFFB300),
+                    color: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                     opened: _claimsDone,
                     onOpened: _onCrateBurstComplete,
                     caption:
@@ -440,7 +440,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                       ? ElevatedButton(
                           onPressed: _done,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFB300),
+                            backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
@@ -457,7 +457,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                               ? _collectAll
                               : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFFFB300),
+                            backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: (isDark ? AppColors.elevated : Colors.grey[200]),
                             padding: const EdgeInsets.symmetric(vertical: 14),
@@ -500,11 +500,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                     blastDirectionality: BlastDirectionality.explosive,
                     shouldLoop: false,
                     colors: const [
-                      Color(0xFFFFB300),
-                      Color(0xFFFF7043),
-                      Colors.amber,
-                      Colors.orange,
-                      Colors.pink,
+                      Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
+                      Color(0xFFFF7043),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
+                      Colors.amber,  // accent-allowlist: warning severity
+                      Colors.orange,  // accent-allowlist: warning severity
+                      Colors.pink,  // accent-allowlist: celebratory confetti burst -- deliberately multi-coloured, not the app accent
                     ],
                     numberOfParticles: 30,
                     maxBlastForce: 20,
@@ -740,9 +740,9 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.08),
+        color: Colors.amber.withOpacity(0.08),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withOpacity(0.25)),
+        border: Border.all(color: Colors.amber.withOpacity(0.25)),  // accent-allowlist: warning severity
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -805,7 +805,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                 value: value,
                 minHeight: 8,
                 backgroundColor: Colors.white.withOpacity(0.08),
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFB300)),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFB300)),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
               ),
             ),
           ),
@@ -839,9 +839,9 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.amber.withOpacity(0.08),
+        color: Colors.amber.withOpacity(0.08),  // accent-allowlist: warning severity
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.amber.withOpacity(0.2)),
+        border: Border.all(color: Colors.amber.withOpacity(0.2)),  // accent-allowlist: warning severity
       ),
       child: Row(
         children: [
@@ -956,7 +956,7 @@ class _BouncingUpArrowState extends State<_BouncingUpArrow>
       child: const Icon(
         Icons.arrow_upward_rounded,
         size: 18,
-        color: Color(0xFF34D399), // emerald — "up / gain"
+        color: Color(0xFF34D399), // emerald — "up / gain"  // accent-allowlist: success/positive state -- "up/gain" delta, must stay green regardless of accent
       ),
     );
   }

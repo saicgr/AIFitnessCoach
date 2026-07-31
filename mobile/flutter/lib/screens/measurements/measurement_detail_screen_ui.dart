@@ -80,7 +80,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
     Color rateColor(double rate) {
       if (rate.abs() < 0.01) return textMuted;
       final isGood = isDecreaseGood ? rate < 0 : rate > 0;
-      return isGood ? AppColors.success : AppColors.error;
+      return isGood ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
     }
     String formatRate(double rate) {
       final sign = rate >= 0 ? '+' : '';
@@ -167,30 +167,30 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
       case MeasurementType.bodyFat:
         title = 'Your Body Fat: ${_formatValue(value)}%';
         if (g == 'female') {
-          if (value < 14) { subtitle = 'Essential fat range'; contextColor = Colors.red; source = 'ACE'; }
-          else if (value < 21) { subtitle = 'Athletes range (14-20%)'; contextColor = Colors.green; source = 'ACE'; }
-          else if (value < 25) { subtitle = 'Fitness range (21-24%)'; contextColor = Colors.cyan; source = 'ACE'; }
-          else if (value < 32) { subtitle = 'Acceptable range (25-31%)'; contextColor = Colors.amber; source = 'ACE'; }
-          else { subtitle = 'Above acceptable range'; contextColor = Colors.red; source = 'ACE'; }
+          if (value < 14) { subtitle = 'Essential fat range'; contextColor = Colors.red; source = 'ACE'; }  // accent-allowlist: error/negative state — must stay red regardless of accent
+          else if (value < 21) { subtitle = 'Athletes range (14-20%)'; contextColor = Colors.green; source = 'ACE'; }  // accent-allowlist: success/positive state — must stay green regardless of accent
+          else if (value < 25) { subtitle = 'Fitness range (21-24%)'; contextColor = Colors.cyan; source = 'ACE'; }  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
+          else if (value < 32) { subtitle = 'Acceptable range (25-31%)'; contextColor = Colors.amber; source = 'ACE'; }  // accent-allowlist: warning severity — must stay amber regardless of accent
+          else { subtitle = 'Above acceptable range'; contextColor = Colors.red; source = 'ACE'; }  // accent-allowlist: error/negative state — must stay red regardless of accent
         } else {
-          if (value < 6) { subtitle = 'Essential fat range'; contextColor = Colors.red; source = 'ACE'; }
-          else if (value < 14) { subtitle = 'Athletes range (6-13%)'; contextColor = Colors.green; source = 'ACE'; }
-          else if (value < 18) { subtitle = 'Fitness range (14-17%)'; contextColor = Colors.cyan; source = 'ACE'; }
-          else if (value < 25) { subtitle = 'Acceptable range (18-24%)'; contextColor = Colors.amber; source = 'ACE'; }
-          else { subtitle = 'Above acceptable range'; contextColor = Colors.red; source = 'ACE'; }
+          if (value < 6) { subtitle = 'Essential fat range'; contextColor = Colors.red; source = 'ACE'; }  // accent-allowlist: error/negative state — must stay red regardless of accent
+          else if (value < 14) { subtitle = 'Athletes range (6-13%)'; contextColor = Colors.green; source = 'ACE'; }  // accent-allowlist: success/positive state — must stay green regardless of accent
+          else if (value < 18) { subtitle = 'Fitness range (14-17%)'; contextColor = Colors.cyan; source = 'ACE'; }  // accent-allowlist: health reference-range color — fixed medical classification zone (e.g. ACE body-fat Athletes/Fitness/Acceptable/Essential/Obese bands), not tied to accent
+          else if (value < 25) { subtitle = 'Acceptable range (18-24%)'; contextColor = Colors.amber; source = 'ACE'; }  // accent-allowlist: warning severity — must stay amber regardless of accent
+          else { subtitle = 'Above acceptable range'; contextColor = Colors.red; source = 'ACE'; }  // accent-allowlist: error/negative state — must stay red regardless of accent
         }
       case MeasurementType.waist:
         final unitLabel = _isMetric ? 'cm' : 'in';
         title = 'Your Waist: ${_formatValue(value)} $unitLabel';
         final cmValue = _isMetric ? value : value * 2.54;
         if (g == 'female') {
-          if (cmValue < 80) { subtitle = 'Low Risk - below 80cm threshold'; contextColor = Colors.green; source = 'CDC/WHO'; }
-          else if (cmValue < 88) { subtitle = 'Moderate Risk (80-88cm)'; contextColor = Colors.amber; source = 'CDC/WHO'; }
-          else { subtitle = 'High Risk - above 88cm threshold'; contextColor = Colors.red; source = 'CDC/WHO'; }
+          if (cmValue < 80) { subtitle = 'Low Risk - below 80cm threshold'; contextColor = Colors.green; source = 'CDC/WHO'; }  // accent-allowlist: success/positive state — must stay green regardless of accent
+          else if (cmValue < 88) { subtitle = 'Moderate Risk (80-88cm)'; contextColor = Colors.amber; source = 'CDC/WHO'; }  // accent-allowlist: warning severity — must stay amber regardless of accent
+          else { subtitle = 'High Risk - above 88cm threshold'; contextColor = Colors.red; source = 'CDC/WHO'; }  // accent-allowlist: error/negative state — must stay red regardless of accent
         } else {
-          if (cmValue < 94) { subtitle = 'Low Risk - below 94cm threshold'; contextColor = Colors.green; source = 'CDC/WHO'; }
-          else if (cmValue < 102) { subtitle = 'Moderate Risk (94-102cm)'; contextColor = Colors.amber; source = 'CDC/WHO'; }
-          else { subtitle = 'High Risk - above 102cm threshold'; contextColor = Colors.red; source = 'CDC/WHO'; }
+          if (cmValue < 94) { subtitle = 'Low Risk - below 94cm threshold'; contextColor = Colors.green; source = 'CDC/WHO'; }  // accent-allowlist: success/positive state — must stay green regardless of accent
+          else if (cmValue < 102) { subtitle = 'Moderate Risk (94-102cm)'; contextColor = Colors.amber; source = 'CDC/WHO'; }  // accent-allowlist: warning severity — must stay amber regardless of accent
+          else { subtitle = 'High Risk - above 102cm threshold'; contextColor = Colors.red; source = 'CDC/WHO'; }  // accent-allowlist: error/negative state — must stay red regardless of accent
         }
       default:
         return const SizedBox.shrink();
@@ -378,7 +378,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
                 alignment: AlignmentDirectional.centerEnd,
                 padding: const EdgeInsetsDirectional.only(end: 20),
                 decoration: BoxDecoration(
-                  color: AppColors.error,
+                  color: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.delete, color: Colors.white),

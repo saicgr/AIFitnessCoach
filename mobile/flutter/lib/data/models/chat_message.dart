@@ -52,7 +52,7 @@ class AgentConfig {
           name: 'coach',
           displayName: 'AI Coach',
           icon: Icons.smart_toy,
-          primaryColor: Color(0xFF00D9FF), // Cyan
+          primaryColor: Color(0xFF00D9FF), // Cyan // accent-allowlist: AI agent persona identity - each coach/nutrition/workout/injury/hydration agent needs a stable distinct color for chat bubble/avatar differentiation, independent of the user's accent choice
           backgroundColorDark: Color(0xFF1A3A4A),
           backgroundColorLight: Color(0xFFE0F7FA), // Light cyan tint
         );
@@ -61,7 +61,7 @@ class AgentConfig {
           name: 'nutrition',
           displayName: 'Nutrition Expert',
           icon: Icons.restaurant_menu,
-          primaryColor: Color(0xFF4CAF50), // Green
+          primaryColor: Color(0xFF4CAF50), // Green // accent-allowlist: AI agent persona identity - each coach/nutrition/workout/injury/hydration agent needs a stable distinct color for chat bubble/avatar differentiation, independent of the user's accent choice
           backgroundColorDark: Color(0xFF1A3A2A),
           backgroundColorLight: Color(0xFFE8F5E9), // Light green tint
         );
@@ -70,7 +70,7 @@ class AgentConfig {
           name: 'workout',
           displayName: 'Workout Specialist',
           icon: Icons.fitness_center,
-          primaryColor: Color(0xFFFF6B35), // Orange
+          primaryColor: Color(0xFFFF6B35), // Orange // accent-allowlist: AI agent persona identity - each coach/nutrition/workout/injury/hydration agent needs a stable distinct color for chat bubble/avatar differentiation, independent of the user's accent choice
           backgroundColorDark: Color(0xFF3A2A1A),
           backgroundColorLight: Color(0xFFFFF3E0), // Light orange tint
         );
@@ -79,7 +79,7 @@ class AgentConfig {
           name: 'injury',
           displayName: 'Recovery Advisor',
           icon: Icons.healing,
-          primaryColor: Color(0xFFE91E63), // Pink
+          primaryColor: Color(0xFFE91E63), // Pink // accent-allowlist: AI agent persona identity - each coach/nutrition/workout/injury/hydration agent needs a stable distinct color for chat bubble/avatar differentiation, independent of the user's accent choice
           backgroundColorDark: Color(0xFF3A1A2A),
           backgroundColorLight: Color(0xFFFCE4EC), // Light pink tint
         );
@@ -88,7 +88,7 @@ class AgentConfig {
           name: 'hydration',
           displayName: 'Hydration Tracker',
           icon: Icons.water_drop,
-          primaryColor: Color(0xFF2196F3), // Blue
+          primaryColor: Color(0xFF2196F3), // Blue // accent-allowlist: AI agent persona identity - each coach/nutrition/workout/injury/hydration agent needs a stable distinct color for chat bubble/avatar differentiation, independent of the user's accent choice
           backgroundColorDark: Color(0xFF1A2A3A),
           backgroundColorLight: Color(0xFFE3F2FD), // Light blue tint
         );

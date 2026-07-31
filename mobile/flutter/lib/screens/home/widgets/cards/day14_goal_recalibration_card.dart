@@ -91,7 +91,7 @@ class Day14GoalRecalibrationCard extends ConsumerWidget {
               child: ElevatedButton(
                 onPressed: () {
                   HapticService.medium();
-                  context.push('/profile/goals/recalibrate');
+                  context.push('/profile?scrollTo=preferences');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: c.accent,

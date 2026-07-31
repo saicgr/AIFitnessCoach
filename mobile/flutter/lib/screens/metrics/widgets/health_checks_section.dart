@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/combined_health_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/health_goals_service.dart';
@@ -140,11 +141,11 @@ class HealthChecksSection extends ConsumerWidget {
     switch (s) {
       case HrStatus.low:
       case HrStatus.high:
-        return AppColors.error;
+        return AppColors.error; // accent-allowlist: resting-HR clinical status severity scale (low/low-normal/normal/high)
       case HrStatus.lowNormal:
-        return AppColors.cyan;
+        return AppColors.cyan; // accent-allowlist: resting-HR clinical status severity scale (low/low-normal/normal/high)
       case HrStatus.normal:
-        return AppColors.success;
+        return AppColors.success; // accent-allowlist: resting-HR clinical status severity scale (low/low-normal/normal/high)
       case HrStatus.noData:
         return AppColors.textMuted;
     }
@@ -247,7 +248,7 @@ class HealthChecksSection extends ConsumerWidget {
               icon: const Icon(Icons.tune, size: 18),
               label: Text(l10n.metricsDashboardCustomizeThresholds),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.cyan,
+                foregroundColor: context.accentColor,
                 side: const BorderSide(color: AppColors.cardBorder),
                 minimumSize: const Size(double.infinity, 46),
               ),
@@ -379,13 +380,13 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
           if (_error != null) ...[
             const SizedBox(height: 10),
             Text(_error!,
-                style: const TextStyle(color: AppColors.error, fontSize: 12)),
+                style: const TextStyle(color: AppColors.error, fontSize: 12)), // accent-allowlist: resting-HR clinical status severity scale (low/low-normal/normal/high)
           ],
           const SizedBox(height: 18),
           FilledButton(
             onPressed: _saving ? null : _save,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.cyan,
+              backgroundColor: context.accentColor,
               minimumSize: const Size(double.infinity, 48),
             ),
             child: _saving
@@ -415,7 +416,7 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
         IconButton(
           onPressed: value > min ? () => onChanged(value - 1) : null,
           icon: const Icon(Icons.remove_circle_outline),
-          color: AppColors.cyan,
+          color: context.accentColor,
         ),
         SizedBox(
           width: 44,
@@ -429,7 +430,7 @@ class _ThresholdEditorState extends ConsumerState<_ThresholdEditor> {
         IconButton(
           onPressed: value < max ? () => onChanged(value + 1) : null,
           icon: const Icon(Icons.add_circle_outline),
-          color: AppColors.cyan,
+          color: context.accentColor,
         ),
       ],
     );

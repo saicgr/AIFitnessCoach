@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -34,7 +35,7 @@ class AgentInfoHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: [AppColors.cyan, AppColors.teal],
+                  colors: [context.accentColor, AppColors.teal],
                   begin: AlignmentDirectional.topStart,
                   end: AlignmentDirectional.bottomEnd,
                 ),
@@ -112,7 +113,7 @@ class _OnlineIndicator extends StatelessWidget {
       width: 12,
       height: 12,
       decoration: BoxDecoration(
-        color: isOnline ? AppColors.success : AppColors.textMuted,
+        color: isOnline ? AppColors.success : AppColors.textMuted, // accent-allowlist: agent online/available status, success semantic
         shape: BoxShape.circle,
         border: Border.all(
           color: AppColors.pureBlack,
@@ -143,7 +144,7 @@ class _StatusText extends StatelessWidget {
             AppLocalizations.of(context).agentInfoHeaderTyping,
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.cyan,
+              color: context.accentColor,
             ),
           ),
           const SizedBox(width: 4),
@@ -156,7 +157,7 @@ class _StatusText extends StatelessWidget {
       isOnline ? AppLocalizations.of(context).globalChatBubbleOnline : AppLocalizations.of(context).agentInfoHeaderOffline,
       style: TextStyle(
         fontSize: 12,
-        color: isOnline ? AppColors.success : AppColors.textMuted,
+        color: isOnline ? AppColors.success : AppColors.textMuted, // accent-allowlist: agent online/available status, success semantic
       ),
     );
   }
@@ -174,7 +175,7 @@ class _TypingDots extends StatelessWidget {
           height: 4,
           margin: const EdgeInsets.symmetric(horizontal: 1),
           decoration: BoxDecoration(
-            color: AppColors.cyan,
+            color: context.accentColor,
             shape: BoxShape.circle,
           ),
         )
@@ -198,10 +199,10 @@ class ConnectedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.1),
+        color: AppColors.success.withOpacity(0.1), // accent-allowlist: agent online/available status, success semantic
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.success.withOpacity(0.3),
+          color: AppColors.success.withOpacity(0.3), // accent-allowlist: agent online/available status, success semantic
         ),
       ),
       child: Row(
@@ -210,14 +211,14 @@ class ConnectedBadge extends StatelessWidget {
           Icon(
             Icons.check_circle,
             size: 12,
-            color: AppColors.success,
+            color: AppColors.success, // accent-allowlist: agent online/available status, success semantic
           ),
           const SizedBox(width: 4),
           Text(
             AppLocalizations.of(context).agentInfoHeaderConnectedToSupport,
             style: TextStyle(
               fontSize: 10,
-              color: AppColors.success,
+              color: AppColors.success, // accent-allowlist: agent online/available status, success semantic
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -249,7 +250,7 @@ class AgentInfoCard extends StatelessWidget {
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
+          color: context.accentColor.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -261,7 +262,7 @@ class AgentInfoCard extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.teal],
+                colors: [context.accentColor, AppColors.teal],
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
               ),
@@ -336,7 +337,7 @@ class AgentTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.cyan.withOpacity(0.1),
+        color: context.accentColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -346,7 +347,7 @@ class AgentTag extends StatelessWidget {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: isOnline ? AppColors.success : AppColors.textMuted,
+              color: isOnline ? AppColors.success : AppColors.textMuted, // accent-allowlist: agent online/available status, success semantic
               shape: BoxShape.circle,
             ),
           ),
@@ -355,7 +356,7 @@ class AgentTag extends StatelessWidget {
             name,
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.cyan,
+              color: context.accentColor,
               fontWeight: FontWeight.w500,
             ),
           ),

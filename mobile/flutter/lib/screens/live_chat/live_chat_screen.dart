@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
@@ -105,7 +106,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             },
             child: Text(
               AppLocalizations.of(context).liveChatEndChat2,
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: AppColors.error), // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
             ),
           ),
         ],
@@ -123,7 +124,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.call_end, color: AppColors.error),
+                leading: const Icon(Icons.call_end, color: AppColors.error), // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
                 title: Text(AppLocalizations.of(context).liveChatEndChat2),
                 onTap: () {
                   Navigator.pop(context);
@@ -131,7 +132,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.info_outline, color: AppColors.cyan),
+                leading: Icon(Icons.info_outline, color: context.accentColor),
                 title: Text(AppLocalizations.of(context).liveChatAboutLiveChat),
                 onTap: () {
                   Navigator.pop(context);
@@ -160,7 +161,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.cyan,
+                color: context.accentColor,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.support_agent, color: Colors.white, size: 24),
@@ -231,7 +232,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                      Icon(Icons.error_outline, color: AppColors.error, size: 48), // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
                       const SizedBox(height: 16),
                       Text(
                         AppLocalizations.of(context).liveChatFailedToConnectTo,
@@ -259,7 +260,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
                               );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.cyan,
+                          backgroundColor: context.accentColor,
                           foregroundColor: Colors.white,
                         ),
                         child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
@@ -376,17 +377,17 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
         statusIcon = Icons.cloud_off;
         break;
       case _ScreenStatus.connecting:
-        statusColor = AppColors.orange;
+        statusColor = AppColors.orange; // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
         statusText = 'Connecting...';
         statusIcon = Icons.sync;
         break;
       case _ScreenStatus.queued:
-        statusColor = AppColors.warning;
+        statusColor = AppColors.warning; // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
         statusText = 'In Queue';
         statusIcon = Icons.hourglass_empty;
         break;
       case _ScreenStatus.connected:
-        statusColor = AppColors.success;
+        statusColor = AppColors.success; // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
         statusText = 'Connected';
         statusIcon = Icons.check_circle;
         break;
@@ -396,7 +397,7 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
         statusIcon = Icons.chat_bubble_outline;
         break;
       case _ScreenStatus.error:
-        statusColor = AppColors.error;
+        statusColor = AppColors.error; // accent-allowlist: connection status severity scale (disconnected/connecting/queued/connected/error)
         statusText = 'Connection Error';
         statusIcon = Icons.error_outline;
         break;
