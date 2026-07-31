@@ -233,7 +233,11 @@ FOCUS: BALANCED QUICK WORKOUT
     library_block = ""
     library_constraint = ""
     if library_exercises:
-        _capped = library_exercises[:30]  # quick workouts have fewer exercises
+        # Raised 30 → 60 in step with the widened library pool (the pool used to
+        # collapse to ~15/body-part before filtering, so a 30 cap was never
+        # reached). This is the menu Gemini picks from — too small a menu is
+        # indistinguishable from "the app ignores most of the exercise library".
+        _capped = library_exercises[:60]
         exercise_list_str = "\n".join([
             f"- {ex.get('name','Unknown')}: targets "
             f"{ex.get('muscle_group','unknown')}, equipment: "

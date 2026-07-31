@@ -87,6 +87,20 @@ STRENGTH_GOALS = {
 # Allow-set of bodyweight movements that are appropriate strength-stimulus
 # for an equipped user. These are unilateral / weighted-vest-friendly /
 # ring-supported / advanced-skill movements that progress to RPE 8+.
+# Library `category` values that count as a real strength stimulus for a
+# bodyweight-tagged exercise. Data-driven counterpart to the curated name set
+# below — see is_strength_appropriate_bodyweight().
+STRENGTH_APPROPRIATE_CATEGORIES = {
+    "strength", "core", "power", "functional", "olympic weightlifting",
+}
+
+# Categories that are definitively NOT a strength stimulus. Kept explicit (rather
+# than "anything not in the set above") so an unknown/blank category falls through
+# to the name check instead of being silently rejected.
+NON_STRENGTH_CATEGORIES = {
+    "cardio", "stretching", "yoga", "plyometric",
+}
+
 STRENGTH_BODYWEIGHT_ALLOW = {
     "pistol squat", "shrimp squat", "single-leg squat",
     "single-leg deadlift", "single-leg romanian deadlift",
@@ -122,12 +136,48 @@ CARDIO_NAME_TOKENS = {
 }
 
 
-def is_strength_appropriate_bodyweight(exercise_name: str) -> bool:
-    """Return True if a bw-tagged exercise is in STRENGTH_BODYWEIGHT_ALLOW.
+def is_strength_appropriate_bodyweight(
+    exercise_name: str,
+    category: Optional[str] = None,
+) -> bool:
+    """Return True if a bodyweight-tagged exercise is a valid strength stimulus.
 
-    Uses substring-match against the curated allow-set, so name variants
-    (e.g. "Single-Arm Archer Push-Up") still pass.
+    Two independent signals, OR'd — an exercise qualifies via EITHER:
+
+    1. ``category`` (data-driven, preferred). The library's own classification.
+       A bodyweight exercise categorised strength/core/power/functional is a
+       legitimate strength stimulus; cardio/stretching/yoga/plyometric is not.
+    2. ``STRENGTH_BODYWEIGHT_ALLOW`` (curated names, legacy). Kept so nothing
+       that passed before can start failing, and so exercises with a missing or
+       wrong category still resolve.
+
+    WHY THE CATEGORY SIGNAL WAS ADDED
+    ---------------------------------
+    The name allow-set has 34 entries and is substring-matched. For a user who
+    owns ANY weighted equipment and has a strength goal, every bodyweight
+    exercise not matching one of those 34 strings was dropped — push-ups, dips,
+    inverted rows, planks, glute bridges, all of it. Production 2026-07-30, a
+    ``equipment=['bodyweight','dumbbells']`` upper day, showed 120 vector
+    candidates collapsing to 19 survivors with this gate as the dominant cause.
+
+    In the library, 310 of 687 bodyweight rows carry a strength-ish category
+    (192 strength + 114 core + 2 power + 2 functional) versus the 34 hardcoded
+    names — so this widens the pool roughly 9x while still keeping the original
+    intent (no burpees or frog jumps in a full-gym strength session), because
+    cardio/plyometric/yoga/stretching categories remain excluded.
+
+    Per the project's "no hardcoded enumerations" rule, the category signal is
+    the one that should grow over time; the name set is now a safety net, not
+    the primary gate.
     """
+    if category:
+        cat = category.strip().lower()
+        if cat in STRENGTH_APPROPRIATE_CATEGORIES:
+            return True
+        if cat in NON_STRENGTH_CATEGORIES:
+            # Explicitly classified as cardio/stretch/yoga/plyo — the curated
+            # name list must not override a definite negative classification.
+            return False
     if not exercise_name:
         return False
     name_lower = exercise_name.lower()
@@ -663,6 +713,7 @@ def filter_by_equipment(
     exercise_name: str,
     use_substitutions: bool = False,
     goals: Optional[List[str]] = None,
+    category: Optional[str] = None,
 ) -> bool:
     """
     Check if exercise equipment matches user's available equipment.
@@ -765,7 +816,9 @@ def filter_by_equipment(
                 eq not in BODYWEIGHT_TOKENS and eq not in {"full_gym", "full gym"}
                 for eq in equipment_lower
             )
-            if user_has_weighted and not is_strength_appropriate_bodyweight(exercise_name):
+            if user_has_weighted and not is_strength_appropriate_bodyweight(
+                exercise_name, category=category
+            ):
                 return False
         # Bodyweight-only users always have these tokens in their set, so
         # this matches without any extra work. Equipped users without

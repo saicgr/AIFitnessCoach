@@ -63,6 +63,13 @@ from .service import _resolve_injury_columns, fetch_safe_candidates
 
 logger = get_logger(__name__)
 
+# Minimum safe-candidate pool to draw injury replacements from. The old
+# `len(dropped) + 25` gave the alphabetically-first ~26 rows, so replacements were
+# effectively a constant ('3-4 Sit-Up'). Every row in this pool has already passed
+# the safety filter, so a wider pool costs one slightly larger query and buys real
+# variety — it never trades away safety.
+_REPLACEMENT_POOL = 120
+
 # High-confidence name-keyword backstop. The index match (by exact name) is the
 # primary gate, but Gemini can emit a contraindicated movement under a name variant
 # the index doesn't carry verbatim (e.g. "Good Morning" vs the index's "Barbell Good
@@ -674,13 +681,47 @@ async def enforce_injury_safety(
             e for e in list(safe) + list(exercises) if isinstance(e, dict)
         ]
         added: List[str] = []
+        # `fetch_safe_candidates` ends in `ORDER BY is_stretch ASC, name LIMIT :k`.
+        # With k = len(dropped) + 25 that returned the alphabetically FIRST ~26 safe
+        # rows — always '3-4 Sit-Up', 'Ab Mat Sit-Up', 'Ab Roller', … — so every
+        # user, every injury and every regenerate got the identical replacement.
+        # Production logs showed '3-4 Sit-Up' backfilled on essentially every run.
+        #
+        # Two changes: fetch a pool with real breadth, then pick from it randomly
+        # rather than taking the alphabetic head.
         cands = await fetch_safe_candidates(
             injuries=injuries,
             focus_areas=focus_areas or [],
             equipment=equipment or [],
             difficulty_ceiling=difficulty_ceiling,
-            k=len(dropped) + 25,
+            k=max(len(dropped) + 25, _REPLACEMENT_POOL),
         )
+
+        # Deterministic per-(user, injuries, 5s bucket) shuffle — same construction
+        # as the main RAG diversity shuffle in exercise_rag/service.py, so retries
+        # within one click stay stable while separate regenerates differ.
+        #
+        # Safe to shuffle the whole list: the "real movements before stretches"
+        # rule is enforced by the two-pass `stretch_pass` loop below (in Python),
+        # NOT by the SQL row order, so randomising here cannot surface a stretch
+        # ahead of an available real movement.
+        try:
+            import hashlib as _hashlib
+            import random as _random
+            import time as _time
+
+            _seed_key = (
+                f"{user_id or 'anon'}|{','.join(sorted(injuries or []))}|"
+                f"{int(_time.time()) // 5}"
+            )
+            _seed = int(_hashlib.md5(_seed_key.encode()).hexdigest(), 16) & 0xFFFFFFFF
+            cands = list(cands)
+            _random.Random(_seed).shuffle(cands)
+        except Exception as _shuf_err:  # noqa: BLE001
+            # Ordering is a quality concern, never a safety one — every candidate
+            # in this list already passed the safety filter, so falling back to
+            # the SQL order is correct-but-repetitive, not unsafe.
+            logger.warning("Injury replacement shuffle skipped: %s", _shuf_err)
         # Two passes: REAL loaded movements first, stretches only if the real-safe
         # pool can't cover the drops. Prevents replacing a dropped squat with a hip
         # stretch when real safe options (glute bridges, machines) exist.

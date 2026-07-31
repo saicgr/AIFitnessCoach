@@ -8,6 +8,7 @@ This service:
 4. Provides equipment-aware weight recommendations
 """
 
+from collections import defaultdict
 from typing import List, Dict, Any, Optional, Tuple
 import json
 import time
@@ -25,6 +26,7 @@ from models.gemini_schemas import ExerciseIndicesResponse
 from .utils import clean_exercise_name_for_display, infer_equipment_from_name
 from .filters import (
     filter_by_equipment,
+    get_movement_pattern,
     is_similar_exercise,
     is_stretch_exercise,
     is_warmup_filler_exercise,
@@ -101,6 +103,64 @@ _CARDIO_INTENT_TYPES = {
     "cardio", "hiit", "conditioning", "circuit",
     "boxing", "combat", "endurance", "metcon", "crossfit", "tabata", "mixed",
 }
+
+# Canonical TRAINING-STYLE vocabulary for `workout_type_preference` — the
+# union of every literal this module's `_filter_exercises` loop and
+# `apply_workout_type_filter` (selection_pipeline.py) branch on: the cardio-
+# intent set above, plus the stretch-exemption set ("mobility", "recovery",
+# "flexibility"), plus the warmup-filler-exemption set ("strength",
+# "hypertrophy"). "power" is included as a recognized lifting-style synonym
+# (see generation_helpers.coerce_workout_type_from_focus, which treats it
+# identically to strength/hypertrophy). "push"/"pull" are ALSO real training-
+# style selections — the Flutter WorkoutTypeSelector's own default chip list
+# (mobile/flutter/lib/screens/home/widgets/components/workout_type_selector.dart)
+# deliberately keeps Push/Pull as workout_type ("how you train"), distinct
+# from the body-region FocusAreasSelector — so they must NOT be treated as a
+# leaked focus value by the request-boundary guard below.
+#
+# This is a DIFFERENT vocabulary than focus/body-region values ("upper",
+# "lower", "legs", "core", "full_body", "arms") returned by
+# `infer_workout_type_from_focus` (api/v1/workouts/schedule_utils.py) for
+# PPL-rotation tracking on the SAVED workout record. That function's output
+# is legitimate for the `workouts.type` display/history column, but for
+# those specific body-region values it is NOT a training style — one of
+# them arriving as `workout_type_preference` before RAG selection is a
+# vocabulary leak (see generation_endpoints.py's request-boundary guard),
+# not a real style.
+RECOGNIZED_WORKOUT_TYPES = _CARDIO_INTENT_TYPES | {
+    "strength", "hypertrophy", "power", "mobility", "recovery", "flexibility",
+    "push", "pull",
+}
+
+
+def sanitize_workout_type(workout_type, *, context: str = ""):
+    """Return (clean_workout_type, leaked_focus_value).
+
+    `workout_type_preference` must carry a TRAINING STYLE. A body-region value
+    (upper / lower / legs / core / full_body / arms) arriving here is a leak from
+    `infer_workout_type_from_focus()`, whose PPL-rotation output is correct for
+    the saved `workouts.type` column but is NOT a training style. Left
+    uncorrected it silently mistypes the RAG call: e.g. "upper" matches neither
+    the cardio-intent set nor ("strength", "hypertrophy"), so the
+    cardio/plyometric filter fires while the warmup-filler filter does not.
+
+    Never rejects — focus/injury inputs must not preflight-reject. Returns the
+    corrected type plus the leaked value so the caller can fold it into
+    focus_areas.
+
+    Shared by the generate, regenerate and streaming paths so the guard lives in
+    ONE place instead of being re-implemented (or forgotten) per entry point.
+    """
+    if not workout_type or not str(workout_type).strip():
+        return workout_type, None
+    if str(workout_type).strip().lower() in RECOGNIZED_WORKOUT_TYPES:
+        return workout_type, None
+    logger.warning(
+        "⚠️ [TypeVocab] workout_type=%r is not a recognized training style%s — "
+        "treating it as a leaked focus-area value and defaulting to 'strength'.",
+        workout_type, f" ({context})" if context else "",
+    )
+    return "strength", workout_type
 
 
 # ---------------------------------------------------------------------------
@@ -1397,18 +1457,27 @@ class ExerciseRAGService:
         # without triggering "Only got N/M unique exercises" backfill warnings.
         # Previously 6x gave 30 candidates — for users with 20+ recent
         # exercises + narrow focus areas, survivors fell to 4.
+        # Caps raised 2026-07-30 (100/120/120/60 → 240/300/300/180). These are the
+        # TOP of the funnel: nothing downstream can recover breadth the vector query
+        # never returned. Production showed a 120-candidate pool collapsing to 19
+        # survivors — below the 2x variety target — which then forced the
+        # require_media=False backfill pass and "Only got N/M unique" warnings.
+        # The downstream filters were simultaneously loosened (bodyweight strength
+        # gate is now category-driven, movement-pattern dedupe now has a quota), so
+        # a wider pool now actually converts into survivors instead of being
+        # re-collapsed.
         if is_constrained_env:
-            candidate_count = min(count * 15, 100)
+            candidate_count = min(count * 30, 240)
         elif is_broad_focus:
-            candidate_count = min(count * 15, 120)
+            candidate_count = min(count * 30, 300)
         elif has_dumbbells_no_bench:
             # Dumbbell-only focuses (e.g. chest+dumbbells) have sparse media
             # coverage — a 2026-07-18 customize showed 80 raw → only 13
             # media-rich survivors (below the 2× variety target). Widen the
             # pool so more media-carrying dumbbell variants clear the filter.
-            candidate_count = min(count * 15, 120)
+            candidate_count = min(count * 30, 300)
         else:
-            candidate_count = min(count * 10, 60)
+            candidate_count = min(count * 20, 180)
 
         results = await self.collection.aquery(
             query_embeddings=[query_embedding],
@@ -1421,12 +1490,46 @@ class ExerciseRAGService:
             raise ValueError(f"No exercises found in RAG for focus_area={focus_area}")
 
         # Helper function to filter and format exercise candidates
-        def _filter_exercises(require_media: bool = True) -> tuple[list, list]:
-            """Filter exercises based on criteria. Returns (candidates, seen_exercises)."""
+        def _filter_exercises(require_media: bool = True) -> tuple[list, list, dict]:
+            """Filter exercises based on criteria. Returns (candidates, seen_exercises, filter_counts).
+
+            ``filter_counts`` is a per-filter drop counter (purely additive
+            instrumentation — does not change which exercises survive) so
+            prod diagnostics can see exactly which of the ~10 filters in
+            this loop collapsed the pool, instead of a single opaque
+            raw->survivors number. Keys match the labels used in the
+            "[RAG Pipeline]" summary log emitted after both passes run.
+            """
             filtered_candidates = []
             seen = []
+            # Per-filter drop counters — one increment per `continue` below,
+            # in the same order the checks run so the summary log reads
+            # left-to-right in loop order.
+            filter_counts = {
+                "avoid": 0,
+                "equipment": 0,
+                "bench": 0,
+                "rack": 0,
+                "media": 0,
+                "unilateral": 0,
+                "difficulty": 0,
+                "stretch": 0,
+                "cardio": 0,
+                "warmupfill": 0,
+                "similar": 0,
+            }
+            # Back-compat locals for the two pre-existing per-pass log lines
+            # below (kept verbatim so their behavior/wording is unchanged).
             no_media_count = 0
             no_cardio_filtered = 0
+
+            # Movement-pattern quota. Replaces the old "one exercise per movement
+            # pattern, ever" rule, which discarded every horizontal press after the
+            # first and collapsed whole families out of the candidate pool.
+            # Scaled to the requested count so a 4-exercise session stays varied
+            # while an 11-exercise session can legitimately hold several presses.
+            pattern_counts_seen: Dict[str, int] = defaultdict(int)
+            _max_per_pattern = max(2, -(-count // 3))  # ceil(count/3), floor of 2
 
             # Pre-compute bench/rack availability (constant across all exercises)
             user_equipment_lower = [eq.lower() for eq in equipment]
@@ -1448,6 +1551,7 @@ class ExerciseRAGService:
 
                 # Skip exercises to avoid
                 if avoid_exercises and meta.get("name", "").lower() in [e.lower() for e in avoid_exercises]:
+                    filter_counts["avoid"] += 1
                     continue
 
                 # Get equipment info
@@ -1483,7 +1587,11 @@ class ExerciseRAGService:
                     ex_equipment, equipment, meta.get("name", ""),
                     use_substitutions=True,
                     goals=goals,
+                    # Lets the bodyweight strength gate decide from the library's
+                    # own classification instead of a 34-entry name allow-list.
+                    category=meta.get("category"),
                 ):
+                    filter_counts["equipment"] += 1
                     logger.debug(f"Filtered out '{meta.get('name')}' - equipment mismatch")
                     continue
 
@@ -1493,11 +1601,13 @@ class ExerciseRAGService:
 
                 if not user_has_bench:
                     if bench_required_field == "true" or _needs_bench(meta.get("name", "")):
+                        filter_counts["bench"] += 1
                         logger.debug(f"Bench-filter: '{meta.get('name')}' removed - requires bench")
                         continue
 
                 if not user_has_rack and user_has_barbell:
                     if any(pat in ex_name_lower for pat in _SQUAT_RACK_REQUIRED_PATTERNS):
+                        filter_counts["rack"] += 1
                         logger.debug(f"Rack-filter: '{meta.get('name')}' removed - requires squat rack")
                         continue
 
@@ -1509,6 +1619,7 @@ class ExerciseRAGService:
                 has_media = has_video or bool(gif_url) or bool(video_url) or bool(image_url)
                 if require_media and not has_media:
                     no_media_count += 1
+                    filter_counts["media"] += 1
                     logger.debug(f"Filtered out '{meta.get('name')}' - no media (video/gif/image)")
                     continue
 
@@ -1516,11 +1627,13 @@ class ExerciseRAGService:
                 if dumbbell_count == 1 and "dumbbell" in ex_equipment:
                     single_db_friendly = meta.get("single_dumbbell_friendly", "false") == "true"
                     if not single_db_friendly:
+                        filter_counts["unilateral"] += 1
                         continue
 
                 if kettlebell_count == 1 and "kettlebell" in ex_equipment:
                     single_kb_friendly = meta.get("single_kettlebell_friendly", "false") == "true"
                     if not single_kb_friendly:
+                        filter_counts["unilateral"] += 1
                         continue
 
                 # Filter by difficulty - prevent advanced exercises for beginners
@@ -1534,10 +1647,12 @@ class ExerciseRAGService:
                 # difficulty_adjustment from user feedback can increase the ceiling
                 if validated_fitness_level == "beginner":
                     if is_exercise_too_difficult_strict(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
+                        filter_counts["difficulty"] += 1
                         logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for beginner (strict, adjustment={difficulty_adjustment})")
                         continue
                 else:
                     if is_exercise_too_difficult(exercise_difficulty, validated_fitness_level, difficulty_adjustment):
+                        filter_counts["difficulty"] += 1
                         logger.debug(f"Filtered out '{meta.get('name')}' - too difficult ({exercise_difficulty}) for {validated_fitness_level}")
                         continue
 
@@ -1548,6 +1663,7 @@ class ExerciseRAGService:
                         meta.get("body_part", ""),
                         meta.get("category", ""),
                     ):
+                        filter_counts["stretch"] += 1
                         logger.debug(f"Filtered out '{meta.get('name')}' - stretch exercise in {workout_type_preference} workout")
                         continue
 
@@ -1560,6 +1676,7 @@ class ExerciseRAGService:
                     cat = (meta.get("category", "") or "").lower()
                     if cat in ("cardio", "plyometric"):
                         no_cardio_filtered += 1
+                        filter_counts["cardio"] += 1
                         logger.debug(
                             f"Filtered out '{meta.get('name')}' - {cat} category "
                             f"in {workout_type_preference} workout"
@@ -1569,6 +1686,7 @@ class ExerciseRAGService:
                 # Filter out warmup/filler exercises from strength workouts
                 if workout_type_preference in ("strength", "hypertrophy"):
                     if is_warmup_filler_exercise(meta.get("name", "")):
+                        filter_counts["warmupfill"] += 1
                         logger.debug(f"Filtered out '{meta.get('name')}' - warmup filler in {workout_type_preference} workout")
                         continue
 
@@ -1578,15 +1696,43 @@ class ExerciseRAGService:
                 from .utils import strip_dedup_suffix
                 exercise_name = strip_dedup_suffix(clean_exercise_name_for_display(raw_name))
 
-                # Skip similar exercises
+                # Skip similar exercises.
+                #
+                # Name-level similarity (exact / subset / high word overlap) still
+                # dedupes strictly — two names for the same movement are a genuine
+                # duplicate.
+                #
+                # MOVEMENT PATTERN is handled separately, with a quota. It used to
+                # go through the same all-or-nothing check, so the FIRST
+                # 'push_horizontal' candidate discarded every other horizontal press
+                # in the pool — whole exercise families collapsed to one entry, which
+                # is a large part of why a 120-candidate pool produced 19 survivors.
+                # A workout legitimately contains several presses; it just shouldn't
+                # be six of them.
                 is_duplicate = False
                 for seen_name in seen:
-                    if is_similar_exercise(exercise_name, seen_name):
+                    if is_similar_exercise(
+                        exercise_name, seen_name, check_movement_pattern=False
+                    ):
                         is_duplicate = True
                         break
 
                 if is_duplicate:
+                    filter_counts["similar"] += 1
                     continue
+
+                # Movement-pattern quota: allow several per pattern, scaled to how
+                # many exercises this workout actually needs.
+                _pattern = get_movement_pattern(exercise_name)
+                if _pattern:
+                    if pattern_counts_seen[_pattern] >= _max_per_pattern:
+                        filter_counts["similar"] += 1
+                        logger.debug(
+                            f"Filtered out '{exercise_name}' - movement pattern "
+                            f"'{_pattern}' already at quota ({_max_per_pattern})"
+                        )
+                        continue
+                    pattern_counts_seen[_pattern] += 1
 
                 seen.append(exercise_name)
 
@@ -1629,7 +1775,7 @@ class ExerciseRAGService:
                     f"from {workout_type_preference} workout"
                 )
 
-            return filtered_candidates, seen
+            return filtered_candidates, seen, filter_counts
 
         # Stage-by-stage candidate counters. Dumped as a single summary
         # log at the end of the pipeline so prod diagnostics can pinpoint
@@ -1638,21 +1784,26 @@ class ExerciseRAGService:
             ("chromadb_raw", len(results["ids"][0])),
         ]
 
-        # First pass: require media
-        candidates, seen_exercises = _filter_exercises(require_media=True)
-        _stage_counts.append(("after_filter_with_media", len(candidates)))
+        # First pass: require media. `_filter_counts` is overwritten (not
+        # merged) if the no-media backfill pass below also runs, so it
+        # always reflects the filters that actually produced the final
+        # `candidates` — see the "[RAG Pipeline]" summary log further down.
+        candidates, seen_exercises, _filter_counts = _filter_exercises(require_media=True)
+        _stage_counts.append(("after_all_filters", len(candidates)))
 
         # Backfill from no-media exercises whenever we're BELOW the target count
         # (not only at zero). A media-sparse focus (e.g. bodyweight full_body)
         # otherwise starved the pool to 2 → "Could only select 2/3". We still
         # PREFER media-rich; this only tops up the shortfall.
+        _media_backfilled = False
         if len(candidates) < count:
             logger.warning(
                 f"Only {len(candidates)}/{count} media-rich candidates for "
                 f"focus_area={focus_area}; backfilling without media requirement"
             )
-            candidates, seen_exercises = _filter_exercises(require_media=False)
+            candidates, seen_exercises, _filter_counts = _filter_exercises(require_media=False)
             _stage_counts.append(("after_filter_no_media", len(candidates)))
+            _media_backfilled = True
 
         if not candidates:
             logger.error("No compatible exercises found after filtering (even without media requirement)")
@@ -1890,11 +2041,36 @@ class ExerciseRAGService:
         # (DEBUG-level per-exercise filter logs are suppressed in prod).
         # Warn loudly when pool collapses below 2× the target count — that's
         # the condition that produces 2-exercise workouts.
-        _summary = " → ".join(f"{k}={v}" for k, v in _stage_counts)
+        #
+        # The raw -> after_all_filters jump used to be a single opaque
+        # number (e.g. "chromadb_raw=120 -> after_filter_with_media=19"),
+        # which misattributed the whole collapse to the media check even
+        # though media rarely drops anything (has_video is hardcoded "true"
+        # at index time — see the module docstring). Expand it into a
+        # per-filter breakdown using the counts `_filter_exercises` already
+        # tracks, so the real culprit (usually equipment or cardio-category)
+        # is visible without a DEBUG re-deploy. Purely cosmetic — the
+        # counts reflect filtering that already happened above.
+        _filter_label_order = [
+            ("avoid", "avoid"), ("equipment", "equipment"), ("bench", "bench"),
+            ("rack", "rack"), ("media", "media"), ("unilateral", "unilateral"),
+            ("difficulty", "difficulty"), ("stretch", "stretch"),
+            ("cardio", "cardio"), ("warmupfill", "warmupfill"),
+            ("similar", "similar"),
+        ]
+        _breakdown = " ".join(
+            f"{label}:-{_filter_counts.get(key, 0)}" for key, label in _filter_label_order
+        )
+        _raw_count = _stage_counts[0][1]
+        _post_filter_count = _stage_counts[1][1]  # after_all_filters (or after_filter_no_media)
+        _media_note = " [no-media backfill pass — media count not meaningful]" if _media_backfilled else ""
+        _rest_stages = " → ".join(f"{k}={v}" for k, v in _stage_counts[2:])
         _final_pool = len(candidates)
         _pipeline_log = (
             f"[RAG Pipeline] focus={focus_area} env={workout_environment} "
-            f"equipment={equipment} count_target={count} | {_summary} → "
+            f"equipment={equipment} count_target={count} | "
+            f"raw={_raw_count} -> {_breakdown} -> {_post_filter_count}{_media_note}"
+            f"{' → ' + _rest_stages if _rest_stages else ''} → "
             f"pre_variety={_final_pool}"
         )
         if _final_pool < count * 2:

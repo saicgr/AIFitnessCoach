@@ -594,10 +594,15 @@ def build_library_pool(
     instead of one lossy key (or the service's upper-body fallback).
     """
     terms = library_focus_terms(focus_area)
-    # 2× the per-term share: sibling terms overlap heavily in the library
-    # (legs and glutes both resolve to body_part 'upper legs'), so an exact
-    # split dedups down to roughly half the requested pool.
-    per_term = max(8, 2 * -(-count // max(1, len(terms))))  # ceil division
+    # Oversample per term: sibling terms overlap heavily in the library (legs and
+    # glutes both resolve to body_part 'upper legs'), so an exact split dedups down
+    # to roughly half the requested pool.
+    #
+    # Was `max(8, 2 * share)`, which for a typical 11-exercise upper day over 4
+    # terms yielded 8 per term → ~32 candidates before dedup, well under the
+    # downstream prompt cap. The pool is what the generator gets to CHOOSE from —
+    # it should be several times the number of exercises actually wanted.
+    per_term = max(20, 4 * -(-count // max(1, len(terms))))  # ceil division
     pool: List[Dict[str, Any]] = []
     seen = set()
     for term in terms:

@@ -16,6 +16,13 @@ from services.exercise_rag_service import _infer_equipment_from_name
 
 logger = get_logger(__name__)
 
+# How wide a candidate pool to pull before sampling down to the caller's `limit`.
+# The pool is what gives repeat generations variety; `limit` is only how many we
+# hand back. Previously the two were the same number, so the "pool" was a single
+# arbitrary heap-ordered slice and every generation drew from the same rows.
+POOL_OVERSAMPLE = 10
+MIN_POOL = 150
+
 
 class ExerciseLibraryService:
     """Service to fetch exercises from the exercise_library table."""
@@ -45,28 +52,65 @@ class ExerciseLibraryService:
             query = self.client.table("exercise_library").select("*").ilike("body_part", f"%{body_part}%")
 
             if equipment:
-                # Filter by equipment - match any of the provided equipment
-                equipment_filters = [f"equipment.ilike.%{eq}%" for eq in equipment]
-                # Also include bodyweight exercises
-                equipment_filters.append("equipment.ilike.%body weight%")
-                equipment_filters.append("equipment.ilike.%bodyweight%")
+                # Apply the equipment predicate SERVER-SIDE.
+                #
+                # This block used to build `equipment_filters` and then never use
+                # it — `.limit(limit)` ran on the unfiltered query and the Python
+                # filter was applied to whatever those first N rows happened to be.
+                # Combined with the absent ORDER BY (Postgres returns heap order),
+                # every request saw substantially the same ~15 rows per body part
+                # out of hundreds, and equipment filtering could only ever shrink
+                # that arbitrary slice. This is the single biggest reason
+                # quick-generate and generate-stream felt like they ignored the
+                # library.
+                or_terms = []
+                for eq in equipment:
+                    eq_clean = (eq or "").strip().replace(",", " ")
+                    if eq_clean:
+                        or_terms.append(f"equipment.ilike.%{eq_clean}%")
+                # Bodyweight is always available to everyone.
+                or_terms.append("equipment.ilike.%body weight%")
+                or_terms.append("equipment.ilike.%bodyweight%")
+                or_terms.append("equipment.ilike.%none%")
+                # An exercise with no stated equipment requires nothing — include
+                # it rather than silently dropping it. Matches the RAG pipeline's
+                # rule (services/exercise_rag/filters.py: empty equipment → allowed).
+                or_terms.append("equipment.is.null")
+                or_terms.append("equipment.eq.")
+                query = query.or_(",".join(or_terms))
 
-            result = query.limit(limit).execute()
-            exercises = result.data or []
+            # Deterministic ordering so the pool is reproducible instead of
+            # heap-ordered, and a pool cap far above `limit` so the caller's
+            # random sampling has real breadth to draw from.
+            pool_cap = max(limit * POOL_OVERSAMPLE, MIN_POOL)
+            result = query.order("exercise_name").limit(pool_cap).execute()
+            pool = result.data or []
 
-            # If we have equipment filter, apply it in Python (Supabase OR queries are tricky)
-            if equipment and exercises:
+            # Belt-and-suspenders: the OR above is a substring match on a free-text
+            # column, so re-check in Python for anything it let through loosely.
+            # Runs on the POOL, never before it — filtering must precede truncation.
+            if equipment and pool:
                 equipment_lower = [eq.lower() for eq in equipment]
                 equipment_lower.extend(['body weight', 'bodyweight', 'none'])
-
                 filtered = []
-                for ex in exercises:
-                    ex_equipment = (ex.get('equipment') or '').lower()
-                    if any(eq in ex_equipment for eq in equipment_lower):
+                for ex in pool:
+                    ex_equipment = (ex.get('equipment') or '').strip().lower()
+                    if not ex_equipment:
+                        filtered.append(ex)      # no requirement → always usable
+                    elif any(eq in ex_equipment for eq in equipment_lower):
                         filtered.append(ex)
-                exercises = filtered
+                pool = filtered
 
-            logger.info(f"Found {len(exercises)} exercises for body_part={body_part}")
+            # Sample from the whole eligible pool so repeat generations vary.
+            if len(pool) > limit:
+                exercises = random.sample(pool, limit)
+            else:
+                exercises = pool
+
+            logger.info(
+                f"Found {len(exercises)} exercises for body_part={body_part} "
+                f"(eligible pool={len(pool)}, cap={pool_cap}, equipment={equipment})"
+            )
             return exercises
 
         except Exception as e:
@@ -140,12 +184,16 @@ class ExerciseLibraryService:
 
         all_exercises = []
 
-        # Fetch exercises for each body part
+        # Fetch exercises for each body part.
+        # Scale with `count` instead of the old hardcoded 15: this pool is what a
+        # generator (or Gemini prompt block) gets to choose from, so a fixed 15 per
+        # body part capped variety no matter how many exercises the caller wanted.
+        per_body_part = max(30, count * 5)
         for body_part in body_parts:
             exercises = self.get_exercises_by_body_part(
                 body_part=body_part,
                 equipment=equipment,
-                limit=15
+                limit=per_body_part
             )
             all_exercises.extend(exercises)
 

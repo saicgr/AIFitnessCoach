@@ -321,8 +321,10 @@ Use this split information to guide exercise selection and workout structure."""
             library_block = ""
             library_constraint = ""
             if library_exercises:
-                # Cap at 50 to keep prompt size manageable (~2KB block).
-                _capped = library_exercises[:50]
+                # Raised 50 → 90 in step with the widened library pool (~4KB block).
+                # This is the menu Gemini picks from; the previous pool rarely
+                # even reached 50 because upstream filtering ran after a limit.
+                _capped = library_exercises[:90]
                 exercise_list_str = "\n".join([
                     f"- {ex.get('name','Unknown')}: targets "
                     f"{ex.get('muscle_group','unknown')}, equipment: "
@@ -1007,7 +1009,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
         # RAG-first library block (validation harness 2026-05-08).
         if library_exercises:
-            _capped = library_exercises[:50]
+            _capped = library_exercises[:90]  # widened pool — see note above
             user_context_parts.append("")
             user_context_parts.append(
                 f"## 📚 AVAILABLE EXERCISES ({len(_capped)} pre-filtered from library)"

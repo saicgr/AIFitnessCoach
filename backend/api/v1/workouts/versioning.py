@@ -28,6 +28,7 @@ from models.schemas import (
 )
 from services.gemini_service import GeminiService
 from services.exercise_rag_service import get_exercise_rag_service
+from services.exercise_rag.service import sanitize_workout_type
 from services.regen_preview_cache import get_preview_cache
 from services.workout_safety_validator import validate_and_repair, UserSafetyContext
 from services.exercise_rag.safety_mode import build_plan as build_safety_mode_plan
@@ -512,8 +513,20 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
         if injuries:
             logger.info(f"Regenerating workout avoiding exercises for injuries: {injuries}")
 
-        # Get workout type from request
-        workout_type_override = request.workout_type
+        # Get workout type from request.
+        # Same vocabulary guard as the generate path: a body-region value
+        # (upper/lower/legs/core/...) arriving in workout_type is a leak from
+        # infer_workout_type_from_focus and mistypes the RAG call. Regenerating an
+        # "upper" day hit this identically to first-generation.
+        workout_type_override, _leaked_focus = sanitize_workout_type(
+            request.workout_type, context="regenerate"
+        )
+        if _leaked_focus and not getattr(request, "focus_areas", None):
+            # Preserve the user's intent — it was a focus all along.
+            try:
+                request.focus_areas = [_leaked_focus]
+            except Exception:  # noqa: BLE001 — model may not expose the field
+                pass
         if workout_type_override:
             logger.info(f"Regenerating with workout type override: {workout_type_override}")
 
@@ -1129,7 +1142,17 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 if user_injuries:
                     injuries = user_injuries
 
-            workout_type_override = body.workout_type
+            # Vocabulary guard before anything else reads this — see
+            # sanitize_workout_type(). The streaming regenerate path had the same
+            # leak as generate/regenerate.
+            workout_type_override, _leaked_focus = sanitize_workout_type(
+                body.workout_type, context="regenerate-stream"
+            )
+            if _leaked_focus and not getattr(body, "focus_areas", None):
+                try:
+                    body.focus_areas = [_leaked_focus]
+                except Exception:  # noqa: BLE001
+                    pass
             # Phase G: infer workout_type from ai_prompt when not explicitly set.
             # Sweep idx 68/75/77/258/276/279/305: ai_prompt asked for cardio /
             # mobility / 5K / marathon but output was strength because no

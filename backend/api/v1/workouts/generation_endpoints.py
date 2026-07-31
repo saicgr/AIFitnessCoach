@@ -40,7 +40,11 @@ from api.v1.workouts.generation_helpers import (
     post_filter_excluded_exercises,
     coerce_workout_type_from_focus,
 )
-from services.exercise_rag.service import get_exercise_rag_service
+from services.exercise_rag.service import (
+    get_exercise_rag_service,
+    RECOGNIZED_WORKOUT_TYPES,
+    sanitize_workout_type,
+)
 from services.adaptive_workout_service_helpers_part2 import get_user_set_type_preferences, build_set_type_context
 
 logger = logging.getLogger(__name__)
@@ -653,6 +657,37 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
 
             # Convert staple exercises from dicts to names
             staple_names = get_staple_names(staple_exercises) if staple_exercises else None
+
+            # ── Focus/type vocabulary guard (C7) ──
+            # `body.workout_type` is meant to carry a TRAINING STYLE (strength,
+            # cardio, hiit, mobility, push, pull, ...) — the vocabulary the RAG
+            # pipeline's filter loop branches on (service.RECOGNIZED_WORKOUT_TYPES,
+            # which also covers Push/Pull since the Flutter WorkoutTypeSelector
+            # legitimately offers them as training styles). A separate
+            # body-region vocabulary (upper, lower, legs, core, full_body, arms)
+            # describes FOCUS, not training style. today.py's day-focus
+            # resolver calls `infer_workout_type_from_focus(focus)` —
+            # legitimate for labeling the SAVED workout's `type` column for
+            # PPL-rotation tracking — but sets the SAME result onto this
+            # request's `workout_type` field alongside `focus_areas=[focus]`.
+            # Left uncorrected, e.g. workout_type="upper" silently mistypes
+            # the RAG call: it matches neither the cardio-intent set nor
+            # ("strength", "hypertrophy"), so the cardio/plyometric filter
+            # fires while the warmup-filler filter silently does not.
+            # Never reject (focus/injury inputs must never preflight-reject,
+            # see feedback_no_preflight_rejection_for_injury_focus) — reroute
+            # the value to focus_areas and default the type instead.
+            # Shared implementation (services/exercise_rag/service.py) so generate,
+            # regenerate and regenerate-stream cannot drift apart — the leak
+            # originally existed on all three.
+            _clean_type, _leaked_focus = sanitize_workout_type(
+                body.workout_type, context="generate"
+            )
+            if _leaked_focus:
+                if not body.focus_areas:
+                    body.focus_areas = [_leaked_focus]
+                    focus_areas = list(body.focus_areas)
+                body.workout_type = _clean_type
 
             # Determine focus area for RAG selection
             focus_area = body.focus_areas[0] if body.focus_areas else "full_body"
