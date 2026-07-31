@@ -18,9 +18,9 @@ class PassportTemplate extends StatelessWidget {
     this.showWatermark = true,
   });
 
-  static const Color _navy = Color(0xFF1E3A8A);
-  static const Color _gold = Color(0xFFFBBF24);
-  static const Color _red = Color(0xFFEF4444);
+  static const Color _navy = Color(0xFF1E3A8A);  // accent-allowlist: Passport cover navy, matches passport_doc.dart's fixed navy/gold/red passport-cover identity
+  static const Color _gold = Color(0xFFFBBF24);  // accent-allowlist: Passport cover gold foil, matches passport_doc.dart's fixed navy/gold/red passport-cover identity
+  static const Color _red = Color(0xFFEF4444);  // accent-allowlist: Passport stamp red ink, matches passport_doc.dart's fixed navy/gold/red passport-cover identity
 
   @override
   Widget build(BuildContext context) {

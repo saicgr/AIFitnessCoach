@@ -70,8 +70,8 @@ class VinylTemplate extends StatelessWidget {
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.orange,
-                                  Color(0xFFFF6B00),
+                                  AppColors.orange,  // accent-allowlist: Vinyl record label's fixed copper-orange identity, matches vinyl_doc.dart
+                                  Color(0xFFFF6B00),  // accent-allowlist: Vinyl record label's fixed copper-orange identity, matches vinyl_doc.dart
                                 ],
                               ),
                             ),

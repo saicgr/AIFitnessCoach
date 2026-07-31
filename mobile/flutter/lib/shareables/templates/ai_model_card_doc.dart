@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 
 CardDoc aiModelCardDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const green = Color(0xFF7CFC7C);
+  const green = Color(0xFF7CFC7C);  // accent-allowlist: AI/terminal template family's fixed neon cyan/magenta/green palette (template design identity, matches sibling AI templates)
   const white = Color(0xFFFFFFFF);
   const dim = Color(0xFF888888);
   const muted = Color(0x99FFFFFF);

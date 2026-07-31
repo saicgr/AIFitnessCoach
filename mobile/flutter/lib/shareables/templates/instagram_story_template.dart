@@ -32,9 +32,9 @@ class InstagramStoryTemplate extends StatelessWidget {
     return ShareableCanvas(
       aspect: data.aspect,
       backgroundOverride: const [
-        Color(0xFFEC4899),
-        Color(0xFFF97316),
-        Color(0xFFEAB308),
+        Color(0xFFEC4899), // accent-allowlist: Instagram's own brand gradient (pink→orange→yellow), matches instagram_story_doc.dart exactly
+        Color(0xFFF97316), // accent-allowlist: Instagram's own brand gradient (pink→orange→yellow), matches instagram_story_doc.dart exactly
+        Color(0xFFEAB308), // accent-allowlist: Instagram's own brand gradient (pink→orange→yellow), matches instagram_story_doc.dart exactly
       ],
       child: Stack(
         children: [

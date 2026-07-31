@@ -10,19 +10,19 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc tradingCardGoldDoc(Shareable data, ShareableAspect aspect) {
-  const gold = Color(0xFFFBBF24);
+  const gold = Color(0xFFFBBF24); // accent-allowlist: Trading Card Gold's fixed gold-foil palette, template design identity
   const navy = Color(0xFF1E293B);
   return cardDoc(
     aspect: aspect,
     presetId: 'tradingCardGold',
-    accent: gold,
+    accent: gold,  // accent-allowlist: Trading Card Gold is a fixed gold-foil identity by design (see file doc comment), not user accent
     background: solidBg(const Color(0xFF0B1020)),
     elements: [
       // Gold-foil border.
       shapeEl(
         pos: const Offset(0.5, 0.47),
         size: const Size(0.82, 0.82),
-        gradient: const [gold, Color(0xFFEAB308), Color(0xFFCA8A04)],
+        gradient: const [gold, Color(0xFFEAB308), Color(0xFFCA8A04)],  // accent-allowlist: Trading Card Gold fixed gold-foil gradient
         stroke: const Color(0xFF422006),
         strokeWidth: 3,
         cornerRadius: 18,
@@ -71,7 +71,7 @@ CardDoc tradingCardGoldDoc(Shareable data, ShareableAspect aspect) {
       dividerEl(
         pos: const Offset(0.5, 0.66),
         size: const Size(0.66, 0.004),
-        color: const Color(0x66FBBF24),
+        color: const Color(0x66FBBF24), // accent-allowlist: Trading Card Gold fixed gold-foil divider
         thickness: 1.5,
       ),
       for (var i = 0; i < 3; i++) ...[

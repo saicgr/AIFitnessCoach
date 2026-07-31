@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 
 CardDoc mealAchievementDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const gold = Color(0xFFF5C542);
+  const gold = Color(0xFFF5C542);  // accent-allowlist: Meal Achievement's confetti scatter needs color variety — fixed decorative confetti colors alongside the real accent, plus fixed gold trophy gradient
 
   // A single confetti dot.
   CardElement confetti(double x, double y, double s, Color c) => shapeEl(
@@ -39,10 +39,10 @@ CardDoc mealAchievementDoc(Shareable data, ShareableAspect aspect) {
       // Confetti scatter behind the banner.
       confetti(0.16, 0.2, 0.035, gold),
       confetti(0.84, 0.22, 0.03, accent),
-      confetti(0.28, 0.78, 0.04, const Color(0xFF06B6D4)),
-      confetti(0.72, 0.82, 0.032, const Color(0xFFA855F7)),
+      confetti(0.28, 0.78, 0.04, const Color(0xFF06B6D4)),  // accent-allowlist: Meal Achievement's confetti scatter needs color variety — fixed decorative confetti colors alongside the real accent, plus fixed gold trophy gradient
+      confetti(0.72, 0.82, 0.032, const Color(0xFFA855F7)),  // accent-allowlist: Meal Achievement's confetti scatter needs color variety — fixed decorative confetti colors alongside the real accent, plus fixed gold trophy gradient
       confetti(0.9, 0.55, 0.026, gold),
-      confetti(0.08, 0.6, 0.03, const Color(0xFF22C55E)),
+      confetti(0.08, 0.6, 0.03, const Color(0xFF22C55E)),  // accent-allowlist: Meal Achievement's confetti scatter needs color variety — fixed decorative confetti colors alongside the real accent, plus fixed gold trophy gradient
       // Glossy banner card.
       shapeEl(
         pos: const Offset(0.5, 0.5),
@@ -65,7 +65,7 @@ CardDoc mealAchievementDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.27, 0.5),
         size: const Size(0.22, 0.22),
         shape: ShapeKind.circle,
-        gradient: const [Color(0xFFF7D873), Color(0xFFC8941F)],
+        gradient: const [Color(0xFFF7D873), Color(0xFFC8941F)],  // accent-allowlist: Meal Achievement's confetti scatter needs color variety — fixed decorative confetti colors alongside the real accent, plus fixed gold trophy gradient
       ),
       iconEl(
         pos: const Offset(0.27, 0.5),

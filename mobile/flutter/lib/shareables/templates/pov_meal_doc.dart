@@ -59,7 +59,7 @@ CardDoc povMealDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.66, 0.1),
         size: const Size(0.04, 0.022),
         shape: ShapeKind.circle,
-        fill: const Color(0xFFFF3B30),
+        fill: const Color(0xFFFF3B30),  // accent-allowlist: POV Meal's fixed alert-red highlight, semantic not accent
       ),
       textEl(
         pos: const Offset(0.76, 0.1),

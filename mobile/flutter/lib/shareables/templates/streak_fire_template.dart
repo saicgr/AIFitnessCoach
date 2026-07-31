@@ -29,8 +29,8 @@ class StreakFireTemplate extends StatelessWidget {
     return ShareableCanvas(
       aspect: data.aspect,
       backgroundOverride: const [
-        Color(0xFF7C2D12),
-        Color(0xFFB45309),
+        Color(0xFF7C2D12),  // accent-allowlist: Streak Fire fixed ember background gradient, matches streak_fire_doc.dart
+        Color(0xFFB45309),  // accent-allowlist: Streak Fire fixed ember background gradient, matches streak_fire_doc.dart
         Color(0xFF1F1411),
       ],
       child: Stack(
@@ -42,7 +42,7 @@ class StreakFireTemplate extends StatelessWidget {
                   center: Alignment.center,
                   radius: 0.6,
                   colors: [
-                    const Color(0xFFFB923C).withValues(alpha: 0.55),
+                    const Color(0xFFFB923C).withValues(alpha: 0.55),  // accent-allowlist: Streak Fire flame glow, matches streak_fire_doc.dart's fixed accent (FB923C)
                     Colors.transparent,
                   ],
                 ),
@@ -65,7 +65,7 @@ class StreakFireTemplate extends StatelessWidget {
                 ),
                 const Spacer(),
                 Icon(Icons.local_fire_department_rounded,
-                    color: Colors.orange.shade200, size: 88),
+                    color: Colors.orange.shade200, size: 88),  // accent-allowlist: Streak Fire flame-icon color, part of the fixed fire theme
                 const SizedBox(height: 8),
                 Text(
                   streakMetric.value.replaceAll(RegExp(r'[^0-9]'), '').isEmpty

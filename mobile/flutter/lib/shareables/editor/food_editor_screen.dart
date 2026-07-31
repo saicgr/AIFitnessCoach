@@ -724,7 +724,7 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
           IconButton(
             tooltip: 'Delete',
             icon: const Icon(Icons.delete_outline_rounded,
-                color: Color(0xFFFF6B6B)),
+                color: Color(0xFFFF6B6B)), // accent-allowlist: destructive/delete-action red, matches error semantic
             onPressed: _deleteSelected,
           ),
         ],
@@ -771,10 +771,10 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
 const List<Color> _kTextColors = [
   Colors.white,
   Color(0xFF111111),
-  Color(0xFFFFD23F),
-  Color(0xFFFF6B6B),
-  Color(0xFF06B6D4),
-  Color(0xFFA855F7),
-  Color(0xFF22C55E),
-  Color(0xFFF97316),
+  Color(0xFFFFD23F),  // accent-allowlist: fixed text-color swatch palette offered in the text-element editor, design choices not app chrome
+  Color(0xFFFF6B6B),  // accent-allowlist: fixed text-color swatch palette offered in the text-element editor, design choices not app chrome
+  Color(0xFF06B6D4),  // accent-allowlist: fixed text-color swatch palette offered in the text-element editor, design choices not app chrome
+  Color(0xFFA855F7),  // accent-allowlist: fixed text-color swatch palette offered in the text-element editor, design choices not app chrome
+  Color(0xFF22C55E),  // accent-allowlist: fixed text-color swatch palette offered in the text-element editor, design choices not app chrome
+  Color(0xFFF97316),  // accent-allowlist: fixed text-color swatch palette offered in the text-element editor, design choices not app chrome
 ];

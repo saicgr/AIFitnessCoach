@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
@@ -59,19 +60,19 @@ class StatsAdapter {
         label: 'THIS WEEK',
         value: '${weekly.$1}/${weekly.$2}',
         icon: Icons.calendar_today_rounded,
-        accent: AppColors.purple,
+        accent: AppColors.purple, // accent-allowlist: fixed metric-type icon color (calendar), distinct from streak/time for scannability
       ),
       ShareableMetric(
         label: 'TOTAL TIME',
         value: _fmtTotalTime(totalMinutes),
         icon: Icons.timer_outlined,
-        accent: AppColors.success,
+        accent: AppColors.success, // accent-allowlist: fixed metric-type icon color (timer), distinct from streak/week for scannability
       ),
       ShareableMetric(
         label: 'STREAK',
         value: '$validatedStreak ${validatedStreak == 1 ? 'day' : 'days'}',
         icon: Icons.local_fire_department_rounded,
-        accent: AppColors.orange,
+        accent: AppColors.orange, // accent-allowlist: fixed flame-icon color for streak metric, matches identical STREAK icon coloring in reports/workout adapters
       ),
       if (longestStreak > 0)
         ShareableMetric(
@@ -82,6 +83,7 @@ class StatsAdapter {
     ];
 
     final periodLabel = _periodLabel();
+    final accent = ref.read(accentColorProvider).getColor(true);
 
     return Shareable(
       kind: ShareableKind.statsOverview,
@@ -90,7 +92,7 @@ class StatsAdapter {
       heroValue: totalWorkouts,
       heroUnitSingular: 'workout',
       highlights: highlights,
-      accentColor: AppColors.orange,
+      accentColor: accent,
     );
   }
 

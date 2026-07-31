@@ -13,7 +13,7 @@ import 'doc_kit.dart';
 CardDoc mealReviewDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const card = Color(0xFF15161B);
-  const star = Color(0xFFF5C542);
+  const star = Color(0xFFF5C542);  // accent-allowlist: Meal Review's fixed star-rating gold (template design identity)
 
   // A row of five filled stars.
   List<CardElement> stars(double y) {

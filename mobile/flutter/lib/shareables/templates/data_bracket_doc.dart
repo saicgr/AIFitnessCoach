@@ -11,7 +11,7 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataBracketDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
   const ink = Color(0xFF0D1117);
 
   // One bracket matchup row: accent left-rule when "won" (completed).

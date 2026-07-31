@@ -13,7 +13,7 @@ CardDoc mealCouponDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const ticket = Color(0xFFFFF6E2);
   const ink = Color(0xFF2B2418);
-  final stamp = Color.lerp(accent, const Color(0xFFCB4B2E), 0.4)!;
+  final stamp = Color.lerp(accent, const Color(0xFFCB4B2E), 0.4)!;  // accent-allowlist: Meal Coupon's blend target, part of the coupon-stamp look (blended WITH the real accent)
 
   // A dashed cut-line side (vertical divider scaled thin).
   CardElement cut(double x) => dividerEl(

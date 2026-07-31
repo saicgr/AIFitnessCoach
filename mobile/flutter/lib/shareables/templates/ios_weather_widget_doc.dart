@@ -22,7 +22,7 @@ CardDoc iosWeatherWidgetDoc(Shareable data, ShareableAspect aspect) {
     presetId: 'iosWeatherWidget',
     accent: accent,
     background: gradientBg(
-      const [Color(0xFF2E6FD6), Color(0xFF4FA3E3), Color(0xFF8FD0F0)],
+      const [Color(0xFF2E6FD6), Color(0xFF4FA3E3), Color(0xFF8FD0F0)],  // accent-allowlist: iOS Weather widget's brand-accurate sky-blue gradient, third-party mimicry
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       stops: const [0.0, 0.5, 1.0],
@@ -34,7 +34,7 @@ CardDoc iosWeatherWidgetDoc(Shareable data, ShareableAspect aspect) {
         size: const Size(0.5, 0.32),
         shape: ShapeKind.circle,
         fill: const Color(0x00000000),
-        gradient: const [Color(0x66FFE39A), Color(0x00FFE39A)],
+        gradient: const [Color(0x66FFE39A), Color(0x00FFE39A)],  // accent-allowlist: iOS Weather widget's brand-accurate sky-blue gradient, third-party mimicry
         radial: true,
       ),
       // Location (title).

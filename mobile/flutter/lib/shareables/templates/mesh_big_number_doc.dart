@@ -14,10 +14,10 @@ CardDoc meshBigNumberDoc(Shareable data, ShareableAspect aspect) {
 
   // A mesh-style gradient blends the accent into vivid neighbours.
   final mesh = [
-    Color.lerp(accent, const Color(0xFF7C3AED), 0.55)!,
-    Color.lerp(accent, const Color(0xFFEC4899), 0.35)!,
+    Color.lerp(accent, const Color(0xFF7C3AED), 0.55)!,  // accent-allowlist: Mesh Big Number's blend targets, part of the mesh-gradient look (blended WITH the real accent, see accent.lerp)
+    Color.lerp(accent, const Color(0xFFEC4899), 0.35)!,  // accent-allowlist: Mesh Big Number's blend targets, part of the mesh-gradient look (blended WITH the real accent, see accent.lerp)
     accent,
-    Color.lerp(accent, const Color(0xFF0EA5E9), 0.5)!,
+    Color.lerp(accent, const Color(0xFF0EA5E9), 0.5)!,  // accent-allowlist: Mesh Big Number's blend targets, part of the mesh-gradient look (blended WITH the real accent, see accent.lerp)
     const Color(0xFF1E1B2E),
   ];
 

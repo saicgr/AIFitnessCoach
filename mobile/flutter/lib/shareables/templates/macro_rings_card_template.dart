@@ -172,9 +172,9 @@ class _MacroLegend extends StatelessWidget {
       spacing: 14 * mul,
       runSpacing: 6 * mul,
       children: [
-        _entry('Protein', nutrition.proteinG, AppColors.macroProtein),
-        _entry('Carbs', nutrition.carbsG, AppColors.macroCarbs),
-        _entry('Fat', nutrition.fatG, AppColors.macroFat),
+        _entry('Protein', nutrition.proteinG, AppColors.macroProtein),  // accent-allowlist: macro identity color — protein/carbs/fat stay consistent across every nutrition surface
+        _entry('Carbs', nutrition.carbsG, AppColors.macroCarbs),  // accent-allowlist: macro identity color — protein/carbs/fat stay consistent across every nutrition surface
+        _entry('Fat', nutrition.fatG, AppColors.macroFat),  // accent-allowlist: macro identity color — protein/carbs/fat stay consistent across every nutrition surface
       ],
     );
   }

@@ -13,10 +13,11 @@ import 'doc_kit.dart';
 
 CardDoc ticketParkingDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const ink = Color(0xFF14140C);
   const paper = Color(0xFFFBFAF4);
   const sub = Color(0x9914140C);
+  final gridTiles = highlightTiles(s, max: 3);
   return cardDoc(
     aspect: aspect,
     presetId: 'ticketParking',
@@ -129,23 +130,20 @@ CardDoc ticketParkingDoc(Shareable s, ShareableAspect aspect) {
         color: const Color(0x6614140C),
         thickness: 2,
       ),
-      // Level / rate / duration grid.
-      statGridEl(
-        pos: const Offset(0.5, 0.55),
-        size: const Size(0.62, 0.1),
-        columns: 3,
-        tiles: const [
-          ['L3', 'LEVEL'],
-          ['B12', 'BAY'],
-          ['MAX', 'EFFORT'],
-        ],
-        tileColor: const Color(0x1414140C),
-        valueColor: ink,
-        labelColor: sub,
-        valueFontSize: 30,
-        labelFontSize: 13,
-        valueFont: CardFontIx.condMid,
-      ),
+      // Stat grid — real numbers, never fabricated (E2E #144).
+      if (gridTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.55),
+          size: const Size(0.62, 0.1),
+          columns: gridTiles.length.clamp(1, 3),
+          tiles: gridTiles,
+          tileColor: const Color(0x1414140C),
+          valueColor: ink,
+          labelColor: sub,
+          valueFontSize: 30,
+          labelFontSize: 13,
+          valueFont: CardFontIx.condMid,
+        ),
       // Amount due (the workout's hero value).
       textEl(
         pos: const Offset(0.32, 0.63),

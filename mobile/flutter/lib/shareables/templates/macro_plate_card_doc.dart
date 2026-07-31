@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 CardDoc macroPlateCardDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const cream = Color(0xFFFBF3E7);
-  const amber = Color(0xFFE9B872);
+  const amber = Color(0xFFE9B872);  // accent-allowlist: Macro Plate's fixed warm ceramic-plate amber tone (template design identity)
   return cardDoc(
     aspect: aspect,
     presetId: 'macroPlateCard',

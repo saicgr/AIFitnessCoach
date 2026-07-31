@@ -26,7 +26,7 @@ class NewsTemplate extends StatelessWidget {
 
   static const Color _cream = Color(0xFFF1ECDF);
   static const Color _ink = Color(0xFF111111);
-  static const Color _redInk = Color(0xFF8B0000);
+  static const Color _redInk = Color(0xFF8B0000);  // accent-allowlist: News/tabloid vintage red-ink masthead color, matches news_doc.dart's redInk (template identity)
 
   @override
   Widget build(BuildContext context) {
@@ -445,7 +445,7 @@ class _PaperGrainPainter extends CustomPainter {
     }
     // Faint corner stamp (top-right) — like a registration mark.
     final stampPaint = Paint()
-      ..color = const Color(0xFF8B0000).withValues(alpha: 0.18)
+      ..color = const Color(0xFF8B0000).withValues(alpha: 0.18)  // accent-allowlist: News/tabloid vintage red-ink registration-mark, matches fixed redInk theme
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
     final c = Offset(size.width - 56, 56);

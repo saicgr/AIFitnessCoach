@@ -87,9 +87,9 @@ CardDoc statStripPhotoDoc(Shareable data, ShareableAspect aspect) {
       ),
       ...tile(0.155, BindingSource.calories, 'KCAL', Colors.white),
       ...tile(0.385, BindingSource.proteinG, 'PROTEIN',
-          const Color(0xFFEF4444)),
-      ...tile(0.615, BindingSource.carbsG, 'CARBS', const Color(0xFFF59E0B)),
-      ...tile(0.845, BindingSource.fatG, 'FAT', const Color(0xFF3B82F6)),
+          const Color(0xFFEF4444)),  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
+      ...tile(0.615, BindingSource.carbsG, 'CARBS', const Color(0xFFF59E0B)),  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
+      ...tile(0.845, BindingSource.fatG, 'FAT', const Color(0xFF3B82F6)),  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
       watermarkEl(pos: const Offset(0.30, 0.95), color: Colors.white70),
     ],
   );

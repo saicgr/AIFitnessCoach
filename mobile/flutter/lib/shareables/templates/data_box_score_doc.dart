@@ -11,9 +11,13 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataBoxScoreDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
   const ink = Color(0xFF0A0A0A);
   const sub = Color(0x99FFFFFF);
+  final footTiles = highlightTiles(
+    data,
+    labels: const ['SETS', 'NEW PRS', 'DURATION'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'dataBoxScore',
@@ -69,21 +73,18 @@ CardDoc dataBoxScoreDoc(Shareable data, ShareableAspect aspect) {
         showCalories: false,
         rowSpacing: 8,
       ),
-      // Stat-tile footer — three quick aggregates.
-      statGridEl(
-        pos: const Offset(0.5, 0.71),
-        size: const Size(0.86, 0.12),
-        columns: 3,
-        tiles: const [
-          ['16', 'SETS'],
-          ['1', 'PR'],
-          ['61', 'MINUTES'],
-        ],
-        tileColor: const Color(0x10FFFFFF),
-        valueColor: Colors.white,
-        valueFontSize: 38,
-        valueFont: CardFontIx.display,
-      ),
+      // Stat-tile footer — real quick aggregates (never fabricated, E2E #144).
+      if (footTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.71),
+          size: const Size(0.86, 0.12),
+          columns: footTiles.length.clamp(1, 3),
+          tiles: footTiles,
+          tileColor: const Color(0x10FFFFFF),
+          valueColor: Colors.white,
+          valueFontSize: 38,
+          valueFont: CardFontIx.display,
+        ),
       dividerEl(
         pos: const Offset(0.5, 0.83),
         size: const Size(0.86, 0.002),

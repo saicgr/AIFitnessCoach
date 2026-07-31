@@ -14,7 +14,7 @@ import 'doc_kit.dart';
 CardDoc socialYoutubeThumbDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
-  const ytRed = Color(0xFFFF0000);
+  const ytRed = Color(0xFFFF0000);  // accent-allowlist: YouTube's own brand red, third-party brand mark
   return cardDoc(
     aspect: aspect,
     presetId: 'socialYoutubeThumb',

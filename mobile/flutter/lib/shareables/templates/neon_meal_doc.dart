@@ -12,9 +12,9 @@ import 'doc_kit.dart';
 CardDoc neonMealDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const wall = Color(0xFF0B0A12);
-  const pink = Color(0xFFFF3D9A);
-  const cyan = Color(0xFF2BE8FF);
-  const lime = Color(0xFFC6FF3D);
+  const pink = Color(0xFFFF3D9A);  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
+  const cyan = Color(0xFF2BE8FF);  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
+  const lime = Color(0xFFC6FF3D);  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
 
   return cardDoc(
     aspect: aspect,
@@ -45,7 +45,7 @@ CardDoc neonMealDoc(Shareable data, ShareableAspect aspect) {
         align: TextAlign.center,
         letterSpacing: 4,
         allCaps: true,
-        shadow: const ShadowSpec(color: Color(0xCC2BE8FF), blur: 22),
+        shadow: const ShadowSpec(color: Color(0xCC2BE8FF), blur: 22),  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
       ),
       // Glowing neon meal name.
       textEl(
@@ -59,7 +59,7 @@ CardDoc neonMealDoc(Shareable data, ShareableAspect aspect) {
         maxLines: 3,
         lineHeight: 1.05,
         sizeMode: TextSizeMode.shrinkToFit,
-        shadow: const ShadowSpec(color: Color(0xEEFF3D9A), blur: 34),
+        shadow: const ShadowSpec(color: Color(0xEEFF3D9A), blur: 34),  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
       ),
       iconEl(
         pos: const Offset(0.5, 0.52),
@@ -76,7 +76,7 @@ CardDoc neonMealDoc(Shareable data, ShareableAspect aspect) {
         color: lime,
         align: TextAlign.center,
         sizeMode: TextSizeMode.shrinkToFit,
-        shadow: const ShadowSpec(color: Color(0xEEC6FF3D), blur: 38),
+        shadow: const ShadowSpec(color: Color(0xEEC6FF3D), blur: 38),  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
       ),
       textEl(
         pos: const Offset(0.5, 0.77),
@@ -87,7 +87,7 @@ CardDoc neonMealDoc(Shareable data, ShareableAspect aspect) {
         color: cyan,
         align: TextAlign.center,
         letterSpacing: 5,
-        shadow: const ShadowSpec(color: Color(0xAA2BE8FF), blur: 18),
+        shadow: const ShadowSpec(color: Color(0xAA2BE8FF), blur: 18),  // accent-allowlist: Neon Meal's fixed neon pink/cyan/lime sign colors (template design identity)
       ),
       // Neon macro chips.
       chipsEl(

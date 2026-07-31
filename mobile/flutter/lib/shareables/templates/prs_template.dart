@@ -24,7 +24,7 @@ class PRsTemplate extends StatelessWidget {
       aspect: data.aspect,
       backgroundOverride: const [
         Color(0xFF1E1B4B),
-        Color(0xFF312E81),
+        Color(0xFF312E81),  // accent-allowlist: PRs template fixed indigo background gradient, matches prs_doc.dart
         Color(0xFF0F0F1F),
       ],
       child: Padding(
@@ -35,7 +35,7 @@ class PRsTemplate extends StatelessWidget {
             Text(
               'PERSONAL RECORDS',
               style: TextStyle(
-                color: const Color(0xFFFCD34D),
+                color: const Color(0xFFFCD34D),  // accent-allowlist: PRs template fixed gold kicker color, matches prs_doc.dart's gold theme
                 fontSize: 13 * mul,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 3,
@@ -57,7 +57,7 @@ class PRsTemplate extends StatelessWidget {
               unitSize: 18,
               stacked: false,
               color: Colors.white,
-              unitColor: const Color(0xFFFCD34D),
+              unitColor: const Color(0xFFFCD34D),  // accent-allowlist: PRs template fixed gold unit color, matches prs_doc.dart's gold theme
             ),
             const SizedBox(height: 24),
             Expanded(
@@ -107,7 +107,7 @@ class _PRRow extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const LinearGradient(
-                colors: [Color(0xFFFCD34D), Color(0xFFB45309)],
+                colors: [Color(0xFFFCD34D), Color(0xFFB45309)],  // accent-allowlist: PRs trophy-badge gold gradient, matches prs_doc.dart's gold theme
               ),
             ),
             child: Text(

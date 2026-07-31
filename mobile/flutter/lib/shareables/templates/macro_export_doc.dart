@@ -145,7 +145,7 @@ CardDoc macroExportDoc(Shareable data, ShareableAspect aspect) {
       badgeEl(
         pos: const Offset(0.5, 0.87),
         size: const Size(0.16, 0.075),
-        gradient: const [Color(0xFF22C55E), Color(0xFF15803D)],
+        gradient: const [Color(0xFF22C55E), Color(0xFF15803D)],  // accent-allowlist: Macro Export template's fixed design palette, not user accent
         label: 'VERIFIED',
         valueLiteral: '✓',
       ),

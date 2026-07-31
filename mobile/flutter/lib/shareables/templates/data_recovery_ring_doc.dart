@@ -11,8 +11,8 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataRecoveryRingDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
-  const teal = Color(0xFF16E0A6);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
+  const teal = Color(0xFF16E0A6);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
   const muted = Color(0x99FFFFFF);
   return cardDoc(
     aspect: aspect,
@@ -87,7 +87,7 @@ CardDoc dataRecoveryRingDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.39, 0.72),
         size: const Size(0.55, 0.008),
         shape: ShapeKind.pill,
-        fill: const Color(0xFF3B82F6),
+        fill: const Color(0xFF3B82F6),  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
       ),
       // Context foot.
       textEl(

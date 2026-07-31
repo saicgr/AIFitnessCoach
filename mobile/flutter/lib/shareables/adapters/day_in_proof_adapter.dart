@@ -80,7 +80,7 @@ class DayInProofAdapter {
       caption: (line != null && line.isNotEmpty) ? line : null,
       dateIso: date,
       userDisplayName: user?.name,
-      accentColor: const Color(0xFFD8FF3A),
+      accentColor: const Color(0xFFD8FF3A),  // accent-allowlist: Day-in-Proof's fixed volt-lime signature brand color (pairs with Zealova Score, F3), not user accent
     );
   }
 

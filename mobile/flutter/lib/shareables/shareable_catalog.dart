@@ -3011,6 +3011,50 @@ class ShareableCatalog {
     return all().firstWhere((s) => s.template == t);
   }
 
+  /// THE chokepoint for turning a template's `docBuilder` into a renderable
+  /// [CardDoc] — every caller (gallery thumbnail, share-sheet preview, remix,
+  /// editor canvas, capture) MUST route through here instead of calling
+  /// `spec.docBuilder!(data, aspect)` directly, so a doc-level policy fix
+  /// applies everywhere at once instead of being copy-pasted (and inevitably
+  /// missed) at every call site. Currently applies [_stripAnatomyHeroPhoto].
+  static CardDoc buildTemplateDoc(
+    ShareableTemplateSpec spec,
+    Shareable data,
+    ShareableAspect aspect,
+  ) {
+    final builder = spec.docBuilder;
+    if (builder == null) {
+      return CardDoc(
+        aspect: aspect,
+        elements: const [],
+        accentColor: data.accentColor,
+      );
+    }
+    return _stripAnatomyHeroPhoto(builder(data, aspect), spec.template);
+  }
+
+  /// `BindingSource.heroImageUrl` is populated EXCLUSIVELY by
+  /// `WorkoutAdapter` with the first exercise's muscle-anatomy illustration
+  /// (an `ILLUSTRATIONS ALL/` figure) — never a real photo. A doc that heroes
+  /// it full-bleed as a background or a photo element reads as a headless
+  /// anatomy diagram, not a postable photo — an unpostable "movie poster" /
+  /// Instagram hero. Strip it via [CardDoc.withoutPhoto] everywhere except
+  /// [ShareableTemplate.exerciseShowcase], which heroes it deliberately with
+  /// a matching "Exercise of the Day" kicker. See E2E issue #143.
+  static CardDoc _stripAnatomyHeroPhoto(CardDoc doc, ShareableTemplate template) {
+    if (template == ShareableTemplate.exerciseShowcase) return doc;
+    final bg = doc.background;
+    final bgIsAnatomyHero = (bg.kind == CardBackgroundKind.photo ||
+            bg.kind == CardBackgroundKind.blurredPhoto) &&
+        bg.photo?.binding.source == BindingSource.heroImageUrl;
+    final elementIsAnatomyHero = doc.elements.any((e) {
+      final props = e.props;
+      return props is PhotoProps &&
+          props.source.binding.source == BindingSource.heroImageUrl;
+    });
+    return (bgIsAnatomyHero || elementIsAnatomyHero) ? doc.withoutPhoto() : doc;
+  }
+
   /// Returns the canonical "hero" template for a given share kind so
   /// callers don't need to thread an `initialTemplate` through. Used by
   /// `ShareableSheet` when no explicit template is requested — the sheet

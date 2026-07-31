@@ -16,10 +16,10 @@ CardDoc iosMeshGradientDoc(Shareable data, ShareableAspect aspect) {
   const white = Color(0xFFFFFFFF);
 
   final mesh = [
-    Color.lerp(accent, const Color(0xFFEC4899), 0.4)!,
-    Color.lerp(accent, const Color(0xFF6366F1), 0.45)!,
+    Color.lerp(accent, const Color(0xFFEC4899), 0.4)!,  // accent-allowlist: iOS Mesh Gradient's blend targets, part of the mesh-gradient look (blended WITH the real accent, see accent.lerp)
+    Color.lerp(accent, const Color(0xFF6366F1), 0.45)!,  // accent-allowlist: iOS Mesh Gradient's blend targets, part of the mesh-gradient look (blended WITH the real accent, see accent.lerp)
     accent,
-    Color.lerp(accent, const Color(0xFF06B6D4), 0.55)!,
+    Color.lerp(accent, const Color(0xFF06B6D4), 0.55)!,  // accent-allowlist: iOS Mesh Gradient's blend targets, part of the mesh-gradient look (blended WITH the real accent, see accent.lerp)
     const Color(0xFF15131F),
   ];
 

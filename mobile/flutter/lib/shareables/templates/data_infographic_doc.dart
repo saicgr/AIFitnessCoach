@@ -11,7 +11,11 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataInfographicDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
+  final gridTiles = highlightTiles(
+    data,
+    labels: const ['VOLUME', 'SETS', 'NEW PRS', 'DURATION'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'dataInfographic',
@@ -55,26 +59,22 @@ CardDoc dataInfographicDoc(Shareable data, ShareableAspect aspect) {
         align: TextAlign.center,
         letterSpacing: 5,
       ),
-      // 2×2 big-stat grid (emoji baked into the value cell for punch).
-      statGridEl(
-        pos: const Offset(0.5, 0.53),
-        size: const Size(0.86, 0.46),
-        columns: 2,
-        tiles: const [
-          ['💪  9,128', 'KG MOVED'],
-          ['🔁  16', 'SETS'],
-          ['🏆  225', 'BENCH PR'],
-          ['⏱  61', 'MINUTES'],
-        ],
-        tileColor: const Color(0x0FFFFFFF),
-        valueColor: Colors.white,
-        labelColor: const Color(0x99FFFFFF),
-        valueFontSize: 40,
-        labelFontSize: 18,
-        valueFont: CardFontIx.display,
-        spacing: 14,
-        cornerRadius: 18,
-      ),
+      // 2×2 big-stat grid — real numbers, never fabricated (E2E #144).
+      if (gridTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.53),
+          size: const Size(0.86, 0.46),
+          columns: 2,
+          tiles: gridTiles,
+          tileColor: const Color(0x0FFFFFFF),
+          valueColor: Colors.white,
+          labelColor: const Color(0x99FFFFFF),
+          valueFontSize: 40,
+          labelFontSize: 18,
+          valueFont: CardFontIx.display,
+          spacing: 14,
+          cornerRadius: 18,
+        ),
       // Streak strip foot.
       shapeEl(
         pos: const Offset(0.5, 0.88),

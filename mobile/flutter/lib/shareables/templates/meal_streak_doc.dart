@@ -11,7 +11,7 @@ import 'doc_kit.dart';
 
 CardDoc mealStreakDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const flame = Color(0xFFFB923C);
+  const flame = Color(0xFFFB923C);  // accent-allowlist: Meal Streak's fixed flame-orange glow (template design identity, matches Streak Fire family)
 
   // Seven mini week dots, last two filled with the accent.
   List<CardElement> weekDots() {
@@ -59,7 +59,7 @@ CardDoc mealStreakDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.34),
         size: const Size(0.62, 0.34),
         shape: ShapeKind.circle,
-        gradient: const [Color(0x66FB923C), Color(0x00FB923C)],
+        gradient: const [Color(0x66FB923C), Color(0x00FB923C)],  // accent-allowlist: Meal Streak's fixed flame-orange glow (template design identity, matches Streak Fire family)
         radial: true,
       ),
       iconEl(

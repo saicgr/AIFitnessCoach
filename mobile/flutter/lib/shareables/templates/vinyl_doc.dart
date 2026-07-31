@@ -10,7 +10,7 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc vinylDoc(Shareable data, ShareableAspect aspect) {
-  const orange = Color(0xFFFF7A1A);
+  const orange = Color(0xFFFF7A1A);  // accent-allowlist: Vinyl record label's fixed copper-orange identity, matches vinyl_template.dart
   return cardDoc(
     aspect: aspect,
     presetId: 'vinyl',
@@ -39,7 +39,7 @@ CardDoc vinylDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.44),
         size: const Size(0.32, 0.32),
         shape: ShapeKind.circle,
-        gradient: const [orange, Color(0xFFFF6B00)],
+        gradient: const [orange, Color(0xFFFF6B00)],  // accent-allowlist: Vinyl record label's fixed copper-orange identity, matches vinyl_template.dart
       ),
       textEl(
         pos: const Offset(0.5, 0.37),

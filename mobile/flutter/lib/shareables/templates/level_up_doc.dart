@@ -11,13 +11,13 @@ import 'doc_kit.dart';
 
 CardDoc levelUpDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const gold = Color(0xFFFCD34D);
+  const gold = Color(0xFFFCD34D);  // accent-allowlist: Level Up's fixed purple/gold RPG XP-card identity, matches level_up_template.dart
   return cardDoc(
     aspect: aspect,
     presetId: 'levelUp',
     accent: accent,
     background: gradientBg(
-      const [Color(0xFF1E1B4B), Color(0xFF6D28D9), Color(0xFF0F0F1F)],
+      const [Color(0xFF1E1B4B), Color(0xFF6D28D9), Color(0xFF0F0F1F)],  // accent-allowlist: Level Up's fixed purple/gold RPG XP-card identity, matches level_up_template.dart
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
@@ -49,7 +49,7 @@ CardDoc levelUpDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.42),
         size: const Size(0.42, 0.24),
         shape: ShapeKind.circle,
-        gradient: const [gold, Color(0xFFFB923C), gold],
+        gradient: const [gold, Color(0xFFFB923C), gold],  // accent-allowlist: Level Up's fixed purple/gold RPG XP-card identity, matches level_up_template.dart
       ),
       shapeEl(
         pos: const Offset(0.5, 0.42),

@@ -11,8 +11,8 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataStockChartDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F); // volt-lime brand accent
-  const up = Color(0xFF16C784); // "market green"
+  const volt = Color(0xFFB8FF2F); // volt-lime brand accent  // accent-allowlist: Stock Chart's fixed volt-lime brand accent + market-green up-color (already documented inline)
+  const up = Color(0xFF16C784); // "market green"  // accent-allowlist: Stock Chart's fixed volt-lime brand accent + market-green up-color (already documented inline)
   const ink = Color(0xFF0A0E12);
   return cardDoc(
     aspect: aspect,

@@ -11,9 +11,9 @@ import 'doc_kit.dart';
 
 CardDoc macroSplitBlockDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const proteinC = Color(0xFF3B82F6);
-  const carbsC = Color(0xFFF59E0B);
-  const fatC = Color(0xFFEF4444);
+  const proteinC = Color(0xFF3B82F6);  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
+  const carbsC = Color(0xFFF59E0B);  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
+  const fatC = Color(0xFFEF4444);  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
 
   // A full-height colour band carrying one macro's label + gram number.
   List<CardElement> band(double x, double w, Color fill, String label,

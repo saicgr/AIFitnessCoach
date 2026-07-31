@@ -76,13 +76,13 @@ extension ShareableThemeMeta on ShareableTheme {
       case ShareableTheme.charcoal:
         return const Color(0xFF6B7280);
       case ShareableTheme.sand:
-        return const Color(0xFFD4A373);
+        return const Color(0xFFD4A373);  // accent-allowlist: one of 5 preset share-card color themes the user explicitly picks in the share sheet (see enum doc comment) — independent of the app-wide accent
       case ShareableTheme.indigo:
-        return const Color(0xFF6366F1);
+        return const Color(0xFF6366F1);  // accent-allowlist: one of 5 preset share-card color themes the user explicitly picks in the share sheet (see enum doc comment) — independent of the app-wide accent
       case ShareableTheme.forest:
-        return const Color(0xFF16A34A);
+        return const Color(0xFF16A34A);  // accent-allowlist: one of 5 preset share-card color themes the user explicitly picks in the share sheet (see enum doc comment) — independent of the app-wide accent
       case ShareableTheme.sunset:
-        return const Color(0xFFF97316);
+        return const Color(0xFFF97316);  // accent-allowlist: one of 5 preset share-card color themes the user explicitly picks in the share sheet (see enum doc comment) — independent of the app-wide accent
     }
   }
 }

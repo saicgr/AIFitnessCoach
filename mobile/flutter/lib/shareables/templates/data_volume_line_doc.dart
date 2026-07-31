@@ -11,8 +11,12 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataVolumeLineDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
   const muted = Color(0x99FFFFFF);
+  final stripTiles = highlightTiles(
+    data,
+    labels: const ['VOLUME', 'DURATION'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'dataVolumeLine',
@@ -59,20 +63,18 @@ CardDoc dataVolumeLineDoc(Shareable data, ShareableAspect aspect) {
         align: TextAlign.center,
         maxLines: 1,
       ),
-      // Total / peak stat strip.
-      statGridEl(
-        pos: const Offset(0.5, 0.265),
-        size: const Size(0.86, 0.1),
-        columns: 2,
-        tiles: const [
-          ['9,128', 'TOTAL KG'],
-          ['+12%', 'VS LAST WK'],
-        ],
-        tileColor: const Color(0x10FFFFFF),
-        valueColor: Colors.white,
-        valueFontSize: 36,
-        valueFont: CardFontIx.display,
-      ),
+      // Stat strip — real numbers, never fabricated (E2E #144).
+      if (stripTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.265),
+          size: const Size(0.86, 0.1),
+          columns: stripTiles.length.clamp(1, 2),
+          tiles: stripTiles,
+          tileColor: const Color(0x10FFFFFF),
+          valueColor: Colors.white,
+          valueFontSize: 36,
+          valueFont: CardFontIx.display,
+        ),
       // Chart baseline.
       shapeEl(
         pos: const Offset(0.5, 0.82),

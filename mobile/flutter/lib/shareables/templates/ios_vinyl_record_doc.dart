@@ -16,6 +16,9 @@ CardDoc iosVinylRecordDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
   const white60 = Color(0x99FFFFFF);
+  // Real duration for the transport scrubber — never a fabricated "4:33"
+  // (E2E #144).
+  final durationLabel = highlightValueFor(data, 'DURATION') ?? shareableHeroString(data);
   return cardDoc(
     aspect: aspect,
     presetId: 'iosVinylRecord',
@@ -122,13 +125,14 @@ CardDoc iosVinylRecordDoc(Shareable data, ShareableAspect aspect) {
         color: white60,
         align: TextAlign.center,
       ),
-      // Transport scrubber.
+      // Transport scrubber — fully played (past tense) with the real session
+      // duration, not an invented elapsed/total pair.
       scrubberEl(
         pos: const Offset(0.5, 0.84),
         size: const Size(0.74, 0.03),
-        progress: 0.48,
-        leftLabel: '2:14',
-        rightLabel: '4:33',
+        progress: 1.0,
+        leftLabel: '0:00',
+        rightLabel: durationLabel,
         fillColor: accent,
         knobColor: accent,
         textColor: white60,

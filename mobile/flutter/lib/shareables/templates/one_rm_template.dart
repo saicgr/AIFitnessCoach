@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
 import '../widgets/app_watermark.dart';
@@ -42,7 +42,7 @@ class OneRmTemplate extends StatelessWidget {
                 fontSize: 14 * mul,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 3,
-                color: AppColors.orange,
+                color: context.accentColor,
               ),
             ),
             Column(

@@ -37,7 +37,7 @@ class ChatBubbleTemplate extends StatelessWidget {
   /// shareable's accent so the bubble always reads as a real iMessage —
   /// using a low-chroma user accent (e.g. white) collapsed into an
   /// unrecognizable white blob in the previous version.
-  static const Color _iMessageBlue = Color(0xFF0B84FF);
+  static const Color _iMessageBlue = Color(0xFF0B84FF); // accent-allowlist: iMessage brand blue, deliberately fixed regardless of user accent (see doc comment above)
   /// iOS dark-mode received-bubble grey.
   static const Color _receivedGrey = Color(0xFF26282E);
 

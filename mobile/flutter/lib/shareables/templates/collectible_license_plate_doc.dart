@@ -13,7 +13,7 @@ import 'doc_kit.dart';
 
 CardDoc collectibleLicensePlateDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const stateBlue = Color(0xFF1B4DB0);
+  const stateBlue = Color(0xFF1B4DB0);  // accent-allowlist: License Plate's fixed US-state-plate blue (template design identity)
   const sub = Color(0xFF555555);
   return cardDoc(
     aspect: aspect,

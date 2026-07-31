@@ -13,7 +13,7 @@ CardDoc calorieCalendarDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const paper = Color(0xFFFBFAF5);
   const ink = Color(0xFF22242B);
-  final header = Color.lerp(accent, const Color(0xFFD23B3B), 0.5)!;
+  final header = Color.lerp(accent, const Color(0xFFD23B3B), 0.5)!;  // accent-allowlist: Calorie Calendar's fixed macro-cell colors + header blend target (macro identity + accent blend)
 
   // A footer macro cell — label above, gram value below.
   List<CardElement> macroCell(double x, String label, BindingSource src,
@@ -123,10 +123,10 @@ CardDoc calorieCalendarDoc(Shareable data, ShareableAspect aspect) {
         color: ink.withValues(alpha: 0.18),
       ),
       ...macroCell(0.3, 'Protein', BindingSource.proteinG,
-          const Color(0xFF3B7BE0)),
+          const Color(0xFF3B7BE0)),  // accent-allowlist: Calorie Calendar's fixed macro-cell colors + header blend target (macro identity + accent blend)
       ...macroCell(0.5, 'Carbs', BindingSource.carbsG,
-          const Color(0xFFE0962F)),
-      ...macroCell(0.7, 'Fat', BindingSource.fatG, const Color(0xFFD2495F)),
+          const Color(0xFFE0962F)),  // accent-allowlist: Calorie Calendar's fixed macro-cell colors + header blend target (macro identity + accent blend)
+      ...macroCell(0.7, 'Fat', BindingSource.fatG, const Color(0xFFD2495F)),  // accent-allowlist: Calorie Calendar's fixed macro-cell colors + header blend target (macro identity + accent blend)
       watermarkEl(pos: const Offset(0.30, 0.92), color: Colors.white60),
     ],
   );

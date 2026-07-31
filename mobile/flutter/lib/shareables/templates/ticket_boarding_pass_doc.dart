@@ -14,10 +14,11 @@ import 'doc_kit.dart';
 
 CardDoc ticketBoardingPassDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const ink = Color(0xFF12140C);
   const paper = Color(0xFFF7F4E9);
   const sub = Color(0x99121400);
+  final fieldTiles = highlightTiles(s, max: 4);
   return cardDoc(
     aspect: aspect,
     presetId: 'ticketBoardingPass',
@@ -120,24 +121,20 @@ CardDoc ticketBoardingPassDoc(Shareable s, ShareableAspect aspect) {
         letterSpacing: 1.2,
         allCaps: true,
       ),
-      // Field grid — gate / seat / volume / PRs.
-      statGridEl(
-        pos: const Offset(0.42, 0.6),
-        size: const Size(0.7, 0.1),
-        columns: 4,
-        tiles: const [
-          ['A12', 'GATE'],
-          ['1A', 'SEAT'],
-          ['ON', 'TIME'],
-          ['100%', 'EFFORT'],
-        ],
-        tileColor: const Color(0x140F1300),
-        valueColor: ink,
-        labelColor: sub,
-        valueFontSize: 26,
-        labelFontSize: 13,
-        valueFont: CardFontIx.condMid,
-      ),
+      // Field grid — real stats, never fabricated (E2E #144).
+      if (fieldTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.42, 0.6),
+          size: const Size(0.7, 0.1),
+          columns: fieldTiles.length.clamp(1, 4),
+          tiles: fieldTiles,
+          tileColor: const Color(0x140F1300),
+          valueColor: ink,
+          labelColor: sub,
+          valueFontSize: 26,
+          labelFontSize: 13,
+          valueFont: CardFontIx.condMid,
+        ),
       // Perforated stub tear with punched notches.
       perforationEl(
         pos: const Offset(0.745, 0.5),

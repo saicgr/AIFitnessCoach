@@ -21,7 +21,7 @@ CardDoc iosBillboardDoc(Shareable data, ShareableAspect aspect) {
     presetId: 'iosBillboard',
     accent: accent,
     background: gradientBg(
-      const [Color(0xFFF9A35C), Color(0xFFB45D8E), Color(0xFF2A2152)],
+      const [Color(0xFFF9A35C), Color(0xFFB45D8E), Color(0xFF2A2152)],  // accent-allowlist: Billboard template's fixed neon sunset gradient (template design identity)
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       stops: const [0.0, 0.45, 1.0],

@@ -19,7 +19,7 @@ CardDoc collectibleBanknoteDoc(Shareable data, ShareableAspect aspect) {
     presetId: 'collectibleBanknote',
     accent: accent,
     background: gradientBg(
-      const [Color(0xFF1F5C3D), Color(0xFF2E7D52)],
+      const [Color(0xFF1F5C3D), Color(0xFF2E7D52)],  // accent-allowlist: Banknote's fixed "Bank of Gains" currency-green palette (template design identity)
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),

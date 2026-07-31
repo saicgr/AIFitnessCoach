@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 
 CardDoc wrappedCalorieDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  final hot = Color.lerp(accent, const Color(0xFFFF2D87), 0.5)!;
+  final hot = Color.lerp(accent, const Color(0xFFFF2D87), 0.5)!;  // accent-allowlist: Wrapped Calorie's blend target, part of the Spotify-Wrapped-style gradient look (blended WITH the real accent)
   return cardDoc(
     aspect: aspect,
     presetId: 'wrappedCalorie',

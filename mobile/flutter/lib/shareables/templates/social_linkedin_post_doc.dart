@@ -15,7 +15,11 @@ CardDoc socialLinkedinPostDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const ink = Color(0xFF1A1A1A);
   const sub = Color(0xFF666666);
-  const liBlue = Color(0xFF0A66C2);
+  const liBlue = Color(0xFF0A66C2);  // accent-allowlist: LinkedIn's own brand blue, third-party brand mark
+  final statTiles = highlightTiles(
+    data,
+    labels: const ['VOLUME', 'NEW PRS', 'DURATION'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'socialLinkedinPost',
@@ -43,23 +47,20 @@ CardDoc socialLinkedinPostDoc(Shareable data, ShareableAspect aspect) {
         lineHeight: 1.4,
         maxLines: 6,
       ),
-      // Stat grid of the milestone numbers.
-      statGridEl(
-        pos: const Offset(0.5, 0.55),
-        size: const Size(0.88, 0.24),
-        columns: 3,
-        tiles: const [
-          ['225', 'BENCH PR LB'],
-          ['9,128', 'VOLUME KG'],
-          ['90', 'DAY JOURNEY'],
-        ],
-        tileColor: const Color(0x0F0A66C2),
-        valueColor: liBlue,
-        labelColor: sub,
-        valueFontSize: 40,
-        labelFontSize: 14,
-        valueFont: CardFontIx.display,
-      ),
+      // Stat grid of the milestone numbers — real, never fabricated (E2E #144).
+      if (statTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.55),
+          size: const Size(0.88, 0.24),
+          columns: statTiles.length.clamp(1, 3),
+          tiles: statTiles,
+          tileColor: const Color(0x0F0A66C2),
+          valueColor: liBlue,
+          labelColor: sub,
+          valueFontSize: 40,
+          labelFontSize: 14,
+          valueFont: CardFontIx.display,
+        ),
       // Reactions + comments footer.
       dividerEl(
         pos: const Offset(0.5, 0.74),

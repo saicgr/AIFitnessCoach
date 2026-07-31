@@ -51,7 +51,7 @@ class NutritionAdapter {
           label: 'CALORIES',
           value: target != null ? '$calories / $target' : '$calories',
           icon: Icons.local_fire_department_rounded,
-          accent: const Color(0xFFFF6B35),
+          accent: const Color(0xFFFF6B35),  // accent-allowlist: fixed flame-icon color for the CALORIES metric tile, matches identical CALORIES icon coloring elsewhere
         ),
         ShareableMetric(
           label: 'PROTEIN',
@@ -80,8 +80,8 @@ class NutritionAdapter {
             value: inflam.toStringAsFixed(1),
             icon: Icons.healing_rounded,
             accent: inflam >= 6
-                ? const Color(0xFFEF4444)
-                : (inflam >= 4 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)),
+                ? const Color(0xFFEF4444)  // accent-allowlist: inflammation-score severity color (high), matches error/red semantic
+                : (inflam >= 4 ? const Color(0xFFF59E0B) : const Color(0xFF10B981)),  // accent-allowlist: inflammation-score severity ternary (mid=warning amber, low=success green)
           ),
       ],
       subMetrics: [
@@ -147,7 +147,7 @@ class NutritionAdapter {
           label: 'GOAL HITS',
           value: '$daysCal/7',
           icon: Icons.check_circle_rounded,
-          accent: const Color(0xFF10B981),
+          accent: const Color(0xFF10B981),  // accent-allowlist: goal-hit success checkmark color
         ),
         ShareableMetric(
           label: 'PROTEIN HITS',

@@ -14,7 +14,7 @@ import 'doc_kit.dart';
 
 CardDoc ticketGymReceiptDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const ink = Color(0xFF161616);
   const paper = Color(0xFFF8F6EE);
   const sub = Color(0xFF5A5A5A);

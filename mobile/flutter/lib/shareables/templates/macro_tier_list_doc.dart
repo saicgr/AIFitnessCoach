@@ -70,10 +70,10 @@ CardDoc macroTierListDoc(Shareable data, ShareableAspect aspect) {
         letterSpacing: 3,
         allCaps: true,
       ),
-      ...tier('S', const Color(0xFFEF4444), 0.30),
-      ...tier('A', const Color(0xFFF59E0B), 0.45),
-      ...tier('B', const Color(0xFF22C55E), 0.60),
-      ...tier('C', const Color(0xFF3B82F6), 0.75),
+      ...tier('S', const Color(0xFFEF4444), 0.30),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
+      ...tier('A', const Color(0xFFF59E0B), 0.45),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
+      ...tier('B', const Color(0xFF22C55E), 0.60),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
+      ...tier('C', const Color(0xFF3B82F6), 0.75),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
       // The meal's foods land on the S row.
       chipsEl(
         pos: const Offset(0.56, 0.30),

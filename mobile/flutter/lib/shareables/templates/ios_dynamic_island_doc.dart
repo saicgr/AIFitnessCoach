@@ -17,6 +17,8 @@ CardDoc iosDynamicIslandDoc(Shareable data, ShareableAspect aspect) {
   const white = Color(0xFFFFFFFF);
   const white60 = Color(0x99FFFFFF);
   const island = Color(0xFF000000);
+  // Real duration for the scrubber — never a fabricated "45:00" (E2E #144).
+  final durationLabel = highlightValueFor(data, 'DURATION') ?? shareableHeroString(data);
   return cardDoc(
     aspect: aspect,
     presetId: 'iosDynamicIsland',
@@ -102,13 +104,14 @@ CardDoc iosDynamicIslandDoc(Shareable data, ShareableAspect aspect) {
         align: TextAlign.right,
         sizeMode: TextSizeMode.shrinkToFit,
       ),
-      // Scrubber row inside the expanded island.
+      // Scrubber row inside the expanded island — fully played (past tense)
+      // with the real session duration, not an invented elapsed/total pair.
       scrubberEl(
         pos: const Offset(0.5, 0.355),
         size: const Size(0.74, 0.03),
-        progress: 0.62,
-        leftLabel: '28:12',
-        rightLabel: '45:00',
+        progress: 1.0,
+        leftLabel: '0:00',
+        rightLabel: durationLabel,
         fillColor: accent,
         knobColor: accent,
         textColor: white60,

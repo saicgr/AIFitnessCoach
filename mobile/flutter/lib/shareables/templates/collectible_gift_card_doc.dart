@@ -19,7 +19,7 @@ CardDoc collectibleGiftCardDoc(Shareable data, ShareableAspect aspect) {
     presetId: 'collectibleGiftCard',
     accent: accent,
     background: gradientBg(
-      [accent, const Color(0xFF22D3EE)],
+      [accent, const Color(0xFF22D3EE)],  // accent-allowlist: Gift Card's blend target, part of the glossy gradient look (blended WITH the real accent)
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),

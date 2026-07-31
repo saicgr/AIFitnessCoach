@@ -16,7 +16,7 @@ CardDoc socialGroupChatDoc(Shareable data, ShareableAspect aspect) {
   const white = Color(0xFFFFFFFF);
   const incoming = Color(0xFF1F2C33);
   const muted = Color(0xFF8696A0);
-  const cyan = Color(0xFF22D3EE);
+  const cyan = Color(0xFF22D3EE);  // accent-allowlist: WhatsApp-style chat-bubble cyan, third-party brand mimicry
   return cardDoc(
     aspect: aspect,
     presetId: 'socialGroupChat',

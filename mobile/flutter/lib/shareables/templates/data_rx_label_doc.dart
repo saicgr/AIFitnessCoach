@@ -16,7 +16,7 @@ CardDoc dataRxLabelDoc(Shareable data, ShareableAspect aspect) {
   return cardDoc(
     aspect: aspect,
     presetId: 'dataRxLabel',
-    accent: const Color(0xFFB8FF2F),
+    accent: const Color(0xFFB8FF2F),  // accent-allowlist: Rx Label data/meme template's fixed volt-lime accent (template family identity), no BuildContext/data available at this default
     background: solidBg(paper),
     elements: [
       // Pharmacy header.

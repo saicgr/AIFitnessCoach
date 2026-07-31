@@ -24,11 +24,11 @@ const List<Color> _defaultPalette = <Color>[
   Color(0xFF2C2C2E), // dark surface
   Color(0xFF3A3A3C), // mid surface
   Color(0xFF8E8E93), // muted gray
-  Color(0xFFFF8A3D), // warm accent
+  Color(0xFFFF8A3D), // warm accent  // accent-allowlist: neutral fallback palette used only when photo color extraction fails — no data available (see doc comment above)
 ];
 
 /// Default accent used when no vibrant swatch can be derived.
-const Color _defaultAccent = Color(0xFFFF8A3D);
+const Color _defaultAccent = Color(0xFFFF8A3D);  // accent-allowlist: default fallback accent used only when no vibrant swatch can be derived — no data available (see doc comment above)
 
 /// Target longest-edge size for downsampling before quantization.
 const int _downsampleSize = 64;

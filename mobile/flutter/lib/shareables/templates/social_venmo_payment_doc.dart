@@ -15,7 +15,7 @@ CardDoc socialVenmoPaymentDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const ink = Color(0xFF2F3033);
   const sub = Color(0xFF888888);
-  const venmoBlue = Color(0xFF008CFF);
+  const venmoBlue = Color(0xFF008CFF);  // accent-allowlist: Venmo's own brand blue, third-party brand mark
   return cardDoc(
     aspect: aspect,
     presetId: 'socialVenmoPayment',

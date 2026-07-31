@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 
 CardDoc aiVibeCheckDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const cyan = Color(0xFF22D3EE);
+  const cyan = Color(0xFF22D3EE);  // accent-allowlist: AI/terminal template family's fixed neon cyan/magenta/green palette (template design identity, matches sibling AI templates)
   const white = Color(0xFFFFFFFF);
   const muted = Color(0x99FFFFFF);
   return cardDoc(

@@ -36,7 +36,7 @@ class EliteTemplate extends StatelessWidget {
             Text(
               'ELITE',
               style: TextStyle(
-                color: Colors.amber.shade200,
+                color: Colors.amber.shade200,  // accent-allowlist: Elite template's fixed gold palette, matches elite_doc.dart's gold/goldBright design identity
                 fontSize: 14 * mul,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 6,
@@ -58,8 +58,8 @@ class EliteTemplate extends StatelessWidget {
                 size: 144,
                 unitSize: 16,
                 stacked: true,
-                color: Colors.amber.shade100,
-                unitColor: Colors.amber.shade200,
+                color: Colors.amber.shade100,  // accent-allowlist: Elite template's fixed gold palette, matches elite_doc.dart's gold/goldBright design identity
+                unitColor: Colors.amber.shade200,  // accent-allowlist: Elite template's fixed gold palette, matches elite_doc.dart's gold/goldBright design identity
               ),
             ),
             const Spacer(),
@@ -74,7 +74,7 @@ class EliteTemplate extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                                color: Colors.amber.shade300, width: 1.5),
+                                color: Colors.amber.shade300, width: 1.5),  // accent-allowlist: Elite template's fixed gold palette, matches elite_doc.dart's gold/goldBright design identity
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -82,7 +82,7 @@ class EliteTemplate extends StatelessWidget {
                           child: Text(
                             h.label.toUpperCase(),
                             style: TextStyle(
-                              color: Colors.amber.shade100
+                              color: Colors.amber.shade100  // accent-allowlist: Elite template's fixed gold palette, matches elite_doc.dart's gold/goldBright design identity
                                   .withValues(alpha: 0.85),
                               fontSize: 12 * mul,
                               fontWeight: FontWeight.w800,
@@ -107,7 +107,7 @@ class EliteTemplate extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child:
-                    AppWatermark(textColor: Colors.amber.shade100),
+                    AppWatermark(textColor: Colors.amber.shade100),  // accent-allowlist: Elite template's fixed gold palette, matches elite_doc.dart's gold/goldBright design identity
               ),
           ],
         ),

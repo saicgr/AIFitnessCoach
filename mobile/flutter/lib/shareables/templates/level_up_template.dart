@@ -24,7 +24,7 @@ class LevelUpTemplate extends StatelessWidget {
       aspect: data.aspect,
       backgroundOverride: const [
         Color(0xFF1E1B4B),
-        Color(0xFF6D28D9),
+        Color(0xFF6D28D9),  // accent-allowlist: Level Up fixed purple background gradient, matches level_up_doc.dart
         Color(0xFF0F0F1F),
       ],
       child: Padding(
@@ -35,7 +35,7 @@ class LevelUpTemplate extends StatelessWidget {
             Text(
               'LEVEL UP',
               style: TextStyle(
-                color: Colors.amber.shade200,
+                color: Colors.amber.shade200,  // accent-allowlist: Level Up fixed gold kicker color, matches level_up_doc.dart's gold theme
                 fontSize: 13 * mul,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 4,
@@ -58,13 +58,13 @@ class LevelUpTemplate extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const SweepGradient(colors: [
-                  Color(0xFFFCD34D),
-                  Color(0xFFFB923C),
-                  Color(0xFFFCD34D),
+                  Color(0xFFFCD34D),  // accent-allowlist: Level Up gold sweep-gradient burst, matches level_up_doc.dart
+                  Color(0xFFFB923C),  // accent-allowlist: Level Up gold sweep-gradient burst, matches level_up_doc.dart
+                  Color(0xFFFCD34D),  // accent-allowlist: Level Up gold sweep-gradient burst, matches level_up_doc.dart
                 ]),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.amber.withValues(alpha: 0.5),
+                    color: Colors.amber.withValues(alpha: 0.5),  // accent-allowlist: Level Up gold glow shadow, matches fixed gold sweep-gradient
                     blurRadius: 40,
                   ),
                 ],
@@ -82,7 +82,7 @@ class LevelUpTemplate extends StatelessWidget {
                   unitSize: 14,
                   stacked: true,
                   color: Colors.white,
-                  unitColor: Colors.amber.shade200,
+                  unitColor: Colors.amber.shade200,  // accent-allowlist: Level Up gold unit-color, matches fixed gold theme
                 ),
               ),
             ),

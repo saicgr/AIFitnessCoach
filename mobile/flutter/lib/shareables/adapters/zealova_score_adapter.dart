@@ -91,7 +91,7 @@ class ZealovaScoreAdapter {
         ShareableMetric(label: 'SCORE', value: '$score'),
       ],
       userDisplayName: name,
-      accentColor: const Color(0xFFD8FF3A), // volt-lime signature
+      accentColor: const Color(0xFFD8FF3A), // volt-lime signature  // accent-allowlist: Zealova Score's fixed volt-lime signature brand color (see inline comment), not user accent
     );
   }
 }

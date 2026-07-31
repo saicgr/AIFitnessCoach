@@ -15,7 +15,7 @@ CardDoc collectibleCertificateDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const parchment = Color(0xFFF7F3E8);
   const ink = Color(0xFF2A2A2A);
-  const goldHair = Color(0xFFC9B870);
+  const goldHair = Color(0xFFC9B870);  // accent-allowlist: Certificate's fixed parchment gold-hair-line palette (template design identity)
   return cardDoc(
     aspect: aspect,
     presetId: 'collectibleCertificate',

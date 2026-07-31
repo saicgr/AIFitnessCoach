@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 CardDoc coachReviewDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const ink = Color(0xFF1A1A1A);
-  const redInk = Color(0xFFB91C1C);
+  const redInk = Color(0xFFB91C1C);  // accent-allowlist: Coach Review's fixed red-pen ink, matches coach_review_template.dart
   return cardDoc(
     aspect: aspect,
     presetId: 'coachReview',

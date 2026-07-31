@@ -105,13 +105,13 @@ CardDoc macroDashboardDoc(Shareable data, ShareableAspect aspect) {
         maxLines: 2,
         sizeMode: TextSizeMode.shrinkToFit,
       ),
-      ...tile(0.28, 0.4, '🔥', const Color(0xFFF97316), 'Calories',
+      ...tile(0.28, 0.4, '🔥', const Color(0xFFF97316), 'Calories',  // accent-allowlist: macro/nutrient identity color (calories/protein/fibre/water tile), consistent iconography
           const DataBinding(BindingSource.calories)),
-      ...tile(0.72, 0.4, '💪', const Color(0xFFA855F7), 'Protein',
+      ...tile(0.72, 0.4, '💪', const Color(0xFFA855F7), 'Protein',  // accent-allowlist: macro/nutrient identity color (calories/protein/fibre/water tile), consistent iconography
           const DataBinding(BindingSource.proteinG)),
-      ...tile(0.28, 0.66, '🌾', const Color(0xFF22C55E), 'Fibre',
+      ...tile(0.28, 0.66, '🌾', const Color(0xFF22C55E), 'Fibre',  // accent-allowlist: macro/nutrient identity color (calories/protein/fibre/water tile), consistent iconography
           const DataBinding(BindingSource.carbsG)),
-      ...tile(0.72, 0.66, '💧', const Color(0xFF06B6D4), 'Water',
+      ...tile(0.72, 0.66, '💧', const Color(0xFF06B6D4), 'Water',  // accent-allowlist: macro/nutrient identity color (calories/protein/fibre/water tile), consistent iconography
           const DataBinding(BindingSource.fatG)),
       watermarkEl(pos: const Offset(0.3, 0.9), color: Colors.white70),
     ],

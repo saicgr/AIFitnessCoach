@@ -13,13 +13,13 @@ import 'doc_kit.dart';
 
 CardDoc collectibleBattleCardDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const gold = Color(0xFFF5D042);
-  const goldDeep = Color(0xFFB8860B);
+  const gold = Color(0xFFF5D042);  // accent-allowlist: Battle Card's fixed Pokemon-style gold/danger palette (template design identity)
+  const goldDeep = Color(0xFFB8860B);  // accent-allowlist: Battle Card's fixed Pokemon-style gold/danger palette (template design identity)
   const rimInk = Color(0xFF6B5210);
   const cream = Color(0xFFFFFCEB);
   const ink = Color(0xFF111111);
   const sub = Color(0xFF555555);
-  const danger = Color(0xFFC0392B);
+  const danger = Color(0xFFC0392B);  // accent-allowlist: Battle Card's fixed Pokemon-style gold/danger palette (template design identity)
   return cardDoc(
     aspect: aspect,
     presetId: 'collectibleBattleCard',
@@ -85,7 +85,7 @@ CardDoc collectibleBattleCardDoc(Shareable data, ShareableAspect aspect) {
       dividerEl(
         pos: const Offset(0.5, 0.69),
         size: const Size(0.68, 0.003),
-        color: const Color(0xFFC9B870),
+        color: const Color(0xFFC9B870),  // accent-allowlist: Battle Card's fixed Pokemon-style gold/danger palette (template design identity)
         thickness: 1.5,
       ),
       // Attack move (⚡ glyph + bound title).
@@ -126,7 +126,7 @@ CardDoc collectibleBattleCardDoc(Shareable data, ShareableAspect aspect) {
         allCaps: true,
         maxLines: 1,
       ),
-      watermarkEl(pos: const Offset(0.32, 0.95), color: const Color(0xFFB8860B)),
+      watermarkEl(pos: const Offset(0.32, 0.95), color: const Color(0xFFB8860B)),  // accent-allowlist: Battle Card's fixed Pokemon-style gold/danger palette (template design identity)
     ],
   );
 }

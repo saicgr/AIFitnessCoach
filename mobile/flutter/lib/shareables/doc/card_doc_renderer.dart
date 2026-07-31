@@ -726,7 +726,15 @@ class _ElementBody extends StatelessWidget {
 
   // ─── repeater (data-bound list) ───
   Widget _repeater(RepeaterProps p) {
-    if (p.exerciseMode) return _exerciseRepeater(p);
+    // `exerciseMode` is a tri-state: an explicit true/false always wins; null
+    // (the common case — 17 of 20 templates never set it) infers from the
+    // share's own kind instead of hard-defaulting to the food path. Food
+    // shares (`ShareableKind.foodLog`) render food rows; every other kind
+    // (workout/stats/PR/…) renders exercise rows. Fixes E2E #142 — a
+    // repeater used to silently render zero rows on any workout/stats share
+    // whose template didn't explicitly pass `exerciseMode: true`.
+    final exerciseMode = p.exerciseMode ?? (data.kind != ShareableKind.foodLog);
+    if (exerciseMode) return _exerciseRepeater(p);
     final items = resolveFoodItems(data, max: p.maxItems);
     final base = cardFontByIndex(p.fontIndex).style;
     final style = base.copyWith(color: p.textColor, fontSize: p.fontSize);
@@ -1021,7 +1029,7 @@ class _ElementBody extends StatelessWidget {
                   if (p.verified) ...[
                     SizedBox(width: p.fontSize * 0.2),
                     Icon(Icons.verified_rounded,
-                        color: const Color(0xFF1DA1F2),
+                        color: const Color(0xFF1DA1F2),  // accent-allowlist: Twitter/X's own verified-badge blue, third-party brand mimicry
                         size: p.fontSize * 0.85),
                   ],
                 ],
@@ -1401,7 +1409,7 @@ class _SeriesPainter extends CustomPainter {
               ..strokeCap = StrokeCap.round);
       case ChartKind.appleRings:
         final c = size.center(Offset.zero);
-        const colors = [Color(0xFFFA114F), Color(0xFF92E82A), Color(0xFF1AD6FD)];
+        const colors = [Color(0xFFFA114F), Color(0xFF92E82A), Color(0xFF1AD6FD)];  // accent-allowlist: ChartKind.appleRings — Apple's own Activity-ring colors, brand mimicry (see enum name)
         const fracs = [0.82, 0.7, 0.6];
         for (var i = 0; i < 3; i++) {
           final r = size.shortestSide / 2 - sw - i * (sw * 1.25);

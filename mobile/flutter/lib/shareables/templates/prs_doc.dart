@@ -11,13 +11,13 @@ import 'doc_kit.dart';
 
 CardDoc prsDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const gold = Color(0xFFFCD34D);
+  const gold = Color(0xFFFCD34D);  // accent-allowlist: PRs template's fixed indigo/gold trophy identity, matches prs_template.dart
   return cardDoc(
     aspect: aspect,
     presetId: 'prs',
     accent: accent,
     background: gradientBg(
-      [const Color(0xFF1E1B4B), const Color(0xFF312E81), const Color(0xFF0F0F1F)],
+      [const Color(0xFF1E1B4B), const Color(0xFF312E81), const Color(0xFF0F0F1F)],  // accent-allowlist: PRs template's fixed indigo/gold trophy identity, matches prs_template.dart
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),

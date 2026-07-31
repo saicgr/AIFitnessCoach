@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 
 CardDoc mealTabloidDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const markerRed = Color(0xFFE3262B);
+  const markerRed = Color(0xFFE3262B);  // accent-allowlist: Meal Tabloid's fixed tabloid marker-red ink (template design identity)
   const ink = Color(0xFF14130F);
   const paper = Color(0xFFF3EDDC);
   return cardDoc(

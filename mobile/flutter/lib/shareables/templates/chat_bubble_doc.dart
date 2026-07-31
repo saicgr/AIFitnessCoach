@@ -11,7 +11,7 @@ import 'doc_kit.dart';
 
 CardDoc chatBubbleDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const iMessageBlue = Color(0xFF0B84FF);
+  const iMessageBlue = Color(0xFF0B84FF);  // accent-allowlist: iMessage's own brand blue, deliberately fixed regardless of user accent (see file doc comment)
   const receivedGrey = Color(0xFF26282E);
   return cardDoc(
     aspect: aspect,

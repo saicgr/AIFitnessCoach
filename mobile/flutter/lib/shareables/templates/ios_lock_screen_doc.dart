@@ -122,7 +122,7 @@ CardDoc iosLockScreenDoc(Shareable data, ShareableAspect aspect) {
         centerBinding: const DataBinding(BindingSource.highlightValue, index: 1),
         centerValue: '55%',
         label: '',
-        ringColor: const Color(0xFF1AD6FD),
+        ringColor: const Color(0xFF1AD6FD),  // accent-allowlist: Apple Activity-ring stand-color, brand-accurate mimicry
         centerFontSize: 30,
       ),
       textEl(

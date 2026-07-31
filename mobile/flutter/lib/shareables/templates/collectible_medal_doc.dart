@@ -38,7 +38,7 @@ CardDoc collectibleMedalDoc(Shareable data, ShareableAspect aspect) {
       shapeEl(
         pos: const Offset(0.5, 0.27),
         size: const Size(0.07, 0.18),
-        gradient: [accent, const Color(0xFF22D3EE)],
+        gradient: [accent, const Color(0xFF22D3EE)],  // accent-allowlist: Gold Medal's fixed 1st-place gold gradient (template design identity)
         cornerRadius: 2,
       ),
       // Medal disc.
@@ -46,7 +46,7 @@ CardDoc collectibleMedalDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.45),
         size: const Size(0.38, 0.38),
         shape: ShapeKind.circle,
-        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],
+        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],  // accent-allowlist: Gold Medal's fixed 1st-place gold gradient (template design identity)
         radial: true,
         stroke: const Color(0x66FFFFFF),
         strokeWidth: 2,

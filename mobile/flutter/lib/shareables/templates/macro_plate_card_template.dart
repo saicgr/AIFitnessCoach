@@ -74,7 +74,7 @@ class MacroPlateCardTemplate extends StatelessWidget {
                 Icon(
                   Icons.restaurant_rounded,
                   size: 15 * mul,
-                  color: const Color(0xFFE9B872),
+                  color: const Color(0xFFE9B872),  // accent-allowlist: Macro Plate's fixed warm ceramic-plate amber tone, matches macro_plate_card_doc.dart's `amber` design identity
                 ),
                 SizedBox(width: 7 * mul),
                 Flexible(
@@ -83,7 +83,7 @@ class MacroPlateCardTemplate extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: const Color(0xFFE9B872),
+                      color: const Color(0xFFE9B872),  // accent-allowlist: Macro Plate's fixed warm ceramic-plate amber tone, matches macro_plate_card_doc.dart's `amber` design identity
                       fontSize: 12 * mul,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 2.8,
@@ -137,7 +137,7 @@ class MacroPlateCardTemplate extends StatelessWidget {
                 TextSpan(
                   text: '  kcal',
                   style: TextStyle(
-                    color: const Color(0xFFE9B872),
+                    color: const Color(0xFFE9B872),  // accent-allowlist: Macro Plate's fixed warm ceramic-plate amber tone, matches macro_plate_card_doc.dart's `amber` design identity
                     fontSize: 15 * mul,
                     fontWeight: FontWeight.w700,
                   ),
@@ -197,7 +197,7 @@ class _PlateItems extends StatelessWidget {
                   height: 5 * mul,
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(0xFFE9B872),
+                    color: Color(0xFFE9B872),  // accent-allowlist: Macro Plate's fixed warm ceramic-plate amber tone, matches macro_plate_card_doc.dart's `amber` design identity
                   ),
                 ),
                 SizedBox(width: 8 * mul),
@@ -222,7 +222,7 @@ class _PlateItems extends StatelessWidget {
             child: Text(
               '+$hiddenCount more',
               style: TextStyle(
-                color: const Color(0xFFE9B872).withValues(alpha: 0.85),
+                color: const Color(0xFFE9B872).withValues(alpha: 0.85),  // accent-allowlist: Macro Plate's fixed warm ceramic-plate amber tone, matches macro_plate_card_doc.dart's `amber` design identity
                 fontSize: 12.5 * mul,
                 fontWeight: FontWeight.w700,
               ),

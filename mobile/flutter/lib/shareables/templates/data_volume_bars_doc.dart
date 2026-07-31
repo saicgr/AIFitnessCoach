@@ -11,8 +11,12 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataVolumeBarsDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
   const muted = Color(0x99FFFFFF);
+  final footTiles = highlightTiles(
+    data,
+    labels: const ['VOLUME', 'STREAK'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'dataVolumeBars',
@@ -72,20 +76,18 @@ CardDoc dataVolumeBarsDoc(Shareable data, ShareableAspect aspect) {
         shape: ShapeKind.pill,
         fill: const Color(0x22FFFFFF),
       ),
-      // Total / streak foot.
-      statGridEl(
-        pos: const Offset(0.5, 0.89),
-        size: const Size(0.86, 0.1),
-        columns: 2,
-        tiles: const [
-          ['9,128', 'TOTAL KG'],
-          ['14', 'DAY STREAK'],
-        ],
-        tileColor: const Color(0x10FFFFFF),
-        valueColor: volt,
-        valueFontSize: 34,
-        valueFont: CardFontIx.display,
-      ),
+      // Total / streak foot — real numbers, never fabricated (E2E #144).
+      if (footTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.89),
+          size: const Size(0.86, 0.1),
+          columns: footTiles.length.clamp(1, 2),
+          tiles: footTiles,
+          tileColor: const Color(0x10FFFFFF),
+          valueColor: volt,
+          valueFontSize: 34,
+          valueFont: CardFontIx.display,
+        ),
       watermarkEl(pos: const Offset(0.3, 0.965), color: const Color(0xFFFFFFFF)),
     ],
   );

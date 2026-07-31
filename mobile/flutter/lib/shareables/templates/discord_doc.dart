@@ -11,7 +11,7 @@ import 'doc_kit.dart';
 
 CardDoc discordDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const orange = Color(0xFFF97316);
+  const orange = Color(0xFFF97316);  // accent-allowlist: Discord embed's fixed orange accent bar (template identity, not user accent)
   return cardDoc(
     aspect: aspect,
     presetId: 'discord',

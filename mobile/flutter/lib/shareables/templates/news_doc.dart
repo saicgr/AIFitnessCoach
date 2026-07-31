@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 CardDoc newsDoc(Shareable data, ShareableAspect aspect) {
   const cream = Color(0xFFF1ECDF);
   const ink = Color(0xFF111111);
-  const redInk = Color(0xFF8B0000);
+  const redInk = Color(0xFF8B0000);  // accent-allowlist: News template's fixed vintage red-ink masthead (template design identity), matches news_template.dart
   return cardDoc(
     aspect: aspect,
     presetId: 'news',

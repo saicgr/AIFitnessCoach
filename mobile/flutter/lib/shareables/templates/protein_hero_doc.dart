@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 
 CardDoc proteinHeroDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const protein = Color(0xFF34D399);
+  const protein = Color(0xFF34D399);  // accent-allowlist: Protein Hero's fixed protein-green identity color (macro identity)
   return cardDoc(
     aspect: aspect,
     presetId: 'proteinHero',

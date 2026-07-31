@@ -116,7 +116,7 @@ class PolaroidTemplate extends StatelessWidget {
                       Text(
                         data.periodLabel.toUpperCase(),
                         style: TextStyle(
-                          color: const Color(0xFF8B0000).withValues(alpha: 0.7),
+                          color: const Color(0xFF8B0000).withValues(alpha: 0.7), // accent-allowlist: vintage red-pen caption ink, part of the Polaroid template's retro look (same fixed tone as the News template)
                           fontSize: 9 * mul,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 2,

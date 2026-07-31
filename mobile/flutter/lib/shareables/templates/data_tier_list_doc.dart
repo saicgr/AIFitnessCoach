@@ -12,7 +12,7 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataTierListDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
   const ink = Color(0xFF0E0F13);
 
   // One tier row: coloured band + a square letter label on the left.
@@ -74,10 +74,10 @@ CardDoc dataTierListDoc(Shareable data, ShareableAspect aspect) {
         allCaps: true,
         maxLines: 1,
       ),
-      ...tier('S', const Color(0xFFEF4444), 0.30),
-      ...tier('A', const Color(0xFFF59E0B), 0.44),
-      ...tier('B', const Color(0xFF22C55E), 0.58),
-      ...tier('C', const Color(0xFF3B82F6), 0.72),
+      ...tier('S', const Color(0xFFEF4444), 0.30),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
+      ...tier('A', const Color(0xFFF59E0B), 0.44),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
+      ...tier('B', const Color(0xFF22C55E), 0.58),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
+      ...tier('C', const Color(0xFF3B82F6), 0.72),  // accent-allowlist: S/A/B/C tier-rank severity color scale, categorical encoding not user accent
       // The session's exercises land on the S row.
       chipsEl(
         pos: const Offset(0.56, 0.30),

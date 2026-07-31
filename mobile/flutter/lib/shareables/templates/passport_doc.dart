@@ -13,8 +13,8 @@ import 'doc_kit.dart';
 
 CardDoc passportDoc(Shareable data, ShareableAspect aspect) {
   const navy = Color(0xFF15275C);
-  const gold = Color(0xFFFBBF24);
-  const red = Color(0xFFE0322E);
+  const gold = Color(0xFFFBBF24);  // accent-allowlist: Passport's fixed navy/gold/red passport-cover identity, matches passport_template.dart
+  const red = Color(0xFFE0322E);  // accent-allowlist: Passport's fixed navy/gold/red passport-cover identity, matches passport_template.dart
   const ink = Color(0xFF1A1A1A);
   const sub = Color(0xFF6B7280);
   return cardDoc(

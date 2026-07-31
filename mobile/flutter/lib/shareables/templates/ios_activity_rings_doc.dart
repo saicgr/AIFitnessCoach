@@ -17,9 +17,9 @@ CardDoc iosActivityRingsDoc(Shareable data, ShareableAspect aspect) {
   const white = Color(0xFFFFFFFF);
   const white60 = Color(0x99FFFFFF);
   // Apple's canonical ring hues.
-  const moveRed = Color(0xFFFA114F);
-  const exerciseGreen = Color(0xFF92E82A);
-  const standBlue = Color(0xFF1AD6FD);
+  const moveRed = Color(0xFFFA114F);  // accent-allowlist: Apple's own Activity-ring colors (move/exercise/stand), brand-accurate mimicry — deliberately fixed, not user accent
+  const exerciseGreen = Color(0xFF92E82A);  // accent-allowlist: Apple's own Activity-ring colors (move/exercise/stand), brand-accurate mimicry — deliberately fixed, not user accent
+  const standBlue = Color(0xFF1AD6FD);  // accent-allowlist: Apple's own Activity-ring colors (move/exercise/stand), brand-accurate mimicry — deliberately fixed, not user accent
 
   return cardDoc(
     aspect: aspect,

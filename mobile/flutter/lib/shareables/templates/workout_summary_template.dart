@@ -29,11 +29,11 @@ class WorkoutSummaryTemplate extends StatelessWidget {
   // Apple Watch color palette — matched to the reference screenshot.
   // Kept module-private so adapters can't accidentally diverge; if you
   // need a new color, add a label here, don't hardcode in adapters.
-  static const Color _heartRate = Color(0xFFFF375F);
-  static const Color _caloriesOrange = Color(0xFFFF6B00);
-  static const Color _distance = Color(0xFFFF375F);
-  static const Color _pace = Color(0xFF30D158);
-  static const Color _elevation = Color(0xFFAC8E68);
+  static const Color _heartRate = Color(0xFFFF375F);  // accent-allowlist: Apple Watch activity-ring palette, explicitly documented as intentional fixed colors (see class doc comment)
+  static const Color _caloriesOrange = Color(0xFFFF6B00);  // accent-allowlist: Apple Watch activity-ring palette, explicitly documented as intentional fixed colors (see class doc comment)
+  static const Color _distance = Color(0xFFFF375F);  // accent-allowlist: Apple Watch activity-ring palette, explicitly documented as intentional fixed colors (see class doc comment)
+  static const Color _pace = Color(0xFF30D158);  // accent-allowlist: Apple Watch activity-ring palette, explicitly documented as intentional fixed colors (see class doc comment)
+  static const Color _elevation = Color(0xFFAC8E68);  // accent-allowlist: Apple Watch activity-ring palette, explicitly documented as intentional fixed colors (see class doc comment)
   static const Color _duration = Colors.white;
   static const Color _defaultValueColor = Colors.white;
 

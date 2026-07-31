@@ -40,7 +40,7 @@ class DiscordTemplate extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Container(width: 6, color: AppColors.orange),
+                    Container(width: 6, color: AppColors.orange), // accent-allowlist: Discord embed's fixed orange accent bar — matches discord_doc.dart's own hardcoded `orange` (Discord template identity, not user accent)
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.all(28),

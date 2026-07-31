@@ -208,20 +208,20 @@ class _MonthCell extends StatelessWidget {
       case 'strength':
       case 'lifting':
       case 'gym':
-        return const Color(0xFF2563EB); // blue
+        return const Color(0xFF2563EB); // blue // accent-allowlist: workout-type categorical color legend (strength/cardio/hiit/flexibility) — same taxonomy across the monthly grid, not user accent
       case 'cardio':
       case 'run':
       case 'cycling':
-        return const Color(0xFFDC2626); // red
+        return const Color(0xFFDC2626); // red // accent-allowlist: workout-type categorical color legend (strength/cardio/hiit/flexibility) — same taxonomy across the monthly grid, not user accent
       case 'hiit':
       case 'circuit':
-        return const Color(0xFFEA580C); // orange
+        return const Color(0xFFEA580C); // orange // accent-allowlist: workout-type categorical color legend (strength/cardio/hiit/flexibility) — same taxonomy across the monthly grid, not user accent
       case 'flexibility':
       case 'yoga':
       case 'mobility':
-        return const Color(0xFF16A34A); // green
+        return const Color(0xFF16A34A); // green // accent-allowlist: workout-type categorical color legend (strength/cardio/hiit/flexibility) — same taxonomy across the monthly grid, not user accent
       default:
-        return const Color(0xFF7C3AED); // purple
+        return const Color(0xFF7C3AED); // purple // accent-allowlist: workout-type categorical color legend (strength/cardio/hiit/flexibility) — same taxonomy across the monthly grid, not user accent
     }
   }
 

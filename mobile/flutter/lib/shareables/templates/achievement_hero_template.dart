@@ -76,8 +76,8 @@ class AchievementHeroTemplate extends StatelessWidget {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            const Color(0xFFFFB35B).withValues(alpha: 0.55),
-                            const Color(0xFFFF6B35).withValues(alpha: 0.20),
+                            const Color(0xFFFFB35B).withValues(alpha: 0.55), // accent-allowlist: Achievement Hero trophy glow gradient, matches achievement_hero_doc.dart's fixed gold-orange gradient
+                            const Color(0xFFFF6B35).withValues(alpha: 0.20), // accent-allowlist: Achievement Hero trophy glow gradient, matches achievement_hero_doc.dart's fixed gold-orange gradient
                             Colors.transparent,
                           ],
                         ),
@@ -89,12 +89,12 @@ class AchievementHeroTemplate extends StatelessWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFFFB35B), Color(0xFFFF6B35)],
+                          colors: [Color(0xFFFFB35B), Color(0xFFFF6B35)], // accent-allowlist: Achievement Hero trophy medal gradient, matches achievement_hero_doc.dart's fixed gold-orange gradient
                         ),
                         boxShadow: [
                           BoxShadow(
                             color:
-                                const Color(0xFFFF6B35).withValues(alpha: 0.5),
+                                const Color(0xFFFF6B35).withValues(alpha: 0.5), // accent-allowlist: Achievement Hero trophy medal shadow, matches fixed gold-orange gradient
                             blurRadius: 30,
                             spreadRadius: 4,
                           ),
@@ -146,7 +146,7 @@ class AchievementHeroTemplate extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.star_rounded,
-                            color: const Color(0xFFFFB35B), size: 16 * mul),
+                            color: const Color(0xFFFFB35B), size: 16 * mul), // accent-allowlist: Achievement Hero star-badge color, matches fixed gold-orange trophy palette
                         const SizedBox(width: 6),
                         Text(
                           'Latest: ${latest.value}',

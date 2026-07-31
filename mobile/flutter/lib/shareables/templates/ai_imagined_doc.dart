@@ -24,9 +24,9 @@ CardDoc aiImaginedDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.5),
         size: const Size(1, 1),
         colors: const [
-          Color(0x667C3AED),
+          Color(0x667C3AED),  // accent-allowlist: AI/terminal template family's fixed neon cyan/magenta/green palette (template design identity, matches sibling AI templates)
           Color(0x00000000),
-          Color(0x4D22D3EE),
+          Color(0x4D22D3EE),  // accent-allowlist: AI/terminal template family's fixed neon cyan/magenta/green palette (template design identity, matches sibling AI templates)
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,

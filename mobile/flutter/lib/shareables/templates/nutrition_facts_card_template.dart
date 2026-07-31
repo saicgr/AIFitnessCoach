@@ -168,7 +168,7 @@ class NutritionFactsCardTemplate extends StatelessWidget {
                 _MacroRow(
                   label: 'Total Fat',
                   grams: n.fatG,
-                  color: AppColors.macroFat,
+                  color: AppColors.macroFat,  // accent-allowlist: macro identity color (fat) — consistent across every nutrition surface
                   ink: _ink,
                   mul: mul,
                   bold: true,
@@ -177,7 +177,7 @@ class NutritionFactsCardTemplate extends StatelessWidget {
                 _MacroRow(
                   label: 'Total Carbohydrate',
                   grams: n.carbsG,
-                  color: AppColors.macroCarbs,
+                  color: AppColors.macroCarbs,  // accent-allowlist: macro identity color (carbs) — consistent across every nutrition surface
                   ink: _ink,
                   mul: mul,
                   bold: true,
@@ -187,7 +187,7 @@ class NutritionFactsCardTemplate extends StatelessWidget {
                   _MacroRow(
                     label: 'Dietary Fiber',
                     grams: fiber,
-                    color: AppColors.green,
+                    color: AppColors.green,  // accent-allowlist: fiber row color, part of the nutrition-facts-label macro identity set
                     ink: _ink,
                     mul: mul,
                     bold: false,
@@ -198,7 +198,7 @@ class NutritionFactsCardTemplate extends StatelessWidget {
                 _MacroRow(
                   label: 'Protein',
                   grams: n.proteinG,
-                  color: AppColors.macroProtein,
+                  color: AppColors.macroProtein,  // accent-allowlist: macro identity color (protein) — consistent across every nutrition surface
                   ink: _ink,
                   mul: mul,
                   bold: true,

@@ -16,6 +16,13 @@ CardDoc collectibleLoyaltyCardDoc(Shareable data, ShareableAspect aspect) {
   const kraft = Color(0xFFF4F1E6);
   const ink = Color(0xFF2A2A2A);
   const sub = Color(0xFF888888);
+  // Punch count from the share's real streak — never a fixed fabricated
+  // "8 of 10" (E2E #144). A share without a streak renders every slot
+  // hollow (an honest "not started" state) rather than inventing progress.
+  final filled = (data.currentStreak ?? 0).clamp(0, 10);
+  final punchTiles = [
+    for (var i = 0; i < 10; i++) [i < filled ? '💪' : '○', ''],
+  ];
   return cardDoc(
     aspect: aspect,
     presetId: 'collectibleLoyaltyCard',
@@ -69,18 +76,7 @@ CardDoc collectibleLoyaltyCardDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.52),
         size: const Size(0.84, 0.32),
         columns: 5,
-        tiles: const [
-          ['💪', ''],
-          ['💪', ''],
-          ['💪', ''],
-          ['💪', ''],
-          ['💪', ''],
-          ['💪', ''],
-          ['💪', ''],
-          ['💪', ''],
-          ['○', ''],
-          ['○', ''],
-        ],
+        tiles: punchTiles,
         tileColor: const Color(0x14000000),
         valueColor: accent,
         labelColor: sub,

@@ -209,20 +209,20 @@ class ReportsAdapter {
         label: 'TOTAL TIME',
         value: _fmtMinutes(totalMin),
         icon: Icons.timer_outlined,
-        accent: AppColors.success,
+        accent: AppColors.success,  // accent-allowlist: fixed metric-type icon color (TOTAL TIME), distinct from CALORIES/STREAK for scannability
       ),
       if (totalCal > 0)
         ShareableMetric(
           label: 'CALORIES',
           value: '$totalCal kcal',
           icon: Icons.local_fire_department_rounded,
-          accent: AppColors.orange,
+          accent: AppColors.orange,  // accent-allowlist: fixed flame-icon color for the CALORIES metric tile
         ),
       ShareableMetric(
         label: 'STREAK',
         value: '$streak ${streak == 1 ? 'day' : 'days'}',
         icon: Icons.bolt_rounded,
-        accent: AppColors.purple,
+        accent: AppColors.purple,  // accent-allowlist: fixed metric-type icon color (STREAK/bolt), distinct from TIME/CALORIES for scannability
       ),
     ];
 
@@ -941,14 +941,14 @@ class ReportsAdapter {
           label: 'TOTAL TIME',
           value: _fmtMinutes(totalMin),
           icon: Icons.timer_outlined,
-          accent: AppColors.success,
+          accent: AppColors.success,  // accent-allowlist: fixed metric-type icon color (TOTAL TIME), distinct from DAYS IN for scannability
         ),
       if (daysSinceStart > 0)
         ShareableMetric(
           label: daysSinceStart == 1 ? 'DAY' : 'DAYS IN',
           value: daysSinceStart.toString(),
           icon: Icons.calendar_today_rounded,
-          accent: AppColors.purple,
+          accent: AppColors.purple,  // accent-allowlist: fixed metric-type icon color (DAYS IN), distinct from TOTAL TIME for scannability
         ),
     ];
 

@@ -14,7 +14,7 @@ import 'doc_kit.dart';
 
 CardDoc ticketWristbandDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const ink = Color(0xFF14160B);
   const white = Color(0xFFFFFFFF);
   const muted = Color(0x99FFFFFF);

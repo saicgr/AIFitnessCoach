@@ -19,9 +19,9 @@ class TradingCardGoldTemplate extends StatelessWidget {
     this.showWatermark = true,
   });
 
-  static const Color _gold1 = Color(0xFFFBBF24);
-  static const Color _gold2 = Color(0xFFEAB308);
-  static const Color _gold3 = Color(0xFFCA8A04);
+  static const Color _gold1 = Color(0xFFFBBF24);  // accent-allowlist: Trading Card Gold's fixed gold-foil palette, matches trading_card_gold_doc.dart
+  static const Color _gold2 = Color(0xFFEAB308);  // accent-allowlist: Trading Card Gold's fixed gold-foil palette, matches trading_card_gold_doc.dart
+  static const Color _gold3 = Color(0xFFCA8A04);  // accent-allowlist: Trading Card Gold's fixed gold-foil palette, matches trading_card_gold_doc.dart
   static const Color _border = Color(0xFF422006);
   static const Color _navy = Color(0xFF1E293B);
 

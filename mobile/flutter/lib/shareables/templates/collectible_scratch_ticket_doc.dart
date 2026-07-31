@@ -26,7 +26,7 @@ CardDoc collectibleScratchTicketDoc(Shareable data, ShareableAspect aspect) {
       shapeEl(
         pos: const Offset(0.5, 0.46),
         size: const Size(0.88, 0.78),
-        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],
+        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],  // accent-allowlist: Scratch Ticket's fixed lottery-gold palette (template design identity)
         cornerRadius: 12,
       ),
       // Header.
@@ -96,7 +96,7 @@ CardDoc collectibleScratchTicketDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.86),
         size: const Size(0.92, 0.05),
         edge: PerforationEdge.horizontalCenter,
-        color: const Color(0x66FFD700),
+        color: const Color(0x66FFD700),  // accent-allowlist: Scratch Ticket's fixed lottery-gold palette (template design identity)
         notchColor: ticketInk,
       ),
       // Footer — literal disclaimer + bound period.

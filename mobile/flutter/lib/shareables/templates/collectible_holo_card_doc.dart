@@ -26,11 +26,11 @@ CardDoc collectibleHoloCardDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.5),
         size: const Size(0.86, 0.88),
         gradient: const [
-          Color(0xFFFF4DD2),
-          Color(0xFF4DFFD2),
-          Color(0xFF4D7CFF),
-          Color(0xFFFFD24D),
-          Color(0xFFFF4DD2),
+          Color(0xFFFF4DD2),  // accent-allowlist: Holo Card's fixed holographic rainbow-foil gradient (template design identity)
+          Color(0xFF4DFFD2),  // accent-allowlist: Holo Card's fixed holographic rainbow-foil gradient (template design identity)
+          Color(0xFF4D7CFF),  // accent-allowlist: Holo Card's fixed holographic rainbow-foil gradient (template design identity)
+          Color(0xFFFFD24D),  // accent-allowlist: Holo Card's fixed holographic rainbow-foil gradient (template design identity)
+          Color(0xFFFF4DD2),  // accent-allowlist: Holo Card's fixed holographic rainbow-foil gradient (template design identity)
         ],
         cornerRadius: 16,
       ),

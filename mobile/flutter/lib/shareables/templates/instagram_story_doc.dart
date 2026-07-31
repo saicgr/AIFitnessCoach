@@ -16,7 +16,7 @@ CardDoc instagramStoryDoc(Shareable data, ShareableAspect aspect) {
     presetId: 'instagramStory',
     accent: accent,
     background: gradientBg(
-      const [Color(0xFFEC4899), Color(0xFFF97316), Color(0xFFEAB308)],
+      const [Color(0xFFEC4899), Color(0xFFF97316), Color(0xFFEAB308)], // accent-allowlist: Instagram's own brand gradient (pink→orange→yellow), third-party brand mark
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),

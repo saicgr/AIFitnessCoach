@@ -21,7 +21,7 @@ class CoachReviewTemplate extends StatelessWidget {
   static const Color _paper = Color(0xFFFFFEF7);
   static const Color _ruling = Color(0xFFE6E1D2);
   static const Color _ink = Color(0xFF1A1A1A);
-  static const Color _redInk = Color(0xFFB91C1C);
+  static const Color _redInk = Color(0xFFB91C1C); // accent-allowlist: Coach Review report-card red-pen ink, matches coach_review_doc.dart's fixed redInk (report-card design identity, not user accent)
 
   String _grade(Shareable d) {
     // Map highlight count + presence of streak/PRs to a letter grade.

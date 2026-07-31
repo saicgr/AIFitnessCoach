@@ -129,14 +129,14 @@ class WeightGraphTemplate extends StatelessWidget {
                       horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: (delta < 0
-                            ? const Color(0xFF22C55E)
-                            : const Color(0xFFFB923C))
+                            ? const Color(0xFF22C55E)  // accent-allowlist: weight-trend direction indicator (loss=green/gain=orange), semantic not accent
+                            : const Color(0xFFFB923C))  // accent-allowlist: weight-trend direction indicator (loss=green/gain=orange), semantic not accent
                         .withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: delta < 0
-                          ? const Color(0xFF22C55E)
-                          : const Color(0xFFFB923C),
+                          ? const Color(0xFF22C55E)  // accent-allowlist: weight-trend direction indicator (loss=green/gain=orange), semantic not accent
+                          : const Color(0xFFFB923C),  // accent-allowlist: weight-trend direction indicator (loss=green/gain=orange), semantic not accent
                     ),
                   ),
                   child: Row(
@@ -148,8 +148,8 @@ class WeightGraphTemplate extends StatelessWidget {
                             : Icons.trending_up_rounded,
                         size: 14 * mul,
                         color: delta < 0
-                            ? const Color(0xFF22C55E)
-                            : const Color(0xFFFB923C),
+                            ? const Color(0xFF22C55E)  // accent-allowlist: weight-trend direction indicator (loss=green/gain=orange), semantic not accent
+                            : const Color(0xFFFB923C),  // accent-allowlist: weight-trend direction indicator (loss=green/gain=orange), semantic not accent
                       ),
                       const SizedBox(width: 4),
                       Text(

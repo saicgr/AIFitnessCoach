@@ -13,10 +13,11 @@ import 'doc_kit.dart';
 
 CardDoc ticketPassportDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const ink = Color(0xFF1B1A12);
   const paper = Color(0xFFEFEAD8);
   const sub = Color(0x8C1B1A12);
+  final detailTiles = highlightTiles(s, max: 4);
   return cardDoc(
     aspect: aspect,
     presetId: 'ticketPassport',
@@ -79,24 +80,20 @@ CardDoc ticketPassportDoc(Shareable s, ShareableAspect aspect) {
         allCaps: true,
         maxLines: 1,
       ),
-      // Details grid.
-      statGridEl(
-        pos: const Offset(0.55, 0.43),
-        size: const Size(0.66, 0.13),
-        columns: 2,
-        tiles: const [
-          ['ZEA', 'NATIONALITY'],
-          ['GAINS', 'CLASS'],
-          ['VALID', 'STATUS'],
-          ['∞', 'VISAS'],
-        ],
-        tileColor: const Color(0x141B1A12),
-        valueColor: ink,
-        labelColor: sub,
-        valueFontSize: 26,
-        labelFontSize: 12,
-        valueFont: CardFontIx.condMid,
-      ),
+      // Details grid — real stats, never fabricated (E2E #144).
+      if (detailTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.55, 0.43),
+          size: const Size(0.66, 0.13),
+          columns: 2,
+          tiles: detailTiles,
+          tileColor: const Color(0x141B1A12),
+          valueColor: ink,
+          labelColor: sub,
+          valueFontSize: 26,
+          labelFontSize: 12,
+          valueFont: CardFontIx.condMid,
+        ),
       // Inked ENTRY stamp (rotated).
       shapeEl(
         pos: const Offset(0.66, 0.55),

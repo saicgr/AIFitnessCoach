@@ -43,10 +43,10 @@ class MealGrade {
 MealGrade letterGrade(num score) {
   final s = score.toDouble().clamp(0.0, 10.0);
 
-  const aColor = Color(0xFF22C55E); // green
-  const bColor = Color(0xFF84CC16); // lime
-  const cColor = Color(0xFFF59E0B); // amber
-  const dColor = Color(0xFFEF4444); // red
+  const aColor = Color(0xFF22C55E); // green  // accent-allowlist: A-grade color, meal-grade severity scale (A-D), semantic not accent
+  const bColor = Color(0xFF84CC16); // lime  // accent-allowlist: B-grade color, meal-grade severity scale (A-D), semantic not accent
+  const cColor = Color(0xFFF59E0B); // amber  // accent-allowlist: C-grade color, meal-grade severity scale (A-D), semantic not accent
+  const dColor = Color(0xFFEF4444); // red  // accent-allowlist: D-grade color, meal-grade severity scale (A-D), semantic not accent
 
   if (s >= 9.5) return const MealGrade('A+', 'Excellent', aColor);
   if (s >= 8.5) return const MealGrade('A', 'Excellent', aColor);

@@ -16,6 +16,10 @@ CardDoc nowPlayingDoc(Shareable data, ShareableAspect aspect) {
   const white = Color(0xFFFFFFFF);
   const white70 = Color(0xB3FFFFFF);
   const white54 = Color(0x8AFFFFFF);
+  // Real duration for the scrubber's right-hand label — falls back to the
+  // share's own hero string (never a fabricated "48:00") when this share's
+  // kind doesn't carry a DURATION highlight. See E2E #144.
+  final durationLabel = highlightValueFor(data, 'DURATION') ?? shareableHeroString(data);
   return cardDoc(
     aspect: aspect,
     presetId: 'nowPlaying',
@@ -77,35 +81,22 @@ CardDoc nowPlayingDoc(Shareable data, ShareableAspect aspect) {
         fontSize: 18,
         color: white70,
       ),
-      // Scrubber track + accent fill.
-      shapeEl(
-        pos: const Offset(0.5, 0.555),
-        size: const Size(0.74, 0.006),
-        shape: ShapeKind.pill,
-        fill: const Color(0x33FFFFFF),
-      ),
-      shapeEl(
-        pos: const Offset(0.345, 0.555),
-        size: const Size(0.43, 0.006),
-        shape: ShapeKind.pill,
-        gradient: [accent, accent],
-      ),
-      textEl(
-        pos: const Offset(0.18, 0.585),
-        size: const Size(0.16, 0.02),
-        literal: '6:51',
-        font: CardFontIx.mono,
+      // Scrubber — fully played (the session is over, past tense) with a
+      // real duration on the right instead of an invented elapsed/total
+      // time pair (E2E #144).
+      scrubberEl(
+        pos: const Offset(0.5, 0.567),
+        size: const Size(0.74, 0.03),
+        progress: 1.0,
+        leftLabel: '0:00',
+        rightLabel: durationLabel,
+        trackColor: const Color(0x33FFFFFF),
+        fillColor: accent,
+        knobColor: accent,
+        textColor: white54,
+        trackHeight: 6,
         fontSize: 14,
-        color: white54,
-      ),
-      textEl(
-        pos: const Offset(0.82, 0.585),
-        size: const Size(0.16, 0.02),
-        literal: '48:00',
-        font: CardFontIx.mono,
-        fontSize: 14,
-        color: white54,
-        align: TextAlign.right,
+        showKnob: false,
       ),
       // Monochrome transport row (crisp glyphs, not a colour emoji).
       textEl(

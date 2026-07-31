@@ -25,7 +25,7 @@ CardDoc collectibleWristbandDoc(Shareable data, ShareableAspect aspect) {
       shapeEl(
         pos: const Offset(0.5, 0.42),
         size: const Size(1.12, 0.2),
-        gradient: [accent, const Color(0xFF22D3EE)],
+        gradient: [accent, const Color(0xFF22D3EE)],  // accent-allowlist: Wristband's blend target, part of the fabric gradient look (blended WITH the real accent)
       ),
       // Access label — bound title + literal "ACCESS".
       textEl(

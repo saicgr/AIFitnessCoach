@@ -15,7 +15,7 @@ CardDoc collectibleRaceBibDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const paper = Color(0xFFFFFFFF);
   const ink = Color(0xFF111111);
-  const banner = Color(0xFFC0392B);
+  const banner = Color(0xFFC0392B);  // accent-allowlist: Race Bib's fixed marathon-bib banner red (template design identity)
   const sub = Color(0xFF888888);
   const pin = Color(0x33000000);
   return cardDoc(

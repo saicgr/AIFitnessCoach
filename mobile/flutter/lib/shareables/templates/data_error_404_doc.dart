@@ -11,7 +11,7 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataError404Doc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Data/meme template family's fixed volt-lime terminal identity, shared across the Data card family, not user accent
   const sub = Color(0xFF888888);
   return cardDoc(
     aspect: aspect,

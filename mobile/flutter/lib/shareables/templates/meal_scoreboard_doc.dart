@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 CardDoc mealScoreboardDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const panel = Color(0xFF0A0B0E);
-  const led = Color(0xFF3AE8B0);
+  const led = Color(0xFF3AE8B0);  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
   const ledDim = Color(0x223AE8B0);
 
   // One glowing scoreboard row: a dim slot bar + a bright LED number.
@@ -88,10 +88,10 @@ CardDoc mealScoreboardDoc(Shareable data, ShareableAspect aspect) {
         binding: const DataBinding(BindingSource.calories),
         font: 4,
         fontSize: 110,
-        color: const Color(0xFFFFC53A),
+        color: const Color(0xFFFFC53A),  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
         align: TextAlign.center,
         sizeMode: TextSizeMode.shrinkToFit,
-        shadow: const ShadowSpec(color: Color(0xAAFFC53A), blur: 32),
+        shadow: const ShadowSpec(color: Color(0xAAFFC53A), blur: 32),  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
       ),
       textEl(
         pos: const Offset(0.5, 0.345),
@@ -99,14 +99,14 @@ CardDoc mealScoreboardDoc(Shareable data, ShareableAspect aspect) {
         literal: 'KCAL',
         font: 4,
         fontSize: 22,
-        color: const Color(0xCCFFC53A),
+        color: const Color(0xCCFFC53A),  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
         align: TextAlign.center,
         letterSpacing: 8,
       ),
-      ...row(0.46, 'PROTEIN', const Color(0xFF4F9EFF),
+      ...row(0.46, 'PROTEIN', const Color(0xFF4F9EFF),  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
           BindingSource.proteinG),
-      ...row(0.61, 'CARBS', const Color(0xFFFFB23A), BindingSource.carbsG),
-      ...row(0.76, 'FAT', const Color(0xFFFF5C7A), BindingSource.fatG),
+      ...row(0.61, 'CARBS', const Color(0xFFFFB23A), BindingSource.carbsG),  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
+      ...row(0.76, 'FAT', const Color(0xFFFF5C7A), BindingSource.fatG),  // accent-allowlist: Meal Scoreboard's fixed LED-glow palette per macro row (template design identity)
       watermarkEl(pos: const Offset(0.30, 0.93), color: led),
     ],
   );

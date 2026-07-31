@@ -83,7 +83,7 @@ CardDoc beforeAfterPlateDoc(Shareable data, ShareableAspect aspect) {
         size: const Size(0.44, 0.09),
         shape: ShapeKind.rounded,
         fill: const Color(0x00000000),
-        stroke: const Color(0xFFEF4444),
+        stroke: const Color(0xFFEF4444),  // accent-allowlist: before/after plate warning-red highlight, semantic not accent
         strokeWidth: 4,
         cornerRadius: 8,
       ),
@@ -93,7 +93,7 @@ CardDoc beforeAfterPlateDoc(Shareable data, ShareableAspect aspect) {
         literal: 'CLEANED IT',
         font: 1,
         fontSize: 30,
-        color: const Color(0xFFEF4444),
+        color: const Color(0xFFEF4444),  // accent-allowlist: before/after plate warning-red highlight, semantic not accent
         align: TextAlign.center,
         letterSpacing: 2,
       ),

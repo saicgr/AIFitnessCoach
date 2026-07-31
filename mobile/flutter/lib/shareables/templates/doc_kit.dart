@@ -9,6 +9,59 @@ import 'package:flutter/material.dart';
 import '../doc/card_doc.dart';
 import '../shareable_data.dart';
 
+// ─────────────────────────── Real-data helpers ─────────────────────────────
+//
+// `statGridEl`/`scrubberEl` take plain literal strings, not a [DataBinding]
+// — there's no runtime resolver for a whole tile grid. These helpers pull
+// real numbers out of a [Shareable] AT DOC-BUILD TIME (every `docBuilder` is
+// re-invoked with fresh `data`, so this stays "live" the same way a bound
+// element would) so a preset never has to fall back to an invented sample
+// value. See E2E issue #144.
+
+/// Builds `statGridEl` tiles (`[value, label]`) from [data]'s real
+/// `highlights` — never fabricated. When [labels] is given, picks those
+/// highlight labels (case-insensitive) in the given priority order, silently
+/// skipping any this particular share doesn't carry (a share's highlight set
+/// varies — e.g. `CALORIES`/`NEW PRS` are only present when logged). When
+/// [labels] is omitted, takes the first [max] populated highlights as-is, in
+/// the adapter's own order. Returns an empty list (never a placeholder row)
+/// when nothing real is available — callers should skip the element in that
+/// case rather than render an empty grid.
+List<List<String>> highlightTiles(
+  Shareable data, {
+  List<String>? labels,
+  int max = 4,
+}) {
+  final populated = data.highlights.where((h) => h.isPopulated).toList();
+  if (labels == null) {
+    return [
+      for (final h in populated.take(max)) [h.value, h.label],
+    ];
+  }
+  final byLabel = {
+    for (final h in populated) h.label.toUpperCase(): h,
+  };
+  final out = <List<String>>[];
+  for (final l in labels) {
+    final h = byLabel[l.toUpperCase()];
+    if (h != null) out.add([h.value, h.label]);
+  }
+  return out;
+}
+
+/// The value of the first populated highlight in [data] whose label matches
+/// [label] (case-insensitive), or null when this share doesn't carry it.
+/// Used where a template needs exactly one real stat outside a grid (e.g. a
+/// scrubber's "total" label) instead of a fabricated placeholder.
+String? highlightValueFor(Shareable data, String label) {
+  for (final h in data.highlights) {
+    if (h.isPopulated && h.label.toUpperCase() == label.toUpperCase()) {
+      return h.value;
+    }
+  }
+  return null;
+}
+
 // ─────────────────────────── Document ──────────────────────────────────────
 
 /// Assembles a [CardDoc] from a background + element list.
@@ -17,7 +70,7 @@ CardDoc cardDoc({
   required List<CardElement> elements,
   CardBackground background = CardBackground.dark,
   String? presetId,
-  Color accent = const Color(0xFFF97316),
+  Color accent = const Color(0xFFF97316),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
 }) =>
     CardDoc(
       aspect: aspect,
@@ -251,7 +304,7 @@ CardElement chipsEl({
 CardElement badgeEl({
   required Offset pos,
   required Size size,
-  List<Color> gradient = const [Color(0xFFF59E0B), Color(0xFFB45309)],
+  List<Color> gradient = const [Color(0xFFF59E0B), Color(0xFFB45309)],  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
   String label = 'HEALTH',
   DataBinding valueBinding = const DataBinding(BindingSource.healthScore),
   String valueLiteral = '5',
@@ -292,7 +345,11 @@ CardElement repeaterEl({
   Color textColor = const Color(0xFFFFFFFF),
   bool showAmount = true,
   bool showCalories = true,
-  bool exerciseMode = false,
+  // Null = infer from `data.kind` at render time (food → food rows,
+  // everything else → exercise rows). See E2E issue #142 — leaving this a
+  // hard `false` default silently renders zero rows on every workout/stats
+  // share whose template didn't explicitly opt in.
+  bool? exerciseMode,
   bool showImage = false,
   double rowSpacing = 6,
 }) =>
@@ -370,7 +427,7 @@ CardElement chatBubbleEl({
   String sender = '',
   DataBinding senderBinding = DataBinding.none,
   ChatSide side = ChatSide.right,
-  Color tint = const Color(0xFF2563EB),
+  Color tint = const Color(0xFF2563EB),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
   Color textColor = const Color(0xFFFFFFFF),
   double fontSize = 28,
   int font = 0,
@@ -432,12 +489,19 @@ CardElement avatarRowEl({
     );
 
 /// A now-playing / podcast scrubber — progress track + two time labels.
+///
+/// [progress]/[leftLabel]/[rightLabel] are REQUIRED — this helper used to
+/// default to a fabricated '1:23'/'3:05' elapsed/total, which read as real
+/// playback data on cards that never actually bound it (E2E #144). Callers
+/// must derive real values (e.g. via [highlightValueFor]) or pass an honest
+/// static value (e.g. `'0:00'` as a scrubber start marker), never invented
+/// digits presented as a stat.
 CardElement scrubberEl({
   required Offset pos,
   required Size size,
-  double progress = 0.42,
-  String leftLabel = '1:23',
-  String rightLabel = '3:05',
+  required double progress,
+  required String leftLabel,
+  required String rightLabel,
   Color trackColor = const Color(0x33FFFFFF),
   Color fillColor = const Color(0xFFFFFFFF),
   Color knobColor = const Color(0xFFFFFFFF),
@@ -474,7 +538,7 @@ CardElement ringStatEl({
   String centerValue = '72%',
   DataBinding centerBinding = DataBinding.none,
   String label = 'GOAL',
-  Color ringColor = const Color(0xFFF97316),
+  Color ringColor = const Color(0xFFF97316),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
   Color trackColor = const Color(0x22FFFFFF),
   Color textColor = const Color(0xFFFFFFFF),
   double strokeFraction = 0.12,
@@ -510,9 +574,9 @@ CardElement ringTrioEl({
   double outer = 0.82,
   double middle = 0.7,
   double inner = 0.6,
-  Color outerColor = const Color(0xFFFA114F),
-  Color middleColor = const Color(0xFF92E82A),
-  Color innerColor = const Color(0xFF1AD6FD),
+  Color outerColor = const Color(0xFFFA114F),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
+  Color middleColor = const Color(0xFF92E82A),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
+  Color innerColor = const Color(0xFF1AD6FD),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
   double strokeFraction = 0.09,
   double trackOpacity = 0.2,
 }) =>
@@ -533,15 +597,17 @@ CardElement ringTrioEl({
     );
 
 /// A 2×N grid of label/value tiles. Each tile is `[value, label]`.
+///
+/// [tiles] is REQUIRED and must come from real [Shareable] data (see
+/// [highlightTiles]) — this helper used to default to a fabricated
+/// `['12','WORKOUTS']`-style sample so an omitted `tiles:` argument silently
+/// shipped invented numbers as if they were the user's stats (E2E #144).
+/// Forcing every caller to supply real tiles makes that failure loud
+/// (a compile error) instead of a plausible-looking lie in a screenshot.
 CardElement statGridEl({
   required Offset pos,
   required Size size,
-  List<List<String>> tiles = const [
-    ['12', 'WORKOUTS'],
-    ['48.2k', 'VOLUME LB'],
-    ['7', 'PRs'],
-    ['14', 'DAY STREAK'],
-  ],
+  required List<List<String>> tiles,
   int columns = 2,
   Color tileColor = const Color(0x14FFFFFF),
   Color valueColor = const Color(0xFFFFFFFF),
@@ -576,7 +642,7 @@ CardElement gridHeatmapEl({
   required Size size,
   List<double> cells = const [],
   int columns = 13,
-  Color cellColor = const Color(0xFF22C55E),
+  Color cellColor = const Color(0xFF22C55E),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
   Color emptyColor = const Color(0x1FFFFFFF),
   double cellRadius = 3,
   double gapFraction = 0.18,
@@ -601,7 +667,7 @@ CardElement ratingStarsEl({
   required Size size,
   double rating = 4.5,
   int count = 5,
-  Color filledColor = const Color(0xFFFFD23F),
+  Color filledColor = const Color(0xFFFFD23F),  // accent-allowlist: DSL helper default parameter value — no BuildContext or Shareable data available at this call site; every real caller overrides this explicitly
   Color emptyColor = const Color(0x33FFFFFF),
   double spacingFraction = 0.18,
 }) =>

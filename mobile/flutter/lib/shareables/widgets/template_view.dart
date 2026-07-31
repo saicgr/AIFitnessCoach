@@ -39,7 +39,10 @@ class TemplateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var doc = overrideDoc ?? spec.docBuilder?.call(data, aspect);
+    var doc = overrideDoc ??
+        (spec.docBuilder != null
+            ? ShareableCatalog.buildTemplateDoc(spec, data, aspect)
+            : null);
     if (doc != null) {
       if (!showPhoto) doc = doc.withoutPhoto();
       return CardDocRenderer(

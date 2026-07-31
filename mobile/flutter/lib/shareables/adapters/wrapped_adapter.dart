@@ -51,14 +51,14 @@ class WrappedAdapter {
           label: 'NEW PRS',
           value: '${data.personalRecordsCount}',
           icon: Icons.emoji_events_rounded,
-          accent: const Color(0xFFFCD34D),
+          accent: const Color(0xFFFCD34D),  // accent-allowlist: gamGold-style medal color for the NEW PRS metric tile
         ),
       if (data.streakBest > 0)
         ShareableMetric(
           label: 'STREAK',
           value: '${data.streakBest} days',
           icon: Icons.local_fire_department_rounded,
-          accent: const Color(0xFFFF6B35),
+          accent: const Color(0xFFFF6B35),  // accent-allowlist: fixed flame-icon color for the STREAK metric tile
         ),
       if (data.favoriteExercise != 'N/A')
         ShareableMetric(

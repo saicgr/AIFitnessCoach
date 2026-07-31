@@ -15,7 +15,7 @@ CardDoc iosDepartureBoardDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const board = Color(0xFF0B0D10);
   const flap = Color(0xFF15181D);
-  const amber = Color(0xFFFFC53D);
+  const amber = Color(0xFFFFC53D);  // accent-allowlist: Departure Board template's fixed airport-signage amber (template design identity)
   const white = Color(0xFFFFFFFF);
   const white60 = Color(0x99FFFFFF);
   return cardDoc(

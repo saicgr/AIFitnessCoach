@@ -139,21 +139,21 @@ class WorkoutAdapter {
           label: 'CALORIES',
           value: '$calories kcal',
           icon: Icons.local_fire_department_rounded,
-          accent: AppColors.orange,
+          accent: AppColors.orange,  // accent-allowlist: fixed flame-icon color for the CALORIES metric tile
         ),
       if (currentStreak != null && currentStreak > 0)
         ShareableMetric(
           label: 'STREAK',
           value: '$currentStreak ${currentStreak == 1 ? 'day' : 'days'}',
           icon: Icons.local_fire_department_rounded,
-          accent: AppColors.orange,
+          accent: AppColors.orange,  // accent-allowlist: fixed flame-icon color for the STREAK metric tile
         ),
       if (newPRs != null && newPRs.isNotEmpty)
         ShareableMetric(
           label: 'NEW PRS',
           value: newPRs.length.toString(),
           icon: Icons.emoji_events_rounded,
-          accent: const Color(0xFFFCD34D),
+          accent: const Color(0xFFFCD34D),  // accent-allowlist: gamGold-style medal color for the NEW PRS metric tile
         ),
     ];
 

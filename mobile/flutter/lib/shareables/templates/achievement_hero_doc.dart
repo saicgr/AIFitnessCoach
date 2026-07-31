@@ -48,13 +48,13 @@ CardDoc achievementHeroDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.38),
         size: const Size(0.5, 0.28),
         shape: ShapeKind.circle,
-        gradient: const [Color(0x8CFFB35B), Color(0x33FF6B35), Color(0x00FF6B35)],
+        gradient: const [Color(0x8CFFB35B), Color(0x33FF6B35), Color(0x00FF6B35)],  // accent-allowlist: Achievement Hero's fixed gold-orange trophy gradient, matches achievement_hero_template.dart
         radial: true,
       ),
       badgeEl(
         pos: const Offset(0.5, 0.38),
         size: const Size(0.3, 0.17),
-        gradient: const [Color(0xFFFFB35B), Color(0xFFFF6B35)],
+        gradient: const [Color(0xFFFFB35B), Color(0xFFFF6B35)],  // accent-allowlist: Achievement Hero's fixed gold-orange trophy gradient, matches achievement_hero_template.dart
         label: 'TROPHY',
         valueLiteral: '🏆',
       ),

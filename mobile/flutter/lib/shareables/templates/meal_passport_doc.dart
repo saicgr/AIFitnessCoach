@@ -12,7 +12,7 @@ import 'doc_kit.dart';
 CardDoc mealPassportDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const navy = Color(0xFF132042);
-  const gold = Color(0xFFD9B14E);
+  const gold = Color(0xFFD9B14E);  // accent-allowlist: Meal Passport's fixed passport-stamp gold + banner gradient (template design identity)
   const page = Color(0xFFF3EEDF);
   const ink = Color(0xFF2A2D33);
 
@@ -107,7 +107,7 @@ CardDoc mealPassportDoc(Shareable data, ShareableAspect aspect) {
       badgeEl(
         pos: const Offset(0.72, 0.73),
         size: const Size(0.28, 0.28),
-        gradient: const [Color(0xFFB23A4A), Color(0xFF7E2532)],
+        gradient: const [Color(0xFFB23A4A), Color(0xFF7E2532)],  // accent-allowlist: Meal Passport's fixed passport-stamp gold + banner gradient (template design identity)
         label: 'ENTRY',
         valueBinding: const DataBinding(BindingSource.literal),
         valueLiteral: 'LOGGED',

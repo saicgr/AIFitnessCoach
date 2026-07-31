@@ -125,10 +125,10 @@ class FoodScoreCardTemplate extends StatelessWidget {
 /// Band color for a 1-10 health score — green high, amber mid, red low.
 /// A data-semantic color (like the macro colors), not the brand accent.
 Color _bandColor(int score) {
-  if (score >= 8) return const Color(0xFF22C55E);
-  if (score >= 6) return const Color(0xFF84CC16);
-  if (score >= 4) return const Color(0xFFF59E0B);
-  return const Color(0xFFEF4444);
+  if (score >= 8) return const Color(0xFF22C55E);  // accent-allowlist: health-score grade band color (see doc comment above)
+  if (score >= 6) return const Color(0xFF84CC16);  // accent-allowlist: health-score grade band color (see doc comment above)
+  if (score >= 4) return const Color(0xFFF59E0B);  // accent-allowlist: health-score grade band color (see doc comment above)
+  return const Color(0xFFEF4444);  // accent-allowlist: health-score grade band color (see doc comment above)
 }
 
 class _ScoreDial extends StatelessWidget {

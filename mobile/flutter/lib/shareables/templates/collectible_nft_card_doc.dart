@@ -32,7 +32,7 @@ CardDoc collectibleNftCardDoc(Shareable data, ShareableAspect aspect) {
       scrimEl(
         pos: const Offset(0.5, 0.42),
         size: const Size(0.88, 0.66),
-        colors: const [Color(0x667C3AED), Color(0x00000000), Color(0x5922D3EE)],
+        colors: const [Color(0x667C3AED), Color(0x00000000), Color(0x5922D3EE)],  // accent-allowlist: NFT card's fixed crypto-art mint-card gradient (template design identity)
         stops: const [0.0, 0.5, 1.0],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,

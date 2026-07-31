@@ -100,10 +100,10 @@ CardDoc goalProgressBarsDoc(Shareable data, ShareableAspect aspect) {
         letterSpacing: 2,
       ),
       ...bar(0.42, 'PROTEIN', BindingSource.proteinG,
-          const Color(0xFFEF4444), 0.74),
-      ...bar(0.55, 'CARBS', BindingSource.carbsG, const Color(0xFFF59E0B),
+          const Color(0xFFEF4444), 0.74),  // accent-allowlist: macro identity color (protein/carbs/fat progress bars), consistent across nutrition surfaces
+      ...bar(0.55, 'CARBS', BindingSource.carbsG, const Color(0xFFF59E0B),  // accent-allowlist: macro identity color (protein/carbs/fat progress bars), consistent across nutrition surfaces
           0.58),
-      ...bar(0.68, 'FAT', BindingSource.fatG, const Color(0xFF3B82F6), 0.46),
+      ...bar(0.68, 'FAT', BindingSource.fatG, const Color(0xFF3B82F6), 0.46),  // accent-allowlist: macro identity color (protein/carbs/fat progress bars), consistent across nutrition surfaces
       ...bar(0.81, 'CALORIES', BindingSource.calories, accent, 0.82),
       watermarkEl(pos: const Offset(0.30, 0.93), color: Colors.white70),
     ],

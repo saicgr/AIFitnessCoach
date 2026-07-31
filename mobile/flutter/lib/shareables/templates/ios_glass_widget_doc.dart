@@ -17,11 +17,19 @@ CardDoc iosGlassWidgetDoc(Shareable data, ShareableAspect aspect) {
   const white60 = Color(0x99FFFFFF);
   final glass = const Color(0xFFFFFFFF).withValues(alpha: 0.08);
   final glassStroke = const Color(0xFFFFFFFF).withValues(alpha: 0.22);
+  // The bottom 2-up widget shows different highlights than the ring above it
+  // (which already bound highlight index 0) — skip it, and never fall back
+  // to a fabricated default when this share carries fewer highlights than
+  // the widget has slots (E2E #144).
+  final bottomTiles = [
+    for (final h in data.highlights.where((h) => h.isPopulated).skip(1).take(2))
+      [h.value, h.label],
+  ];
 
   // Soft mesh wallpaper from the accent.
   final mesh = [
-    Color.lerp(accent, const Color(0xFF312E81), 0.6)!,
-    Color.lerp(accent, const Color(0xFF7C3AED), 0.35)!,
+    Color.lerp(accent, const Color(0xFF312E81), 0.6)!,  // accent-allowlist: iOS Glass Widget's mesh-gradient blend targets, part of the glass-widget look (blended WITH the real accent, see accent.lerp)
+    Color.lerp(accent, const Color(0xFF7C3AED), 0.35)!,  // accent-allowlist: iOS Glass Widget's mesh-gradient blend targets, part of the glass-widget look (blended WITH the real accent, see accent.lerp)
     const Color(0xFF0B0B14),
   ];
 
@@ -125,17 +133,19 @@ CardDoc iosGlassWidgetDoc(Shareable data, ShareableAspect aspect) {
         strokeWidth: 1.4,
         cornerRadius: 36,
       ),
-      statGridEl(
-        pos: const Offset(0.5, 0.66),
-        size: const Size(0.72, 0.2),
-        columns: 2,
-        tileColor: const Color(0x00000000),
-        valueColor: white,
-        labelColor: white60,
-        valueFontSize: 46,
-        labelFontSize: 16,
-        valueFont: CardFontIx.display,
-      ),
+      if (bottomTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.66),
+          size: const Size(0.72, 0.2),
+          columns: bottomTiles.length.clamp(1, 2),
+          tiles: bottomTiles,
+          tileColor: const Color(0x00000000),
+          valueColor: white,
+          labelColor: white60,
+          valueFontSize: 46,
+          labelFontSize: 16,
+          valueFont: CardFontIx.display,
+        ),
       watermarkEl(pos: const Offset(0.3, 0.92), color: white60),
     ],
   );

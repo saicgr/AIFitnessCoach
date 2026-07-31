@@ -13,10 +13,11 @@ import 'doc_kit.dart';
 
 CardDoc ticketEventDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const white = Color(0xFFFFFFFF);
   const muted = Color(0x99FFFFFF);
   const panel = Color(0xFF15180E);
+  final fieldTiles = highlightTiles(s, max: 3);
   return cardDoc(
     aspect: aspect,
     presetId: 'ticketEvent',
@@ -82,23 +83,20 @@ CardDoc ticketEventDoc(Shareable s, ShareableAspect aspect) {
         color: const Color(0x33FFFFFF),
         thickness: 2,
       ),
-      // SECTION / ROW / SEAT.
-      statGridEl(
-        pos: const Offset(0.5, 0.515),
-        size: const Size(0.78, 0.1),
-        columns: 3,
-        tiles: const [
-          ['FLOOR', 'SECTION'],
-          ['1', 'ROW'],
-          ['A', 'SEAT'],
-        ],
-        tileColor: const Color(0x14D8FF3A),
-        valueColor: volt,
-        labelColor: muted,
-        valueFontSize: 34,
-        labelFontSize: 14,
-        valueFont: CardFontIx.display,
-      ),
+      // Field grid — real stats, never fabricated (E2E #144).
+      if (fieldTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.515),
+          size: const Size(0.78, 0.1),
+          columns: fieldTiles.length.clamp(1, 3),
+          tiles: fieldTiles,
+          tileColor: const Color(0x14D8FF3A),
+          valueColor: volt,
+          labelColor: muted,
+          valueFontSize: 34,
+          labelFontSize: 14,
+          valueFont: CardFontIx.display,
+        ),
       // Admit one strip.
       shapeEl(
         pos: const Offset(0.5, 0.6),

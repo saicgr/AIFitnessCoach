@@ -11,9 +11,13 @@ import '../shareable_data.dart';
 import 'doc_kit.dart';
 
 CardDoc dataScoreboardDoc(Shareable data, ShareableAspect aspect) {
-  const volt = Color(0xFFB8FF2F);
-  const gold = Color(0xFFFFD60A);
+  const volt = Color(0xFFB8FF2F);  // accent-allowlist: Scoreboard data/meme template's fixed volt-lime + LED-red palette (template family identity)
+  const gold = Color(0xFFFFD60A);  // accent-allowlist: Scoreboard data/meme template's fixed volt-lime + LED-red palette (template family identity)
   const muted = Color(0x8CFFFFFF);
+  final stripTiles = highlightTiles(
+    data,
+    labels: const ['SETS', 'NEW PRS', 'DURATION'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'dataScoreboard',
@@ -25,7 +29,7 @@ CardDoc dataScoreboardDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.28, 0.20),
         size: const Size(0.04, 0.025),
         emoji: '🔴',
-        color: const Color(0xFFFF3B30),
+        color: const Color(0xFFFF3B30),  // accent-allowlist: Scoreboard data/meme template's fixed volt-lime + LED-red palette (template family identity)
       ),
       textEl(
         pos: const Offset(0.56, 0.20),
@@ -56,11 +60,11 @@ CardDoc dataScoreboardDoc(Shareable data, ShareableAspect aspect) {
         binding: const DataBinding(BindingSource.heroString),
         font: CardFontIx.display,
         fontSize: 130,
-        color: const Color(0xFFFF3B30),
+        color: const Color(0xFFFF3B30),  // accent-allowlist: Scoreboard data/meme template's fixed volt-lime + LED-red palette (template family identity)
         align: TextAlign.center,
         maxLines: 1,
         shadow: const ShadowSpec(
-          color: Color(0x99FF3B30),
+          color: Color(0x99FF3B30),  // accent-allowlist: Scoreboard data/meme template's fixed volt-lime + LED-red palette (template family identity)
           blur: 36,
           offset: Offset.zero,
         ),
@@ -75,22 +79,19 @@ CardDoc dataScoreboardDoc(Shareable data, ShareableAspect aspect) {
         align: TextAlign.center,
         letterSpacing: 4,
       ),
-      // Gold stat strip.
-      statGridEl(
-        pos: const Offset(0.5, 0.74),
-        size: const Size(0.86, 0.12),
-        columns: 3,
-        tiles: const [
-          ['16', 'SETS'],
-          ['1', 'PR'],
-          ['61', 'MIN'],
-        ],
-        tileColor: const Color(0x0FFFFFFF),
-        valueColor: gold,
-        labelColor: muted,
-        valueFontSize: 40,
-        valueFont: CardFontIx.display,
-      ),
+      // Gold stat strip — real numbers, never fabricated (E2E #144).
+      if (stripTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.74),
+          size: const Size(0.86, 0.12),
+          columns: stripTiles.length.clamp(1, 3),
+          tiles: stripTiles,
+          tileColor: const Color(0x0FFFFFFF),
+          valueColor: gold,
+          labelColor: muted,
+          valueFontSize: 40,
+          valueFont: CardFontIx.display,
+        ),
       textEl(
         pos: const Offset(0.5, 0.875),
         size: const Size(0.86, 0.03),

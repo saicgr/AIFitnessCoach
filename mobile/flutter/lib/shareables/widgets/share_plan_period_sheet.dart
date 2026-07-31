@@ -18,12 +18,12 @@ import '../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 enum _Period {
-  today('day', 'plan', 'Today\'s workout', Icons.today_rounded, AppColors.cyan),
-  thisWeek('week', 'plan', 'This week (Mon–Sun)', Icons.calendar_view_week_rounded, AppColors.info),
-  thisMonth('month', 'plan', 'This month\'s program', Icons.calendar_month_rounded, AppColors.purple),
+  today('day', 'plan', 'Today\'s workout', Icons.today_rounded, AppColors.cyan),  // accent-allowlist: fixed per-period picker-row icon color (Today), distinct from other rows for scannability
+  thisWeek('week', 'plan', 'This week (Mon–Sun)', Icons.calendar_view_week_rounded, AppColors.info),  // accent-allowlist: fixed per-period picker-row icon color (This Week), distinct from other rows for scannability
+  thisMonth('month', 'plan', 'This month\'s program', Icons.calendar_month_rounded, AppColors.purple),  // accent-allowlist: fixed per-period picker-row icon color (This Month), distinct from other rows for scannability
   ytd('ytd', 'plan', 'Year to date', Icons.event_note_rounded, AppColors.onboardingAccent),
-  prs('month', 'prs', 'PRs this month', Icons.emoji_events_rounded, AppColors.quickActionGenerate),
-  oneRm('ytd', 'one_rm', '1RM progress', Icons.fitness_center_rounded, AppColors.red);
+  prs('month', 'prs', 'PRs this month', Icons.emoji_events_rounded, AppColors.quickActionGenerate),  // accent-allowlist: fixed per-period picker-row icon color (PRs), distinct from other rows for scannability
+  oneRm('ytd', 'one_rm', '1RM progress', Icons.fitness_center_rounded, AppColors.red);  // accent-allowlist: fixed per-period picker-row icon color (1RM), distinct from other rows for scannability
 
   final String period;
   final String scope;
@@ -166,7 +166,7 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
               _PeriodTile(
                 label: 'This week',
                 icon: Icons.calendar_view_week_rounded,
-                color: AppColors.info,
+                color: AppColors.info,  // accent-allowlist: fixed per-period picker-row icon color (This Week), matches _Period enum's own scheme
                 isLastUsed: _lastUsedKey == 'thisWeek',
                 enabled: !_busy,
                 onTap: () => _onPickImage(false),
@@ -174,7 +174,7 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
               _PeriodTile(
                 label: 'This month',
                 icon: Icons.calendar_month_rounded,
-                color: AppColors.purple,
+                color: AppColors.purple,  // accent-allowlist: fixed per-period picker-row icon color (This Month), matches _Period enum's own scheme
                 isLastUsed: _lastUsedKey == 'thisMonth',
                 enabled: !_busy,
                 onTap: () => _onPickImage(true),

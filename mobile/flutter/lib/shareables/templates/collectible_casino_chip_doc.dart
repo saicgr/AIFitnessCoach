@@ -14,8 +14,8 @@ import 'doc_kit.dart';
 CardDoc collectibleCasinoChipDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
-  const gold = Color(0xFFFFD700);
-  const chipRed = Color(0xFFC0392B);
+  const gold = Color(0xFFFFD700);  // accent-allowlist: Casino Chip's fixed felt-green/gold/red palette (template design identity)
+  const chipRed = Color(0xFFC0392B);  // accent-allowlist: Casino Chip's fixed felt-green/gold/red palette (template design identity)
   return cardDoc(
     aspect: aspect,
     presetId: 'collectibleCasinoChip',

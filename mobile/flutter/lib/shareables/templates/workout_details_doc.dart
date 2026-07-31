@@ -15,6 +15,18 @@ CardDoc workoutDetailsDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
   const white70 = Color(0xB3FFFFFF);
+  // Real duration / volume / calories / sets — this is the DEFAULT template
+  // for `workoutComplete` shares (ShareableCatalog.defaultTemplateForKind),
+  // so it must actually carry numbers. It used to bind none at all (E2E
+  // #137) — a photo-forward layout with a title and a ledger but nothing
+  // between them. The photo itself is the anatomy illustration in most
+  // real workout shares and gets stripped by `ShareableCatalog
+  // .buildTemplateDoc` (E2E #143), which only makes the missing numbers
+  // more obvious (an otherwise-empty gradient card).
+  final statTiles = highlightTiles(
+    data,
+    labels: const ['DURATION', 'VOLUME', 'CALORIES', 'SETS'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'workoutDetails',
@@ -53,6 +65,20 @@ CardDoc workoutDetailsDoc(Shareable data, ShareableAspect aspect) {
         maxLines: 2,
         allCaps: true,
       ),
+      // Real stat readout (duration / volume / calories / sets) — occupies
+      // the upper canvas that used to be bare photo space when there's no
+      // real (non-anatomy-illustration) photo to show.
+      if (statTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.32),
+          size: const Size(0.78, 0.20),
+          tiles: statTiles,
+          columns: 2,
+          tileColor: const Color(0x1FFFFFFF),
+          valueColor: white,
+          labelColor: white70,
+          valueFont: CardFontIx.display,
+        ),
       // Lift ledger — exercise list, accent-tinted values, no calories.
       repeaterEl(
         pos: const Offset(0.5, 0.86),

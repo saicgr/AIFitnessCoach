@@ -58,10 +58,10 @@ class MacroViz extends StatelessWidget {
   });
 
   // ─── Macro color shorthands (app-wide constants) ───────────────────────
-  Color get _pColor => AppColors.macroProtein; // 0xFFA855F7
-  Color get _cColor => AppColors.macroCarbs; //   0xFF06B6D4
-  Color get _fColor => AppColors.macroFat; //     0xFFF97316
-  Color get _fiberColor => AppColors.green; //    0xFF22C55E
+  Color get _pColor => AppColors.macroProtein; // 0xFFA855F7  // accent-allowlist: macro identity color — consistent across every nutrition surface
+  Color get _cColor => AppColors.macroCarbs; //   0xFF06B6D4  // accent-allowlist: macro identity color — consistent across every nutrition surface
+  Color get _fColor => AppColors.macroFat; //     0xFFF97316  // accent-allowlist: macro identity color — consistent across every nutrition surface
+  Color get _fiberColor => AppColors.green; //    0xFF22C55E  // accent-allowlist: macro identity color — consistent across every nutrition surface
 
   Color get _muted => textColor.withValues(alpha: 0.62);
   Color get _faint => textColor.withValues(alpha: 0.30);

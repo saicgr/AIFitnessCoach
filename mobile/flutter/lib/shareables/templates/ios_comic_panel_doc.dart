@@ -15,7 +15,7 @@ CardDoc iosComicPanelDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const ink = Color(0xFF111111);
   const paper = Color(0xFFFDF6E3);
-  const comicYellow = Color(0xFFFFD23F);
+  const comicYellow = Color(0xFFFFD23F);  // accent-allowlist: Comic Panel template's fixed halftone comic-book yellow/red (template design identity)
   return cardDoc(
     aspect: aspect,
     presetId: 'iosComicPanel',
@@ -84,7 +84,7 @@ CardDoc iosComicPanelDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.78, 0.78),
         size: const Size(0.4, 0.2),
         shape: ShapeKind.circle,
-        gradient: [accent, Color.lerp(accent, const Color(0xFFFF3D00), 0.4)!],
+        gradient: [accent, Color.lerp(accent, const Color(0xFFFF3D00), 0.4)!],  // accent-allowlist: Comic Panel template's fixed halftone comic-book yellow/red (template design identity)
         stroke: ink,
         strokeWidth: 4,
         radial: true,

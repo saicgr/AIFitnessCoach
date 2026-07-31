@@ -15,6 +15,10 @@ CardDoc collectibleTrophyShelfDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
   const muted = Color(0x99FFFFFF);
+  final tallyTiles = highlightTiles(
+    data,
+    labels: const ['NEW PRS', 'STREAK', 'DURATION'],
+  );
   return cardDoc(
     aspect: aspect,
     presetId: 'collectibleTrophyShelf',
@@ -52,25 +56,22 @@ CardDoc collectibleTrophyShelfDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.4),
         size: const Size(0.72, 0.012),
         shape: ShapeKind.pill,
-        gradient: [accent, const Color(0xFF8A6D1F)],
+        gradient: [accent, const Color(0xFF8A6D1F)],  // accent-allowlist: Trophy Shelf's blend target, part of the trophy gradient look (blended WITH the real accent)
       ),
-      // Tally grid (real counts).
-      statGridEl(
-        pos: const Offset(0.5, 0.62),
-        size: const Size(0.86, 0.22),
-        columns: 3,
-        tiles: const [
-          ['12', 'PRs'],
-          ['3', 'BADGES'],
-          ['1', 'STREAK'],
-        ],
-        tileColor: const Color(0x14FFFFFF),
-        valueColor: white,
-        labelColor: muted,
-        valueFontSize: 46,
-        labelFontSize: 16,
-        valueFont: CardFontIx.display,
-      ),
+      // Tally grid — real counts, never fabricated (E2E #144).
+      if (tallyTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.62),
+          size: const Size(0.86, 0.22),
+          columns: tallyTiles.length.clamp(1, 3),
+          tiles: tallyTiles,
+          tileColor: const Color(0x14FFFFFF),
+          valueColor: white,
+          labelColor: muted,
+          valueFontSize: 46,
+          labelFontSize: 16,
+          valueFont: CardFontIx.display,
+        ),
       // Cabinet plaque.
       shapeEl(
         pos: const Offset(0.5, 0.8),

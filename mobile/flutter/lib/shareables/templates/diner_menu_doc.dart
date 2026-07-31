@@ -14,7 +14,7 @@ CardDoc dinerMenuDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const cream = Color(0xFFF7EFDD);
   const ink = Color(0xFF2A2118);
-  final banner = Color.lerp(const Color(0xFF7A1E1E), accent, 0.25)!;
+  final banner = Color.lerp(const Color(0xFF7A1E1E), accent, 0.25)!;  // accent-allowlist: Diner Menu's blend target, part of the diner-banner look (blended WITH the real accent)
 
   return cardDoc(
     aspect: aspect,

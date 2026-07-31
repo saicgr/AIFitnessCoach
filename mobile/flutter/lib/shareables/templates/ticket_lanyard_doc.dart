@@ -13,10 +13,11 @@ import 'doc_kit.dart';
 
 CardDoc ticketLanyardDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const card = Color(0xFF14160C);
   const white = Color(0xFFFFFFFF);
   const muted = Color(0x99FFFFFF);
+  final entryTiles = highlightTiles(s, max: 2);
   return cardDoc(
     aspect: aspect,
     presetId: 'ticketLanyard',
@@ -133,22 +134,20 @@ CardDoc ticketLanyardDoc(Shareable s, ShareableAspect aspect) {
         fontSize: 17,
         spacing: 8,
       ),
-      // Entry grid.
-      statGridEl(
-        pos: const Offset(0.5, 0.68),
-        size: const Size(0.66, 0.08),
-        columns: 2,
-        tiles: const [
-          ['HALL A', 'ACCESS'],
-          ['VIP', 'ZONE'],
-        ],
-        tileColor: const Color(0x14FFFFFF),
-        valueColor: white,
-        labelColor: muted,
-        valueFontSize: 22,
-        labelFontSize: 12,
-        valueFont: CardFontIx.condMid,
-      ),
+      // Entry grid — real stats, never fabricated (E2E #144).
+      if (entryTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.68),
+          size: const Size(0.66, 0.08),
+          columns: entryTiles.length.clamp(1, 2),
+          tiles: entryTiles,
+          tileColor: const Color(0x14FFFFFF),
+          valueColor: white,
+          labelColor: muted,
+          valueFontSize: 22,
+          labelFontSize: 12,
+          valueFont: CardFontIx.condMid,
+        ),
       // Barcode at the bottom of the badge.
       barcodeEl(
         pos: const Offset(0.5, 0.78),

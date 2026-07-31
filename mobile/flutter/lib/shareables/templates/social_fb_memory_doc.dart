@@ -15,7 +15,7 @@ CardDoc socialFbMemoryDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
   const ink = Color(0xFF111111);
-  const fbBlue = Color(0xFF1877F2);
+  const fbBlue = Color(0xFF1877F2);  // accent-allowlist: Facebook's own brand blue, third-party brand mark
   return cardDoc(
     aspect: aspect,
     presetId: 'socialFbMemory',

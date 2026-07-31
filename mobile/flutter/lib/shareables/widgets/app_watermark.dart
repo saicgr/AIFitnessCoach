@@ -59,7 +59,7 @@ class _Fallback extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF00D9FF), Color(0xFF9D4EDD)],
+          colors: [Color(0xFF00D9FF), Color(0xFF9D4EDD)], // accent-allowlist: fixed Zealova brand-mark gradient (watermark logo fallback) — must stay recognizable across every share regardless of the sharer's accent
         ),
         borderRadius: BorderRadius.circular(size * 0.25),
       ),

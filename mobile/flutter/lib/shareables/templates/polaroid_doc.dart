@@ -60,7 +60,7 @@ CardDoc polaroidDoc(Shareable data, ShareableAspect aspect) {
         binding: const DataBinding(BindingSource.periodLabel),
         font: 1,
         fontSize: 18,
-        color: const Color(0xB38B0000),
+        color: const Color(0xB38B0000),  // accent-allowlist: Polaroid's fixed vintage red-pen caption ink, matches polaroid_template.dart
         align: TextAlign.center,
         letterSpacing: 2,
         allCaps: true,

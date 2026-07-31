@@ -13,10 +13,11 @@ import 'doc_kit.dart';
 
 CardDoc ticketCinemaDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const white = Color(0xFFFFFFFF);
   const muted = Color(0x99FFFFFF);
   const panel = Color(0xFF16180D);
+  final fieldTiles = highlightTiles(s, max: 3);
   return cardDoc(
     aspect: aspect,
     presetId: 'ticketCinema',
@@ -103,23 +104,20 @@ CardDoc ticketCinemaDoc(Shareable s, ShareableAspect aspect) {
         color: const Color(0x33FFFFFF),
         thickness: 2,
       ),
-      // SCREEN / SEAT / TIME grid.
-      statGridEl(
-        pos: const Offset(0.5, 0.58),
-        size: const Size(0.8, 0.1),
-        columns: 3,
-        tiles: const [
-          ['07', 'SCREEN'],
-          ['H14', 'SEAT'],
-          ['AM', 'TIME'],
-        ],
-        tileColor: const Color(0x14D8FF3A),
-        valueColor: volt,
-        labelColor: muted,
-        valueFontSize: 32,
-        labelFontSize: 13,
-        valueFont: CardFontIx.display,
-      ),
+      // Field grid — real stats, never fabricated (E2E #144).
+      if (fieldTiles.isNotEmpty)
+        statGridEl(
+          pos: const Offset(0.5, 0.58),
+          size: const Size(0.8, 0.1),
+          columns: fieldTiles.length.clamp(1, 3),
+          tiles: fieldTiles,
+          tileColor: const Color(0x14D8FF3A),
+          valueColor: volt,
+          labelColor: muted,
+          valueFontSize: 32,
+          labelFontSize: 13,
+          valueFont: CardFontIx.display,
+        ),
       // Showtime / date line.
       textEl(
         pos: const Offset(0.5, 0.645),

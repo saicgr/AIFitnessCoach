@@ -19,7 +19,7 @@ CardDoc socialSnapStreakDoc(Shareable data, ShareableAspect aspect) {
     aspect: aspect,
     presetId: 'socialSnapStreak',
     accent: accent,
-    background: solidBg(const Color(0xFFFFFC00)),
+    background: solidBg(const Color(0xFFFFFC00)),  // accent-allowlist: Snapchat's own brand yellow, third-party brand mark
     elements: [
       // Flame.
       iconEl(

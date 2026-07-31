@@ -1068,7 +1068,7 @@ class BadgeProps extends ElementProps {
 
   const BadgeProps({
     this.shape = BadgeShape.circle,
-    this.fillGradient = const [Color(0xFFF59E0B), Color(0xFFB45309)],
+    this.fillGradient = const [Color(0xFFF59E0B), Color(0xFFB45309)],  // accent-allowlist: BadgeProps model default value, no BuildContext/data available — every real caller overrides explicitly
     this.borderColor = const Color(0xFFFFFFFF),
     this.borderWidth = 2.4,
     this.valueBinding = const DataBinding(BindingSource.healthScore),
@@ -1118,7 +1118,7 @@ class BadgeProps extends ElementProps {
         fillGradient: (v['fillGradient'] as List?)
                 ?.map((c) => _colorFromJson(c))
                 .toList(growable: false) ??
-            const [Color(0xFFF59E0B), Color(0xFFB45309)],
+            const [Color(0xFFF59E0B), Color(0xFFB45309)],  // accent-allowlist: BadgeProps.fromJson fallback default, no BuildContext/data available
         borderColor: _colorFromJson(v['borderColor']),
         borderWidth: (v['borderWidth'] as num?)?.toDouble() ?? 2.4,
         valueBinding: DataBinding.fromJson(v['valueBinding']),
@@ -1392,7 +1392,11 @@ class RepeaterProps extends ElementProps {
   final bool showCalories;
   /// When true, the repeater renders `data.exercises` (name + top set, with an
   /// optional thumbnail) instead of food items — the Hevy-style workout list.
-  final bool exerciseMode;
+  /// Null = infer from `data.kind` at render time (see `_repeater` in
+  /// card_doc_renderer.dart) — a preset that doesn't explicitly opt in used
+  /// to silently hard-default to the food path and render zero rows on every
+  /// workout/stats share (E2E #142).
+  final bool? exerciseMode;
   final bool showImage;
 
   const RepeaterProps({
@@ -1405,7 +1409,7 @@ class RepeaterProps extends ElementProps {
     this.textColor = const Color(0xFFFFFFFF),
     this.showAmount = true,
     this.showCalories = true,
-    this.exerciseMode = false,
+    this.exerciseMode,
     this.showImage = false,
   });
 
@@ -1450,7 +1454,7 @@ class RepeaterProps extends ElementProps {
         'textColor': _colorToJson(textColor),
         'showAmount': showAmount,
         'showCalories': showCalories,
-        'exerciseMode': exerciseMode,
+        if (exerciseMode != null) 'exerciseMode': exerciseMode,
         'showImage': showImage,
       };
 
@@ -1464,7 +1468,7 @@ class RepeaterProps extends ElementProps {
         textColor: _colorFromJson(v['textColor']),
         showAmount: v['showAmount'] as bool? ?? true,
         showCalories: v['showCalories'] as bool? ?? true,
-        exerciseMode: v['exerciseMode'] as bool? ?? false,
+        exerciseMode: v['exerciseMode'] as bool?,
         showImage: v['showImage'] as bool? ?? false,
       );
 }
@@ -1678,7 +1682,7 @@ class ChatBubbleProps extends ElementProps {
     this.text = 'Crushed leg day today 💪',
     this.textBinding = DataBinding.none,
     this.side = ChatSide.right,
-    this.tint = const Color(0xFF2563EB),
+    this.tint = const Color(0xFF2563EB),  // accent-allowlist: ChatBubbleProps model default value, no BuildContext/data available — every real caller overrides explicitly
     this.textColor = const Color(0xFFFFFFFF),
     this.fontSize = 28,
     this.fontIndex = 0,
@@ -1737,7 +1741,7 @@ class ChatBubbleProps extends ElementProps {
         text: v['text'] as String? ?? 'Crushed leg day today 💪',
         textBinding: DataBinding.fromJson(v['textBinding']),
         side: _enumFromJson(v['side'], ChatSide.values, ChatSide.right),
-        tint: _colorFromJson(v['tint'], const Color(0xFF2563EB)),
+        tint: _colorFromJson(v['tint'], const Color(0xFF2563EB)),  // accent-allowlist: ChatBubbleProps.fromJson fallback default, no BuildContext/data available
         textColor: _colorFromJson(v['textColor']),
         fontSize: (v['fontSize'] as num?)?.toDouble() ?? 28,
         fontIndex: (v['fontIndex'] as num?)?.toInt() ?? 0,
@@ -1952,7 +1956,7 @@ class RingStatProps extends ElementProps {
     this.centerValue = '72%',
     this.centerBinding = DataBinding.none,
     this.label = 'GOAL',
-    this.ringColor = const Color(0xFFF97316),
+    this.ringColor = const Color(0xFFF97316),  // accent-allowlist: RingGoalProps model default value, no BuildContext/data available — every real caller overrides explicitly
     this.trackColor = const Color(0x22FFFFFF),
     this.textColor = const Color(0xFFFFFFFF),
     this.strokeFraction = 0.12,
@@ -2023,7 +2027,7 @@ class RingStatProps extends ElementProps {
         centerValue: v['centerValue'] as String? ?? '72%',
         centerBinding: DataBinding.fromJson(v['centerBinding']),
         label: v['label'] as String? ?? 'GOAL',
-        ringColor: _colorFromJson(v['ringColor'], const Color(0xFFF97316)),
+        ringColor: _colorFromJson(v['ringColor'], const Color(0xFFF97316)),  // accent-allowlist: RingGoalProps.fromJson fallback default, no BuildContext/data available
         trackColor: _colorFromJson(v['trackColor'], const Color(0x22FFFFFF)),
         textColor: _colorFromJson(v['textColor']),
         strokeFraction: (v['strokeFraction'] as num?)?.toDouble() ?? 0.12,
@@ -2051,9 +2055,9 @@ class RingTrioProps extends ElementProps {
     this.outer = 0.82,
     this.middle = 0.7,
     this.inner = 0.6,
-    this.outerColor = const Color(0xFFFA114F),
-    this.middleColor = const Color(0xFF92E82A),
-    this.innerColor = const Color(0xFF1AD6FD),
+    this.outerColor = const Color(0xFFFA114F),  // accent-allowlist: RingTrioProps model default — Apple-style activity-ring colors, brand mimicry
+    this.middleColor = const Color(0xFF92E82A),  // accent-allowlist: RingTrioProps model default — Apple-style activity-ring colors, brand mimicry
+    this.innerColor = const Color(0xFF1AD6FD),  // accent-allowlist: RingTrioProps model default — Apple-style activity-ring colors, brand mimicry
     this.strokeFraction = 0.09,
     this.trackOpacity = 0.2,
   });
@@ -2098,9 +2102,9 @@ class RingTrioProps extends ElementProps {
         outer: (v['outer'] as num?)?.toDouble() ?? 0.82,
         middle: (v['middle'] as num?)?.toDouble() ?? 0.7,
         inner: (v['inner'] as num?)?.toDouble() ?? 0.6,
-        outerColor: _colorFromJson(v['outerColor'], const Color(0xFFFA114F)),
-        middleColor: _colorFromJson(v['middleColor'], const Color(0xFF92E82A)),
-        innerColor: _colorFromJson(v['innerColor'], const Color(0xFF1AD6FD)),
+        outerColor: _colorFromJson(v['outerColor'], const Color(0xFFFA114F)),  // accent-allowlist: RingTrioProps.fromJson fallback — Apple-style activity-ring colors, brand mimicry
+        middleColor: _colorFromJson(v['middleColor'], const Color(0xFF92E82A)),  // accent-allowlist: RingTrioProps.fromJson fallback — Apple-style activity-ring colors, brand mimicry
+        innerColor: _colorFromJson(v['innerColor'], const Color(0xFF1AD6FD)),  // accent-allowlist: RingTrioProps.fromJson fallback — Apple-style activity-ring colors, brand mimicry
         strokeFraction: (v['strokeFraction'] as num?)?.toDouble() ?? 0.09,
         trackOpacity: (v['trackOpacity'] as num?)?.toDouble() ?? 0.2,
       );
@@ -2218,7 +2222,7 @@ class GridHeatmapProps extends ElementProps {
   const GridHeatmapProps({
     this.cells = const [],
     this.columns = 13,
-    this.cellColor = const Color(0xFF22C55E),
+    this.cellColor = const Color(0xFF22C55E),  // accent-allowlist: GridHeatmapProps model default value, no BuildContext/data available — every real caller overrides explicitly
     this.emptyColor = const Color(0x1FFFFFFF),
     this.cellRadius = 3,
     this.gapFraction = 0.18,
@@ -2260,7 +2264,7 @@ class GridHeatmapProps extends ElementProps {
                 .toList(growable: false) ??
             const [],
         columns: (v['columns'] as num?)?.toInt() ?? 13,
-        cellColor: _colorFromJson(v['cellColor'], const Color(0xFF22C55E)),
+        cellColor: _colorFromJson(v['cellColor'], const Color(0xFF22C55E)),  // accent-allowlist: GridHeatmapProps.fromJson fallback default, no BuildContext/data available
         emptyColor: _colorFromJson(v['emptyColor'], const Color(0x1FFFFFFF)),
         cellRadius: (v['cellRadius'] as num?)?.toDouble() ?? 3,
         gapFraction: (v['gapFraction'] as num?)?.toDouble() ?? 0.18,
@@ -2279,7 +2283,7 @@ class RatingStarsProps extends ElementProps {
   const RatingStarsProps({
     this.rating = 4.5,
     this.count = 5,
-    this.filledColor = const Color(0xFFFFD23F),
+    this.filledColor = const Color(0xFFFFD23F),  // accent-allowlist: RatingStarsProps model default value, no BuildContext/data available — every real caller overrides explicitly
     this.emptyColor = const Color(0x33FFFFFF),
     this.spacingFraction = 0.18,
   });
@@ -2314,7 +2318,7 @@ class RatingStarsProps extends ElementProps {
   factory RatingStarsProps.fromJson(Map v) => RatingStarsProps(
         rating: (v['rating'] as num?)?.toDouble() ?? 4.5,
         count: (v['count'] as num?)?.toInt() ?? 5,
-        filledColor: _colorFromJson(v['filledColor'], const Color(0xFFFFD23F)),
+        filledColor: _colorFromJson(v['filledColor'], const Color(0xFFFFD23F)),  // accent-allowlist: RatingStarsProps.fromJson fallback default, no BuildContext/data available
         emptyColor: _colorFromJson(v['emptyColor'], const Color(0x33FFFFFF)),
         spacingFraction: (v['spacingFraction'] as num?)?.toDouble() ?? 0.18,
       );
@@ -2569,7 +2573,7 @@ class CardDoc {
     required this.elements,
     this.background = CardBackground.dark,
     this.presetId,
-    this.accentColor = const Color(0xFFF97316),
+    this.accentColor = const Color(0xFFF97316),  // accent-allowlist: CardDoc.accentColor model default — every real Shareable supplies its own accentColor explicitly (see adapters); this is only the class-level fallback
   });
 
   CardDoc copyWith({
@@ -2702,7 +2706,7 @@ class CardDoc {
       background: CardBackground.fromJson(v['background']),
       elements: elements,
       presetId: v['presetId'] as String?,
-      accentColor: _colorFromJson(v['accentColor'], const Color(0xFFF97316)),
+      accentColor: _colorFromJson(v['accentColor'], const Color(0xFFF97316)),  // accent-allowlist: CardDoc.accentColor fromJson fallback default, no data available
     );
   }
 

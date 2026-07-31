@@ -12,8 +12,8 @@ import 'doc_kit.dart';
 
 CardDoc iosNeonSignDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const neonPink = Color(0xFFFF2D95);
-  const neonCyan = Color(0xFF22D3EE);
+  const neonPink = Color(0xFFFF2D95);  // accent-allowlist: Neon Sign template's fixed neon pink/cyan tube colors (template design identity)
+  const neonCyan = Color(0xFF22D3EE);  // accent-allowlist: Neon Sign template's fixed neon pink/cyan tube colors (template design identity)
 
   return cardDoc(
     aspect: aspect,

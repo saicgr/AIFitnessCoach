@@ -14,7 +14,7 @@ CardDoc candyHeartDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   // A soft pastel ground tinted toward the accent — sweet, not loud.
   final ground = Color.lerp(const Color(0xFFFFF1F4), accent, 0.14)!;
-  final ink = Color.lerp(const Color(0xFF7A2E3C), accent, 0.30)!;
+  final ink = Color.lerp(const Color(0xFF7A2E3C), accent, 0.30)!;  // accent-allowlist: Candy Heart's blend target, part of the pastel look (blended WITH the real accent)
 
   return cardDoc(
     aspect: aspect,

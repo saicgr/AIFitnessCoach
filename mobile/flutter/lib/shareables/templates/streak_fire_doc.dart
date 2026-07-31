@@ -13,9 +13,9 @@ CardDoc streakFireDoc(Shareable data, ShareableAspect aspect) {
   return cardDoc(
     aspect: aspect,
     presetId: 'streakFire',
-    accent: const Color(0xFFFB923C),
+    accent: const Color(0xFFFB923C), // accent-allowlist: Streak Fire is a fixed flame-orange identity by design (see file doc comment) — doesn't track the user's app accent
     background: gradientBg(
-      const [Color(0xFF7C2D12), Color(0xFFB45309), Color(0xFF1F1411)],
+      const [Color(0xFF7C2D12), Color(0xFFB45309), Color(0xFF1F1411)], // accent-allowlist: Streak Fire fixed ember background gradient
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
@@ -25,8 +25,8 @@ CardDoc streakFireDoc(Shareable data, ShareableAspect aspect) {
         pos: const Offset(0.5, 0.42),
         size: const Size(1.0, 0.56),
         shape: ShapeKind.circle,
-        fill: const Color(0x8CFB923C),
-        gradient: const [Color(0x8CFB923C), Color(0x00FB923C)],
+        fill: const Color(0x8CFB923C), // accent-allowlist: Streak Fire flame glow, fixed fire theme
+        gradient: const [Color(0x8CFB923C), Color(0x00FB923C)], // accent-allowlist: Streak Fire flame glow, fixed fire theme
         radial: true,
       ),
       textEl(

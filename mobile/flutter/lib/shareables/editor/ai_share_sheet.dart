@@ -373,9 +373,9 @@ class _AiShareSheetState extends ConsumerState<AiShareSheet> {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.12),
+        color: Colors.red.withValues(alpha: 0.12), // accent-allowlist: error banner — must stay red regardless of accent
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.4)), // accent-allowlist: error banner — must stay red regardless of accent
       ),
       child: Text(msg,
           style: const TextStyle(color: Colors.white, fontSize: 13)),

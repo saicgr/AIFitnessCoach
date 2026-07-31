@@ -11,8 +11,8 @@ import 'doc_kit.dart';
 
 CardDoc eliteDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const gold = Color(0xFFFDE68A);
-  const goldBright = Color(0xFFFCD34D);
+  const gold = Color(0xFFFDE68A);  // accent-allowlist: Elite template's fixed gold-chrome palette, matches elite_template.dart
+  const goldBright = Color(0xFFFCD34D);  // accent-allowlist: Elite template's fixed gold-chrome palette, matches elite_template.dart
   return cardDoc(
     aspect: aspect,
     presetId: 'elite',

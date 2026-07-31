@@ -258,21 +258,21 @@ class _ExerciseRow extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFCD34D),
+                        color: const Color(0xFFFCD34D),  // accent-allowlist: PR trophy badge gold/bronze color, medal identity not accent
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.emoji_events_rounded,
-                              size: 11, color: Color(0xFF7A5C00)),
+                              size: 11, color: Color(0xFF7A5C00)),  // accent-allowlist: PR trophy badge gold/bronze color, medal identity not accent
                           SizedBox(width: 3),
                           Text(
                             'PR',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w900,
-                              color: Color(0xFF7A5C00),
+                              color: Color(0xFF7A5C00),  // accent-allowlist: PR trophy badge gold/bronze color, medal identity not accent
                             ),
                           ),
                         ],

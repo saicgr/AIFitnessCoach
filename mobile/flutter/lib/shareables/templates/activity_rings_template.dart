@@ -87,7 +87,7 @@ class ActivityRingsTemplate extends StatelessWidget {
         label: label(0, 'WORKOUTS'),
         value: value(0, '${d.heroValue?.round() ?? 0}'),
         progress: _progressFromValue(value(0, '0'), max: 30),
-        colors: [const Color(0xFFFF375F), const Color(0xFFFF6B82)],
+        colors: [const Color(0xFFFF375F), const Color(0xFFFF6B82)], // accent-allowlist: fixed WORKOUTS-ring color (Apple-Watch-style ring set) — VOLUME ring already carries the user's accent below, this ring stays fixed so the 3 rings stay visually distinct
       ),
       _Ring(
         label: label(1, 'VOLUME'),
@@ -99,7 +99,7 @@ class ActivityRingsTemplate extends StatelessWidget {
         label: label(2, 'STREAK'),
         value: value(2, '0'),
         progress: _progressFromValue(value(2, '0'), max: 30),
-        colors: [const Color(0xFFFFB35B), const Color(0xFFFF6B35)],
+        colors: [const Color(0xFFFFB35B), const Color(0xFFFF6B35)], // accent-allowlist: fixed STREAK-ring color, distinct from the accent-carrying VOLUME ring so all 3 rings stay visually distinguishable
       ),
     ];
   }

@@ -14,7 +14,7 @@ CardDoc socialPinterestPinDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
   const white70 = Color(0xB3FFFFFF);
-  const pinRed = Color(0xFFE60023);
+  const pinRed = Color(0xFFE60023);  // accent-allowlist: Pinterest's own brand red, third-party brand mark
   return cardDoc(
     aspect: aspect,
     presetId: 'socialPinterestPin',

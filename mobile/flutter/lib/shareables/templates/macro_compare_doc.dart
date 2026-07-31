@@ -12,9 +12,9 @@ import 'doc_kit.dart';
 
 CardDoc macroCompareDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
-  const proteinC = Color(0xFFA855F7);
-  const carbsC = Color(0xFF06B6D4);
-  const fatC = Color(0xFFF97316);
+  const proteinC = Color(0xFFA855F7);  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
+  const carbsC = Color(0xFF06B6D4);  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
+  const fatC = Color(0xFFF97316);  // accent-allowlist: macro identity color (protein/carbs/fat), consistent across nutrition surfaces
 
   // A stacked column at fractional x — three macro segments + a caption.
   // Segment heights are visual (a typical P/C/F balance), the editor lets

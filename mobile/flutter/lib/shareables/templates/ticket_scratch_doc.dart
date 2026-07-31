@@ -13,7 +13,7 @@ import 'doc_kit.dart';
 
 CardDoc ticketScratchDoc(Shareable s, ShareableAspect aspect) {
   final accent = s.accentColor;
-  const volt = Color(0xFFD8FF3A);
+  const volt = Color(0xFFD8FF3A);  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
   const ink = Color(0xFF14140A);
   const paper = Color(0xFF1A1C12);
   const white = Color(0xFFFFFFFF);
@@ -80,7 +80,7 @@ CardDoc ticketScratchDoc(Shareable s, ShareableAspect aspect) {
         size: const Size(0.22, 0.12),
         shape: ShapeKind.rounded,
         fill: const Color(0x14D8FF3A),
-        stroke: const Color(0x55D8FF3A),
+        stroke: const Color(0x55D8FF3A),  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
         strokeWidth: 1.5,
         cornerRadius: 12,
       ),
@@ -95,7 +95,7 @@ CardDoc ticketScratchDoc(Shareable s, ShareableAspect aspect) {
         size: const Size(0.22, 0.12),
         shape: ShapeKind.rounded,
         fill: const Color(0x14D8FF3A),
-        stroke: const Color(0x55D8FF3A),
+        stroke: const Color(0x55D8FF3A),  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
         strokeWidth: 1.5,
         cornerRadius: 12,
       ),
@@ -110,7 +110,7 @@ CardDoc ticketScratchDoc(Shareable s, ShareableAspect aspect) {
         size: const Size(0.22, 0.12),
         shape: ShapeKind.rounded,
         fill: const Color(0x14D8FF3A),
-        stroke: const Color(0x55D8FF3A),
+        stroke: const Color(0x55D8FF3A),  // accent-allowlist: Ticket family's fixed volt-lime identity (template design, `accent` is separately threaded to the doc's own accentColor field)
         strokeWidth: 1.5,
         cornerRadius: 12,
       ),

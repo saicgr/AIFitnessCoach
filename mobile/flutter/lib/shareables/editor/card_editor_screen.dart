@@ -15,6 +15,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/share_service.dart';
 import '../doc/card_doc.dart';
 import '../doc/card_doc_bindings.dart';
@@ -34,29 +35,34 @@ import '../../widgets/glass_sheet.dart';
 
 /// Volt-lime — the redesign signature accent (proofs.html). First swatch in
 /// the palette panel and the default the Studio nudges users toward.
-const Color _kVoltLime = Color(0xFFD8FF3A);
+const Color _kVoltLime = Color(0xFFD8FF3A);  // accent-allowlist: still used as the default/signature swatch in the card's own accent-choice palette (_accents list below) — a deliberate design option; every ambient-chrome usage was migrated to context.accentColor (see E2E row 15 fix)
 
 /// Wraps the editor's body + every glass sheet in a readable Chip theme. The
 /// Material-default selected ChoiceChip (purple fill + light label) was
 /// unreadable across the option rows; this single chokepoint makes every
-/// selected chip a volt fill with a dark label.
+/// selected chip an accent fill with a contrast-safe label — matches
+/// [_EditorChip]'s own selected-state color so stock ChoiceChips and the
+/// editor's custom chips agree (see E2E row 15: volt-lime previously fought
+/// the app's chosen accent here).
 Widget _editorChrome(BuildContext context, {required Widget child}) {
   final base = Theme.of(context);
+  final accent = context.accentColor;
+  final accentFg = accent.computeLuminance() > 0.5
+      ? const Color(0xFF0B0C0F)
+      : Colors.white;
   return Theme(
     data: base.copyWith(
       chipTheme: ChipThemeData(
         backgroundColor: Colors.white.withValues(alpha: 0.07),
-        selectedColor: _kVoltLime,
-        secondarySelectedColor: _kVoltLime,
+        selectedColor: accent,
+        secondarySelectedColor: accent,
         showCheckmark: false,
         side: const BorderSide(color: Colors.white24),
         shape: const StadiumBorder(),
         labelStyle: const TextStyle(
             color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-        secondaryLabelStyle: const TextStyle(
-            color: Color(0xFF0B0C0F),
-            fontWeight: FontWeight.w800,
-            fontSize: 13),
+        secondaryLabelStyle: TextStyle(
+            color: accentFg, fontWeight: FontWeight.w800, fontSize: 13),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
     ),
@@ -66,7 +72,7 @@ Widget _editorChrome(BuildContext context, {required Widget child}) {
 
 /// The editor's selection-chrome accent (kept neutral so it never clashes
 /// with a card whose own accent is volt-lime).
-const Color _kEditorAccent = Color(0xFF3B82F6);
+const Color _kEditorAccent = Color(0xFF3B82F6);  // accent-allowlist: intentionally neutral against BOTH the app accent and the card's own accent (see doc comment above) — migrating this to the app accent would reintroduce the exact clash it exists to prevent whenever a user's app accent matches their card accent
 
 class CardEditorScreen extends StatefulWidget {
   final CardDoc initialDoc;
@@ -154,12 +160,13 @@ class CardEditorScreen extends StatefulWidget {
     }
     pick ??= available.isNotEmpty ? available.first : null;
     final aspect = data.aspect;
-    final base = pick?.docBuilder?.call(data, aspect) ??
-        CardDoc(
-          aspect: aspect,
-          elements: const [],
-          accentColor: data.accentColor,
-        );
+    final base = pick != null
+        ? ShareableCatalog.buildTemplateDoc(pick, data, aspect)
+        : CardDoc(
+            aspect: aspect,
+            elements: const [],
+            accentColor: data.accentColor,
+          );
     switch (compose.mode) {
       case ComposeMode.noPhoto:
         return base;
@@ -439,31 +446,36 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     );
   }
 
-  /// The headline volt "Story" pill.
+  /// The headline "Story" pill — filled with the user's app accent (was
+  /// hardcoded volt-lime, which fought the app's chosen accent; see E2E row
+  /// 15). The icon/label flip white-or-ink based on the accent's own
+  /// luminance so the CTA stays legible for any accent choice.
   Widget _voltStoryButton() {
+    final accent = context.accentColor;
+    final fg =
+        accent.computeLuminance() > 0.5 ? const Color(0xFF0B0C0F) : Colors.white;
     return Opacity(
       opacity: _busy ? 0.5 : 1,
       child: Material(
-        color: _kVoltLime,
+        color: accent,
         borderRadius: BorderRadius.circular(26),
         child: InkWell(
           borderRadius: BorderRadius.circular(26),
           onTap: _busy ? null : _onStory,
-          child: const SizedBox(
+          child: SizedBox(
             height: 48,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.camera_alt_rounded,
-                    size: 18, color: Color(0xFF0B0C0F)),
-                SizedBox(width: 8),
+                Icon(Icons.camera_alt_rounded, size: 18, color: fg),
+                const SizedBox(width: 8),
                 Flexible(
                   child: Text('Story',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          color: Color(0xFF0B0C0F),
+                          color: fg,
                           fontWeight: FontWeight.w900,
                           fontSize: 15)),
                 ),
@@ -480,7 +492,12 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
   Widget _circleAction(String label, IconData icon, VoidCallback onTap,
       {bool volt = false}) {
     final disabled = _busy;
-    final fg = volt ? const Color(0xFF0B0C0F) : Colors.white;
+    final accent = context.accentColor;
+    final fg = volt
+        ? (accent.computeLuminance() > 0.5
+            ? const Color(0xFF0B0C0F)
+            : Colors.white)
+        : Colors.white;
     return TextButton(
       onPressed: disabled ? null : onTap,
       style: TextButton.styleFrom(
@@ -495,7 +512,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
             height: 38,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: volt ? _kVoltLime : Colors.white.withValues(alpha: 0.08),
+              color: volt ? accent : Colors.white.withValues(alpha: 0.08),
               shape: BoxShape.circle,
               border: volt ? null : Border.all(color: Colors.white24),
             ),
@@ -770,7 +787,9 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
   /// contrast and legibility guardrails — see the inline notes.
   void _applyRemix(_RemixRecipe r) {
     final aspect = _c.doc.aspect;
-    var next = r.spec != null ? r.spec!.docBuilder!(widget.data, aspect) : _c.doc;
+    var next = r.spec != null
+        ? ShareableCatalog.buildTemplateDoc(r.spec!, widget.data, aspect)
+        : _c.doc;
 
     // Photo preservation: the user's OWN photo (upload / log photo) is always
     // kept across a template swap; a stock/bound photo is kept only when the new
@@ -872,7 +891,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Reset',
-                style: TextStyle(color: Color(0xFFFF6B6B))),
+                style: TextStyle(color: Color(0xFFFF6B6B))),  // accent-allowlist: destructive/delete-action red, matches error semantic
           ),
         ],
       ),
@@ -1270,7 +1289,7 @@ class _SelectionOverlayState extends State<_SelectionOverlay> {
   Widget build(BuildContext context) {
     final el = widget.element;
     final rect = widget.geo.rectFor(el.transform);
-    const accent = Color(0xFF3B82F6);
+    const accent = Color(0xFF3B82F6);  // accent-allowlist: editor's own neutral selection-chrome blue (element-handle color), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
     const handle = 26.0;
 
     return Positioned(
@@ -1881,7 +1900,11 @@ String _elementLabel(ElementProps p) {
   if (p is DateStampProps) return 'Date';
   if (p is IconProps) return 'Sticker';
   if (p is WatermarkProps) return 'Logo';
-  if (p is RepeaterProps) return p.exerciseMode ? 'Exercises' : 'List';
+  // `exerciseMode` is a tri-state (null = infer from the share's kind at
+  // render time, see card_doc_renderer.dart); this label is cosmetic only,
+  // so an explicit `true` reads "Exercises" and anything else (false OR the
+  // inferred null case) reads the generic "List".
+  if (p is RepeaterProps) return p.exerciseMode == true ? 'Exercises' : 'List';
   if (p is StatGridProps) return 'Stat strip';
   if (p is GridHeatmapProps) return 'Grid';
   if (p is RingStatProps) return 'HR zone';
@@ -1899,6 +1922,10 @@ class _ContextPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final props = element.props;
+    final accent = context.accentColor;
+    final accentFg = accent.computeLuminance() > 0.5
+        ? const Color(0xFF0B0C0F)
+        : Colors.white;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1909,7 +1936,7 @@ class _ContextPanel extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4),
           child: Row(
             children: [
-              Icon(_elementIcon(props), size: 16, color: _kVoltLime),
+              Icon(_elementIcon(props), size: 16, color: accent),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1931,18 +1958,17 @@ class _ContextPanel extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(
-                    color: _kVoltLime,
+                    color: accent,
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_rounded,
-                          size: 16, color: Color(0xFF0B0C0F)),
-                      SizedBox(width: 4),
+                      Icon(Icons.check_rounded, size: 16, color: accentFg),
+                      const SizedBox(width: 4),
                       Text('Done',
                           style: TextStyle(
-                              color: Color(0xFF0B0C0F),
+                              color: accentFg,
                               fontSize: 13,
                               fontWeight: FontWeight.w800)),
                     ],
@@ -2072,9 +2098,9 @@ class _ContextPanel extends StatelessWidget {
           ),
           btn(Icons.delete_outline_rounded, 'Delete',
               controller.deleteSelected,
-              color: const Color(0xFFFF6B6B)),
+              color: const Color(0xFFFF6B6B)),  // accent-allowlist: destructive/delete-action red, matches error semantic
           btn(Icons.check_rounded, 'Done', controller.deselect,
-              color: const Color(0xFF3B82F6)),
+              color: const Color(0xFF3B82F6)),  // accent-allowlist: editor's own neutral selection-chrome blue (secondary Done action), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
         ],
       ),
     );
@@ -2200,7 +2226,7 @@ class _PerspectiveSheetState extends State<_PerspectiveSheet> {
                   },
                   child: const Text('Reset',
                       style: TextStyle(
-                          color: Color(0xFF3B82F6),
+                          color: Color(0xFF3B82F6),  // accent-allowlist: editor's own neutral selection-chrome blue (Reset link), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                           fontSize: 13,
                           fontWeight: FontWeight.w700)),
                 ),
@@ -2257,7 +2283,7 @@ class _PerspectiveSheetState extends State<_PerspectiveSheet> {
                           width: 28,
                           height: 28,
                           decoration: BoxDecoration(
-                            color: _kVoltLime,
+                            color: context.accentColor,
                             shape: BoxShape.circle,
                             border:
                                 Border.all(color: Colors.white, width: 2),
@@ -2402,7 +2428,7 @@ class _TextControls extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: props.color.toARGB32() == c.toARGB32()
-                            ? const Color(0xFF3B82F6)
+                            ? const Color(0xFF3B82F6)  // accent-allowlist: editor's own neutral selection-chrome blue (swatch-selected ring), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                             : Colors.white24,
                         width: props.color.toARGB32() == c.toARGB32() ? 3 : 1,
                       ),
@@ -2438,7 +2464,7 @@ class _TextControls extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: props.highlightColor == null
-                                ? const Color(0xFF3B82F6)
+                                ? const Color(0xFF3B82F6)  // accent-allowlist: editor's own neutral selection-chrome blue (swatch-selected ring), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                                 : Colors.white24,
                             width: props.highlightColor == null ? 3 : 1,
                           ),
@@ -2463,7 +2489,7 @@ class _TextControls extends StatelessWidget {
                             border: Border.all(
                               color: props.highlightColor?.toARGB32() ==
                                       c.toARGB32()
-                                  ? const Color(0xFF3B82F6)
+                                  ? const Color(0xFF3B82F6)  // accent-allowlist: editor's own neutral selection-chrome blue (swatch-selected ring), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                                   : Colors.white24,
                               width: props.highlightColor?.toARGB32() ==
                                       c.toARGB32()
@@ -2520,12 +2546,12 @@ class _TextControls extends StatelessWidget {
 const List<Color> _kTextColors = [
   Color(0xFFFFFFFF),
   Color(0xFF111111),
-  Color(0xFFFFD23F),
-  Color(0xFFFF6B6B),
-  Color(0xFF06B6D4),
-  Color(0xFFA855F7),
-  Color(0xFF22C55E),
-  Color(0xFFF97316),
+  Color(0xFFFFD23F),  // accent-allowlist: named Remix Look preset palette (design choices in the remix picker, not app chrome)
+  Color(0xFFFF6B6B),  // accent-allowlist: named Remix Look preset palette (design choices in the remix picker, not app chrome)
+  Color(0xFF06B6D4),  // accent-allowlist: named Remix Look preset palette (design choices in the remix picker, not app chrome)
+  Color(0xFFA855F7),  // accent-allowlist: named Remix Look preset palette (design choices in the remix picker, not app chrome)
+  Color(0xFF22C55E),  // accent-allowlist: named Remix Look preset palette (design choices in the remix picker, not app chrome)
+  Color(0xFFF97316),  // accent-allowlist: named Remix Look preset palette (design choices in the remix picker, not app chrome)
 ];
 
 /// A curated, cohesive "look" the Remix tool shuffles through — a hand-vetted
@@ -2551,33 +2577,33 @@ class _RemixLook {
 /// The Remix catalogue. Each look is a tested pairing; the engine layers it over
 /// a (separately shuffled) template, with contrast + legibility guardrails.
 const List<_RemixLook> _kRemixLooks = [
-  _RemixLook('Neon Wrapped', Color(0xFFCCFF00), CardFontIx.display,
+  _RemixLook('Neon Wrapped', Color(0xFFCCFF00), CardFontIx.display,  // accent-allowlist: 'Neon Wrapped' Remix Look preset color, named design choice
       PhotoFilter.darker, {ShareableKind.wrapped, ShareableKind.workoutComplete}),
   _RemixLook('Editorial', Color(0xFFFFFFFF), CardFontIx.serif, PhotoFilter.bw),
-  _RemixLook('Sunset Poster', Color(0xFFF97316), CardFontIx.grotesk,
+  _RemixLook('Sunset Poster', Color(0xFFF97316), CardFontIx.grotesk,  // accent-allowlist: 'Sunset Poster' Remix Look preset color, named design choice
       PhotoFilter.warm),
-  _RemixLook('Coral Pop', Color(0xFFFF6B6B), CardFontIx.display,
+  _RemixLook('Coral Pop', Color(0xFFFF6B6B), CardFontIx.display,  // accent-allowlist: 'Coral Pop' Remix Look preset color, named design choice
       PhotoFilter.original),
-  _RemixLook('Cyber', Color(0xFF06B6D4), CardFontIx.cond, PhotoFilter.cool,
+  _RemixLook('Cyber', Color(0xFF06B6D4), CardFontIx.cond, PhotoFilter.cool,  // accent-allowlist: 'Cyber' Remix Look preset color, named design choice
       {ShareableKind.personalRecords, ShareableKind.strength, ShareableKind.oneRm}),
   _RemixLook('Mono Minimal', Color(0xFF9CA3AF), CardFontIx.mono, PhotoFilter.bw),
-  _RemixLook('Amber Heat', Color(0xFFFFD23F), CardFontIx.display,
+  _RemixLook('Amber Heat', Color(0xFFFFD23F), CardFontIx.display,  // accent-allowlist: 'Amber Heat' Remix Look preset color, named design choice
       PhotoFilter.warm, {ShareableKind.workoutComplete, ShareableKind.streak}),
-  _RemixLook('Mint Fresh', Color(0xFF34D399), CardFontIx.grotesk,
+  _RemixLook('Mint Fresh', Color(0xFF34D399), CardFontIx.grotesk,  // accent-allowlist: 'Mint Fresh' Remix Look preset color, named design choice
       PhotoFilter.fade, {ShareableKind.nutrition, ShareableKind.foodLog}),
-  _RemixLook('Violet Night', Color(0xFFA855F7), CardFontIx.display,
+  _RemixLook('Violet Night', Color(0xFFA855F7), CardFontIx.display,  // accent-allowlist: 'Violet Night' Remix Look preset color, named design choice
       PhotoFilter.darker),
-  _RemixLook('Magazine', Color(0xFFFF2D55), CardFontIx.serif, PhotoFilter.fade),
-  _RemixLook('Ocean', Color(0xFF3B82F6), CardFontIx.cond, PhotoFilter.cool),
-  _RemixLook('Greenprint', Color(0xFF22C55E), CardFontIx.grotesk,
+  _RemixLook('Magazine', Color(0xFFFF2D55), CardFontIx.serif, PhotoFilter.fade),  // accent-allowlist: 'Magazine' Remix Look preset color, named design choice
+  _RemixLook('Ocean', Color(0xFF3B82F6), CardFontIx.cond, PhotoFilter.cool),  // accent-allowlist: 'Ocean' Remix Look preset color, named design choice
+  _RemixLook('Greenprint', Color(0xFF22C55E), CardFontIx.grotesk,  // accent-allowlist: 'Greenprint' Remix Look preset color, named design choice
       PhotoFilter.original, {ShareableKind.progressCharts, ShareableKind.weeklyProgress}),
-  _RemixLook('Indigo Press', Color(0xFF6366F1), CardFontIx.condMid,
+  _RemixLook('Indigo Press', Color(0xFF6366F1), CardFontIx.condMid,  // accent-allowlist: 'Indigo Press' Remix Look preset color, named design choice
       PhotoFilter.darker),
-  _RemixLook('Hot Magenta', Color(0xFFEC4899), CardFontIx.display,
+  _RemixLook('Hot Magenta', Color(0xFFEC4899), CardFontIx.display,  // accent-allowlist: 'Hot Magenta' Remix Look preset color, named design choice
       PhotoFilter.original),
-  _RemixLook('Classic Serif', Color(0xFFF97316), CardFontIx.serif,
+  _RemixLook('Classic Serif', Color(0xFFF97316), CardFontIx.serif,  // accent-allowlist: 'Classic Serif' Remix Look preset color, named design choice
       PhotoFilter.original),
-  _RemixLook('Volt Mono', Color(0xFFCCFF00), CardFontIx.mono, PhotoFilter.darker),
+  _RemixLook('Volt Mono', Color(0xFFCCFF00), CardFontIx.mono, PhotoFilter.darker),  // accent-allowlist: 'Volt Mono' Remix Look preset color, named design choice
 ];
 
 /// A resolved Remix recipe — the template to build from (null = restyle the
@@ -2624,7 +2650,7 @@ Color _ensureAccentContrast(Color accent, CardBackground bg) {
   final lo = math.min(bgLum, acLum) + 0.05;
   if (hi / lo >= 2.3) return accent; // enough contrast
   // Too close: dark bg → bright volt; light bg → hot red.
-  return bgLum > 0.5 ? const Color(0xFFFF2D55) : const Color(0xFFCCFF00);
+  return bgLum > 0.5 ? const Color(0xFFFF2D55) : const Color(0xFFCCFF00);  // accent-allowlist: _ensureAccentContrast() fallback pair (bright-volt / hot-red) — a contrast algorithm, not app chrome
 }
 
 /// Font-row display order: lead with the visually DISTINCT typefaces (so the
@@ -2639,7 +2665,8 @@ const List<int> _kFontDisplayOrder = [
 
 /// A readable selectable chip for the editor's option rows. The bare Material
 /// [ChoiceChip] rendered an unreadable purple-fill / light-text selected state;
-/// this uses the volt accent + dark label so the selection is obvious.
+/// this uses the app accent + a contrast-safe label so the selection is
+/// obvious and matches the user's chosen accent (see E2E row 15).
 /// [labelStyle] lets the font row preview each typeface in its own face.
 class _EditorChip extends StatelessWidget {
   final String label;
@@ -2655,6 +2682,10 @@ class _EditorChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = context.accentColor;
+    final accentFg = accent.computeLuminance() > 0.5
+        ? const Color(0xFF0B0C0F)
+        : Colors.white;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -2664,14 +2695,14 @@ class _EditorChip extends StatelessWidget {
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: selected ? _kVoltLime : Colors.white.withValues(alpha: 0.07),
+          color: selected ? accent : Colors.white.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ? _kVoltLime : Colors.white24),
+          border: Border.all(color: selected ? accent : Colors.white24),
         ),
         child: Text(
           label,
           style: (labelStyle ?? const TextStyle()).copyWith(
-            color: selected ? const Color(0xFF0B0C0F) : Colors.white,
+            color: selected ? accentFg : Colors.white,
             fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             fontSize: labelStyle?.fontSize ?? 13,
           ),
@@ -2932,7 +2963,7 @@ class _ShapeControls extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: props.fillColor == c
-                            ? const Color(0xFF3B82F6)
+                            ? const Color(0xFF3B82F6)  // accent-allowlist: editor's own neutral selection-chrome blue (swatch-selected ring), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                             : Colors.white24,
                         width: props.fillColor == c ? 3 : 1,
                       ),
@@ -3558,7 +3589,10 @@ class _RepeaterControls extends StatelessWidget {
                 (v) => props.copyWith(showAmount: v)),
             _toggle('Calories', props.showCalories,
                 (v) => props.copyWith(showCalories: v)),
-            if (props.exerciseMode)
+            // Explicit `true` only — `null` (inferred) still shows the
+            // generic food controls in the editor since we don't thread the
+            // share's `kind` into this widget.
+            if (props.exerciseMode == true)
               _toggle('Image', props.showImage,
                   (v) => props.copyWith(showImage: v)),
           ],
@@ -4200,17 +4234,17 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
   static const List<Color> _solids = [
     Color(0xFF0D1117), Color(0xFF15171C), Color(0xFF1C2128),
     Color(0xFFFFFFFF), Color(0xFFF4EFE6), Color(0xFF111111),
-    Color(0xFF4F5BD5), Color(0xFFD62976), Color(0xFFFA7E1E),
-    Color(0xFF16A34A), Color(0xFF6B7280), Color(0xFFF59E0B),
+    Color(0xFF4F5BD5), Color(0xFFD62976), Color(0xFFFA7E1E),  // accent-allowlist: fixed background-color/gradient picker palette (solid + gradient swatch options), design choices not app chrome
+    Color(0xFF16A34A), Color(0xFF6B7280), Color(0xFFF59E0B),  // accent-allowlist: fixed background-color/gradient picker palette (solid + gradient swatch options), design choices not app chrome
   ];
 
   static const List<List<Color>> _gradients = [
-    [Color(0xFF4F5BD5), Color(0xFFD62976)],
-    [Color(0xFFFA7E1E), Color(0xFFD62976)],
+    [Color(0xFF4F5BD5), Color(0xFFD62976)],  // accent-allowlist: fixed background-gradient picker palette (gradient swatch options), design choices not app chrome
+    [Color(0xFFFA7E1E), Color(0xFFD62976)],  // accent-allowlist: fixed background-gradient picker palette (gradient swatch options), design choices not app chrome
     [Color(0xFF0D1117), Color(0xFF1C2128)],
-    [Color(0xFF16A34A), Color(0xFF0D1117)],
-    [Color(0xFFF59E0B), Color(0xFF7C2D12)],
-    [Color(0xFF6366F1), Color(0xFF0D1117)],
+    [Color(0xFF16A34A), Color(0xFF0D1117)],  // accent-allowlist: fixed background-gradient picker palette (gradient swatch options), design choices not app chrome
+    [Color(0xFFF59E0B), Color(0xFF7C2D12)],  // accent-allowlist: fixed background-gradient picker palette (gradient swatch options), design choices not app chrome
+    [Color(0xFF6366F1), Color(0xFF0D1117)],  // accent-allowlist: fixed background-gradient picker palette (gradient swatch options), design choices not app chrome
   ];
 
   /// Bundled background packs — drawn from the shared
@@ -4543,7 +4577,7 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
           height: 84,
           decoration: BoxDecoration(
             border: Border.all(
-              color: selected ? _kVoltLime : Colors.white24,
+              color: selected ? context.accentColor : Colors.white24,
               width: selected ? 2.4 : 1,
             ),
             borderRadius: BorderRadius.circular(12),
@@ -4598,7 +4632,7 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
               height: 84,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: selected ? _kVoltLime : Colors.white24,
+                  color: selected ? context.accentColor : Colors.white24,
                   width: selected ? 2.4 : 1,
                 ),
                 borderRadius: BorderRadius.circular(12),
@@ -4754,7 +4788,8 @@ class _VariationsSheetState extends State<_VariationsSheet> {
                         // Build at the editor's current aspect so the swap
                         // lands in the same ratio the user is editing in;
                         // keep the chosen photo backdrop.
-                        var next = spec.docBuilder!(widget.data, aspect);
+                        var next =
+                            ShareableCatalog.buildTemplateDoc(spec, widget.data, aspect);
                         // Carry the user's photo into the new template ONLY when
                         // the template doesn't define its own photo — so a photo
                         // template (Immersive, Cover Story…) lands exactly like
@@ -4782,6 +4817,10 @@ class _VariationsSheetState extends State<_VariationsSheet> {
 
   Widget _catPill(String label, ShareableCategory? cat, bool selected,
       {IconData? icon, bool iconOnly = false}) {
+    final accent = context.accentColor;
+    final accentFg = accent.computeLuminance() > 0.5
+        ? const Color(0xFF0B0C0F)
+        : Colors.white;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -4790,23 +4829,20 @@ class _VariationsSheetState extends State<_VariationsSheet> {
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: iconOnly ? 11 : 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? _kVoltLime : Colors.white.withValues(alpha: 0.07),
+          color: selected ? accent : Colors.white.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: selected ? _kVoltLime : Colors.white24),
+          border: Border.all(color: selected ? accent : Colors.white24),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (icon != null)
-              Icon(icon,
-                  size: 14,
-                  color: selected ? const Color(0xFF0B0C0F) : Colors.white70),
+              Icon(icon, size: 14, color: selected ? accentFg : Colors.white70),
             if (icon != null && !iconOnly) const SizedBox(width: 5),
             if (!iconOnly)
               Text(label,
                   style: TextStyle(
-                      color:
-                          selected ? const Color(0xFF0B0C0F) : Colors.white70,
+                      color: selected ? accentFg : Colors.white70,
                       fontWeight: FontWeight.w700,
                       fontSize: 12.5)),
           ],
@@ -4835,8 +4871,9 @@ class _VariationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     // Build the preset once for the thumbnail. Cheap value objects; a single
     // render at thumbnail scale.
-    final doc = spec.docBuilder!(data, aspect);
+    final doc = ShareableCatalog.buildTemplateDoc(spec, data, aspect);
     final design = aspect.size;
+    final accent = context.accentColor;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -4848,7 +4885,7 @@ class _VariationTile extends StatelessWidget {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: selected ? _kVoltLime : Colors.white12,
+                    color: selected ? accent : Colors.white12,
                     width: selected ? 2.4 : 1,
                   ),
                   borderRadius: BorderRadius.circular(10),
@@ -4881,7 +4918,7 @@ class _VariationTile extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: selected ? _kVoltLime : Colors.white70,
+              color: selected ? accent : Colors.white70,
               fontSize: 11,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
             ),
@@ -4903,17 +4940,17 @@ class _PaletteSheet extends StatelessWidget {
 
   static const List<Color> _accents = [
     _kVoltLime, // signature
-    Color(0xFFF97316), // orange (legacy default)
-    Color(0xFFFF2D55), // hot red
-    Color(0xFFFF6B6B), // coral
-    Color(0xFFFFD23F), // amber
-    Color(0xFF34D399), // mint
-    Color(0xFF22C55E), // green
-    Color(0xFF06B6D4), // cyan
-    Color(0xFF3B82F6), // blue
-    Color(0xFF6366F1), // indigo
-    Color(0xFFA855F7), // violet
-    Color(0xFFEC4899), // magenta
+    Color(0xFFF97316), // orange (legacy default)  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFFFF2D55), // hot red  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFFFF6B6B), // coral  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFFFFD23F), // amber  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFF34D399), // mint  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFF22C55E), // green  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFF06B6D4), // cyan  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFF3B82F6), // blue  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFF6366F1), // indigo  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFFA855F7), // violet  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
+    Color(0xFFEC4899), // magenta  // accent-allowlist: card-accent choice palette (_accents list) — swatches the user picks FROM to set the card's own accent, not app chrome
     Color(0xFFFFFFFF), // white
     Color(0xFF9CA3AF), // steel
   ];
@@ -5100,13 +5137,13 @@ class _LayersSheet extends StatelessWidget {
                         dense: true,
                         leading: Icon(icon,
                             color: selected
-                                ? const Color(0xFF3B82F6)
+                                ? const Color(0xFF3B82F6)  // accent-allowlist: editor's own neutral selection-chrome blue (layers-list selected row), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                                 : Colors.white70,
                             size: 20),
                         title: Text(label,
                             style: TextStyle(
                                 color: selected
-                                    ? const Color(0xFF3B82F6)
+                                    ? const Color(0xFF3B82F6)  // accent-allowlist: editor's own neutral selection-chrome blue (layers-list selected row), intentionally neutral against BOTH the app accent and the card's own accent — see _kEditorAccent doc comment
                                     : Colors.white,
                                 fontSize: 14)),
                         onTap: () {

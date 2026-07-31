@@ -135,7 +135,7 @@ class MacroPieCardTemplate extends StatelessWidget {
               label: 'Protein',
               grams: nutrition.proteinG,
               percent: pct(nutrition.proteinG, pKcal),
-              color: AppColors.macroProtein,
+              color: AppColors.macroProtein,  // accent-allowlist: macro identity color — protein/carbs/fat stay consistent across every nutrition surface
               mul: mul,
             ),
             SizedBox(height: 10 * mul),
@@ -143,7 +143,7 @@ class MacroPieCardTemplate extends StatelessWidget {
               label: 'Carbs',
               grams: nutrition.carbsG,
               percent: pct(nutrition.carbsG, cKcal),
-              color: AppColors.macroCarbs,
+              color: AppColors.macroCarbs,  // accent-allowlist: macro identity color — protein/carbs/fat stay consistent across every nutrition surface
               mul: mul,
             ),
             SizedBox(height: 10 * mul),
@@ -151,7 +151,7 @@ class MacroPieCardTemplate extends StatelessWidget {
               label: 'Fat',
               grams: nutrition.fatG,
               percent: pct(nutrition.fatG, fKcal),
-              color: AppColors.macroFat,
+              color: AppColors.macroFat,  // accent-allowlist: macro identity color — protein/carbs/fat stay consistent across every nutrition surface
               mul: mul,
             ),
             SizedBox(height: 20 * mul),
