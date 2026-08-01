@@ -60,7 +60,10 @@ void main() {
       });
 
       final c = makeContainer();
-      final state = await _settled(c, test: (v) => v.contains(RingKind.recovery));
+      // NOTE: don't settle on "contains recovery" — `RingKindX.defaultOrder`
+      // (the pre-load state) already contains it, so the predicate would pass
+      // before `_load()` resolves. The persisted blob dedupes to 6 kinds.
+      final state = await _settled(c, test: (v) => v.length == 6);
 
       // No duplicates — the invariant the keyed ReorderableListView relies on.
       expect(state.length, state.toSet().length,
@@ -120,9 +123,12 @@ void main() {
       final state = c.read(ringVisibilityProvider);
       expect(state.length, state.toSet().length);
       expect(state.where((k) => k == RingKind.move).length, 1);
-      // Core rings are all still present.
+      // Core rings are all still present. `coreOrder` — NOT `defaultOrder`,
+      // which also carries the optional first-launch extras (active energy /
+      // recovery / hydration / weight / heart rate / protein) that setOrder
+      // is allowed to drop because they're user-hideable.
       expect(
-        RingKindX.defaultOrder.every(state.contains),
+        RingKindX.coreOrder.every(state.contains),
         isTrue,
         reason: 'core rings must survive setOrder: $state',
       );

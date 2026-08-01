@@ -1,6 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/workout/controllers/workout_timer_controller.dart';
 
+/// Cancels the controller's timers and drains the one-shot haptic
+/// `Future.delayed` follow-ups that [HapticService.restTimerComplete] schedules.
+///
+/// This MUST happen inside the `testWidgets` body: the framework's
+/// "A Timer is still pending" invariant (`AutomatedTestWidgetsFlutterBinding.
+/// _verifyInvariants`) runs at the end of the test body, *before* any
+/// `tearDown` callback. Disposing only in `tearDown` is too late.
+Future<void> drainTimers(WidgetTester tester, void Function() dispose) async {
+  dispose();
+  await tester.pump(const Duration(milliseconds: 500));
+}
+
 void main() {
   group('WorkoutTimerController', () {
     late WorkoutTimerController controller;
@@ -53,6 +65,8 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
 
       expect(controller.workoutSeconds, greaterThan(0));
+
+      await drainTimers(tester, controller.dispose);
     });
 
     testWidgets('startRestTimer sets initial values', (tester) async {
@@ -61,6 +75,8 @@ void main() {
       expect(controller.restSecondsRemaining, 60);
       expect(controller.initialRestDuration, 60);
       expect(controller.restProgress, 1.0);
+
+      await drainTimers(tester, controller.dispose);
     });
 
     testWidgets('rest timer decrements and calls onComplete', (tester) async {
@@ -85,6 +101,8 @@ void main() {
 
       expect(completed, true);
       expect(controller.restSecondsRemaining, 0);
+
+      await drainTimers(tester, controller.dispose);
     });
 
     test('restProgress calculates correctly', () {
@@ -105,6 +123,8 @@ void main() {
       await tester.pump(const Duration(seconds: 2));
 
       expect(controller.workoutSeconds, initialSeconds);
+
+      await drainTimers(tester, controller.dispose);
     });
   });
 
@@ -132,6 +152,8 @@ void main() {
 
       await tester.pump(const Duration(seconds: 1));
       expect(controller.secondsRemaining, lessThan(60));
+
+      await drainTimers(tester, controller.dispose);
     });
 
     testWidgets('pause stops timer', (tester) async {
@@ -155,6 +177,8 @@ void main() {
       expect(controller.isRunning, true);
       await tester.pump(const Duration(seconds: 1));
       expect(controller.secondsRemaining, lessThan(remaining));
+
+      await drainTimers(tester, controller.dispose);
     });
 
     test('stop resets running state', () {
@@ -182,6 +206,8 @@ void main() {
 
       expect(completed, true);
       expect(controller.isRunning, false);
+
+      await drainTimers(tester, controller.dispose);
     });
 
     testWidgets('onTick called on each tick', (tester) async {
@@ -193,6 +219,8 @@ void main() {
       await tester.pump(const Duration(seconds: 3));
 
       expect(tickCount, greaterThan(0));
+
+      await drainTimers(tester, controller.dispose);
     });
   });
 }

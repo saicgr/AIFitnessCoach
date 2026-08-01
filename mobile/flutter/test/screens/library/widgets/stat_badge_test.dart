@@ -20,7 +20,9 @@ void main() {
       );
 
       expect(find.byIcon(Icons.fitness_center), findsOneWidget);
-      expect(find.text('50'), findsOneWidget);
+      // The value goes through the shared [StatNumber] widget, which paints a
+      // `RichText` (FittedBox + tabular figures) rather than a plain `Text`.
+      expect(find.text('50', findRichText: true), findsOneWidget);
       expect(find.text('sets'), findsOneWidget);
     });
 
@@ -58,7 +60,7 @@ void main() {
         ),
       );
 
-      expect(find.text('45'), findsOneWidget);
+      expect(find.text('45', findRichText: true), findsOneWidget);
       expect(find.text('min'), findsOneWidget);
     });
   });

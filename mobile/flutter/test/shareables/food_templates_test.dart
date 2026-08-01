@@ -144,8 +144,44 @@ void main() {
     expect(noPhoto.contains(ShareableTemplate.macroRingsCard), isTrue);
     expect(noPhoto.contains(ShareableTemplate.nutritionFactsCard), isTrue);
 
-    // A foodLog share surfaces exactly the 14 food templates — no generic
-    // workout-shaped templates leak in.
-    expect(withPhoto.length, 14);
+    // The food gallery is a CLOSED set: only templates that explicitly list
+    // `foodLog` in their kinds qualify (ShareableTemplateSpec.isAvailableFor).
+    // The gallery has since grown well past the original 14 cards, so assert
+    // the invariant that actually matters instead of a headcount: every one
+    // of the 14 originals is still offered, and no generic workout-shaped
+    // template leaks in through the `statsOverview` wildcard.
+    for (final t in const [
+      ShareableTemplate.foodPhotoMacros,
+      ShareableTemplate.foodPolaroid,
+      ShareableTemplate.foodMagazine,
+      ShareableTemplate.foodCollage,
+      ShareableTemplate.macroRingsCard,
+      ShareableTemplate.macroNumbersCard,
+      ShareableTemplate.macroPieCard,
+      ShareableTemplate.macroPlateCard,
+      ShareableTemplate.whatIAteCard,
+      ShareableTemplate.macroWaffleCard,
+      ShareableTemplate.macroBarsCard,
+      ShareableTemplate.nutritionFactsCard,
+      ShareableTemplate.foodReceipt,
+      ShareableTemplate.foodScoreCard,
+    ]) {
+      expect(withPhoto.contains(t), isTrue, reason: '$t missing from gallery');
+    }
+    for (final t in const [
+      ShareableTemplate.workoutDetails,
+      ShareableTemplate.prs,
+      ShareableTemplate.streakFire,
+      ShareableTemplate.weightGraph,
+      ShareableTemplate.muscleMap,
+      ShareableTemplate.wrapped,
+    ]) {
+      expect(withPhoto.contains(t), isFalse, reason: '$t leaked into food');
+    }
+    // Every offered template must itself declare foodLog support.
+    for (final spec in ShareableCatalog.availableFor(_food(ShareableAspect.story))) {
+      expect(spec.kinds.contains(ShareableKind.foodLog), isTrue,
+          reason: '${spec.template} does not declare foodLog');
+    }
   });
 }

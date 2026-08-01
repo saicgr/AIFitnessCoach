@@ -5,9 +5,13 @@
 /// - Suggested weight value renders with the correct unit.
 /// - Bodyweight branch (suggested_weight == null) renders rep target card.
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fitwiz/core/providers/user_provider.dart';
+
 import 'package:fitwiz/screens/workout/widgets/fatigue_alert_modal.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 FatigueAlertData _alert({
   double? suggestedWeight = 37.5,
@@ -28,18 +32,33 @@ FatigueAlertData _alert({
   });
 }
 
+/// The modal converts the backend payload into the user's *display* unit,
+/// which it reads from `workoutWeightUnitProvider` — so it needs a
+/// ProviderScope, and each test pins the unit it is asserting on.
+Widget _host(Widget child, {required String weightUnit}) {
+  return ProviderScope(
+    overrides: [
+      workoutWeightUnitProvider.overrideWith((ref) => weightUnit),
+    ],
+    child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: child),
+    ),
+  );
+}
+
 void main() {
   testWidgets('renders lb unit and value, never "kg"', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: FatigueAlertModal(
-          alertData: _alert(suggestedWeight: 37.5, unit: 'lb'),
-          currentWeight: 45.0,
-          exerciseName: 'Bench Press',
-          onAcceptSuggestion: () {},
-          onContinueAsPlanned: () {},
-        ),
+    await tester.pumpWidget(_host(
+      FatigueAlertModal(
+        alertData: _alert(suggestedWeight: 37.5, unit: 'lb'),
+        currentWeight: 45.0,
+        exerciseName: 'Bench Press',
+        onAcceptSuggestion: () {},
+        onContinueAsPlanned: () {},
       ),
+      weightUnit: 'lb',
     ));
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -50,16 +69,15 @@ void main() {
   });
 
   testWidgets('renders kg unit when user is on metric', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: FatigueAlertModal(
-          alertData: _alert(suggestedWeight: 17.5, unit: 'kg'),
-          currentWeight: 20.0,
-          exerciseName: 'Squat',
-          onAcceptSuggestion: () {},
-          onContinueAsPlanned: () {},
-        ),
+    await tester.pumpWidget(_host(
+      FatigueAlertModal(
+        alertData: _alert(suggestedWeight: 17.5, unit: 'kg'),
+        currentWeight: 20.0,
+        exerciseName: 'Squat',
+        onAcceptSuggestion: () {},
+        onContinueAsPlanned: () {},
       ),
+      weightUnit: 'kg',
     ));
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -68,16 +86,15 @@ void main() {
   });
 
   testWidgets('bodyweight branch shows rep target card, not weight diff', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: FatigueAlertModal(
-          alertData: _alert(suggestedWeight: null, unit: 'lb', repTarget: 8),
-          currentWeight: 0.0,
-          exerciseName: 'Pull-up',
-          onAcceptSuggestion: () {},
-          onContinueAsPlanned: () {},
-        ),
+    await tester.pumpWidget(_host(
+      FatigueAlertModal(
+        alertData: _alert(suggestedWeight: null, unit: 'lb', repTarget: 8),
+        currentWeight: 0.0,
+        exerciseName: 'Pull-up',
+        onAcceptSuggestion: () {},
+        onContinueAsPlanned: () {},
       ),
+      weightUnit: 'lb',
     ));
     await tester.pump(const Duration(milliseconds: 200));
 

@@ -3,7 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/library/widgets/exercise_card.dart';
 import 'package:fitwiz/data/models/exercise.dart';
+import 'package:fitwiz/widgets/signature/signature.dart';
 
+// The signature-v2 redesign turned ExerciseCard from a badge-stack card into a
+// dense [ZHairlineRow]: the muscle group / difficulty / equipment now render as
+// ONE uppercase metadata line (`●LEVEL · MUSCLE · EQUIPMENT`) instead of
+// separate title-case badges, and the trailing chevron was replaced by three
+// inline actions (favourite / add-to-workout / alternatives). These tests
+// assert that shape.
 void main() {
   group('ExerciseCard', () {
     LibraryExercise createExercise({
@@ -39,7 +46,7 @@ void main() {
       expect(find.text('Squat'), findsOneWidget);
     });
 
-    testWidgets('renders muscle group badge when provided',
+    testWidgets('renders muscle group in the metadata line when provided',
         (WidgetTester tester) async {
       final exercise = createExercise(
         name: 'Bench Press',
@@ -56,10 +63,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Chest'), findsOneWidget);
+      expect(find.text('CHEST'), findsOneWidget);
     });
 
-    testWidgets('renders difficulty badge when provided',
+    testWidgets('renders difficulty level when provided',
         (WidgetTester tester) async {
       final exercise = createExercise(
         name: 'Deadlift',
@@ -76,10 +83,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Intermediate'), findsOneWidget);
+      expect(find.text('INTERMEDIATE'), findsOneWidget);
     });
 
-    testWidgets('renders equipment list when provided',
+    testWidgets('renders the primary equipment when provided',
         (WidgetTester tester) async {
       final exercise = createExercise(
         name: 'Incline Press',
@@ -96,7 +103,10 @@ void main() {
         ),
       );
 
-      expect(find.text('Barbell, Bench'), findsOneWidget);
+      // The dense row shows only the primary (first) piece of equipment so the
+      // metadata line stays on one line at 9.5px.
+      expect(find.text('BARBELL'), findsOneWidget);
+      expect(find.textContaining('Bench'), findsNothing);
     });
 
     testWidgets('shows video indicator when video is available',
@@ -139,7 +149,8 @@ void main() {
       expect(find.byIcon(Icons.play_arrow), findsNothing);
     });
 
-    testWidgets('shows chevron right icon', (WidgetTester tester) async {
+    testWidgets('shows the inline row actions instead of a chevron',
+        (WidgetTester tester) async {
       final exercise = createExercise();
 
       await tester.pumpWidget(
@@ -152,10 +163,15 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      // The trailing chevron was replaced by three inline actions: favourite,
+      // add-to-workout and alternatives.
+      expect(find.byIcon(Icons.chevron_right), findsNothing);
+      expect(find.byIcon(Icons.favorite_border), findsOneWidget);
+      expect(find.byIcon(Icons.add), findsOneWidget);
+      expect(find.byIcon(Icons.swap_horiz), findsOneWidget);
     });
 
-    testWidgets('is tappable', (WidgetTester tester) async {
+    testWidgets('the row is tappable', (WidgetTester tester) async {
       final exercise = createExercise();
 
       await tester.pumpWidget(
@@ -168,9 +184,11 @@ void main() {
         ),
       );
 
-      // Tapping should not throw an error
-      await tester.tap(find.byType(ExerciseCard));
-      await tester.pump();
+      // Actually firing the tap would push the exercise-browse route, which
+      // resolves the library repository (and therefore Supabase) — out of
+      // reach in a widget test. Assert the tap affordance is wired instead.
+      final row = tester.widget<ZHairlineRow>(find.byType(ZHairlineRow));
+      expect(row.onTap, isNotNull);
     });
 
     testWidgets('renders correctly in dark mode',
@@ -193,7 +211,9 @@ void main() {
       );
 
       expect(find.text('Lat Pulldown'), findsOneWidget);
-      expect(find.text('Back'), findsOneWidget);
+      // Level + muscle share one metadata line: `BEGINNER · BACK`.
+      expect(find.text('BEGINNER'), findsOneWidget);
+      expect(find.textContaining('BACK'), findsOneWidget);
     });
 
     testWidgets('renders correctly in light mode',
@@ -216,7 +236,8 @@ void main() {
       );
 
       expect(find.text('Bicep Curl'), findsOneWidget);
-      expect(find.text('Arms'), findsOneWidget);
+      expect(find.text('BEGINNER'), findsOneWidget);
+      expect(find.textContaining('ARMS'), findsOneWidget);
     });
 
     testWidgets('truncates long equipment list',
@@ -236,8 +257,10 @@ void main() {
         ),
       );
 
-      // Should only show first 2 equipment items
-      expect(find.text('Cable Machine, D-Handle'), findsOneWidget);
+      // Only the first equipment item survives into the dense metadata line.
+      expect(find.text('CABLE MACHINE'), findsOneWidget);
+      expect(find.textContaining('D-Handle'), findsNothing);
+      expect(find.textContaining('Extra Handle'), findsNothing);
     });
   });
 }

@@ -13,9 +13,12 @@ void main() {
         ),
       ));
 
-      expect(find.text('Easy'), findsOneWidget);
-      expect(find.text('Medium'), findsOneWidget);
-      expect(find.text('Hard'), findsOneWidget);
+      // Chips render DifficultyUtils display names, not the internal values,
+      // and the default list gained a fourth level ('hell').
+      expect(find.text('Beginner'), findsOneWidget);
+      expect(find.text('Moderate'), findsOneWidget);
+      expect(find.text('Challenging'), findsOneWidget);
+      expect(find.text('Hell'), findsOneWidget);
     });
 
     testWidgets('highlights selected difficulty', (tester) async {
@@ -27,7 +30,7 @@ void main() {
       ));
 
       // The selected difficulty should be visible
-      expect(find.text('Hard'), findsOneWidget);
+      expect(find.text('Challenging'), findsOneWidget);
     });
 
     testWidgets('calls onSelectionChanged when difficulty is tapped', (tester) async {
@@ -40,7 +43,7 @@ void main() {
         ),
       ));
 
-      await tester.tap(find.text('Easy'));
+      await tester.tap(find.text('Beginner'));
       await tester.pump();
 
       expect(selectedDifficulty, equals('easy'));
@@ -57,7 +60,7 @@ void main() {
         ),
       ));
 
-      await tester.tap(find.text('Easy'));
+      await tester.tap(find.text('Beginner'));
       await tester.pump();
 
       expect(selectedDifficulty, isNull);

@@ -16,8 +16,11 @@ void main() {
       notifier = ThemeModeNotifier();
     });
 
-    test('should initialize with system theme mode', () {
-      expect(notifier.state, ThemeMode.system);
+    // v7 first-run redesign: a fresh install starts DARK (see
+    // ThemeModeNotifier's ctor). A stored choice — including an explicit
+    // 'system' — still wins; only the no-stored-value case is dark.
+    test('should initialize with dark theme mode', () {
+      expect(notifier.state, ThemeMode.dark);
     });
 
     group('setTheme', () {
@@ -58,12 +61,18 @@ void main() {
         expect(notifier.state, ThemeMode.dark);
       });
 
-      test('should toggle from system to light (system != dark)', () async {
-        notifier = ThemeModeNotifier();
+      test('should toggle from system to dark, then to light', () async {
+        await notifier.setTheme(ThemeMode.system);
         expect(notifier.state, ThemeMode.system);
 
+        // toggle() is `state == dark ? light : dark`, so any non-dark state —
+        // including system — resolves to an explicit dark first. The second
+        // toggle then behaves like a normal dark/light flip, so system is
+        // never a state the toggle can get stuck in.
         await notifier.toggle();
-        // From system, toggle goes to light (since system != dark)
+        expect(notifier.state, ThemeMode.dark);
+
+        await notifier.toggle();
         expect(notifier.state, ThemeMode.light);
       });
     });
@@ -79,7 +88,8 @@ void main() {
         expect(notifier.isDark, false);
       });
 
-      test('should return false for system mode', () {
+      test('should return false for system mode', () async {
+        await notifier.setTheme(ThemeMode.system);
         expect(notifier.isDark, false);
       });
     });
@@ -105,14 +115,15 @@ void main() {
         expect(loadedNotifier.state, ThemeMode.light);
       });
 
-      test('should default to system when no saved preference', () async {
+      test('should default to dark when no saved preference', () async {
         SharedPreferences.setMockInitialValues({});
         final loadedNotifier = ThemeModeNotifier();
 
         // Wait for async _loadTheme to complete
         await Future.delayed(const Duration(milliseconds: 100));
 
-        expect(loadedNotifier.state, ThemeMode.system);
+        // v7 first-run redesign — fresh installs land on dark.
+        expect(loadedNotifier.state, ThemeMode.dark);
       });
 
       test('should default to system for invalid saved preference', () async {
@@ -137,11 +148,16 @@ void main() {
     });
 
     test('should allow setting theme via notifier', () async {
+      // A stored 'light' means the async _loadTheme resolves to something
+      // other than what setTheme writes — the explicit user write must win.
+      SharedPreferences.setMockInitialValues({'theme_mode': 'light'});
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(themeModeProvider.notifier);
       await notifier.setTheme(ThemeMode.dark);
+      // Give the in-flight _loadTheme a chance to (wrongly) overwrite.
+      await Future.delayed(const Duration(milliseconds: 50));
 
       expect(container.read(themeModeProvider), ThemeMode.dark);
     });

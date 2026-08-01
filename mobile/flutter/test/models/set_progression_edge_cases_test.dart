@@ -786,7 +786,9 @@ void main() {
       // Step 1: repRatio 0.50 < 0.65 → -1 already
       // Actually the fatigue override only fires when incrementAdjust >= 0
       // Since Step 1 already gives -1, fatigue override doesn't change it
-      expect(adapted[2].weight, 47.5); // -1 increment
+      // Asserted as a delta off the generated target: straight sets ramp the
+      // weight on the lower-RIR sets, so targets[2] is not the base 50kg.
+      expect(adapted[2].weight, targets[2].weight - 2.5); // -1 increment
     });
   });
 }

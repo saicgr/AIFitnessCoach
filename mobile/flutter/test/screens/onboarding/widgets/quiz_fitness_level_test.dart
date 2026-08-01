@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/onboarding/widgets/quiz_fitness_level.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void main() {
   group('QuizFitnessLevel', () {
     testWidgets('displays question text', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: null,
@@ -25,6 +28,8 @@ void main() {
     testWidgets('displays fitness level options', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: null,
@@ -47,6 +52,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: null,
@@ -70,6 +77,8 @@ void main() {
     testWidgets('shows experience options after level is selected', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: 'beginner',
@@ -88,6 +97,8 @@ void main() {
     testWidgets('hides experience options when no level selected', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: null,
@@ -108,6 +119,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: 'beginner',
@@ -131,6 +144,8 @@ void main() {
     testWidgets('shows check mark for selected level', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizFitnessLevel(
               selectedLevel: 'intermediate',
@@ -149,6 +164,8 @@ void main() {
     testWidgets('renders in dark mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(),
           home: Scaffold(
             body: QuizFitnessLevel(
@@ -168,6 +185,8 @@ void main() {
     testWidgets('renders in light mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.light(),
           home: Scaffold(
             body: QuizFitnessLevel(

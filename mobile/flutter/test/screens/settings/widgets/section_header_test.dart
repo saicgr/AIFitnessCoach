@@ -38,8 +38,23 @@ void main() {
         ),
       );
 
-      final align = tester.widget<Align>(find.byType(Align));
-      expect(align.alignment, Alignment.centerLeft);
+      // Assert the observable behaviour (the label starts at the header's
+      // leading edge) rather than a specific wrapper widget — the header now
+      // left-aligns via `Column(crossAxisAlignment: start)` + `Expanded`,
+      // so there is no longer an `Align` to interrogate.
+      final column = tester.widget<Column>(
+        find.descendant(
+          of: find.byType(SectionHeader),
+          matching: find.byType(Column),
+        ),
+      );
+      expect(column.crossAxisAlignment, CrossAxisAlignment.start);
+
+      final headerLeft = tester.getTopLeft(find.byType(SectionHeader)).dx;
+      final textLeft = tester.getTopLeft(find.text('TEST')).dx;
+      expect(textLeft, headerLeft);
+      // No textAlign override => the glyphs sit at the leading edge.
+      expect(tester.widget<Text>(find.text('TEST')).textAlign, isNull);
     });
 
     testWidgets('uses correct text style in dark mode', (tester) async {

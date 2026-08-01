@@ -345,16 +345,30 @@ void main() {
       expect(RateOfChange.aggressive.value, 'aggressive');
     });
 
+    // The daily adjustment is derived from the weekly rate, not a round
+    // number: kgPerWeek x 7700 kcal/kg / 7 days (0.25 kg/wk -> 275 kcal/day).
     test('should have correct calorie adjustments', () {
-      expect(RateOfChange.slow.calorieAdjustment, 250);
-      expect(RateOfChange.moderate.calorieAdjustment, 500);
-      expect(RateOfChange.aggressive.calorieAdjustment, 750);
+      expect(RateOfChange.slow.calorieAdjustment, 275);
+      expect(RateOfChange.moderate.calorieAdjustment, 550);
+      expect(RateOfChange.fast.calorieAdjustment, 825);
+      expect(RateOfChange.aggressive.calorieAdjustment, 1100);
     });
 
     test('should have correct kg per week targets', () {
       expect(RateOfChange.slow.kgPerWeek, 0.25);
       expect(RateOfChange.moderate.kgPerWeek, 0.5);
-      expect(RateOfChange.aggressive.kgPerWeek, 0.75);
+      expect(RateOfChange.fast.kgPerWeek, 0.75);
+      expect(RateOfChange.aggressive.kgPerWeek, 1.0);
+    });
+
+    test('calorie adjustment stays consistent with the weekly rate', () {
+      for (final rate in RateOfChange.values) {
+        expect(
+          rate.calorieAdjustment,
+          (rate.kgPerWeek * 7700 / 7).round(),
+          reason: '${rate.value} adjustment must derive from kgPerWeek',
+        );
+      }
     });
   });
 }

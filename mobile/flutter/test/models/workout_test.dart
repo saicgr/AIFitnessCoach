@@ -71,7 +71,10 @@ void main() {
       });
 
       test('should return empty list for null exercises', () {
-        final workout = TestFixtures.createWorkout(exercisesJson: null);
+        // NOTE: constructed directly — TestFixtures.createWorkout() substitutes
+        // its default 2-exercise payload for an explicit `null` (`?? [...]`),
+        // so the fixture can never express "no exercises".
+        const workout = Workout(id: 'test-workout-id', exercisesJson: null);
 
         expect(workout.exercises, isEmpty);
       });
@@ -103,21 +106,46 @@ void main() {
       });
 
       test('should return 0 for no exercises', () {
-        final workout = TestFixtures.createWorkout(exercisesJson: null);
+        const workout = Workout(id: 'test-workout-id', exercisesJson: null);
 
         expect(workout.exerciseCount, 0);
       });
     });
 
     group('estimatedCalories', () {
-      test('should calculate calories based on duration (6 cal/min)', () {
-        final workout = TestFixtures.createWorkout(durationMinutes: 45);
+      // The flat "6 cal/min" model was replaced by a MET-based estimate
+      // (MET × 70kg × hours) that reads the exercise mix, so the assertions
+      // below pin the contract (stored wins, scales with duration, 0 only for
+      // a non-positive duration) rather than a magic constant.
+      test('should prefer the server-computed estimate when stored', () {
+        const workout = Workout(
+          id: 'w',
+          durationMinutes: 45,
+          estimatedCaloriesStored: 412,
+        );
 
-        expect(workout.estimatedCalories, 270); // 45 * 6
+        expect(workout.estimatedCalories, 412);
       });
 
-      test('should return 0 for null duration', () {
-        final workout = TestFixtures.createWorkout(durationMinutes: null);
+      test('should scale MET-based estimate with duration', () {
+        final short = TestFixtures.createWorkout(durationMinutes: 45);
+        final long = TestFixtures.createWorkout(durationMinutes: 90);
+
+        expect(short.estimatedCalories, greaterThan(0));
+        // Doubling the duration doubles the burn (±1 for rounding).
+        expect(long.estimatedCalories, closeTo(short.estimatedCalories * 2, 1));
+      });
+
+      test('should fall back to the 45-minute default for null duration', () {
+        final nullDuration = TestFixtures.createWorkout(durationMinutes: null);
+        final fortyFive = TestFixtures.createWorkout(durationMinutes: 45);
+
+        // bestDurationMinutes: estimated ?? requested ?? 45
+        expect(nullDuration.estimatedCalories, fortyFive.estimatedCalories);
+      });
+
+      test('should return 0 for a zero-length workout', () {
+        final workout = TestFixtures.createWorkout(durationMinutes: 0);
 
         expect(workout.estimatedCalories, 0);
       });
@@ -133,7 +161,8 @@ void main() {
       });
 
       test('should return empty string for null date', () {
-        final workout = TestFixtures.createWorkout(scheduledDate: null);
+        // Constructed directly: the fixture substitutes today's date for null.
+        const workout = Workout(id: 'test-workout-id', scheduledDate: null);
 
         expect(workout.formattedDate, '');
       });
@@ -164,7 +193,7 @@ void main() {
       });
 
       test('should return false for null date', () {
-        final workout = TestFixtures.createWorkout(scheduledDate: null);
+        const workout = Workout(id: 'test-workout-id', scheduledDate: null);
 
         expect(workout.isToday, false);
       });
@@ -186,7 +215,7 @@ void main() {
       });
 
       test('should return empty list when no exercises', () {
-        final workout = TestFixtures.createWorkout(exercisesJson: null);
+        const workout = Workout(id: 'test-workout-id', exercisesJson: null);
 
         expect(workout.primaryMuscles, isEmpty);
       });
@@ -317,10 +346,11 @@ void main() {
     });
 
     group('setsRepsDisplay', () {
-      test('should format sets x reps', () {
+      test('should format sets × reps', () {
         final exercise = TestFixtures.createExercise(sets: 3, reps: 10);
 
-        expect(exercise.setsRepsDisplay, '3 x 10');
+        // Production uses the typographic multiplication sign (U+00D7).
+        expect(exercise.setsRepsDisplay, '3 × 10');
       });
 
       test('should format duration for time-based exercises', () {

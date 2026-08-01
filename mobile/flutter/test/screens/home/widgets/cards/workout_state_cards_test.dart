@@ -10,9 +10,9 @@ void main() {
         EmptyWorkoutCard(onGenerate: () {}),
       ));
 
-      expect(find.text('No workouts scheduled'), findsOneWidget);
-      expect(find.text('Complete setup to get your personalized workout plan'),
-          findsOneWidget);
+      // Copy was reworded to an inviting CTA when the card was localized.
+      expect(find.text('Ready to Start?'), findsOneWidget);
+      expect(find.text('Get your personalized workout plan'), findsOneWidget);
     });
 
     testWidgets('renders generate button', (tester) async {

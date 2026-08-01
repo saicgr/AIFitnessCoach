@@ -164,7 +164,13 @@ void main() {
       });
 
       test('should return null for null createdAt', () {
-        final message = TestFixtures.createChatMessage(createdAt: null);
+        // Constructed directly: TestFixtures.createChatMessage() substitutes
+        // DateTime.now() for an explicit `null` (`createdAt ?? ...`).
+        const message = ChatMessage(
+          role: 'user',
+          content: 'test',
+          createdAt: null,
+        );
         expect(message.timestamp, isNull);
       });
 

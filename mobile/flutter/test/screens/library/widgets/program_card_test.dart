@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
+import '../../../helpers/fake_supabase.dart';
 import 'package:fitwiz/screens/library/widgets/program_card.dart';
 import 'package:fitwiz/data/models/branded_program.dart';
 
 void main() {
+  // Tapping a card opens ProgramDetailSheet, whose analytics/repository
+  // providers read Supabase.instance.
+  setUpAll(initFakeSupabase);
+
   group('ProgramCard', () {
     BrandedProgram createProgram({
       String name = 'Strength Training',
@@ -28,9 +35,11 @@ void main() {
       final program = createProgram(name: 'HIIT Cardio');
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -45,9 +54,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -55,17 +66,20 @@ void main() {
       expect(find.text('Goal-Based'), findsOneWidget);
     });
 
-    testWidgets('renders difficulty level when provided',
-        (WidgetTester tester) async {
+    testWidgets('renders difficulty level when provided', (
+      WidgetTester tester,
+    ) async {
       final program = createProgram(
         name: 'Advanced Strength',
         difficultyLevel: 'Advanced',
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -80,9 +94,11 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -90,17 +106,17 @@ void main() {
       expect(find.text('12 weeks'), findsOneWidget);
     });
 
-    testWidgets('renders sessions per week display',
-        (WidgetTester tester) async {
-      final program = createProgram(
-        name: 'PPL Split',
-        sessionsPerWeek: 6,
-      );
+    testWidgets('renders sessions per week display', (
+      WidgetTester tester,
+    ) async {
+      final program = createProgram(name: 'PPL Split', sessionsPerWeek: 6);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -108,17 +124,15 @@ void main() {
       expect(find.text('6 days/week'), findsOneWidget);
     });
 
-    testWidgets('shows calendar and repeat icons',
-        (WidgetTester tester) async {
-      final program = createProgram(
-        durationWeeks: 8,
-        sessionsPerWeek: 4,
-      );
+    testWidgets('shows calendar and repeat icons', (WidgetTester tester) async {
+      final program = createProgram(durationWeeks: 8, sessionsPerWeek: 4);
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -131,9 +145,11 @@ void main() {
       final program = createProgram();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -145,28 +161,41 @@ void main() {
       final program = createProgram();
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
 
       await tester.tap(find.byType(ProgramCard));
+      // Tapping opens the program detail sheet.
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+
+      // Tear the sheet down so its outstanding timers are cancelled before
+      // the binding's end-of-test !timersPending check.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     });
 
-    testWidgets('renders celebrity workout category correctly',
-        (WidgetTester tester) async {
+    testWidgets('renders celebrity workout category correctly', (
+      WidgetTester tester,
+    ) async {
       final program = createProgram(
         name: 'Chris Hemsworth Workout',
         category: 'Celebrity Workout',
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -175,17 +204,20 @@ void main() {
       expect(find.byIcon(Icons.star), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('renders sport training category correctly',
-        (WidgetTester tester) async {
+    testWidgets('renders sport training category correctly', (
+      WidgetTester tester,
+    ) async {
       final program = createProgram(
         name: 'Football Conditioning',
         category: 'Sport Training',
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -194,8 +226,7 @@ void main() {
       expect(find.byIcon(Icons.sports), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('renders correctly in dark mode',
-        (WidgetTester tester) async {
+    testWidgets('renders correctly in dark mode', (WidgetTester tester) async {
       final program = createProgram(
         name: 'Night Workout',
         category: 'Goal-Based',
@@ -203,10 +234,12 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.dark(),
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: ThemeData.dark(),
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );
@@ -214,8 +247,7 @@ void main() {
       expect(find.text('Night Workout'), findsOneWidget);
     });
 
-    testWidgets('renders correctly in light mode',
-        (WidgetTester tester) async {
+    testWidgets('renders correctly in light mode', (WidgetTester tester) async {
       final program = createProgram(
         name: 'Morning Routine',
         category: 'Goal-Based',
@@ -223,10 +255,12 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light(),
-          home: Scaffold(
-            body: ProgramCard(program: program),
+        ProviderScope(
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            theme: ThemeData.light(),
+            home: Scaffold(body: ProgramCard(program: program)),
           ),
         ),
       );

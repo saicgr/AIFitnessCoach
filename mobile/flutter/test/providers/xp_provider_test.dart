@@ -11,13 +11,17 @@ import 'package:fitwiz/data/providers/xp_provider.dart';
 void main() {
   group('XPGoalType', () {
     test('all goal types are defined', () {
-      expect(XPGoalType.values.length, equals(6));
+      expect(XPGoalType.values.length, equals(10));
       expect(XPGoalType.values.contains(XPGoalType.dailyLogin), isTrue);
       expect(XPGoalType.values.contains(XPGoalType.weightLog), isTrue);
       expect(XPGoalType.values.contains(XPGoalType.mealLog), isTrue);
       expect(XPGoalType.values.contains(XPGoalType.workoutComplete), isTrue);
       expect(XPGoalType.values.contains(XPGoalType.proteinGoal), isTrue);
       expect(XPGoalType.values.contains(XPGoalType.bodyMeasurements), isTrue);
+      expect(XPGoalType.values.contains(XPGoalType.stepsGoal), isTrue);
+      expect(XPGoalType.values.contains(XPGoalType.hydrationGoal), isTrue);
+      expect(XPGoalType.values.contains(XPGoalType.calorieGoal), isTrue);
+      expect(XPGoalType.values.contains(XPGoalType.cycleLogged), isTrue);
     });
   });
 
@@ -76,9 +80,10 @@ void main() {
       expect(goals.completedCount, equals(3));
     });
 
-    test('totalCount returns 6', () {
+    test('totalCount returns 9', () {
+      // 6 original goals + steps / hydration / calorie.
       final goals = DailyGoals.today();
-      expect(goals.totalCount, equals(6));
+      expect(goals.totalCount, equals(9));
     });
 
     test('progress returns correct fraction', () {
@@ -92,7 +97,7 @@ void main() {
         loggedBodyMeasurements: false,
       );
 
-      expect(goals.progress, equals(0.5)); // 3/6
+      expect(goals.progress, closeTo(3 / 9, 1e-9));
     });
 
     test('xpEarned calculates correct XP with multiplier', () {

@@ -1,7 +1,13 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/onboarding/weight_projection_screen.dart'
     show WeightProjectionCalculator;
 import 'package:fitwiz/screens/onboarding/widgets/quiz_weight_rate.dart';
+
+/// This test asserts calorie/rate MATH, not colour — the accent is
+/// irrelevant here, so a fixed placeholder stands in for the
+/// `context.accentColor` a real screen would pass.
+const _testAccent = Color(0xFFF97316);
 
 /// Regression gate: the pace a user SEES must be the pace we COMPUTE with.
 ///
@@ -30,7 +36,7 @@ void main() {
 
   group('pace chip weeklyRate matches calculateWeeklyRate', () {
     test('every LOSING chip agrees with the calculator', () {
-      final options = getWeightRateOptions(isLosing: true, useMetric: true);
+      final options = getWeightRateOptions(isLosing: true, useMetric: true, accentColor: _testAccent);
       expect(options, isNotEmpty);
 
       for (final o in options) {
@@ -52,7 +58,7 @@ void main() {
     });
 
     test('every GAINING chip agrees with the calculator', () {
-      final options = getWeightRateOptions(isLosing: false, useMetric: true);
+      final options = getWeightRateOptions(isLosing: false, useMetric: true, accentColor: _testAccent);
       expect(options, isNotEmpty);
 
       for (final o in options) {
@@ -99,7 +105,7 @@ void main() {
         reason: 'If these ever became equal this test would pass vacuously.',
       );
 
-      final chipRate = getWeightRateOptions(isLosing: true, useMetric: true)
+      final chipRate = getWeightRateOptions(isLosing: true, useMetric: true, accentColor: _testAccent)
           .firstWhere((o) => o.id == 'moderate')
           .weeklyRate;
       expect(moderate, chipRate);
@@ -112,7 +118,7 @@ void main() {
         workoutDaysPerWeek: kWorkoutDays,
         weightChangeRate: null,
       );
-      final chipRates = getWeightRateOptions(isLosing: true, useMetric: true)
+      final chipRates = getWeightRateOptions(isLosing: true, useMetric: true, accentColor: _testAccent)
           .map((o) => o.weeklyRate)
           .toList();
       expect(
@@ -128,7 +134,7 @@ void main() {
     // Labels are deliberately rounded for readability ("1 lb/wk" for
     // 0.5 kg/wk = 1.10 lb). Allow the rounding, catch a real mismatch.
     test('losing labels are within 15% of the true conversion', () {
-      for (final o in getWeightRateOptions(isLosing: true, useMetric: false)) {
+      for (final o in getWeightRateOptions(isLosing: true, useMetric: false, accentColor: _testAccent)) {
         final labelled =
             double.parse(RegExp(r'[\d.]+').firstMatch(o.rateLabel)!.group(0)!);
         final trueLb = o.weeklyRate * 2.20462;

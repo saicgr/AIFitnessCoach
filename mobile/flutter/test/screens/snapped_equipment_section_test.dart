@@ -23,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/workout/widgets/equipment_snap_flow.dart'
     show SnapMode;
 import 'package:fitwiz/screens/workout/widgets/snapped_equipment_section.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 class _StubNotifier extends SnappedEquipmentNotifier {
   final Map<String, dynamic>? reuseResponse;
@@ -59,6 +60,8 @@ Widget _wrap(Widget child, {required _StubNotifier Function(Ref) build}) {
       snappedEquipmentProvider.overrideWith(build),
     ],
     child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: SizedBox(height: 600, child: child)),
     ),
   );

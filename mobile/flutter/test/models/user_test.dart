@@ -56,7 +56,10 @@ void main() {
       });
 
       test('should return empty list for null goals', () {
-        final user = TestFixtures.createUser(goals: null);
+        // NOTE: constructed directly — TestFixtures.createUser() substitutes its
+        // default goals payload for an explicit `null` (`goals ?? '[...]'`), so
+        // the fixture can never express "no goals".
+        const user = User(id: 'test-user-id', goals: null);
 
         expect(user.goalsList, isEmpty);
       });
@@ -90,7 +93,7 @@ void main() {
       });
 
       test('should return empty list for null equipment', () {
-        final user = TestFixtures.createUser(equipment: null);
+        const user = User(id: 'test-user-id', equipment: null);
 
         expect(user.equipmentList, isEmpty);
       });
@@ -164,7 +167,8 @@ void main() {
           goals: '["Build muscle", "Lose weight"]',
         );
 
-        expect(user.fitnessGoal, 'Build muscle');
+        // fitnessGoal maps/humanises the raw goal for display.
+        expect(user.fitnessGoal, 'Build Muscle');
       });
 
       test('should return null when goals list is empty', () {
@@ -192,7 +196,7 @@ void main() {
       });
 
       test('should return null for null preferences', () {
-        final user = TestFixtures.createUser(preferences: null);
+        const user = User(id: 'test-user-id', preferences: null);
 
         expect(user.workoutsPerWeek, isNull);
       });
@@ -216,7 +220,7 @@ void main() {
       });
 
       test('should return empty list for null preferences', () {
-        final user = TestFixtures.createUser(preferences: null);
+        const user = User(id: 'test-user-id', preferences: null);
 
         expect(user.workoutDays, isEmpty);
       });

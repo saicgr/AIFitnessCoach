@@ -36,7 +36,10 @@ void main() {
         ),
       );
 
-      expect(find.text('10'), findsOneWidget);
+      // StatCard renders its number through the shared [StatNumber] widget,
+      // which paints a `RichText` (FittedBox + tabular figures) rather than a
+      // plain `Text` — so the finder has to opt into rich text.
+      expect(find.text('10', findRichText: true), findsOneWidget);
     });
 
     testWidgets('displays label correctly', (tester) async {
@@ -107,7 +110,7 @@ void main() {
         ),
       );
 
-      expect(find.text('10'), findsOneWidget);
+      expect(find.text('10', findRichText: true), findsOneWidget);
     });
 
     testWidgets('renders in light mode', (tester) async {
@@ -125,7 +128,7 @@ void main() {
         ),
       );
 
-      expect(find.text('10'), findsOneWidget);
+      expect(find.text('10', findRichText: true), findsOneWidget);
     });
   });
 }

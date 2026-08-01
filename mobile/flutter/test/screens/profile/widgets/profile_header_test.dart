@@ -1,17 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fitwiz/screens/profile/widgets/profile_header.dart';
 
+/// ProfileHeader is a [ConsumerWidget] — it resolves its accent colour through
+/// `ref.colors(context)` (which watches `accentColorProvider`), so every pump
+/// needs a [ProviderScope] ancestor. The accent notifier hydrates from
+/// SharedPreferences, so we seed a fake store to keep the accent deterministic
+/// (orange) instead of depending on a real platform channel.
+Widget _wrap(Widget child, {ThemeData? theme}) {
+  return ProviderScope(
+    child: MaterialApp(
+      theme: theme,
+      home: Scaffold(body: child),
+    ),
+  );
+}
+
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({'accent_color': 'orange'});
+  });
+
   group('ProfileHeader', () {
     testWidgets('displays user name correctly', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ProfileHeader(
-              name: 'John Doe',
-              email: 'john@example.com',
-            ),
+        _wrap(
+          const ProfileHeader(
+            name: 'John Doe',
+            email: 'john@example.com',
           ),
         ),
       );
@@ -21,12 +39,10 @@ void main() {
 
     testWidgets('displays user email correctly', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ProfileHeader(
-              name: 'John Doe',
-              email: 'john@example.com',
-            ),
+        _wrap(
+          const ProfileHeader(
+            name: 'John Doe',
+            email: 'john@example.com',
           ),
         ),
       );
@@ -36,12 +52,10 @@ void main() {
 
     testWidgets('shows default avatar icon when no photo URL', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ProfileHeader(
-              name: 'John Doe',
-              email: 'john@example.com',
-            ),
+        _wrap(
+          const ProfileHeader(
+            name: 'John Doe',
+            email: 'john@example.com',
           ),
         ),
       );
@@ -51,13 +65,11 @@ void main() {
 
     testWidgets('shows avatar icon when photo URL is empty', (tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: ProfileHeader(
-              name: 'John Doe',
-              email: 'john@example.com',
-              photoUrl: '',
-            ),
+        _wrap(
+          const ProfileHeader(
+            name: 'John Doe',
+            email: 'john@example.com',
+            photoUrl: '',
           ),
         ),
       );
@@ -67,14 +79,12 @@ void main() {
 
     testWidgets('renders correctly in dark mode', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.dark(),
-          home: const Scaffold(
-            body: ProfileHeader(
-              name: 'Jane Doe',
-              email: 'jane@example.com',
-            ),
+        _wrap(
+          const ProfileHeader(
+            name: 'Jane Doe',
+            email: 'jane@example.com',
           ),
+          theme: ThemeData.dark(),
         ),
       );
 
@@ -84,14 +94,12 @@ void main() {
 
     testWidgets('renders correctly in light mode', (tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeData.light(),
-          home: const Scaffold(
-            body: ProfileHeader(
-              name: 'Jane Doe',
-              email: 'jane@example.com',
-            ),
+        _wrap(
+          const ProfileHeader(
+            name: 'Jane Doe',
+            email: 'jane@example.com',
           ),
+          theme: ThemeData.light(),
         ),
       );
 

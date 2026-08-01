@@ -101,12 +101,21 @@ void main() {
       expect(chooseWorkoutCardMode(s), WorkoutCardMode.windDown);
     });
 
-    test('windDown (evening + sleep coach pillar)', () {
+    test('windDown (quiet hour)', () {
+      final s = WorkoutCardState.empty().copyWith(time: TimeOfDay.quiet);
+      expect(chooseWorkoutCardMode(s), WorkoutCardMode.windDown);
+    });
+
+    test('evening + sleep coach pillar does NOT wind down', () {
+      // windDown is strictly clock-driven now. The backend leads with the
+      // sleep pillar on ANY evening the user has no sleep logged, so the old
+      // evening+pillar combo showed "Sleep first" over an unstarted workout
+      // as early as 5pm.
       final s = WorkoutCardState.empty().copyWith(
         time: TimeOfDay.evening,
         coachPillar: 'sleep',
       );
-      expect(chooseWorkoutCardMode(s), WorkoutCardMode.windDown);
+      expect(chooseWorkoutCardMode(s), WorkoutCardMode.scheduledNotStarted);
     });
 
     test('fastingActive', () {

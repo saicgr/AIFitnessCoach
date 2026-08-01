@@ -229,6 +229,7 @@ void main() {
           queryParameters: {
             'drink_type': 'water',
             'amount_ml': 250,
+            'source': 'home',
           },
         )).called(1);
       });
@@ -254,6 +255,7 @@ void main() {
           queryParameters: {
             'drink_type': 'sports_drink',
             'amount_ml': 500,
+            'source': 'home',
           },
         )).called(1);
       });

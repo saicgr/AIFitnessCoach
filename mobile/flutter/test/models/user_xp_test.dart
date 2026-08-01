@@ -37,7 +37,8 @@ void main() {
         expect(xp.userId, '');
         expect(xp.totalXp, 0);
         expect(xp.currentLevel, 1);
-        expect(xp.xpToNextLevel, 25);
+        // Level 1 -> 2 costs 150 XP (migration 1901 curve; server-owned).
+        expect(xp.xpToNextLevel, 150);
         expect(xp.xpInCurrentLevel, 0);
         expect(xp.prestigeLevel, 0);
         expect(xp.title, 'Beginner');
@@ -197,7 +198,7 @@ void main() {
         expect(xp.userId, 'user-99');
         expect(xp.totalXp, 0);
         expect(xp.currentLevel, 1);
-        expect(xp.xpToNextLevel, 25);
+        expect(xp.xpToNextLevel, 150);
         expect(xp.title, 'Beginner');
       });
     });

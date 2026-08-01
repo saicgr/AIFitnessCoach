@@ -39,23 +39,29 @@ ExerciseInsightInput _input({
 
 void main() {
   group('PreSetInsightEngine.detectPattern', () {
-    test('skips when history is empty', () {
+    // Brand-new lift → freshLift (NOT the old blank-banner skipNewExercise).
+    // The engine deliberately replaced the silent path with a concrete
+    // starting cue; see detectPattern's "Fresh-user fallback" comment.
+    test('freshLift when history is empty', () {
       final r = PreSetInsightEngine.detectPattern(_input(history: const []));
-      expect(r.code, PatternCode.skipNewExercise);
+      expect(r.code, PatternCode.freshLift);
+      expect(r.data['sessionCount'], 0);
     });
 
-    test('skips when all sessions have no working sets', () {
+    test('freshLift when all sessions have no working sets', () {
       final r = PreSetInsightEngine.detectPattern(_input(history: [
         _session('2026-04-10', []),
       ]));
-      expect(r.code, PatternCode.skipNewExercise);
+      expect(r.code, PatternCode.freshLift);
+      expect(r.data['sessionCount'], 0);
     });
 
-    test('skips when every working set has reps=0 (bailed)', () {
+    test('freshLift when every working set has reps=0 (bailed)', () {
       final r = PreSetInsightEngine.detectPattern(_input(history: [
         _session('2026-04-10', [(80, 0, null, null), (80, 0, null, null)]),
       ]));
-      expect(r.code, PatternCode.skipNewExercise);
+      expect(r.code, PatternCode.freshLift);
+      expect(r.data['sessionCount'], 0);
     });
 
     test('skips for dropSets pattern', () {
@@ -91,10 +97,22 @@ void main() {
       expect(r.code, PatternCode.skipNoRepTarget);
     });
 
-    test('skips when in-range steady (no prior pattern match)', () {
+    test('freshLift when the ONE logged session was unremarkable (in-range)',
+        () {
       final r = PreSetInsightEngine.detectPattern(_input(
         history: [_session('2026-04-19', [(80, 10, 7, 3)])],
       ));
+      // Logged once, nothing to say about it → still-early cue, not silence.
+      expect(r.code, PatternCode.freshLift);
+      expect(r.data['sessionCount'], 1);
+    });
+
+    test('skips when in-range steady across 2+ sessions (no pattern match)',
+        () {
+      final r = PreSetInsightEngine.detectPattern(_input(history: [
+        _session('2026-04-19', [(80, 10, 7, 3)]),
+        _session('2026-04-12', [(80, 10, 7, 3)]),
+      ]));
       expect(r.code, PatternCode.skipSteadyInRange);
     });
 
@@ -242,7 +260,37 @@ void main() {
 
   group('PreSetInsightEngine.computeCopy', () {
     test('returns null for skip codes', () {
-      expect(PreSetInsightEngine.computeCopy(_input()), isNull);
+      // skipSpecialtyPattern — drop sets carry no comparable set history.
+      expect(
+        PreSetInsightEngine.computeCopy(_input(
+          pattern: SetProgressionPattern.dropSets,
+          history: [_session('2026-04-19', [(80, 9, null, null)])],
+        )),
+        isNull,
+      );
+      // skipNoRepTarget — no rep target to reason about.
+      expect(
+        PreSetInsightEngine.computeCopy(_input(
+          tmin: 0,
+          tmax: 0,
+          history: [_session('2026-04-19', [(80, 9, null, null)])],
+        )),
+        isNull,
+      );
+      // skipSteadyInRange — 2+ unremarkable in-range sessions.
+      expect(
+        PreSetInsightEngine.computeCopy(_input(history: [
+          _session('2026-04-19', [(80, 10, 7, 3)]),
+          _session('2026-04-12', [(80, 10, 7, 3)]),
+        ])),
+        isNull,
+      );
+    });
+
+    test('empty history renders a fresh-lift cue instead of going silent', () {
+      final copy = PreSetInsightEngine.computeCopy(_input());
+      expect(copy, isNotNull);
+      expect(copy, isNotEmpty);
     });
 
     test('renders pattern copy with exact numbers', () {

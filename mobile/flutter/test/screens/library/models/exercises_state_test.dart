@@ -14,7 +14,14 @@ void main() {
       expect(state.error, isNull);
     });
 
-    test('copyWith creates correct copy with no changes', () {
+    // `error` is deliberately NOT carried forward by copyWith (it is assigned
+    // straight from the parameter, not `error ?? this.error`): every state
+    // transition in ExercisesNotifier either sets a fresh error or is a
+    // success/loading transition that must clear the previous one. The
+    // success path (`loadExercises` → new page) omits `error:` and relies on
+    // that clear, so preserving it here would leave a stale error banner over
+    // a freshly loaded grid.
+    test('copyWith preserves every field except error, which it clears', () {
       const original = ExercisesState(
         isLoading: true,
         hasMore: false,
@@ -27,7 +34,16 @@ void main() {
       expect(copy.isLoading, true);
       expect(copy.hasMore, false);
       expect(copy.offset, 100);
+      expect(copy.error, isNull);
+    });
+
+    test('copyWith keeps an error when it is passed through explicitly', () {
+      const original = ExercisesState(error: 'test error');
+
+      final copy = original.copyWith(error: original.error, isLoading: true);
+
       expect(copy.error, 'test error');
+      expect(copy.isLoading, true);
     });
 
     test('copyWith overrides specified fields', () {

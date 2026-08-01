@@ -102,9 +102,11 @@ void main() {
 
       expect(log.foodItems, isEmpty);
       expect(log.totalCalories, 0);
-      expect(log.proteinG, 0);
-      expect(log.carbsG, 0);
-      expect(log.fatG, 0);
+      // Per-meal macros are deliberately nullable with NO `= 0` default:
+      // null == UNKNOWN and must render as "—", never a fabricated "0 g".
+      expect(log.proteinG, isNull);
+      expect(log.carbsG, isNull);
+      expect(log.fatG, isNull);
       expect(log.fiberG, isNull);
       expect(log.healthScore, isNull);
       expect(log.aiFeedback, isNull);

@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 import 'package:fitwiz/data/services/api_client.dart';
 import 'package:fitwiz/data/models/user.dart';
 import 'package:fitwiz/data/models/workout.dart';
@@ -214,6 +215,11 @@ class TestFixtures {
 }
 
 // Widget test helpers
+//
+// Every app widget reads copy through AppLocalizations.of(context), which
+// null-asserts the Localizations lookup. A pumped tree WITHOUT the delegates
+// therefore throws "Null check operator used on a null value" during build,
+// so these harnesses always install them.
 Widget createWidgetUnderTest({
   required Widget child,
   List<Override>? overrides,
@@ -222,6 +228,8 @@ Widget createWidgetUnderTest({
   return ProviderScope(
     overrides: overrides ?? [],
     child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: child,
       navigatorObservers: navigatorObservers ?? [],
     ),
@@ -235,6 +243,8 @@ Widget createScaffoldedWidget({
   return ProviderScope(
     overrides: overrides ?? [],
     child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(body: child),
     ),
   );

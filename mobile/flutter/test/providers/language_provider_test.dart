@@ -269,6 +269,9 @@ void main() {
 
       final notifier = container.read(languageProvider.notifier);
       await notifier.setLanguage(SupportedLanguages.english);
+      // Give the in-flight _loadLanguage a chance to (wrongly) overwrite the
+      // explicit selection with the "nothing saved" state.
+      await Future.delayed(const Duration(milliseconds: 50));
 
       expect(container.read(languageProvider).selectedLanguage, SupportedLanguages.english);
       expect(container.read(languageProvider).hasSelectedLanguage, true);

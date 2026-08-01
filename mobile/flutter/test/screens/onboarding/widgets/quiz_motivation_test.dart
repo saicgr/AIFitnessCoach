@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/onboarding/widgets/quiz_motivation.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void main() {
   group('QuizMotivation', () {
     testWidgets('displays question text', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizMotivation(
               selectedMotivations: const {},
@@ -23,6 +26,8 @@ void main() {
     testWidgets('displays subtitle text', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizMotivation(
               selectedMotivations: const {},
@@ -39,6 +44,8 @@ void main() {
     testWidgets('displays motivation options', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizMotivation(
               selectedMotivations: const {},
@@ -59,6 +66,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizMotivation(
               selectedMotivations: const {},
@@ -80,6 +89,8 @@ void main() {
     testWidgets('shows check mark for selected options', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizMotivation(
               selectedMotivations: const {'look_better', 'feel_stronger'},
@@ -96,6 +107,8 @@ void main() {
     testWidgets('renders in dark mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(),
           home: Scaffold(
             body: QuizMotivation(
@@ -113,6 +126,8 @@ void main() {
     testWidgets('renders in light mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.light(),
           home: Scaffold(
             body: QuizMotivation(

@@ -8,11 +8,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/core/models/chat_quick_action.dart';
 import 'package:fitwiz/core/models/quick_action.dart';
 import 'package:fitwiz/screens/chat/widgets/equipment_match_card.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void _wrap(Widget child) {} // helper kept inline below
 
 Widget _harness(Widget child) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: ThemeData.light(),
     home: Scaffold(body: child),
   );

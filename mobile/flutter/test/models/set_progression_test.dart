@@ -397,7 +397,7 @@ void main() {
   });
 
   group('adaptTargets', () {
-    test('Pyramid: exceed target (RIR 3, 125% reps) → +1 increment', () {
+    test('Pyramid: exceed target (RIR 3, 125% reps) → +2 increments', () {
       final targets = [
         const ProgressionSetTarget(setNumber: 1, weight: 20, reps: 12, isAmrap: false),
         const ProgressionSetTarget(setNumber: 2, weight: 22.5, reps: 10, isAmrap: false),
@@ -413,9 +413,11 @@ void main() {
         totalSets: 3,
       );
 
-      expect(adapted[1].weight, 25.0);  // 22.5 + 2.5
-      expect(adapted[1].reps, 9);  // 10 - 1
-      expect(adapted[2].weight, 27.5);  // 25 + 2.5
+      // Step 2 tier: RIR >= 3 AND repRatio > 1.10 (15/12 = 1.25) → +2.
+      // Safety cap allows it: 2 x 2.5 = 5.0 == 25% of the 20kg logged set.
+      expect(adapted[1].weight, 27.5);  // 22.5 + 5.0
+      expect(adapted[1].reps, 8);  // 10 - 2
+      expect(adapted[2].weight, 30.0);  // 25 + 5.0
     });
 
     test('Pyramid: underperform (RIR 0, 50% reps) → -1 increment', () {

@@ -11,6 +11,7 @@ import 'package:fitwiz/core/providers/workout_mutation_coordinator.dart';
 import 'package:fitwiz/data/providers/consistency_provider.dart';
 import 'package:fitwiz/data/providers/milestones_provider.dart';
 import 'package:fitwiz/data/providers/muscle_analytics_provider.dart';
+import 'package:fitwiz/data/providers/program_assignments_provider.dart';
 import 'package:fitwiz/data/providers/scores_provider.dart';
 
 void main() {
@@ -30,9 +31,12 @@ void main() {
           consistencyDataProvider,
           activityHeatmapProvider,
           calendarHeatmapProvider,
+          // Program progress (Week X · % complete) must advance the instant a
+          // program workout completes, not just on resume/pull-to-refresh.
+          programAssignmentsProvider,
         ]),
       );
-      expect(kWorkoutMutationProviders.length, 9);
+      expect(kWorkoutMutationProviders.length, 10);
     });
   });
 

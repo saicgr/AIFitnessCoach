@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/onboarding/widgets/quiz_days_selector.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void main() {
   group('QuizDaysSelector', () {
     testWidgets('displays question text', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: null,
@@ -25,6 +28,8 @@ void main() {
     testWidgets('displays all day count options', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: null,
@@ -47,6 +52,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: null,
@@ -70,6 +77,8 @@ void main() {
     testWidgets('shows specific days picker after days count is selected', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: 3,
@@ -88,6 +97,8 @@ void main() {
     testWidgets('hides specific days picker when no days count selected', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: null,
@@ -106,6 +117,8 @@ void main() {
     testWidgets('displays day abbreviations when days count is selected', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: 3,
@@ -132,6 +145,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: 3,
@@ -155,6 +170,8 @@ void main() {
     testWidgets('shows selection counter', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizDaysSelector(
               selectedDays: 3,
@@ -173,6 +190,8 @@ void main() {
     testWidgets('renders in dark mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(),
           home: Scaffold(
             body: QuizDaysSelector(
@@ -192,6 +211,8 @@ void main() {
     testWidgets('renders in light mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.light(),
           home: Scaffold(
             body: QuizDaysSelector(

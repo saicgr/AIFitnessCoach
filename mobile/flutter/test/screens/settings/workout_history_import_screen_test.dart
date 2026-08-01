@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/core/theme/accent_color_provider.dart';
 import 'package:fitwiz/data/models/workout_import_preview.dart';
 import 'package:fitwiz/screens/settings/widgets/workout_import_preview_sheet.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void main() {
   group('WorkoutImportPreview model', () {
@@ -56,6 +57,8 @@ void main() {
   Widget wrap(Widget child) {
     return ProviderScope(
       child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: AccentColorScope(
           accent: AccentColor.orange,
           child: Scaffold(body: child),

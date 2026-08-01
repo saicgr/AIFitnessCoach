@@ -72,24 +72,29 @@ void main() {
       expect(controller.text, '9');
     });
 
-    testWidgets('plus button increments decimal by 2.5', (tester) async {
+    // Decimal (weight) step is deliberately 1.0, not the old plate-friendly
+    // 2.5 — see `_InlineNumberInputState._increment`. The plate-friendly
+    // increments live in the user-configurable stepper
+    // (`lib/widgets/weight_increments_sheet.dart`, default 2.5) used by the
+    // active-workout screen; these widgets are the fine-grained correction path.
+    testWidgets('plus button increments decimal by 1', (tester) async {
       controller.text = '50';
       await tester.pumpWidget(buildTestWidget(isDecimal: true));
 
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
 
-      expect(controller.text, '52.5');
+      expect(controller.text, '51');
     });
 
-    testWidgets('minus button decrements decimal by 2.5', (tester) async {
+    testWidgets('minus button decrements decimal by 1', (tester) async {
       controller.text = '50';
       await tester.pumpWidget(buildTestWidget(isDecimal: true));
 
       await tester.tap(find.byIcon(Icons.remove));
       await tester.pump();
 
-      expect(controller.text, '47.5');
+      expect(controller.text, '49');
     });
 
     testWidgets('value cannot go below 0', (tester) async {
@@ -260,10 +265,13 @@ void main() {
       );
     }
 
-    testWidgets('displays icon', (tester) async {
+    testWidgets('displays stepper icons', (tester) async {
       await tester.pumpWidget(buildTestWidget());
 
-      expect(find.byIcon(Icons.fitness_center), findsNWidgets(2)); // Both + and - have icons
+      // NumberInputField renders its own +/- affordances; the `icon` argument
+      // is not drawn (see report — it is an unused parameter on the widget).
+      expect(find.byIcon(Icons.add), findsOneWidget);
+      expect(find.byIcon(Icons.remove), findsOneWidget);
     });
 
     testWidgets('has text field', (tester) async {
@@ -279,7 +287,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
 
-      expect(controller.text, '52.5');
+      expect(controller.text, '51');
 
       // Tap decrement
       await tester.tap(find.byIcon(Icons.remove));
@@ -351,7 +359,7 @@ void main() {
       await tester.tap(find.byIcon(Icons.add));
       await tester.pump();
 
-      expect(controller.text, '62.5');
+      expect(controller.text, '61');
     });
   });
 }

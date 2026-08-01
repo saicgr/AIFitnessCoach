@@ -81,9 +81,10 @@ void main() {
     });
 
     group('setsRepsDisplay', () {
-      test('should format sets x reps', () {
+      test('should format sets × reps', () {
         final exercise = TestFixtures.createExercise(sets: 4, reps: 12);
-        expect(exercise.setsRepsDisplay, '4 x 12');
+        // Production uses the typographic multiplication sign (U+00D7).
+        expect(exercise.setsRepsDisplay, '4 × 12');
       });
 
       test('should format duration when no sets/reps', () {

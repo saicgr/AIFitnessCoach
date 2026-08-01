@@ -84,7 +84,9 @@ void main() {
         ),
       ));
 
-      expect(find.text('View All'), findsOneWidget);
+      // The signature header renders the action as an uppercase label
+      // (`ZType.lbl`), matching the uppercase section title beside it.
+      expect(find.text('VIEW ALL'), findsOneWidget);
       expect(find.byIcon(Icons.arrow_forward_ios), findsOneWidget);
     });
 
@@ -99,7 +101,7 @@ void main() {
         ),
       ));
 
-      await tester.tap(find.text('View All'));
+      await tester.tap(find.text('VIEW ALL'));
       await tester.pump();
 
       expect(wasTapped, isTrue);
@@ -110,7 +112,7 @@ void main() {
         const SectionHeader(title: 'TODAY'),
       ));
 
-      expect(find.text('View All'), findsNothing);
+      expect(find.text('VIEW ALL'), findsNothing);
       expect(find.byIcon(Icons.arrow_forward_ios), findsNothing);
     });
 
@@ -122,7 +124,7 @@ void main() {
         ),
       ));
 
-      expect(find.text('View All'), findsNothing);
+      expect(find.text('VIEW ALL'), findsNothing);
     });
   });
 }

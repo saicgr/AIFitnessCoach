@@ -69,7 +69,7 @@ void main() {
 
         verify(() => mockApiClient.get(
           any(),
-          queryParameters: {'limit': 50},
+          queryParameters: {'limit': 50, 'offset': 0},
         )).called(1);
       });
 
@@ -87,7 +87,7 @@ void main() {
 
         verify(() => mockApiClient.get(
           any(),
-          queryParameters: {'limit': 100},
+          queryParameters: {'limit': 100, 'offset': 0},
         )).called(1);
       });
 
@@ -134,6 +134,7 @@ void main() {
         when(() => mockApiClient.post(
           any(),
           data: any(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => Response(
           requestOptions: RequestOptions(path: '/chat/send'),
           statusCode: 200,
@@ -155,6 +156,7 @@ void main() {
         when(() => mockApiClient.post(
           any(),
           data: any(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => Response(
           requestOptions: RequestOptions(path: '/chat/send'),
           statusCode: 200,
@@ -172,6 +174,7 @@ void main() {
         final captured = verify(() => mockApiClient.post(
           any(),
           data: captureAny(named: 'data'),
+          options: any(named: 'options'),
         )).captured.single as Map<String, dynamic>;
 
         expect(captured['message'], 'How should I train?');
@@ -185,6 +188,7 @@ void main() {
         when(() => mockApiClient.post(
           any(),
           data: any(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => Response(
           requestOptions: RequestOptions(path: '/chat/send'),
           statusCode: 200,
@@ -205,6 +209,7 @@ void main() {
         final captured = verify(() => mockApiClient.post(
           any(),
           data: captureAny(named: 'data'),
+          options: any(named: 'options'),
         )).captured.single as Map<String, dynamic>;
 
         expect(captured['conversation_history'], history);
@@ -224,6 +229,7 @@ void main() {
         when(() => mockApiClient.post(
           any(),
           data: any(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => Response(
           requestOptions: RequestOptions(path: '/chat/send'),
           statusCode: 200,
@@ -245,6 +251,7 @@ void main() {
         when(() => mockApiClient.post(
           any(),
           data: any(named: 'data'),
+          options: any(named: 'options'),
         )).thenAnswer((_) async => Response(
           requestOptions: RequestOptions(path: '/chat/send'),
           statusCode: 500,
@@ -260,21 +267,69 @@ void main() {
         );
       });
 
-      test('should rethrow DioException', () async {
+      // sendMessage deliberately does NOT leak the raw DioException — it maps
+      // transport failures onto user-facing copy the chat UI renders verbatim
+      // (503 / 429 / timeout / connection / 402 quota all get their own line).
+      // These assert the mapping, not a rethrow.
+      test('should map connection errors to a user-facing message', () async {
         when(() => mockApiClient.post(
           any(),
           data: any(named: 'data'),
+          options: any(named: 'options'),
         )).thenThrow(DioException(
           requestOptions: RequestOptions(path: '/chat/send'),
-          error: 'Connection timeout',
+          type: DioExceptionType.connectionError,
+          error: 'Connection refused',
         ));
 
-        expect(
-          () => repository.sendMessage(
-            message: 'Test',
-            userId: 'user-123',
+        await expectLater(
+          () => repository.sendMessage(message: 'Test', userId: 'user-123'),
+          throwsA(
+            isA<Exception>()
+                .having((e) => e is DioException, 'is not a raw DioException', isFalse)
+                .having((e) => e.toString(), 'message',
+                    contains('Unable to connect to the server')),
           ),
-          throwsA(isA<DioException>()),
+        );
+      });
+
+      test('should map receive timeouts to a user-facing message', () async {
+        when(() => mockApiClient.post(
+          any(),
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        )).thenThrow(DioException(
+          requestOptions: RequestOptions(path: '/chat/send'),
+          type: DioExceptionType.receiveTimeout,
+        ));
+
+        await expectLater(
+          () => repository.sendMessage(message: 'Test', userId: 'user-123'),
+          throwsA(isA<Exception>().having(
+              (e) => e.toString(), 'message', contains('timed out'))),
+        );
+      });
+
+      test('should surface the free-tier quota cap on 402', () async {
+        when(() => mockApiClient.post(
+          any(),
+          data: any(named: 'data'),
+          options: any(named: 'options'),
+        )).thenThrow(DioException(
+          requestOptions: RequestOptions(path: '/chat/send'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/chat/send'),
+            statusCode: 402,
+            data: {
+              'detail': {'feature': 'chat', 'limit': 5, 'used': 5}
+            },
+          ),
+        ));
+
+        await expectLater(
+          () => repository.sendMessage(message: 'Test', userId: 'user-123'),
+          throwsA(isA<Exception>().having(
+              (e) => e.toString(), 'message', contains('5 free coach messages'))),
         );
       });
     });

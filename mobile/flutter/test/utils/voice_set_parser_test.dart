@@ -210,7 +210,10 @@ void main() {
       final r = parser.parse('BENCH 225 FOR 5');
       expect(r.weightKg, closeToKg(225));
       expect(r.reps, 5);
-      expect(r.liftHint, isNull); // no currentExerciseName → still no mismatch
+      // With no currentExerciseName there is nothing to compare against, so
+      // the spoken lift is surfaced verbatim (same rule as the "OHP 95 for 5"
+      // case above); the caller does its own current-exercise comparison.
+      expect(r.liftHint, 'bench');
     });
   });
 }

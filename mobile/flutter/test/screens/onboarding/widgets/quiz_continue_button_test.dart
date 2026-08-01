@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/onboarding/widgets/quiz_continue_button.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void main() {
   group('QuizContinueButton', () {
     testWidgets('shows "Continue" text when not last question', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizContinueButton(
               canProceed: true,
@@ -24,6 +27,8 @@ void main() {
     testWidgets('shows "See My Plan" text when last question', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizContinueButton(
               canProceed: true,
@@ -43,6 +48,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizContinueButton(
               canProceed: true,
@@ -56,7 +63,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(ElevatedButton));
+      await tester.tap(find.text('Continue'));
       await tester.pump();
 
       expect(pressed, isTrue);
@@ -67,6 +74,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizContinueButton(
               canProceed: false,
@@ -80,7 +89,7 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(ElevatedButton));
+      await tester.tap(find.text('Continue'));
       await tester.pump();
 
       expect(pressed, isFalse);
@@ -89,6 +98,8 @@ void main() {
     testWidgets('shows arrow icon when canProceed is true', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizContinueButton(
               canProceed: true,
@@ -106,6 +117,8 @@ void main() {
     testWidgets('hides arrow icon when canProceed is false', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: Scaffold(
             body: QuizContinueButton(
               canProceed: false,
@@ -123,6 +136,8 @@ void main() {
     testWidgets('renders in dark mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(),
           home: Scaffold(
             body: QuizContinueButton(
@@ -141,6 +156,8 @@ void main() {
     testWidgets('renders in light mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.light(),
           home: Scaffold(
             body: QuizContinueButton(

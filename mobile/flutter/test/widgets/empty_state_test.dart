@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/widgets/empty_state.dart';
 import '../helpers/test_helpers.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 void main() {
   group('EmptyState', () {
@@ -12,6 +13,9 @@ void main() {
             icon: Icons.search,
             title: 'Test Title',
             subtitle: 'Test Subtitle',
+            // The default empty state renders a Lottie animation instead of
+            // the icon; opt into the icon variant to assert on it.
+            useLottie: false,
           ),
         ),
       );
@@ -77,13 +81,20 @@ void main() {
       testWidgets('noWorkouts should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: Builder(builder: (context) => EmptyState.noWorkouts(context)),
+            child: Builder(
+              // The action button only renders when BOTH actionLabel and
+              // onAction are supplied.
+              builder: (context) => EmptyState.noWorkouts(context, onAction: () {}),
+            ),
           ),
         );
 
-        expect(find.byIcon(Icons.fitness_center), findsOneWidget);
+        expect(
+          tester.widget<EmptyState>(find.byType(EmptyState)).icon,
+          Icons.fitness_center,
+        );
         expect(find.text('No workouts yet'), findsOneWidget);
-        expect(find.text('Create Program'), findsOneWidget);
+        expect(find.text('Create program'), findsOneWidget);
       });
 
       testWidgets('noWorkouts should call onAction when button tapped', (tester) async {
@@ -102,13 +113,18 @@ void main() {
       testWidgets('noExercises should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: Builder(builder: (context) => EmptyState.noExercises(context)),
+            child: Builder(
+              builder: (context) => EmptyState.noExercises(context, onAction: () {}),
+            ),
           ),
         );
 
-        expect(find.byIcon(Icons.search_off), findsOneWidget);
+        expect(
+          tester.widget<EmptyState>(find.byType(EmptyState)).icon,
+          Icons.search_off,
+        );
         expect(find.text('No exercises found'), findsOneWidget);
-        expect(find.text('Clear Filters'), findsOneWidget);
+        expect(find.text('Clear filters'), findsOneWidget);
       });
 
       testWidgets('noHistory should display correct content', (tester) async {
@@ -118,7 +134,10 @@ void main() {
           ),
         );
 
-        expect(find.byIcon(Icons.history), findsOneWidget);
+        expect(
+          tester.widget<EmptyState>(find.byType(EmptyState)).icon,
+          Icons.history,
+        );
         expect(find.text('No workout history'), findsOneWidget);
         // No action button for noHistory
         expect(find.byType(ElevatedButton), findsNothing);
@@ -131,7 +150,10 @@ void main() {
           ),
         );
 
-        expect(find.byIcon(Icons.search), findsOneWidget);
+        expect(
+          tester.widget<EmptyState>(find.byType(EmptyState)).icon,
+          Icons.search,
+        );
         expect(find.text('No results'), findsOneWidget);
         expect(find.byType(ElevatedButton), findsNothing);
       });
@@ -139,11 +161,16 @@ void main() {
       testWidgets('offline should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: Builder(builder: (context) => EmptyState.offline(context)),
+            child: Builder(
+              builder: (context) => EmptyState.offline(context, onRetry: () {}),
+            ),
           ),
         );
 
-        expect(find.byIcon(Icons.wifi_off), findsOneWidget);
+        expect(
+          tester.widget<EmptyState>(find.byType(EmptyState)).icon,
+          Icons.wifi_off,
+        );
         expect(find.text('No connection'), findsOneWidget);
         expect(find.text('Retry'), findsOneWidget);
       });
@@ -172,6 +199,7 @@ void main() {
             title: 'Title',
             subtitle: 'Subtitle',
             iconColor: customColor,
+            useLottie: false,
           ),
         ),
       );
@@ -198,6 +226,8 @@ void main() {
     testWidgets('should work in dark mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(),
           home: const Scaffold(
             body: EmptyState(
@@ -215,6 +245,8 @@ void main() {
     testWidgets('should work in light mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.light(),
           home: const Scaffold(
             body: EmptyState(
@@ -334,6 +366,8 @@ void main() {
     testWidgets('should work in dark mode', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           theme: ThemeData.dark(),
           home: const Scaffold(
             body: SkeletonCard(),

@@ -16,7 +16,10 @@ void main() {
       expect(find.text('3 of 5 workouts'), findsOneWidget);
     });
 
-    testWidgets('renders percentage', (tester) async {
+    // Surface 2.5 deliberately dropped the big "N%" number (it was punitive on
+    // a fresh week and duplicated the day-ring row). Completion is now carried
+    // by the "X of N workouts" headline plus the progress bar's value.
+    testWidgets('progress bar value reflects completion ratio', (tester) async {
       await tester.pumpWidget(createTestWidget(
         const WeeklyProgressCard(
           completed: 3,
@@ -24,10 +27,14 @@ void main() {
         ),
       ));
 
-      expect(find.text('60%'), findsOneWidget);
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, closeTo(0.6, 0.0001));
+      expect(find.text('60%'), findsNothing);
     });
 
-    testWidgets('renders 100% when all completed', (tester) async {
+    testWidgets('progress bar is full when all completed', (tester) async {
       await tester.pumpWidget(createTestWidget(
         const WeeklyProgressCard(
           completed: 5,
@@ -35,10 +42,14 @@ void main() {
         ),
       ));
 
-      expect(find.text('100%'), findsOneWidget);
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, closeTo(1.0, 0.0001));
+      expect(find.text('5 of 5 workouts'), findsOneWidget);
     });
 
-    testWidgets('renders 0% when none completed', (tester) async {
+    testWidgets('progress bar is empty when none completed', (tester) async {
       await tester.pumpWidget(createTestWidget(
         const WeeklyProgressCard(
           completed: 0,
@@ -46,7 +57,11 @@ void main() {
         ),
       ));
 
-      expect(find.text('0%'), findsOneWidget);
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, closeTo(0.0, 0.0001));
+      expect(find.text('0 of 5 workouts'), findsOneWidget);
     });
 
     testWidgets('renders all day indicators', (tester) async {
@@ -84,8 +99,11 @@ void main() {
         ),
       ));
 
-      // Should show 0% without crashing
-      expect(find.text('0%'), findsOneWidget);
+      // Should render an empty bar without a divide-by-zero crash.
+      final bar = tester.widget<LinearProgressIndicator>(
+        find.byType(LinearProgressIndicator),
+      );
+      expect(bar.value, closeTo(0.0, 0.0001));
     });
 
     testWidgets('renders correctly in dark theme', (tester) async {

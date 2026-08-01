@@ -184,25 +184,30 @@ void main() {
 
     group('rescheduleWorkout', () {
       test('should return true on success', () async {
-        when(() => mockApiClient.patch(
+        when(() => mockApiClient.post(
           any(),
-          queryParameters: any(named: 'queryParameters'),
+          data: any(named: 'data'),
         )).thenAnswer((_) async => Response(
-          requestOptions: RequestOptions(path: '/workouts/workout-id/reschedule'),
+          requestOptions: RequestOptions(path: '/scheduling/reschedule'),
           statusCode: 200,
         ));
 
         final result = await repository.rescheduleWorkout('workout-id', '2025-02-01');
 
         expect(result, true);
+
+        verify(() => mockApiClient.post(
+          '/scheduling/reschedule',
+          data: {'workout_id': 'workout-id', 'new_date': '2025-02-01'},
+        )).called(1);
       });
 
       test('should return false on error', () async {
-        when(() => mockApiClient.patch(
+        when(() => mockApiClient.post(
           any(),
-          queryParameters: any(named: 'queryParameters'),
+          data: any(named: 'data'),
         )).thenThrow(DioException(
-          requestOptions: RequestOptions(path: '/workouts/workout-id/reschedule'),
+          requestOptions: RequestOptions(path: '/scheduling/reschedule'),
         ));
 
         final result = await repository.rescheduleWorkout('workout-id', '2025-02-01');

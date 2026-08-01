@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/workout/widgets/pre_set_coaching_banner.dart';
+import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
 Widget _host(Widget child, {Brightness brightness = Brightness.dark}) {
   return MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     theme: ThemeData(brightness: brightness),
     home: Scaffold(body: child),
   );

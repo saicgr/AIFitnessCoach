@@ -1,8 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/data/models/nutrition_preferences.dart';
 import 'package:fitwiz/data/providers/nutrition_preferences_provider.dart';
 import 'package:fitwiz/data/repositories/nutrition_preferences_repository.dart';
+import 'package:fitwiz/data/services/api_client.dart' show ApiClient;
+
+/// A container whose [nutritionPreferencesProvider] is a real notifier holding
+/// the real initial state — but built WITHOUT walking the live dependency
+/// chain (`authStateProvider` → `authRepositoryProvider` → `apiClientProvider`
+/// → `ApiClient.startAuthListener()` → `Supabase.instance`). A unit test never
+/// initialises Supabase, so reading any convenience accessor used to blow up on
+/// that assertion. The `ApiClient` object itself is Supabase-free to construct;
+/// only the provider body's auth-listener side effect is not, and these tests
+/// never issue a request.
+ProviderContainer _container() => ProviderContainer(
+      overrides: [
+        nutritionPreferencesProvider.overrideWith(
+          (ref) => NutritionPreferencesNotifier(
+            NutritionPreferencesRepository(ApiClient(const FlutterSecureStorage())),
+          ),
+        ),
+      ],
+    );
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -82,10 +102,15 @@ void main() {
       expect(state.currentCalorieTarget, 2000);
     });
 
-    test('currentCalorieTarget should return default when nothing set', () {
+    // NOT a fallback to 2000 — nullable by design. A fabricated default let an
+    // unconfigured target masquerade as a real plan on any surface that forgot
+    // to check `hasConfiguredTargets`, so the magic number was removed and the
+    // type made nullable to force every consumer to handle "no plan set".
+    test('currentCalorieTarget should be null when nothing set', () {
       const state = NutritionPreferencesState();
 
-      expect(state.currentCalorieTarget, 2000);
+      expect(state.currentCalorieTarget, isNull);
+      expect(state.hasConfiguredTargets, isFalse);
     });
 
     test('onboardingCompleted should be preserved in copyWith', () {
@@ -190,31 +215,35 @@ void main() {
 
   group('Provider convenience accessors', () {
     test('nutritionOnboardingCompletedProvider returns false by default', () {
-      final container = ProviderContainer();
+      final container = _container();
       addTearDown(container.dispose);
 
       final isCompleted = container.read(nutritionOnboardingCompletedProvider);
       expect(isCompleted, false);
     });
 
-    test('currentCalorieTargetProvider returns default 2000', () {
-      final container = ProviderContainer();
+    // Nullable, NOT 2000 — the provider mirrors
+    // `NutritionPreferencesState.currentCalorieTarget`, which deliberately has
+    // no magic-number fallback. Presenting surfaces must gate on
+    // `hasConfiguredTargets` and show a "set a target" CTA instead.
+    test('currentCalorieTargetProvider returns null until targets are set', () {
+      final container = _container();
       addTearDown(container.dispose);
 
       final calories = container.read(currentCalorieTargetProvider);
-      expect(calories, 2000);
+      expect(calories, isNull);
     });
 
-    test('currentProteinTargetProvider returns default 150', () {
-      final container = ProviderContainer();
+    test('currentProteinTargetProvider returns null until targets are set', () {
+      final container = _container();
       addTearDown(container.dispose);
 
       final protein = container.read(currentProteinTargetProvider);
-      expect(protein, 150);
+      expect(protein, isNull);
     });
 
     test('isTrainingDayProvider returns false by default', () {
-      final container = ProviderContainer();
+      final container = _container();
       addTearDown(container.dispose);
 
       final isTraining = container.read(isTrainingDayProvider);
@@ -223,10 +252,14 @@ void main() {
   });
 
   group('DynamicNutritionTargets', () {
-    test('should create with default values', () {
+    // Macro fields are nullable with NO numeric default: a missing/failed
+    // dynamic target must stay null so it can't shadow the real base target
+    // through `dynamicTargets?.targetCalories ?? preferences?.targetCalories`.
+    test('should leave macro targets null by default', () {
       const targets = DynamicNutritionTargets();
 
-      expect(targets.targetCalories, 2000);
+      expect(targets.targetCalories, isNull);
+      expect(targets.targetProteinG, isNull);
       expect(targets.isTrainingDay, false);
       expect(targets.isFastingDay, false);
     });

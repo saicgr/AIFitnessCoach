@@ -19,6 +19,7 @@
 // (_SessionScoreRings, _SessionTimelineAndHeatmap, _PyramidExerciseCard, …) are
 // exercised transitively by feeding metadata/data that makes each render.
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,10 +29,79 @@ import 'package:fitwiz/core/providers/user_provider.dart' show useKgForWorkoutPr
 import 'package:fitwiz/core/providers/locale_provider.dart' show supportedAppLocales;
 import 'package:fitwiz/data/models/exercise.dart' show LibraryExercise;
 import 'package:fitwiz/data/models/workout.dart';
+import 'package:fitwiz/data/services/api_client.dart'
+    show ApiClient, apiClientProvider;
 import 'package:fitwiz/l10n/generated/app_localizations.dart';
 import 'package:fitwiz/screens/library/providers/library_providers.dart'
     show exercisesProvider;
 import 'package:fitwiz/screens/workout/workout_summary_general.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+// ────────────────────── offline API stub ──────────────────────
+//
+// The result screen mounts two async side-cars — `WorkoutAiRecapCard` and
+// `ScoreLevelUpCelebration` — that `ref.read(apiClientProvider)` from
+// initState / a post-frame callback. Two things break a pure layout test there:
+//
+//   1. the REAL `apiClientProvider` body calls `client.startAuthListener()`,
+//      which dereferences `Supabase.instance`. A unit test never initialises
+//      Supabase, so every case in this file died on that assertion before a
+//      single frame laid out.
+//   2. left on their loading path, both render an infinitely repeating
+//      `.shimmer()` — `pumpAndSettle()` can then never settle.
+//
+// So subclass the REAL ApiClient (no auth listener) and answer only the two
+// GETs these widgets issue, with production-shaped payloads. Every other
+// method stays the real implementation. The cards therefore reach their
+// terminal, non-animating states and this gate measures the layout users
+// actually get, not a skeleton.
+class _OfflineApiClient extends ApiClient {
+  _OfflineApiClient() : super(const FlutterSecureStorage());
+
+  static Response<T> _json<T>(String path, int status, T body) => Response<T>(
+        requestOptions: RequestOptions(path: path),
+        statusCode: status,
+        data: body,
+      );
+
+  @override
+  Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    if (path.startsWith('/feedback/recap/')) {
+      return _json<T>(path, 200, <String, dynamic>{
+        'exists': true,
+        'recap': {
+          'headline': 'Bench PR and your best push volume yet.',
+          'what_stood_out': [
+            'Top bench set moved 5% heavier than last week.',
+            'Rest between squat sets stayed under 2:00 the whole way.',
+          ],
+          'prs': [
+            {'exercise_name': 'Bench Press', 'detail': '65 kg × 3 — new all-time'},
+          ],
+          'coaching_cue': 'Keep the bar path over mid-foot on the last squat set.',
+          'notes_reference': 'You logged "left shoulder felt fine today".',
+          'volume_comparison': {
+            'current_kg': 5400,
+            'previous_kg': 5000,
+            'delta_percent': 8.0,
+          },
+        },
+      } as T);
+    }
+    if (path == '/scores/recent-level-ups') {
+      return _json<T>(path, 200, <String, dynamic>{
+        'muscle_level_ups': const [],
+        'overall_level_up': null,
+      } as T);
+    }
+    return _json<T>(path, 404, null as T);
+  }
+}
 
 // ───────────────────────── render matrix ─────────────────────────
 
@@ -122,6 +192,8 @@ Future<void> _pumpResult(
         // `workout_summary_weight_unit_test.dart` does. false = pounds, which
         // is what these fixtures were written against.
         useKgForWorkoutProvider.overrideWith((ref) => false),
+        // Supabase-free, network-free API client — see [_OfflineApiClient].
+        apiClientProvider.overrideWith((ref) => _OfflineApiClient()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
