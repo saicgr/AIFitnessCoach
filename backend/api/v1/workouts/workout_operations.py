@@ -194,25 +194,128 @@ async def swap_workout_date(request: Request, payload: SwapWorkoutsRequest,
         raise safe_internal_error(e, "generation")
 
 
+def _swap_exercise_in_side_section(
+    db,
+    section: str,
+    workout: Dict[str, Any],
+    payload: SwapExerciseRequest,
+    new_ex: Optional[Dict[str, Any]],
+) -> Workout:
+    """Swap a warmup/stretch move in place (register row 154).
+
+    `/swap-exercise` advertised `section` support via the schema but only ever
+    read the MAIN `exercises_json` list, so a `section:"warmup"` swap searched
+    the wrong list and always 404'd "not found in workout". This mirrors
+    `add_exercise_to_workout`'s warmup/stretches branches: same table
+    (`warmups`/`stretches`), same row shape, same in-place update of the
+    CURRENT row's `exercises_json` — no SCD2 versioning needed here because
+    this doesn't create a new `is_current` row, it edits the existing one.
+    """
+    table = "warmups" if section == "warmup" else "stretches"
+
+    row_result = (
+        db.client.table(table).select("*")
+        .eq("workout_id", payload.workout_id)
+        .eq("is_current", True)
+        .execute()
+    )
+    if not row_result.data:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Exercise '{payload.old_exercise_name}' not found in workout",
+        )
+    row = row_result.data[0]
+
+    existing = row.get("exercises_json", "[]")
+    exercises = json.loads(existing) if isinstance(existing, str) else list(existing or [])
+
+    idx = None
+    for i, ex in enumerate(exercises):
+        if (ex.get("name") or "").lower() == payload.old_exercise_name.lower():
+            idx = i
+            break
+    if idx is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Exercise '{payload.old_exercise_name}' not found in workout",
+        )
+
+    old_entry = exercises[idx]
+    if new_ex:
+        new_entry = {
+            **old_entry,
+            "name": new_ex.get("name", payload.new_exercise_name),
+            "muscle_group": new_ex.get("target_muscle") or new_ex.get("body_part") or old_entry.get("muscle_group"),
+            "equipment": new_ex.get("equipment") or old_entry.get("equipment"),
+            "notes": new_ex.get("instructions") or old_entry.get("notes"),
+            "library_id": new_ex.get("id"),
+        }
+    else:
+        new_entry = {**old_entry, "name": payload.new_exercise_name}
+
+    if payload.duration_seconds is not None:
+        new_entry["duration_seconds"] = payload.duration_seconds
+        new_entry["is_timed"] = True
+    if payload.speed_mph is not None:
+        new_entry["speed_mph"] = payload.speed_mph
+    if payload.incline_percent is not None:
+        new_entry["incline_percent"] = payload.incline_percent
+    if payload.rpm is not None:
+        new_entry["rpm"] = payload.rpm
+    if payload.resistance_level is not None:
+        new_entry["resistance_level"] = payload.resistance_level
+    if payload.stroke_rate_spm is not None:
+        new_entry["stroke_rate_spm"] = payload.stroke_rate_spm
+
+    exercises[idx] = new_entry
+
+    db.client.table(table).update({
+        "exercises_json": json.dumps(exercises),
+        "updated_at": datetime.now().isoformat(),
+    }).eq("id", row["id"]).execute()
+
+    log_workout_change(
+        payload.workout_id,
+        workout.get("user_id"),
+        "exercise_swap",
+        f"{table}.exercises_json",
+        payload.old_exercise_name,
+        payload.new_exercise_name,
+    )
+
+    try:
+        db.client.table("exercise_swaps").insert({
+            "user_id": workout.get("user_id"),
+            "workout_id": payload.workout_id,
+            "original_exercise": payload.old_exercise_name,
+            "new_exercise": payload.new_exercise_name,
+            "swap_reason": payload.reason,
+            "swap_source": payload.swap_source or "ai_suggestion",
+            "exercise_index": idx,
+            "workout_phase": section,
+        }).execute()
+        logger.info(f"Logged swap to exercise_swaps: {payload.old_exercise_name} -> {payload.new_exercise_name} ({section})")
+    except Exception as e:
+        logger.warning(f"Failed to log swap to exercise_swaps: {e}", exc_info=True)
+
+    logger.info(f"Exercise swapped successfully in {table} for workout {payload.workout_id}")
+    return row_to_workout(workout)
+
+
 @router.post("/swap-exercise", response_model=Workout)
 @limiter.limit("10/minute")
 async def swap_exercise_in_workout(request: Request, payload: SwapExerciseRequest, background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Swap an exercise within a workout with a new exercise from the library."""
-    logger.info(f"Swapping exercise '{payload.old_exercise_name}' with '{payload.new_exercise_name}' in workout {payload.workout_id}")
+    section = payload.section or "main"
+    logger.info(f"Swapping exercise '{payload.old_exercise_name}' with '{payload.new_exercise_name}' in workout {payload.workout_id} (section: {section})")
     try:
         db = get_supabase_db()
 
         workout = db.get_workout(payload.workout_id)
         if not workout:
             raise HTTPException(status_code=404, detail="Workout not found")
-
-        exercises_json = workout.get("exercises_json", "[]")
-        if isinstance(exercises_json, str):
-            exercises = json.loads(exercises_json)
-        else:
-            exercises = exercises_json
 
         # Get muscle profiles for comparison (optional)
         muscle_comparison = None
@@ -246,6 +349,17 @@ async def swap_exercise_in_workout(request: Request, payload: SwapExerciseReques
             )
         except InjuryUnsafeExerciseError as unsafe:
             raise injury_block_response(unsafe)
+
+        # Row 154: honour `section` the same way add-exercise does — warmup and
+        # stretches live in their own tables, not `exercises_json`.
+        if section in ("warmup", "stretches"):
+            return _swap_exercise_in_side_section(db, section, workout, payload, new_ex)
+
+        exercises_json = workout.get("exercises_json", "[]")
+        if isinstance(exercises_json, str):
+            exercises = json.loads(exercises_json)
+        else:
+            exercises = exercises_json
 
         exercise_found = False
         i = 0

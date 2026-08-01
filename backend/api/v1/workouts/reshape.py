@@ -21,6 +21,7 @@ original session untouched with `reshaped=false`, never a 500 that blocks Start.
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
@@ -35,6 +36,7 @@ from .readiness_utils import (
     adjust_workout_params_for_readiness,
     get_muscles_to_avoid_from_injuries,
 )
+from .utils import log_workout_change
 
 logger = logging.getLogger("workout_reshape")
 
@@ -78,7 +80,7 @@ class ReshapeResponse(BaseModel):
 # Pain at/above this 0–10 level moves from "monitor" to "swap zone" (#3).
 _PAIN_SWAP_THRESHOLD = 4
 
-_SOURCE_SELECT = "id, user_id, exercises_json, duration_minutes, type, difficulty"
+_SOURCE_SELECT = "id, user_id, exercises_json, duration_minutes, type, difficulty, modification_history"
 
 
 def _readiness_0_100(req: ReshapeRequest) -> Optional[int]:
@@ -361,14 +363,59 @@ async def reshape_for_readiness(
                 new_minutes,
                 _weight_kg,
             )
+
+            # Register row #159: this endpoint rewrote exercises_json /
+            # duration_minutes / estimated_calories in place with NO audit
+            # trail — neither `modification_history` (the column) nor
+            # `workout_changes` (via log_workout_change) ever saw it, unlike
+            # every other mutation path (see services/workout_modifier.py).
+            # A reshaped workout was indistinguishable after the fact from
+            # one that was always that size. Stamp both surfaces, same shape.
+            existing_history = row.data.get("modification_history") or []
+            if isinstance(existing_history, str):
+                try:
+                    existing_history = json.loads(existing_history) if existing_history else []
+                except (ValueError, TypeError):
+                    existing_history = []
+            history_entry = {
+                "type": "reshape_for_readiness",
+                "reasons": reasons,
+                "exercise_count_before": len(original),
+                "exercise_count_after": len(reshaped),
+                "duration_minutes": new_minutes,
+                "estimated_calories": new_calories,
+                "timestamp": datetime.now().isoformat(),
+                "method": "pre_workout_checkin",
+            }
+            new_history = list(existing_history) + [history_entry]
+
             sb.client.table("workouts").update(
                 {
                     "exercises_json": reshaped,
                     "duration_minutes": new_minutes,
                     "estimated_calories": new_calories,
+                    "modification_history": new_history,
+                    "last_modified_method": "reshape_for_readiness",
                 }
             ).eq("id", workout_id).eq("user_id", user_id).execute()
             applied = True
+
+            log_workout_change(
+                workout_id,
+                user_id,
+                "reshape_for_readiness",
+                "exercises_json",
+                None,
+                {
+                    "reasons": reasons,
+                    "exercise_count_before": len(original),
+                    "exercise_count_after": len(reshaped),
+                    "duration_minutes": new_minutes,
+                    "estimated_calories": new_calories,
+                },
+                change_source="pre_workout_checkin",
+                change_reason="; ".join(reasons) if reasons else None,
+            )
         except Exception as e:
             logger.warning(f"[reshape] persist failed (non-fatal): {e}")
 
