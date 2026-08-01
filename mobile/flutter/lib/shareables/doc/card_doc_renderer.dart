@@ -9,6 +9,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../core/utils/const_icons.dart';
 import '../shareable_data.dart';
 import '../widgets/app_watermark.dart';
 import '../widgets/food_image.dart';
@@ -667,7 +668,10 @@ class _ElementBody extends StatelessWidget {
     return FittedBox(
       fit: BoxFit.contain,
       child: Icon(
-        IconData(p.iconCodepoint!, fontFamily: p.iconFontFamily ?? 'MaterialIcons'),
+        // E2E #157 — see core/utils/const_icons.dart. Nothing in lib/ ever
+        // assigns `iconCodepoint` (every icon prop is an emoji today), yet the
+        // dynamic IconData here still failed release tree-shaking.
+        iconFromCodePoint(p.iconCodepoint),
         color: p.color,
         size: 96,
       ),

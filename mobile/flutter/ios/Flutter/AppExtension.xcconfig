@@ -1,0 +1,27 @@
+// Base configuration for app-extension targets (FitWizLiveActivityExtension).
+//
+// Why this file exists
+// --------------------
+// The extension target's build settings already ask for the Flutter version:
+//
+//     MARKETING_VERSION        = $(FLUTTER_BUILD_NAME)
+//     CURRENT_PROJECT_VERSION  = $(FLUTTER_BUILD_NUMBER)
+//
+// but those variables are defined ONLY in Flutter/Generated.xcconfig, which
+// until now was reachable from the Runner target alone (via Debug/Release
+// .xcconfig). For the extension they resolved to EMPTY, and Xcode silently
+// drops empty-valued keys from the generated Info.plist — so the built
+// .appex shipped with no CFBundleShortVersionString and no CFBundleVersion.
+// `simctl install` rejects that as "Invalid placeholder attributes / Failed
+// to create app extension placeholder", and Apple requires an appex's
+// CFBundleShortVersionString to match the host app's, so it is a submission
+// risk too. See docs/qa/E2E_ISSUES_2026-07-28.md row 155.
+//
+// Including Generated.xcconfig here makes the versions track pubspec.yaml
+// automatically, so they can never drift from the app the way a hardcoded
+// literal would.
+//
+// Deliberately NOT including Flutter/Debug.xcconfig or Release.xcconfig:
+// those pull in Pods-Runner.*.xcconfig, which would link the Runner target's
+// CocoaPods dependencies into the extension.
+#include "Generated.xcconfig"

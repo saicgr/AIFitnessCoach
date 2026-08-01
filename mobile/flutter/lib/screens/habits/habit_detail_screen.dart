@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+
+import '../../core/utils/const_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -205,11 +207,11 @@ class HabitDetailData {
     return HabitDetailData(
       id: json['id'] as String,
       name: json['name'] as String,
-      icon: IconData(
-        (json['iconCodePoint'] as num).toInt(),
-        fontFamily: json['iconFontFamily'] as String?,
-        fontPackage: json['iconFontPackage'] as String?,
-      ),
+      // E2E #157 — a dynamic `IconData` here broke release tree-shaking and
+      // with it every release build. The codepoint is only ever one this app
+      // serialised on the way in (habit icons come from a fixed name→icon
+      // map), so resolving through the const table costs nothing.
+      icon: iconFromCodePoint((json['iconCodePoint'] as num?)?.toInt()),
       color: Color((json['color'] as num).toInt()),
       isAutoTracked: json['isAutoTracked'] == true,
       description: json['description'] as String?,

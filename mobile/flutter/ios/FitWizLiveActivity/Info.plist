@@ -5,46 +5,47 @@
 	<key>CFBundleDisplayName</key>
 	<string>Zealova Live Activity</string>
 	<!--
-		iOS 26 simulator regression — `simctl install` fails with
+		`simctl install` used to fail on this extension with
 		"Invalid placeholder attributes / Failed to create app extension
-		placeholder" when the WidgetKit/Live Activity extension's Info.plist
-		does not declare these keys explicitly:
+		placeholder for …FitWizLiveActivityExtension.appex", which blocked
+		every simulator install of the app. There were TWO independent
+		causes, both fixed 2026-07-31 (E2E register row 155). An earlier
+		attempt fixed neither and its comment asserted the opposite of what
+		the installer actually does, so the reasoning is recorded in full.
 
-		- NSExtensionAttributes (even an empty dict is enough; iOS 26's
-		  placeholder validator refuses extensions where the key is missing).
-		- NSExtensionPrincipalClass — WidgetKit extensions auto-discover the
-		  principal Widget bundle via @main; this key is allowed to be empty
-		  but must be PRESENT for the iOS 26 sim installer to build the
-		  placeholder bundle. Production devices were unaffected.
+		1. The built .appex carried NO CFBundleShortVersionString and NO
+		   CFBundleVersion. This target sets GENERATE_INFOPLIST_FILE = YES,
+		   so Xcode's generated plist overwrites whatever is written here —
+		   and it takes the versions from MARKETING_VERSION /
+		   CURRENT_PROJECT_VERSION, which are "$(FLUTTER_BUILD_NAME)" /
+		   "$(FLUTTER_BUILD_NUMBER)". Those variables live in
+		   Flutter/Generated.xcconfig, which only the Runner target used to
+		   include, so here they resolved EMPTY and Xcode dropped the keys.
+		   Writing literal versions in THIS file therefore cannot work — the
+		   generated plist wins. The fix is upstream: the target now has
+		   Flutter/AppExtension.xcconfig as its base configuration, which
+		   supplies both variables, so the versions track pubspec.yaml and
+		   cannot drift from the host app (Apple requires the appex
+		   CFBundleShortVersionString to match the app's).
 
-		Adding both unblocks `flutter run` on iOS 26 simulators without
-		changing runtime behaviour. Cleared once Apple fixes the sim regression.
+		2. NSExtensionPrincipalClass must NOT be declared at all. WidgetKit
+		   extensions find their principal bundle via @main, and the
+		   installer rejects the key outright — "defines either an
+		   NSExtensionMainStoryboard or NSExtensionPrincipalClass key, which
+		   is not allowed for the extension point
+		   com.apple.widgetkit-extension" — even when the value is an empty
+		   string. It had been present-but-empty on the belief that iOS 26
+		   required it; it is the reason install still failed after (1).
+
+		NSExtensionAttributes stays as an explicit empty dict: harmless, and
+		the placeholder validator wants the key present.
 	-->
-	<!--
-		Explicit version keys: with GENERATE_INFOPLIST_FILE the merged appex
-		plist was shipping WITHOUT CFBundleVersion/CFBundleShortVersionString,
-		which the iOS 26 sim installer also rejects as "Invalid placeholder
-		attributes". LITERALS, not $(MARKETING_VERSION)/$(CURRENT_PROJECT_VERSION):
-		those resolve EMPTY for this target (Generated.xcconfig with
-		FLUTTER_BUILD_NAME/NUMBER is only included by the Runner target) and
-		Xcode silently drops empty-valued keys, reproducing the install failure.
-		App Store requires the appex CFBundleShortVersionString to match the
-		app's — bump these alongside pubspec.yaml `version:` before an iOS
-		release (durable fix = include Generated.xcconfig in the extension
-		target's build configs; do that in the iOS release pass).
-	-->
-	<key>CFBundleShortVersionString</key>
-	<string>1.2.67</string>
-	<key>CFBundleVersion</key>
-	<string>1140</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
-		<key>NSExtensionPrincipalClass</key>
-		<string></string>
 	</dict>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
