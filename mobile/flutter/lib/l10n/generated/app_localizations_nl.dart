@@ -24315,9 +24315,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get nextSetPreviewFinal => 'Laatste set';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'VOLGENDE SET';
 
   @override

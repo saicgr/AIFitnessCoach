@@ -24101,9 +24101,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextSetPreviewFinal => 'Final Set';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'NEXT SET';
 
   @override

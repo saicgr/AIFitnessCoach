@@ -24640,9 +24640,6 @@ class AppLocalizationsTa extends AppLocalizations {
   String get nextSetPreviewFinal => 'இறுதி செட்';
 
   @override
-  String get nextSetPreviewKg => ' கிலோ';
-
-  @override
   String get nextSetPreviewNextSet => 'அடுத்த செட்';
 
   @override

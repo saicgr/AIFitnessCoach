@@ -24203,9 +24203,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get nextSetPreviewFinal => 'Sista setet';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'NÄSTA SET';
 
   @override

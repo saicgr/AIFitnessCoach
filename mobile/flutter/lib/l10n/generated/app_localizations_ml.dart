@@ -24647,9 +24647,6 @@ class AppLocalizationsMl extends AppLocalizations {
   String get nextSetPreviewFinal => 'അവസാന സെറ്റ്';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'അടുത്ത സെറ്റ്';
 
   @override

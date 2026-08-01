@@ -24462,9 +24462,6 @@ class AppLocalizationsKn extends AppLocalizations {
   String get nextSetPreviewFinal => 'ಅಂತಿಮ ಸೆಟ್';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'ಮುಂದಿನ ಸೆಟ್';
 
   @override

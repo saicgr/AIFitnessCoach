@@ -24300,9 +24300,6 @@ class AppLocalizationsFi extends AppLocalizations {
   String get nextSetPreviewFinal => 'Viimeinen sarja';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SEURAAVA SARJA';
 
   @override

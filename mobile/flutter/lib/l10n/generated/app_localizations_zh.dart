@@ -23015,9 +23015,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nextSetPreviewFinal => '最后一组';
 
   @override
-  String get nextSetPreviewKg => ' 公斤';
-
-  @override
   String get nextSetPreviewNextSet => '下一组';
 
   @override

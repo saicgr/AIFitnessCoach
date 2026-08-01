@@ -24272,9 +24272,6 @@ class AppLocalizationsUr extends AppLocalizations {
   String get nextSetPreviewFinal => 'آخری سیٹ';
 
   @override
-  String get nextSetPreviewKg => ' کلوگرام';
-
-  @override
   String get nextSetPreviewNextSet => 'اگلا سیٹ';
 
   @override

@@ -24244,9 +24244,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nextSetPreviewFinal => 'Son Set';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SIRADAKİ SET';
 
   @override

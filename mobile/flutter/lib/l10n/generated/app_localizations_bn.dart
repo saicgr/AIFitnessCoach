@@ -24323,9 +24323,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get nextSetPreviewFinal => 'শেষ সেট';
 
   @override
-  String get nextSetPreviewKg => ' কেজি';
-
-  @override
   String get nextSetPreviewNextSet => 'পরবর্তী সেট';
 
   @override

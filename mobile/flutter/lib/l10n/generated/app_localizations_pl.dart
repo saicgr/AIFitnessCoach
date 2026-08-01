@@ -24349,9 +24349,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get nextSetPreviewFinal => 'Ostatnia seria';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'KOLEJNA SERIA';
 
   @override

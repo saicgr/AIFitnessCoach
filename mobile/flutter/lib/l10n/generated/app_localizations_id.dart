@@ -24275,9 +24275,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get nextSetPreviewFinal => 'Set Terakhir';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SET BERIKUTNYA';
 
   @override

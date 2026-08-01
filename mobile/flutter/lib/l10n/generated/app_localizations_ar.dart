@@ -24016,9 +24016,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nextSetPreviewFinal => 'المجموعة الأخيرة';
 
   @override
-  String get nextSetPreviewKg => ' كجم';
-
-  @override
   String get nextSetPreviewNextSet => 'المجموعة التالية';
 
   @override

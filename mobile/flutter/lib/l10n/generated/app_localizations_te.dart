@@ -24451,9 +24451,6 @@ class AppLocalizationsTe extends AppLocalizations {
   String get nextSetPreviewFinal => 'చివరి సెట్';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'తదుపరి సెట్';
 
   @override

@@ -24447,9 +24447,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get nextSetPreviewFinal => 'Serie final';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SIGUIENTE SERIE';
 
   @override

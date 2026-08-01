@@ -23306,9 +23306,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nextSetPreviewFinal => '最終セット';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => '次のセット';
 
   @override

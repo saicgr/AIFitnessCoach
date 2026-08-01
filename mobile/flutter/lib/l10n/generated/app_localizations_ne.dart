@@ -24387,9 +24387,6 @@ class AppLocalizationsNe extends AppLocalizations {
   String get nextSetPreviewFinal => 'अन्तिम सेट';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'अर्को सेट';
 
   @override

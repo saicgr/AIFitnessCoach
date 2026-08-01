@@ -24206,9 +24206,6 @@ class AppLocalizationsTh extends AppLocalizations {
   String get nextSetPreviewFinal => 'เซตสุดท้าย';
 
   @override
-  String get nextSetPreviewKg => ' กก.';
-
-  @override
   String get nextSetPreviewNextSet => 'เซตถัดไป';
 
   @override

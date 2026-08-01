@@ -24245,9 +24245,6 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nextSetPreviewFinal => 'Poslední série';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'DALŠÍ SÉRIE';
 
   @override

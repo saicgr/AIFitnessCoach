@@ -24257,9 +24257,6 @@ class AppLocalizationsMr extends AppLocalizations {
   String get nextSetPreviewFinal => 'अंतिम सेट';
 
   @override
-  String get nextSetPreviewKg => ' किलो';
-
-  @override
   String get nextSetPreviewNextSet => 'पुढील सेट';
 
   @override

@@ -23322,9 +23322,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nextSetPreviewFinal => '마지막 세트';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => '다음 세트';
 
   @override

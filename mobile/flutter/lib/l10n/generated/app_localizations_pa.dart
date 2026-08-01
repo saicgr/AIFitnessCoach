@@ -24235,9 +24235,6 @@ class AppLocalizationsPa extends AppLocalizations {
   String get nextSetPreviewFinal => 'ਅੰਤਿਮ ਸੈੱਟ';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'ਅਗਲਾ ਸੈੱਟ';
 
   @override

@@ -24340,9 +24340,6 @@ class AppLocalizationsSw extends AppLocalizations {
   String get nextSetPreviewFinal => 'Seti ya Mwisho';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SETI INAYOFUATA';
 
   @override

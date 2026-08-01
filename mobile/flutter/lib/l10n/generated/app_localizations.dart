@@ -40712,12 +40712,6 @@ abstract class AppLocalizations {
   /// **'Final Set'**
   String get nextSetPreviewFinal;
 
-  /// No description provided for @nextSetPreviewKg.
-  ///
-  /// In en, this message translates to:
-  /// **' kg'**
-  String get nextSetPreviewKg;
-
   /// No description provided for @nextSetPreviewNextSet.
   ///
   /// In en, this message translates to:

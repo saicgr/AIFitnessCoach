@@ -24288,9 +24288,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get nextSetPreviewFinal => 'Hiệp cuối';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'HIỆP TIẾP THEO';
 
   @override

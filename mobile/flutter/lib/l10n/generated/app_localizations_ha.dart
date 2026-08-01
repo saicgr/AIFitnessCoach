@@ -24347,9 +24347,6 @@ class AppLocalizationsHa extends AppLocalizations {
   String get nextSetPreviewFinal => 'Saiti na karshe';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'ATISAYE NA GABA';
 
   @override

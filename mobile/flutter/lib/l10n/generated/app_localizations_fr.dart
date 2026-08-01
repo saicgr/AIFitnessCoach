@@ -24572,9 +24572,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get nextSetPreviewFinal => 'Dernière série';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'PROCHAINE SÉRIE';
 
   @override

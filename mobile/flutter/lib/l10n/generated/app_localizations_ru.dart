@@ -24364,9 +24364,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get nextSetPreviewFinal => 'Финальный подход';
 
   @override
-  String get nextSetPreviewKg => ' кг';
-
-  @override
   String get nextSetPreviewNextSet => 'СЛЕДУЮЩИЙ ПОДХОД';
 
   @override

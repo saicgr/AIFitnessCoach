@@ -24488,9 +24488,6 @@ class AppLocalizationsTl extends AppLocalizations {
   String get nextSetPreviewFinal => 'Huling Set';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SUSUNOD NA SET';
 
   @override

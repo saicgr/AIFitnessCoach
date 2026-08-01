@@ -24266,9 +24266,6 @@ class AppLocalizationsJv extends AppLocalizations {
   String get nextSetPreviewFinal => 'Set Pungkasan';
 
   @override
-  String get nextSetPreviewKg => ' kg';
-
-  @override
   String get nextSetPreviewNextSet => 'SET SABANJURE';
 
   @override

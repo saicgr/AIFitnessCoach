@@ -24387,9 +24387,6 @@ class AppLocalizationsOr extends AppLocalizations {
   String get nextSetPreviewFinal => 'ଅନ୍ତିମ ସେଟ୍';
 
   @override
-  String get nextSetPreviewKg => ' କିଗ୍ରା';
-
-  @override
   String get nextSetPreviewNextSet => 'ପରବର୍ତ୍ତୀ ସେଟ୍';
 
   @override
