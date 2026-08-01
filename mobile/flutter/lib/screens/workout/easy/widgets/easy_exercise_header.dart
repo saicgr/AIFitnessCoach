@@ -104,7 +104,15 @@ class EasyExerciseHeader extends ConsumerWidget {
           _WideMedia(
             exercise: exercise,
             isDark: isDark,
-            height: compact ? 132 : 168,
+            // Scale with the device instead of a flat 168. The fixed value was
+            // sized for a large phone and took the same absolute bite out of
+            // every screen, which is what pushed the steppers below the fold
+            // on shorter ones. ~18% of height keeps the move clearly legible
+            // while leaving the residual space to the thing the user is
+            // actually here to do. Clamped so it never gets silly either way.
+            height: compact
+                ? 132
+                : (MediaQuery.sizeOf(context).height * 0.18).clamp(120.0, 168.0),
             onTap: () async {
               await HapticService.instance.tap();
               onShowVideo();

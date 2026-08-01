@@ -79,6 +79,11 @@ part 'workout_complete_screen_ui_2.dart';
 part 'workout_complete_screen_ext_1.dart';
 part 'workout_complete_screen_ext_2.dart';
 
+/// Height of the two bottom-bar CTAs (Share / Done). Shared so the
+/// slack-giving OverflowBox and the submitting-state Container can never
+/// drift apart — the drift is what let E2E #160 size itself to the screen.
+const double _kCompleteCtaHeight = 52;
+
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
   final int duration;
@@ -821,17 +826,33 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   // overflow genuinely never occurs (not just visually
                   // clipped), and the slack is imperceptible against a
                   // button this wide.
+                  // E2E #160: the OverflowBox below is `sizedByParent` — it
+                  // reports `constraints.biggest` as its OWN size, and only
+                  // the WIDTH is constrained here (height passes straight
+                  // through). Inside `Scaffold.bottomNavigationBar` the
+                  // incoming height is not tight, so it sized itself to the
+                  // full available height, the bottom bar swallowed the whole
+                  // screen, the body was squeezed to nothing, and the screen
+                  // rendered as a black wall reading "BOTTOM OVERFLOWED BY
+                  // Infinity PIXELS". This SizedBox pins the vertical axis to
+                  // the CTA height (the same 52 the `_isSubmitting` branch
+                  // below hardcodes) so only the horizontal slack #141 needs
+                  // is granted. Gate: test/screens/workout/
+                  // workout_complete_bottom_bar_test.dart.
                   Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) => OverflowBox(
-                        alignment: Alignment.center,
-                        minWidth: constraints.maxWidth,
-                        maxWidth: constraints.maxWidth + 16,
-                        child: ZealovaButton(
-                          label: AppLocalizations.of(context).commonShare,
-                          onTap: _showShareSheet,
-                          variant: ZealovaButtonVariant.ghost,
-                          trailingIcon: Icons.share_rounded,
+                    child: SizedBox(
+                      height: _kCompleteCtaHeight,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) => OverflowBox(
+                          alignment: Alignment.center,
+                          minWidth: constraints.maxWidth,
+                          maxWidth: constraints.maxWidth + 16,
+                          child: ZealovaButton(
+                            label: AppLocalizations.of(context).commonShare,
+                            onTap: _showShareSheet,
+                            variant: ZealovaButtonVariant.ghost,
+                            trailingIcon: Icons.share_rounded,
+                          ),
                         ),
                       ),
                     ),
@@ -842,7 +863,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     flex: 2,
                     child: _isSubmitting
                         ? Container(
-                            height: 52,
+                            height: _kCompleteCtaHeight,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
                               color: ThemeColors.of(context).accent,
@@ -935,6 +956,64 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   // Signature v2 hairline stat ledger — Time · Volume ·
                   // Sets·Reps · Energy · Median rest · Records on 1px rules.
                   _buildCompactStatsGrid().animate().fadeIn(delay: 200.ms),
+                  
+                  // E2E: the rating used to sit BELOW the photo prompt, Strava
+                  // section, heart-rate blocks, the coach recap and the full
+                  // exercise table — roughly a screen and a half down — while the
+                  // pinned bar said "SKIP RATING", i.e. the app asked for a rating
+                  // in fixed position and put the control out of reach. Reported as
+                  // "I had to scroll down so much to just rate". It now sits
+                  // directly under the stat ledger, above the fold.
+                  // Rating Section
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ZealovaSectionKicker(
+                      AppLocalizations.of(
+                        context,
+                      ).workoutCompleteHowWasYourWorkout,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      final starIndex = index + 1;
+                      return GestureDetector(
+                        onTap: () => setState(() => _rating = starIndex),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Icon(
+                            starIndex <= _rating
+                                ? Icons.star
+                                : Icons.star_border,
+                            size: 36,
+                            // Neutral filled stars keep the single orange budget
+                            // on the DONE CTA (Signature v2 orange-once rule).
+                            color: starIndex <= _rating
+                                ? ThemeColors.of(context).textPrimary
+                                : AppColors.textMuted,
+                          ),
+                        ),
+                      );
+                    }),
+                  ).animate().fadeIn(delay: 400.ms),
+                  if (_rating > 0)
+                    Text(
+                      _getRatingLabel(_rating),
+                      style: ZType.lbl(
+                        12,
+                        color: ThemeColors.of(context).accent,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  const SizedBox(height: 6),
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    ).workoutCompleteYourRatingsHelpUs,
+                    style: ZType.ser(13, color: textSecondary),
+                  ),
+                  
 
                   // XP + streak — the two-cell earned/streak row (Frame 2).
                   // Neutral numerals keep the single orange budget on DONE.
@@ -1013,56 +1092,6 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   ],
 
                   const SizedBox(height: 16),
-
-                  // Rating Section
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: ZealovaSectionKicker(
-                      AppLocalizations.of(
-                        context,
-                      ).workoutCompleteHowWasYourWorkout,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(5, (index) {
-                      final starIndex = index + 1;
-                      return GestureDetector(
-                        onTap: () => setState(() => _rating = starIndex),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Icon(
-                            starIndex <= _rating
-                                ? Icons.star
-                                : Icons.star_border,
-                            size: 36,
-                            // Neutral filled stars keep the single orange budget
-                            // on the DONE CTA (Signature v2 orange-once rule).
-                            color: starIndex <= _rating
-                                ? ThemeColors.of(context).textPrimary
-                                : AppColors.textMuted,
-                          ),
-                        ),
-                      );
-                    }),
-                  ).animate().fadeIn(delay: 400.ms),
-                  if (_rating > 0)
-                    Text(
-                      _getRatingLabel(_rating),
-                      style: ZType.lbl(
-                        12,
-                        color: ThemeColors.of(context).accent,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  Text(
-                    AppLocalizations.of(
-                      context,
-                    ).workoutCompleteYourRatingsHelpUs,
-                    style: ZType.ser(13, color: textSecondary),
-                  ),
 
                   const SizedBox(height: 16),
 

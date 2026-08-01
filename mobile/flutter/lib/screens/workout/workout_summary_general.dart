@@ -1223,16 +1223,26 @@ class _ExerciseCardsSectionState extends State<_ExerciseCardsSection> {
           padding: const EdgeInsets.only(left: 2, right: 2, bottom: 8),
           child: Row(
             children: [
-              Text(
-                AppLocalizations.of(context).workoutSummaryGeneralExercises,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-                  letterSpacing: 0.8,
+              // Expanded (was a bare Text + Spacer): the section label and the
+              // "Expand all" affordance are both free text, so on a 320pt
+              // phone at 130%+ text their combined intrinsic width exceeded
+              // the row and it overflowed on the right. Expanded gives the
+              // label the leftover space (still pushing the action to the far
+              // right, exactly as Spacer did) and lets it ellipsize instead.
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).workoutSummaryGeneralExercises,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textMuted : Colors.grey.shade500,
+                    letterSpacing: 0.8,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _toggleAll,
@@ -1241,6 +1251,8 @@ class _ExerciseCardsSectionState extends State<_ExerciseCardsSection> {
                   children: [
                     Text(
                       _allExpanded ? 'Collapse all' : 'Expand all',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

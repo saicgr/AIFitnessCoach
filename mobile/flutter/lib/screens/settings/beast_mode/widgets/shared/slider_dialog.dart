@@ -30,7 +30,6 @@ Future<void> showSliderDialog({
         final textPrimary =
             isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
         return GlassSheet(
-          opaque: true,
           child: StatefulBuilder(builder: (ctx, setSheetState) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

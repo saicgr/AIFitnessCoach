@@ -6,12 +6,15 @@
 /// Matches Gravl's timeframe sheet but adds the freeze-earn cadence rail.
 library;
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/theme_colors.dart';
 import '../data/providers/streak_freeze_provider.dart';
 import '../data/services/haptic_service.dart';
+import 'glass_sheet.dart';
 
 /// Show the streak timeframe sheet.
 Future<void> showStreakTimeframeSheet(BuildContext context) {
@@ -49,10 +52,24 @@ class _StreakTimeframeSheetState extends ConsumerState<StreakTimeframeSheet> {
       minChildSize: 0.45,
       maxChildSize: 0.92,
       expand: false,
-      builder: (context, scrollController) => Container(
+      builder: (context, scrollController) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        // DraggableScrollableSheet controls its own size fraction, so it
+        // can't be wrapped in GlassSheet (fixed maxHeightFraction) — build
+        // the same blurred glass surface by hand, matching GlassSheetStyle.
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(GlassSheetStyle.borderRadius)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+                sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
+            child: Container(
         decoration: BoxDecoration(
-          color: c.surface,
+          color: GlassSheetStyle.backgroundColor(isDark),
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: Border(
+            top: BorderSide(color: GlassSheetStyle.borderColor(isDark), width: 0.5),
+          ),
         ),
         child: ListView(
           controller: scrollController,
@@ -124,7 +141,10 @@ class _StreakTimeframeSheetState extends ConsumerState<StreakTimeframeSheet> {
             ),
           ],
         ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 

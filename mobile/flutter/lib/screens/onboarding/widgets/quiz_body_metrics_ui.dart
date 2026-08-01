@@ -138,10 +138,10 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.cake_outlined, color: AppColors.accent, size: 14),
+                    child: Icon(Icons.cake_outlined, color: context.accentColor, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -157,7 +157,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.15),
+                        color: context.accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -165,7 +165,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.accent,
+                          color: context.accentColor,
                         ),
                       ),
                     ),
@@ -220,10 +220,10 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.15),
+                      color: context.accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.person_outline, color: AppColors.accent, size: 14),
+                    child: Icon(Icons.person_outline, color: context.accentColor, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Flexible(
@@ -485,7 +485,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
       color = AppColors.success;  // accent-allowlist: success/positive state - must stay green regardless of accent
     } else if (bmi < 30) {
       category = 'Overweight';
-      color = AppColors.accent;
+      color = AppColors.warning;  // accent-allowlist: warning severity - matches Underweight in this same ramp, not the user's accent
     } else {
       category = 'Obese';
       color = AppColors.error;  // accent-allowlist: error/destructive - must stay red

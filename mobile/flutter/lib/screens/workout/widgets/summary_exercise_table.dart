@@ -622,7 +622,6 @@ void _showSetNotesSheet({
     context: context,
     builder: (ctx) {
       return GlassSheet(
-        opaque: true,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: Column(

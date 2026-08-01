@@ -182,7 +182,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accent = context.accentColor;
 
     // Each tour fires its first-run UI when at least one of the listed
     // SharedPrefs keys is absent. The two underlying systems use different
@@ -700,43 +700,52 @@ class _LanguagePickerSheet extends StatelessWidget {
       maxChildSize: 0.95,
       expand: false,
       builder: (ctx, scrollCtl) {
-        return Container(
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
-          decoration: BoxDecoration(
-            color: Theme.of(ctx).colorScheme.surface,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        // DraggableScrollableSheet controls its own size fraction, so it
+        // can't be wrapped in GlassSheet (fixed maxHeightFraction) — build
+        // the same blurred glass surface by hand, matching GlassSheetStyle.
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(GlassSheetStyle.borderRadius)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+                sigmaX: GlassSheetStyle.blurSigma,
+                sigmaY: GlassSheetStyle.blurSigma),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
+              decoration: BoxDecoration(
+                color: GlassSheetStyle.backgroundColor(isDark),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+                border: Border(
+                  top: BorderSide(
+                      color: GlassSheetStyle.borderColor(isDark), width: 0.5),
                 ),
               ),
-              Expanded(
-                child: ListView(
-                  controller: scrollCtl,
-                  children: items.entries.map((e) {
-                    final isSelected = selectedCode == e.key;
-                    return ListTile(
-                      title: Text(
-                        e.value,
-                        textDirection: TextDirection.ltr,
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_rounded)
-                          : null,
-                      onTap: () => Navigator.pop(ctx, e.key ?? const Object()),
-                    );
-                  }).toList(),
-                ),
+              child: Column(
+                children: [
+                  GlassSheetHandle(isDark: isDark),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollCtl,
+                      children: items.entries.map((e) {
+                        final isSelected = selectedCode == e.key;
+                        return ListTile(
+                          title: Text(
+                            e.value,
+                            textDirection: TextDirection.ltr,
+                          ),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_rounded)
+                              : null,
+                          onTap: () => Navigator.pop(ctx, e.key ?? const Object()),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

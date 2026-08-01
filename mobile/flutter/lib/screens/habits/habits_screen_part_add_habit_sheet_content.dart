@@ -306,7 +306,7 @@ class _AddHabitSheetContentState extends State<_AddHabitSheetContent>
                     ),
                   ),
                   ...grouped[category]!.map((template) {
-                    final templateColor = widget.parseColor(template.color, AppColors.accent);
+                    final templateColor = widget.parseColor(template.color, context.accentColor);
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: GestureDetector(

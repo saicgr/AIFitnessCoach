@@ -182,7 +182,6 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
     final picked = await showGlassSheet<CycleTrackingMode>(
       context: context,
       builder: (_) => GlassSheet(
-        opaque: true,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(

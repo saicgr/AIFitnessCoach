@@ -207,9 +207,14 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                 ),
               ),
               const SizedBox(height: 12),
-              _buildExplanationItem('Strength', 'Focus on building muscle and power with weights', AppColors.accent, Icons.fitness_center, textPrimary, textSecondary),
-              _buildExplanationItem('Cardio', 'Running, cycling, rowing for heart health', AppColors.accent, Icons.directions_run, textPrimary, textSecondary),
-              _buildExplanationItem('Mixed', 'Combination of strength training and cardio', AppColors.accent, Icons.sports_gymnastics, textPrimary, textSecondary),
+              // Colours mirror `_workoutTypes` above (this used to read the
+              // monochrome `AppColors.accent` for all three, which both
+              // erased the categorical legend and ignored the user's
+              // accent — matching the actual chip colours is correct here,
+              // not `context.accentColor`).
+              _buildExplanationItem('Strength', 'Focus on building muscle and power with weights', AppColors.purple, Icons.fitness_center, textPrimary, textSecondary),  // accent-allowlist: categorical per-option palette, mirrors `_workoutTypes`
+              _buildExplanationItem('Cardio', 'Running, cycling, rowing for heart health', AppColors.onboardingAccent, Icons.directions_run, textPrimary, textSecondary),
+              _buildExplanationItem('Mixed', 'Combination of strength training and cardio', AppColors.electricBlue, Icons.sports_gymnastics, textPrimary, textSecondary),  // accent-allowlist: categorical per-option palette, mirrors `_workoutTypes`
               const SizedBox(height: 24),
               Text(
                 AppLocalizations.of(context).workoutSettingsProgressionPace,
@@ -222,7 +227,8 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
               const SizedBox(height: 12),
               _buildExplanationItem('Slow', 'Increase weight every 3-4 weeks. Best for beginners.', AppColors.success, Icons.trending_up, textPrimary, textSecondary),  // accent-allowlist: success/positive state - must stay green regardless of accent
               _buildExplanationItem('Medium', 'Increase weight every 1-2 weeks. Standard progression.', AppColors.electricBlue, Icons.trending_up, textPrimary, textSecondary),
-              _buildExplanationItem('Fast', 'Increase weight every session if ready. For experienced lifters.', AppColors.accent, Icons.trending_up, textPrimary, textSecondary),
+              // Mirrors `_paces` above.
+              _buildExplanationItem('Fast', 'Increase weight every session if ready. For experienced lifters.', AppColors.onboardingAccent, Icons.trending_up, textPrimary, textSecondary),
               const SizedBox(height: 20),
             ],
           ),

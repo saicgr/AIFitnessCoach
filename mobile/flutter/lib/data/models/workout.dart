@@ -447,8 +447,12 @@ class Workout extends Equatable {
     for (final exercise in exercises) {
       if (exercise.equipment != null && exercise.equipment!.isNotEmpty) {
         String eq = exercise.equipment!;
-        // Normalize equipment names
-        final lowerEq = eq.toLowerCase();
+        // Normalize equipment names. The trailing "only" qualifier
+        // ("Bodyweight only") is a real equipment value, so strip it before
+        // matching — otherwise it survives the bodyweight removal below and is
+        // listed to the user as equipment they need to bring.
+        final lowerEq =
+            eq.toLowerCase().replaceFirst(RegExp(r'\s+only$'), '');
         if (lowerEq.contains('none') ||
             lowerEq == 'bodyweight' ||
             lowerEq == 'body weight') {

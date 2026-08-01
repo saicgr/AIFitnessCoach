@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/sort_spec.dart';
-import '../../../../widgets/glass_sheet.dart' show GlassSheet, showGlassSheet;
+import '../../../../widgets/glass_sheet.dart'
+    show GlassSheet, GlassSheetStyle, showGlassSheet;
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for configuring the Menu Analysis multi-sort.
@@ -32,15 +33,14 @@ class SortOptionsSheet extends StatefulWidget {
     BuildContext context, {
     required SortSpecList initial,
   }) {
-    // Opaque sheet + stronger scrim. The Menu Analysis sheet that opens this
-    // sheet is itself a translucent glass sheet — without an opaque surface
-    // here, the menu cards underneath bled through the sort UI and the user
-    // saw both stacked on top of each other.
+    // The Menu Analysis sheet that opens this sheet is itself a translucent
+    // glass sheet — darken the scrim (instead of going opaque) so the parent
+    // sheet's content doesn't bleed through while this sheet keeps the
+    // standard blur glass surface.
     return showGlassSheet<SortSpecList>(
       context: context,
-      opaque: true,
+      barrierColor: GlassSheetStyle.nestedBarrierColor(),
       builder: (_) => GlassSheet(
-        opaque: true,
         showHandle: true,
         child: SortOptionsSheet(initial: initial),
       ),

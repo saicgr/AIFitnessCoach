@@ -207,12 +207,21 @@ class _StatChip extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: fg),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: fg,
+          // Flexible, not a bare Text: these chips sit in a Wrap that hands
+          // each one the full row width as its max. On a 320pt phone at 130%
+          // text a long label ("Median rest 1:45", localized strings) exceeds
+          // it and the Row overflowed on the right. Letting the label shrink
+          // and ellipsize keeps the chip inside its line.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: fg,
+              ),
             ),
           ),
         ],

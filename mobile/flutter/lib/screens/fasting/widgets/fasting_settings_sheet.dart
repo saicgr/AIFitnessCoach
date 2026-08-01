@@ -4,6 +4,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/providers/fasting_provider.dart';
@@ -149,9 +151,8 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    // Use monochrome accent instead of purple
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accentColor = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     return ClipRRect(

@@ -97,7 +97,6 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
       builder: (ctx) {
         final text = ThemeColors.of(ctx).textPrimary;
         return GlassSheet(
-          opaque: true,
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,

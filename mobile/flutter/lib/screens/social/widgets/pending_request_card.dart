@@ -42,9 +42,7 @@ class PendingRequestCard extends StatelessWidget {
           // Avatar
           CircleAvatar(
             radius: 24,
-            backgroundColor: isDark
-                ? context.accentColor.withValues(alpha: 0.2)
-                : AppColorsLight.accent.withValues(alpha: 0.1),
+            backgroundColor: context.accentColor.withValues(alpha: isDark ? 0.2 : 0.1),
             backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl) : null,
             child: avatarUrl == null
                 ? Text(
@@ -52,7 +50,7 @@ class PendingRequestCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? context.accentColor : AppColorsLight.accent,
+                      color: context.accentColor,
                     ),
                   )
                 : null,

@@ -221,7 +221,6 @@ class AiIntegrationsScreen extends ConsumerWidget {
       isDismissible: false, // user must explicitly acknowledge
       enableDrag: false,
       builder: (sheetContext) => GlassSheet(
-        opaque: true,
         showHandle: false,
         child: _ConnectionReadySheet(
           creation: created!,

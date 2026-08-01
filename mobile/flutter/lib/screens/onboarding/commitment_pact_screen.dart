@@ -110,7 +110,6 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       context: context,
       builder: (sheetCtx) {
         return GlassSheet(
-          opaque: true,
           padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,

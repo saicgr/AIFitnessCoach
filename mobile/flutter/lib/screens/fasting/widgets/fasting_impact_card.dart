@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/fasting_impact.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -56,8 +57,7 @@ class FastingImpactCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    // Use monochrome accent
-    final monoAccent = isDark ? AppColors.accent : AppColorsLight.accent;
+    final monoAccent = context.accentColor;
 
     final accentColor = positiveColor ??
         (isPositive ? AppColors.success : AppColors.orange); // accent-allowlist: fasting impact status severity

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -259,7 +260,7 @@ class _GlossaryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

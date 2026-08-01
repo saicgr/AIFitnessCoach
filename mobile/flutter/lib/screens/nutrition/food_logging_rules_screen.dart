@@ -461,7 +461,6 @@ class _FoodLoggingRulesScreenState
       context: context,
       builder: (ctx) {
         return GlassSheet(
-          opaque: true,
           child: Padding(
           padding: EdgeInsetsDirectional.only(start: 20,
             end: 20,

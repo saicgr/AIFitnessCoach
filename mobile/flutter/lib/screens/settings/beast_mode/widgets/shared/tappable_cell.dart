@@ -102,7 +102,6 @@ class TappableBiasCell extends StatelessWidget {
         final textPrimary =
             isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
         return GlassSheet(
-          opaque: true,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: Column(

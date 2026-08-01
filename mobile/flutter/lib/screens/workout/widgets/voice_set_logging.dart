@@ -18,9 +18,9 @@ import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Result of parsing a spoken set phrase.
 class ParsedVoiceSet {
@@ -320,10 +320,9 @@ class _VoiceSetMicButtonState extends State<VoiceSetMicButton> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
       isDismissible: true,
-      backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (ctx, setSheet) {
@@ -360,14 +359,11 @@ class _VoiceSetMicButtonState extends State<VoiceSetMicButton> {
             }
 
             final unit = widget.useKg ? 'kg' : 'lb';
-            return Container(
+            // No drag handle — this sheet deliberately lacks one (dismiss is
+            // via the Cancel button or the final transcript auto-pop).
+            return GlassSheet(
+              showHandle: false,
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.elevated : Colors.white,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

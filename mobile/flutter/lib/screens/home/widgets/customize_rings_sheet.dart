@@ -2,6 +2,8 @@
 /// screen and in what order. Reads/writes [ringVisibilityProvider].
 library;
 
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,54 +39,74 @@ class _CustomizeRingsSheet extends ConsumerWidget {
         maxChildSize: 0.95,
         expand: false,
         builder: (context, scrollController) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFFFAF8F3),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              children: [
-                _grabber(),
-                _header(context),
-                Expanded(
-                  child: CustomScrollView(
-                    controller: scrollController,
-                    slivers: [
-                      const SliverToBoxAdapter(
-                        child: _SectionLabel(text: 'Showing'),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _ShowingList(
-                          visible: visible,
-                          notifier: notifier,
-                        ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      if (hidden.isNotEmpty) ...[
-                        const SliverToBoxAdapter(
-                          child: _SectionLabel(text: 'Available to add'),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (context, i) => _HiddenTile(
-                              kind: hidden[i],
-                              onAdd: () => notifier.addRing(hidden[i]),
-                            ),
-                            childCount: hidden.length,
-                          ),
-                        ),
-                      ],
-                      const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                      SliverToBoxAdapter(
-                        child: _ResetButton(
-                          onTap: notifier.resetToDefault,
-                        ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 32)),
-                    ],
+          // Blurred glass surface, matching the app-wide GlassSheet look.
+          // This card catalogue keeps its own fixed warm-off-white identity
+          // (dark, non-theme-aware text) regardless of app dark/light mode,
+          // so the translucent fill stays on that same warm tone rather than
+          // switching to GlassSheetStyle's black/white — swapping to a dark
+          // translucent fill here would make the fixed near-black text
+          // illegible.
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAF8F3).withValues(alpha: 0.88),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
+                  border: Border(
+                    top: BorderSide(
+                      color: const Color(0xFF16161A).withValues(alpha: 0.08),
+                      width: 0.5,
+                    ),
                   ),
                 ),
-              ],
+                child: Column(
+                  children: [
+                    _grabber(),
+                    _header(context),
+                    Expanded(
+                      child: CustomScrollView(
+                        controller: scrollController,
+                        slivers: [
+                          const SliverToBoxAdapter(
+                            child: _SectionLabel(text: 'Showing'),
+                          ),
+                          SliverToBoxAdapter(
+                            child: _ShowingList(
+                              visible: visible,
+                              notifier: notifier,
+                            ),
+                          ),
+                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          if (hidden.isNotEmpty) ...[
+                            const SliverToBoxAdapter(
+                              child: _SectionLabel(text: 'Available to add'),
+                            ),
+                            SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, i) => _HiddenTile(
+                                  kind: hidden[i],
+                                  onAdd: () => notifier.addRing(hidden[i]),
+                                ),
+                                childCount: hidden.length,
+                              ),
+                            ),
+                          ],
+                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          SliverToBoxAdapter(
+                            child: _ResetButton(
+                              onTap: notifier.resetToDefault,
+                            ),
+                          ),
+                          const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           );
         },

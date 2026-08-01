@@ -14,6 +14,7 @@ import '../../shareables/adapters/trends_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
 import '../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/trends/metric_picker_sheet.dart';
 import '../../widgets/trends/mini_trend_sparkline.dart';
 import '../../widgets/trends/trend_ai_insight_card.dart';
@@ -1928,38 +1929,22 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   void _openSavedSheet() {
     HapticService.selection();
     final colors = ref.colors(context);
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: colors.background,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (sheetCtx, setSheetState) {
-            return SafeArea(
-              top: false,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(sheetCtx).size.height * 0.72,
-                ),
+            // No inner background/handle/height-constraint — GlassSheet
+            // supplies the surface (blur), drag handle, and the same 0.72
+            // max-height fraction this sheet used.
+            return GlassSheet(
+              maxHeightFraction: 0.72,
+              child: SafeArea(
+                top: false,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 10),
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: colors.cardBorder,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       child: Row(
@@ -2126,14 +2111,11 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     HapticService.selection();
     final colors = ref.colors(context);
     final current = _colorFor(metric, colors);
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      backgroundColor: colors.background,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (sheetCtx) {
-        return SafeArea(
+        return GlassSheet(
+          child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
@@ -2201,6 +2183,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                 ),
               ],
             ),
+          ),
           ),
         );
       },

@@ -2036,10 +2036,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     // No active workout — never silently no-op. Surface a clear CTA.
     showGlassSheet<void>(
       context: context,
-      opaque: true,
       builder: (sheetCtx) {
         return GlassSheet(
-          opaque: true,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(

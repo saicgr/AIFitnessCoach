@@ -828,6 +828,58 @@ String _titleCase(String s) {
       .join(' ');
 }
 
+/// Maps ANY muscle name the exercise library emits onto one of the 15 asset
+/// groups, by keyword rather than by exact match.
+///
+/// Why a classifier and not an alias table: a live scan of `exercise_library`
+/// found **861 distinct** muscle strings across `target_muscle` +
+/// `secondary_muscles`, and they are not clean — parenthetical anatomy
+/// ("Shoulders (Deltoids)"), fragments left by comma-splitting a parenthetical
+/// list ("Hamstrings (Biceps Femoris", "Semimembranosus)"), bare anatomical
+/// names ("erector spinae", "rhomboids", "teres major"), and both spellings of
+/// "core stabilis/zers". The previous 20-entry exact-match table covered a
+/// fraction of that, so anything outside it — "Middle Back", "Front Shoulders"
+/// — silently fell back to a generic dumbbell glyph on the workout-complete
+/// recap while its neighbours showed real anatomy.
+///
+/// Order is significant and deliberate:
+///  * Lower Back before Back, so "lower back" is not swallowed by "back".
+///  * Hamstrings before Biceps, so "biceps femoris" is a leg, not an arm.
+///  * Shoulders before Back, because "lateral deltoid" contains "lat" — the
+///    single nastiest false positive here.
+const List<(String, List<String>)> _muscleGroupPatterns = [
+  ('Lower Back', ['lower back', 'erector spinae', 'spinal erector', 'multifidus']),
+  ('Hamstrings', ['hamstring', 'biceps femoris', 'semitendinosus', 'semimembranosus']),
+  ('Glutes', ['glute']),
+  ('Quadriceps', ['quad', 'rectus femoris', 'vastus']),
+  ('Calves', ['calf', 'calves', 'gastrocnemius', 'soleus', 'tibialis']),
+  ('Hips', ['hip flexor', 'iliopsoas', 'psoas', 'adductor', 'abductor', 'hip']),
+  ('Core', ['core', 'abdomin', 'abs', 'oblique', 'transverse']),
+  ('Chest', ['chest', 'pec', 'serratus']),
+  ('Shoulders', ['delt', 'shoulder', 'rotator cuff', 'infraspinatus',
+                 'supraspinatus', 'subscapularis']),
+  ('Back', ['latissimus', 'lats', 'rhomboid', 'trap', 'teres', 'upper back',
+            'middle back', 'back']),
+  ('Triceps', ['tricep']),
+  ('Biceps', ['bicep', 'brachialis']),
+  ('Forearms', ['forearm', 'brachioradialis', 'wrist', 'grip']),
+  ('Arms', ['arm']),
+  ('Legs', ['leg']),
+];
+
+/// The asset-group key for a muscle name, or null when nothing sensible fits
+/// (in which case the caller keeps its neutral fallback glyph rather than
+/// guessing at anatomy).
+String? muscleAssetGroupFor(String raw) {
+  final lower = raw.toLowerCase();
+  for (final (group, patterns) in _muscleGroupPatterns) {
+    for (final p in patterns) {
+      if (lower.contains(p)) return group;
+    }
+  }
+  return null;
+}
+
 String? _findMuscleImage(String normalized) {
   if (muscleGroupAssets.containsKey(normalized)) {
     return muscleGroupAssets[normalized];
@@ -835,6 +887,12 @@ String? _findMuscleImage(String normalized) {
   for (final entry in muscleGroupAssets.entries) {
     if (entry.key.toLowerCase() == normalized.toLowerCase()) return entry.value;
   }
+  // Keyword fallback. Deliberately only resolves the IMAGE — the chip keeps
+  // its specific label ("Middle Back" stays "Middle Back"), so nothing the
+  // library knows is thrown away; two chips may legitimately share one
+  // illustration.
+  final group = muscleAssetGroupFor(normalized);
+  if (group != null) return muscleGroupAssets[group];
   return null;
 }
 

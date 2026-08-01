@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/share_service.dart';
 import '../../../utils/image_capture_utils.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -288,7 +290,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accent = context.accentColor;
     final hasDeepLink =
         widget.data.deepLinkUrl != null && widget.data.deepLinkUrl!.isNotEmpty;
 
@@ -411,9 +413,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
                         _templates[index].name,
                         style: TextStyle(
                           color: isActive
-                              ? (isDark
-                                  ? AppColors.accentContrast
-                                  : AppColorsLight.accentContrast)
+                              ? context.colors.accentContrast
                               : (isDark ? Colors.white70 : Colors.black54),
                           fontSize: 12,
                           fontWeight:
@@ -514,9 +514,8 @@ class _ShareButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accent = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
 
     return SizedBox(
       height: 48,

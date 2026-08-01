@@ -1498,7 +1498,6 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
-        opaque: true,
         child: _HighScoresSheet(
           service: service,
           userId: uid,

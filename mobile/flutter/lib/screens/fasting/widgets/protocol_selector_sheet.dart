@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/last_used_service.dart';
@@ -105,9 +107,8 @@ class _ProtocolSelectorSheetState extends ConsumerState<ProtocolSelectorSheet> {
     final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    // Use monochrome accent instead of purple
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accentColor = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return ClipRRect(
@@ -387,8 +388,7 @@ class _ProtocolChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use monochrome accent for all chips
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;

@@ -235,7 +235,7 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
-    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return Column(
         children: [

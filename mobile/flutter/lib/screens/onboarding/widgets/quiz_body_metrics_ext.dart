@@ -23,10 +23,10 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.height, color: AppColors.accent, size: 14),
+                    child: Icon(Icons.height, color: context.accentColor, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -125,10 +125,10 @@ extension __QuizBodyMetricsStateExt on _QuizBodyMetricsState {
                   Container(
                     padding: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
-                      color: AppColors.accent.withOpacity(0.15),
+                      color: context.accentColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(Icons.monitor_weight_outlined, color: AppColors.accent, size: 14),
+                    child: Icon(Icons.monitor_weight_outlined, color: context.accentColor, size: 14),
                   ),
                   const SizedBox(width: 6),
                   Text(

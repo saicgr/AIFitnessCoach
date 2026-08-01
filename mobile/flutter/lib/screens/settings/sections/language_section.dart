@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../widgets/section_header.dart';
+import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Phase 5 — language picker. Surfaces 36 locales (Gravl-parity 8 plus the
@@ -145,54 +148,64 @@ class LanguageSection extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
         return DraggableScrollableSheet(
           initialChildSize: 0.7,
           minChildSize: 0.4,
           maxChildSize: 0.95,
           expand: false,
           builder: (sheetCtx, scrollCtl) {
-            return Container(
-              padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
-              decoration: BoxDecoration(
-                color: Theme.of(ctx).colorScheme.surface,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40, height: 4,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+            // DraggableScrollableSheet controls its own size fraction, so it
+            // can't be wrapped in GlassSheet (fixed maxHeightFraction) — build
+            // the same blurred glass surface by hand, matching GlassSheetStyle.
+            return ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(GlassSheetStyle.borderRadius)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                    sigmaX: GlassSheetStyle.blurSigma,
+                    sigmaY: GlassSheetStyle.blurSigma),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(8, 12, 8, 16),
+                  decoration: BoxDecoration(
+                    color: GlassSheetStyle.backgroundColor(isDark),
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(GlassSheetStyle.borderRadius)),
+                    border: Border(
+                      top: BorderSide(
+                          color: GlassSheetStyle.borderColor(isDark), width: 0.5),
                     ),
                   ),
-                  Expanded(
-                    child: ListView(
-                      controller: scrollCtl,
-                      children: _localeNames.entries.map((e) {
-                        final selectedNow =
-                            ref.read(localeProvider).locale?.languageCode ==
-                                e.key;
-                        return ListTile(
-                          title: Text(
-                            e.value,
-                            // Force LTR direction on the picker rows so the
-                            // RTL native scripts (Arabic, Urdu) render
-                            // correctly inside this LTR shell.
-                            textDirection: TextDirection.ltr,
-                          ),
-                          trailing: Icon(
-                            selectedNow ? Icons.check_rounded : null,
-                          ),
-                          onTap: () =>
-                              Navigator.pop(ctx, e.key ?? const Object()),
-                        );
-                      }).toList(),
-                    ),
+                  child: Column(
+                    children: [
+                      GlassSheetHandle(isDark: isDark),
+                      Expanded(
+                        child: ListView(
+                          controller: scrollCtl,
+                          children: _localeNames.entries.map((e) {
+                            final selectedNow =
+                                ref.read(localeProvider).locale?.languageCode ==
+                                    e.key;
+                            return ListTile(
+                              title: Text(
+                                e.value,
+                                // Force LTR direction on the picker rows so the
+                                // RTL native scripts (Arabic, Urdu) render
+                                // correctly inside this LTR shell.
+                                textDirection: TextDirection.ltr,
+                              ),
+                              trailing: Icon(
+                                selectedNow ? Icons.check_rounded : null,
+                              ),
+                              onTap: () =>
+                                  Navigator.pop(ctx, e.key ?? const Object()),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },

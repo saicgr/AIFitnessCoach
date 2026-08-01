@@ -100,7 +100,7 @@ class _SyncedWorkoutDetailScreenState
     HapticService.selection();
     final confirmed = await showGlassSheet<bool>(
       context: context,
-      builder: (ctx) => GlassSheet(opaque: true, child: _DeleteSheet()),
+      builder: (ctx) => GlassSheet(child: _DeleteSheet()),
     );
     if (confirmed != true || !mounted) return;
 
@@ -217,10 +217,10 @@ class _SyncedWorkoutDetailScreenState
               onTap: () {
                 // Tap delegate — the export button is the popup, but
                 // PillAppBar wants a tap callback. Show a quick action sheet.
-                showModalBottomSheet<void>(
+                showGlassSheet<void>(
                   context: context,
-                  showDragHandle: true,
-                  builder: (sheetCtx) => SafeArea(
+                  builder: (sheetCtx) => GlassSheet(
+                    child: SafeArea(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -232,6 +232,7 @@ class _SyncedWorkoutDetailScreenState
                         ),
                         const SizedBox(height: 12),
                       ],
+                    ),
                     ),
                   ),
                 );

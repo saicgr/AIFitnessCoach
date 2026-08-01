@@ -140,22 +140,36 @@ class _OnboardingWhyScreenState extends ConsumerState<OnboardingWhyScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 4),
-                  // Back affordance — pops to /intro. GlassBackButton is the
-                  // onboarding-wide standard (weight projection, science
-                  // grounding, coach selection all use it).
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: GlassBackButton(onTap: _back),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppLocalizations.of(context).onboardingWhyFirstTheWhy,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
-                      color: t.accent,
-                    ),
+                  // Back affordance + section kicker on ONE line.
+                  //
+                  // This screen used to stack them — GlassBackButton on its own
+                  // row, "FIRST, THE WHY" beneath it — which is not what the
+                  // rest of onboarding does. The shared `quiz_header.dart` puts
+                  // the back button and its accent label in a single `Row`
+                  // (`:65-80`), so every quiz step reads as one header band
+                  // while this screen read as two stacked ones. Matching the
+                  // shared pattern also gives ~20pt back to the content, which
+                  // matters on a screen with six options and a sticky footer.
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      GlassBackButton(onTap: _back),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(context)
+                              .onboardingWhyFirstTheWhy,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.6,
+                            color: t.accent,
+                          ),
+                        ),
+                      ),
+                    ],
                   ).animate().fadeIn(),
                   const SizedBox(height: 8),
                   Text(

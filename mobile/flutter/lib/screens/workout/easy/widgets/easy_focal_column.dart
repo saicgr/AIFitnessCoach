@@ -62,6 +62,18 @@ class EasyFocalColumn extends StatelessWidget {
   /// Short detail for the Next line, e.g. "15 reps" or "Rest · 1 min".
   final String? nextDetail;
 
+  /// Optional compact secondary action rendered INLINE to the right of the
+  /// LOG SET pill (currently "✦ Ask coach").
+  ///
+  /// It used to be a full-width row of its own beneath LOG SET, which cost
+  /// ~64pt of vertical budget on a screen whose whole problem is vertical
+  /// budget — the poster + steppers were being pushed into the scroll region,
+  /// so reaching the stepper (and on shorter devices, LOG SET itself) needed a
+  /// scroll on the app's single most-repeated action. Sharing the CTA row
+  /// gives that height back to the focal content and keeps the coach one tap
+  /// away instead of one scroll away.
+  final Widget? ctaTrailing;
+
   const EasyFocalColumn({
     super.key,
     required this.state,
@@ -80,6 +92,7 @@ class EasyFocalColumn extends StatelessWidget {
     this.editingSetIndex,
     this.nextExerciseName,
     this.nextDetail,
+    this.ctaTrailing,
   });
 
   /// Step granularity for an extra-metric stepper. Coarse for the moves where a
@@ -721,28 +734,50 @@ class EasyFocalColumn extends StatelessWidget {
               // live `weight × reps` ("LOG SET — 60 × 12"), matching the frame.
               // Tour anchor ("Finish the set") — Easy-OWN key, distinct from the
               // steppers above and from the Advanced tree's setLogging key.
-              KeyedSubtree(
-                key: TooltipAnchors.easyLogSetButton,
-                child: SizedBox(
-                  height: logBtnHeight,
-                  child: ElevatedButton(
-                    onPressed: onLogSet,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.accent,
-                      foregroundColor: colors.accentContrast,
-                      shape: const StadiumBorder(),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      _ctaLabel(),
-                      style: ZType.lbl(
-                        logFontSize,
-                        color: colors.accentContrast,
-                        weight: FontWeight.w800,
-                        letterSpacing: 2.5,
+              // LOG SET owns the row; the coach rides along at its right so
+              // neither costs the focal area a second full-width band.
+              SizedBox(
+                height: logBtnHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: KeyedSubtree(
+                        key: TooltipAnchors.easyLogSetButton,
+                        child: ElevatedButton(
+                          onPressed: onLogSet,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.accent,
+                            foregroundColor: colors.accentContrast,
+                            shape: const StadiumBorder(),
+                            elevation: 0,
+                          ),
+                          child: FittedBox(
+                            // The caption restates the live value ("LOG SET —
+                            // 60 × 12") and grows with translation; sharing the
+                            // row with the coach button means it can no longer
+                            // assume full width. Scale down rather than
+                            // overflow — same class as E2E #23/#141.
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              _ctaLabel(),
+                              maxLines: 1,
+                              style: ZType.lbl(
+                                logFontSize,
+                                color: colors.accentContrast,
+                                weight: FontWeight.w800,
+                                letterSpacing: 2.5,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    if (ctaTrailing != null) ...[
+                      const SizedBox(width: 10),
+                      ctaTrailing!,
+                    ],
+                  ],
                 ),
               ),
               SizedBox(height: tight ? 4 : 8),

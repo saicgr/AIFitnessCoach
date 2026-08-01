@@ -18,6 +18,12 @@ import '../../../core/theme/accent_color_provider.dart';
 /// for the WorkoutDetailScreen.
 mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
+  /// Collapse state for the AI Insights summary row below (default
+  /// collapsed). User feedback (live review): AI Insights stays on the
+  /// screen — it's the app's differentiator, hiding it hides what makes this
+  /// an AI coach — but it shouldn't dominate the layout by default.
+  bool _isAIInsightsExpanded = false;
+
   /// Strip markdown formatting from text
   String stripMarkdown(String text) {
     return text
@@ -58,9 +64,18 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
     }
   }
 
-  /// Single always-visible AI Insights card. No chevron / expand-collapse —
-  /// it shows a one-line teaser of the top insight and opens the full modal on
-  /// tap. Drives the loading skeleton while the summary is being fetched.
+  /// AI Insights — collapsed-by-default single-line summary row (icon +
+  /// "AI INSIGHTS" + headline, ellipsized) with a chevron. Tapping the row
+  /// expands the teaser body in place; the deep-link into the full modal
+  /// (→ icon, unchanged behavior via [onTapInsights]) only appears once
+  /// expanded, so the collapsed row stays exactly one line.
+  ///
+  /// User feedback (live review): AI Insights is the app's differentiator and
+  /// must stay visible — hiding it hides what makes this an AI coach — but it
+  /// was dominating the screen at two-plus lines by default. Collapse-by-
+  /// default keeps it visible without the weight; nothing is removed, just
+  /// hidden until tapped. Drives the loading skeleton while the summary is
+  /// being fetched.
   Widget buildWorkoutSummarySection({
     required String? workoutSummary,
     required bool isLoadingSummary,
@@ -100,11 +115,14 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
       teaserHeadline = 'Your pre-workout briefing';
     }
 
+    final canInteract = !isLoadingSummary && workoutSummary != null;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: GestureDetector(
-        onTap: (!isLoadingSummary && workoutSummary != null)
-            ? onTapInsights
+        onTap: canInteract
+            ? () => setState(
+                () => _isAIInsightsExpanded = !_isAIInsightsExpanded)
             : null,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -120,105 +138,127 @@ mixin WorkoutDetailAIInsightsMixin<T extends ConsumerStatefulWidget> on Consumer
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: accentColor.withValues(alpha: 0.3)),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(Icons.auto_awesome, color: accentColor, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'AI INSIGHTS',
-                          style: ZType.lbl(
-                            11,
-                            color: textMuted,
-                            letterSpacing: 1.6,
-                          ),
-                        ),
-                        // Count chip for multi-tip summaries.
-                        if (!isLoadingSummary && tipCount > 1) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$tipCount',
-                              style: ZType.data(10,
-                                  color: accentColor, weight: FontWeight.w700),
-                            ),
-                          ),
-                        ],
-                      ],
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 5),
-                    if (isLoadingSummary)
-                      Text(
-                        AppLocalizations.of(context)
-                            .workoutDetailAiGeneratingInsights,
-                        style: ZType.sans(13,
-                            color: textSecondary, weight: FontWeight.w500),
-                      )
-                    else ...[
-                      Text(
-                        teaserHeadline,
-                        style: ZType.sans(
-                          14.5,
-                          color: textPrimary,
-                          weight: FontWeight.w700,
-                          height: 1.2,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (teaserBody != null && teaserBody.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          stripMarkdown(teaserBody),
-                          style: ZType.sans(
-                            12,
-                            color: textSecondary,
-                            weight: FontWeight.w400,
-                            height: 1.35,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (isLoadingSummary)
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: accentColor.withValues(alpha: 0.7),
+                    child: Icon(Icons.auto_awesome, color: accentColor, size: 18),
                   ),
-                )
-              else if (workoutSummary != null)
-                Icon(
-                  Icons.arrow_forward_rounded,
-                  color: accentColor.withValues(alpha: 0.8),
-                  size: 18,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: isLoadingSummary
+                        ? Text(
+                            AppLocalizations.of(context)
+                                .workoutDetailAiGeneratingInsights,
+                            style: ZType.sans(13,
+                                color: textSecondary, weight: FontWeight.w500),
+                          )
+                        : Row(
+                            children: [
+                              Text(
+                                'AI INSIGHTS',
+                                style: ZType.lbl(
+                                  11,
+                                  color: textMuted,
+                                  letterSpacing: 1.6,
+                                ),
+                              ),
+                              // Count chip for multi-tip summaries — preserved
+                              // from the always-expanded design.
+                              if (tipCount > 1) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: accentColor.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '$tipCount',
+                                    style: ZType.data(10,
+                                        color: accentColor,
+                                        weight: FontWeight.w700),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  teaserHeadline,
+                                  style: ZType.sans(
+                                    14,
+                                    color: textPrimary,
+                                    weight: FontWeight.w700,
+                                    height: 1.2,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (isLoadingSummary)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: accentColor.withValues(alpha: 0.7),
+                      ),
+                    )
+                  else if (workoutSummary != null)
+                    Icon(
+                      _isAIInsightsExpanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: textMuted,
+                      size: 20,
+                    ),
+                ],
+              ),
+              if (_isAIInsightsExpanded && canInteract) ...[
+                const SizedBox(height: 10),
+                if (teaserBody != null && teaserBody.isNotEmpty)
+                  Text(
+                    stripMarkdown(teaserBody),
+                    style: ZType.sans(
+                      12.5,
+                      color: textSecondary,
+                      weight: FontWeight.w400,
+                      height: 1.4,
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                // The → deep-link into the full modal. Absorbs its own tap
+                // (nested GestureDetector, same pattern used elsewhere on
+                // this screen) so it opens the modal instead of re-toggling
+                // the row's collapse state.
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: GestureDetector(
+                      onTap: onTapInsights,
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: accentColor.withValues(alpha: 0.8),
+                        size: 18,
+                      ),
+                    ),
+                  ),
                 ),
+              ],
             ],
           ),
         ),

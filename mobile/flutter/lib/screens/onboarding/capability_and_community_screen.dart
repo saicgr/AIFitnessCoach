@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../core/services/posthog_service.dart';
+import '../../widgets/glass_back_button.dart';
+import 'onboarding_experiments.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -26,6 +28,13 @@ import '../../l10n/generated/app_localizations.dart';
 /// Exercise-media wording: every exercise ships a still illustration + a real
 /// vertical MP4 demo (`VERTICAL VIDEOS ALL/…`), so "HD video demos" is the
 /// honest premium term. NOT "3D model" — we have video, not interactive 3D.
+///
+/// Back button (live review, 2026-08): this screen sits on the
+/// revisit-friendly side of the funnel — coach-selection, fitness-assessment,
+/// and science-grounding (all upstream) each have a back button — and before
+/// the deliberately no-back persuasion sequence that follows. A user who
+/// wants to revise a real choice they just made must be able to get back to
+/// it, so it now carries a `GlassBackButton` too.
 class CapabilityAndCommunityScreen extends ConsumerWidget {
   const CapabilityAndCommunityScreen({super.key});
 
@@ -58,18 +67,48 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 36),
+              const SizedBox(height: 8),
 
-              // ── Anton display headline
-              Text(
-                l10n.capabilityAndCommunityBuiltRight.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: 'Anton',
-                  fontSize: 38,
-                  height: 1.0,
-                  letterSpacing: 0.5,
-                  color: textPrimary,
-                ),
+              // Back affordance + header on ONE line — matches the shared
+              // quiz_header.dart Row pattern (back button + title share a
+              // Row), same placement science_grounding_screen (the screen
+              // immediately upstream) uses.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GlassBackButton(
+                    // We arrive here via context.go (science-grounding when
+                    // that experiment is on, otherwise fitness-assessment
+                    // directly — see fitness_assessment_screen._nextRoute),
+                    // so canPop() is usually false. Fall back to whichever
+                    // screen actually precedes us.
+                    onTap: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go(OnboardingExperiments.scienceScreen
+                            ? '/science-grounding'
+                            : '/fitness-assessment');
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 12),
+                  // ── Anton display headline
+                  Expanded(
+                    child: Text(
+                      l10n.capabilityAndCommunityBuiltRight.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'Anton',
+                        fontSize: 38,
+                        height: 1.0,
+                        letterSpacing: 0.5,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
               ).animate().fadeIn().slideY(begin: -0.1),
               const SizedBox(height: 8),
               Text(

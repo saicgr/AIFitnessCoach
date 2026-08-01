@@ -19,6 +19,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/exercise_image.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../shared/exercise_instruction_copy.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -185,36 +186,23 @@ class _ExerciseInstructionsScreenState
         : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = ref.read(accentColorProvider).getColor(isDark);
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (_) {
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.8,
-            ),
+        return GlassSheet(
+          // Opaque: opens over the exercise demo video, which keeps decoding
+          // frames behind it — BackdropFilter blur forces a re-blur of
+          // everything behind it every frame, which is expensive against a
+          // playing video. Opaque avoids that cost and the bleed-through.
+          opaque: true,
+          maxHeightFraction: 0.8,
+          child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: textMuted.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
                   Text(
                     _titleCase(_exercise.name),
                     style: TextStyle(

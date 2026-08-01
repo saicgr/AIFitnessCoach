@@ -190,6 +190,9 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
     final picked = await showGlassSheet<String>(
       context: context,
       builder: (ctx) => GlassSheet(
+        // Opaque: opens over the live shareable-card canvas (a photo the user
+        // is compositing behind it) — blur would let that busy image bleed
+        // through and hurt emoji-grid legibility.
         opaque: true,
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -269,6 +272,8 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
       final action = await showGlassSheet<String>(
         context: context,
         builder: (ctx) => GlassSheet(
+          // Opaque: opens over the just-captured card preview — keep the
+          // share-action list legible against the finished artwork behind it.
           opaque: true,
           child: Column(
             mainAxisSize: MainAxisSize.min,

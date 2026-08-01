@@ -166,22 +166,11 @@ class _FridgeFiltersSheetState extends State<FridgeFiltersSheet> {
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: tc.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        border: Border(top: BorderSide(color: AppColors.cardBorder)),
-      ),
-      child: Column(
+    // No inner background/handle — the enclosing GlassSheet supplies the
+    // surface (blur) and the drag handle.
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-                color: AppColors.cardBorder, borderRadius: BorderRadius.circular(2)),
-          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
             child: Column(
@@ -252,7 +241,6 @@ class _FridgeFiltersSheetState extends State<FridgeFiltersSheet> {
             ),
           ),
         ],
-      ),
     );
   }
 

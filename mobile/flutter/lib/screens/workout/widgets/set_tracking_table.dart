@@ -1186,34 +1186,19 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     }
 
     double selected = 8.0;
-    final picked = await showModalBottomSheet<double>(
+    final picked = await showGlassSheet<double>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (innerCtx, setStateLocal) {
-            return Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(innerCtx).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-              ),
+            // No inner background/handle — the enclosing GlassSheet supplies
+            // the surface (blur) and the drag handle.
+            return GlassSheet(
               child: SafeArea(
                 top: false,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
                     Text(
                       'RPE — set ${setIndex + 1}',
                       style: const TextStyle(

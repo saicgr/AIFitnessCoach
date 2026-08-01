@@ -504,7 +504,6 @@ class _WorkoutShowcaseScreenState
       context: ctx,
       builder: (sheetCtx) {
         return GlassSheet(
-          opaque: true,
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,

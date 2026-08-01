@@ -16,6 +16,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import 'cycle_onboarding_sheet.dart';
 import 'pre_auth_quiz_screen.dart';
+import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -152,15 +153,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   }
 
   void _showPhotoSourceSheet() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     HapticFeedback.selectionClick();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetContext) => SafeArea(
+      builder: (sheetContext) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -201,6 +198,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               ),
             const SizedBox(height: 8),
           ],
+        ),
         ),
       ),
     );

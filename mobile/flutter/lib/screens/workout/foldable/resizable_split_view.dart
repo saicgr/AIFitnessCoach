@@ -8,7 +8,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 
 /// A vertical split view with a draggable divider between [topChild] and
@@ -110,7 +109,7 @@ class _ResizableSplitViewState extends State<ResizableSplitView> {
                     height: dividerHeight,
                     decoration: BoxDecoration(
                       color: _isDragging
-                          ? (isDark ? AppColors.accent : context.accentColor)
+                          ? (context.accentColor)
                           : (isDark
                               ? Colors.white.withValues(alpha: 0.15)
                               : Colors.black.withValues(alpha: 0.1)),
@@ -123,7 +122,7 @@ class _ResizableSplitViewState extends State<ResizableSplitView> {
                         height: dividerHeight,
                         decoration: BoxDecoration(
                           color: _isDragging
-                              ? (isDark ? AppColors.accent : context.accentColor)
+                              ? (context.accentColor)
                               : (isDark
                                   ? Colors.white.withValues(alpha: 0.3)
                                   : Colors.black.withValues(alpha: 0.2)),

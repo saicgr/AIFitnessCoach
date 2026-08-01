@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// Compact inline row showing start time (tappable) and calculated end time
 class TimeScheduleRow extends StatelessWidget {
@@ -40,7 +41,7 @@ class TimeScheduleRow extends StatelessWidget {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.fromSeed(
-              seedColor: isDark ? AppColors.accent : AppColorsLight.accent,
+              seedColor: context.accentColor,
               brightness: isDark ? Brightness.dark : Brightness.light,
             ),
           ),
@@ -64,8 +65,7 @@ class TimeScheduleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;

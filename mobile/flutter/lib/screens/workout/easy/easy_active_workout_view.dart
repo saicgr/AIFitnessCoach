@@ -290,20 +290,21 @@ class EasyActiveWorkoutView extends StatelessWidget {
                   editingSetIndex: editingSetIndex,
                   // "Next: <name>" preview shown just above LOG SET (mockup).
                   nextExerciseName: nextExerciseName,
+                  // "✦ Ask coach" now rides INLINE at the right of LOG SET
+                  // instead of owning a full-width band beneath it. It was
+                  // costing ~64pt of a screen that did not have it to spare:
+                  // the poster + steppers were pushed into the inner scroll
+                  // region, so the +/− stepper sat half-clipped and the app's
+                  // single most-repeated action needed a scroll to reach.
+                  // Compact keeps the coach one TAP away (the point of the
+                  // pill) without charging the focal area for it.
+                  ctaTrailing: EasyChatPill(
+                    currentExercise: exercise,
+                    currentSetNumber: currentSetNumber,
+                    totalSets: state.totalSets,
+                  ),
                 ),
                 ),
-            ),
-            // Full-width "✦ Ask coach" below LOG SET — the only secondary CTA,
-            // visually lighter than the primary Log Set (per the mockup). Skip
-            // to the next exercise lives in the ⋯ menu.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: EasyChatPill(
-                currentExercise: exercise,
-                currentSetNumber: currentSetNumber,
-                totalSets: state.totalSets,
-                expand: true,
-              ),
             ),
             // E2E #134 — matches the rest overlay's own visible height (its
             // 12+12 internal padding + kicker/countdown row + progress bar +

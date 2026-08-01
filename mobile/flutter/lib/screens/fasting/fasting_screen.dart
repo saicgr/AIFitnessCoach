@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
@@ -87,8 +89,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    // Use monochrome accent instead of purple
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Check if guest - fasting is disabled for guests
@@ -287,7 +288,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     Color textMuted,
     Color elevated,
   ) {
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accentContrast = context.colors.accentContrast;
     final hasFast = fastingState.hasFast;
     final durationMinutes = _selectedProtocol == FastingProtocol.custom
         ? _customHours * 60
@@ -618,7 +619,7 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             child: Text(
               AppLocalizations.of(context).fastingContinueFasting,
               style: TextStyle(
-                color: isDark ? AppColors.accent : AppColorsLight.accent,
+                color: context.accentColor,
               ),
             ),
           ),

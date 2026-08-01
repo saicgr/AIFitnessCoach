@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
 import '../data/services/haptic_service.dart';
 
 /// Floating iOS 26 "Liquid Glass" action bar.
@@ -69,8 +70,9 @@ class LiquidGlassActionBar extends StatelessWidget {
     final textColor = isDark
         ? Colors.white.withValues(alpha: 0.62)
         : AppColorsLight.textSecondary;
-    final iconAccent = accentColor ??
-        (isDark ? AppColors.accent : AppColorsLight.accent);
+    // Fixes the doc comment's own promise above: this used to fall back to
+    // the monochrome token instead of the "active app accent" it claimed.
+    final iconAccent = accentColor ?? context.accentColor;
     final radius = BorderRadius.circular(kLiquidGlassActionBarHeight / 2);
 
     final bar = ClipRRect(

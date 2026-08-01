@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
+import '../core/theme/theme_colors.dart';
 import '../data/services/share_service.dart';
 import '../utils/image_capture_utils.dart';
 import 'glass_sheet.dart';
@@ -323,9 +325,8 @@ class _WatermarkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accent = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -376,9 +377,8 @@ class _PageIndicators extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accent = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -513,9 +513,8 @@ class _ShareButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accent = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
     final textColor =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 

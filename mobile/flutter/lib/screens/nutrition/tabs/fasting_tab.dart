@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
@@ -79,10 +81,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
         widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted =
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor =
-        widget.isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        widget.isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accentColor = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
     final elevated =
         widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
     final hairline =

@@ -17,6 +17,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../food_history_screen.dart';
 import '../log_meal_sheet.dart';
@@ -388,13 +389,10 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
   /// Tiny source chooser — camera first, gallery second. Returns null on cancel.
   Future<ImageSource?> _pickPhotoSource() {
     final tc = ThemeColors.of(context);
-    return showModalBottomSheet<ImageSource>(
+    return showGlassSheet<ImageSource>(
       context: context,
-      backgroundColor: tc.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -413,6 +411,7 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
             ),
             const SizedBox(height: 8),
           ],
+        ),
         ),
       ),
     );

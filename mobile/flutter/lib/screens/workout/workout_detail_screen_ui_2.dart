@@ -1028,6 +1028,20 @@ extension _WorkoutDetailScreenStateParityActions on _WorkoutDetailScreenState {
                   _menuVersionHistory(workout);
                 },
               ),
+              // Moved out of the Equipment glance row (live-review feedback):
+              // editing equipment is deliberate and rare, unlike the glance
+              // itself which is checked constantly, so it belongs behind the
+              // overflow menu rather than competing for space on that row.
+              if (workout.equipmentNeeded.isNotEmpty)
+                actionTile(
+                  icon: Icons.fitness_center,
+                  title: 'Edit equipment',
+                  subtitle: 'Swap what\'s available for this workout',
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _showEditEquipmentSheet(workout);
+                  },
+                ),
               actionTile(
                 icon: Icons.directions_run_rounded,
                 title: 'Generate warm-up',

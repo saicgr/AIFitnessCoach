@@ -36,7 +36,6 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
       isDismissible: false,
       enableDrag: false,
       builder: (_) => const GlassSheet(
-        opaque: true,
         showHandle: false,
         child: WorkoutPermissionsPrimeSheet(),
       ),
@@ -49,36 +48,23 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accent = context.accentColor;
 
+    // No inner background/handle — the enclosing GlassSheet supplies the
+    // surface (blur). This sheet has enableDrag: false / isDismissible:
+    // false, so it deliberately omits a drag handle entirely.
     return SafeArea(
       top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: textSecondary.withOpacity(0.25),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Text(
               AppLocalizations.of(context).workoutPermissionsPrimeTwoQuickHeadsUps,
               style: TextStyle(

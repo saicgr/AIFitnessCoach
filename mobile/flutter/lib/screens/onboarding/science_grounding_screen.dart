@@ -72,28 +72,28 @@ class _ScienceGroundingScreenState
             child: Column(
               children: [
                 const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: GlassBackButton(
-                    // Mirror weight_projection_screen: pop if we can, else
-                    // fall back to the real predecessor GoRoute. We arrive here
-                    // via context.go from fitness-assessment, so canPop() is
-                    // false → /fitness-assessment (a registered route).
-                    onTap: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/fitness-assessment');
-                      }
-                    },
-                  ),
-                ).animate().fadeIn(duration: 300.ms),
 
-                const SizedBox(height: 20),
-
-                // ── Header
+                // Back affordance + header on ONE line — matches the shared
+                // quiz_header.dart Row pattern (back button + accent
+                // label/title share a Row) instead of the button stacked
+                // above the header as its own row.
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    GlassBackButton(
+                      // Mirror weight_projection_screen: pop if we can, else
+                      // fall back to the real predecessor GoRoute. We arrive here
+                      // via context.go from fitness-assessment, so canPop() is
+                      // false → /fitness-assessment (a registered route).
+                      onTap: () {
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/fitness-assessment');
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 12),
                     Container(
                       width: 36,
                       height: 36,
@@ -108,6 +108,8 @@ class _ScienceGroundingScreenState
                     Expanded(
                       child: Text(
                         'Your plan is built on real science',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,

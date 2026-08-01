@@ -50,6 +50,14 @@ class AiShareSheet extends ConsumerStatefulWidget {
     required Shareable data,
     required String? photoPathOrUrl,
   }) {
+    // Deliberately not GlassSheet: this sheet opens over the live card-editor
+    // canvas (photo/design in progress) — same opaque-for-legibility reason
+    // as the other shareables/editor sheets — AND owns a fixed dark palette
+    // (Color(0xFF14161B) + literal white text) matching the editor's dark
+    // chrome regardless of app theme. GlassSheet(opaque: true)'s background
+    // switches by isDark (AppColors.surface / AppColorsLight.surface), which
+    // would fight this sheet's intentionally fixed dark look, so it keeps its
+    // own solid Container below instead of routing through GlassSheet.
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,

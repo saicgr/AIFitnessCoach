@@ -25,7 +25,6 @@ Future<double?> showFocalStepperNumericSheet({
   return showGlassSheet<double>(
     context: context,
     builder: (ctx) => GlassSheet(
-      opaque: true,
       child: _NumericEditSheet(
         initial: initial,
         unit: unit,
@@ -114,33 +113,19 @@ class _NumericEditSheetState extends State<_NumericEditSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final onSurface = isDark ? Colors.white : Colors.black;
     final viewInsets = MediaQuery.of(context).viewInsets;
 
+    // No inner background/handle here — the enclosing GlassSheet already
+    // supplies the surface (blur) and the drag handle (showHandle: true).
     return Padding(
       padding: EdgeInsets.only(bottom: viewInsets.bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: onSurface.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
             Text(
               widget.label,
               style: TextStyle(

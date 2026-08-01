@@ -51,14 +51,15 @@ Widget buildQuickActionWidget(
         iconChild: LineIcon(
           'nutrition',
           size: 18,
-          color: quickActionRegistry['food']?.color ?? AppColors.accent,
+          color: context.accentColor,
         ),
         // v27 mockup labels this slot "Log Food", not just "Food".
         label: AppLocalizations.of(context).quickLogFabLogFood,
-        // Registry has been re-keyed across releases ('food' vs 'log_food');
-        // a `!` here threw "Null check operator used on a null value" for
-        // users on a stale install. Default to a safe accent if missing.
-        iconColor: quickActionRegistry['food']?.color ?? AppColors.accent,
+        // E2E register row 15: follow the user's accent rather than the
+        // registry's private per-action hue (matches the `default` case
+        // below, and sidesteps the old null-check crash on a stale-install
+        // registry re-key — the accent is always available).
+        iconColor: context.accentColor,
         // Launch via the shared launcher so the home grid and the in-chat
         // SuggestedActionsCard share one code path. D4: lands on the Search
         // tab (showLogMealSheet's default mode), Nutrition branch first.
@@ -70,7 +71,7 @@ Widget buildQuickActionWidget(
         icon: Icons.flash_on,
         label: AppLocalizations.of(context).quickActionsRowQuick,
         iconColor:
-            quickActionRegistry['quick_workout']?.color ?? AppColors.accent,
+            context.accentColor,
         onTap: () => launchQuickAction(context, ref, 'quick_workout'),
         isDark: isDark,
       );
@@ -78,7 +79,7 @@ Widget buildQuickActionWidget(
       return _GridActionItem(
         icon: Icons.auto_awesome,
         label: AppLocalizations.of(context).quickActionsRowChat,
-        iconColor: quickActionRegistry['chat']?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () => launchQuickAction(context, ref, 'chat'),
         isDark: isDark,
       );
@@ -89,7 +90,7 @@ Widget buildQuickActionWidget(
         label:
             photoFood?.label ??
             AppLocalizations.of(context).quickActionsRowPhotoLog,
-        iconColor: photoFood?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         // Snap-your-plate flow — shared launcher hops to Nutrition then opens
         // the single-photo camera path.
         onTap: () => launchQuickAction(context, ref, 'photo_food'),
@@ -102,7 +103,7 @@ Widget buildQuickActionWidget(
         label:
             barcodeFood?.label ??
             AppLocalizations.of(context).quickActionsRowBarcode,
-        iconColor: barcodeFood?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () => launchQuickAction(context, ref, 'barcode_food'),
         isDark: isDark,
       );
@@ -111,7 +112,7 @@ Widget buildQuickActionWidget(
       return _GridActionItem(
         icon: scanFood?.icon ?? Icons.camera_alt_outlined,
         label: scanFood?.label ?? AppLocalizations.of(context).quickLogFabScan,
-        iconColor: scanFood?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         // Hop to Nutrition then open the log-meal sheet with the multi-image
         // camera path armed (shared launcher).
         onTap: () => launchQuickAction(context, ref, 'scan_food'),
@@ -128,7 +129,7 @@ Widget buildQuickActionWidget(
         label:
             identify?.label ??
             AppLocalizations.of(context).sectionHeaderWhatSThis,
-        iconColor: identify?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () => launchQuickAction(context, ref, 'identify_equipment'),
         isDark: isDark,
       );
@@ -138,7 +139,7 @@ Widget buildQuickActionWidget(
         icon: scanMenu?.icon ?? Icons.menu_book_outlined,
         label:
             scanMenu?.label ?? AppLocalizations.of(context).quickActionsRowMenu,
-        iconColor: scanMenu?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () => launchQuickAction(context, ref, 'scan_menu'),
         isDark: isDark,
       );
@@ -149,7 +150,7 @@ Widget buildQuickActionWidget(
       return _GridActionItem(
         icon: formCheck?.icon ?? Icons.sports_gymnastics_outlined,
         label: formCheck?.label ?? 'Form Check',
-        iconColor: formCheck?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () {
           HapticService.light();
           showFormAnalysisSheet(context);
@@ -162,7 +163,7 @@ Widget buildQuickActionWidget(
       return _GridActionItem(
         icon: addEx?.icon ?? Icons.add_circle_outline,
         label: addEx?.label ?? 'Add Exercise',
-        iconColor: addEx?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () {
           HapticService.light();
           showGlassSheet(
@@ -180,10 +181,10 @@ Widget buildQuickActionWidget(
         iconChild: LineIcon(
           'workout',
           size: 18,
-          color: workout?.color ?? AppColors.accent,
+          color: context.accentColor,
         ),
         label: workout?.label ?? AppLocalizations.of(context).navWorkout,
-        iconColor: workout?.color ?? AppColors.accent,
+        iconColor: context.accentColor,
         onTap: () => launchQuickAction(context, ref, 'workout'),
         isDark: isDark,
       );

@@ -165,7 +165,6 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
     await showGlassSheet<void>(
       context: ctx,
       builder: (sheetCtx) => GlassSheet(
-        opaque: true,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -230,7 +229,6 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
       context: context,
       builder: (sheetContext) {
         return GlassSheet(
-          opaque: true,
           child: StatefulBuilder(
           builder: (context, setSheetState) => Padding(
             padding: EdgeInsetsDirectional.only(start: 20,

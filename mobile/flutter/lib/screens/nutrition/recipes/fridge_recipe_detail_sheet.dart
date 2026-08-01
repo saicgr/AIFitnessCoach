@@ -146,24 +146,12 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
     final amber = tc.warning;
     final hasSteps = s.instructions.isNotEmpty;
 
-    return Container(
-      constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.9),
-      decoration: BoxDecoration(
-        color: tc.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-        border: Border(top: BorderSide(color: AppColors.cardBorder)),
-      ),
-      child: Column(
+    // No inner background/handle/height-constraint — the enclosing GlassSheet
+    // already supplies the surface (blur), drag handle, and the same 0.9
+    // max-height fraction this sheet used.
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 44,
-            height: 4,
-            decoration: BoxDecoration(
-                color: AppColors.cardBorder, borderRadius: BorderRadius.circular(2)),
-          ),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
@@ -243,7 +231,6 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
             ),
           ),
         ],
-      ),
     );
   }
 

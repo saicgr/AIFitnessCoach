@@ -103,12 +103,26 @@ enum FastingProtocol {
   /// Get the protocol ID (same as the enum name)
   String get id => name;
 
-  /// Get protocol from string
+  /// Get protocol from string.
+  ///
+  /// Accepts the full [displayName] ("OMAD (One Meal a Day)"), the enum
+  /// [name] ("omad"), and the SHORT label ("OMAD", "ADF") — the bare form
+  /// that older rows persisted into `fasting_records.protocol` (see backend
+  /// migration 067, which still has to translate a literal 'OMAD'). Without
+  /// the short-label pass those rows silently resolved to the 16:8 default,
+  /// so a 23h OMAD fast rendered its progress ring against a 16h goal.
   static FastingProtocol fromString(String value) {
-    return FastingProtocol.values.firstWhere(
-      (p) => p.displayName == value || p.name == value,
-      orElse: () => FastingProtocol.sixteen8,
-    );
+    final v = value.trim();
+    for (final p in FastingProtocol.values) {
+      if (p.displayName == v || p.name == v) return p;
+    }
+    final lower = v.toLowerCase();
+    for (final p in FastingProtocol.values) {
+      // "OMAD (One Meal a Day)" → "omad"; "16:8" → "16:8".
+      final short = p.displayName.split(' (').first.toLowerCase();
+      if (short == lower || p.name.toLowerCase() == lower) return p;
+    }
+    return FastingProtocol.sixteen8;
   }
 }
 

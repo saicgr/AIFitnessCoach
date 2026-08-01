@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../data/models/program_template.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 
 // ===========================================================================
 // Shared program-variant picker — the single implementation used by BOTH the
@@ -316,14 +317,13 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
     required String title,
     required List<_PickerOption> options,
   }) {
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetContext) {
-        return SafeArea(
+        // No inner background/handle — the enclosing GlassSheet supplies the
+        // surface (blur) and the drag handle.
+        return GlassSheet(
+          child: SafeArea(
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -331,17 +331,6 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardBorder,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
                 Text(
                   title.toUpperCase(),
                   style: ZType.lbl(
@@ -386,6 +375,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
                 ),
               ],
             ),
+          ),
           ),
         );
       },

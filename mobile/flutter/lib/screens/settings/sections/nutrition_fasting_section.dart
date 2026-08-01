@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/fasting_repository.dart';
@@ -176,9 +177,7 @@ class NutritionFastingSection extends ConsumerWidget {
   const NutritionFastingSection({super.key});
 
   /// Help items explaining each nutrition/fasting preference
-  /// Note: Colors will be resolved at build time based on theme
-  static List<Map<String, dynamic>> _getNutritionHelpItems(bool isDark) {
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+  static List<Map<String, dynamic>> _getNutritionHelpItems(Color accentColor) {
     return [
       {
         'icon': Icons.restaurant_outlined,
@@ -213,9 +212,8 @@ class NutritionFastingSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final settingsState = ref.watch(fastingSettingsProvider);
-    final helpItems = _getNutritionHelpItems(isDark);
+    final helpItems = _getNutritionHelpItems(context.accentColor);
 
     if (settingsState.isLoading) {
       return Column(
@@ -267,8 +265,7 @@ class _NutritionFastingCard extends ConsumerWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return Material(
       color: elevatedColor,
@@ -569,8 +566,7 @@ class _ProtocolSelectorSheet extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return Container(
       padding: const EdgeInsets.only(top: 8, bottom: 16),

@@ -6,29 +6,42 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
   /// E2E #51 — the docked start bar. Same two controls the old
   /// `floatingActionButton` carried (coach avatar + accent LET'S GO pill),
   /// right-aligned, but sitting in `bottomNavigationBar` so the list is inset
-  /// by its height and can never scroll underneath it. The surface-coloured
-  /// background is what turns "a pill overlapping an exercise row" into "a bar
-  /// the content stops above".
+  /// by its height and can never scroll underneath it.
+  ///
+  /// User feedback (live review): the solid `pureBlack`/`pureWhite` fill read
+  /// as "a heavy black slab under the content". Swapped for the same glass
+  /// recipe used app-wide (`GlassSheetStyle` — see `widgets/glass_sheet.dart`):
+  /// `ClipRect` + `BackdropFilter` blur over a translucent surface, so the
+  /// list scrolls translucently beneath it instead of stopping at an opaque
+  /// wall. `ClipRect` (not `ClipRRect`) because this bar is a full-width edge
+  /// docked bar with no corner radius, unlike the rounded bottom sheets that
+  /// style was designed for. The CTA itself keeps its own opaque accent fill
+  /// (unchanged), so "LET'S GO" stays fully legible over a scrolling photo
+  /// regardless of what's blurred behind the bar — no extra scrim needed.
   Widget _buildStartBar(BuildContext context, WidgetRef ref, Workout workout) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Same fill the Scaffold uses, so the bar reads as the page floor
-    // rather than a second surface.
-    final surface = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final divider = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    return Container(
-      decoration: BoxDecoration(
-        color: surface,
-        border: Border(
-          top: BorderSide(color: divider.withValues(alpha: 0.35)),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: GlassSheetStyle.blurSigma,
+          sigmaY: GlassSheetStyle.blurSigma,
         ),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [_buildFloatingButtons(context, ref, workout)],
+        child: Container(
+          decoration: BoxDecoration(
+            color: GlassSheetStyle.backgroundColor(isDark),
+            border: Border(
+              top: BorderSide(color: GlassSheetStyle.borderColor(isDark)),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [_buildFloatingButtons(context, ref, workout)],
+              ),
+            ),
           ),
         ),
       ),
@@ -154,6 +167,96 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
   // _buildTargetedMusclesSection, _buildAIReasoningSection moved to WorkoutDetailAIInsightsMixin
 
   // AI Reasoning, View Parameters, and Params Section methods removed - now in mixin
+
+  /// Equipment — single compact glance line (icon + count + names, truncated
+  /// to one line). Replaces the old two-line collapsible header + inline EDIT
+  /// button: knowing whether a session fits the gym you're standing in is a
+  /// pre-workout glance made constantly, so it must never disappear behind a
+  /// menu, but it also shouldn't cost a full card. Tapping the row expands
+  /// the full equipment list in place (existing `_isEquipmentExpanded`
+  /// Wrap of pills, unchanged). Editing equipment is deliberate and rare, so
+  /// that action now lives in the screen's ⋮ overflow menu instead.
+  Widget _buildEquipmentCompactRow(Workout workout) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    const color = Colors.blueGrey;
+    final names = workout.equipmentNeeded
+        .map((e) => localizeEquipment(e, context))
+        .join(', ');
+
+    return GestureDetector(
+      onTap: () => setState(() => _isEquipmentExpanded = !_isEquipmentExpanded),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: elevatedColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.fitness_center, color: color, size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${workout.equipmentNeeded.length} · ',
+                      style: ZType.lbl(12, color: textMuted, letterSpacing: 0.5),
+                    ),
+                    TextSpan(
+                      text: names,
+                      style: ZType.sans(13, color: textSecondary, weight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Revert button (only shown when modifications exist). Absorbs
+            // its own tap so it doesn't also toggle the row's expand state —
+            // same nested-GestureDetector pattern as the trailing slot in
+            // `_buildCollapsibleSectionHeader` below.
+            if (_hasEquipmentModifications) ...[
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {},
+                child: GestureDetector(
+                  onTap: _revertToOriginalExercises,
+                  child: Text(
+                    AppLocalizations.of(context).workoutDetailRevert.toUpperCase(),
+                    style: ZType.lbl(
+                      11,
+                      color: Colors.orange,  // accent-allowlist: warning severity
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 8),
+            Icon(
+              _isEquipmentExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              color: textMuted,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// Build collapsible section header for warmup/stretches
   Widget _buildCollapsibleSectionHeader({

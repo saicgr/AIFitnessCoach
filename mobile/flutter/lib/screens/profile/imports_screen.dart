@@ -12,6 +12,8 @@
 ///      category × format filters, bulk-select, retry and detail sheets.
 library imports_screen;
 
+import 'dart:ui';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -29,6 +31,7 @@ import '../../data/services/haptic_service.dart';
 import '../../data/services/imports_api_service.dart';
 import '../../data/services/incoming_share_service.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../settings/nutrition_import_screen.dart';
 import '../settings/workout_history_import_screen.dart';
@@ -827,16 +830,17 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
     // Surface the row payload — the actual navigation to the destination
     // entity lives in the parent app shell. For now, pop a sheet with raw
     // details so the user can confirm + retry/reclassify/delete.
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      builder: (ctx) => _RowDetailSheet(row: row),
+      builder: (ctx) => GlassSheet(child: _RowDetailSheet(row: row)),
     );
   }
 
   Future<void> _rowActionSheet(ImportHistoryRow row) async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showGlassSheet<String>(
       context: context,
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -862,6 +866,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
               onTap: () => Navigator.pop(ctx, 'delete'),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -894,10 +899,7 @@ class _ImportsScreenState extends ConsumerState<ImportsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      backgroundColor: Colors.transparent,
       builder: (ctx) => const _LimitsSheet(),
     );
   }
@@ -1517,14 +1519,9 @@ class _PasteSheet extends StatefulWidget {
   final String initialText;
 
   static Future<String?> show(BuildContext context, {required String initialText}) {
-    return showModalBottomSheet<String>(
+    return showGlassSheet<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _PasteSheet(initialText: initialText),
+      builder: (_) => GlassSheet(child: _PasteSheet(initialText: initialText)),
     );
   }
 
@@ -1552,9 +1549,9 @@ class _PasteSheetState extends State<_PasteSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: SafeArea(
+    // No outer keyboard-padding wrapper — the enclosing GlassSheet already
+    // handles keyboard avoidance.
+    return SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           child: Column(
@@ -1606,7 +1603,6 @@ class _PasteSheetState extends State<_PasteSheet> {
             ],
           ),
         ),
-      ),
     );
   }
 }
@@ -1891,7 +1887,26 @@ class _LimitsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DraggableScrollableSheet(
+    final isDark = theme.brightness == Brightness.dark;
+    // DraggableScrollableSheet controls its own size fraction, so it can't
+    // be wrapped in GlassSheet (fixed maxHeightFraction) — build the same
+    // blurred glass surface by hand instead, matching GlassSheetStyle.
+    return ClipRRect(
+      borderRadius:
+          const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+            sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
+        child: Container(
+          decoration: BoxDecoration(
+            color: GlassSheetStyle.backgroundColor(isDark),
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(GlassSheetStyle.borderRadius)),
+            border: Border(
+              top: BorderSide(color: GlassSheetStyle.borderColor(isDark), width: 0.5),
+            ),
+          ),
+          child: DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.78,
       builder: (ctx, scrollCtrl) => ListView(
@@ -1928,6 +1943,9 @@ class _LimitsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 24),
         ],
+      ),
+          ),
+        ),
       ),
     );
   }

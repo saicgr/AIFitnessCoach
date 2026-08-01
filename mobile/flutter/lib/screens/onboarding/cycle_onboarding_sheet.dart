@@ -47,9 +47,7 @@ class CycleOnboardingSheet extends ConsumerStatefulWidget {
   static Future<bool?> show(BuildContext context, {required String userId}) {
     return showGlassSheet<bool>(
       context: context,
-      opaque: true,
       builder: (_) => GlassSheet(
-        opaque: true,
         showHandle: true,
         child: CycleOnboardingSheet(userId: userId),
       ),

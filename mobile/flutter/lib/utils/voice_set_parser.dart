@@ -355,20 +355,22 @@ class VoiceSetParser {
 
     // Step 3: implicit hundreds ("two twenty five" → 225, "two oh five" → 205)
     if (acc <= 9 && idx < tokens.length) {
-      // Pattern A: digit + tens [+ ones]  → "two twenty five"
-      final under = readUnderHundred(idx);
-      if (under != null) {
-        acc = acc * 100 + under;
-        return _NumRun(end, acc);
-      }
-      // Pattern B: digit + "oh" + ones  → handled above via readUnderHundred
-      // ("oh" is in _ones as 0, so "two oh five" becomes 2 then we'd try to
-      // read "oh five" which yields 0 then we'd skip "five"). Special-case:
+      // Pattern B FIRST: digit + "oh" + ones → "two oh five" = 205.
+      // Order matters. `oh` lives in _ones as 0, so Pattern A's
+      // readUnderHundred happily consumes it alone and yields 200, dropping
+      // the trailing "five" (which then gets re-read as the rep count). This
+      // check must therefore run BEFORE Pattern A, not after it.
       if (idx + 1 < tokens.length &&
           tokens[idx] == 'oh' &&
           _ones.containsKey(tokens[idx + 1])) {
         acc = acc * 100 + _ones[tokens[idx + 1]]!;
         end = idx + 1;
+        return _NumRun(end, acc);
+      }
+      // Pattern A: digit + tens [+ ones]  → "two twenty five"
+      final under = readUnderHundred(idx);
+      if (under != null) {
+        acc = acc * 100 + under;
         return _NumRun(end, acc);
       }
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 
 /// A bouncing arrow that indicates scrollable content below.
 /// Shows when user hasn't scrolled to the bottom yet.
@@ -115,7 +116,7 @@ class _ScrollHintArrowState extends State<ScrollHintArrow> {
             ),
             child: Icon(
               Icons.keyboard_arrow_down,
-              color: isDark ? AppColors.accent : AppColors.teal,
+              color: context.accentColor,
               size: 24,
             ),
           )

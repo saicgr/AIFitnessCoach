@@ -6,6 +6,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/design_system/zealova.dart';
+import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Phase 4 — per-exercise contribution to a muscle's strength score.
@@ -25,11 +26,12 @@ class MuscleScoreBreakdownSheet extends ConsumerStatefulWidget {
   final String muscleGroup;
 
   static Future<void> show(BuildContext context, String muscleGroup) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => MuscleScoreBreakdownSheet(muscleGroup: muscleGroup),
+      builder: (_) => GlassSheet(
+        maxHeightFraction: 0.8,
+        child: MuscleScoreBreakdownSheet(muscleGroup: muscleGroup),
+      ),
     );
   }
 
@@ -77,34 +79,15 @@ class _MuscleScoreBreakdownSheetState
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    final bg = tc.surface;
     final textPrimary = tc.textPrimary;
     final textSecondary = tc.textSecondary;
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.8,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: const Border(
-          top: BorderSide(color: AppColors.hairlineStrong, width: 1),
-        ),
-      ),
-      child: Column(
+    // No inner background/handle/height-constraint — the enclosing GlassSheet
+    // already supplies the surface (blur), drag handle, and the same 0.8
+    // max-height fraction this sheet used.
+    return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.hairlineStrong,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
@@ -157,7 +140,6 @@ class _MuscleScoreBreakdownSheetState
           else
             Flexible(child: _body(context, textPrimary, textSecondary)),
         ],
-      ),
     );
   }
 

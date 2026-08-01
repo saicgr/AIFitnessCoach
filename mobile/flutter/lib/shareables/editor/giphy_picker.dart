@@ -16,6 +16,8 @@ class GiphyPicker extends StatefulWidget {
     return showGlassSheet<String>(
       context: context,
       builder: (_) => const GlassSheet(
+        // Opaque: opens over the live card/food editor canvas — see the
+        // card_editor_screen.dart sheets for the same rationale.
         opaque: true,
         child: GiphyPicker(),
       ),

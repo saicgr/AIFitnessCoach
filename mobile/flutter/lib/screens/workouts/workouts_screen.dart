@@ -1178,7 +1178,6 @@ class _ImportWorkoutsPickerSheet extends StatelessWidget {
         isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return GlassSheet(
-      opaque: true,
       child: SafeArea(
         top: false,
         child: Padding(

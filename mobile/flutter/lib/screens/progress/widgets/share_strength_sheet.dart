@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/services/share_service.dart';
 import '../../../utils/image_capture_utils.dart';
@@ -214,9 +216,7 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                 Icon(
                   Icons.branding_watermark_rounded,
                   size: 18,
-                  color: _showWatermark
-                      ? (isDark ? AppColors.accent : AppColorsLight.accent)
-                      : Colors.grey,
+                  color: _showWatermark ? context.accentColor : Colors.grey,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -233,8 +233,8 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
                     HapticFeedback.lightImpact();
                     setState(() => _showWatermark = value);
                   },
-                  activeTrackColor: isDark ? AppColors.accent : AppColorsLight.accent,
-                  activeThumbColor: isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
+                  activeTrackColor: context.accentColor,
+                  activeThumbColor: context.colors.accentContrast,
                 ),
               ],
             ),
@@ -250,8 +250,8 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(_templateNames.length, (index) {
                 final isActive = _currentPage == index;
-                final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-                final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+                final accent = context.accentColor;
+                final accentContrast = context.colors.accentContrast;
                 return GestureDetector(
                   onTap: () {
                     _pageController.animateToPage(
@@ -413,8 +413,8 @@ class _ShareStrengthSheetState extends ConsumerState<ShareStrengthSheet> {
     required bool isLoading,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accent = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     if (isPrimary) {

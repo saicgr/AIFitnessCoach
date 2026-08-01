@@ -14,6 +14,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/sheet_header.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 // ---------------------------------------------------------------------------
 // Public API: call this to show the import sheet from home_screen.dart
@@ -285,7 +286,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide(
-                              color: isDark ? AppColors.accent : AppColorsLight.accent,
+                              color: context.accentColor,
                             ),
                           ),
                           contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -335,9 +336,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             child: CircularProgressIndicator(
                               strokeWidth: 2.5,
-                              color: isDark
-                                  ? AppColors.accent
-                                  : AppColorsLight.accent,
+                              color: context.accentColor,
                             ),
                           ),
                         )
@@ -768,9 +767,8 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: isDark ? AppColors.accent : AppColorsLight.accent,
-          foregroundColor:
-              isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
+          backgroundColor: context.accentColor,
+          foregroundColor: context.colors.accentContrast,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),

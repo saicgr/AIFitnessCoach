@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
 import 'fasting_plan_cards.dart';
@@ -64,9 +66,8 @@ class _StartFastSheetState extends State<StartFastSheet> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    // Use monochrome accent instead of purple
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final accentColor = context.accentColor;
+    final accentContrast = context.colors.accentContrast;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return ClipRRect(
@@ -505,11 +506,11 @@ class _StartFastSheetState extends State<StartFastSheet> {
           data: Theme.of(context).copyWith(
             colorScheme: isDark
                 ? ColorScheme.dark(
-                    primary: AppColors.accent,
+                    primary: context.accentColor,
                     surface: AppColors.elevated,
                   )
                 : ColorScheme.light(
-                    primary: AppColorsLight.accent,
+                    primary: context.accentColor,
                     surface: AppColorsLight.elevated,
                   ),
           ),
@@ -582,8 +583,7 @@ class _ProtocolChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use monochrome accent for all chips
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;

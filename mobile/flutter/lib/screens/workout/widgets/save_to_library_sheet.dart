@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/workout_studio_providers.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows a modal bottom sheet to save the given workout into the user's
 /// library under a chosen name.
@@ -17,13 +18,13 @@ Future<bool> showSaveToLibrarySheet(
   required String workoutId,
   required String defaultName,
 }) async {
-  final result = await showModalBottomSheet<bool>(
+  final result = await showGlassSheet<bool>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _SaveToLibrarySheet(
-      workoutId: workoutId,
-      defaultName: defaultName,
+    builder: (ctx) => GlassSheet(
+      child: _SaveToLibrarySheet(
+        workoutId: workoutId,
+        defaultName: defaultName,
+      ),
     ),
   );
   return result ?? false;
@@ -95,39 +96,20 @@ class _SaveToLibrarySheetState extends ConsumerState<_SaveToLibrarySheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
+    // No inner background/handle/keyboard-padding — the enclosing GlassSheet
+    // already supplies the surface, drag handle, and keyboard avoidance.
     return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Container(
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         child: SafeArea(
           top: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Grab handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
               Row(
                 children: [
                   Icon(Icons.bookmark_add_rounded, color: accent, size: 22),
@@ -219,7 +201,6 @@ class _SaveToLibrarySheetState extends ConsumerState<_SaveToLibrarySheet> {
             ],
           ),
         ),
-      ),
     );
   }
 }

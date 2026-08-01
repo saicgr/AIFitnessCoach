@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ import '../../data/services/haptic_service.dart';
 import '../../data/services/image_url_cache.dart';
 import '../home/widgets/components/equipment_selector.dart'
     show showEquipmentPickerSheet;
+import '../../widgets/glass_sheet.dart';
 import 'widgets/body_map_selector.dart';
 
 /// Opens the Workout Customization Studio — an instant, RAG-backed live-preview
@@ -40,6 +42,9 @@ Future<BuiltWorkout?> showCustomizationStudio(
     isScrollControlled: true,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
+    // Keep raw showModalBottomSheet here (not showGlassSheet) — this sheet's
+    // own DraggableScrollableSheet controls its size fraction directly, and
+    // draws its own blurred glass surface below (see _CustomizationStudioSheetState.build).
     builder: (ctx) => _CustomizationStudioSheet(
       workoutId: workoutId,
       initialParams: initialParams ?? const WorkoutBuildParams(),
@@ -382,10 +387,22 @@ class _CustomizationStudioSheetState
       maxChildSize: 0.96,
       expand: false,
       builder: (context, scrollController) {
-        return Container(
+        // DraggableScrollableSheet controls its own size fraction, so it
+        // can't be wrapped in GlassSheet (fixed maxHeightFraction) — build
+        // the same blurred glass surface by hand, matching GlassSheetStyle.
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(GlassSheetStyle.borderRadius)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+                sigmaX: GlassSheetStyle.blurSigma, sigmaY: GlassSheetStyle.blurSigma),
+            child: Container(
           decoration: BoxDecoration(
-            color: isDark ? AppColors.background : AppColorsLight.background,
+            color: GlassSheetStyle.backgroundColor(isDark),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(
+              top: BorderSide(color: GlassSheetStyle.borderColor(isDark), width: 0.5),
+            ),
           ),
           child: Column(
             children: [
@@ -570,6 +587,8 @@ class _CustomizationStudioSheetState
               ),
               _buildFooter(context, isDark, accent),
             ],
+          ),
+            ),
           ),
         );
       },

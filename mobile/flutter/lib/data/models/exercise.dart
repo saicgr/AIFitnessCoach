@@ -660,8 +660,14 @@ class LibraryExercise extends Equatable {
     return equipmentValue!.split(',').map((e) {
       final eq = e.trim();
       final lower = eq.toLowerCase();
-      // Normalize "None (Bodyweight)" and similar to just "Bodyweight"
-      if (lower.contains('none') || lower == 'bodyweight' || lower == 'body weight') {
+      // Normalize "None (Bodyweight)", "Bodyweight only", "Body Weight" → "Bodyweight".
+      // The trailing "only" qualifier is a real library/equipment value (it is the
+      // onboarding quiz's own label), and leaving it unnormalized leaked
+      // "Bodyweight only" through as if it were a piece of equipment — including
+      // past Workout.equipmentNeeded, which strips exactly `bodyweight`. Kept in
+      // sync with `isBodyweight` below, which already matched it.
+      final base = lower.replaceFirst(RegExp(r'\s+only$'), '');
+      if (base.contains('none') || base == 'bodyweight' || base == 'body weight') {
         return 'Bodyweight';
       }
       return eq;

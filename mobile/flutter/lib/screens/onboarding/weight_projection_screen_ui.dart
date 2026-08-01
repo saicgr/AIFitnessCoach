@@ -15,22 +15,30 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
     final displayWeight = useMetric ? currentWeight : currentWeight * 2.20462;
     final unit = useMetric ? 'kg' : 'lbs';
 
+    // headerOverlay Row — matches the `_buildHeaderOverlay` shape used by
+    // coach_selection_screen_ui.dart / fitness_assessment_screen.dart (both
+    // FoldableQuizScaffold screens keep the back button in a `Row`, not a
+    // bare `Align`). No trailing element to pair here (no skip action on
+    // this branch), and the screen's actual headline already renders lower
+    // in `content` via FoldableQuizScaffold's own headerTitle/phone-inline
+    // mechanism — duplicating it into this top bar would show it twice.
     final maintainBackButton = Padding(
       padding: const EdgeInsetsDirectional.only(start: 16, end: 16, top: 8),
-      child: Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: GlassBackButton(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            // Maintain-weight branch — pop back into the v5 flow rather
-            // than nuking quiz state by jumping to /intro.
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/plan-analyzing');
-            }
-          },
-        ),
+      child: Row(
+        children: [
+          GlassBackButton(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              // Maintain-weight branch — pop back into the v5 flow rather
+              // than nuking quiz state by jumping to /intro.
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/plan-analyzing');
+              }
+            },
+          ),
+        ],
       ),
     );
 

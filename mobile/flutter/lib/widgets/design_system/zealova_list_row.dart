@@ -58,9 +58,20 @@ class ZealovaListRow extends StatelessWidget {
       child: Row(
         children: [
           if (leading != null) ...[leading, const SizedBox(width: 12)],
+          // The label is the row's IDENTITY and must win the width fight.
+          //
+          // `value` used to be an unconstrained Text, so it claimed its full
+          // intrinsic width and left `Expanded(label)` the remainder. A long
+          // value ("View & manage what your AI coach remembers") squeezed the
+          // label to a sliver — "Coach memory" wrapped onto THREE lines and
+          // broke mid-word ("memor / y"). Now both are flexible, the label
+          // gets the larger share, and the value ellipsizes first.
           Expanded(
+            flex: 5,
             child: Text(
               label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 15,
                 color: labelColor ?? tc.textPrimary,
@@ -69,10 +80,17 @@ class ZealovaListRow extends StatelessWidget {
             ),
           ),
           if (value != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: Text(value!,
-                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1)),
+            Flexible(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Text(value!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: ZType.lbl(11,
+                        color: tc.textMuted, letterSpacing: 1)),
+              ),
             ),
           if (trailing != null) trailing!,
           if (trailing == null && showChevron && onTap != null)

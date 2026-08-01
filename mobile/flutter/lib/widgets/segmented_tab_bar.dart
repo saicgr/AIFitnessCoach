@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/accent_color_provider.dart';
+import '../core/theme/theme_colors.dart';
 
 /// A modern segmented tab bar with smooth animations.
 ///
@@ -112,12 +114,13 @@ class _SegmentedTabButton extends StatelessWidget {
     final animationValue = controller.animation?.value ?? 0.0;
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    // Monochrome accent - white in dark mode, black in light mode
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Follows the user's chosen accent (E2E register row 15/161 class) — a
+    // hand-duplicated copy of this pattern elsewhere in the app (e.g. the
+    // friend search tab bar) already does the same.
+    final accentColor = context.accentColor;
     final selectedBg = accentColor;
     const unselectedBg = Colors.transparent;
-    // Contrast text: black on white button, white on black button
-    final selectedFg = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final selectedFg = context.colors.accentContrast;
     final unselectedFg = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;

@@ -10,6 +10,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -350,11 +351,11 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
             toolbarColor: isDark ? AppColors.nearBlack : AppColorsLight.pureWhite,
             toolbarWidgetColor: isDark ? Colors.white : AppColorsLight.textPrimary,
             backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.nearWhite,
-            activeControlsWidgetColor: isDark ? context.accentColor : AppColorsLight.accent,
+            activeControlsWidgetColor: context.accentColor,
             dimmedLayerColor: isDark
                 ? Colors.black.withValues(alpha: 0.6)
                 : Colors.white.withValues(alpha: 0.6),
-            cropFrameColor: isDark ? context.accentColor : AppColorsLight.accent,
+            cropFrameColor: context.accentColor,
             cropGridColor: isDark
                 ? Colors.white.withValues(alpha: 0.3)
                 : Colors.black.withValues(alpha: 0.2),
@@ -575,20 +576,19 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   };
 
   void _showEmojiPicker() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: isDark ? AppColors.nearBlack : AppColorsLight.pureWhite,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => _EmojiPickerSheet(
-        onEmojiSelected: (emoji) {
-          Navigator.pop(ctx);
-          _addEmojiSticker(emoji);
-        },
-        categories: _emojiCategories,
+      builder: (ctx) => GlassSheet(
+        // Opaque: opens over the live photo being edited — blur would let
+        // that busy image bleed through and hurt the emoji-grid legibility.
+        opaque: true,
+        child: _EmojiPickerSheet(
+          onEmojiSelected: (emoji) {
+            Navigator.pop(ctx);
+            _addEmojiSticker(emoji);
+          },
+          categories: _emojiCategories,
+        ),
       ),
     );
   }
@@ -928,7 +928,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
   /// Horizontal strip of filter preview tiles — thumbnail + name.
   Widget _buildFilterStrip() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final secondaryColor =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -1173,7 +1173,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     bool enabled = true,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
@@ -1345,7 +1345,7 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final secondaryColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
@@ -1360,19 +1360,10 @@ class _EmojiPickerSheetState extends State<_EmojiPickerSheet> {
     return SafeArea(
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.45,
+        // No inner drag handle — the enclosing GlassSheet supplies one.
         child: Column(
           children: [
-            const SizedBox(height: 8),
-            // Drag handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: mutedColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             Text(
               AppLocalizations.of(context).photoEditorAddSticker,
               style: TextStyle(

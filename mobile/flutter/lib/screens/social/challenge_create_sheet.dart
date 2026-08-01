@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Phase 6 #18 — Create-challenge sheet.
@@ -15,11 +16,9 @@ class ChallengeCreateSheet extends ConsumerStatefulWidget {
   const ChallengeCreateSheet({super.key});
 
   static Future<bool?> show(BuildContext context) {
-    return showModalBottomSheet<bool>(
+    return showGlassSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const ChallengeCreateSheet(),
+      builder: (_) => const GlassSheet(child: ChallengeCreateSheet()),
     );
   }
 
@@ -93,32 +92,16 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final mq = MediaQuery.of(context);
     final textPrimary = Theme.of(context).colorScheme.onSurface;
 
+    // No inner background/handle/keyboard-padding — the enclosing GlassSheet
+    // already supplies the surface, drag handle, and keyboard avoidance.
     return Padding(
-      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
               Text(
                 AppLocalizations.of(context).challengeCreateButton,
                 style: TextStyle(
@@ -226,7 +209,6 @@ class _ChallengeCreateSheetState extends ConsumerState<ChallengeCreateSheet> {
             ],
           ),
         ),
-      ),
     );
   }
 }

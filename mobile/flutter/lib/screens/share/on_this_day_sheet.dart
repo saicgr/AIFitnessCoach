@@ -8,6 +8,7 @@ import '../../data/repositories/share_growth_repository.dart';
 import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
 import '../../shareables/shareable_data.dart';
 import '../../shareables/shareable_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// F16 — "A year ago today". Fetches `/share/on-this-day` and lists workouts /
 /// meals logged on this calendar day in prior years. Each memory offers a
@@ -43,11 +44,12 @@ class OnThisDaySheet {
         .map((e) => (e as Map).cast<String, dynamic>())
         .toList();
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _OnThisDayBody(workouts: workouts, meals: meals),
+      builder: (_) => GlassSheet(
+        maxHeightFraction: 0.8,
+        child: _OnThisDayBody(workouts: workouts, meals: meals),
+      ),
     );
   }
 }
@@ -118,30 +120,15 @@ class _OnThisDayBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
     final accent = c.accent;
-    final media = MediaQuery.of(context);
-    return Container(
-      constraints: BoxConstraints(maxHeight: media.size.height * 0.8),
-      decoration: BoxDecoration(
-        color: c.elevated,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      child: SafeArea(
+    // No inner background/handle/height-constraint — the enclosing GlassSheet
+    // already supplies the surface (blur), drag handle, and the same 0.8
+    // max-height fraction this sheet used.
+    return SafeArea(
         top: false,
         child: ListView(
           shrinkWrap: true,
           padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: c.textMuted.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             Text('A year ago today',
                 style: TextStyle(
                     color: c.textPrimary,
@@ -171,7 +158,6 @@ class _OnThisDayBody extends ConsumerWidget {
               ),
           ],
         ),
-      ),
     );
   }
 

@@ -23,7 +23,6 @@ class TemplateEditorSheet extends StatefulWidget {
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
-        opaque: true,
         child: TemplateEditorSheet(existing: existing, notifier: notifier),
       ),
     ).whenComplete(() {

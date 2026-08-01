@@ -385,7 +385,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
-    final accentColor = isDark ? context.accentColor : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.9,
@@ -1124,7 +1124,7 @@ class _CustomEquipmentDialogState extends State<_CustomEquipmentDialog> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? context.accentColor : AppColorsLight.accent;
+    final accent = context.accentColor;
     final textPrimary =
         isDark ? Colors.white : AppColorsLight.textPrimary;
     final isEdit = widget.initial != null;

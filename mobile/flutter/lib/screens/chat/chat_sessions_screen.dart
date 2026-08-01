@@ -8,6 +8,7 @@ import '../../data/models/chat_session.dart';
 import '../../data/providers/coach_unread_provider.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// "Ask Coach" conversation list — like ChatGPT/Gemini chat history.
 ///
@@ -543,13 +544,10 @@ class _SessionRow extends StatelessWidget {
 
   void _showMenu(BuildContext context) {
     HapticService.selection();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: colors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
+        child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -588,6 +586,7 @@ class _SessionRow extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
+        ),
         ),
       ),
     );

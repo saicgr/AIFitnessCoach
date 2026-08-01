@@ -561,7 +561,6 @@ class _CustomFoodBuilderSheetState
     final chosen = await showGlassSheet<String>(
       context: context,
       builder: (ctx) => GlassSheet(
-        opaque: true,
         padding: const EdgeInsets.all(16),
         child: Wrap(
           spacing: 8,

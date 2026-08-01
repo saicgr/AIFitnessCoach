@@ -177,10 +177,8 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       if (prefs.getBool('programs_intro_seen') ?? false) return;
       await prefs.setBool('programs_intro_seen', true);
       if (!mounted) return;
-      await showModalBottomSheet<void>(
+      await showGlassSheet<void>(
         context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
         builder: (_) => const ProgramsIntroSheet(),
       );
     } catch (_) {

@@ -279,21 +279,31 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
       body: SafeArea(
         child: Column(
           children: [
-            // Back button (conditionally shown)
+            // Back button (conditionally shown) — Row wrapper, matching the
+            // shared quiz_header.dart / `_buildHeaderOverlay` shape used
+            // elsewhere in onboarding, instead of a bare `Align`. Same
+            // EdgeInsets.all(16) inset as quiz_header.dart:64, so the
+            // on-screen position is unchanged. This screen has no adjacent
+            // header/kicker text to pair beside the button (it's a
+            // full-screen progress loader; the "Generating your plan"
+            // title lives deep in the vertically-centered content, not in
+            // a header band) — pairing it here would require restructuring
+            // the loader layout, which is out of scope for a placement fix.
             if (widget.showBackButton)
-              Align(
-                alignment: AlignmentDirectional.topStart,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: GlassBackButton(
-                    onTap: () {
-                      if (widget.returnWorkout) {
-                        Navigator.of(context).pop();
-                      } else {
-                        context.go('/coach-selection');
-                      }
-                    },
-                  ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    GlassBackButton(
+                      onTap: () {
+                        if (widget.returnWorkout) {
+                          Navigator.of(context).pop();
+                        } else {
+                          context.go('/coach-selection');
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
 
@@ -524,7 +534,7 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
               icon: const Icon(Icons.refresh),
               label: Text(l10n.workoutGenerationTryAgain),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
+                backgroundColor: context.accentColor,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 shape: RoundedRectangleBorder(

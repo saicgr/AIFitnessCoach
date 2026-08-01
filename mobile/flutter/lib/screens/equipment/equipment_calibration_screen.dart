@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/equipment_calibration.dart';
 import '../../data/repositories/equipment_calibration_repository.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -86,11 +87,11 @@ class EquipmentCalibrationScreen extends ConsumerWidget {
     WidgetRef ref,
     EquipmentCalibration? existing,
   ) {
-    showModalBottomSheet<bool>(
+    showGlassSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CalibrationEditorSheet(existing: existing),
+      builder: (_) => GlassSheet(
+        child: _CalibrationEditorSheet(existing: existing),
+      ),
     ).then((didChange) {
       if (didChange == true) {
         ref.invalidate(equipmentCalibrationListProvider);
@@ -548,9 +549,7 @@ class _CalibrationEditorSheetState
 
   @override
   Widget build(BuildContext context) {
-    final bg = Theme.of(context).colorScheme.surface;
     final textPrimary = Theme.of(context).colorScheme.onSurface;
-    final mq = MediaQuery.of(context);
 
     final showBar = _category == 'barbell';
     final showSled = _category == 'machine';
@@ -558,29 +557,14 @@ class _CalibrationEditorSheetState
     final showPlates = _category == 'barbell' || _category == 'plate_set';
     final showDb = _category == 'dumbbell';
 
+    // No inner background/handle/keyboard-padding — the enclosing GlassSheet
+    // already supplies the surface, drag handle, and keyboard avoidance.
     return Padding(
-      padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        child: SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: textPrimary.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
               Text(
                 widget.existing == null ? AppLocalizations.of(context).equipmentCalibrationAddEquipment : AppLocalizations.of(context).equipmentCalibrationEditEquipment,
                 style: TextStyle(
@@ -691,7 +675,6 @@ class _CalibrationEditorSheetState
             ],
           ),
         ),
-      ),
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../widgets/glass_sheet.dart';
 /// Phase 2.D — RPE pill for set logging.
 ///
 /// Tap to cycle through 6 → 7 → 8 → 9 → 10. Tap-and-hold opens a quick scale
@@ -97,10 +98,11 @@ class RpePill extends StatelessWidget {
   }
 
   Future<void> _picker(BuildContext context) async {
-    final picked = await showModalBottomSheet<double>(
+    final picked = await showGlassSheet<double>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _RpePicker(initial: value ?? target ?? 8.0),
+      builder: (_) => GlassSheet(
+        child: _RpePicker(initial: value ?? target ?? 8.0),
+      ),
     );
     if (picked != null) onChanged(picked);
   }
@@ -145,26 +147,15 @@ class _RpePickerState extends State<_RpePicker> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    // No inner background/handle — the enclosing GlassSheet supplies the
+    // surface (blur) and the drag handle.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       child: SafeArea(
         top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
             Text(
               AppLocalizations.of(context).rpePillRpeRateOfPerceived,
               style: TextStyle(

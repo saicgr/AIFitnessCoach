@@ -24,6 +24,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'fridge_dish_card.dart';
 import 'fridge_filters_sheet.dart';
@@ -512,13 +513,13 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   }
 
   Future<void> _openAllFilters() async {
-    final result = await showModalBottomSheet<Set<String>>(
+    final result = await showGlassSheet<Set<String>>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => FridgeFiltersSheet(
-        active: _activeFilters,
-        defaults: _defaultFilters,
+      builder: (_) => GlassSheet(
+        child: FridgeFiltersSheet(
+          active: _activeFilters,
+          defaults: _defaultFilters,
+        ),
       ),
     );
     if (result != null) {
@@ -532,12 +533,11 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   }
 
   void _openDetail(PantrySuggestion s) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) =>
-          FridgeRecipeDetailSheet(suggestion: s, userId: widget.userId),
+      builder: (_) => GlassSheet(
+        child: FridgeRecipeDetailSheet(suggestion: s, userId: widget.userId),
+      ),
     );
   }
 
@@ -560,20 +560,11 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   Future<void> _promptAddIngredient({required bool generateAfter}) async {
     final ctrl = TextEditingController();
     final tc = ThemeColors.of(context);
-    final added = await showModalBottomSheet<bool>(
+    final added = await showGlassSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-          decoration: BoxDecoration(
-            color: tc.elevated,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-            border: Border(top: BorderSide(color: AppColors.cardBorder)),
-          ),
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -650,16 +641,9 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
 
   Future<void> _pickPhotoSource() async {
     final tc = ThemeColors.of(context);
-    final src = await showModalBottomSheet<ImageSource>(
+    final src = await showGlassSheet<ImageSource>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-        decoration: BoxDecoration(
-          color: tc.elevated,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
-          border: Border(top: BorderSide(color: AppColors.cardBorder)),
-        ),
+      builder: (ctx) => GlassSheet(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

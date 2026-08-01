@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' show max;
+import 'dart:ui' show ImageFilter;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/app_dialog.dart';
@@ -397,27 +398,25 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           ),
                         );
                       }),
-                      Text(
-                        (workout.name ??
+                      // E2E #123 gave this a 3rd line so long curated names
+                      // ("Active Recovery & Mobility Day") stopped ellipsizing
+                      // to "Active Rec…". That fixed truncation but bought it
+                      // with height: "UPPER BODY STRENGTH FOUNDATION" set three
+                      // 32pt lines and ate roughly a fifth of the screen before
+                      // any content (E2E #165).
+                      //
+                      // Neither cap is the answer — the SIZE is what should
+                      // give. _MastheadTitle keeps 32pt when the name fits two
+                      // lines and steps down only as far as it must, so short
+                      // names look exactly as before, long ones stay fully
+                      // readable, and nothing truncates.
+                      WorkoutMastheadTitle(
+                        text: (workout.name ??
                                 AppLocalizations.of(context).navWorkout)
                             .toUpperCase(),
-                        style: ZType.sans(
-                          32,
-                          color: isDark
-                              ? AppColors.textPrimary
-                              : AppColorsLight.textPrimary,
-                          weight: FontWeight.w800,
-                          letterSpacing: -0.5,
-                          height: 0.98,
-                        ),
-                        // E2E #123 — a realistic AI/curated workout name
-                        // ("Active Recovery & Mobility Day") ellipsized to
-                        // "Active Rec…" at maxLines:2 despite the masthead
-                        // having vertical room to spare (the eyebrow +
-                        // subtitle below it are short). A 3rd line gives it
-                        // that room instead of truncating.
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+                        color: isDark
+                            ? AppColors.textPrimary
+                            : AppColorsLight.textPrimary,
                       ),
                       if (_workoutMastheadSubtitle(workout) != null) ...[
                         const SizedBox(height: 5),
@@ -681,56 +680,17 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
           // ─────────────────────────────────────────────────────────────────
           // EQUIPMENT SECTION (Collapsible)
           // ─────────────────────────────────────────────────────────────────
+          // User feedback (live review): equipment shouldn't occupy a full
+          // card — but knowing whether today's session fits the gym you're
+          // standing in is a pre-workout glance, so it can't disappear behind
+          // a menu either. Collapsed to one line (icon + count + names,
+          // truncated); EDIT moved into the ⋮ overflow menu since editing is
+          // deliberate and rare while the glance is frequent.
           if (workout.equipmentNeeded.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.only(top: 8),
-                child: _buildCollapsibleSectionHeader(
-                  title: AppLocalizations.of(context).workoutDetailEquipment,
-                  icon: Icons.fitness_center,
-                  color: Colors.blueGrey,
-                  isExpanded: _isEquipmentExpanded,
-                  onTap: () => setState(() => _isEquipmentExpanded = !_isEquipmentExpanded),
-                  itemCount: workout.equipmentNeeded.length,
-                  subtitle: workout.equipmentNeeded
-                          .take(3)
-                          .map((e) => localizeEquipment(e, context))
-                          .join(', ') +
-                      (workout.equipmentNeeded.length > 3 ? '...' : ''),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Revert button (only shown when modifications exist)
-                      if (_hasEquipmentModifications)
-                        GestureDetector(
-                          onTap: _revertToOriginalExercises,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 12),
-                            child: Text(
-                              AppLocalizations.of(context).workoutDetailRevert.toUpperCase(),
-                              style: ZType.lbl(
-                                12,
-                                color: Colors.orange,  // accent-allowlist: warning severity
-                                letterSpacing: 1.2,
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Edit button
-                      GestureDetector(
-                        onTap: () => _showEditEquipmentSheet(workout),
-                        child: Text(
-                          AppLocalizations.of(context).commonEdit.toUpperCase(),
-                          style: ZType.lbl(
-                            12,
-                            color: accentColor,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                child: _buildEquipmentCompactRow(workout),
               ),
             ),
 
@@ -1516,6 +1476,67 @@ class _ThumbButton extends StatelessWidget {
           color: active ? activeColor : mutedFg,
         ),
       ),
+    );
+  }
+}
+
+/// The workout-detail masthead title.
+///
+/// Sizes itself to fit **two** lines rather than spilling onto a third.
+/// Measures with a real `TextPainter` at the width it is actually given, so it
+/// is correct for any name length, any locale, and any text-scale setting —
+/// none of which are knowable at build time. Steps down 32 → 22pt and stops at
+/// the first size that fits; a name too long even at 22 keeps `maxLines: 2`
+/// with an ellipsis, which is strictly better than the 3-line spill it
+/// replaces. Short names are untouched: they fit at 32 and the loop exits on
+/// the first try.
+class WorkoutMastheadTitle extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const WorkoutMastheadTitle({super.key, required this.text, required this.color});
+
+  static const List<double> _ladder = [32, 29, 26, 24, 22];
+
+  @override
+  Widget build(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        double chosen = _ladder.last;
+        for (final size in _ladder) {
+          final style = ZType.sans(
+            size,
+            color: color,
+            weight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 0.98,
+          );
+          final painter = TextPainter(
+            text: TextSpan(text: text, style: style),
+            maxLines: 2,
+            textDirection: Directionality.of(context),
+            textScaler: scaler,
+          )..layout(maxWidth: maxWidth);
+          if (!painter.didExceedMaxLines) {
+            chosen = size;
+            break;
+          }
+        }
+        return Text(
+          text,
+          style: ZType.sans(
+            chosen,
+            color: color,
+            weight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 0.98,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        );
+      },
     );
   }
 }

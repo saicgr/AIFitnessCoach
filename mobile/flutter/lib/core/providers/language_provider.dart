@@ -89,10 +89,18 @@ class LanguageNotifier extends StateNotifier<LanguageState> {
     _loadLanguage();
   }
 
+  /// True once the user has explicitly picked a language in THIS session.
+  /// The ctor's `_loadLanguage()` is async; a `setLanguage` that lands while
+  /// the SharedPreferences read is still in flight would otherwise be reset
+  /// to "no language selected" the moment that read resolves — which also
+  /// bounces the router back to the language picker. Newest write wins.
+  bool _explicitlySet = false;
+
   /// Load saved language preference
   Future<void> _loadLanguage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (_explicitlySet) return; // user already chose — don't clobber
       final hasSelected = prefs.getBool(_hasSelectedKey) ?? false;
       final languageCode = prefs.getString(_languageKey);
 
@@ -121,6 +129,7 @@ class LanguageNotifier extends StateNotifier<LanguageState> {
 
   /// Set language and save to preferences
   Future<void> setLanguage(Language language) async {
+    _explicitlySet = true;
     state = state.copyWith(
       selectedLanguage: language,
       hasSelectedLanguage: true,

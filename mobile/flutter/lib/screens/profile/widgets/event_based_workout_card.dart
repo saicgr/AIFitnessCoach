@@ -24,7 +24,7 @@ class EventBasedWorkoutCard extends StatelessWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return GestureDetector(
       onTap: () {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/week_start_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/user.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -22,8 +23,7 @@ class WorkoutPreferencesCard extends ConsumerWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
 
     return Container(
       width: double.infinity,

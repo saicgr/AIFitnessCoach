@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/coach_persona.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -73,7 +74,7 @@ class CustomCoachForm extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.accent, width: 2),
+                borderSide: BorderSide(color: context.accentColor, width: 2),
               ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             ),
@@ -103,7 +104,7 @@ class CustomCoachForm extends StatelessWidget {
                   HapticFeedback.selectionClick();
                   onStyleChanged(style['id']!);
                 },
-                selectedColor: AppColors.accent,
+                selectedColor: context.accentColor,
                 textSecondary: textSecondary,
                 cardBorder: cardBorder,
               );
@@ -134,7 +135,7 @@ class CustomCoachForm extends StatelessWidget {
                   HapticFeedback.selectionClick();
                   onToneChanged(tone['id']!);
                 },
-                selectedColor: AppColors.accent,
+                selectedColor: context.accentColor,
                 textSecondary: textSecondary,
                 cardBorder: cardBorder,
               );
@@ -160,7 +161,7 @@ class CustomCoachForm extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.accent,
+                  color: context.accentColor,
                 ),
               ),
             ],
@@ -168,10 +169,10 @@ class CustomCoachForm extends StatelessWidget {
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.accent,
+              activeTrackColor: context.accentColor,
               inactiveTrackColor: cardBorder,
-              thumbColor: AppColors.accent,
-              overlayColor: AppColors.accent.withValues(alpha: 0.2),
+              thumbColor: context.accentColor,
+              overlayColor: context.accentColor.withValues(alpha: 0.2),
               trackHeight: 4,
             ),
             child: Slider(

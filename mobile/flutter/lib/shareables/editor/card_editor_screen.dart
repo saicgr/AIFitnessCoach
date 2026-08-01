@@ -665,6 +665,9 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
+        // Opaque: these editor sheets open over the live card-compositing
+        // canvas (a photo/design in progress) — blur would let that busy
+        // background bleed through and hurt control legibility.
         opaque: true,
         child: _VariationsSheet(controller: _c, data: widget.data),
       ),
@@ -679,6 +682,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
+        // Opaque: over the live card canvas — see _openTemplates above.
         opaque: true,
         child: _AddElementSheet(controller: _c, data: widget.data),
       ),
@@ -709,6 +713,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
+        // Opaque: over the live card canvas — see _openTemplates above.
         opaque: true,
         child: _PaletteSheet(controller: _c),
       ),
@@ -721,6 +726,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
       builder: (ctx) => _editorChrome(
         ctx,
         child: GlassSheet(
+          // Opaque: over the live card canvas — see _openTemplates above.
           opaque: true,
           child: _BackgroundSheet(controller: _c, data: widget.data),
         ),
@@ -732,6 +738,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
+        // Opaque: over the live card canvas — see _openTemplates above.
         opaque: true,
         child: _LayersSheet(controller: _c),
       ),
@@ -2112,6 +2119,10 @@ class _ContextPanel extends StatelessWidget {
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
+        // Opaque: over the live card canvas — see _openTemplates above. Also
+        // a live-drag control (2-axis tilt pad) with a real-time preview on
+        // the canvas behind it — a translucent surface would visually
+        // compete with that preview during the drag.
         opaque: true,
         child: _PerspectiveSheet(controller: controller, element: element),
       ),

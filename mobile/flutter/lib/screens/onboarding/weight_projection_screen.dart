@@ -386,23 +386,36 @@ class _WeightProjectionScreenState
       ),
     ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2);
 
+    // headerOverlay Row — matches the `_buildHeaderOverlay` shape used by
+    // coach_selection_screen_ui.dart / fitness_assessment_screen.dart, and
+    // the sibling maintain-branch button in weight_projection_screen_ui.dart
+    // (both FoldableQuizScaffold screens keep the back button in a `Row`,
+    // not a bare `Align`). `EdgeInsetsDirectional`/`Row` also fix an RTL bug
+    // here — the old `Alignment.centerLeft` + `EdgeInsets.only(left:,
+    // right:)` didn't flip for RTL locales, unlike every other back-button
+    // wrapper in onboarding. No trailing element to pair here (no skip
+    // action on this screen), and the screen's actual headline already
+    // renders lower in `content` via FoldableQuizScaffold's own
+    // headerTitle/phone-inline mechanism — duplicating it into this top bar
+    // would show it twice.
     final backButton = Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: GlassBackButton(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            // Back goes one step in the v5 flow: ← plan-analyzing
-            // (not all the way to /intro — losing all quiz answers
-            // mid-projection is a footgun).
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/plan-analyzing');
-            }
-          },
-        ),
+      padding: const EdgeInsetsDirectional.only(start: 16, end: 16, top: 8),
+      child: Row(
+        children: [
+          GlassBackButton(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              // Back goes one step in the v5 flow: ← plan-analyzing
+              // (not all the way to /intro — losing all quiz answers
+              // mid-projection is a footgun).
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/plan-analyzing');
+              }
+            },
+          ),
+        ],
       ),
     );
 
@@ -496,7 +509,7 @@ class _WeightProjectionScreenState
                 const SizedBox(height: 8),
                 QuizWeightRateChips(
                   selectedRate: weightChangeRate ?? 'moderate',
-                  rates: getWeightRateOptions(isLosing: isLosingWeight, useMetric: useMetric, tdee: tdee, gender: userGender),
+                  rates: getWeightRateOptions(isLosing: isLosingWeight, useMetric: useMetric, accentColor: context.accentColor, tdee: tdee, gender: userGender),
                   onRateChanged: (rate) {
                     final notifier = ref.read(preAuthQuizProvider.notifier);
                     notifier.setBodyMetrics(

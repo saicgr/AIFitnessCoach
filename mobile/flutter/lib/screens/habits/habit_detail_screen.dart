@@ -373,7 +373,13 @@ final habitDetailProvider = FutureProvider.autoDispose
       id: habitId,
       name: autoHabit.name,
       icon: autoHabit.icon,
-      color: AppColors.accent,
+      // Never actually painted — the widget overrides with the live
+      // `context`-resolved accent for every auto-tracked habit (see
+      // habit_detail_screen.dart's `data.isAutoTracked ? accentColor :
+      // data.color`). Still uses the user's accent (not the monochrome
+      // token) rather than a fabricated colour, in case another consumer
+      // of [HabitDetailData] reads it directly.
+      color: ref.read(accentColorProvider).previewColor,
       isAutoTracked: true,
       description: _getAutoHabitDescription(autoHabit.name),
       currentStreak: autoHabit.currentStreak,
@@ -443,7 +449,9 @@ final habitDetailProvider = FutureProvider.autoDispose
       id: detail.habit.id,
       name: detail.habit.name,
       icon: _getIconFromName(detail.habit.icon),
-      color: _parseColor(detail.habit.color, AppColors.accent),
+      // Custom habits carry their own stored colour; fall back to the
+      // user's accent (not the monochrome token) when none was set.
+      color: _parseColor(detail.habit.color, ref.read(accentColorProvider).previewColor),
       isAutoTracked: false,
       description: detail.habit.description,
       currentStreak: detail.streak.currentStreak,

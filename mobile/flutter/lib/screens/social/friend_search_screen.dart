@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../core/services/posthog_service.dart';
@@ -396,10 +398,10 @@ class _FriendSearchScreenState extends ConsumerState<FriendSearchScreen>
     final animationValue = _tabController.animation?.value ?? 0.0;
     final selectionProgress = (1.0 - (animationValue - index).abs()).clamp(0.0, 1.0);
 
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+    final accentColor = context.accentColor;
     final selectedBg = accentColor;
     final unselectedBg = Colors.transparent;
-    final selectedFg = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final selectedFg = context.colors.accentContrast;
     final unselectedFg = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final bgColor = Color.lerp(unselectedBg, selectedBg, selectionProgress)!;

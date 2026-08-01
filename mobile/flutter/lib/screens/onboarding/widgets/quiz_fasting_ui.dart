@@ -260,7 +260,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                               return Theme(
                                 data: Theme.of(context).copyWith(
                                   colorScheme: Theme.of(context).colorScheme.copyWith(
-                                    primary: AppColors.accent,
+                                    primary: t.accent,
                                   ),
                                 ),
                                 child: child!,
@@ -288,7 +288,7 @@ extension _QuizFastingStateUI on _QuizFastingState {
                               return Theme(
                                 data: Theme.of(context).copyWith(
                                   colorScheme: Theme.of(context).colorScheme.copyWith(
-                                    primary: AppColors.accent,
+                                    primary: t.accent,
                                   ),
                                 ),
                                 child: child!,

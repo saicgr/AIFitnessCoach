@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
@@ -119,7 +121,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
         actions: [
           PillAppBarAction(
             icon: _isLoading ? Icons.hourglass_empty : Icons.check_rounded,
-            iconColor: _hasChanges ? AppColors.accent : textSecondary,
+            iconColor: _hasChanges ? context.accentColor : textSecondary,
             onTap: _isLoading ? null : _saveSettings,
           ),
         ],
@@ -205,11 +207,11 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: isSelected ? AppColors.accentGradient : null,
+              gradient: isSelected ? context.colors.accentGradient : null,
               color: isSelected ? null : elevated,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: isSelected ? AppColors.accent : cardBorder,
+                color: isSelected ? context.accentColor : cardBorder,
                 width: isSelected ? 2 : 1,
               ),
             ),
@@ -305,7 +307,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
                   height: 20,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: isFilled ? AppColors.accentGradient : null,
+                    gradient: isFilled ? context.colors.accentGradient : null,
                     color: isFilled ? null : Colors.transparent,
                     border: isFilled ? null : Border.all(color: cardBorder, width: 2),
                   ),
@@ -409,7 +411,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: hasPoints ? AppColors.accent : textSecondary,
+                                  color: hasPoints ? context.accentColor : textSecondary,
                                 ),
                               ),
                             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../widgets/glass_sheet.dart';
 import 'share_routing_table.dart';
 
 /// Modal bottom sheet that lets the user pick the destination manually.
@@ -28,18 +29,15 @@ class ShareChooserSheet extends ConsumerWidget {
     String? predictionLabel,
     String? predictionWhy,
   }) {
-    return showModalBottomSheet<ShareDestination>(
+    return showGlassSheet<ShareDestination>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => ShareChooserSheet(
-        predictedDestination: predicted,
-        predictionLabel: predictionLabel,
-        predictionWhy: predictionWhy,
-        onPick: (dest) => Navigator.of(ctx).pop(dest),
+      builder: (ctx) => GlassSheet(
+        child: ShareChooserSheet(
+          predictedDestination: predicted,
+          predictionLabel: predictionLabel,
+          predictionWhy: predictionWhy,
+          onPick: (dest) => Navigator.of(ctx).pop(dest),
+        ),
       ),
     );
   }
@@ -65,6 +63,7 @@ class ShareChooserSheet extends ConsumerWidget {
       _ChipSpec(ShareDestination.savedTip,           'Save as tip',        Icons.bookmark_add_outlined),
     ];
 
+    // No inner grabber — the enclosing GlassSheet supplies the drag handle.
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -72,18 +71,6 @@ class ShareChooserSheet extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Grabber
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: theme.dividerColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Text(
               'Where should this go?',
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),

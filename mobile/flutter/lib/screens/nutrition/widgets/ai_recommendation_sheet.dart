@@ -146,7 +146,6 @@ class _AiRecommendationSheetState extends ConsumerState<AiRecommendationSheet> {
     final colors = ThemeColors.of(context);
 
     return GlassSheet(
-      opaque: true,
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
       child: SingleChildScrollView(
         physics: const ClampingScrollPhysics(),
@@ -835,7 +834,10 @@ Future<void> showAiRecommendationSheet(
 }) {
   return showGlassSheet<void>(
     context: context,
-    opaque: true,
+    // Opened over the Edit Targets sheet — darken the scrim (instead of
+    // going opaque) so the parent sheet doesn't bleed through while this
+    // sheet keeps the standard blur glass surface.
+    barrierColor: GlassSheetStyle.nestedBarrierColor(),
     builder: (_) => AiRecommendationSheet(userId: userId),
   );
 }

@@ -36,9 +36,13 @@ String _formatCalorieLabel(int tdee, int adjustment, String gender) {
 
 /// Returns rate options based on direction, with calorie estimates per option.
 /// [tdee] is the user's total daily energy expenditure; [gender] for safety minimums.
+/// [accentColor] paints the non-green (not implicitly "safest") options —
+/// pass `context.accentColor` from the caller; this file has no BuildContext
+/// of its own. Was hardcoded to the monochrome `AppColors.accent` token.
 List<WeightRateOption> getWeightRateOptions({
   required bool isLosing,
   required bool useMetric,
+  required Color accentColor,
   int? tdee,
   String? gender,
 }) {
@@ -55,10 +59,10 @@ List<WeightRateOption> getWeightRateOptions({
           Icons.balance_outlined, AppColors.success, true),  // accent-allowlist: success/positive state - must stay green regardless of accent
       WeightRateOption('fast', 'Faster', 0.75, useMetric ? '0.75 kg/wk' : '1.5 lbs/wk',
           _formatCalorieLabel(effectiveTdee, _loseAdjustments['fast']!, effectiveGender),
-          Icons.speed_outlined, AppColors.accent, false),
+          Icons.speed_outlined, accentColor, false),
       WeightRateOption('aggressive', 'Aggressive', 1.0, useMetric ? '1 kg/wk' : '2 lbs/wk',
           _formatCalorieLabel(effectiveTdee, _loseAdjustments['aggressive']!, effectiveGender),
-          Icons.whatshot_outlined, AppColors.accent, false),
+          Icons.whatshot_outlined, accentColor, false),
     ];
   }
   return [
@@ -70,7 +74,7 @@ List<WeightRateOption> getWeightRateOptions({
         Icons.fitness_center_outlined, AppColors.success, false),  // accent-allowlist: success/positive state - must stay green regardless of accent
     WeightRateOption('fast', 'Aggressive', 0.5, useMetric ? '0.5 kg/wk' : '1 lb/wk',
         _formatCalorieLabel(effectiveTdee, _gainAdjustments['fast']!, effectiveGender),
-        Icons.rocket_launch_outlined, AppColors.accent, false),
+        Icons.rocket_launch_outlined, accentColor, false),
   ];
 }
 
@@ -192,7 +196,7 @@ class QuizWeightRateChips extends StatelessWidget {
                       ),
                       if (rate.recommended) ...[
                         const SizedBox(width: 3),
-                        Icon(Icons.star, size: 10, color: isSelected ? Colors.white : AppColors.accent),
+                        Icon(Icons.star, size: 10, color: isSelected ? Colors.white : rate.color),
                       ],
                     ],
                   ),

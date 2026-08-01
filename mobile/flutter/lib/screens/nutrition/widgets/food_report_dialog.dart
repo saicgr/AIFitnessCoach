@@ -66,7 +66,6 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
   showGlassSheet<void>(
     context: context,
     builder: (sheetContext) => GlassSheet(
-      opaque: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         child: Column(

@@ -891,7 +891,6 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final choice = await showGlassSheet<String>(
       context: context,
       builder: (ctx) => GlassSheet(
-        opaque: true,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -938,7 +937,6 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final result = await showGlassSheet<CustomFoodResult>(
       context: context,
       builder: (ctx) => GlassSheet(
-        opaque: true,
         child: CustomFoodBuilderSheet(userId: _userId!),
       ),
     );

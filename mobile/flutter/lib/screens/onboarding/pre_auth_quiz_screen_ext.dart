@@ -887,7 +887,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.accent),
+                    Icon(Icons.info_outline, color: t.accent),
                     const SizedBox(width: 12),
                     Text(
                       title,
@@ -914,8 +914,8 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(ctx),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: Colors.white,
+                      backgroundColor: t.accent,
+                      foregroundColor: t.buttonText,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

@@ -47,10 +47,15 @@ class EasyExerciseActionsSheet extends StatelessWidget {
   final String exerciseName;
   final List<EasyExerciseAction> actions;
 
+  /// Opens the move's info / instructions. Wired to the header so an unfamiliar
+  /// name ("Inchworm") is one tap from an explanation instead of a guess.
+  final VoidCallback? onShowInfo;
+
   const EasyExerciseActionsSheet({
     super.key,
     required this.exerciseName,
     required this.actions,
+    this.onShowInfo,
   });
 
   /// Standard entry point. Builds the sheet from explicit handlers so the
@@ -69,6 +74,7 @@ class EasyExerciseActionsSheet extends StatelessWidget {
     required String incrementLabel,
     VoidCallback? onCompleteWorkout,
     VoidCallback? onQuitWorkout,
+    VoidCallback? onShowInfo,
   }) {
     return showGlassSheet(
       context: context,
@@ -76,6 +82,7 @@ class EasyExerciseActionsSheet extends StatelessWidget {
         showHandle: true,
         child: EasyExerciseActionsSheet(
           exerciseName: exerciseName,
+          onShowInfo: onShowInfo,
           actions: [
             // Per-equipment weight increment (the +/− step). Shows the current
             // value; tapping opens a quick picker.
@@ -156,16 +163,42 @@ class EasyExerciseActionsSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
-            child: Text(
-              exerciseName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: fg.withValues(alpha: 0.55),
+          // The move's name was a dead label. For anything a user hasn't met
+          // before ("Inchworm") it named the thing without explaining it, and
+          // the only way to find out was to guess which of the actions below
+          // would tell you. It now reads as — and behaves as — the way in.
+          InkWell(
+            onTap: onShowInfo,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      exerciseName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: fg.withValues(alpha: 0.55),
+                      ),
+                    ),
+                  ),
+                  if (onShowInfo != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      "What's this?",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: accent,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(Icons.info_outline_rounded, size: 15, color: accent),
+                  ],
+                ],
               ),
             ),
           ),

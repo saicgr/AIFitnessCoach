@@ -325,7 +325,6 @@ class SetRowVisuals {
       context: context,
       builder: (sheetContext) {
         return GlassSheet(
-          opaque: true,
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               20,

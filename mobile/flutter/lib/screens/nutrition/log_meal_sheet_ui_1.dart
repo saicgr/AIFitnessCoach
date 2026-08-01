@@ -3337,11 +3337,21 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       isScrollControlled: true,
       builder: (sheetCtx) {
         final tc = ThemeColors.of(sheetCtx);
+        final isDark = Theme.of(sheetCtx).brightness == Brightness.dark;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Material(
-              color: tc.surface,
+            // Floating rounded-all-corners card (not an edge-to-edge sheet),
+            // so it can't route through GlassSheet directly — blur it by
+            // hand instead, matching GlassSheetStyle.
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                    sigmaX: GlassSheetStyle.blurSigma,
+                    sigmaY: GlassSheetStyle.blurSigma),
+                child: Material(
+              color: GlassSheetStyle.backgroundColor(isDark),
               borderRadius: BorderRadius.circular(20),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
@@ -3417,6 +3427,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                       ],
                     ),
                   ],
+                ),
+              ),
                 ),
               ),
             ),

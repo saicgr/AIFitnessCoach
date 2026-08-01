@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/fasting.dart';
 import 'fasting_mood_checkin.dart';
 
@@ -33,7 +34,7 @@ class FastingHistoryList extends StatelessWidget {
               child: Text(
                 AppLocalizations.of(context).foodHistoryScreenLoadMore,
                 style: TextStyle(
-                  color: isDark ? AppColors.accent : AppColorsLight.accent,
+                  color: context.accentColor,
                 ),
               ),
             ),
@@ -208,7 +209,7 @@ class FastingHistoryCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.accent : AppColorsLight.accent)
+                    color: (context.accentColor)
                         .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -217,7 +218,7 @@ class FastingHistoryCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.accent : AppColorsLight.accent,
+                      color: context.accentColor,
                     ),
                   ),
                 ),

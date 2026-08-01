@@ -151,7 +151,6 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
   }
 
   void _showImageSourceDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
@@ -162,7 +161,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: Icon(Icons.camera_alt, color: isDark ? AppColors.accent : AppColorsLight.accent),
+                  leading: Icon(Icons.camera_alt, color: context.accentColor),
                   title: Text(AppLocalizations.of(context).progressTakePhoto),
                   onTap: () {
                     Navigator.pop(context);
@@ -170,7 +169,7 @@ class _EditPersonalInfoSheetState extends ConsumerState<EditPersonalInfoSheet> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library, color: isDark ? AppColors.accent : AppColorsLight.accent),
+                  leading: Icon(Icons.photo_library, color: context.accentColor),
                   title: Text(AppLocalizations.of(context).progressChooseFromGallery),
                   onTap: () {
                     Navigator.pop(context);

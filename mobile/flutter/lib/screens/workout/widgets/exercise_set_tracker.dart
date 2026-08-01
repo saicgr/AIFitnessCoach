@@ -354,7 +354,6 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
       context: context,
       builder: (sheetCtx) {
         return GlassSheet(
-          opaque: true,
           child: StatefulBuilder(
           builder: (ctx, setSheetState) {
             void bump(int delta) {
