@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/app_colors.dart';
 import '../repositories/auth_repository.dart';
 import 'feature_adoption_provider.dart';
 
@@ -9,13 +8,19 @@ import 'feature_adoption_provider.dart';
 // ============================================
 
 /// A single progressive feature tip shown during the user's first two weeks.
+///
+/// Deliberately has NO per-tip colour. It used to carry a decorative
+/// `accentColor` literal (orange/cyan/purple/success/green cycling per tip)
+/// annotated as "resolved by the consuming banner at render time" — a claim
+/// that was never true (E2E register row 161). Every consumer now paints
+/// with `context.accentColor`, the single accent source, matching every
+/// sibling banner in the same stack (streak, missed-workout, double-XP).
 class Week1Tip {
   final String featureKey;
   final String title;
   final String subtitle;
   final IconData icon;
   final String? actionRoute;
-  final Color accentColor;
 
   const Week1Tip({
     required this.featureKey,
@@ -23,7 +28,6 @@ class Week1Tip {
     required this.subtitle,
     required this.icon,
     this.actionRoute,
-    required this.accentColor,
   });
 }
 
@@ -57,7 +61,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Snap a photo of your meal for instant nutrition tracking',
       icon: Icons.camera_alt_outlined,
       actionRoute: '/nutrition?camera=true',
-      accentColor: AppColors.orange,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -69,7 +72,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Scan any product barcode for precise nutrition data',
       icon: Icons.qr_code_scanner_outlined,
       actionRoute: '/nutrition?barcode=true',
-      accentColor: AppColors.cyan,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -81,7 +83,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Ask your AI coach anything about fitness or nutrition',
       icon: Icons.chat_outlined,
       actionRoute: '/chat',
-      accentColor: AppColors.purple,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -93,7 +94,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: "Complete today's workout to build your streak",
       icon: Icons.fitness_center_outlined,
       actionRoute: '/consistency',
-      accentColor: AppColors.success,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -105,7 +105,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Set your daily nutrition targets for better tracking',
       icon: Icons.track_changes_outlined,
       actionRoute: '/nutrition-settings',
-      accentColor: AppColors.orange,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -117,7 +116,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Connect Health to auto-track steps and calories',
       icon: Icons.monitor_heart_outlined,
       actionRoute: '/settings/health-devices',
-      accentColor: AppColors.green,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   // ── Week 2: Discovery & engagement ───────────────────────
@@ -130,7 +128,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Stay hydrated — track your daily water intake',
       icon: Icons.water_drop_outlined,
       actionRoute: '/nutrition?tab=2',
-      accentColor: AppColors.cyan,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -142,7 +139,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Log your weight to see trends over time',
       icon: Icons.monitor_weight_outlined,
       actionRoute: '/measurements/weight',
-      accentColor: AppColors.orange,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -154,7 +150,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Take a photo to compare your transformation later',
       icon: Icons.photo_camera_front_outlined,
       actionRoute: '/stats?openPhoto=true',
-      accentColor: AppColors.purple,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -166,7 +161,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Explore your workout analytics and muscle breakdown',
       icon: Icons.bar_chart_outlined,
       actionRoute: '/stats',
-      accentColor: AppColors.success,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -178,7 +172,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'See what badges and trophies you\'ve unlocked',
       icon: Icons.emoji_events_outlined,
       actionRoute: '/achievements',
-      accentColor: AppColors.orange,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
   _TipScheduleEntry(
@@ -190,7 +183,6 @@ const List<_TipScheduleEntry> _tipSchedule = [
       subtitle: 'Review your week — workouts, nutrition, and insights',
       icon: Icons.summarize_outlined,
       actionRoute: '/summaries',
-      accentColor: AppColors.cyan,  // accent-allowlist: compile-time const tip-schedule literal, not a widget — no BuildContext reachable here; per-tip decorative colour is resolved by the consuming Week1TipBanner at render time
     ),
   ),
 ];

@@ -1,5 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+
+import '../core/theme/theme_colors.dart';
 import '../core/constants/app_colors.dart';
 
 /// Standardized dialog helpers for the app.
@@ -135,7 +137,13 @@ class AppDialog {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
+    // Same bug as the primary button, one function up and easy to miss once
+    // the button was fixed: `AppColors.accent` is the MONOCHROME token (white
+    // in dark, black in light), not the user's accent — so every dialog icon
+    // without an explicit `iconColor` rendered monochrome on an accented app.
+    // The button fix made this site dead for BUTTON colour (each button
+    // recomputes its own `tc.accent`) while it silently kept feeding the icon.
+    final accent = ThemeColors.of(context).accent;
     final resolvedIconColor = iconColor ?? accent;
 
     return showDialog<T>(
@@ -229,9 +237,16 @@ class _DialogButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast =
-        isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    // E2E: this used `AppColors.accent`, which despite the name is the
+    // MONOCHROME token — pure white in dark mode, pure black in light — not
+    // the user's accent. Every AppDialog primary button therefore rendered
+    // white on an orange-accented app ("Mark as done?" was the reported
+    // case). `ThemeColors.of(context).accent` is the live single source and
+    // falls back to the same monochrome token when no accent is selected, so
+    // nothing regresses for users who chose the mono accent.
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final accentContrast = tc.accentContrast;
     final resolvedColor = color ?? accent;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -250,11 +265,19 @@ class _DialogButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
+            // Two buttons split the dialog width, so a normal-length label
+            // ("Mark as done") does not fit at 15pt and was being CLIPPED to
+            // "Mark as" — changing what the button appeared to do. Scale down
+            // rather than clip; same class as E2E #23/#141.
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -277,11 +300,15 @@ class _DialogButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              text,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ),

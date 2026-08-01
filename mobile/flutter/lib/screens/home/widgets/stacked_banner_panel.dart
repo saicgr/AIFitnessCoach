@@ -456,7 +456,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
         icon: week1Tip.icon,
         title: week1Tip.title,
         subtitle: week1Tip.subtitle,
-        accentColor: week1Tip.accentColor,
+        accentColor: context.accentColor,
         actionLabel: 'Try It',
         onTap: () {
           HapticService.light();

@@ -29,6 +29,13 @@
 // colour whose HSV saturation and value put it in the vivid brand range. Greys,
 // near-blacks, near-whites and washed-out tints are ignored, so semantic
 // surfaces (borders, scrims, muted text) never trip the gate.
+//
+// One deliberate EXCEPTION to that derivation (E2E register rows 161, 172):
+// `AppColors.accent` / `AppColorsLight.accent` is a NAMED constant, not a
+// literal, and its value is pure white / pure black — the monochrome token,
+// which the HSV heuristic above correctly judges as "not vivid" and would
+// otherwise let through forever, no matter how many sites misuse it as a
+// stand-in for the live accent. It is flagged unconditionally by name.
 
 library;
 
@@ -191,6 +198,24 @@ List<Finding> scan(Directory libDir) {
         final ref = '${m.group(1)!}.${m.group(2)!}';
         final argb = constants[ref];
         if (argb != null && isAccentFamily(argb)) {
+          findings.add(Finding(rel, i + 1, ref));
+        } else if (m.group(2) == 'accent') {
+          // `AppColors.accent` / `AppColorsLight.accent` is, despite the
+          // name, the MONOCHROME token — pure white in dark mode, pure
+          // black in light (see app_colors.dart's own "Monochrome Accent"
+          // comment). It is never vivid, so it always fails the
+          // isAccentFamily() check above and sailed through this gate
+          // while being the wrong colour everywhere it stood in for "the
+          // user's accent" (E2E register rows 161, 172: AppDialog painted
+          // every confirm button white on an orange-accented app; the
+          // Week-1 tip banner rendered a stray purple literal under a false
+          // "resolved downstream" comment). A named constant can be exactly
+          // as wrong as a hardcoded literal, so it is flagged unconditionally
+          // here — `_skipPathFragments` still exempts the one legitimate
+          // reader (`ThemeColors.accent`'s no-selection fallback in
+          // core/theme/theme_colors.dart), and a genuine intentional site
+          // elsewhere can still self-declare with a trailing
+          // `// accent-allowlist: <reason>` like every other finding.
           findings.add(Finding(rel, i + 1, ref));
         }
       }

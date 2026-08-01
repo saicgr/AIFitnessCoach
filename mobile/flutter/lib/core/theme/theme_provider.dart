@@ -21,10 +21,18 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
     _loadTheme();
   }
 
+  /// True once the user has explicitly chosen a theme in THIS session. The
+  /// ctor's `_loadTheme()` is async, so a `setTheme` that lands while the
+  /// SharedPreferences read is still in flight would otherwise be silently
+  /// overwritten by the older stored value the moment the read resolves.
+  /// Newest explicit write always wins.
+  bool _explicitlySet = false;
+
   /// Load saved theme preference
   Future<void> _loadTheme() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (_explicitlySet) return; // user already chose — don't clobber
       final themeString = prefs.getString(_themeKey);
       debugPrint('🎨 [Theme] Loaded theme string from prefs: "$themeString"');
       state = _themeFromString(themeString ?? 'dark');
@@ -44,6 +52,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   /// Set specific theme mode
   Future<void> setTheme(ThemeMode mode) async {
     debugPrint('🎨 [Theme] setTheme called with: $mode (current: $state)');
+    _explicitlySet = true;
     state = mode;
     _updateSystemUI();
     try {

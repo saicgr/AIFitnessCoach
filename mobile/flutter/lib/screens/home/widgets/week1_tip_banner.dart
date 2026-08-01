@@ -106,8 +106,11 @@ class _Week1TipBannerState extends ConsumerState<Week1TipBanner>
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Resolve accent color per theme
-    final accent = isDark ? tip.accentColor : _lightAccent(tip.accentColor);
+    // The single accent source — matches this banner's siblings in the same
+    // stack (streak, missed-workout). See E2E register row 161: this used to
+    // read a per-tip decorative literal (`tip.accentColor`) under a comment
+    // claiming it was "resolved at render time", which was never true.
+    final accent = context.accentColor;
 
     return AnimatedBuilder(
       animation: _animController,
@@ -214,15 +217,5 @@ class _Week1TipBannerState extends ConsumerState<Week1TipBanner>
         ),
       ),
     );
-  }
-
-  /// Map dark-theme accent colors to their light-theme counterparts.
-  Color _lightAccent(Color darkColor) {
-    if (darkColor == context.accentColor) return context.accentColor;
-    if (darkColor == context.accentColor) return AppColorsLight.cyan;
-    if (darkColor == context.accentColor) return context.accentColor;
-    if (darkColor == AppColors.success) return AppColorsLight.success;  // accent-allowlist: success/positive state -- must stay green regardless of accent
-    if (darkColor == AppColors.green) return AppColorsLight.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
-    return darkColor;
   }
 }
