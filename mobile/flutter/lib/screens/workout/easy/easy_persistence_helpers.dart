@@ -131,6 +131,65 @@ Future<String?> persistEasySet({
   }
 }
 
+/// Mutable holder for the `workout_log` id an Easy session has established,
+/// shared across every [persistEasySetSerialized] call for that session so
+/// they can serialize on it instead of each reading their own stale copy.
+class EasyWorkoutLogIdHolder {
+  String? value;
+}
+
+/// Persist one set through [persistEasySet], serialized against [holder] so
+/// a tight loop of set-persists with no natural pause between iterations
+/// can't race.
+///
+/// E2E #175 — `_completeWorkoutNow`'s padding loop used to fire
+/// `persistEasySet` unawaited for every unlogged set in a plain synchronous
+/// `while` loop. Because the cached log id was only ever updated from a
+/// `.then()` callback — which can't run until the loop yields — every
+/// iteration read the same stale id (frequently still `null`) and
+/// independently took `persistEasySet`'s create-workout-log branch: 27
+/// identical `POST /performance/workout-logs` for a single 27-set
+/// completion, all racing, all resolving to the same row via the server's
+/// idempotency guard (E2E #158) but still 27 real requests — burning the
+/// connection pool and flooding the logs for one user action.
+///
+/// The fix serializes on the one call that actually needs to create the
+/// row: while `holder.value` is still unknown, this AWAITS the persist so
+/// the id is captured before the caller dispatches its next call. Once an
+/// id is known, later calls stay fire-and-forget exactly as before — no
+/// added latency once the workout log exists.
+Future<void> persistEasySetSerialized({
+  required WidgetRef ref,
+  required WorkoutExercise exercise,
+  required SetLog log,
+  required EasyExerciseState state,
+  required String workoutId,
+  required int totalTimeSeconds,
+  required EasyWorkoutLogIdHolder holder,
+}) async {
+  final future = persistEasySet(
+    ref: ref,
+    exercise: exercise,
+    log: log,
+    state: state,
+    workoutId: workoutId,
+    totalTimeSeconds: totalTimeSeconds,
+    cachedWorkoutLogId: holder.value,
+  );
+  if (holder.value == null) {
+    // No log id yet — this call may be the one that creates the row. Wait
+    // for it so the next call in a tight loop sees the real id instead of
+    // racing on `null`.
+    final id = await future;
+    if (id != null) holder.value = id;
+  } else {
+    // Already have a log id — no need to serialize, stay fire-and-forget.
+    unawaited(future.then((id) {
+      if (id != null) holder.value = id;
+    }));
+  }
+}
+
 Future<String?> _createWorkoutLog({
   required WorkoutRepository repo,
   required String workoutId,
@@ -458,6 +517,26 @@ Future<void> easyFinalizeWithOfflineFallbackForTest({
       bindReplay: bindReplay,
     );
 
+/// True when a `workout_logs` row we just got back from `createWorkoutLog`
+/// still looks like the empty shell first-set persistence creates — i.e. the
+/// server replayed an existing row instead of writing ours (E2E #158).
+///
+/// Deliberately conservative: it only reports "unfinalized" on a row that
+/// positively looks empty. An unrecognised shape returns false, so a genuine
+/// create is never followed by a redundant PATCH.
+bool _looksUnfinalized(Map<String, dynamic> row) {
+  final status = (row['status'] as String?)?.toLowerCase();
+  if (status != null && status != 'in_progress') return false;
+  final sets = row['sets_json'];
+  if (sets == null) return true;
+  if (sets is List) return sets.isEmpty;
+  if (sets is String) {
+    final t = sets.trim();
+    return t.isEmpty || t == '[]' || t == 'null';
+  }
+  return false;
+}
+
 Future<void> _easyFinalizeWithOfflineFallback({
   required WidgetRef ref,
   required Workout workout,
@@ -497,8 +576,44 @@ Future<void> _easyFinalizeWithOfflineFallback({
           gymProfileId: gymProfileId,
         );
         if (created != null) {
-          debugPrint('✅ [EasyWorkout] finalize (create) succeeded');
-          return;
+          // E2E #158 — a 200 with a row back does NOT mean anything was
+          // written. `createWorkoutLog` sends the stable idempotency key
+          // `wklog_$workoutId`; when a row already exists (it always does by
+          // finalize time — first-set persistence created it with
+          // `sets_json='[]'`), migration 2247's double-log guard returns that
+          // EXISTING row untouched. The endpoint still logs "Workout log
+          // created" and returns 200, so this branch used to report success
+          // while persisting nothing: observed live as 20 identical POSTs in
+          // 18s, all 200, all resolving to the same row id, zero net writes —
+          // the workout stayed `in_progress` with an empty sets_json and the
+          // user's completed session was recorded nowhere.
+          //
+          // The row we get back tells us which happened. If it came back
+          // WITHOUT our sets, it was a replay, and the finalize still has to
+          // happen — as the PATCH it should have been all along.
+          final createdId = created['id'] as String?;
+          if (createdId != null && _looksUnfinalized(created)) {
+            debugPrint(
+              '⚠️ [EasyWorkout] create returned an existing empty log '
+              '($createdId) — finalizing via update',
+            );
+            final patched = await repo.updateWorkoutLog(
+              logId: createdId,
+              setsJson: setsJson,
+              totalTimeSeconds: totalTimeSeconds,
+              metadata: metadata,
+            );
+            if (patched != null) {
+              debugPrint('✅ [EasyWorkout] finalize (create→update) succeeded');
+              return;
+            }
+            // Fall through to the offline queue rather than returning a
+            // success we did not earn.
+            debugPrint('⚠️ [EasyWorkout] follow-up update failed — enqueueing');
+          } else {
+            debugPrint('✅ [EasyWorkout] finalize (create) succeeded');
+            return;
+          }
         }
       }
     } else {

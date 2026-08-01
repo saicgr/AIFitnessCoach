@@ -121,7 +121,14 @@ class EasyActiveWorkoutScreenState
   RestStreamBroadcaster? _restBroadcaster;
 
   DateTime? _currentSetStartTime;
-  String? _workoutLogId;
+  // Backed by a holder (not a bare field) so every set-persist call — the
+  // natural per-set path in `_logCurrentSet` AND the padding loop in
+  // `_completeWorkoutNow` — serializes against the SAME mutable id through
+  // `persistEasySetSerialized` (E2E #175). See `_persistEasySetTracked`.
+  final EasyWorkoutLogIdHolder _workoutLogIdHolder = EasyWorkoutLogIdHolder();
+  // `holder.value` is only ever written by `persistEasySetSerialized` — no
+  // setter here, that's the single point of truth for the id.
+  String? get _workoutLogId => _workoutLogIdHolder.value;
   // Re-entry guard so the finalize-and-navigate flow can't fire twice
   // (e.g. last-set persistence + rest-complete both call into it).
   bool _isFinishing = false;
@@ -750,6 +757,10 @@ class EasyActiveWorkoutScreenState
         showHandle: true,
         child: EasyExerciseActionsSheet(
           exerciseName: ex.name,
+          // "What's this?" — warm-up moves are the ones users are least
+          // likely to recognise by name (E2E: "I do not understand what is
+          // inchworm").
+          onShowInfo: () => openEasyInfoSheet(context, ex),
           actions: [
             EasyExerciseAction(
               icon: Icons.swap_horiz_rounded,
@@ -1397,19 +1408,7 @@ class EasyActiveWorkoutScreenState
     );
 
     if (widget.workout.id != null) {
-      unawaited(
-        persistEasySet(
-          ref: ref,
-          exercise: exercise,
-          log: setLog,
-          state: state,
-          workoutId: widget.workout.id!,
-          totalTimeSeconds: _timer.workoutSeconds,
-          cachedWorkoutLogId: _workoutLogId,
-        ).then((id) {
-          if (id != null) _workoutLogId = id;
-        }),
-      );
+      await _persistEasySetTracked(exercise: exercise, log: setLog, state: state);
     }
 
     final finished = state.completed.length >= state.totalSets;
@@ -1423,6 +1422,31 @@ class EasyActiveWorkoutScreenState
 
     final restSeconds = exercise.restSeconds ?? (finished ? 120 : 90);
     _startRest(restSeconds, finishedExercise: finished);
+  }
+
+  /// Chokepoint for every Easy-tier set-persist call (natural per-set
+  /// logging in `_logCurrentSet` AND the "Complete workout now" padding
+  /// loop) — delegates to [persistEasySetSerialized] against the shared
+  /// [_workoutLogIdHolder] so a tight loop of persists can't race
+  /// `createWorkoutLog` (E2E #175 — see the helper's doc comment for the
+  /// full mechanism: 27 identical `POST /performance/workout-logs` for one
+  /// completion because every padded set read the same stale, still-null
+  /// id before the previous call's `.then()` had a chance to run).
+  Future<void> _persistEasySetTracked({
+    required WorkoutExercise exercise,
+    required SetLog log,
+    required EasyExerciseState state,
+  }) async {
+    if (widget.workout.id == null) return;
+    await persistEasySetSerialized(
+      ref: ref,
+      exercise: exercise,
+      log: log,
+      state: state,
+      workoutId: widget.workout.id!,
+      totalTimeSeconds: _timer.workoutSeconds,
+      holder: _workoutLogIdHolder,
+    );
   }
 
   void _startRest(int seconds, {required bool finishedExercise}) {
@@ -1566,6 +1590,9 @@ class EasyActiveWorkoutScreenState
     EasyExerciseActionsSheet.show(
       context,
       exerciseName: exercise.name,
+      // "What's this?" in the sheet header — an unfamiliar move name is now
+      // one tap from an explanation instead of a guess.
+      onShowInfo: () => openEasyInfoSheet(context, exercise),
       onSwap: () async {
         if (workoutId == null) return;
         final updated = await showExerciseSwapSheet(
@@ -1819,30 +1846,28 @@ class EasyActiveWorkoutScreenState
         st.completed.add(placeholder);
 
         if (widget.workout.id != null) {
-          // Fire-and-forget persist; we don't block the UI on each. The
-          // finalize step below awaits the workout-log PATCH which is
-          // the load-bearing call for summary aggregation.
-          unawaited(
-            persistEasySet(
-              ref: ref,
-              exercise: _exercises[i],
-              log: placeholder.copyWith(),
-              // Spoof a state so persistEasySet uses the right set_number
-              // (it reads `state.completed.length` for setNumber).
-              state: EasyExerciseState(
-                displayWeight: 0,
-                reps: 0,
-                targetReps: st.targetReps,
-                targetWeightKg: st.targetWeightKg,
-                totalSets: st.totalSets,
-                completed: List<SetLog>.from(st.completed),
-              ),
-              workoutId: widget.workout.id!,
-              totalTimeSeconds: _timer.workoutSeconds,
-              cachedWorkoutLogId: _workoutLogId,
-            ).then((id) {
-              if (id != null) _workoutLogId = id;
-            }),
+          // Routed through `_persistEasySetTracked` (E2E #175), NOT a bare
+          // unawaited `persistEasySet` — this loop has no natural pause
+          // between iterations, so a bare fire-and-forget call here raced
+          // every padded set against the same stale `_workoutLogId` and
+          // fired one `createWorkoutLog` per set. `_persistEasySetTracked`
+          // awaits only while the log id is still unknown (i.e. at most the
+          // very first padded set); once it's cached, later iterations stay
+          // fire-and-forget exactly as before — the UI still isn't blocked
+          // on each individual set's round trip.
+          await _persistEasySetTracked(
+            exercise: _exercises[i],
+            log: placeholder.copyWith(),
+            // Spoof a state so persistEasySet uses the right set_number
+            // (it reads `state.completed.length` for setNumber).
+            state: EasyExerciseState(
+              displayWeight: 0,
+              reps: 0,
+              targetReps: st.targetReps,
+              targetWeightKg: st.targetWeightKg,
+              totalSets: st.totalSets,
+              completed: List<SetLog>.from(st.completed),
+            ),
           );
         }
       }
