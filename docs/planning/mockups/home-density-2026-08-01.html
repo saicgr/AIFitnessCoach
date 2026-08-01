@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home density — before / after (2026-08-01)</title>
+<style>
+  :root{
+    --bg:#0a0a0b; --card:#141416; --card2:#1a1a1d; --line:#2a2a2e;
+    --txt:#f4f4f5; --dim:#9a9aa2; --mut:#6e6e76;
+    --accent:#F59E0B; --accent-dim:#7a4d05; --bad:#ef4444; --good:#22c55e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#050506;color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:32px 20px 64px}
+  h1{font-size:26px;letter-spacing:-.5px;margin:0 0 6px}
+  .sub{color:var(--dim);font-size:14px;max-width:760px;line-height:1.55;margin:0 0 28px}
+  .stage{display:flex;gap:44px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .col{flex:0 0 auto}
+  .lbl{text-align:center;font-size:12px;letter-spacing:2px;font-weight:800;margin:0 0 12px}
+  .lbl.b{color:var(--bad)} .lbl.a{color:var(--good)}
+  .phone{width:340px;background:var(--bg);border:1px solid var(--line);
+    border-radius:34px;padding:14px 12px 0;position:relative;overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .status{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);padding:0 8px 10px}
+  .greet{font-size:13px;color:var(--dim);padding:0 6px}
+  .date{font-family:Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif;
+    font-size:30px;letter-spacing:.5px;padding:2px 6px 12px}
+  .date span{color:#4a4a50}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:12px;margin:0 4px 10px}
+  .banner{border-color:var(--accent-dim)}
+  .row{display:flex;align-items:center;gap:10px}
+  .chip{width:36px;height:36px;border-radius:10px;background:#26200f;
+    display:grid;place-items:center;color:var(--accent);font-size:16px;flex:0 0 auto}
+  .t{font-weight:700;font-size:14px}
+  .s{font-size:12px;color:var(--dim);margin-top:2px}
+  .act{margin-left:auto;color:var(--accent);font-size:12px;font-weight:800;white-space:nowrap}
+  .coach{border-left:3px solid var(--accent)}
+  .kick{font-size:10px;letter-spacing:1.6px;color:var(--mut);font-weight:800}
+  .head{font-size:17px;font-weight:800;margin:8px 0 4px}
+  .para{font-size:13px;color:var(--dim);line-height:1.5}
+  .todo{background:var(--card2);border:1px solid var(--line);border-radius:11px;
+    padding:10px;margin-top:8px;display:flex;align-items:center;gap:10px}
+  .box{width:20px;height:20px;border:1.5px solid #3a3a40;border-radius:6px;flex:0 0 auto}
+  .pill{margin-left:auto;border:1px solid var(--accent-dim);color:var(--accent);
+    border-radius:999px;padding:5px 11px;font-size:11px;font-weight:800;white-space:nowrap}
+  .trunc{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+  .hero{margin:0 4px;border-radius:14px;height:120px;position:relative;overflow:hidden;
+    background:linear-gradient(160deg,#3a3a3f,#111);border:1px solid var(--line)}
+  .hero .ttl{position:absolute;left:12px;bottom:34px;
+    font-family:Impact,"Arial Narrow Bold",sans-serif;font-size:24px;letter-spacing:.5px}
+  .hero .meta{position:absolute;left:12px;bottom:14px;font-size:11px;color:var(--dim)}
+  .hero .tag{position:absolute;right:10px;top:10px;background:#000a;border:1px solid var(--line);
+    border-radius:6px;font-size:9px;letter-spacing:1.4px;padding:4px 7px;font-weight:800}
+  .fab{position:absolute;right:14px;bottom:52px;background:#000;border:1.5px solid var(--accent);
+    color:var(--txt);border-radius:11px;padding:9px 14px;font-size:13px;font-weight:800;z-index:5}
+  .nav{display:flex;justify-content:space-around;border-top:1px solid var(--line);
+    margin-top:10px;padding:9px 0 12px;font-size:9px;letter-spacing:.6px;color:var(--mut)}
+  .nav b{color:var(--accent);font-weight:800}
+  /* the number band — the "after" addition */
+  .band{display:flex;margin:0 4px 10px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;overflow:hidden}
+  .band div{flex:1;padding:9px 6px;text-align:center;border-right:1px solid var(--line)}
+  .band div:last-child{border-right:0}
+  .band .n{font-size:19px;font-weight:800;letter-spacing:-.5px}
+  .band .k{font-size:8.5px;letter-spacing:1.3px;color:var(--mut);font-weight:800;margin-top:2px}
+  .note{margin-top:14px;font-size:12px;line-height:1.6;color:var(--dim);width:340px}
+  .note b{color:var(--txt)}
+  .tagline{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.6px;
+    padding:2px 7px;border-radius:5px;margin-right:6px}
+  .tb{background:#3a1414;color:#ff8f8f}
+  .ta{background:#12331c;color:#8ef0ab}
+  .legend{max-width:1000px;margin:36px auto 0;border-top:1px solid var(--line);padding-top:20px}
+  .legend h2{font-size:15px;margin:0 0 10px}
+  .legend ol{margin:0;padding-left:20px;color:var(--dim);font-size:13px;line-height:1.75}
+  .legend b{color:var(--txt)}
+  .caveat{max-width:1000px;margin:22px auto 0;background:#141416;border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:10px;padding:14px 16px;
+    font-size:13px;color:var(--dim);line-height:1.65}
+  /* mini weekly chart */
+  .chart{display:flex;align-items:flex-end;gap:5px;height:38px;flex:1}
+  .chart i{flex:1;background:#2e2e34;border-radius:3px 3px 0 0;display:block}
+  .chart i.on{background:var(--accent)}
+  .chart i.today{background:var(--accent);box-shadow:0 0 0 1.5px #fff3}
+  .ring{width:46px;height:46px;border-radius:50%;flex:0 0 auto;
+    background:conic-gradient(var(--accent) 0turn .72turn,#26262b .72turn 1turn);
+    display:grid;place-items:center}
+  .ring b{width:34px;height:34px;border-radius:50%;background:var(--card);
+    display:grid;place-items:center;font-size:12px;font-weight:800}
+  .spark{display:flex;align-items:center;gap:12px}
+  .fabf{position:absolute;right:16px;background:#000;border:1.5px solid var(--accent);
+    color:var(--txt);border-radius:999px;padding:11px 16px;font-size:13px;font-weight:800;
+    z-index:9;box-shadow:0 8px 22px rgba(0,0,0,.75)}
+  .chev{color:var(--accent);font-weight:800;margin-left:6px}
+  @media (max-width:820px){ .stage{gap:28px} }
+</style>
+</head>
+<body>
+
+<h1>Home screen — density &amp; impact</h1>
+<p class="sub">
+  Four contained changes. <b style="color:#f4f4f5">No section moves</b> — the order is exactly as it is today,
+  because the June redesign already rejected a Home reorder (v27–v34). This is about what each block
+  <em>says</em> and how much room it takes, not where it sits.
+</p>
+
+<div class="stage">
+
+  <!-- ─────────────── BEFORE ─────────────── -->
+  <div class="col">
+    <p class="lbl b">BEFORE — TODAY</p>
+    <div class="phone">
+      <div class="status"><span>12:37</span><span>▪▪▪ ⌁ ▮</span></div>
+      <div class="greet">Afternoon, Casey.</div>
+      <div class="date">SATURDAY <span>· AUGUST 1</span></div>
+
+      <div class="card banner">
+        <div class="row">
+          <div class="chip">◷</div>
+          <div><div class="t">Missed: Upper Body</div>
+               <div class="s">Yesterday · 45min · 6 exercises</div></div>
+          <div class="act">Do Today</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div style="color:var(--accent)">♥</div>
+          <div class="s" style="margin:0">Connect Health to see steps, sleep &amp; readiness</div>
+          <div class="act">CONNECT</div>
+        </div>
+      </div>
+
+      <div class="card coach">
+        <div class="kick">✦ YOUR COACH · TODAY'S FOCUS</div>
+        <div class="head">Let's get you started, Casey.</div>
+        <div class="para">Start with one thing, a workout or a logged meal,
+          and your daily plan comes to life.</div>
+        <div class="kick" style="margin-top:12px">TO DO TODAY</div>
+
+        <div class="todo">
+          <div class="box"></div>
+          <div><div class="t">Stay hydrated</div>
+               <div class="s"><span class="trunc">0.0L logged so far — top up to…</span></div></div>
+          <div class="pill">Log water</div>
+        </div>
+        <div class="todo">
+          <div class="box"></div>
+          <div><div class="t">Log last night's sleep</div>
+               <div class="s"><span class="trunc">Add last night's sleep so your r…</span></div></div>
+          <div class="pill">Log sleep</div>
+        </div>
+      </div>
+
+      <div class="hero">
+        <div class="tag">TOMORROW</div>
+        <div class="ttl">LOWER BODY STRE</div>
+        <div class="meta">QUADRICEPS, GLUTES &amp; ABDOMINALS…</div>
+      </div>
+      <div class="fab">+ Quick Log</div>
+
+      <div class="nav"><b>HOME</b><span>WORKOUT</span><span>COACH</span><span>NUTRITION</span><span>YOU</span></div>
+    </div>
+    <p class="note">
+      <span class="tagline tb">~90 WORDS</span>
+      <span class="tagline tb">0 NUMBERS EARNED</span><br>
+      Every block is a sentence; both to-do subtitles truncate mid-word. Nothing on screen
+      reflects something you <em>did</em> — and today's workout is absent while yesterday's
+      miss and tomorrow's session both get space.
+    </p>
+  </div>
+
+  <!-- ─────────────── AFTER ─────────────── -->
+  <div class="col">
+    <p class="lbl a">AFTER — PROPOSED</p>
+    <div class="phone">
+      <div class="status"><span>12:37</span><span>▪▪▪ ⌁ ▮</span></div>
+      <div class="greet">Afternoon, Casey.</div>
+      <div class="date">SATURDAY <span>· AUGUST 1</span></div>
+
+      <!-- ③ a visual band — a real chart, not just numerals -->
+      <div class="card" style="padding:11px 12px">
+        <div class="spark">
+          <div class="ring"><b>4<span style="font-size:8px">d</span></b></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <div class="kick">THIS WEEK · VOLUME</div>
+              <div style="font-size:13px;font-weight:800">12.4<span style="color:var(--mut);font-size:10px">k KG</span></div>
+            </div>
+            <div class="chart" style="margin-top:6px">
+              <i style="height:38%"></i><i class="on" style="height:64%"></i>
+              <i class="on" style="height:88%"></i><i style="height:22%"></i>
+              <i class="on" style="height:70%"></i><i class="today" style="height:46%"></i>
+              <i style="height:14%"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card banner">
+        <div class="row">
+          <div class="chip">◷</div>
+          <div><div class="t">Missed: Upper Body</div>
+               <div class="s">Yesterday · 45min · 6 exercises</div></div>
+          <div class="act">Do Today</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <div style="color:var(--accent)">♥</div>
+          <div class="s" style="margin:0">Connect Health to see steps, sleep &amp; readiness</div>
+          <div class="act">CONNECT</div>
+        </div>
+      </div>
+
+      <div class="card coach">
+        <div class="kick">✦ YOUR COACH · TODAY'S FOCUS</div>
+        <!-- ② the words STAY — they just become tappable -->
+        <div class="head">Let's get you started, Casey.</div>
+        <div class="para">Start with one thing, a workout or a logged meal…<span class="chev">›</span></div>
+        <div class="kick" style="margin-top:12px">TO DO TODAY</div>
+
+        <!-- ① fragments, not sentences -->
+        <div class="todo">
+          <div class="box"></div>
+          <div><div class="t">Stay hydrated</div>
+               <div class="s">0.0 / 2.5 L</div></div>
+          <div class="pill">Log water</div>
+        </div>
+        <div class="todo">
+          <div class="box"></div>
+          <div><div class="t">Log last night's sleep</div>
+               <div class="s">Last night — not logged</div></div>
+          <div class="pill">Log sleep</div>
+        </div>
+      </div>
+
+      <!-- ④ Quick Log stays FLOATING (unchanged behaviour) — it just floats
+              clear of the hero title instead of on top of it. -->
+      <div class="fabf" style="bottom:64px">+ Quick Log</div>
+      <div class="hero">
+        <div class="tag">TOMORROW</div>
+        <div class="ttl">LOWER BODY STRENGTH</div>
+        <div class="meta">QUADRICEPS, GLUTES &amp; ABDOMINALS</div>
+      </div>
+
+      <div class="nav"><b>HOME</b><span>WORKOUT</span><span>COACH</span><span>NUTRITION</span><span>YOU</span></div>
+    </div>
+    <p class="note">
+      <span class="tagline ta">~55 WORDS</span>
+      <span class="tagline ta">3 NUMBERS EARNED</span><br>
+      Same blocks, same order. The prose becomes data, the paragraph becomes a greeting,
+      and one band near the top shows a <em>state</em> instead of a queue.
+    </p>
+  </div>
+
+</div>
+
+<div class="legend">
+  <h2>The four changes</h2>
+  <ol>
+    <li><b>To-do subtitles become fragments.</b> "0.0L logged so far — top up to…" → <b>"0.0 / 2.5 L"</b>.
+        The truncation isn't just ugly, it's the worst case: it spends the space <em>and</em> withholds
+        the answer. Same class as register #148.</li>
+    <li><b>The coach copy stays — it becomes tappable.</b> One truncated line plus a <b>›</b>, so the
+        full text is one tap away instead of always occupying three lines. The words were never the
+        problem; permanently spending the screen's best real estate on them was.</li>
+    <li><b>A visual band under the date — a chart, not just numerals.</b> The single biggest reason the
+        screen feels unimpressive is that nothing on it reflects an achievement; it's four outstanding
+        obligations, which on day one reads as a nag. A 7-bar week (today highlighted) plus a streak
+        ring gives the screen a <em>shape</em> you can read at a glance. All of it is data the app
+        already stores.</li>
+    <li><b>Quick Log stays FLOATING and unchanged — it just floats clear of the hero title.</b> Same
+        floating pill, same size, same accent outline, same tap target, same always-on-top behaviour
+        over the scrolling content. Only its resting offset moves. Today it clips
+        "LOWER BODY STRENGTH" to "LOWER BODY STRE▮", which is a real bug (register #16 recurring on
+        Home after being marked fixed), not a matter of taste. Nothing about what Quick Log
+        <em>does</em> changes.</li>
+  </ol>
+</div>
+
+<div class="caveat">
+  <b style="color:#f4f4f5">What this deliberately does NOT do.</b>
+  It doesn't reorder anything, doesn't remove the Missed or Connect Health banners, and doesn't
+  promote today's workout above the coach card — even though "what am I doing today?" being absent
+  above the fold is arguably the biggest issue here. All of those are reorder decisions, and the
+  June redesign rejected a Home reorder (v27–v34). If you want that reconsidered, it's a separate
+  conversation and a separate mockup — worth having, but not something to smuggle in under
+  "make it less wordy".
+  <br><br>
+  The chart's metric is a proposal, not a fixed choice — the 7-bar week could be volume, minutes,
+  sessions or calories, and the ring could be streak, weekly-goal completion or readiness. The point
+  is that <em>something with a shape</em> sits above the fold; which metric it plots is yours to pick.
+</div>
+
+</body>
+</html>
