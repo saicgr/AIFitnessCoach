@@ -59,6 +59,47 @@ _INDEX_EXEMPT_WORKOUT_SOURCES = (
 )
 
 
+# ---- E2E #158: idempotent-replay merge -------------------------------------
+# Fields a finalize may legitimately backfill onto a row that first-set
+# persistence created empty. Deliberately narrow: identity columns
+# (user_id, workout_id, idempotency_key, gym_profile_id) are NOT here, so a
+# replay can never repoint a row at a different workout or owner.
+_FINALIZE_MERGE_FIELDS = (
+    "sets_json",
+    "total_time_seconds",
+    "duration_minutes",
+    "metadata",
+    "status",
+    "exercises_completed",
+    "completed_at",
+)
+
+
+def _is_empty_sets(value) -> bool:
+    """True when a stored sets_json holds no sets, in any of its shapes."""
+    if value is None:
+        return True
+    if isinstance(value, (list, tuple)):
+        return len(value) == 0
+    if isinstance(value, str):
+        t = value.strip()
+        return t in ("", "[]", "null")
+    return False
+
+
+def _carries_new_session_data(existing: dict, incoming: dict) -> bool:
+    """Does this replay carry real set data the stored row is missing?
+
+    Only true in the one direction that matters — empty row, populated
+    payload. A replay of the SAME completed payload, or any payload with no
+    sets, is still treated as a duplicate and changes nothing.
+    """
+    if not _is_empty_sets(existing.get("sets_json")):
+        return False
+    return not _is_empty_sets(incoming.get("sets_json"))
+
+
+
 class WorkoutDB(BaseDB):
     """
     Database operations for workout management.
@@ -862,7 +903,43 @@ class WorkoutDB(BaseDB):
                 .execute()
             )
             if prior.data:
-                return prior.data[0]
+                # E2E #158 — returning the prior row unchanged is right for a
+                # true REPLAY (same payload twice), but the Easy-tier finalize
+                # reaches this path carrying the session's real sets while the
+                # prior row is still the empty shell first-set persistence
+                # created (`sets_json='[]'`, status `in_progress`). Returning
+                # it untouched meant the finalize silently wrote NOTHING while
+                # every layer reported 200 — observed live as 20 identical
+                # POSTs, same row id, zero net writes, and a completed workout
+                # recorded nowhere.
+                #
+                # So: a replay that carries REAL data where the stored row has
+                # none is an upgrade, not a duplicate. Merge it. This closes
+                # the class at the chokepoint — no caller can silently no-op a
+                # finalize again, whatever it sends.
+                existing_row = prior.data[0]
+                if _carries_new_session_data(existing_row, data):
+                    patch = {
+                        k: v
+                        for k, v in data.items()
+                        if k in _FINALIZE_MERGE_FIELDS and v is not None
+                    }
+                    if patch:
+                        merged = (
+                            self.client.table("workout_logs")
+                            .update(patch)
+                            .eq("id", existing_row["id"])
+                            .execute()
+                        )
+                        if merged.data:
+                            logger.info(
+                                "workout_logs: merged finalize payload into "
+                                "idempotent row %s (%s)",
+                                existing_row["id"],
+                                ", ".join(sorted(patch)),
+                            )
+                            return merged.data[0]
+                return existing_row
         try:
             result = self.client.table("workout_logs").insert(data).execute()
             return result.data[0] if result.data else None

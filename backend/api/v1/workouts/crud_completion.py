@@ -121,6 +121,12 @@ async def complete_workout(
         now = datetime.now(timezone.utc)
         update_data = {
             "is_completed": True,
+            # The enum must move WITH the boolean. Verified live: a workout
+            # that had been auto-flagged 'missed' kept `status='missed'` after
+            # a real completion, so the row asserted "missed" and
+            # "is_completed=true" at the same time — and any surface reading
+            # the enum (rather than the boolean) still called it missed.
+            "status": "completed",
             "completed_at": now.isoformat(),
             "last_modified_at": now.isoformat(),
             "last_modified_method": "completed",

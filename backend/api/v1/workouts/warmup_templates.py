@@ -239,13 +239,31 @@ async def apply_warmup_template(
         )
         next_version = 1
         new_id = str(uuid.uuid4())
-        if current_result.data:
-            current_row = current_result.data[0]
+        current_row = current_result.data[0] if current_result.data else None
+        if current_row:
             next_version = (current_row.get("version_number") or 1) + 1
+
+        # Three statements, in this exact order, because two constraints pull
+        # in opposite directions:
+        #
+        #   1. DEMOTE the old row first — but WITHOUT `superseded_by`. If the
+        #      new row were inserted while the old one is still is_current,
+        #      the one-current-per-workout invariant would be briefly violated.
+        #   2. INSERT the new row.
+        #   3. Only THEN point the old row at it.
+        #
+        # Doing (3) as part of (1) is what shipped, and it 500'd every time:
+        # `superseded_by` is a self-referencing FK, so naming a row that does
+        # not exist yet fails with 23503 —
+        #   'insert or update on table "warmups" violates foreign key
+        #    constraint "warmups_superseded_by_fkey"'
+        # Observed twice in production on 2026-08-01 (the only errors that day),
+        # taking the whole apply-template request down with a 500 so the saved
+        # warm-up silently never applied.
+        if current_row:
             db.client.table("warmups").update({
                 "is_current": False,
                 "valid_to": now,
-                "superseded_by": new_id,
                 "updated_at": now,
             }).eq("id", current_row["id"]).execute()
 
@@ -260,6 +278,12 @@ async def apply_warmup_template(
             "created_at": now,
             "updated_at": now,
         }).execute()
+
+        if current_row:
+            db.client.table("warmups").update({
+                "superseded_by": new_id,
+                "updated_at": now,
+            }).eq("id", current_row["id"]).execute()
 
         logger.info(
             f"Applied saved warm-up template to workout={workout_id} "

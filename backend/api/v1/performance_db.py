@@ -33,7 +33,7 @@ from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 
 from core.logger import get_logger
 from models.schemas import (
@@ -738,6 +738,17 @@ async def update_workout_log(
             # it is what should flip trg_sync_workout_completion — not the
             # empty-set row created on the user's first set.
             update_data["status"] = "completed"
+
+        # A row that just became 'completed' must carry WHEN it completed.
+        # Without this, `completed_at` keeps whatever it held from row
+        # creation — verified live: a workout finished at 18:00 still reported
+        # `completed_at` of 02:46 from when its first set created the row, so
+        # every finished session showed a completion time hours in the past.
+        # Stamped server-side rather than trusting a client clock.
+        if update_data.get("status") == "completed":
+            update_data.setdefault(
+                "completed_at", datetime.now(timezone.utc).isoformat()
+            )
 
         if not update_data:
             raise HTTPException(status_code=400, detail="No updatable fields provided")
