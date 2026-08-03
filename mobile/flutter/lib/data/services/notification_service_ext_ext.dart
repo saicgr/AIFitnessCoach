@@ -277,6 +277,32 @@ extension NotificationServiceScheduled on NotificationService {
       return;
     }
 
+    // …and that there is actually SOMEONE to notify.
+    //
+    // The two flags above are local SharedPreferences booleans about how far
+    // this DEVICE got through the funnel — they say nothing about whether an
+    // account exists. Reported from a real device: a weekly-summary
+    // notification ("Your Week in Review, Champ!") fired for a user who had
+    // never signed in. Anyone who walks through onboarding and the paywall
+    // without completing signup gets a full schedule of local notifications
+    // about a training week they do not have — every one of which opens the
+    // app to a signed-out screen.
+    //
+    // Sign-OUT was already handled (`auth_repository` cancels everything), so
+    // this closes the other half: never scheduling in the first place. Guarded
+    // because `Supabase.instance` throws if it has not been initialised yet,
+    // and a notification schedule must never take the app down.
+    bool signedIn;
+    try {
+      signedIn = Supabase.instance.client.auth.currentSession != null;
+    } catch (_) {
+      signedIn = false;
+    }
+    if (!signedIn) {
+      debugPrint('⏸️ [Schedule] Skipping notification scheduling - no signed-in user');
+      return;
+    }
+
     // Branch scheduling based on frequency preset
     final preset = prefs.frequencyPreset;
 
