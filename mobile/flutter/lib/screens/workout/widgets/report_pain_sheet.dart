@@ -122,6 +122,14 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
   int _windowIdx = 1; // default = 2 weeks
   bool _submitting = false;
   String? _swapReason; // set when the engine swapped the aggravators (#3)
+  // #178: reshape-for-readiness applies apply:true DIRECTLY here — no
+  // preview/confirm round trip, deliberately: gating a second confirmation
+  // right after someone has just told the app they're in pain is worse UX
+  // than the swap gate pre_workout_reshape_gate.dart uses. The trade is an
+  // after-the-fact disclosure with the REAL before/after exercise count
+  // (not a vague "workout was updated"), captured from the same response.
+  int? _swapExercisesBefore;
+  int? _swapExercisesAfter;
 
   /// Map the pain sheet's severity (mild|sharp|severe) to an injury severity.
   /// Mild pain stays exercise-specific (no body-part injury filed).
@@ -186,6 +194,15 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
           final reasons = (data['reasons'] as List<dynamic>? ?? const [])
               .map((e) => e.toString())
               .toList();
+          // The endpoint doesn't return the new duration/calories (only
+          // persists them server-side), but it does echo both exercise
+          // lists — that's the one real before/after number available here.
+          _swapExercisesBefore =
+              (data['original_exercises'] as List<dynamic>? ?? const [])
+                  .length;
+          _swapExercisesAfter =
+              (data['reshaped_exercises'] as List<dynamic>? ?? const [])
+                  .length;
           _swapReason = reasons.isNotEmpty ? reasons.first : null;
         }
       } catch (_) {
@@ -198,10 +215,7 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _swapReason ??
-                '${widget.exerciseName} flagged for pain — we\'ll skip it ${_windows[_windowIdx].duration == null ? 'until you re-enable it' : 'for ${_windows[_windowIdx].label}'}.',
-          ),
+          content: Text(_confirmationMessage()),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsetsDirectional.only(bottom: 90, start: 16, end: 16),
         ),
@@ -215,6 +229,27 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
         ),
       );
     }
+  }
+
+  /// #178: the disclosure shown after the sheet closes. When the engine
+  /// reshaped today's session, state the concrete change — real before/after
+  /// exercise count plus the engine's own reason — instead of a generic
+  /// "workout updated" line. Falls back to the plain avoid-confirmation when
+  /// no reshape happened (mild pain, or nothing to swap). No Undo action: the
+  /// reshape has no revert endpoint, and the change is already persisted
+  /// server-side by the time this shows.
+  String _confirmationMessage() {
+    final reason = _swapReason;
+    if (reason != null) {
+      final before = _swapExercisesBefore;
+      final after = _swapExercisesAfter;
+      final countTxt = (before != null && after != null && before != after)
+          ? '$before → $after exercises. '
+          : '';
+      return 'Adjusted today\'s workout for reported pain — $countTxt$reason';
+    }
+    return '${widget.exerciseName} flagged for pain — we\'ll skip it '
+        '${_windows[_windowIdx].duration == null ? 'until you re-enable it' : 'for ${_windows[_windowIdx].label}'}.';
   }
 
   @override

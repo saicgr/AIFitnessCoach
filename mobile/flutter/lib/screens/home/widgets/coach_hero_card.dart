@@ -1132,15 +1132,33 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       // Refresh today's workout so the swap shows immediately.
       ref.read(todayWorkoutProvider.notifier).refresh();
       final bp = cn.bodyPart!.replaceAll('_', ' ');
+      // #178: the tap that got us here already IS the confirm gesture — the
+      // banner above states what it will do and the trust-framing line right
+      // below it ("nothing happens until you accept") before this fires — so
+      // this stays a single apply:true call rather than importing
+      // pre_workout_reshape_gate's separate preview→dialog→confirm round
+      // trip. What the snackbar was missing was a CONCRETE result: state the
+      // real before/after exercise count from the response alongside the
+      // engine's own reason, not just the reason alone.
+      String message;
+      if (reshaped && reasons.isNotEmpty) {
+        final before =
+            (data['original_exercises'] as List<dynamic>? ?? const [])
+                .length;
+        final after =
+            (data['reshaped_exercises'] as List<dynamic>? ?? const [])
+                .length;
+        final countTxt =
+            before != after ? '$before → $after exercises. ' : '';
+        message = '$countTxt${reasons.first}';
+      } else {
+        message = "Today's session already protects your $bp.";
+      }
       rootSnackBar(
         SnackBar(
           backgroundColor: AppColors.green,  // accent-allowlist: success/positive state -- must stay green regardless of accent
           duration: const Duration(seconds: 4),
-          content: Text(
-            reshaped && reasons.isNotEmpty
-                ? reasons.first
-                : "Today's session already protects your $bp.",
-          ),
+          content: Text(message),
         ),
       );
     } catch (_) {
