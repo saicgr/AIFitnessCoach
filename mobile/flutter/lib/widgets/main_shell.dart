@@ -88,6 +88,33 @@ part 'main_shell_part_guest_mode_banner.dart';
 /// Provider to control floating nav bar visibility
 final floatingNavBarVisibleProvider = StateProvider<bool>((ref) => true);
 
+/// Whether the quick-log FAB (see `quick_log_fab_chrome.dart`) shows its
+/// labelled-pill state, keyed per tab index.
+///
+/// Driven by the `NotificationListener<ScrollNotification>` wrapped around
+/// `_child` below — NOT a per-screen scroll controller. `_child` is a single
+/// `StatefulNavigationShell`/`IndexedStack`, so one shell-level listener sees
+/// every tab's scroll bubbling through it; adding a controller to each of
+/// Home/Workout/Nutrition/You individually would duplicate that plumbing four
+/// times for no benefit.
+///
+/// Keyed by tab index (`.family<bool, int>`), not a single flag, because
+/// `IndexedStack` keeps every tab's scroll position alive offscreen: if this
+/// were one shared flag, scrolling down on Home and then switching to a
+/// still-at-top Workout tab would show Workout collapsed too, with nothing to
+/// re-expand it until the user scrolled again. Per-tab state means each tab
+/// resumes showing exactly what its own scroll position implies.
+final quickLogFabExpandedProvider = StateProvider.family<bool, int>(
+  (ref, tabIndex) => true,
+);
+
+/// Hysteresis band for [quickLogFabExpandedProvider]: collapse once past 12px
+/// of scroll, but don't re-expand until back under 8px. Two different
+/// thresholds (rather than one) stop a scroll position sitting exactly on the
+/// boundary from flickering the pill in and out on 1px jitter.
+const double _kQuickLogFabCollapseScrollPx = 12.0;
+const double _kQuickLogFabExpandScrollPx = 8.0;
+
 /// Provider to control whether nav bar labels are expanded
 /// Set to false when on secondary pages (Workouts, Nutrition, Fasting)
 
@@ -552,8 +579,39 @@ class MainShell extends ConsumerWidget {
                 const OfflineBanner(),
                 // Verify-your-email nudge (auto-shows/hides; non-blocking)
                 const EmailVerificationBanner(),
-                // Main content fills remaining space. Wrapped in a
-                Expanded(child: _child),
+                // Main content fills remaining space. NotificationListener
+                // drives quickLogFabExpandedProvider from whichever tab is
+                // live inside _child (see the provider doc above) — a single
+                // shell-level listener rather than a scroll controller bolted
+                // onto each of the four tab screens individually, since
+                // ScrollNotification already bubbles up through here from any
+                // descendant Scrollable regardless of nesting.
+                Expanded(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (notification) {
+                      // Horizontal scrollables (carousels, chip rows) bubble
+                      // through here too; only a vertical scroll position
+                      // says anything about content occluded by a
+                      // bottom-docked button.
+                      if (notification.metrics.axis != Axis.vertical) {
+                        return false;
+                      }
+                      final pixels = notification.metrics.pixels;
+                      final notifier = ref.read(
+                        quickLogFabExpandedProvider(selectedIndex).notifier,
+                      );
+                      if (pixels > _kQuickLogFabCollapseScrollPx) {
+                        if (notifier.state) notifier.state = false;
+                      } else if (pixels <= _kQuickLogFabExpandScrollPx) {
+                        if (!notifier.state) notifier.state = true;
+                      }
+                      // Never consume — nothing else up-tree needs to see
+                      // this, but don't assume that stays true forever.
+                      return false;
+                    },
+                    child: _child,
+                  ),
+                ),
               ],
             ),
           ),
@@ -579,6 +637,13 @@ class MainShell extends ConsumerWidget {
           // `kQuickLogFabClearance` (the space a tab must reserve at the end of
           // its scroll extent) is derived from, so the button's real footprint
           // and the space reserved for it can never drift apart again.
+          //
+          // Register #177 (a #16 recurrence): the labelled pill also covers
+          // content it floats ON TOP of at rest while the user is scrolling
+          // past it. `expanded` below (from `quickLogFabExpandedProvider`)
+          // collapses it to the icon-only circle the instant this tab
+          // scrolls, and re-expands it back at the top — never hidden either
+          // way, just narrower while content is moving under it.
           if (isNavBarVisible && selectedIndex != 2)
             Positioned(
               right: 24,
@@ -606,6 +671,11 @@ class MainShell extends ConsumerWidget {
                     // Opens the Signature quick-actions grid (Scan menu, Log
                     // workout, Log water, …), not the bare food-log dialog.
                     onTap: () => showQuickLogSheet(context, ref),
+                    // Pill at rest, icon-only the instant this tab scrolls —
+                    // see quickLogFabExpandedProvider above.
+                    expanded: ref.watch(
+                      quickLogFabExpandedProvider(selectedIndex),
+                    ),
                   ),
                 ),
               ),

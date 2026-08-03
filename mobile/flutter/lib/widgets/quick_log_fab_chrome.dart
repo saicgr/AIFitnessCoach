@@ -33,6 +33,21 @@ import '../core/theme/theme_colors.dart';
 //     one stable, legible caption — not a per-tab label that would imply the
 //     action changes when it does not. Fixed: `main_shell.dart` now renders
 //     [QuickLogFabChrome] with the localised `quickLogOverlayQuickLog` caption.
+//
+//  3. COLLAPSE ON SCROLL. #16's caption and #177's icon-only shrink each fixed
+//     one half of the occlusion problem but not both at once: a caption wide
+//     enough to read blankets content while scrolling (#16/#177), and an
+//     icon-only glyph that never explains itself regresses #16's original
+//     complaint. The button now has TWO states, driven by [expanded]: the
+//     labelled pill from rest (top of scroll, nothing is moving under it so
+//     the width is safe) and the icon-only circle the instant the user
+//     scrolls (content is moving under it, so it shrinks to the smallest
+//     footprint that is still tappable). `main_shell.dart` derives
+//     [expanded] from a shell-level scroll listener — see
+//     `quickLogFabExpandedProvider` there. Never hidden in either state
+//     (auto-hide was considered and rejected — the control must always be
+//     reachable), and the [Semantics] label is identical in both states so a
+//     screen-reader user never hears the control change identity.
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Height of the quick-log FAB.
@@ -80,9 +95,17 @@ const double kQuickLogFabRadius = 6.0;
 
 /// The labelled quick-log button that docks above the main nav.
 ///
-/// Replaces the unlabelled 44×44 square. Same tap target, same destination —
-/// but it now says what it does, and it exposes proper [Semantics] so a
-/// screen-reader user gets "<label>, button" instead of an anonymous glyph.
+/// Two visual states, chosen by [expanded]:
+///  - `true` (at rest, top of scroll): the labelled pill — icon + caption.
+///  - `false` (while the user is scrolling): the icon-only 44×44 circle.
+///
+/// Both states share the same tap target height ([kQuickLogFabHeight]) and
+/// the same outer [Semantics] node, so a screen reader announces "<label>,
+/// button" identically regardless of scroll state — only the SIGHTED
+/// presentation changes. Callers drive [expanded] from scroll position (see
+/// `quickLogFabExpandedProvider` in `main_shell.dart`); this widget itself
+/// has no scroll awareness, so it stays trivially testable with either state
+/// passed directly.
 ///
 /// [label] is REQUIRED and has no English default on purpose: the caption is
 /// user-facing copy, so it must come from `AppLocalizations` at the call site
@@ -95,17 +118,104 @@ class QuickLogFabChrome extends StatelessWidget {
     super.key,
     required this.onTap,
     required this.label,
+    required this.expanded,
   });
 
   final VoidCallback onTap;
 
-  /// Visible caption — pass a localised string.
+  /// Visible caption — pass a localised string. Rendered only when
+  /// [expanded] is true; always exposed to assistive tech via [Semantics].
   final String label;
+
+  /// `true` renders the labelled pill, `false` the icon-only circle. Never
+  /// controls visibility — the button is never hidden in either state.
+  final bool expanded;
 
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
     final isDark = tc.isDark;
+    // Snap instead of animate under reduced motion, same pattern as
+    // core/constants/stat_typography.dart.
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+
+    final decoration = BoxDecoration(
+      color: tc.surface,
+      borderRadius: BorderRadius.circular(
+        expanded ? kQuickLogFabRadius : kQuickLogFabHeight / 2,
+      ),
+      // Single accent source — never a literal. See
+      // core/theme/accent_color_provider.dart.
+      border: Border.all(color: tc.accent, width: 1.5),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+          blurRadius: 24,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    );
+
+    final sizedChild = expanded
+        ? Container(
+            height: kQuickLogFabHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            alignment: Alignment.center,
+            decoration: decoration,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add_rounded, size: 20, color: tc.textPrimary),
+                const SizedBox(width: 6),
+                // Adaptive, never truncated (E2E register row 16 + 108). A
+                // bare `maxLines: 1` Text in a Row overflows (yellow stripe)
+                // as soon as the localised caption or the user's text scale
+                // outgrows the remaining width — and the obvious patch,
+                // `TextOverflow.ellipsis`, would clip the caption to
+                // "Quick…", exactly the truncation-on-the-identifying-word
+                // defect row 108 is about. Flexible bounds the width,
+                // FittedBox.scaleDown shrinks the glyphs to fit instead of
+                // deleting them, so every letter survives at every locale
+                // and every text scale.
+                Flexible(
+                  // ExcludeSemantics: the caption is already announced by
+                  // the wrapping [Semantics] node. Without this a screen
+                  // reader reads "Quick Log, Quick Log, button".
+                  child: ExcludeSemantics(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        softWrap: false,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.1,
+                          color: tc.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : Container(
+            height: kQuickLogFabHeight,
+            width: kQuickLogFabHeight,
+            alignment: Alignment.center,
+            decoration: decoration,
+            // Icon only. The labelled pill is ~3x this width, which is why
+            // it covers "View all", the habit rows and the workout hero's
+            // title (E2E #177) whenever content is moving under it — no
+            // offset could fix a control that wide floating over scrolling
+            // content. `label` is still announced by the wrapping
+            // [Semantics], so screen-reader users lose nothing.
+            child: Icon(Icons.add_rounded, size: 24, color: tc.textPrimary),
+          );
 
     return Semantics(
       button: true,
@@ -116,31 +226,28 @@ class QuickLogFabChrome extends StatelessWidget {
           HapticFeedback.selectionClick();
           onTap();
         },
-        child: Container(
-          height: kQuickLogFabHeight,
-          width: kQuickLogFabHeight,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: tc.surface,
-            shape: BoxShape.circle,
-            // Single accent source — never a literal. See
-            // core/theme/accent_color_provider.dart.
-            border: Border.all(color: tc.accent, width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
+        // Grows/shrinks from the right edge — the button is right-anchored
+        // (`Positioned(right: 24, ...)` in main_shell.dart) — so collapsing
+        // never shifts the tap target's right edge, only its left edge.
+        //
+        // Reduced motion skips AnimatedSize entirely rather than driving it
+        // with `duration: Duration.zero`: RenderAnimatedSize restarts its
+        // internal AnimationController mid-layout when the child's size
+        // changes, and a zero-duration controller completes synchronously
+        // inside that same layout pass — Flutter's layout protocol forbids a
+        // render object dirtying itself while it's still being laid out, so
+        // that path throws ("A RenderAnimatedSize was mutated in its own
+        // performLayout implementation"). Skipping the animated wrapper
+        // altogether renders the target size directly, with the same net
+        // "snap" effect and no framework-level landmine.
+        child: reduceMotion
+            ? sizedChild
+            : AnimatedSize(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.centerRight,
+                child: sizedChild,
               ),
-            ],
-          ),
-          // Icon only. The labelled pill was ~3x this width, which is why it
-          // covered "View all", the habit rows and the workout hero's title
-          // (E2E #177) — no offset could fix a control that wide floating over
-          // content. `label` is still announced by the wrapping [Semantics],
-          // so screen-reader users lose nothing.
-          child: Icon(Icons.add_rounded, size: 24, color: tc.textPrimary),
-        ),
       ),
     );
   }
