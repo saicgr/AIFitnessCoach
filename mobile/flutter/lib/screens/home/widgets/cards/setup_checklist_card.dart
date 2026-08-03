@@ -5,15 +5,29 @@
 ///
 /// Shown below the Next Workout hero while the user is in their first 14 days
 /// and hasn't finished (or dismissed) the challenge. Persistent inline card —
-/// NOT a transient notification banner.
+/// NOT a transient notification banner. Collapsed by default (one line: ring +
+/// title + "N of M done"); tap the header to expand the task rows.
 ///
 /// Completion is derived from live providers (zero-cost: goal/plan/workout) and
 /// the authoritative server claimed-state from `getAvailableFirstTimeBonuses()`
-/// (meal/chat, which their own flows award). The card itself CLAIMS the three
+/// (meal/chat, which their own flows award). The card itself CLAIMS the
 /// onboarding-specific keys (goal/plan/workout) when it detects them complete —
 /// awards are idempotent server-side, so this is safe even if a flow also
-/// awarded them. When all five are done it calls `completeOnboardingChallenge()`
+/// awarded them. When all items are done it calls `completeOnboardingChallenge()`
 /// for the +100 XP finish bonus and a reward crate.
+///
+/// There used to be a sixth "Pick a program (or let AI decide)" item, removed
+/// 2026-08 — onboarding assigns the user an AI-generated workout PLAN (which
+/// already satisfies "Generate your first workout plan"), never a curated
+/// PROGRAM LIBRARY assignment (`user_program_assignments`), so that item's
+/// `done` state depended entirely on the user tapping this exact row (a local
+/// `_programSeen` engagement claim) or separately assigning a real program —
+/// neither of which normal onboarding triggers. In practice it sat unchecked
+/// for most users, stalling the ring at 5/6 forever.
+///
+/// At 100% the card collapses to a one-line trophy ("All N done · +XP") for
+/// [_kTrophyWindowDays] days (persisted as a completion timestamp, so the
+/// window survives app restarts), then disappears from Home for good.
 library;
 
 import 'dart:async';
@@ -26,7 +40,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
-import '../../../../data/providers/program_assignments_provider.dart';
 import '../../../../data/providers/root_messenger.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
@@ -36,6 +49,10 @@ import '../../../../data/services/haptic_service.dart';
 
 /// How long after signup the challenge stays offered.
 const int _kChallengeWindowDays = 14;
+
+/// How long a completed challenge stays visible as a one-line trophy before
+/// vanishing from Home for good.
+const int _kTrophyWindowDays = 7;
 
 class SetupChecklistCard extends ConsumerStatefulWidget {
   const SetupChecklistCard({super.key});
@@ -48,15 +65,15 @@ class SetupChecklistCard extends ConsumerStatefulWidget {
 class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   bool _dismissed = false;
   bool _loaded = false;
-  bool _collapsed = false;
+  bool _collapsed = true; // collapsed by default — one line until tapped
   bool _done = false; // challenge fully completed (persisted)
   bool _justCompleted = false; // show the celebration this session
 
-  /// Local engagement claim for the "pick a program" discovery step — set the
-  /// first time the user opens the library from this card. Persisted so the
-  /// step stays complete (and never strands the finish bonus for users who
-  /// stay on the default AI-decides plan rather than assigning a program).
-  bool _programSeen = false;
+  /// When the challenge was completed (persisted as an ISO8601 string), so
+  /// the 7-day trophy window survives app restarts. Null if never completed,
+  /// or completed before this field existed (treated as expired — see
+  /// [build]).
+  DateTime? _completedAt;
 
   /// Authoritative server claimed-state, fetched from
   /// `getAvailableFirstTimeBonuses()` and refreshed while visible.
@@ -82,7 +99,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   String _dismissKey(String uid) => 'get_started_challenge_dismissed_$uid';
   String _collapseKey(String uid) => 'get_started_challenge_collapsed_$uid';
   String _doneKey(String uid) => 'get_started_challenge_done_$uid';
-  String _programSeenKey(String uid) => 'get_started_program_seen_$uid';
+  String _doneAtKey(String uid) => 'get_started_challenge_done_at_$uid';
 
   Future<void> _init() async {
     final user = ref.read(currentUserProvider).valueOrNull;
@@ -100,9 +117,12 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
             DateTime.tryParse(decoded['snoozedUntil'] as String? ?? '');
         if (until != null && until.isAfter(DateTime.now())) _dismissed = true;
       }
-      _collapsed = prefs.getBool(_collapseKey(user.id)) ?? false;
+      _collapsed = prefs.getBool(_collapseKey(user.id)) ?? true;
       _done = prefs.getBool(_doneKey(user.id)) ?? false;
-      _programSeen = prefs.getBool(_programSeenKey(user.id)) ?? false;
+      if (_done) {
+        final doneAtRaw = prefs.getString(_doneAtKey(user.id));
+        _completedAt = doneAtRaw != null ? DateTime.tryParse(doneAtRaw) : null;
+      }
     } catch (_) {/* ignore */}
 
     await _refreshAwarded();
@@ -188,20 +208,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
     } catch (_) {/* ignore */}
   }
 
-  /// Mark the "pick a program" discovery step complete the first time the user
-  /// opens the library from this card. Persisted per-user so exploring the
-  /// choice (or letting AI decide) is enough to finish the step.
-  Future<void> _markProgramSeen() async {
-    if (_programSeen) return;
-    setState(() => _programSeen = true);
-    final user = ref.read(currentUserProvider).valueOrNull;
-    if (user == null) return;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_programSeenKey(user.id), true);
-    } catch (_) {/* ignore */}
-  }
-
   /// Claim a single onboarding-specific bonus (idempotent server-side).
   Future<void> _claim(String key) async {
     if (_inFlight.contains(key) || _has(key)) return;
@@ -224,14 +230,18 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       if (mounted) {
         setState(() => _justCompleted = true);
       }
-      // Persist so it stays hidden after the celebration / restart.
+      // Persist done + the completion timestamp, so the 7-day trophy window
+      // survives app restarts.
       final user = ref.read(currentUserProvider).valueOrNull;
+      final now = DateTime.now();
       if (user != null) {
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setBool(_doneKey(user.id), true);
+          await prefs.setString(_doneAtKey(user.id), now.toIso8601String());
         } catch (_) {/* ignore */}
       }
+      if (mounted) setState(() => _completedAt = now);
       _poll?.cancel();
       if (mounted && result.crateGranted) {
         rootSnackBar(
@@ -272,9 +282,18 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   @override
   Widget build(BuildContext context) {
     if (!_loaded || _dismissed) return const SizedBox.shrink();
-    // Already finished (and the celebration, if any, was shown) → hide.
-    if (_done && !_justCompleted) return const SizedBox.shrink();
-    if (_daysSinceSignup() > _kChallengeWindowDays && !_justCompleted) {
+    // Finished, celebration already shown → either the 7-day trophy window is
+    // still open (collapsed one-liner, handled below) or it's expired (gone
+    // for good). A missing timestamp (done before this field existed) is
+    // treated as expired rather than resurrecting an old completion.
+    final trophyExpired = _completedAt == null ||
+        DateTime.now().difference(_completedAt!).inDays >= _kTrophyWindowDays;
+    if (_done && !_justCompleted && trophyExpired) {
+      return const SizedBox.shrink();
+    }
+    if (!_done &&
+        _daysSinceSignup() > _kChallengeWindowDays &&
+        !_justCompleted) {
       return const SizedBox.shrink();
     }
 
@@ -308,19 +327,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
 
     final chatDone = _has('first_chat');
 
-    // Program pick — done once the user has any (non-abandoned) program
-    // assignment OR has opened the library from this card (local claim). The
-    // engagement claim keeps this from stranding the finish bonus for users who
-    // stay on the default AI-decides plan.
-    bool programDone = _programSeen;
-    try {
-      final progs = ref.watch(programAssignmentsProvider).valueOrNull;
-      if (progs != null) {
-        programDone = programDone ||
-            progs.any((a) => a.isActive || a.status == 'completed');
-      }
-    } catch (_) {/* provider not ready */}
-
     final items = <_Item>[
       _Item(
         icon: Icons.flag_rounded,
@@ -337,18 +343,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
         done: planDone,
         route: '/workouts',
         claimKey: 'first_plan_generated',
-      ),
-      _Item(
-        icon: Icons.menu_book_rounded,
-        label: 'Pick a program (or let AI decide)',
-        // Discovery step — no XP (it doesn't map to a first-time bonus), so the
-        // row hides its pill (see _buildRow). Kept honest: no XP shown that we
-        // never grant.
-        xp: 0,
-        done: programDone,
-        route: '/workout/program-library',
-        claimKey: null,
-        onTap: _markProgramSeen,
       ),
       _Item(
         icon: Icons.fitness_center,
@@ -380,11 +374,27 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
 
     final completed = items.where((i) => i.done).length;
     final pct = completed / items.length;
-    final nextLabel = items.firstWhere((i) => !i.done,
-        orElse: () => items.last).label;
+
+    // Completed, within the 7-day trophy window → a static one-line trophy
+    // takes over the whole card, no rows, no accent border (decision: an
+    // orange border means something is waiting on you; a finished challenge
+    // is information, not a to-do).
+    if (_done && !_justCompleted) {
+      final totalXp = items.fold<int>(0, (sum, i) => sum + i.xp);
+      return Container(
+        margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: _buildTrophy(c, items.length, totalXp),
+      );
+    }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: c.surface,
@@ -397,7 +407,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildHeader(c, pct, completed, items.length, nextLabel),
+                _buildHeader(c, pct, completed, items.length),
                 if (!_collapsed) ...[
                   const SizedBox(height: 12),
                   for (final item in items) _buildRow(c, item),
@@ -407,8 +417,55 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
     );
   }
 
-  Widget _buildHeader(ThemeColors c, double pct, int completed, int total,
-      String nextLabel) {
+  /// One-line trophy for a completed challenge — ring pinned at 100%, kicker,
+  /// and the XP total earned across every item. Tapping opens the reward
+  /// crate (same destination as the completion snackbar).
+  Widget _buildTrophy(ThemeColors c, int total, int totalXp) {
+    return InkWell(
+      onTap: () {
+        HapticService.light();
+        context.push('/rewards');
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          _ProgressRing(value: 1.0, accent: c.accent, track: c.cardBorder,
+              textColor: c.textPrimary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'GET STARTED CHALLENGE',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                    color: c.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'All $total done · +$totalXp XP',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: c.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, size: 20, color: c.textMuted),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(ThemeColors c, double pct, int completed, int total) {
     return InkWell(
       onTap: _toggleCollapsed,
       borderRadius: BorderRadius.circular(12),
@@ -432,7 +489,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _collapsed ? nextLabel : '$completed of $total complete',
+                  '$completed of $total done',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -462,12 +519,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
 
   Widget _buildRow(ThemeColors c, _Item item) {
     return InkWell(
-      onTap: item.done
-          ? null
-          : () {
-              item.onTap?.call();
-              context.push(item.route);
-            },
+      onTap: item.done ? null : () => context.push(item.route),
       borderRadius: BorderRadius.circular(10),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
@@ -574,10 +626,6 @@ class _Item {
   /// items whose XP is awarded by their own flow (meal/chat).
   final String? claimKey;
 
-  /// Optional side-effect run when the row is tapped, before navigation
-  /// (e.g. record a local engagement claim). Null for most items.
-  final VoidCallback? onTap;
-
   const _Item({
     required this.icon,
     required this.label,
@@ -585,7 +633,6 @@ class _Item {
     required this.done,
     required this.route,
     required this.claimKey,
-    this.onTap,
   });
 }
 

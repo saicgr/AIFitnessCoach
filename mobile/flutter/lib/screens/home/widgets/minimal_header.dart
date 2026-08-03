@@ -50,7 +50,7 @@ class MinimalHeader extends ConsumerWidget {
     final weekday = _weekdays[now.weekday - 1];
     final monthDay = '${_months[now.month - 1]} ${now.day}';
 
-    // SIGNATURE V2 masthead — brand + streak/bell/coach cluster, then the big
+    // SIGNATURE V2 masthead — brand + streak/bell cluster, then the big
     // Anton editorial date, then the Fraunces greeting. Replaces the prior
     // avatar + inline-greeting row. Profile is reached via the You tab; the
     // settings gear stays in the cluster so it's still one tap from Home.
@@ -63,12 +63,14 @@ class MinimalHeader extends ConsumerWidget {
         children: [
           // Eyebrow: the greeting fills the LEFT so the top isn't empty (and no
           // stray "streak 4" number — the streak moved off the masthead into
-          // coach / You). Bell / coach / settings cluster on the right.
+          // coach / You). Bell / settings cluster on the right — the sparkle
+          // "Ask coach" button was removed (2026-08): Coach is a bottom tab
+          // and already owns most of Home, so a third unlabelled route into
+          // chat earned nothing.
           Row(
             children: [
               const Expanded(child: _Greeting()),
               NotificationBellButton(isDark: isDark),
-              _CoachGlyphButton(isDark: isDark),
               _SettingsButton(isDark: isDark),
             ],
           ),
@@ -89,31 +91,6 @@ class MinimalHeader extends ConsumerWidget {
           const SizedBox(height: 6),
         ],
       ),
-    );
-  }
-}
-
-/// The ✦ ask-coach glyph in the home masthead — opens the coach chat.
-class _CoachGlyphButton extends StatelessWidget {
-  final bool isDark;
-  const _CoachGlyphButton({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final iconColor = isDark ? Colors.white70 : Colors.black54;
-    return IconButton(
-      icon: Icon(Icons.auto_awesome, size: 20, color: iconColor),
-      tooltip: 'Ask coach',
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-      onPressed: () {
-        HapticService.light();
-        try {
-          context.push('/chat?source=home_masthead');
-        } catch (_) {
-          context.push('/chat');
-        }
-      },
     );
   }
 }

@@ -1528,6 +1528,43 @@ class HomeFuelStrip extends ConsumerWidget {
     final over = hasTargets && calLeft < 0;
     final nf = NumberFormat.decimalPattern();
 
+    // Nothing logged yet → one compact line instead of the full headline +
+    // three empty macro rows (a placeholder that size doesn't earn). Expands
+    // back to the full card the moment the first log lands.
+    if (nutrition.logs.isEmpty) {
+      return Padding(
+        padding: kHomeHPad,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticService.light();
+            context.go('/nutrition');
+          },
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('FUEL', style: ZType.lbl(11, color: c.textMuted)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '0 logged',
+                  style: ZType.lbl(11.5, color: c.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ),
+              Text('0', style: ZType.disp(16, color: c.accent).copyWith(height: 1.0)),
+              const SizedBox(width: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 1),
+                child: Text('KCAL', style: ZType.lbl(9, color: c.textMuted, letterSpacing: 1)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: kHomeHPad,
       child: GestureDetector(

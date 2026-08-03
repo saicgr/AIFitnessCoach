@@ -56,7 +56,6 @@ import 'widgets/extended_home_cards_stack.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/today_score_card.dart';
 import 'widgets/coach_hero_card.dart';
-import 'widgets/readiness_tile.dart';
 // StrainCoachCard was folded into the workout-hero meta line as a tier chip
 // (see `_WorkoutHeroIntensityLine` in unified_home_widgets.dart). The widget
 // itself stays in `widgets/strain_coach_card.dart` for the rationale detail
@@ -99,7 +98,7 @@ import '../../widgets/streak_milestone_dialog.dart';
 import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
 import 'widgets/minimal_header.dart';
-import 'widgets/home_week_glance_band.dart';
+import 'widgets/metrics_carousel/metrics_carousel.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -1249,12 +1248,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Header — greeting + streak + bell + overflow. Fixed chrome.
               const SliverToBoxAdapter(child: MinimalHeader()),
 
-              // Week-glance band (register #176, change 3) — a 7-bar week +
-              // streak ring directly under the masthead date. NOT a reorder:
-              // every existing section below keeps its place, this is a new
-              // insertion at the very top so Home shows something EARNED
-              // before it shows anything outstanding.
-              const SliverToBoxAdapter(child: HomeWeekGlanceBand()),
+              // Metrics carousel (register #176, change 3 — replaces the
+              // static week-glance band) — swipeable, user-configurable
+              // metric cards (Training ring, Volume trend, Recovery when
+              // Health is connected) directly under the masthead date. NOT a
+              // reorder: every existing section below keeps its place, this
+              // is a new insertion at the very top so Home shows something
+              // EARNED before it shows anything outstanding.
+              const SliverToBoxAdapter(child: MetricsCarousel()),
               const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
               // Stacked notification-panel banners — fixed system chrome,
@@ -1380,7 +1381,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       HomeSection.nutritionCard,
       HomeSection.todayScore,
       HomeSection.habits,
-      HomeSection.readiness,
+      // readiness dropped (2026-08) — the standalone "Recovery — not enough
+      // data" row duplicated what the "This week" carousel's Recovery page
+      // now covers properly (a real chart, not an empty state). See
+      // HomeSection.readiness's case below.
       if (menstrualEnabled) HomeSection.cycle,
     ];
 
@@ -1560,10 +1564,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // CycleStatusCard + the separate extended-stack cycle tiles.
         return const CycleSummaryCard();
       case HomeSection.readiness:
-        // SLICE_READINESS Recovery Readiness tile. Self-hides on
-        // calibration window (<14d) and after a "Building baseline"
-        // empty state period.
-        return const ReadinessTile();
+        // Dropped from Home (2026-08) — the "This week" carousel's Recovery
+        // page covers readiness properly (a real chart vs. this tile's
+        // "not enough data" empty state). Kept in the enum + switch so a
+        // user's persisted section ordering doesn't break (matches the
+        // strainCoach/metricTrio precedent above). ReadinessTile is now
+        // unreferenced anywhere on Home but left as its own file — it still
+        // pushes to the real `/stats/readiness` detail route.
+        return const SizedBox.shrink();
     }
   }
 

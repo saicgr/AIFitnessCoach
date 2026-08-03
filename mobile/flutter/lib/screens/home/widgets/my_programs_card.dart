@@ -58,7 +58,14 @@ class MyProgramsCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showHeader) const SectionHeader(label: 'My Programs'),
+            // "Browse programs →" is a section action, exactly like "View all"
+            // on the Streaks header — not a second entry sitting beneath the
+            // active program card.
+            if (showHeader)
+              SectionHeader(
+                label: 'My Programs',
+                trailing: _BrowseProgramsAction(),
+              ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -67,31 +74,6 @@ class MyProgramsCard extends ConsumerWidget {
                   // program is enrolled.
                   if (!hasActivePrimary) ...[
                     const AiAdaptivePlanCard(),
-                    const SizedBox(height: 4),
-                    // Gentle invitation into the library — the adaptive plan is a
-                    // real active plan, so this is an offer to explore, not an
-                    // empty-state takeover.
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () {
-                          HapticService.selection();
-                          context.push('/workout/program-library');
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: ThemeColors.of(context).accent,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text(
-                          'Browse programs →',
-                          style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 10),
                   ],
                   for (final a in active) ...[
@@ -104,6 +86,31 @@ class MyProgramsCard extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// "Browse programs →" section-header action — opens the Program Library.
+/// Lives on the "My Programs" header line (matches "View all" on Streaks).
+class _BrowseProgramsAction extends StatelessWidget {
+  const _BrowseProgramsAction();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticService.selection();
+        context.push('/workout/program-library');
+      },
+      child: Text(
+        'Browse programs →',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: ThemeColors.of(context).accent,
+        ),
+      ),
     );
   }
 }

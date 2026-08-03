@@ -48,16 +48,21 @@ final _savedHabitOrderProvider = FutureProvider.autoDispose<List<String>>((ref) 
   }
 });
 
-/// Number of recent-completion dots rendered per habit row (newest = rightmost).
-const int _kHabitDots = 5;
+/// Number of recent-completion dots rendered per habit row (newest =
+/// rightmost) — one per day of the week, matching the mockup's 7-dot streak
+/// row.
+const int _kHabitDots = 7;
 
-/// Habits section — Signature v2 hairline dot-rows.
+/// Streaks section (was "Your Habits") — Signature v2 hairline dot-rows.
 ///
 /// Each habit (the auto-tracked Workouts / Food Log / Water plus any custom
 /// habits from `habitsProvider`/`customHabitsHomeProvider`) renders as a slim
-/// hairline row: a leading emoji glyph, the habit name + today's progress, and
-/// a compact run of filled/empty dots showing recent completion (from the
-/// habit's real `last30Days` tail). No boxed cards, no 30-day heatmap, no glow.
+/// hairline row: a leading emoji glyph, the habit name + today's progress, a
+/// run of 7 filled/empty dots showing the week's completion (from the habit's
+/// real `last30Days` tail), and a static "+" to log — deliberately NOT a
+/// checkbox/pill action button like the coach's "To do today" rows, so a
+/// glance reads as consistency rather than another chore. No boxed cards, no
+/// 30-day heatmap, no glow.
 class HabitsSection extends ConsumerWidget {
   const HabitsSection({super.key});
 
@@ -112,7 +117,10 @@ class HabitsSection extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── "HABITS" Barlow kicker + View all link ──
+          // ── "STREAKS" Barlow kicker + View all link ──
+          // Hardcoded (not the shared `habitsYourHabits` l10n string) — that
+          // key is also the title of the dedicated /habits screen, which
+          // keeps its "Your Habits" name; only this Home section renamed.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -120,7 +128,7 @@ class HabitsSection extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
-                  AppLocalizations.of(context).habitsYourHabits.toUpperCase(),
+                  'STREAKS',
                   style: ZType.lbl(
                     11,
                     color: c.textSecondary,
@@ -341,46 +349,32 @@ class _HabitDotRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            // Recent-completion dots (real data: last5 days, today rightmost).
+            const SizedBox(width: 10),
+            // Streak dots — 7 days, today rightmost. This alone carries the
+            // "done" signal now (see the static "+" below).
             _DotsRow(days: _recentDays(), accent: c.accent, isDark: isDark),
-            const SizedBox(width: 12),
-            // Log affordance — small accent ring/check, preserves onLog.
+            const SizedBox(width: 9),
+            // Static "+" to log — never swaps to a checkmark/fill. A row that
+            // toggles into a filled checkbox reads as a to-do; the dots above
+            // already say whether today is done, so this stays a plain,
+            // always-the-same increment affordance (not an action button).
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: onLog,
-              child: SizedBox(
+              child: Container(
                 width: 26,
                 height: 26,
-                child: Center(
-                  child: Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: habit.todayCompleted
-                          ? c.accent
-                          : Colors.transparent,
-                      border: Border.all(
-                        color: habit.todayCompleted
-                            ? c.accent
-                            : (isDark
-                                ? AppColors.hairlineStrong
-                                : AppColorsLight.cardBorder),
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Icon(
-                      habit.todayCompleted
-                          ? Icons.check_rounded
-                          : Icons.add_rounded,
-                      size: 14,
-                      color: habit.todayCompleted
-                          ? c.accentContrast
-                          : c.textMuted,
-                    ),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.hairlineStrong
+                        : AppColorsLight.cardBorder,
+                    width: 1,
                   ),
                 ),
+                child: Icon(Icons.add_rounded, size: 15, color: c.accent),
               ),
             ),
           ],
