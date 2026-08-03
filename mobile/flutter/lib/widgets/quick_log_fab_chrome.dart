@@ -118,10 +118,11 @@ class QuickLogFabChrome extends StatelessWidget {
         },
         child: Container(
           height: kQuickLogFabHeight,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          width: kQuickLogFabHeight,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
             color: tc.surface,
-            borderRadius: BorderRadius.circular(kQuickLogFabRadius),
+            shape: BoxShape.circle,
             // Single accent source — never a literal. See
             // core/theme/accent_color_provider.dart.
             border: Border.all(color: tc.accent, width: 1.5),
@@ -133,44 +134,12 @@ class QuickLogFabChrome extends StatelessWidget {
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add_rounded, size: 20, color: tc.textPrimary),
-              const SizedBox(width: 6),
-              // Adaptive, never truncated (E2E register row 16 + 108). A bare
-              // `maxLines: 1` Text in a Row overflows (yellow stripe) as soon
-              // as the localised caption or the user's text scale outgrows the
-              // remaining width — and the obvious patch, `TextOverflow
-              // .ellipsis`, would clip the caption to "Quick…", which is
-              // exactly the truncation-on-the-identifying-word defect row 108
-              // is about. Flexible bounds the width, FittedBox.scaleDown
-              // shrinks the glyphs to fit instead of deleting them, so every
-              // letter survives at every locale and every text scale.
-              Flexible(
-                // ExcludeSemantics: the caption is already announced by the
-                // wrapping [Semantics] node. Without this a screen reader
-                // reads "Quick Log, Quick Log, button".
-                child: ExcludeSemantics(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: AlignmentDirectional.centerStart,
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      softWrap: false,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.1,
-                        color: tc.textPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // Icon only. The labelled pill was ~3x this width, which is why it
+          // covered "View all", the habit rows and the workout hero's title
+          // (E2E #177) — no offset could fix a control that wide floating over
+          // content. `label` is still announced by the wrapping [Semantics],
+          // so screen-reader users lose nothing.
+          child: Icon(Icons.add_rounded, size: 24, color: tc.textPrimary),
         ),
       ),
     );

@@ -11,6 +11,11 @@ enum HomeSection {
   quickActions,
   weekStrip,
   coachHero, // NEW (2026-05-22) — Gemini-backed daily insight hero card
+  // NEW (2026-08-03) — the swipeable metrics carousel. Sits immediately
+  // after coachHero by user request: the banners are transient, so anchoring
+  // a permanent strip above them made the permanent thing move every time a
+  // temporary thing was dismissed.
+  metricsCarousel,
   strainCoach, // NEW (2026-05-24, P5 §12) — daily intensity recommendation
   workoutCard,
   nutritionCard,
@@ -45,6 +50,8 @@ extension HomeSectionMeta on HomeSection {
         return 'week_strip';
       case HomeSection.coachHero:
         return 'coach_hero';
+      case HomeSection.metricsCarousel:
+        return 'metrics_carousel';
       case HomeSection.strainCoach:
         return 'strain_coach';
       case HomeSection.workoutCard:
@@ -76,6 +83,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Week strip';
       case HomeSection.coachHero:
         return 'Coach insight';
+      case HomeSection.metricsCarousel:
+        return 'This week';
       case HomeSection.strainCoach:
         return 'Strain Coach';
       case HomeSection.workoutCard:
@@ -107,6 +116,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Your seven-day workout streak ring';
       case HomeSection.coachHero:
         return 'A daily nudge from your AI coach';
+      case HomeSection.metricsCarousel:
+        return 'Swipeable training, volume and recovery metrics';
       case HomeSection.strainCoach:
         return "Today's intensity call: rest / light / moderate / hard";
       case HomeSection.workoutCard:
@@ -139,6 +150,8 @@ extension HomeSectionMeta on HomeSection {
         return 'check';
       case HomeSection.coachHero:
         return 'spark';
+      case HomeSection.metricsCarousel:
+        return 'chart';
       case HomeSection.strainCoach:
         return 'flame';
       case HomeSection.workoutCard:

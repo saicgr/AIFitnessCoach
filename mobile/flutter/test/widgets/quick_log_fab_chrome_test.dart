@@ -74,12 +74,22 @@ void main() {
           ),
         );
 
-    testWidgets('renders its caption and exposes it as a button to a11y',
+    testWidgets('is icon-only on screen but still labelled to a11y',
         (tester) async {
+      // 2026-08-03: the visible caption was REMOVED at the user's request —
+      // they had it as a bare "+" and preferred that. This is a deliberate
+      // partial revert of row 16's original remedy, so the invariant is
+      // restated rather than deleted: row 16's real complaint was that the
+      // control was unlabelled AND covered content. The caption addressed the
+      // first; the icon-only pill plus its Semantics label addresses it for
+      // assistive tech, and being ~3x narrower is what actually fixes the
+      // second (see #177 — no offset could save a control that wide).
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(host('Quick Log'));
 
-      expect(find.text('Quick Log'), findsOneWidget);
+      // No visible caption…
+      expect(find.text('Quick Log'), findsNothing);
+      // …but the semantics tree still announces it as a labelled button.
       expect(
         tester.getSemantics(find.byType(QuickLogFabChrome)),
         matchesSemantics(
@@ -91,31 +101,28 @@ void main() {
       handle.dispose();
     });
 
-    testWidgets('caption is never ellipsised', (tester) async {
+    testWidgets('stays a compact circle so it cannot blanket content',
+        (tester) async {
       await tester.pumpWidget(host('Quick Log'));
 
-      final text = tester.widget<Text>(find.text('Quick Log'));
-      expect(
-        text.overflow,
-        isNot(TextOverflow.ellipsis),
-        reason:
-            'ellipsis on a caption this short deletes the identifying word '
-            '(row 108); the caption must scale down instead',
-      );
-      expect(find.byType(FittedBox), findsOneWidget);
+      final size = tester.getSize(find.byType(QuickLogFabChrome));
+      // Square-ish: the labelled pill was ~3x wider than tall, which is what
+      // put it on top of "View all", the habit rows and the hero title.
+      expect(size.width, lessThanOrEqualTo(size.height + 1),
+          reason: 'a wide pill re-creates the #177 overlap');
     });
 
-    testWidgets('a long localisation at 2.0 text scale neither overflows '
-        'nor loses letters', (tester) async {
-      // German-length caption at the largest accessibility step.
+    testWidgets('a long localisation at 2.0 text scale changes nothing',
+        (tester) async {
+      // With no rendered caption, translation length can no longer affect the
+      // control's width at all — which is the point. Kept as a gate so a
+      // future re-introduction of a caption has to face this case again.
       const long = 'Schnellerfassung';
       await tester.pumpWidget(host(long, textScale: 2.0));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      // Every letter still present — scaled, not truncated.
-      expect(find.text(long), findsOneWidget);
-      // And the control still respects the shell's width bound.
+      expect(find.text(long), findsNothing);
       expect(
         tester.getSize(find.byType(QuickLogFabChrome)).width,
         lessThanOrEqualTo(800 - 48),

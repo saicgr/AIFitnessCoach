@@ -1248,14 +1248,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Header — greeting + streak + bell + overflow. Fixed chrome.
               const SliverToBoxAdapter(child: MinimalHeader()),
 
-              // Metrics carousel (register #176, change 3 — replaces the
-              // static week-glance band) — swipeable, user-configurable
-              // metric cards (Training ring, Volume trend, Recovery when
-              // Health is connected) directly under the masthead date. NOT a
-              // reorder: every existing section below keeps its place, this
-              // is a new insertion at the very top so Home shows something
-              // EARNED before it shows anything outstanding.
-              const SliverToBoxAdapter(child: MetricsCarousel()),
               const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
               // Stacked notification-panel banners — fixed system chrome,
@@ -1376,6 +1368,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final quickActionsOnHome = ref.watch(quickActionsHomeVisibleProvider);
     final visible = <HomeSection>[
       HomeSection.coachHero,
+      // The carousel follows the coach card, below the transient banners —
+      // the order the approved mockup settles on.
+      HomeSection.metricsCarousel,
       if (quickActionsOnHome) HomeSection.quickActions,
       HomeSection.workoutCard,
       HomeSection.nutritionCard,
@@ -1518,6 +1513,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return const HomeWeekStrip();
       case HomeSection.coachHero:
         return const CoachHeroCard();
+      case HomeSection.metricsCarousel:
+        return const MetricsCarousel();
       case HomeSection.strainCoach:
         // The standalone "TODAY'S INTENSITY" card was folded into the
         // Workout hero's meta line as a tier chip. Returning SizedBox

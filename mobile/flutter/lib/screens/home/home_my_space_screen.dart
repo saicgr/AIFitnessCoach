@@ -473,6 +473,32 @@ class _PresetThumbnail extends StatelessWidget {
   Widget _mini(HomeSection s, ThemeColors c) {
     final muted = c.textMuted.withValues(alpha: 0.30);
     switch (s) {
+      // Mini preview for the My Space reorder editor: a ring + two bars,
+      // echoing the carousel's Training page at thumbnail scale.
+      case HomeSection.metricsCarousel:
+        return Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 13,
+                height: 13,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: c.accent, width: 2.2),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Container(width: 4, height: 9,
+                  decoration: BoxDecoration(color: muted,
+                      borderRadius: BorderRadius.circular(1.5))),
+              const SizedBox(width: 2),
+              Container(width: 4, height: 13,
+                  decoration: BoxDecoration(color: c.accent,
+                      borderRadius: BorderRadius.circular(1.5))),
+            ],
+          ),
+        );
       case HomeSection.todayScore:
         return Center(
           child: Container(
