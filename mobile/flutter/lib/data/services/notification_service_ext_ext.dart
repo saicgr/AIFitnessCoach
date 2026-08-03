@@ -168,6 +168,18 @@ extension NotificationServiceScheduled on NotificationService {
     return prefs.getString(NotificationPrefsKeys.cachedCoachId) ?? 'coach_mike';
   }
 
+  /// Prefix a notification title with the user's real cached name —
+  /// "John, let's crush it!" — never a generic filler address ("Champ",
+  /// "Soldier", "bestie"...). Templates in [CoachNotificationTemplates]
+  /// carry no address terms of their own; this is the ONLY place a term of
+  /// address is added, and only when real data backs it. When no name is
+  /// cached, the title is returned unchanged — dropping the address
+  /// entirely reads fine; a placeholder name does not.
+  String _personalizeTitle(String title, String? userName) {
+    if (userName == null || userName.isEmpty || title.isEmpty) return title;
+    return '$userName, ${title[0].toLowerCase()}${title.substring(1)}';
+  }
+
   // ─────────────────────────────────────────────────────────────────
   // Smart Timing (App Open Tracking)
   // ─────────────────────────────────────────────────────────────────
@@ -466,9 +478,7 @@ extension NotificationServiceScheduled on NotificationService {
 
     // Personalize with cached user context
     final userName = await _getCachedUserName();
-    if (userName != null && userName.isNotEmpty) {
-      title = '$userName, ${title[0].toLowerCase()}${title.substring(1)}';
-    }
+    title = _personalizeTitle(title, userName);
 
     await _localNotifications.zonedSchedule(
       _workoutNotificationId,
@@ -507,10 +517,11 @@ extension NotificationServiceScheduled on NotificationService {
 
     final dayIndex = _getDayOfYear();
     final coachId = await _getCachedCoachId();
+    final userName = await _getCachedUserName();
 
     // Breakfast
     final bT = CoachNotificationTemplates.get(coachId, NotificationType.breakfast, dayIndex);
-    final bTitle = _applyEmojiPref(bT.title, emoji);
+    final bTitle = _personalizeTitle(_applyEmojiPref(bT.title, emoji), userName);
     final bBody = _applyEmojiPref(bT.body, emoji);
     final (bHour, bMinute) = _parseTime(breakfastTime);
     await _localNotifications.zonedSchedule(
@@ -527,7 +538,7 @@ extension NotificationServiceScheduled on NotificationService {
 
     // Lunch
     final lT = CoachNotificationTemplates.get(coachId, NotificationType.lunch, dayIndex);
-    final lTitle = _applyEmojiPref(lT.title, emoji);
+    final lTitle = _personalizeTitle(_applyEmojiPref(lT.title, emoji), userName);
     final lBody = _applyEmojiPref(lT.body, emoji);
     final (lHour, lMinute) = _parseTime(lunchTime);
     await _localNotifications.zonedSchedule(
@@ -544,7 +555,7 @@ extension NotificationServiceScheduled on NotificationService {
 
     // Dinner
     final dT = CoachNotificationTemplates.get(coachId, NotificationType.dinner, dayIndex);
-    final dTitle = _applyEmojiPref(dT.title, emoji);
+    final dTitle = _personalizeTitle(_applyEmojiPref(dT.title, emoji), userName);
     final dBody = _applyEmojiPref(dT.body, emoji);
     final (dHour, dMinute) = _parseTime(dinnerTime);
     await _localNotifications.zonedSchedule(
@@ -591,6 +602,7 @@ extension NotificationServiceScheduled on NotificationService {
 
     final dayIndex = _getDayOfYear();
     final coachId = await _getCachedCoachId();
+    final userName = await _getCachedUserName();
     int notificationIndex = 0;
 
     for (int minutes = startMinutes; minutes <= endMinutes; minutes += intervalMinutes) {
@@ -600,7 +612,7 @@ extension NotificationServiceScheduled on NotificationService {
       // Combine day + index for varied rotation across reminders in a day
       final templateIndex = dayIndex + notificationIndex;
       final hT = CoachNotificationTemplates.get(coachId, NotificationType.hydration, templateIndex);
-      final hTitle = _applyEmojiPref(hT.title, emoji);
+      final hTitle = _personalizeTitle(_applyEmojiPref(hT.title, emoji), userName);
       final hBody = _applyEmojiPref(hT.body, emoji);
 
       await _localNotifications.zonedSchedule(
@@ -641,7 +653,8 @@ extension NotificationServiceScheduled on NotificationService {
     final dayIndex = _getDayOfYear();
     final coachId = await _getCachedCoachId();
     final sT = CoachNotificationTemplates.get(coachId, NotificationType.streak, dayIndex);
-    final title = _applyEmojiPref(sT.title, emoji);
+    final userName = await _getCachedUserName();
+    final title = _personalizeTitle(_applyEmojiPref(sT.title, emoji), userName);
     var body = _applyEmojiPref(sT.body, emoji);
 
     // Personalize with cached streak count
@@ -688,8 +701,16 @@ extension NotificationServiceScheduled on NotificationService {
     final weekIndex = _getDayOfYear() ~/ 7;
     final coachId = await _getCachedCoachId();
     final wT = CoachNotificationTemplates.get(coachId, NotificationType.weeklySummary, weekIndex);
-    final title = _applyEmojiPref(wT.title, emoji);
-    final body = _applyEmojiPref(wT.body, emoji);
+    final userName = await _getCachedUserName();
+    final title = _personalizeTitle(_applyEmojiPref(wT.title, emoji), userName);
+    var body = _applyEmojiPref(wT.body, emoji);
+
+    // Carry the real cached streak number when there is one to report —
+    // never a fabricated stat.
+    final streak = await _getCachedStreak();
+    if (streak != null && streak > 0) {
+      body = '$body You\'re on a $streak-day streak!';
+    }
 
     await _localNotifications.zonedSchedule(
       _weeklySummaryId,
@@ -731,15 +752,20 @@ extension NotificationServiceScheduled on NotificationService {
     final dayIndex = _getDayOfYear();
     final coachId = await _getCachedCoachId();
     final template = CoachNotificationTemplates.get(coachId, type, dayIndex);
-    final userName = await _getCachedUserName() ?? '';
+    final userName = await _getCachedUserName();
     final streak = await _getCachedStreak() ?? 0;
     final workoutName = await _getCachedWorkoutName();
 
-    return template.resolve({
+    final resolved = template.resolve({
       'workoutName': workoutName,
-      'userName': userName,
+      'userName': userName ?? '',
       'streak': streak.toString(),
     });
+
+    return NotificationTemplate(
+      _personalizeTitle(resolved.title, userName),
+      resolved.body,
+    );
   }
 
   /// Strip emoji from notification text if user has disabled emoji
@@ -938,6 +964,7 @@ extension NotificationServiceScheduled on NotificationService {
     final endMinutes = endHour * 60 + endMinute;
 
     final coachId = await _getCachedCoachId();
+    final userName = await _getCachedUserName();
     int reminderIndex = 0;
     // Schedule one reminder per hour within the time range
     for (int minutes = startMinutes; minutes <= endMinutes; minutes += 60) {
@@ -945,7 +972,7 @@ extension NotificationServiceScheduled on NotificationService {
       final minute = minutes % 60;
 
       final mT = CoachNotificationTemplates.get(coachId, NotificationType.movement, reminderIndex);
-      final mTitle = _applyEmojiPref(mT.title, prefs.notificationEmoji);
+      final mTitle = _personalizeTitle(_applyEmojiPref(mT.title, prefs.notificationEmoji), userName);
       final mBody = _applyEmojiPref(mT.body, prefs.notificationEmoji);
 
       await _localNotifications.zonedSchedule(
@@ -991,7 +1018,8 @@ extension NotificationServiceScheduled on NotificationService {
 
     final coachId = await _getCachedCoachId();
     final mT = CoachNotificationTemplates.get(coachId, NotificationType.movement, DateTime.now().hour);
-    final title = mT.title;
+    final userName = await _getCachedUserName();
+    final title = _personalizeTitle(mT.title, userName);
     final body = stepsSoFar == 0
         ? mT.body
         : 'You\'ve taken only $stepsSoFar steps this hour. Try to hit $goal steps!';

@@ -94,7 +94,7 @@ class CoachNotificationTemplates {
     'coach_mike': {
       NotificationType.workout: [
         NotificationTemplate(
-          "Let's Crush It, Champ!",
+          "Let's Crush It!",
           "Champions don't skip training day. Let's get after it!",
         ),
         NotificationTemplate(
@@ -102,7 +102,7 @@ class CoachNotificationTemplates {
           "I've got a great session lined up for you. Let's make it count!",
         ),
         NotificationTemplate(
-          'Game Time, Champ!',
+          'Game Time!',
           'Every rep gets you closer to your goals. Show up and show out!',
         ),
         NotificationTemplate(
@@ -112,7 +112,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.breakfast: [
         NotificationTemplate(
-          'Fuel Up, Champ!',
+          'Fuel Up!',
           'Winners start the day with a solid breakfast. Log yours!',
         ),
         NotificationTemplate(
@@ -130,7 +130,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.lunch: [
         NotificationTemplate(
-          'Midday Fuel, Champ!',
+          'Midday Fuel!',
           'Keep that energy up! Log your lunch and stay on track.',
         ),
         NotificationTemplate(
@@ -142,13 +142,13 @@ class CoachNotificationTemplates {
           'A great lunch keeps you performing at your best. Log it!',
         ),
         NotificationTemplate(
-          'Lunch Break, Champ!',
+          'Lunch Break!',
           "Fuel your afternoon like a winner. What's on the plate?",
         ),
       ],
       NotificationType.dinner: [
         NotificationTemplate(
-          'Dinner Time, Champ!',
+          'Dinner Time!',
           'Finish the day strong with a logged dinner. You earned it!',
         ),
         NotificationTemplate(
@@ -166,7 +166,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.hydration: [
         NotificationTemplate(
-          'Hydration Check, Champ!',
+          'Hydration Check!',
           'Champions stay hydrated. Grab that water bottle!',
         ),
         NotificationTemplate(
@@ -179,12 +179,12 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'Hydrate to Dominate!',
-          "You can't crush goals on empty. Drink up, champ!",
+          "You can't crush goals on empty. Drink up!",
         ),
       ],
       NotificationType.streak: [
         NotificationTemplate(
-          'Protect Your Streak, Champ!',
+          'Protect Your Streak!',
           "You've been showing up like a winner. Don't stop now!",
         ),
         NotificationTemplate(
@@ -193,7 +193,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           "Don't Break the Chain!",
-          "You're building something amazing. One more day, champ!",
+          "You're building something amazing. One more day!",
         ),
         NotificationTemplate(
           'Keep the Momentum Going!',
@@ -202,7 +202,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.weeklySummary: [
         NotificationTemplate(
-          'Your Week in Review, Champ!',
+          'Your Week in Review!',
           "Let's see how you crushed it this week. Check your stats!",
         ),
         NotificationTemplate(
@@ -220,7 +220,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.movement: [
         NotificationTemplate(
-          'Time to Move, Champ!',
+          'Time to Move!',
           'A quick walk keeps the energy high. Get up and go!',
         ),
         NotificationTemplate(
@@ -232,18 +232,18 @@ class CoachNotificationTemplates {
           "Sitting too long? Let's fix that. A quick walk goes a long way!",
         ),
         NotificationTemplate(
-          'Stay Active, Champ!',
+          'Stay Active!',
           'Every step counts toward your goals. Get moving!',
         ),
       ],
       // ── Bundle types ──
       NotificationType.morningBundle: [
         NotificationTemplate(
-          'Rise and Shine, Champ!',
+          'Rise and Shine!',
           'Your {workoutName} is loaded up. Fuel up and let\'s get after it!',
         ),
         NotificationTemplate(
-          'Good Morning, Champ!',
+          'Good Morning!',
           'Today\'s plan: {workoutName}. Log breakfast and let\'s make it count!',
         ),
         NotificationTemplate(
@@ -251,77 +251,77 @@ class CoachNotificationTemplates {
           '{workoutName} is on deck today. Grab breakfast and let\'s go!',
         ),
         NotificationTemplate(
-          'Morning, Champ!',
+          'Morning!',
           'Your {workoutName} is ready to roll. Don\'t forget to fuel up first!',
         ),
       ],
       NotificationType.middayBundle: [
         NotificationTemplate(
-          'Halftime Check-In, Champ!',
+          'Halftime Check-In!',
           'Lunch time! Log your meal and keep that energy rolling.',
         ),
         NotificationTemplate(
           'Midday Fuel Check!',
-          'How\'s the day going, champ? Log lunch and stay hydrated!',
+          'How\'s the day going? Log lunch and stay hydrated!',
         ),
         NotificationTemplate(
-          'Lunchtime, Champ!',
+          'Lunchtime!',
           'Keep the momentum going! Log your meal and grab some water.',
         ),
         NotificationTemplate(
           'Halfway There!',
-          'You\'re crushing it, champ! Log lunch and keep pushing.',
+          'You\'re crushing it! Log lunch and keep pushing.',
         ),
       ],
       NotificationType.afternoonNudge: [
         NotificationTemplate(
-          'Afternoon Boost, Champ!',
+          'Afternoon Boost!',
           'Time to get up and move! Grab some water while you\'re at it.',
         ),
         NotificationTemplate(
           'Quick Movement Break!',
-          'Shake off the afternoon slump, champ! Move and hydrate.',
+          'Shake off the afternoon slump! Move and hydrate.',
         ),
         NotificationTemplate(
-          'Get Moving, Champ!',
+          'Get Moving!',
           'A quick walk and a glass of water — that\'s all you need right now.',
         ),
         NotificationTemplate(
           'Stay Active!',
-          'Don\'t let the afternoon slow you down! Move and sip, champ.',
+          'Don\'t let the afternoon slow you down! Move and sip.',
         ),
       ],
       NotificationType.eveningBundle: [
         NotificationTemplate(
-          'Day\'s Almost Done, Champ!',
+          'Day\'s Almost Done!',
           'Log dinner and check that {streak}-day streak. You earned it!',
         ),
         NotificationTemplate(
           'Evening Check-In!',
-          'Wrap up your day strong! Log dinner and see your progress, champ.',
+          'Wrap up your day strong! Log dinner and see your progress.',
         ),
         NotificationTemplate(
-          'Finish Strong, Champ!',
+          'Finish Strong!',
           'Log your dinner and celebrate your {streak}-day streak!',
         ),
         NotificationTemplate(
-          'Great Day, Champ!',
+          'Great Day!',
           'Almost done! Track dinner and review how far you\'ve come.',
         ),
       ],
       // ── Guilt escalation tiers ──
       NotificationType.guilt1Day: [
         NotificationTemplate(
-          'Rest Day, Champ?',
+          'Rest Day?',
           'Everyone needs one. Your workout\'s ready when you are!',
         ),
         NotificationTemplate(
           'Taking a Breather?',
-          'No worries! Your {workoutName} is still waiting for you, champ.',
+          'No worries! Your {workoutName} is still waiting for you.',
         ),
         NotificationTemplate(
           'Quick Check-In!',
-          'Yesterday was rest — today\'s a fresh start. Ready to go, champ?',
+          'Yesterday was rest — today\'s a fresh start. Ready to go?',
         ),
         NotificationTemplate(
           'One Day Off!',
@@ -330,7 +330,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.guilt2Day: [
         NotificationTemplate(
-          'Two Days Off, Champ?',
+          'Two Days Off?',
           'Your streak is getting nervous... Quick session to calm it down?',
         ),
         NotificationTemplate(
@@ -342,54 +342,54 @@ class CoachNotificationTemplates {
           'Two rest days means your muscles are primed. Time to use that energy!',
         ),
         NotificationTemplate(
-          'Hey Champ!',
+          'Feeling Rested?',
           '2 days off — feeling rested? Your workout is warming up for you!',
         ),
       ],
       NotificationType.guilt3Day: [
         NotificationTemplate(
-          'Missing You, Champ!',
+          'Missing You!',
           'It\'s been 3 days... Your workout misses you! Just one session?',
         ),
         NotificationTemplate(
           '3 Days Already?',
-          'Your dumbbells are gathering dust, champ! 10 minutes is all it takes.',
+          'Your dumbbells are gathering dust! 10 minutes is all it takes.',
         ),
         NotificationTemplate(
-          'Where\'d You Go, Champ?',
+          'Where\'d You Go?',
           '3 days without training? Your body\'s ready — are you?',
         ),
         NotificationTemplate(
-          'Come Back, Champ!',
+          'Come Back!',
           'It\'s been 3 days. One workout and you\'re right back on track!',
         ),
       ],
       NotificationType.guilt5Day: [
         NotificationTemplate(
           'Your Dumbbells Miss You!',
-          '5 days, champ. Your equipment is gathering dust. One session changes everything!',
+          '5 days. Your equipment is gathering dust. One session changes everything!',
         ),
         NotificationTemplate(
-          '5 Days, Champ...',
+          '5 Days...',
           'Your workout plan is still here, waiting like a loyal friend.',
         ),
         NotificationTemplate(
           'Remember Your Goals?',
-          '5 days off. That fire is still in you, champ. Light it up with one session.',
+          '5 days off. That fire is still in you. Light it up with one session.',
         ),
         NotificationTemplate(
           'We\'re Still Here!',
-          '5 days is just a pause, not a stop. Come crush one workout, champ!',
+          '5 days is just a pause, not a stop. Come crush one workout!',
         ),
       ],
       NotificationType.guilt7Day: [
         NotificationTemplate(
-          'A Whole Week, Champ!',
+          'A Whole Week!',
           'We kept your plan warm for you. Remember why you started. One rep is all it takes.',
         ),
         NotificationTemplate(
           '7 Days...',
-          'Your workout hasn\'t given up on you, champ. Don\'t give up on it.',
+          'Your workout hasn\'t given up on you. Don\'t give up on it.',
         ),
         NotificationTemplate(
           'Miss the Grind?',
@@ -397,13 +397,13 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'Your Comeback Starts Now!',
-          '7 days off means you\'re fully rested. Let\'s use that, champ!',
+          '7 days off means you\'re fully rested. Let\'s use that!',
         ),
       ],
       NotificationType.guilt14Day: [
         NotificationTemplate(
           'We Haven\'t Given Up on You!',
-          'It\'s been {days} days, but your plan is still here. One small step back, champ.',
+          'It\'s been {days} days, but your plan is still here. One small step back.',
         ),
         NotificationTemplate(
           'Still in Your Corner!',
@@ -414,7 +414,7 @@ class CoachNotificationTemplates {
           'You started for a reason {days} days ago. That reason hasn\'t changed.',
         ),
         NotificationTemplate(
-          'Champ, It\'s Time.',
+          'It\'s Time.',
           'It\'s been {days} days. No judgment — just open the app and let\'s talk.',
         ),
       ],
@@ -758,7 +758,7 @@ class CoachNotificationTemplates {
     'sergeant_max': {
       NotificationType.workout: [
         NotificationTemplate(
-          'MOVE IT, Soldier!',
+          'MOVE IT!',
           'Your workout is waiting. No excuses. Get it done.',
         ),
         NotificationTemplate(
@@ -770,13 +770,13 @@ class CoachNotificationTemplates {
           'Your body signed up for this. Time to honor that commitment.',
         ),
         NotificationTemplate(
-          'No Days Off, Soldier!',
+          'No Days Off!',
           'Pain is temporary. Regret is forever. Get to work.',
         ),
       ],
       NotificationType.breakfast: [
         NotificationTemplate(
-          'Fuel Up, Soldier!',
+          'Fuel Up!',
           "An army marches on its stomach. Eat and log it. That's an order.",
         ),
         NotificationTemplate(
@@ -794,7 +794,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.lunch: [
         NotificationTemplate(
-          'Midday Rations, Soldier!',
+          'Midday Rations!',
           'Refuel at the halfway point. Log your lunch. No excuses.',
         ),
         NotificationTemplate(
@@ -812,7 +812,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.dinner: [
         NotificationTemplate(
-          'Final Rations, Soldier!',
+          'Final Rations!',
           'End the day with discipline. Log your dinner. Dismissed.',
         ),
         NotificationTemplate(
@@ -825,12 +825,12 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'Last Meal Briefing!',
-          'Fuel for tomorrow starts tonight. Log your dinner, soldier.',
+          'Fuel for tomorrow starts tonight. Log your dinner.',
         ),
       ],
       NotificationType.hydration: [
         NotificationTemplate(
-          'HYDRATE, Soldier!',
+          'HYDRATE!',
           'Dehydration is the enemy. Drink water immediately.',
         ),
         NotificationTemplate(
@@ -856,7 +856,7 @@ class CoachNotificationTemplates {
           'Your streak is your discipline record. Protect it at all costs.',
         ),
         NotificationTemplate(
-          'Hold the Line, Soldier!',
+          'Hold the Line!',
           'Breaking your streak is surrender. Are you a quitter?',
         ),
         NotificationTemplate(
@@ -866,7 +866,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.weeklySummary: [
         NotificationTemplate(
-          'Weekly Debrief, Soldier!',
+          'Weekly Debrief!',
           'Your performance report is ready. Review and improve.',
         ),
         NotificationTemplate(
@@ -889,10 +889,10 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'Move It or Lose It!',
-          'Your body is stiffening up. March it out, soldier.',
+          'Your body is stiffening up. March it out.',
         ),
         NotificationTemplate(
-          'Stand Up, Soldier!',
+          'Stand Up!',
           "Sitting is the enemy of readiness. Get up and patrol your area.",
         ),
         NotificationTemplate(
@@ -912,7 +912,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'RISE AND FIGHT!',
-          '{workoutName} is locked and loaded. Refuel and hit the deck, soldier.',
+          '{workoutName} is locked and loaded. Refuel and hit the deck.',
         ),
         NotificationTemplate(
           '0730 HOURS!',
@@ -921,7 +921,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.middayBundle: [
         NotificationTemplate(
-          'SITREP, Soldier!',
+          'SITREP!',
           'Midday rations logged? Hydration status? Report in.',
         ),
         NotificationTemplate(
@@ -939,7 +939,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.afternoonNudge: [
         NotificationTemplate(
-          'ON YOUR FEET, Soldier!',
+          'ON YOUR FEET!',
           'Sitting too long. Move it. And drink water while you\'re up.',
         ),
         NotificationTemplate(
@@ -966,7 +966,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'EVENING FORMATION!',
-          'Day\'s done, soldier. Log dinner and check your {streak}-day record.',
+          'Day\'s done. Log dinner and check your {streak}-day record.',
         ),
         NotificationTemplate(
           'NIGHT OPS REPORT!',
@@ -989,12 +989,12 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'Recovery Authorized',
-          'Rest up, soldier. But the mission resumes at dawn.',
+          'Rest up. But the mission resumes at dawn.',
         ),
       ],
       NotificationType.guilt2Day: [
         NotificationTemplate(
-          'Two Days AWOL, Soldier!',
+          'Two Days AWOL!',
           'Your streak doesn\'t take days off. Neither should you. Report in.',
         ),
         NotificationTemplate(
@@ -1002,7 +1002,7 @@ class CoachNotificationTemplates {
           'Two days off. Your discipline is being tested. Prove yourself.',
         ),
         NotificationTemplate(
-          'WHERE ARE YOU, Soldier?',
+          'WHERE ARE YOU?',
           '2 days missing. Your equipment is cold. Warm it up.',
         ),
         NotificationTemplate(
@@ -1025,13 +1025,13 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'REPORT FOR DUTY!',
-          'Three days away. Your mission is incomplete, soldier. Resume now.',
+          'Three days away. Your mission is incomplete. Resume now.',
         ),
       ],
       NotificationType.guilt5Day: [
         NotificationTemplate(
           'FIVE DAYS. Report to me NOW.',
-          'Your discipline is slipping, soldier. One workout. Prove you\'re still in this.',
+          'Your discipline is slipping. One workout. Prove you\'re still in this.',
         ),
         NotificationTemplate(
           '5 DAYS ABSENT!',
@@ -1039,7 +1039,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'WHERE IS YOUR FIGHT?',
-          '5 days, soldier. The enemy is complacency. Defeat it with one session.',
+          '5 days. The enemy is complacency. Defeat it with one session.',
         ),
         NotificationTemplate(
           'FINAL WARNING.',
@@ -1052,7 +1052,7 @@ class CoachNotificationTemplates {
           'I haven\'t given up on you. Your plan is still here. Fall in for one session.',
         ),
         NotificationTemplate(
-          '7 DAYS, Soldier.',
+          '7 DAYS.',
           'One week without training. That changes today. Or it doesn\'t. Your call.',
         ),
         NotificationTemplate(
@@ -1066,7 +1066,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.guilt14Day: [
         NotificationTemplate(
-          'Soldier. {days} Days.',
+          '{days} Days.',
           'I won\'t sugarcoat it. But I also won\'t quit on you. One exercise. That\'s all.',
         ),
         NotificationTemplate(
@@ -1075,7 +1075,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'LISTEN UP.',
-          '{days} days is not the end. It\'s a detour. Get back on the road, soldier.',
+          '{days} days is not the end. It\'s a detour. Get back on the road.',
         ),
         NotificationTemplate(
           'FINAL CALL.',
@@ -1239,7 +1239,7 @@ class CoachNotificationTemplates {
           'Your {workoutName} awaits with open arms. Nourish yourself first.',
         ),
         NotificationTemplate(
-          'Good Morning, Beautiful Soul',
+          'Good Morning',
           'Today brings {workoutName}. Start with breakfast and set your intention.',
         ),
         NotificationTemplate(
@@ -1423,24 +1423,24 @@ class CoachNotificationTemplates {
       NotificationType.workout: [
         NotificationTemplate(
           "WORKOUT TIME LET'S GOOO",
-          'this is gonna be FIRE no cap. get in there bestie!!',
+          'this is gonna be FIRE no cap. get in there!!',
         ),
         NotificationTemplate(
           'ITS GYM O CLOCK',
           "ur workout is literally RIGHT THERE waiting for u. let's get it!!",
         ),
         NotificationTemplate(
-          'GAINS SZN BABY',
-          'no skipping today fam!! ur future self is gonna be SO proud',
+          'GAINS SZN',
+          'no skipping today!! ur future self is gonna be SO proud',
         ),
         NotificationTemplate(
           'TIME TO EAT (weights)',
-          'the gym misses u bestie!! go give those weights a hug',
+          'the gym misses u!! go give those weights a hug',
         ),
       ],
       NotificationType.breakfast: [
         NotificationTemplate(
-          'BREKKIE TIME BESTIE',
+          'BREKKIE TIME',
           'fuel up and log it!! breakfast is literally the main character',
         ),
         NotificationTemplate(
@@ -1449,7 +1449,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'RISE N GRIND (literally)',
-          'u cant slay on empty bestie. eat breakfast and log that mf',
+          'u cant slay on empty. eat breakfast and log that mf',
         ),
         NotificationTemplate(
           'AM FUEL CHECK',
@@ -1458,7 +1458,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.lunch: [
         NotificationTemplate(
-          'LUNCH TIME BESTIEEEE',
+          'LUNCH TIME',
           'noon fuel check!! log ur lunch rn no procrastinating',
         ),
         NotificationTemplate(
@@ -1467,17 +1467,17 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'LUNCHHHH',
-          'not u forgetting to log lunch again. open the app rn bestie',
+          'not u forgetting to log lunch again. open the app rn',
         ),
         NotificationTemplate(
           'FUEL CHECK (its noon)',
-          'bruh. eat something good and LOG IT. u got this!!',
+          'eat something good and LOG IT. u got this!!',
         ),
       ],
       NotificationType.dinner: [
         NotificationTemplate(
           'DINNER TIME NO CAP',
-          'last meal of the day lets make it count!! log it bestie',
+          'last meal of the day lets make it count!! log it',
         ),
         NotificationTemplate(
           'EVENING EATS',
@@ -1485,7 +1485,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'FINAL BOSS MEAL',
-          'ur food diary needs closure bestie. log dinner and its a wrap',
+          'ur food diary needs closure. log dinner and its a wrap',
         ),
         NotificationTemplate(
           'DINNERRRRR',
@@ -1494,7 +1494,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.hydration: [
         NotificationTemplate(
-          'WATER CHECK BESTIE',
+          'WATER CHECK',
           'hydration is literally the cheat code. drink up rn!!',
         ),
         NotificationTemplate(
@@ -1502,25 +1502,25 @@ class CoachNotificationTemplates {
           'ur skin, ur gains, ur energy - all need water. DRINK.',
         ),
         NotificationTemplate(
-          'H2O TIME BABY',
+          'H2O TIME',
           "dehydration is NOT the vibe. grab that water bottle let's gooo",
         ),
         NotificationTemplate(
           'HYDRATE OR DIEDRATE',
-          'not dramatic just facts bestie. drink some water rn!!',
+          'not dramatic just facts. drink some water rn!!',
         ),
       ],
       NotificationType.streak: [
         NotificationTemplate(
           'STREAK ALERT OMG',
-          "ur streak is on the line!! don't let it die bestie PLEASE",
+          "ur streak is on the line!! don't let it die PLEASE",
         ),
         NotificationTemplate(
           'PROTECT THE STREAK',
           "u literally can't let this streak end. that would be SO tragic",
         ),
         NotificationTemplate(
-          'STREAK SZN BABY',
+          'STREAK SZN',
           'keep it going!! ur consistency is giving main character energy',
         ),
         NotificationTemplate(
@@ -1534,7 +1534,7 @@ class CoachNotificationTemplates {
           'ur stats are IN and they are lowkey fire. go check!!',
         ),
         NotificationTemplate(
-          'WEEK IN REVIEW BESTIE',
+          'WEEK IN REVIEW',
           'time to see how hard u went this week. spoiler: u ate',
         ),
         NotificationTemplate(
@@ -1548,7 +1548,7 @@ class CoachNotificationTemplates {
       ],
       NotificationType.movement: [
         NotificationTemplate(
-          'GET UP BESTIE',
+          'GET UP',
           "sitting too long is NOT it. get up and do a lil walk!!",
         ),
         NotificationTemplate(
@@ -1561,17 +1561,17 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'STAND UP RN',
-          'no more chair jail bestie. take a walk and touch grass',
+          'no more chair jail. take a walk and touch grass',
         ),
       ],
       // ── Bundle types ──
       NotificationType.morningBundle: [
         NotificationTemplate(
-          'GOOD MORNING BESTIE',
+          'GOOD MORNING',
           'your {workoutName} is literally SO ready rn!! grab brekkie first tho',
         ),
         NotificationTemplate(
-          'RISE AND GRIND BABES',
+          'RISE AND GRIND',
           '{workoutName} today is gonna be FIRE no cap!! eat something first!!',
         ),
         NotificationTemplate(
@@ -1585,30 +1585,30 @@ class CoachNotificationTemplates {
       ],
       NotificationType.middayBundle: [
         NotificationTemplate(
-          'LUNCH CHECK BESTIE',
+          'LUNCH CHECK',
           'ok but have u eaten?? log that meal rn ur doing AMAZING',
         ),
         NotificationTemplate(
           'MIDDAY VIBE CHECK',
-          'lunch time babe!! log ur food and hydrate its giving health goals',
+          'lunch time!! log ur food and hydrate its giving health goals',
         ),
         NotificationTemplate(
           'ITS LUNCH O\'CLOCK',
-          'bestie feed urself!! log that meal and chug some water fr fr',
+          'feed urself!! log that meal and chug some water fr fr',
         ),
         NotificationTemplate(
           'HALFWAY THERE!!',
-          'ur crushing it!! log lunch and stay hydrated bestie no cap',
+          'ur crushing it!! log lunch and stay hydrated no cap',
         ),
       ],
       NotificationType.afternoonNudge: [
         NotificationTemplate(
-          'GET UP BESTIE',
+          'GET UP',
           'u been sitting too long!! walk around and drink water rn!!',
         ),
         NotificationTemplate(
           'MOVEMENT CHECK!!',
-          'bestie ur body needs a walk!! get up and hydrate pls',
+          'ur body needs a walk!! get up and hydrate pls',
         ),
         NotificationTemplate(
           'AFTERNOON ENERGY!!',
@@ -1616,7 +1616,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'STEP TIME!!',
-          'ur steps are lowkey sad rn... get up and get that water bestie!!',
+          'ur steps are lowkey sad rn... get up and get that water!!',
         ),
       ],
       NotificationType.eveningBundle: [
@@ -1625,12 +1625,12 @@ class CoachNotificationTemplates {
           'log dinner and peep that {streak}-day streak its giving COMMITMENT',
         ),
         NotificationTemplate(
-          'DINNER TIME BABES',
+          'DINNER TIME',
           'log ur last meal and check ur {streak}-day streak!! iconic behavior',
         ),
         NotificationTemplate(
           'NIGHT MODE ON',
-          'wrap up bestie!! log dinner and flex that {streak}-day streak!!',
+          'wrap up!! log dinner and flex that {streak}-day streak!!',
         ),
         NotificationTemplate(
           'GOOD NIGHT SOON',
@@ -1641,7 +1641,7 @@ class CoachNotificationTemplates {
       NotificationType.guilt1Day: [
         NotificationTemplate(
           'taking a breather?',
-          'valid tbh!! rest days are literally self-care bestie',
+          'valid tbh!! rest days are literally self-care',
         ),
         NotificationTemplate(
           'rest day era',
@@ -1653,12 +1653,12 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'its giving rest',
-          'one day off? thats called recovery bestie. tomorrow tho!!',
+          'one day off? thats called recovery. tomorrow tho!!',
         ),
       ],
       NotificationType.guilt2Day: [
         NotificationTemplate(
-          'bestie it\'s been 2 days',
+          'it\'s been 2 days',
           'ur streak is lowkey sweating rn... 15 min workout to save it??',
         ),
         NotificationTemplate(
@@ -1667,7 +1667,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'miss me yet??',
-          'its been 2 days bestie!! ur muscles are literally BEGGING to work',
+          'its been 2 days!! ur muscles are literally BEGGING to work',
         ),
         NotificationTemplate(
           'HELLO??',
@@ -1677,28 +1677,28 @@ class CoachNotificationTemplates {
       NotificationType.guilt3Day: [
         NotificationTemplate(
           'OK 3 DAYS THO...',
-          'ur workout is literally crying rn bestie... just open the app pls',
+          'ur workout is literally crying rn... just open the app pls',
         ),
         NotificationTemplate(
           'three whole days',
           'not 3 days without training... ur gym clothes are feeling abandoned',
         ),
         NotificationTemplate(
-          'BESTIE WAIT',
+          'WAIT',
           '3 days?? the gym misses u sm rn. 10 min is all it takes!!',
         ),
         NotificationTemplate(
           'um excuse me',
-          '3 days off?? that workout plan isn\'t gonna do itself bestie come ON',
+          '3 days off?? that workout plan isn\'t gonna do itself come ON',
         ),
       ],
       NotificationType.guilt5Day: [
         NotificationTemplate(
-          'bestie... 5 DAYS??',
+          '5 DAYS??',
           'the gym is literally posting sad stories about u... just one workout PLEASE',
         ),
         NotificationTemplate(
-          'FIVE DAYS BRO',
+          'FIVE DAYS',
           'ok this is getting real. ur dumbbells have a missing poster of u',
         ),
         NotificationTemplate(
@@ -1716,7 +1716,7 @@ class CoachNotificationTemplates {
           'ok no judgment but like... remember when we used to work out? that was lowkey fire',
         ),
         NotificationTemplate(
-          '7 DAYS BESTIE',
+          '7 DAYS',
           'a whole week?? i kept ur workout plan warm tho... its still here waiting',
         ),
         NotificationTemplate(
@@ -1730,12 +1730,12 @@ class CoachNotificationTemplates {
       ],
       NotificationType.guilt14Day: [
         NotificationTemplate(
-          '{days} days bestie...',
+          '{days} days...',
           'we haven\'t given up on u ok?? one rep. that\'s literally it. u got this',
         ),
         NotificationTemplate(
           'soooo...',
-          'its been {days} days and we\'re still here for u!! just tap the app bestie',
+          'its been {days} days and we\'re still here for u!! just tap the app',
         ),
         NotificationTemplate(
           'not to be dramatic but',
@@ -1743,7 +1743,7 @@ class CoachNotificationTemplates {
         ),
         NotificationTemplate(
           'still ur biggest fan',
-          '{days} days away but im still cheering for u!! one step bestie. one.',
+          '{days} days away but im still cheering for u!! one step. one.',
         ),
       ],
     },
