@@ -211,6 +211,27 @@ void main() {
       expect(size.width, lessThanOrEqualTo(size.height + 1));
     });
 
+    testWidgets('expanded pill hugs its caption instead of filling the width',
+        (tester) async {
+      // Shipped bug, 2026-08-03: `Container(alignment: Alignment.center)` on
+      // the expanded branch made the pill span the ENTIRE screen. A Container
+      // with an alignment expands to fill BOUNDED constraints, and the shell
+      // wraps this in a ConstrainedBox(maxWidth: screenWidth - 48) — so the
+      // alignment silently turned a hug-your-content pill into a full-width
+      // bar. Every existing test still passed, because they all asserted on
+      // the caption and none on the WIDTH.
+      await tester.pumpWidget(host('Quick Log', expanded: true));
+
+      final fab = tester.getSize(find.byType(QuickLogFabChrome));
+      // Generous ceiling — the point is "hugs its content", not an exact px.
+      expect(fab.width, lessThan(220),
+          reason: 'the expanded pill must size to its caption, not to the '
+              'constraints it is offered');
+      // …and it is still clearly wider than the collapsed circle, or the
+      // expand state would be pointless.
+      expect(fab.width, greaterThan(kQuickLogFabHeight));
+    });
+
     testWidgets('tap reaches the handler in both states', (tester) async {
       var taps = 0;
       await tester.pumpWidget(MaterialApp(

@@ -158,10 +158,15 @@ class QuickLogFabChrome extends StatelessWidget {
     );
 
     final sizedChild = expanded
+        // NO `alignment:` here. A Container with an alignment expands to FILL
+        // its constraints when they are bounded — and the shell wraps this in
+        // a ConstrainedBox(maxWidth: screenWidth - 48), so setting one made
+        // the pill span the entire screen instead of hugging its caption. The
+        // Row's MainAxisSize.min is what sizes it; the collapsed branch below
+        // can keep its alignment because it has an explicit width.
         ? Container(
             height: kQuickLogFabHeight,
             padding: const EdgeInsets.symmetric(horizontal: 14),
-            alignment: Alignment.center,
             decoration: decoration,
             child: Row(
               mainAxisSize: MainAxisSize.min,
