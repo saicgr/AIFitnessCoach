@@ -341,16 +341,26 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 
     // 3) Hydration (log a drink) → open the real hydration tracker sheet in
     //    place (same flow as the Nutrition "Log water" card), not a tab jump.
-    final water = ref.watch(hydrationProvider.select((h) => h.todaySummary));
-    final waterMl = water?.totalMl ?? 0;
+    // Register #176 — the detail used to be a sentence ("0.0L logged so far
+    // — top up to…") that truncated mid-word at 1 line, spending the space
+    // AND withholding the answer. Now a complete fragment ("0.0 / 2.5 L").
+    // Also fixes a real bug the fragment rewrite surfaced: `done`/the old
+    // copy compared against a hardcoded 2000ml literal while the actual
+    // configured goal (`HydrationState.dailyGoalMl`, [DailyHydrationSummary
+    // .goalMl]) defaults to 2500ml — the fragment now reads the real goal
+    // instead of a second, disagreeing hardcoded number.
+    final water = ref.watch(hydrationProvider.select(
+        (h) => (summary: h.todaySummary, dailyGoalMl: h.dailyGoalMl)));
+    final waterMl = water.summary?.totalMl ?? 0;
+    final waterGoalMl = water.summary?.goalMl ?? water.dailyGoalMl;
+    final waterDone = waterGoalMl > 0 && waterMl >= waterGoalMl;
     tasks.add(_TodoTask(
       icon: Icons.local_drink_rounded,
-      done: waterMl >= 2000,
+      done: waterDone,
       label: 'Stay hydrated',
       trailing: '${(waterMl / 1000).toStringAsFixed(1)}L',
-      detail: waterMl >= 2000
-          ? "You're well hydrated today. Keep sipping."
-          : "${(waterMl / 1000).toStringAsFixed(1)}L logged so far — top up toward ~2L.",
+      detail:
+          '${(waterMl / 1000).toStringAsFixed(1)} / ${(waterGoalMl / 1000).toStringAsFixed(1)} L',
       actionLabel: 'Log water',
       onTap: () async {
         final result = await showHydrationDialog(
@@ -369,6 +379,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     ));
 
     // 4) Last night's sleep (log it) → open the sleep detail screen.
+    // Register #176 — same fragment rewrite as hydration above: "Add last
+    // night's sleep so your r…" truncated mid-word. "Last night — not
+    // logged" is complete at 1 line and still names what's missing.
     final sleep = ref.watch(sleepScoreProvider.select((a) => a.valueOrNull));
     final logged = sleep?.hasData ?? false;
     final mins = sleep?.summary.totalMinutes ?? 0;
@@ -378,8 +391,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       label: "Log last night's sleep",
       trailing: logged ? '${mins ~/ 60}h ${mins % 60}m' : 'tonight',
       detail: logged
-          ? "${mins ~/ 60}h ${mins % 60}m recorded. Your recovery score uses this."
-          : "Add last night's sleep so your readiness + recovery stay accurate.",
+          ? "Last night — ${mins ~/ 60}h ${mins % 60}m logged"
+          : "Last night — not logged",
       actionLabel: 'Log sleep',
       onTap: () => context.push('/health/sleep'),
     ));
@@ -454,6 +467,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     );
   }
 
+  /// Register #176 — the coach paragraph itself stays (the user overruled
+  /// shortening it: "words in coach is fine so you need to add > so that
+  /// user can tap to open"). What changed is how much of the screen it
+  /// permanently occupies: collapsed from a 3-line block to ONE truncated
+  /// line with a trailing `›`, so the full tip is still one tap away inline
+  /// (same expand-in-place mechanism as before, `_bodyExpanded`) but no
+  /// longer spends 3 lines of every visit on it.
   Widget _expandableBody(ThemeColors c, String text) {
     final style = TextStyle(
       fontSize: 13,
@@ -461,36 +481,54 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       height: 1.35,
       color: c.textSecondary,
     );
+    final chevronStyle = style.copyWith(
+      color: c.accent,
+      fontWeight: FontWeight.w800,
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         final tp = TextPainter(
           text: TextSpan(text: text, style: style),
-          maxLines: 3,
+          maxLines: 1,
           textDirection: Directionality.of(context),
         )..layout(maxWidth: constraints.maxWidth);
         final overflows = tp.didExceedMaxLines;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              text,
-              style: style,
-              maxLines: _bodyExpanded ? null : 3,
-              overflow:
-                  _bodyExpanded ? TextOverflow.clip : TextOverflow.ellipsis,
-            ),
-            if (overflows) ...[
-              const SizedBox(height: 2),
-              // Inner tap target wins the gesture arena, so toggling does not
-              // also fire the whole-card open-chat tap.
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => setState(() => _bodyExpanded = !_bodyExpanded),
-                child: Padding(
+        return GestureDetector(
+          // Inner tap target wins the gesture arena, so toggling does not
+          // also fire the whole-card open-chat tap.
+          behavior: HitTestBehavior.opaque,
+          onTap: overflows
+              ? () => setState(() => _bodyExpanded = !_bodyExpanded)
+              : null,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!_bodyExpanded)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        text,
+                        style: style,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (overflows) ...[
+                      const SizedBox(width: 4),
+                      Text('›', style: chevronStyle),
+                    ],
+                  ],
+                )
+              else ...[
+                Text(text, style: style),
+                const SizedBox(height: 2),
+                Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
                   child: Text(
-                    _bodyExpanded ? 'Show less' : 'Show more',
+                    'Show less',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -498,9 +536,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
                     ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         );
       },
     );

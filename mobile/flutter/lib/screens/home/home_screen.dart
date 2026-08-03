@@ -99,6 +99,7 @@ import '../../widgets/streak_milestone_dialog.dart';
 import '../../widgets/xp_earned_animation.dart';
 import '../../data/models/level_reward.dart';
 import 'widgets/minimal_header.dart';
+import 'widgets/home_week_glance_band.dart';
 import '../../widgets/health_connect_sheet.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -1247,6 +1248,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             slivers: [
               // Header — greeting + streak + bell + overflow. Fixed chrome.
               const SliverToBoxAdapter(child: MinimalHeader()),
+
+              // Week-glance band (register #176, change 3) — a 7-bar week +
+              // streak ring directly under the masthead date. NOT a reorder:
+              // every existing section below keeps its place, this is a new
+              // insertion at the very top so Home shows something EARNED
+              // before it shows anything outstanding.
+              const SliverToBoxAdapter(child: HomeWeekGlanceBand()),
+              const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
               // Stacked notification-panel banners — fixed system chrome,
               // always directly under the header. Self-collapses to zero
