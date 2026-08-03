@@ -123,8 +123,22 @@ void main() {
       final handle = tester.ensureSemantics();
       await tester.pumpWidget(host('Quick Log', expanded: false));
 
-      // No visible caption while collapsed…
-      expect(find.text('Quick Log'), findsNothing);
+      // The caption is REVEALED, not inserted — so while collapsed the Text
+      // still exists in the tree, clipped to zero width and fully
+      // transparent. Asserting `findsNothing` would be asserting an
+      // implementation detail (two swapped subtrees) that we deliberately
+      // replaced with one interpolated widget, because swapping is what made
+      // the transition jump. Assert the VISIBLE result instead: it occupies
+      // no width and paints nothing.
+      final capAlign = tester.widget<Align>(find.ancestor(
+        of: find.text('Quick Log'), matching: find.byType(Align)).first);
+      expect(capAlign.widthFactor, 0.0);
+      expect(
+        tester.widget<Opacity>(find.ancestor(
+            of: find.text('Quick Log'), matching: find.byType(Opacity)).first)
+            .opacity,
+        0.0,
+      );
       // …but the semantics tree still announces it as a labelled button —
       // identical to the expanded-state label above, so a screen-reader user
       // never hears the control change identity when the FAB collapses.
@@ -206,7 +220,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text(long), findsNothing);
+      // Width is what matters: however long the localisation, the collapsed
+      // control is a circle. The caption contributes zero because its Align
+      // widthFactor is 0 — see the note in the collapsed a11y test above.
       final size = tester.getSize(find.byType(QuickLogFabChrome));
       expect(size.width, lessThanOrEqualTo(size.height + 1));
     });

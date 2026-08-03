@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -140,87 +142,95 @@ class QuickLogFabChrome extends StatelessWidget {
     final reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
-    final decoration = BoxDecoration(
-      color: tc.surface,
-      borderRadius: BorderRadius.circular(
-        expanded ? kQuickLogFabRadius : kQuickLogFabHeight / 2,
-      ),
-      // Single accent source — never a literal. See
-      // core/theme/accent_color_provider.dart.
-      border: Border.all(color: tc.accent, width: 1.5),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
-          blurRadius: 24,
-          offset: const Offset(0, 10),
+    // ONE continuously-interpolated widget, not two subtrees swapped inside
+    // an AnimatedSize. The previous version animated only the outer box size
+    // while four things changed instantly at the switch:
+    //   · corner radius jumped 22 → 6
+    //   · icon jumped 20 → 24
+    //   · the caption appeared at full opacity
+    //   · the padding snapped 0 → 14
+    // AnimatedSize cannot tween across a child swap, so the box slid while
+    // its contents cut — which is exactly what reads as "not smooth".
+    // Everything below is driven by a single t (0 = circle, 1 = pill).
+    Widget buildAt(double t) {
+      final radius =
+          ui.lerpDouble(kQuickLogFabHeight / 2, kQuickLogFabRadius, t)!;
+      return Container(
+        height: kQuickLogFabHeight,
+        // minWidth holds the 44pt circle at t=0 and releases as it expands, so
+        // the pill hugs its caption at t=1. NOT `alignment:` — a Container
+        // with an alignment fills bounded constraints, which is what made the
+        // pill span the whole screen once already.
+        constraints: BoxConstraints(
+          minWidth: ui.lerpDouble(kQuickLogFabHeight, 0, t)!,
         ),
-      ],
-    );
-
-    final sizedChild = expanded
-        // NO `alignment:` here. A Container with an alignment expands to FILL
-        // its constraints when they are bounded — and the shell wraps this in
-        // a ConstrainedBox(maxWidth: screenWidth - 48), so setting one made
-        // the pill span the entire screen instead of hugging its caption. The
-        // Row's MainAxisSize.min is what sizes it; the collapsed branch below
-        // can keep its alignment because it has an explicit width.
-        ? Container(
-            height: kQuickLogFabHeight,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: decoration,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add_rounded, size: 20, color: tc.textPrimary),
-                const SizedBox(width: 6),
-                // Adaptive, never truncated (E2E register row 16 + 108). A
-                // bare `maxLines: 1` Text in a Row overflows (yellow stripe)
-                // as soon as the localised caption or the user's text scale
-                // outgrows the remaining width — and the obvious patch,
-                // `TextOverflow.ellipsis`, would clip the caption to
-                // "Quick…", exactly the truncation-on-the-identifying-word
-                // defect row 108 is about. Flexible bounds the width,
-                // FittedBox.scaleDown shrinks the glyphs to fit instead of
-                // deleting them, so every letter survives at every locale
-                // and every text scale.
-                Flexible(
-                  // ExcludeSemantics: the caption is already announced by
-                  // the wrapping [Semantics] node. Without this a screen
-                  // reader reads "Quick Log, Quick Log, button".
-                  child: ExcludeSemantics(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: AlignmentDirectional.centerStart,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        softWrap: false,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.1,
-                          color: tc.textPrimary,
+        padding: EdgeInsets.symmetric(horizontal: ui.lerpDouble(0, 14, t)!),
+        decoration: BoxDecoration(
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(radius),
+          // Single accent source — never a literal. See
+          // core/theme/accent_color_provider.dart.
+          border: Border.all(color: tc.accent, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Constant size in both states — a 20↔24 jump is small but it is
+            // the element the eye is actually tracking through the change.
+            Icon(Icons.add_rounded, size: 22, color: tc.textPrimary),
+            // The caption is REVEALED rather than inserted: ClipRect + a
+            // widthFactor that grows with t wipes it out from the icon, and
+            // the opacity ramp keeps it from strobing at the very start.
+            Flexible(
+              child: ClipRect(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  widthFactor: t,
+                  child: Opacity(
+                    // Squared so the text stays faint until the box has
+                    // actually made room, instead of racing the width.
+                    opacity: (t * t).clamp(0.0, 1.0),
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 7),
+                      // ExcludeSemantics: the caption is already announced by
+                      // the wrapping [Semantics] node, or a screen reader
+                      // reads "Quick Log, Quick Log, button".
+                      child: ExcludeSemantics(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: AlignmentDirectional.centerStart,
+                          // Scales rather than ellipsising — clipping this to
+                          // "Quick…" is the row-108 truncation defect.
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.1,
+                              color: tc.textPrimary,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          )
-        : Container(
-            height: kQuickLogFabHeight,
-            width: kQuickLogFabHeight,
-            alignment: Alignment.center,
-            decoration: decoration,
-            // Icon only. The labelled pill is ~3x this width, which is why
-            // it covers "View all", the habit rows and the workout hero's
-            // title (E2E #177) whenever content is moving under it — no
-            // offset could fix a control that wide floating over scrolling
-            // content. `label` is still announced by the wrapping
-            // [Semantics], so screen-reader users lose nothing.
-            child: Icon(Icons.add_rounded, size: 24, color: tc.textPrimary),
-          );
+          ],
+        ),
+      );
+    }
 
     return Semantics(
       button: true,
@@ -231,28 +241,19 @@ class QuickLogFabChrome extends StatelessWidget {
           HapticFeedback.selectionClick();
           onTap();
         },
-        // Grows/shrinks from the right edge — the button is right-anchored
-        // (`Positioned(right: 24, ...)` in main_shell.dart) — so collapsing
-        // never shifts the tap target's right edge, only its left edge.
-        //
-        // Reduced motion skips AnimatedSize entirely rather than driving it
-        // with `duration: Duration.zero`: RenderAnimatedSize restarts its
-        // internal AnimationController mid-layout when the child's size
-        // changes, and a zero-duration controller completes synchronously
-        // inside that same layout pass — Flutter's layout protocol forbids a
-        // render object dirtying itself while it's still being laid out, so
-        // that path throws ("A RenderAnimatedSize was mutated in its own
-        // performLayout implementation"). Skipping the animated wrapper
-        // altogether renders the target size directly, with the same net
-        // "snap" effect and no framework-level landmine.
-        child: reduceMotion
-            ? sizedChild
-            : AnimatedSize(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOutCubic,
-                alignment: Alignment.centerRight,
-                child: sizedChild,
-              ),
+        // Grows and shrinks from the right edge — the button is right-anchored
+        // in main_shell.dart — so the tap target's right edge never moves.
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(end: expanded ? 1.0 : 0.0),
+          duration:
+              reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          builder: (context, t, _) => Align(
+            alignment: AlignmentDirectional.centerEnd,
+            widthFactor: 1,
+            child: buildAt(t),
+          ),
+        ),
       ),
     );
   }
