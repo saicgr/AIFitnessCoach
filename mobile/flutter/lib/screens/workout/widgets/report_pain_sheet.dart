@@ -19,10 +19,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/avoided_provider.dart';
+import '../../../data/models/workout.dart';
 import '../../../data/services/api_client.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../providers/active_workout_live_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Pain severity ↔ encoded reason. Kept in sync with the avoided-list
@@ -84,12 +86,21 @@ class ReportPainSheet extends ConsumerStatefulWidget {
   /// `/workouts/{id}/reshape-for-readiness`. Null falls back to avoid-only.
   final String? workoutId;
 
+  /// The caller's current view of the active workout (post any prior swap/add
+  /// override), used ONLY as the base for #179's re-sync: if the engine
+  /// reshapes the session we need something to `copyWith` the new exercise
+  /// list onto before publishing back to [activeWorkoutLiveProvider]. Null
+  /// falls back to skipping the re-sync (avoid-list + server write still
+  /// happen; only the in-memory session mirror is skipped).
+  final Workout? activeWorkout;
+
   const ReportPainSheet({
     super.key,
     required this.exerciseName,
     this.exerciseId,
     this.bodyPart,
     this.workoutId,
+    this.activeWorkout,
   });
 
   static Future<bool> show(
@@ -98,6 +109,7 @@ class ReportPainSheet extends ConsumerStatefulWidget {
     String? exerciseId,
     String? bodyPart,
     String? workoutId,
+    Workout? activeWorkout,
   }) async {
     final result = await showGlassSheet<bool>(
       context: context,
@@ -107,6 +119,7 @@ class ReportPainSheet extends ConsumerStatefulWidget {
           exerciseId: exerciseId,
           bodyPart: bodyPart,
           workoutId: workoutId,
+          activeWorkout: activeWorkout,
         ),
       ),
     );
@@ -194,16 +207,36 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
           final reasons = (data['reasons'] as List<dynamic>? ?? const [])
               .map((e) => e.toString())
               .toList();
+          final reshapedExercises =
+              (data['reshaped_exercises'] as List<dynamic>? ?? const [])
+                  .whereType<Map>()
+                  .map((e) => Map<String, dynamic>.from(e))
+                  .toList();
           // The endpoint doesn't return the new duration/calories (only
           // persists them server-side), but it does echo both exercise
           // lists — that's the one real before/after number available here.
           _swapExercisesBefore =
               (data['original_exercises'] as List<dynamic>? ?? const [])
                   .length;
-          _swapExercisesAfter =
-              (data['reshaped_exercises'] as List<dynamic>? ?? const [])
-                  .length;
+          _swapExercisesAfter = reshapedExercises.length;
           _swapReason = reasons.isNotEmpty ? reasons.first : null;
+
+          // #179: re-sync the in-memory session the same way the sibling
+          // exercise-swap feature does, so the screen behind this sheet's
+          // disclosure (#178) actually shows the new exercise list instead
+          // of the stale one. Prefer whatever's already live (a prior
+          // swap/add this session) over the caller's snapshot, matching
+          // ActiveWorkoutEntry's own live-vs-passed-in precedence. Only the
+          // exercise list is touched — duration/calories are intentionally
+          // left as-is (not re-derived client-side; see #178).
+          final live = ref.read(activeWorkoutLiveProvider);
+          final base = (live != null && live.id == wid)
+              ? live
+              : widget.activeWorkout;
+          if (base != null) {
+            ref.read(activeWorkoutLiveProvider.notifier).state =
+                base.copyWith(exercisesJson: reshapedExercises);
+          }
         }
       } catch (_) {
         // Non-fatal: the exercise is still avoided for future generations.

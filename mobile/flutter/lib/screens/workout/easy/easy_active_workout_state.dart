@@ -1662,6 +1662,11 @@ class EasyActiveWorkoutScreenState
           bodyPart: exercise.muscleGroup ?? exercise.bodyPart,
           // Active workout id → swap the aggravators at the ≥4/10 threshold (#3).
           workoutId: widget.workout.id,
+          // #179: base for the sheet's own live-provider re-sync if the
+          // engine reshapes today's session. The sheet prefers whatever's
+          // already in activeWorkoutLiveProvider (e.g. an earlier swap this
+          // session) over this snapshot when the ids match.
+          activeWorkout: widget.workout,
         );
         // The avoided-list provider already invalidates today/all-workouts
         // caches; for the *current* session we leave the exercise in place
