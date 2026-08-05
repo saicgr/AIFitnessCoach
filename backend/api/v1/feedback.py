@@ -969,14 +969,18 @@ async def _assemble_recap_enrichment(
     small, fixed number of queries. Every piece fails open to empty so an old
     client (or a missing log row) still gets a working recap.
 
-    Returns (exercise_contexts, injury_context, rest_analysis, session_signals).
+    Returns (exercise_contexts, injury_context, rest_analysis, session_signals,
+    actual_completion).
     """
     from services.exercise_context_service import (
         assemble_exercise_contexts,
         fetch_active_injury_context,
         fetch_recent_form_analysis,
     )
-    from services.workout_feedback_rag_service import summarize_session_signals
+    from services.workout_feedback_rag_service import (
+        derive_actual_session_completion,
+        summarize_session_signals,
+    )
 
     ex_names = [e.get("name") for e in exercises_data if e.get("name")][:8]
     gym_id = body.gym_profile_id
@@ -1089,7 +1093,19 @@ async def _assemble_recap_enrichment(
     except Exception as e:
         logger.warning(f"[recap] session signal distill failed: {e}")
 
-    return exercise_contexts, injury_context, rest_analysis, session_signals
+    # --- actual completion ground truth (NO DB — derived from sets_json) -----
+    # This is what the recap guard uses to stop the "completed all prescribed
+    # sets" claim on a session where nothing was actually logged — it must come
+    # from the durable per-set store, never from body.exercises/planned_exercises
+    # (the client-supplied PLAN, which looks 100% "complete" regardless of
+    # whether any set actually holds real reps/duration/distance).
+    actual_completion = None
+    try:
+        actual_completion = derive_actual_session_completion(sets_json)
+    except Exception as e:
+        logger.warning(f"[recap] actual completion derivation failed: {e}")
+
+    return exercise_contexts, injury_context, rest_analysis, session_signals, actual_completion
 
 
 @router.get("/recap/{workout_id}")
@@ -1205,6 +1221,7 @@ async def generate_recap_endpoint(
             injury_context,
             rest_analysis,
             session_signals,
+            actual_completion,
         ) = await _assemble_recap_enrichment(db, user_id, body, exercises_data)
 
         recap = await generate_workout_recap(
@@ -1220,6 +1237,7 @@ async def generate_recap_endpoint(
             rest_analysis=rest_analysis,
             session_signals=session_signals,
             use_kg=body.use_kg,
+            actual_completion=actual_completion,
         )
 
         # Split derived denormalized fields (prefixed with _) from the stored payload.
@@ -1832,12 +1850,17 @@ async def generate_detailed_summary_endpoint(
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        # Assemble the rich grounding context (B/A2/A3) before generating.
+        # Assemble the rich grounding context (B/A2/A3) before generating. This
+        # card sits on the same post-workout screen as the /recap card, directly
+        # below it, so it gets the SAME completion-truth guard — a user must
+        # never see an honest recap next to a fabricated "AI Summary" for the
+        # same session.
         (
             exercise_contexts,
             injury_context,
             rest_analysis,
             session_signals,
+            actual_completion,
         ) = await _assemble_recap_enrichment(db, user_id, body, exercises_data)
 
         result = await generate_detailed_workout_summary(
@@ -1853,6 +1876,7 @@ async def generate_detailed_summary_endpoint(
             rest_analysis=rest_analysis,
             session_signals=session_signals,
             use_kg=body.use_kg,
+            actual_completion=actual_completion,
         )
         summary_md = result["summary_markdown"]
 

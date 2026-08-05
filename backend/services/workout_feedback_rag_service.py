@@ -14,6 +14,7 @@ The AI Coach uses this data to provide personalized, short feedback after each w
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 import asyncio
+import re
 import uuid
 import json
 
@@ -1336,6 +1337,157 @@ def _find_last_comparable_session(
     return candidates[0] if candidates else None
 
 
+# =============================================================================
+# Ground-truth completion (guards the recap against the PLAN, not the LOG)
+#
+# `current_session['exercises']` / `['planned_exercises']` (client-supplied) are
+# the session's PLAN — they reflect what was PRESCRIBED, not what was actually
+# performed, and a workout marked complete with every set left at reps=0 still
+# reports 100% "exercises completed" through that lens. `sets_json` (the
+# durable per-set store, see workout_log_finalize.py) is the only ground truth
+# for what was actually logged. This block derives real completion stats from
+# it so the recap can be guarded independently of whatever the plan says.
+# =============================================================================
+
+
+def derive_actual_session_completion(
+    sets_json: Optional[List[Dict[str, Any]]],
+) -> Optional[Dict[str, Any]]:
+    """Ground truth for how much of the session was ACTUALLY logged.
+
+    Reads `sets_json` (each entry: exercise_name, is_completed, reps /
+    reps_completed, set_duration_seconds, distance_meters — the shape
+    `workout_log_finalize.build_sets_json_from_performance_logs` writes).
+    Warmup sets are excluded (they're not prescribed working sets).
+
+    A set can be marked `is_completed: true` with every number left at its
+    zero default — that is NOT logged work, so "completed" here additionally
+    requires at least one of reps/duration/distance to be > 0.
+
+    Returns None when there's no `sets_json` to derive from (caller must not
+    guard on an absence of evidence — fail open, not closed). Otherwise:
+      - total_sets: prescribed working sets in the session
+      - completed_sets: sets marked is_completed (defaults True — mirrors the
+        DB reconstruction, which treats a missing flag as completed)
+      - completed_with_real_work: completed sets with real reps/duration/distance
+      - has_real_logged_work: completed_with_real_work > 0
+      - all_completed: completed_with_real_work == total_sets > 0
+    """
+    if sets_json is None:
+        return None
+
+    def _set_type(s: Dict[str, Any]) -> str:
+        return (s.get("set_type") or s.get("setType") or "working").lower()
+
+    working = [
+        s for s in sets_json
+        if isinstance(s, dict) and _set_type(s) not in ("warmup", "warm_up", "warm-up")
+    ]
+    total = len(working)
+    if total == 0:
+        return {
+            "total_sets": 0,
+            "completed_sets": 0,
+            "completed_with_real_work": 0,
+            "has_real_logged_work": False,
+            "all_completed": False,
+        }
+
+    def _num(value: Any) -> float:
+        try:
+            return float(value) if value is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
+    completed = [s for s in working if s.get("is_completed", True) is not False]
+    real_work = [
+        s for s in completed
+        if _num(s.get("reps") if s.get("reps") is not None else s.get("reps_completed")) > 0
+        or _num(s.get("set_duration_seconds") or s.get("duration_seconds")) > 0
+        or _num(s.get("distance_meters") or s.get("distance_km")) > 0
+    ]
+    return {
+        "total_sets": total,
+        "completed_sets": len(completed),
+        "completed_with_real_work": len(real_work),
+        "has_real_logged_work": len(real_work) > 0,
+        "all_completed": len(real_work) == total,
+    }
+
+
+_ALL_QUANTIFIER_RE = re.compile(r"\b(all|every)\b", re.IGNORECASE)
+_COMPLETION_NOUN_RE = re.compile(
+    r"\b(sets?|exercises?|reps?|prescribed|movements?|routine)\b", re.IGNORECASE
+)
+
+
+def _claims_full_completion(text: Optional[str]) -> bool:
+    """True when a recap sentence generalizes to 'all sets/exercises completed'.
+
+    Heuristic, not a parser — good enough to gate a single short sentence: an
+    "all"/"every" quantifier co-occurring with a completion noun ("all
+    prescribed sets", "every exercise", "all five exercises").
+    """
+    if not text:
+        return False
+    return bool(_ALL_QUANTIFIER_RE.search(text) and _COMPLETION_NOUN_RE.search(text))
+
+
+# Shared by BOTH post-workout LLM surfaces (`generate_workout_recap` and
+# `generate_detailed_workout_summary`) so the "what counts as no/partial real
+# logged work" definition — and its ground-truth prompt phrasing — lives in
+# exactly one place instead of drifting between the two.
+
+
+def _completion_ground_truth_flags(
+    actual_completion: Optional[Dict[str, Any]],
+) -> "tuple[bool, bool]":
+    """(no_real_logged_work, partial_completion) from a `derive_actual_session_completion`
+    result. Both False when `actual_completion` is None (no evidence => no guard)."""
+    no_real_logged_work = bool(actual_completion) and not actual_completion.get(
+        "has_real_logged_work"
+    )
+    partial_completion = (
+        bool(actual_completion)
+        and actual_completion.get("has_real_logged_work")
+        and not actual_completion.get("all_completed")
+    )
+    return no_real_logged_work, partial_completion
+
+
+def _completion_ground_truth_block(
+    actual_completion: Optional[Dict[str, Any]],
+    no_real_logged_work: bool,
+    partial_completion: bool,
+) -> str:
+    """The ACTUAL LOGGED COMPLETION prompt block — ground truth from sets_json
+    that overrides whatever completion analysis was computed from the PLAN
+    (current_session['exercises']/['planned_exercises'])."""
+    if not actual_completion:
+        return ""
+    total = actual_completion.get("total_sets", 0)
+    real = actual_completion.get("completed_with_real_work", 0)
+    if no_real_logged_work:
+        return (
+            "ACTUAL LOGGED COMPLETION (ground truth — overrides any completion "
+            f"rate above): 0 of {total} prescribed sets have any real logged work "
+            "(reps, duration, and distance are all zero, even on sets marked done). "
+            "Do NOT say any set, rep, or exercise was completed, and do NOT describe "
+            "effort or execution as consistent — there is nothing to describe."
+        )
+    if partial_completion:
+        return (
+            "ACTUAL LOGGED COMPLETION (ground truth — overrides any completion rate "
+            f"above): only {real} of {total} prescribed sets have real logged work. "
+            "Do NOT say 'all sets' or 'all exercises' were completed — that is false. "
+            "Describe only the sets that actually have logged work."
+        )
+    return (
+        f"ACTUAL LOGGED COMPLETION: all {total} prescribed sets have real "
+        "logged work."
+    )
+
+
 async def generate_workout_recap(
     gemini_service: GeminiService,
     rag_service: WorkoutFeedbackRAGService,
@@ -1349,6 +1501,7 @@ async def generate_workout_recap(
     rest_analysis: Optional[Dict[str, Any]] = None,
     session_signals: Optional[List[str]] = None,
     use_kg: bool = False,
+    actual_completion: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Generate a STRUCTURED post-workout recap (B8).
 
@@ -1370,6 +1523,13 @@ async def generate_workout_recap(
         rest_analysis: {name -> {avg_actual_s, avg_prescribed_s}} for the REST block.
         session_signals: distilled active-workout signals (see summarize_session_signals).
         use_kg: when False, weights in prompt blocks are phrased in lb.
+        actual_completion: output of `derive_actual_session_completion(sets_json)` —
+            ground truth for what was actually logged, as opposed to
+            `current_session['exercises']`/`['planned_exercises']` which reflect the
+            PLAN. When provided, both conditions the prompt AND deterministically
+            guards `what_stood_out`/`headline`/`coaching_cue` on the way out so the
+            model can never claim sets/exercises were completed that weren't. None
+            skips the guard (no evidence to guard on — fails open, not closed).
 
     Returns:
         Dict matching WorkoutAiRecapPayload, PLUS denormalized derived fields the
@@ -1492,10 +1652,30 @@ async def generate_workout_recap(
     if total_workouts_completed:
         consistency_line = f"Lifetime workouts completed: {total_workouts_completed}."
 
+    # --- ACTUAL COMPLETION ground truth (overrides the plan) -------------------
+    # `context` above (format_feedback_context) computes a "completion rate" from
+    # current_session['exercises'] vs ['planned_exercises'] — that's the PLAN, and
+    # a workout marked complete with every set left at reps=0 still looks like
+    # 100% completion through that lens. This block feeds the model the REAL
+    # per-set truth so it stops inventing "completed all prescribed sets" /
+    # "consistent execution" claims for sessions with no logged work.
+    no_real_logged_work, partial_completion = _completion_ground_truth_flags(actual_completion)
+    completion_block = _completion_ground_truth_block(
+        actual_completion, no_real_logged_work, partial_completion
+    )
+
     zero_load_rule = (
         " This session has NO logged load — NEVER write '0kg', 'baseline', or a "
         "volume number; frame it purely as a completed session and what to do next."
         if marked_done_no_load else ""
+    )
+    completion_rule = (
+        " NEVER claim a set, rep, or exercise was completed unless the ACTUAL "
+        "LOGGED COMPLETION line confirms it — a workout can be marked done in the "
+        "app with nothing actually logged, and 'all sets/exercises' requires the "
+        "count to match exactly."
+        if actual_completion is not None
+        else ""
     )
     system_prompt = (
         "You are an elite strength coach writing a SHORT, data-grounded recap of a "
@@ -1504,7 +1684,8 @@ async def generate_workout_recap(
         "or rest figures. When an INJURY/PAIN block is present, respect it: never "
         "tell the client to push load on an affected movement. "
         "No emojis. No markdown. The coaching cue must be ONE concrete, actionable "
-        "instruction for the next session, tied to the actual data." + zero_load_rule
+        "instruction for the next session, tied to the actual data."
+        + zero_load_rule + completion_rule
     )
 
     extra_blocks = "\n\n".join(
@@ -1518,6 +1699,8 @@ async def generate_workout_recap(
 VOLUME COMPARISON (use these exact numbers):
 {vol_line}
 
+{completion_block}
+
 {extra_blocks}
 
 {pr_lines}
@@ -1528,7 +1711,7 @@ VOLUME COMPARISON (use these exact numbers):
 
 Requirements:
 - headline: punchy one-liner about THIS session.
-- what_stood_out: 1-3 specific highlights (a PR / near-PR, weak point progressed, consistency streak, strongest lift, completion). Each one short sentence.
+- what_stood_out: 1-3 specific highlights (a PR / near-PR, weak point progressed, consistency streak, strongest lift, completion). Each one short sentence. Grounded ONLY in ACTUAL LOGGED COMPLETION above when present.
 - volume_comparison: fill from the VOLUME COMPARISON numbers above (do not change them).
 - prs: only the PRs listed above (empty if none).
 - coaching_cue: EXACTLY ONE concrete cue for next time, grounded in the data{' (respect any injury/pain noted above)' if injury_block else ''}.
@@ -1587,6 +1770,43 @@ Requirements:
     # If the user logged no notes, never fabricate a notes reference.
     if not has_notes:
         payload_dict["notes_reference"] = None
+
+    # --- DETERMINISTIC COMPLETION GUARD (load-bearing — runs on BOTH the LLM
+    # and the deterministic-fallback path, and REPLACES content rather than
+    # trusting the model to have honored the prompt rule above). A prompt
+    # instruction alone is not a gate: the model can still write "completed all
+    # prescribed sets" for a session where every set has reps=0, because
+    # `context` (format_feedback_context) computes its completion analysis from
+    # the client-supplied PLAN (exercises/planned_exercises), not from what was
+    # actually logged. This rewrites the recap from the sets_json ground truth
+    # instead, so a fabricated claim can never reach the client regardless of
+    # what came back from the model.
+    workout_name = current_session.get("workout_name") or "Workout"
+    if no_real_logged_work:
+        payload_dict["headline"] = f"{workout_name} marked complete — no sets logged."
+        payload_dict["what_stood_out"] = [
+            "Marked complete with no logged sets this session — no reps, weight, "
+            "or duration were recorded, so there's nothing to report yet."
+        ]
+        payload_dict["coaching_cue"] = (
+            "Log your sets as you go next time so this recap can show real "
+            "volume and progress."
+        )
+        payload_dict["prs"] = []
+    elif partial_completion:
+        real = actual_completion.get("completed_with_real_work", 0)
+        total = actual_completion.get("total_sets", 0)
+        stood_out = [
+            item for item in (payload_dict.get("what_stood_out") or [])
+            if not _claims_full_completion(item)
+        ]
+        if not stood_out:
+            stood_out = [
+                f"Logged real work on {real} of {total} prescribed sets this session."
+            ]
+        payload_dict["what_stood_out"] = stood_out[:3]
+        if _claims_full_completion(payload_dict.get("headline")):
+            payload_dict["headline"] = f"{workout_name} — partial session logged."
 
     referenced_notes = has_notes and bool(payload_dict.get("notes_reference"))
 
@@ -2090,6 +2310,80 @@ def _deterministic_detailed_summary(
     )
 
 
+# =============================================================================
+# Completion-truth guard for the detailed summary — the markdown-prose sibling
+# of the recap's structured guard. Same bug class: `context` and the COMPLETION
+# line below are both computed from the session PLAN, so a workout marked done
+# with every set at reps=0 still reads as fully completed. This surface can't
+# reuse `_claims_full_completion` sentence-by-sentence the way the recap's
+# `what_stood_out` list does — it's free-form multi-bullet markdown — so the
+# guard operates at whole-body (no real work at all) or bullet-line (partial)
+# granularity instead.
+# =============================================================================
+
+
+def _deterministic_no_log_detailed_summary(current_session: Dict[str, Any]) -> str:
+    """Honest, SHORT four-section markdown for a session with ZERO real logged
+    work. Every bullet says the same true thing rather than inventing distinct
+    strengths/weaknesses/improvements for a session with no data to critique —
+    a short honest summary is the correct output here, not a padded one."""
+    name = current_session.get("workout_name") or "This workout"
+    nothing_line = (
+        f"{name} was marked complete with no logged sets — no reps, weight, or "
+        "duration were recorded, so there's nothing here to strengthen or critique."
+    )
+    next_line = (
+        "Log your sets as you go next time so this summary can be built from "
+        "real numbers."
+    )
+    return (
+        f"**Strengths**\n- {nothing_line}\n\n"
+        f"**Weaknesses**\n- {nothing_line}\n\n"
+        f"**What to improve**\n- {next_line}\n\n"
+        f"**What to do next**\n- {next_line}"
+    )
+
+
+def _strip_completion_overclaims_from_sections(
+    markdown: str, actual_completion: Dict[str, Any]
+) -> str:
+    """Bullet-level guard for the PARTIAL-completion case: drop any bullet, in
+    any section, that generalizes to 'all sets/exercises completed' when the
+    ground truth says otherwise. A targeted strike rather than a rewrite — every
+    other bullet (including honest ones about the sets that DID get logged)
+    survives untouched. A section left with zero bullets after filtering gets
+    one honest replacement line instead of being left empty.
+    """
+    real = actual_completion.get("completed_with_real_work", 0)
+    total = actual_completion.get("total_sets", 0)
+    honest_fallback = f"- Logged real work on {real} of {total} prescribed sets this session."
+
+    def _section_header(line: str) -> bool:
+        stripped = line.strip()
+        return any(stripped.startswith(f"**{s}**") for s in _DETAILED_SECTIONS)
+
+    out_lines: List[str] = []
+    in_section = False
+    section_has_bullet = False
+    for line in markdown.split("\n"):
+        if _section_header(line):
+            if in_section and not section_has_bullet:
+                out_lines.append(honest_fallback)
+            out_lines.append(line)
+            in_section = True
+            section_has_bullet = False
+            continue
+        stripped = line.strip()
+        if stripped.startswith("-") and _claims_full_completion(stripped):
+            continue  # drop the overclaiming bullet — everything else survives
+        if stripped.startswith("-"):
+            section_has_bullet = True
+        out_lines.append(line)
+    if in_section and not section_has_bullet:
+        out_lines.append(honest_fallback)
+    return "\n".join(out_lines)
+
+
 async def generate_detailed_workout_summary(
     gemini_service: GeminiService,
     rag_service: WorkoutFeedbackRAGService,
@@ -2103,6 +2397,7 @@ async def generate_detailed_workout_summary(
     rest_analysis: Optional[Dict[str, Any]] = None,
     session_signals: Optional[List[str]] = None,
     use_kg: bool = False,
+    actual_completion: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Longer, strict, honest post-workout breakdown as sectioned MARKDOWN.
 
@@ -2112,6 +2407,17 @@ async def generate_detailed_workout_summary(
     rest, RIR). FAILS OPEN to a deterministic structured summary.
 
     Reuses the same comparison machinery as `generate_workout_recap`.
+
+    Args:
+        actual_completion: output of `derive_actual_session_completion(sets_json)`
+            — see `generate_workout_recap`'s docstring. This surface sits on the
+            same post-workout screen as the recap card, directly below it, so it
+            is guarded against the SAME bug class: a workout marked complete with
+            no real logged work must not read as a completed session with
+            strengths/weaknesses to critique. Unlike the recap's structured
+            `what_stood_out` list, this is free-form markdown, so the guard
+            operates on the whole body (no real work at all) or per-bullet-line
+            (partial completion) rather than per-sentence. None skips the guard.
 
     Returns:
         {"summary_markdown": str, "is_fallback": bool}. Never raises.
@@ -2238,11 +2544,29 @@ async def generate_detailed_workout_summary(
     if total_workouts_completed:
         consistency_line = f"Lifetime workouts completed: {total_workouts_completed}."
 
+    # --- ACTUAL COMPLETION ground truth (overrides the plan) -------------------
+    # Same bug class as the recap: COMPLETION below is computed from the session
+    # PLAN (exercises/planned_exercises), so a workout marked done with every set
+    # at reps=0 still reads as "100% completed". This is the real per-set truth.
+    no_real_logged_work, partial_completion = _completion_ground_truth_flags(actual_completion)
+    completion_block = _completion_ground_truth_block(
+        actual_completion, no_real_logged_work, partial_completion
+    )
+
     zero_load_rule = (
         " This session has NO logged load — NEVER write '0kg', 'baseline', or a "
         "volume figure anywhere; frame strengths/weaknesses around completion, "
         "adherence, and logging discipline."
         if marked_done_no_load else ""
+    )
+    completion_rule = (
+        " NEVER claim a set, rep, or exercise was completed unless the ACTUAL "
+        "LOGGED COMPLETION line confirms it — a workout can be marked done in the "
+        "app with nothing actually logged, and 'all sets/exercises' requires the "
+        "count to match exactly. The COMPLETION line below reflects the session "
+        "PLAN, not what was logged — ACTUAL LOGGED COMPLETION is the ground truth."
+        if actual_completion is not None
+        else ""
     )
     system_prompt = (
         "You are an elite strength coach writing a HONEST, data-grounded breakdown "
@@ -2255,7 +2579,7 @@ async def generate_detailed_workout_summary(
         "**Strengths**\n**Weaknesses**\n**What to improve**\n**What to do next**\n"
         "Do not add other sections or headers. No emojis. Keep each bullet to one "
         "sentence. 'What to do next' must contain concrete, actionable steps tied "
-        "to the data." + zero_load_rule
+        "to the data." + zero_load_rule + completion_rule
     )
 
     user_prompt = f"""Write the four-section breakdown of this workout, grounded only in the data below.
@@ -2267,7 +2591,9 @@ async def generate_detailed_workout_summary(
 VOLUME COMPARISON (use these exact numbers):
 {vol_line}
 
-COMPLETION: {len(exercises)}/{total_planned} exercises completed ({completion_rate:.0f}%).{(' Skipped: ' + ', '.join(skipped_names) + '.') if skipped_names else ''}
+COMPLETION (per session PLAN — not evidence of logged work, see ACTUAL LOGGED COMPLETION below): {len(exercises)}/{total_planned} exercises had a plan entry ({completion_rate:.0f}%).{(' Skipped: ' + ', '.join(skipped_names) + '.') if skipped_names else ''}
+
+{completion_block}
 
 {pr_lines}
 
@@ -2277,6 +2603,7 @@ COMPLETION: {len(exercises)}/{total_planned} exercises completed ({completion_ra
 
 Output the four bold sections (**Strengths**, **Weaknesses**, **What to improve**, **What to do next**), each with 1-4 one-sentence bullets, honest and specific."""
 
+    is_fallback = False
     try:
         response = await gemini_generate_with_retry(
             model=gemini_service.model,
@@ -2295,13 +2622,29 @@ Output the four bold sections (**Strengths**, **Weaknesses**, **What to improve*
         if not text or not all(f"**{s}**" in text for s in _DETAILED_SECTIONS):
             raise ValueError("Detailed summary missing required sections")
         logger.info(f"[detailed] Generated for user {user_id} (Δvol={delta_pct})")
-        return {"summary_markdown": text, "is_fallback": False}
     except Exception as e:
         logger.warning(f"[detailed] LLM summary failed, using deterministic fallback: {e}")
-        return {
-            "summary_markdown": _deterministic_detailed_summary(
-                current_session, current_volume, previous_volume, delta_pct,
-                comparable_name, earned_prs, skipped_names, completion_rate,
-            ),
-            "is_fallback": True,
-        }
+        text = _deterministic_detailed_summary(
+            current_session, current_volume, previous_volume, delta_pct,
+            comparable_name, earned_prs, skipped_names, completion_rate,
+        )
+        is_fallback = True
+
+    # --- DETERMINISTIC COMPLETION GUARD (load-bearing — runs on BOTH the LLM
+    # and the deterministic-fallback path, and REPLACES/EDITS content rather
+    # than trusting the model — or `_deterministic_detailed_summary`, which
+    # also derives its "completed X sets" language from the client-supplied
+    # PLAN — to have honored the prompt rule above). Mirrors the recap's guard;
+    # see that docstring for why a prompt instruction alone is not a gate.
+    if no_real_logged_work:
+        # Whole-body override: there is no real logged work to critique, so a
+        # much shorter, honest summary IS the correct output — not a padded one.
+        # This fully replaces whatever the model (or the deterministic-fallback
+        # helper, which has the same PLAN-based blind spot) produced, so the
+        # result is deterministic regardless of which path got us here.
+        text = _deterministic_no_log_detailed_summary(current_session)
+        is_fallback = True
+    elif partial_completion:
+        text = _strip_completion_overclaims_from_sections(text, actual_completion)
+
+    return {"summary_markdown": text, "is_fallback": is_fallback}
