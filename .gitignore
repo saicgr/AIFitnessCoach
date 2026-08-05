@@ -156,3 +156,7 @@ docs/planning/redesign-2026-06/backup-shareables/
 docs/planning/library-redesign-2026-06/backup/
 docs/planning/redesign-2026-07/backup/
 docs/planning/redesign-2026-08/backup/
+
+# E2E sweep screenshots — 342MB of PNGs; kept on disk for the issues table,
+# never in git history (they do not delta-compress and would bloat the repo forever).
+docs/qa/screenshots/**/*.png
