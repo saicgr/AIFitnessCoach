@@ -15,6 +15,16 @@ import '../../../../data/providers/combined_health_provider.dart';
 import '../../../../data/providers/metrics_carousel_data_provider.dart';
 import 'metrics_carousel_painters.dart';
 
+/// Shell geometry shared with the other Home cards this sits between — the
+/// challenge card and the program card (`setup_checklist_card.dart` uses
+/// radius 16 / `EdgeInsets.all(14)`). Named here so the carousel cannot
+/// silently drift off them again.
+const double kHomeCardRadius = 16;
+const double kHomeCardPadding = 14;
+
+/// Extra bottom inset for the page-dot row painted inside the card.
+const double kCarouselDotsAllowance = 20;
+
 const double kCarouselCardWidth = 330;
 const double kCarouselCardHeightNormal = 170;
 const double kCarouselCardHeightTall = 240;
@@ -51,7 +61,12 @@ class CarouselCardShell extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: c.surface,
-            borderRadius: BorderRadius.circular(14),
+            // Matches the Home cards this sits between (the challenge card and
+            // the program card both use radius 16 / padding 14). It used to be
+            // radius 14 / padding 13 — off by one on both, and off the 8px
+            // grid, which is exactly why the card read as "inconsistent"
+            // against its neighbours without an obvious cause.
+            borderRadius: BorderRadius.circular(kHomeCardRadius),
             border: Border.all(
               color: isPlaceholder ? c.textMuted.withValues(alpha: 0.3) : c.cardBorder,
               style: BorderStyle.solid,
@@ -61,7 +76,14 @@ class CarouselCardShell extends StatelessWidget {
           child: Stack(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(13, 13, 13, 34),
+                // Bottom is the shared inset PLUS room for the page dots that
+                // sit inside this card, rather than an unexplained 34.
+                padding: const EdgeInsets.fromLTRB(
+                  kHomeCardPadding,
+                  kHomeCardPadding,
+                  kHomeCardPadding,
+                  kHomeCardPadding + kCarouselDotsAllowance,
+                ),
                 child: child,
               ),
               Positioned(
@@ -433,7 +455,11 @@ class VolumeTrendCard extends StatelessWidget {
                     TextSpan(
                       style: ZType.disp(38, color: c.textPrimary, height: 0.84),
                       children: [
-                        TextSpan(text: _formatThousands(data.currentWeekKg.round())),
+                        TextSpan(
+                          text: data.currentWeekKg == null
+                              ? '—'
+                              : _formatThousands(data.currentWeekKg!.round()),
+                        ),
                         TextSpan(
                           text: '\nKG THIS WEEK',
                           style: TextStyle(

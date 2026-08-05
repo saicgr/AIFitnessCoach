@@ -122,6 +122,36 @@ void main() {
       expect(find.text('— —'), findsOneWidget);
     });
 
+    testWidgets('zero weeks renders "—" as the HEADLINE, never a literal 0',
+        (tester) async {
+      // The test above guarded the DELTA and passed the whole time the
+      // headline was rendering a fabricated "0". A user reported the card
+      // reading "0 / KG THIS WEEK" on a week with no data — the largest type
+      // on the card asserting they had lifted nothing. Same empty input,
+      // different half of the card: assert the headline too.
+      await tester.pumpWidget(
+          createTestWidget(const VolumeTrendCard(data: VolumeTrendSnapshot.empty)));
+
+      final headline = tester.widget<Text>(
+        find.descendant(
+          of: find.byType(VolumeTrendCard),
+          matching: find.byType(Text),
+        ).at(1),
+      );
+      final rendered = headline.textSpan!.toPlainText();
+      expect(rendered, contains('—'),
+          reason: 'unknown volume must render an em dash');
+      expect(rendered.startsWith('0'), isFalse,
+          reason: 'a literal 0 here tells the user they lifted nothing this '
+              'week, when the truth is that we do not know yet');
+    });
+
+    test('currentWeekKg is null — not 0 — when there is no real week', () {
+      // The class doc promises "real rows only (never zero-filled/fabricated)".
+      // The getter used to return a literal 0 and quietly break that promise.
+      expect(VolumeTrendSnapshot.empty.currentWeekKg, isNull);
+    });
+
     testWidgets('2+ weeks renders a real percent delta vs last week',
         (tester) async {
       final data = VolumeTrendSnapshot(weeks: [

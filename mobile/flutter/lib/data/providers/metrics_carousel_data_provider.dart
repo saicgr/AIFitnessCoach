@@ -210,7 +210,15 @@ class VolumeTrendSnapshot {
 
   static const empty = VolumeTrendSnapshot(weeks: []);
 
-  double get currentWeekKg => weeks.isEmpty ? 0 : weeks.last.totalVolumeKg;
+  /// Null when there is no real week to report — NOT 0.
+  ///
+  /// The class doc above promises "real rows only (never zero-filled/
+  /// fabricated)", but this getter used to return a literal `0` for an empty
+  /// list, and the card renders it as a 38pt "0 / KG THIS WEEK". A user with
+  /// an unloaded or failed fetch was therefore told, in the largest type on
+  /// the card, that they had lifted nothing this week. The sibling STEPS slot
+  /// already renders '—' for unknown; this makes volume agree.
+  double? get currentWeekKg => weeks.isEmpty ? null : weeks.last.totalVolumeKg;
 
   /// Null when fewer than 2 weeks of real history exist — the guard the
   /// build spec requires ("<2 weeks → '— —', never 0%").
