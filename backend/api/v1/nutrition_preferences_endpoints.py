@@ -260,9 +260,9 @@ async def update_meal_template(
         db = get_supabase_db()
 
         # Verify ownership
-        existing = db.client.table("meal_templates").select("*").eq("id", template_id).maybeSingle().execute()
+        existing = db.client.table("meal_templates").select("*").eq("id", template_id).maybe_single().execute()
 
-        if not existing.data:
+        if not existing or not existing.data:
             raise HTTPException(status_code=404, detail="Template not found")
 
         if existing.data.get("is_system_template"):
@@ -353,9 +353,9 @@ async def delete_meal_template(
         db = get_supabase_db()
 
         # Verify ownership
-        existing = db.client.table("meal_templates").select("*").eq("id", template_id).maybeSingle().execute()
+        existing = db.client.table("meal_templates").select("*").eq("id", template_id).maybe_single().execute()
 
-        if not existing.data:
+        if not existing or not existing.data:
             raise HTTPException(status_code=404, detail="Template not found")
 
         if existing.data.get("is_system_template"):
@@ -413,9 +413,9 @@ async def log_meal_template(
         db = get_supabase_db()
 
         # Get template
-        result = db.client.table("meal_templates").select("*").eq("id", template_id).maybeSingle().execute()
+        result = db.client.table("meal_templates").select("*").eq("id", template_id).maybe_single().execute()
 
-        if not result.data:
+        if not result or not result.data:
             raise HTTPException(status_code=404, detail="Template not found")
 
         template = result.data

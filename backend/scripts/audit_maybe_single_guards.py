@@ -125,12 +125,80 @@ def scan_file(path: Path):
     return violations
 
 
+# ── supabase-JS method names that do NOT exist on the Python client ──────────
+#
+# 2026-08-05: five nutrition routes shipped `.maybeSingle()` (the JS spelling).
+# Python's client only has `.maybe_single()`, so every one of those calls raised
+# AttributeError -> 500 for EVERY user. `GET /nutrition/preferences` was dead in
+# production and nothing caught it: the guard scan below keys off the literal
+# string "maybe_single()", so the camelCase spelling was invisible to it — the
+# call never reached the guard check because it never looked like one.
+#
+# Curated deliberately: only names that are unambiguously supabase-js API. A
+# blanket "flag any .camelCase(" rule would fire on legitimate stdlib calls
+# (logging's .setLevel, etc.), so the list stays specific enough to be actionable.
+JS_ONLY_METHODS = (
+    "maybeSingle", "textSearch", "containedBy", "rangeGte", "rangeLte",
+    "rangeGt", "rangeLt", "rangeAdjacent", "onConflict", "abortSignal",
+    "signInWithPassword", "signInWithOtp", "signInWithOAuth", "signUp",
+    "signOut", "getUser", "getSession", "refreshSession", "setSession",
+    "resetPasswordForEmail", "updateUser", "createUser", "listUsers",
+    "deleteUser", "updateUserById", "getUserById", "generateLink",
+    "getPublicUrl", "createSignedUrl", "createSignedUrls", "uploadToSignedUrl",
+    "removeChannel", "removeAllChannels", "getChannels",
+)
+JS_CALL_RE = re.compile(r"\.(" + "|".join(JS_ONLY_METHODS) + r")\s*\(")
+
+_SNAKE_RE = re.compile(r"(?<!^)(?=[A-Z])")
+
+
+def _snake(name: str) -> str:
+    return _SNAKE_RE.sub("_", name).lower()
+
+
+def scan_js_spellings(path: Path):
+    """Find supabase-JS method spellings — each is an AttributeError at runtime."""
+    out = []
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return out
+    for i, line in enumerate(lines):
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        for m in JS_CALL_RE.finditer(line):
+            out.append((i + 1, m.group(1), stripped[:100]))
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     ap.add_argument("--check", action="store_true", help="exit 1 if any unguarded site is found")
     args = ap.parse_args()
+
+    js_violations = []
+    for path in sorted(BACKEND.rglob("*.py")):
+        if _skip(path.relative_to(BACKEND)):
+            continue
+        for (ln, name, snippet) in scan_js_spellings(path):
+            js_violations.append((path.relative_to(BACKEND), ln, name, snippet))
+
+    if js_violations:
+        print(
+            f"❌ {len(js_violations)} supabase-JS method spelling(s) — "
+            "each raises AttributeError -> 500 on EVERY call:\n"
+        )
+        for rel, ln, name, snippet in js_violations:
+            print(f"  {rel}:{ln}  .{name}() -> .{_snake(name)}()  {snippet}")
+        print(
+            "\nThe Python client is snake_case. Renaming `.maybeSingle()` also "
+            "changes behaviour:\n"
+            "`.maybe_single()` returns None (not a response) on 0 rows, so add "
+            "the result-object guard below at the same time.\n"
+        )
 
     all_violations = []
     for path in sorted(BACKEND.rglob("*.py")):
@@ -153,6 +221,11 @@ def main() -> int:
             return 1
     else:
         print("✅ No unguarded maybe_single().execute() derefs found.")
+
+    if js_violations and args.check:
+        return 1
+    if not js_violations:
+        print("✅ No supabase-JS method spellings found.")
     return 0
 
 

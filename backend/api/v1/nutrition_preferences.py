@@ -321,9 +321,11 @@ async def get_nutrition_preferences(current_user: dict = Depends(get_current_use
         db = get_supabase_db()
 
         # Try to get existing preferences
-        result = db.client.table("nutrition_preferences").select("*").eq("user_id", user_id).maybeSingle().execute()
+        result = db.client.table("nutrition_preferences").select("*").eq("user_id", user_id).maybe_single().execute()
 
-        if result.data:
+        # maybe_single() returns None (not a response with data=None) on 0 rows,
+        # so the guard has to cover the RESULT OBJECT, not just .data.
+        if result and result.data:
             prefs_data = result.data
             preferences = NutritionPreferences(
                 disable_ai_tips=prefs_data.get("disable_ai_tips", False),
@@ -544,9 +546,9 @@ async def quick_log_saved_food(
         db = get_supabase_db()
 
         # Get the saved food
-        result = db.client.table("saved_foods").select("*").eq("id", request.saved_food_id).eq("user_id", user_id).maybeSingle().execute()
+        result = db.client.table("saved_foods").select("*").eq("id", request.saved_food_id).eq("user_id", user_id).maybe_single().execute()
 
-        if not result.data:
+        if not result or not result.data:
             raise HTTPException(status_code=404, detail="Saved food not found")
 
         saved_food = result.data
