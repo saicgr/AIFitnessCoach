@@ -122,23 +122,13 @@ void main() {
       // next actionable (placeholder) day via a post-frame callback
       // (`_pickInitialIndex` / `jumpToPage` in hero_workout_carousel.dart) —
       // no tap needed, this is the exact real-world path E2E #151 describes.
+      // Confirmed via the day strip's own semantics: the target day's cell
+      // carries `isSelected` after this many pumps, i.e. `_selectedDate` has
+      // genuinely moved off today by the time the assertions below run.
       // Bounded pumps, not pumpAndSettle — below-fold loading/shimmer
       // sub-states in this signed-out-shaped environment never fully settle.
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 6; i++) {
         await tester.pump(const Duration(milliseconds: 100));
-      }
-
-      // ignore: avoid_print
-      print('ALL TEXTS: ' +
-          tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).toList().toString());
-      // ignore: avoid_print
-      print('today=$today weekday=${today.weekday}');
-      for (final label in ['Completed Session', 'Thursday', 'Friday']) {
-        final f = find.text(label);
-        if (f.evaluate().isNotEmpty) {
-          // ignore: avoid_print
-          print('$label topLeft=${tester.getTopLeft(f.first)}');
-        }
       }
 
       // The two exact message shapes the deleted banner used to render.
