@@ -31,6 +31,15 @@ import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/quick_log_fab_chrome.dart';
 import '../../core/theme/accent_color_provider.dart';
+/// Height of the floating masthead block below the safe-area top inset: the
+/// "WORKOUTS" title + action pills row (~40), then the equipment-profile
+/// pill + date line (~34). 2 top + 40 + 8 + 34 + 10 bottom = 94. Named (was a
+/// bare `94` literal in the `SliverToBoxAdapter` below) so
+/// `WorkoutsSignatureBody` can derive how much of the screen the masthead
+/// actually consumes instead of hand-duplicating the number — see its
+/// PROGRAM-tile-row FAB clearance calculation.
+const double kWorkoutsMastheadHeight = 94;
+
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
 class WorkoutsScreen extends ConsumerStatefulWidget {
@@ -142,7 +151,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 // 34 + 10 bottom = 94.
                 SliverToBoxAdapter(
                   child: SizedBox(
-                      height: MediaQuery.of(context).padding.top + 94),
+                      height: MediaQuery.of(context).padding.top +
+                          kWorkoutsMastheadHeight),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load

@@ -14,9 +14,13 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../../widgets/design_system/zealova.dart';
+import '../../../widgets/quick_log_fab_chrome.dart'
+    show kQuickLogFabBottomOffset, kQuickLogFabHeight;
 import '../../home/widgets/edit_program_sheet.dart';
+import '../../home/widgets/hero_workout_carousel.dart' show HeroWorkoutCarousel;
 import '../../workout/widgets/quick_workout_sheet.dart';
 import '../../workout/schedule_date_utils.dart';
+import '../workouts_screen.dart' show kWorkoutsMastheadHeight;
 import 'exercise_preferences_card.dart';
 import 'my_program_sheet.dart';
 import 'workout_library_grid.dart';
@@ -273,6 +277,106 @@ class _BrowseByTypeBlock extends StatelessWidget {
 // 3. PROGRAM block
 // ─────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────
+// FAB clearance for the SCHEDULE/LIBRARY/BUILDER/PROGRAMS tile row
+// ─────────────────────────────────────────────────────────────────────────
+//
+// The always-on quick-log FAB (`main_shell.dart`) is a screen-space overlay
+// painted at a FIXED distance from the bottom safe-area inset, independent
+// of scroll position — see quick_log_fab_chrome.dart. `workouts_screen.dart`
+// already reserves `kQuickLogFabClearance` at the END of its scroll extent
+// for exactly this reason, but that only protects whatever's LAST in the
+// list. This tile row is nowhere near the end — it's the second block this
+// body renders — so on a screen tall enough to show it without scrolling but
+// short enough that it lands in the FAB's band anyway (iPhone-16e-class,
+// 852pt), the pill sat directly on top of it at rest, on load, with no
+// scrolling involved.
+//
+// [extraGapBeforeProgramTiles] estimates the row's on-screen top position
+// from the fixed heights of everything WorkoutsSignatureBody stacks above it
+// (masthead + date strip + hero card + Quick Generate + the Program header)
+// and, if that estimate would land the row's bottom inside the FAB's real
+// band for THIS device, adds just enough space to push it below the band
+// entirely.
+//
+// This is an ESTIMATE, not a measurement: it assumes a single-line program
+// title, no "Balancing your volume…" Quick Generate busy state, and the
+// nominal heights below. If any of those blocks genuinely change height
+// (a taller title, a redesign of Quick Generate, …) this drifts and either
+// under- or over-corrects — the FAB is a fixed overlay independent of
+// scroll, so any content that lands in its band is at risk, and a static
+// estimate computed from siblings this widget doesn't own can't fully close
+// that class of bug (a real fix needs either a measure-then-lay-out pass or
+// the overlay itself to stop floating over arbitrary content). Tuned to the
+// device size class the defect was screenshot-confirmed on; flagged as a
+// known limitation rather than silently treated as solved everywhere.
+//
+// The constants and function below are public (not `_`-prefixed) SPECIFICALLY
+// so `workouts_signature_body_program_tiles_fab_clearance_test.dart` can
+// assert against the real formula precisely, rather than a hand-duplicated
+// proxy of it — they are not intended as a general-purpose API for other
+// screens.
+@visibleForTesting
+const double kProgramTilesDateStripHeight = 64; // widgets/date_strip.dart _buildDateStrip
+@visibleForTesting
+const double kProgramTilesAfterFocusNoticeGap = 8; // workout_planner_section.dart:77
+@visibleForTesting
+const double kProgramTilesAfterPlannerGap = 22; // this file, after WorkoutPlannerSection
+@visibleForTesting
+const double kProgramTilesQuickGenerateBlockHeight = 72; // padding(30)+border(2)+row(40)
+@visibleForTesting
+const double kProgramTilesBeforeProgramBlockGap = 26; // this file, before _ProgramBlock
+@visibleForTesting
+const double kProgramTilesTitleRowHeight = 26; // ZType.disp(20) title row
+@visibleForTesting
+const double kProgramTilesAfterTitleGap = 12; // this file
+@visibleForTesting
+const double kProgramTilesProgressRuleHeight = 2;
+@visibleForTesting
+const double kProgramTilesBaseGap = 14; // this file, before the tile row
+@visibleForTesting
+const double kProgramTilesRowHeight = 72; // _ProgramToolTile: padding(28)+icon(22)+gap(8)+label(~14)
+
+/// The row's natural top position (screen-absolute Y), with NO extra gap
+/// applied — i.e. what `estimatedTileRowTop` would be if
+/// [extraGapBeforeProgramTiles] always returned 0. Also exposed for testing.
+@visibleForTesting
+double estimatedProgramTilesTopWithoutExtraGap(double topPadding) =>
+    topPadding +
+    kWorkoutsMastheadHeight +
+    kProgramTilesDateStripHeight +
+    kProgramTilesAfterFocusNoticeGap +
+    HeroWorkoutCarousel.cardHeight +
+    kProgramTilesAfterPlannerGap +
+    kProgramTilesQuickGenerateBlockHeight +
+    kProgramTilesBeforeProgramBlockGap +
+    kProgramTilesTitleRowHeight +
+    kProgramTilesAfterTitleGap +
+    kProgramTilesProgressRuleHeight +
+    kProgramTilesBaseGap;
+
+@visibleForTesting
+double extraGapBeforeProgramTiles(BuildContext context) {
+  final mq = MediaQuery.of(context);
+  final naturalTop = estimatedProgramTilesTopWithoutExtraGap(mq.padding.top);
+  final naturalBottom = naturalTop + kProgramTilesRowHeight;
+
+  final fabBandBottom =
+      mq.size.height - mq.padding.bottom - kQuickLogFabBottomOffset;
+  final fabBandTop = fabBandBottom - kQuickLogFabHeight;
+
+  // No correction needed unless the row, AT ITS NATURAL POSITION, actually
+  // overlaps the band — a device with plenty of headroom (naturalBottom
+  // already <= fabBandTop) or one so short the row already lands past the
+  // band (naturalTop >= fabBandBottom) must get zero extra gap.
+  final overlaps = naturalTop < fabBandBottom && naturalBottom > fabBandTop;
+  if (!overlaps) return 0.0;
+
+  // Clear PAST the far edge of the FAB's band (not just its near edge) —
+  // clearing only the near edge would still overlap the pill itself.
+  return (fabBandBottom - naturalTop) + 8 /* breathing room */;
+}
+
 class _ProgramBlock extends ConsumerWidget {
   const _ProgramBlock();
 
@@ -396,7 +500,12 @@ class _ProgramBlock extends ConsumerWidget {
           )
         else
           const ZealovaRule(),
-        const SizedBox(height: 14),
+        // Base gap + whatever extra clearance keeps this row from landing
+        // under the always-on-top quick-log FAB on this device — see the
+        // "FAB clearance" block above.
+        SizedBox(
+          height: kProgramTilesBaseGap + extraGapBeforeProgramTiles(context),
+        ),
         // LIBRARY / BUILDER / PROGRAMS — promoted from weak left-aligned text
         // links to an evenly-distributed 3-up icon+label tile row so they read
         // as deliberate navigation, not a footer. PROGRAMS owns "browse all
