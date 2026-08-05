@@ -13,6 +13,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../widgets/barbell_plate_indicator.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/parsed_exercise.dart';
+import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
@@ -674,6 +675,11 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           bodyPart: exercise.muscleGroup ?? exercise.bodyPart,
           // Active workout id → swap the aggravators at the ≥4/10 threshold (#3).
           workoutId: (workoutWidget as dynamic).workout.id as String?,
+          // #179: base for the sheet's own live-provider re-sync if the
+          // engine reshapes today's session. The sheet prefers whatever's
+          // already in activeWorkoutLiveProvider (e.g. an earlier swap this
+          // session) over this snapshot when the ids match.
+          activeWorkout: (workoutWidget as dynamic).workout as Workout?,
         );
       },
     );
