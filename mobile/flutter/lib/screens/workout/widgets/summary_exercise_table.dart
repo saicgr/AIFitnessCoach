@@ -16,6 +16,74 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
+// METRIC KIND — reps vs distance/time/custom
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Which real-world quantity a set's primary number represents. Used to pick
+/// a per-exercise column header (see `_metricKindOf` callers in
+/// [SummaryExerciseTable]) instead of always labelling the column "REPS" even
+/// for a pure-distance or pure-timed exercise.
+enum SetMetricKind { reps, distance, duration, custom, none }
+
+/// Formats a logged distance for the summary table — same simple
+/// metric convention as `LocationService.formatDistance` (m under 1000,
+/// km with 1 decimal above), reimplemented here rather than importing that
+/// service (it pulls in geolocator + location-permission plumbing this
+/// read-only summary table has no business depending on). Displays whatever
+/// value is stored, honestly — implausible values (a seed/stepper bug) are
+/// tracked separately and are NOT clamped or sanity-checked here.
+String formatSetDistanceMeters(double meters) {
+  if (meters < 1000) {
+    return '${meters.round()} m';
+  }
+  return '${(meters / 1000).toStringAsFixed(1)} km';
+}
+
+/// Formats a logged set duration (seconds) for the summary table. Mirrors
+/// `_SummaryTimingRow._formatDuration`'s m:ss-above-a-minute convention; kept
+/// as a separate top-level function rather than sharing that private method
+/// so this file's two duration-formatting call sites (the timing divider row
+/// and the reps-column override) can evolve independently.
+String formatSetDurationSeconds(int seconds) {
+  if (seconds >= 60) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+  return '${seconds}s';
+}
+
+/// Picks the Reps column's header label for one exercise's sets. When every
+/// set that carries a metric at all shares the SAME non-reps kind (a whole
+/// exercise of distance sets, or a whole exercise of timed holds), the
+/// column is honestly relabelled instead of staying "REPS" over a column of
+/// distances/times. Mixed kinds (rare — some sets logged reps, others
+/// distance) fall back to "REPS": the header can't honestly describe every
+/// row at once, but [_SummarySetRow] still renders each row's REAL metric
+/// (see [SummarySetData.hasAlternateMetric]) rather than a bogus "0" — the
+/// header is a secondary cue, the per-row value is what actually matters.
+String repsColumnLabel(BuildContext context, List<SummarySetData> sets) {
+  final kinds = sets
+      .map((s) => s.metricKind)
+      .where((k) => k != SetMetricKind.none)
+      .toSet();
+  if (kinds.length == 1) {
+    switch (kinds.first) {
+      case SetMetricKind.distance:
+        return 'DISTANCE';
+      case SetMetricKind.duration:
+        return 'TIME';
+      case SetMetricKind.custom:
+        return 'METRIC';
+      case SetMetricKind.reps:
+      case SetMetricKind.none:
+        break;
+    }
+  }
+  return AppLocalizations.of(context).workoutSummaryGeneralReps;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // DATA MODELS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -48,6 +116,20 @@ class SummarySetData {
   /// with weight=0 (logged carelessly) would falsely render as "BW" too.
   final bool isBodyweight;
 
+  /// Logged distance in meters for a distance-based set (SkiErg, sled push,
+  /// a tracked run) — parsed from `distance_meters`. `reps`/`weight_kg` are
+  /// CORRECTLY zeroed for these sets (`easy_active_workout_state.dart`
+  /// deliberately zeroes reps when the set is timed/distance), so a table
+  /// that only knows about reps/weight renders them as a bare "0" — see
+  /// [hasAlternateMetric].
+  final double? distanceMeters;
+
+  /// Extra tracked metrics keyed by the catalog's metric name (e.g.
+  /// `{'box_height_cm': 60}`), parsed from `metrics`, for exercises whose
+  /// primary output isn't reps/weight/distance/time. Null/empty for
+  /// ordinary sets.
+  final Map<String, num>? metrics;
+
   const SummarySetData({
     required this.setNumber,
     this.targetReps,
@@ -69,7 +151,50 @@ class SummarySetData {
     this.notesPhotoUrls = const [],
     this.completedAt,
     this.isBodyweight = false,
+    this.distanceMeters,
+    this.metrics,
   });
+
+  /// True when [actualReps] is absent/zero but a real alternative metric
+  /// (distance, set duration, or a custom metrics-bag entry) was actually
+  /// recorded — i.e. a distance/timed set, not a rep set someone forgot to
+  /// log. Reps legitimately IS zero for these (see [distanceMeters] doc);
+  /// showing a bare "0" in the Reps cell reads as data loss when a real
+  /// number exists (production example: "Air Swing Running", 19,950 logged
+  /// meters, rendered as "Reps 0" with the distance nowhere on screen).
+  bool get hasAlternateMetric =>
+      (actualReps == null || actualReps == 0) &&
+      (((distanceMeters ?? 0) > 0) ||
+          ((durationSeconds ?? 0) > 0) ||
+          (metrics != null && metrics!.isNotEmpty));
+
+  /// This set's dominant recorded metric, for deciding a per-exercise column
+  /// header (see `_metricKindOf` callers). Preference order mirrors
+  /// `easy_persistence_helpers.dart`'s "hasOtherMetric" treatment: a set
+  /// with real reps is a rep set even if it also carries other fields.
+  SetMetricKind get metricKind {
+    if (actualReps != null && actualReps! > 0) return SetMetricKind.reps;
+    if ((distanceMeters ?? 0) > 0) return SetMetricKind.distance;
+    if ((durationSeconds ?? 0) > 0) return SetMetricKind.duration;
+    if (metrics != null && metrics!.isNotEmpty) return SetMetricKind.custom;
+    return SetMetricKind.none;
+  }
+
+  /// The alternate metric's display text, or null if [hasAlternateMetric] is
+  /// false.
+  String? get alternateMetricLabel {
+    if ((distanceMeters ?? 0) > 0) return formatSetDistanceMeters(distanceMeters!);
+    if ((durationSeconds ?? 0) > 0) return formatSetDurationSeconds(durationSeconds!);
+    if (metrics != null && metrics!.isNotEmpty) {
+      final entry = metrics!.entries.first;
+      final value = entry.value;
+      final formattedValue =
+          value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
+      final label = entry.key.replaceAll('_', ' ');
+      return '$formattedValue $label';
+    }
+    return null;
+  }
 
   factory SummarySetData.fromJson(Map<String, dynamic> json) {
     return SummarySetData(
@@ -99,7 +224,21 @@ class SummarySetData {
       isBodyweight: (json['is_bodyweight'] as bool?) ??
           (json['is_bodyweight_exercise'] as bool?) ??
           false,
+      distanceMeters: (json['distance_meters'] as num?)?.toDouble(),
+      metrics: coerceMetrics(json['metrics']),
     );
+  }
+
+  /// Coerces the generic metrics bag into `Map<String, num>`, tolerant of a
+  /// null/missing/wrongly-shaped value (never throws).
+  static Map<String, num>? coerceMetrics(dynamic raw) {
+    if (raw is! Map) return null;
+    final out = <String, num>{};
+    for (final entry in raw.entries) {
+      final value = entry.value;
+      if (value is num) out[entry.key.toString()] = value;
+    }
+    return out.isEmpty ? null : out;
   }
 
   static List<String> coerceStringList(dynamic raw) {
@@ -268,6 +407,7 @@ class SummaryExerciseSetsTable extends StatelessWidget {
     final showTarget = sets.any((s) =>
         (s.targetWeightKg ?? s.targetWeightLbs) != null || s.targetReps != null);
     final showRir = sets.any((s) => s.rir != null);
+    final repsLabel = repsColumnLabel(context, sets);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,6 +418,7 @@ class SummaryExerciseSetsTable extends StatelessWidget {
           showPrevious: showPrevious,
           showTarget: showTarget,
           showRir: showRir,
+          repsLabel: repsLabel,
         ),
         for (final set in sets) ...[
           _SummarySetRow(
@@ -329,6 +470,7 @@ class _ExerciseSection extends StatelessWidget {
         (s.targetWeightKg ?? s.targetWeightLbs) != null ||
         s.targetReps != null);
     final showRir = sets.any((s) => s.rir != null);
+    final repsLabel = repsColumnLabel(context, sets);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -349,6 +491,7 @@ class _ExerciseSection extends StatelessWidget {
             showPrevious: showPrevious,
             showTarget: showTarget,
             showRir: showRir,
+            repsLabel: repsLabel,
           ),
           for (final set in exercise.sets) ...[
             _SummarySetRow(
@@ -497,12 +640,19 @@ class _SummaryTableHeader extends StatelessWidget {
   final bool showTarget;
   final bool showRir;
 
+  /// Overrides the "REPS" column label — pass the result of
+  /// [repsColumnLabel] so a whole-exercise distance/timed table reads
+  /// "DISTANCE"/"TIME" instead of a column of zeroes under "REPS". Null
+  /// (the default) keeps the plain localized "REPS" string.
+  final String? repsLabel;
+
   const _SummaryTableHeader({
     required this.useKg,
     required this.isDark,
     this.showPrevious = true,
     this.showTarget = true,
     this.showRir = true,
+    this.repsLabel,
   });
 
   @override
@@ -567,14 +717,20 @@ class _SummaryTableHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Reps
+          // Reps (or DISTANCE/TIME/METRIC — see [repsLabel]). FittedBox since
+          // those replacement labels are longer than "REPS" and this column
+          // is a fixed 48px.
           SizedBox(
             width: 48,
-            child: Text(
-              AppLocalizations.of(context).workoutSummaryGeneralReps,
-              style: WorkoutDesign.tableHeaderStyle
-                  .copyWith(color: headerColor),
-              textAlign: TextAlign.center,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                repsLabel ?? AppLocalizations.of(context).workoutSummaryGeneralReps,
+                maxLines: 1,
+                style: WorkoutDesign.tableHeaderStyle
+                    .copyWith(color: headerColor),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
           if (showRir) ...[
@@ -1040,19 +1196,30 @@ class _SummarySetRow extends StatelessWidget {
 
           const SizedBox(width: 8),
 
-          // Actual reps
+          // Actual reps — or the set's real alternate metric (distance/time/
+          // custom) when reps is legitimately 0 but something else was
+          // actually logged. Was a bare `set.actualReps?.toString() ?? '—'`,
+          // which rendered literal "0" for a distance/timed set (e.g. a
+          // logged 19,950m run showed "Reps 0" with the distance nowhere on
+          // screen) — see [SummarySetData.hasAlternateMetric].
           SizedBox(
             width: 48,
-            child: Text(
-              set.actualReps?.toString() ?? '—',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? WorkoutDesign.textPrimary
-                    : WorkoutDesign.textPrimaryLight,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                set.hasAlternateMetric
+                    ? set.alternateMetricLabel!
+                    : (set.actualReps?.toString() ?? '—'),
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark
+                      ? WorkoutDesign.textPrimary
+                      : WorkoutDesign.textPrimaryLight,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
 

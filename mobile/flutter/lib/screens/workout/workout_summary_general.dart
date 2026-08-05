@@ -536,6 +536,13 @@ class WorkoutSummaryGeneral extends ConsumerWidget {
           notes: SummarySetData.coerceNotes(s['notes']),
           notesPhotoUrls: SummarySetData.coerceStringList(s['notes_photo_urls']),
           completedAt: s['completed_at'] as String?,
+          // Distance/timed/custom-metric sets — see
+          // easy_persistence_helpers.dart's setsJsonList write side (the
+          // canonical key names: `distance_meters`, `metrics`). Without
+          // these the table had no way to show what a set with reps=0 (by
+          // design, see SummarySetData.distanceMeters doc) actually logged.
+          distanceMeters: (s['distance_meters'] as num?)?.toDouble(),
+          metrics: SummarySetData.coerceMetrics(s['metrics']),
         );
       }).toList();
 
@@ -647,6 +654,10 @@ class WorkoutSummaryGeneral extends ConsumerWidget {
           notes: log.notes,
           notesPhotoUrls: log.notesPhotoUrls,
           completedAt: log.recordedAt,
+          // SetLogInfo already parses these (distance_meters / metrics) —
+          // see lib/data/models/workout.dart.
+          distanceMeters: log.distanceMeters,
+          metrics: log.metrics,
         );
       }).toList();
 
@@ -956,7 +967,19 @@ class _MusclesWorkedSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muscles = _extractMuscles();
-    if (muscles.isEmpty) return const SizedBox.shrink();
+    // Hidden entirely when there's nothing real to show: either no exercise
+    // carried a muscle at all, or every exercise had zero COMPLETED sets (see
+    // _extractMuscles — secondary-muscle entries are always setCount:0 by
+    // design, so this only trips when every PRIMARY entry is also 0, i.e. the
+    // whole session logged nothing). Showing muscle silhouettes for a session
+    // where nothing was completed would silently present the PLANNED workout
+    // as if it were the done one — the label just wouldn't say "0 sets"
+    // (that Text is itself gated on setCount > 0 in _MuscleAvatar), but the
+    // silhouettes appearing at all still reads as "here's what you worked"
+    // when you worked nothing.
+    if (muscles.isEmpty || muscles.every((m) => m.setCount == 0)) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       width: double.infinity,
@@ -1006,8 +1029,14 @@ class _MusclesWorkedSection extends StatelessWidget {
       final primaryMuscle =
           ex['primary_muscle'] as String? ?? ex['muscle_group'] as String?;
       final exerciseName = (ex['name'] as String? ?? '').toLowerCase();
-      final setsForExercise =
-          setCountByExercise[exerciseName] ?? (ex['sets'] as int? ?? 0);
+      // COMPLETED sets only — was `?? (ex['sets'] as int? ?? 0)`, silently
+      // falling back to the exercise's PLANNED set count whenever no set log
+      // matched by name. That's what produced "Back 6, Core 3, Hips 3, Quads
+      // 3 = 15" while the headline SETS · REPS stat (completed-only, from
+      // SummarySessionTotals.resolve) correctly read "1" — two different
+      // denominators on the same screen with no label distinguishing them.
+      // An exercise with no completed log contributes 0 here, full stop.
+      final setsForExercise = setCountByExercise[exerciseName] ?? 0;
 
       if (primaryMuscle != null && primaryMuscle.isNotEmpty) {
         final normalized = _normalizeMuscle(primaryMuscle);
