@@ -412,6 +412,7 @@ class _ConfettiPainter extends CustomPainter {
 /// Overlay manager for showing XP earned animations
 class XPEarnedOverlay {
   static OverlayEntry? _currentEntry;
+  static void Function()? _removeCurrent;
 
   /// Show XP earned animation at the top of the screen
   static void show(
@@ -419,12 +420,47 @@ class XPEarnedOverlay {
     required int xpAmount,
     required XPGoalType goalType,
   }) {
-    // Dismiss any existing toast
+    // Dismiss any existing toast so two never stack.
     dismiss();
 
     final overlay = Overlay.of(context);
 
-    _currentEntry = OverlayEntry(
+    late OverlayEntry entry;
+    var removed = false;
+
+    // Per-call identity, because `_currentEntry` is STATIC and shared.
+    //
+    // The bug: `show()` and `dismiss()` both operated on the bare static
+    // field with no check of WHICH entry they were acting on. Call `show()`
+    // twice in quick succession and the first toast's in-flight dismiss can
+    // land after the second has replaced the field — removing the NEWER
+    // toast's entry and nulling a field that should still point at it.
+    //
+    // Idempotency is not optional here: `OverlayEntry.remove()` does
+    // `_overlay!` (overlay.dart:229), a null-check that throws in RELEASE as
+    // well as debug — the `'should be removed only once'` assert above it is
+    // stripped, the crash is not. Since the backstop is designed to fire
+    // after the normal path has usually already succeeded, a backstop
+    // without this guard would crash on ordinary use rather than on an edge
+    // case.
+    //
+    // Note the mechanism is NOT "the widget's State went away so its timer
+    // never fired". `entry.mounted` reads the same notifier that
+    // `_OverlayEntryWidgetState.dispose()` nulls (overlay.dart:100), so an
+    // entry cannot outlive the widget it builds. The real window is that
+    // `entry.mounted` stays stale-true for a frame or two after `remove()`,
+    // because `remove()` defers the rebuild.
+    void remove() {
+      if (removed) return;
+      removed = true;
+      if (entry.mounted) entry.remove();
+      if (identical(_currentEntry, entry)) {
+        _currentEntry = null;
+        _removeCurrent = null;
+      }
+    }
+
+    entry = OverlayEntry(
       builder: (context) => Positioned(
         top: 0,
         left: 0,
@@ -434,18 +470,23 @@ class XPEarnedOverlay {
           child: XPEarnedToast(
             xpAmount: xpAmount,
             goalType: goalType,
-            onDismiss: dismiss,
+            onDismiss: remove,
           ),
         ),
       ),
     );
 
-    overlay.insert(_currentEntry!);
+    _currentEntry = entry;
+    _removeCurrent = remove;
+    overlay.insert(entry);
+
+    // Backstop, deliberately longer than the toast's own 2s auto-dismiss so
+    // it only fires when the normal path failed.
+    Future.delayed(const Duration(milliseconds: 3200), remove);
   }
 
   /// Dismiss the current toast
   static void dismiss() {
-    _currentEntry?.remove();
-    _currentEntry = null;
+    _removeCurrent?.call();
   }
 }

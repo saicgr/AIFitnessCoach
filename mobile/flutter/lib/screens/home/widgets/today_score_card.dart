@@ -338,24 +338,51 @@ void _maybeCelebrateRing(BuildContext context, WidgetRef ref,
   // by ~16ms so the sensory feedback feels in-sync.
   HapticService.success();
 
-  // Confetti via an Overlay insert. Auto-removes on completion.
+  // Confetti via an Overlay insert.
   final overlayState = Overlay.maybeOf(context);
   if (overlayState == null) return;
+
   late OverlayEntry entry;
+  var removed = false;
+
+  // A backstop so removal doesn't depend solely on ConfettiOverlay's
+  // animation reaching `completed`, plus the idempotency that backstop
+  // REQUIRES in order to be safe.
+  //
+  // `OverlayEntry.remove()` does `_overlay!` (overlay.dart:229) — a
+  // null-check that throws in RELEASE as well as debug; the
+  // `'should be removed only once'` assert above it is stripped, the crash
+  // is not. Because the backstop is designed to fire after the animation
+  // callback has normally already removed the entry, an unguarded backstop
+  // would crash on ordinary use rather than on some rare path.
+  //
+  // To be precise about what this does NOT defend against: an entry cannot
+  // outlive the widget it builds — `entry.mounted` reads the notifier that
+  // `_OverlayEntryWidgetState.dispose()` nulls (overlay.dart:100). The real
+  // window is `entry.mounted` reading stale-true for a frame or two after
+  // `remove()`, since `remove()` defers its rebuild.
+  void remove() {
+    if (removed) return;
+    removed = true;
+    if (entry.mounted) entry.remove();
+  }
+
   entry = OverlayEntry(builder: (_) {
     return Positioned.fill(
       child: IgnorePointer(
         child: ConfettiOverlay(
           particleCount: 60,
           duration: const Duration(milliseconds: 2200),
-          onComplete: () {
-            entry.remove();
-          },
+          onComplete: remove,
         ),
       ),
     );
   });
   overlayState.insert(entry);
+
+  // Backstop, deliberately longer than the confetti's own 2.2s animation so
+  // it only fires when the normal path failed.
+  Future.delayed(const Duration(milliseconds: 3500), remove);
 }
 
 /// Health rings whose unavailable state means "no Health Connect / no

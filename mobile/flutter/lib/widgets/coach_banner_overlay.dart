@@ -12,6 +12,7 @@ import '../data/models/coach_persona.dart';
 /// early.
 class CoachBannerOverlay {
   static OverlayEntry? _entry;
+  static void Function()? _removeCurrent;
 
   /// Fire a banner. Safe to call repeatedly — the previous one is dismissed
   /// first so two banners never stack on top of each other.
@@ -24,11 +25,45 @@ class CoachBannerOverlay {
     IconData icon = Icons.emoji_events_rounded,
     Duration duration = const Duration(milliseconds: 4500),
   }) {
-    _entry?.remove();
+    // Dismiss any banner already showing so two never stack.
+    _removeCurrent?.call();
     HapticFeedback.mediumImpact();
 
     final overlay = Overlay.of(context, rootOverlay: true);
-    _entry = OverlayEntry(
+    late OverlayEntry entry;
+    var removed = false;
+
+    // Per-call identity, because the current-entry field is STATIC and
+    // shared: `show()` and `dismiss()` acted on it without checking WHICH
+    // entry they were operating on, so a first banner's in-flight dismiss
+    // can remove a SECOND banner's entry and null a field that should still
+    // point at it.
+    //
+    // Idempotency is load-bearing, not belt-and-braces:
+    // `OverlayEntry.remove()` does `_overlay!` (overlay.dart:229), a
+    // null-check that throws in RELEASE as well as debug — the
+    // `'should be removed only once'` assert above it is stripped, the
+    // crash is not. The backstop normally fires AFTER the ordinary dismiss
+    // has already run, so without this guard it would crash on the happy
+    // path, not on an edge case.
+    //
+    // Not the mechanism: "the State went away so the timer never fired".
+    // `entry.mounted` reads the notifier that
+    // `_OverlayEntryWidgetState.dispose()` nulls (overlay.dart:100), so the
+    // entry cannot outlive the widget it builds. The real window is
+    // `entry.mounted` reading stale-true for a frame or two after
+    // `remove()`, which defers its rebuild.
+    void remove() {
+      if (removed) return;
+      removed = true;
+      if (entry.mounted) entry.remove();
+      if (identical(_entry, entry)) {
+        _entry = null;
+        _removeCurrent = null;
+      }
+    }
+
+    entry = OverlayEntry(
       builder: (_) => _CoachBanner(
         coach: coach,
         title: title,
@@ -36,13 +71,17 @@ class CoachBannerOverlay {
         xpAwarded: xpAwarded,
         icon: icon,
         duration: duration,
-        onDismissed: () {
-          _entry?.remove();
-          _entry = null;
-        },
+        onDismissed: remove,
       ),
     );
-    overlay.insert(_entry!);
+    _entry = entry;
+    _removeCurrent = remove;
+    overlay.insert(entry);
+
+    // Backstop, deliberately longer than the banner's own auto-dismiss
+    // duration (plus its reverse animation) so it only fires when the
+    // normal path failed.
+    Future.delayed(duration + const Duration(seconds: 2), remove);
   }
 }
 
