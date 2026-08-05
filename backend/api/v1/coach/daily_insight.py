@@ -251,6 +251,13 @@ def _build_greeting(
         pool.append({"label": "🏋️ Build me a workout for today"})
     if injury.get("body_part"):
         _bp = injury["body_part"]
+        # Plain-language label for the chip TEXT only (same jargon-leak class
+        # as `_build_coach_noticed` — `_bp` can carry a raw target-muscle
+        # string with Latin parentheticals). The dispatch payload below keeps
+        # the raw `_bp` in `body_part` — that value round-trips to
+        # POST /coach/injury-action and must stay exactly what the server
+        # understands, unrelated to display copy.
+        _bp_label, _ = _short_muscle_label(_bp)
         # Mature injury (past ~2/3 of its expected recovery window) → proactively
         # offer to RESOLVE or EXTEND it via actionable chips the coach card
         # dispatches to POST /coach/injury-action (injury-2026-06 Phase 3). Acute/
@@ -260,12 +267,12 @@ def _build_greeting(
             # body_part at TOP LEVEL — the Dart InsightChip.fromJson harvests
             # actionContext from top-level scalar keys, not a nested dict.
             pool.insert(1, {
-                "label": f"🩹 Is my {_bp} better now?",
+                "label": f"🩹 Is my {_bp_label} better now?",
                 "action": "injury_resolved",
                 "body_part": _bp,
             })
         else:
-            pool.append({"label": f"🩹 How's my {_bp} feeling?"})
+            pool.append({"label": f"🩹 How's my {_bp_label} feeling?"})
     if not nourish.get("calories_logged"):
         pool.append({"label": "🍽️ Log what I ate and break it down"})
     if sleep.get("applicable", True) and sleep.get("total_minutes"):
@@ -299,6 +306,74 @@ def _build_greeting(
     }
 
 
+def _join_natural(items: List[str]) -> str:
+    """"a" | "a and b" | "a, b, and c" — de-duped, order preserved."""
+    items = list(dict.fromkeys(i for i in items if i))
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return ", ".join(items[:-1]) + f", and {items[-1]}"
+
+
+_LATIN_PAREN_RE = re.compile(r"\s*\([^)]*\)\s*")
+
+
+def _is_plural_label(names: List[str]) -> bool:
+    """Grammatical number for the joined label. Multiple items are always
+    plural; a single item is plural when its own word is (canonical bucket
+    names are anatomically plural nouns — "quads", "hamstrings", "shoulders",
+    "glutes" — while others are singular — "chest", "back", "core"). A
+    trailing-"s" check is generic (no per-muscle enumeration) and matches
+    every canonical token `text_to_muscles` emits."""
+    if len(names) > 1:
+        return True
+    if not names:
+        return False
+    last_word = names[0].strip().split(" ")[-1].lower()
+    return last_word.endswith("s")
+
+
+def _short_muscle_label(bp_raw: Any) -> Tuple[str, bool]:
+    """Plain-language muscle label for user-facing coach copy, + is-plural.
+
+    `injury.body_part` is sometimes a simple token ("knee") but can also be
+    an exercise's raw `target_muscle` free text carried straight through
+    (e.g. pain reported against a specific exercise) — which is the
+    Gemini/library format `"quadriceps (quadriceps femoris), hamstrings
+    (biceps femoris)"` (see `services/exercise_muscle_resolver.py`
+    docstring). Routing it through `text_to_muscles` — the SAME closed,
+    already-approved vocabulary the strength-score breadth uses — collapses
+    that into plain canonical tokens ("quads", "hamstrings") that agree with
+    the Flutter side's canonical bucket names (`muscle_aliases.dart`)
+    instead of inventing a second vocabulary here. No enumeration is added
+    in THIS module — unknown text falls back to a generically paren-stripped
+    version of the raw value.
+    """
+    raw = str(bp_raw or "").strip()
+    if not raw:
+        return "", False
+    try:
+        from services.exercise_muscle_resolver import text_to_muscles
+        muscles = text_to_muscles(raw)
+    except Exception:
+        muscles = []
+    if muscles:
+        names = [m.replace("_", " ") for m in muscles]
+        return _join_natural(names), _is_plural_label(names)
+    # Unknown to the resolver (e.g. a plain user-typed part like "shin") —
+    # generically strip any "(...)" Latin annotation per comma-separated
+    # segment rather than inventing a mapping.
+    segments = [s.strip() for s in raw.split(",") if s.strip()]
+    cleaned = [_LATIN_PAREN_RE.sub("", s).strip().replace("_", " ") for s in segments]
+    cleaned = [c for c in cleaned if c]
+    if not cleaned:
+        cleaned = [raw.replace("_", " ")]
+    return _join_natural(cleaned), _is_plural_label(cleaned)
+
+
 def _build_coach_noticed(
     snapshot: Dict[str, Any],
     next_workout: Optional[Dict[str, Any]] = None,
@@ -316,19 +391,28 @@ def _build_coach_noticed(
     if not bp:
         return None
     phase = (injury.get("phase") or "").lower()
-    bp_title = str(bp).replace("_", " ")
+    # Plain-language label (e.g. "quads and hamstrings", not the raw
+    # "quadriceps (quadriceps femoris), hamstrings (biceps femoris)" that
+    # can arrive when an injury was inferred from an exercise's target-muscle
+    # text) — see `_short_muscle_label`. Used ONCE per sentence below; a
+    # `pronoun`/`verb` pair carries the reference the rest of the way so the
+    # jargon-y list never has to repeat (previously interpolated twice, the
+    # second time hyphenated into "…-loading work").
+    bp_label, bp_plural = _short_muscle_label(bp)
+    verb = "are" if bp_plural else "is"
+    pronoun = "them" if bp_plural else "it"
 
     if phase in ("recovery", "reintroduction"):
         body = (
-            f"Your {bp_title} is far enough along to test. I added a light "
+            f"Your {bp_label} {verb} far enough along to test. I added a light "
             f"reintroduction into today's session and pulled anything that "
-            f"loads it hard — tell me how it feels and I'll adjust."
+            f"loads {pronoun} hard — tell me how it feels and I'll adjust."
         )
         accept_label = "Adjust today's session"
     else:  # acute / subacute / unknown → protect
         body = (
-            f"Your {bp_title} is still settling. I kept {bp_title}-loading work "
-            f"lighter today and swapped the exercises that aggravate it. Want me "
+            f"Your {bp_label} {verb} still settling. I kept that work lighter "
+            f"today and swapped the exercises that aggravate {pronoun}. Want me "
             f"to ease it off further?"
         )
         accept_label = "Ease today's session further"
@@ -343,7 +427,7 @@ def _build_coach_noticed(
         "action": "adjust_today_workout",
         "accept_label": accept_label,
         "dismiss_label": "Talk more",
-        "chat_seed": f"How's my {bp_title} and what did you change in today's workout?",
+        "chat_seed": f"How's my {bp_label} and what did you change in today's workout?",
     }
 
 

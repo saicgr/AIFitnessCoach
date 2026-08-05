@@ -21,6 +21,7 @@ import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show NumberFormat;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/app_typography.dart';
 import '../../../widgets/design_system/zealova_stat_tile.dart';
@@ -91,6 +92,46 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   // local date). The notifier outlives this widget's State so the user's
   // explicit minimize / dismiss survives every tab switch + every cold
   // start within the same day.
+
+  // "Coach noticed" collapse state — per-install (not per-day, unlike the
+  // whole-card visibility above): once a user collapses this injury/recovery
+  // alert they shouldn't see the full block again on a later launch. Same
+  // SharedPreferences-flag pattern as `CalibrationBanner` (this file's
+  // sibling widgets use it too) rather than a day-keyed Riverpod provider,
+  // since the preference should stick indefinitely, not reset daily.
+  static const String _kCoachNoticedCollapsedKey = 'coach_noticed_collapsed';
+  bool _coachNoticedCollapsed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCoachNoticedPrefs();
+  }
+
+  Future<void> _loadCoachNoticedPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      final collapsed = prefs.getBool(_kCoachNoticedCollapsedKey) ?? false;
+      if (collapsed != _coachNoticedCollapsed) {
+        setState(() => _coachNoticedCollapsed = collapsed);
+      }
+    } catch (_) {
+      // Pre-init or disk failure — keep default (expanded).
+    }
+  }
+
+  Future<void> _toggleCoachNoticedCollapsed() async {
+    final next = !_coachNoticedCollapsed;
+    setState(() => _coachNoticedCollapsed = next);
+    HapticFeedback.selectionClick();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kCoachNoticedCollapsedKey, next);
+    } catch (_) {
+      // Non-fatal — in-memory toggle stands for this session.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1036,106 +1077,35 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   /// is a surface-half stub today — it opens chat seeded with the coach's
   /// concrete proposal; Phase 2 (#2 apply-action) swaps it for a live
   /// pre-session reshape via the `action` field.
+  ///
+  /// Collapsible (user request): the choice persists via
+  /// `_kCoachNoticedCollapsedKey` (see [_loadCoachNoticedPrefs] /
+  /// [_toggleCoachNoticedCollapsed]) so a user who collapses this doesn't see
+  /// the full block again on a later launch. This is an injury/recovery
+  /// alert, so the collapsed state still surfaces a one-line summary rather
+  /// than disappearing outright. Rendering + the tap-target geometry live in
+  /// [CoachNoticedBanner] (provider-free, unit-testable in isolation); this
+  /// method only wires it to persistence + navigation.
   Widget _coachNoticedBanner(
     ThemeColors c,
     DailyCoachInsight insight,
     CoachNoticed cn,
   ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: c.accent.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: c.accent.withOpacity(0.30), width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.lightbulb_outline_rounded, size: 15, color: c.accent),
-              const SizedBox(width: 6),
-              Text(
-                cn.title.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.6,
-                  color: c.accent,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            cn.body,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.35,
-              color: c.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  // #2 apply-action: reshape today's session for the flagged
-                  // body part via the reshape endpoint. Falls back to chat when
-                  // there's no today workout to adjust.
-                  if (cn.action == 'adjust_today_workout' &&
-                      cn.bodyPart != null) {
-                    _applyCoachAdjustment(cn, insight);
-                  } else {
-                    _openChat(context, insight);
-                  }
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: c.accent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    cn.acceptLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: c.accentContrast,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => _openChat(context, insight),
-                child: Text(
-                  cn.dismissLabel,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: c.textMuted,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // Trust framing (Dr-Yaad audit #12) — the engine drafts, you decide.
-          const SizedBox(height: 8),
-          Text(
-            'The engine drafts the change — nothing happens until you accept.',
-            style: TextStyle(
-              fontSize: 10.5,
-              fontStyle: FontStyle.italic,
-              color: c.textMuted,
-            ),
-          ),
-        ],
-      ),
+    return CoachNoticedBanner(
+      noticed: cn,
+      collapsed: _coachNoticedCollapsed,
+      onToggleCollapsed: _toggleCoachNoticedCollapsed,
+      onAccept: () {
+        // #2 apply-action: reshape today's session for the flagged body part
+        // via the reshape endpoint. Falls back to chat when there's no today
+        // workout to adjust.
+        if (cn.action == 'adjust_today_workout' && cn.bodyPart != null) {
+          _applyCoachAdjustment(cn, insight);
+        } else {
+          _openChat(context, insight);
+        }
+      },
+      onTalkMore: () => _openChat(context, insight),
     );
   }
 
@@ -1900,6 +1870,221 @@ class _TodoCard extends StatelessWidget {
             else
               Text(task.trailing, style: ZType.data(11, color: c.textMuted)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Coach noticed" card content (Dr-Yaad audit #2) — a concrete,
+/// injury-aware observation + the adjustment the engine made, with an Accept
+/// action, "Talk more", and a collapse toggle.
+///
+/// Deliberately provider-free (plain callbacks in, plain rendering out) so
+/// its interaction contract — the 44x44 minimum tap targets on "Talk more"
+/// and the collapse chevron, and the collapsed one-line summary — is
+/// unit-testable in isolation without mounting the full coach card and its
+/// provider tree. `_CoachHeroCardState._coachNoticedBanner` is the only
+/// caller; it wires [onToggleCollapsed] to SharedPreferences persistence and
+/// [onAccept] / [onTalkMore] to the reshape/chat navigation.
+class CoachNoticedBanner extends StatelessWidget {
+  final CoachNoticed noticed;
+  final bool collapsed;
+  final VoidCallback onToggleCollapsed;
+  final VoidCallback onAccept;
+  final VoidCallback onTalkMore;
+
+  const CoachNoticedBanner({
+    super.key,
+    required this.noticed,
+    required this.collapsed,
+    required this.onToggleCollapsed,
+    required this.onAccept,
+    required this.onTalkMore,
+  });
+
+  /// First clause of `noticed.body` (the deterministic backend copy always
+  /// opens with the concrete observation, e.g. "Your quads and hamstrings
+  /// are still settling") — falls back to the title when the body is empty.
+  String get _summaryLine {
+    final body = noticed.body.trim();
+    if (body.isEmpty) return noticed.title;
+    final firstSentence = body.split('.').first.trim();
+    return firstSentence.isEmpty ? noticed.title : firstSentence;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    return collapsed ? _collapsedBanner(c) : _expandedBanner(c);
+  }
+
+  Widget _expandedBanner(ThemeColors c) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: c.accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.accent.withOpacity(0.30), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.lightbulb_outline_rounded, size: 15, color: c.accent),
+              const SizedBox(width: 6),
+              Text(
+                noticed.title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.6,
+                  color: c.accent,
+                ),
+              ),
+              const Spacer(),
+              _collapseToggle(c, collapsed: false),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            noticed.body,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              color: c.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onAccept,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    noticed.acceptLabel,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.accentContrast,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // "Talk more" — was a bare ~70x15pt Text in a GestureDetector,
+              // far under the 44x44 minimum touch target (the tap silently
+              // missed for most users). Explicit BoxConstraints guarantee
+              // the geometry regardless of font metrics; the outlined pill
+              // gives it visual weight matching the accent Accept button
+              // beside it without competing for primary emphasis.
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: onTalkMore,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                  child: Container(
+                    alignment: Alignment.centerLeft,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: c.textMuted.withOpacity(0.35),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      noticed.dismissLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: c.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Trust framing (Dr-Yaad audit #12) — the engine drafts, you decide.
+          const SizedBox(height: 8),
+          Text(
+            'The engine drafts the change — nothing happens until you accept.',
+            style: TextStyle(
+              fontSize: 10.5,
+              fontStyle: FontStyle.italic,
+              color: c.textMuted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Collapsed "Coach noticed" — one-line summary (still names what needs
+  /// attention, per the injury/recovery-alert requirement) + an expand
+  /// affordance. Tapping anywhere on the row re-expands.
+  Widget _collapsedBanner(ThemeColors c) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onToggleCollapsed,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: c.accent.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: c.accent.withOpacity(0.30), width: 0.8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.lightbulb_outline_rounded, size: 14, color: c.accent),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _summaryLine,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: c.textPrimary,
+                ),
+              ),
+            ),
+            _collapseToggle(c, collapsed: true),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Expand/collapse chevron with an explicit 44x44 minimum tap target.
+  Widget _collapseToggle(ThemeColors c, {required bool collapsed}) {
+    return Semantics(
+      button: true,
+      label: collapsed ? 'Expand coach noticed' : 'Collapse coach noticed',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onToggleCollapsed,
+        child: Container(
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          alignment: Alignment.center,
+          child: Icon(
+            collapsed ? Icons.expand_more_rounded : Icons.expand_less_rounded,
+            size: 18,
+            color: c.textMuted,
+          ),
         ),
       ),
     );
