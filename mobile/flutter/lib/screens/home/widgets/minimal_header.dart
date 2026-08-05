@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -15,15 +14,16 @@ import 'streak_explainer_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
 /// Clean, minimal header for the "Minimalist" home screen preset.
 ///
-/// Layout (May 2026 redesign — replaces the prior 5-element chrome row):
+/// Layout (2026-08 redesign — collapses the prior two-line greeting + big
+/// Anton date block into a single line so the sections below start higher):
 /// ```
-/// [Avatar] Good evening,        [bell] [gear]
-///          Sai · 2d 🔥
+/// Morning, Casey · Wed, Aug 5      [bell] [gear]
 /// ```
 ///
-/// - Avatar (36pt) → `/profile` (You hub).
-/// - Greeting + inline streak chip under name (gamification stays glanceable
-///   without competing with primary CTAs).
+/// - Greeting + date share one line (was: greeting line, then a large
+///   two-line "WEDNESDAY · AUGUST 5" editorial date block below it). The
+///   reclaimed vertical space goes to the banner stack and coach card, not a
+///   phantom gap — this widget's own padding shrank to match.
 /// - Level ring removed from Home; lives on `/you/overview` next to the
 ///   XP hero tile (gamification belongs in the gamification surface).
 /// - Bell stays (notifications are universal).
@@ -34,61 +34,22 @@ import '../../../l10n/generated/app_localizations.dart';
 class MinimalHeader extends ConsumerWidget {
   const MinimalHeader({super.key});
 
-  static const _weekdays = [
-    'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
-  ];
-  static const _months = [
-    'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
-    'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final c = ThemeColors.of(context);
-    final now = DateTime.now();
-    final weekday = _weekdays[now.weekday - 1];
-    final monthDay = '${_months[now.month - 1]} ${now.day}';
 
-    // SIGNATURE V2 masthead — brand + streak/bell cluster, then the big
-    // Anton editorial date, then the Fraunces greeting. Replaces the prior
-    // avatar + inline-greeting row. Profile is reached via the You tab; the
-    // settings gear stays in the cluster so it's still one tap from Home.
+    // Single-line masthead — greeting + date on the left, bell/settings
+    // cluster on the right. The sparkle "Ask coach" button was removed
+    // (2026-08): Coach is a bottom tab and already owns most of Home, so a
+    // third unlabelled route into chat earned nothing.
     return Padding(
       key: AppTourKeys.topBarKey,
-      padding: const EdgeInsets.fromLTRB(20, 4, 8, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+      child: Row(
         children: [
-          // Eyebrow: the greeting fills the LEFT so the top isn't empty (and no
-          // stray "streak 4" number — the streak moved off the masthead into
-          // coach / You). Bell / settings cluster on the right — the sparkle
-          // "Ask coach" button was removed (2026-08): Coach is a bottom tab
-          // and already owns most of Home, so a third unlabelled route into
-          // chat earned nothing.
-          Row(
-            children: [
-              const Expanded(child: _Greeting()),
-              NotificationBellButton(isDark: isDark),
-              _SettingsButton(isDark: isDark),
-            ],
-          ),
-          const SizedBox(height: 4),
-          // Big editorial date — Anton display, gym-aware accent on the month.
-          RichText(
-            text: TextSpan(
-              text: weekday,
-              style: ZType.disp(30, color: c.textPrimary),
-              children: [
-                TextSpan(
-                  text: '  ·  $monthDay',
-                  style: ZType.disp(30, color: c.textMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
+          const Expanded(child: _Greeting()),
+          NotificationBellButton(isDark: isDark),
+          _SettingsButton(isDark: isDark),
         ],
       ),
     );
@@ -162,36 +123,51 @@ class _SettingsButton extends StatelessWidget {
   }
 }
 
-/// Time-of-day greeting + the user's first name + inline streak chip.
-/// The streak chip moved here from the right side of the header so the
-/// streak's daily-motivation hook stays glanceable without occupying its
-/// own chrome slot. Hidden in Serious Mode (where gamification chrome is
-/// suppressed) and when the streak is zero.
+/// Time-of-day greeting + the user's first name, folded onto one line with
+/// the short date ("Morning, Casey · Wed, Aug 5"). Real name personalization
+/// only — no "there"-style placeholder. When the name isn't available yet
+/// (still loading, or genuinely unset) the line degrades to the date alone
+/// rather than showing a fake-personalized greeting.
 class _Greeting extends ConsumerWidget {
   const _Greeting();
+
+  static const _weekdaysShort = [
+    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun',
+  ];
+  static const _monthsShort = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hour = DateTime.now().hour;
+    final now = DateTime.now();
+    final hour = now.hour;
     final name = ref.watch(currentUserProvider).valueOrNull?.name;
     final firstName = (name != null && name.trim().isNotEmpty)
         ? name.trim().split(' ').first
-        : 'there';
+        : null;
+    final shortDate =
+        '${_weekdaysShort[now.weekday - 1]}, ${_monthsShort[now.month - 1]} ${now.day}';
 
-    // v2 greeting — short, human, Fraunces italic. "Evening, Chetan."
+    // v2 greeting — short, human, Archivo. "Evening, Chetan · Wed, Aug 5."
     final shortGreeting = hour < 12
         ? 'Morning'
         : hour < 17
             ? 'Afternoon'
             : 'Evening';
 
+    final line =
+        firstName != null ? '$shortGreeting, $firstName · $shortDate' : shortDate;
+
     return Text(
-      '$shortGreeting, $firstName.',
+      line,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: ZType.ser(
-        12.5,
+        15,
+        weight: FontWeight.w600,
         color: isDark
             ? Colors.white.withValues(alpha: 0.82)
             : const Color(0xFF2A2A2A),

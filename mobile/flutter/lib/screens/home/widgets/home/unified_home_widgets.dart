@@ -13,11 +13,13 @@ import '../../../../core/providers/user_provider.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../core/providers/week_start_provider.dart';
 import '../../../../core/theme/theme_colors.dart';
+import '../../../../data/models/user_program_assignment.dart';
 import '../../../../data/models/workout.dart';
 import '../../../../data/providers/gym_profile_provider.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/home_sections_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../../data/providers/program_assignments_provider.dart';
 import '../../../../data/providers/scores_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
@@ -41,6 +43,7 @@ import '../../../../data/services/image_url_cache.dart';
 import '../../../../widgets/health_connect_sheet.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../nutrition/log_meal_sheet.dart';
+import '../../../workout/widgets/program_manage_sheet.dart';
 import '../week_calendar_strip.dart';
 import '../workout_options_sheet.dart';
 import '../../../../data/providers/root_messenger.dart';
@@ -772,6 +775,82 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
         ? c.accentContrast
         : (overImage ? Colors.white.withValues(alpha: 0.92) : c.textMuted);
 
+    // ---- Active program line -----------------------------------------
+    // Folds in what used to be the standalone "My Programs" home section —
+    // the active program is what generates today's session, so it belongs
+    // on the card that launches that session. Only the PRIMARY assignment
+    // (the one actually driving today's workout) shows here; the full list
+    // (including add-ons) is still reachable via "Browse programs →" on the
+    // workout-card section header. Only rendered once the assignments
+    // provider has actually resolved — no fabricated "AI Coach" fallback
+    // while the real answer is loading/erroring, and no line at all when
+    // there's genuinely nothing to show.
+    final assignments = ref.watch(programAssignmentsProvider).valueOrNull;
+    UserProgramAssignment? primaryAssignment;
+    if (assignments != null) {
+      for (final a in assignments) {
+        if (a.status != 'completed' && a.isPrimary && a.isActive) {
+          primaryAssignment = a;
+          break;
+        }
+      }
+    }
+    // No active primary → the user is on the default AI-decides adaptive
+    // plan, which IS their real active plan (mirrors AiAdaptivePlanCard's
+    // copy exactly, never a shortened paraphrase).
+    final programTitle = assignments == null
+        ? null
+        : (primaryAssignment?.title ?? 'AI Coach · Adaptive Plan');
+
+    Widget? programRow;
+    if (programTitle != null) {
+      programRow = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticService.selection();
+          if (primaryAssignment != null) {
+            showProgramManageSheet(context, ref, primaryAssignment!);
+          } else {
+            context.push('/settings/workout-settings');
+          }
+        },
+        child: Row(
+          children: [
+            Icon(Icons.auto_awesome, size: 13, color: metaColor),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                programTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: subColor,
+                  shadows: textShadows,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: c.accent.withValues(alpha: overImage ? 0.30 : 0.12),
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: c.accent.withValues(alpha: 0.5)),
+              ),
+              child: Text(
+                'ACTIVE',
+                style: ZType.lbl(9,
+                    color: overImage ? Colors.white : c.accent,
+                    letterSpacing: 1.0),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
         HapticService.medium();
@@ -878,6 +957,10 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
                             color: metaColor,
                             shadows: textShadows),
                       ),
+                      if (programRow != null) ...[
+                        const SizedBox(height: 6),
+                        programRow,
+                      ],
                       const SizedBox(height: 14),
                       // Single orange CTA — Start (today / available).
                       GestureDetector(

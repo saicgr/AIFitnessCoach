@@ -64,7 +64,7 @@ class MyProgramsCard extends ConsumerWidget {
             if (showHeader)
               SectionHeader(
                 label: 'My Programs',
-                trailing: _BrowseProgramsAction(),
+                trailing: BrowseProgramsAction(),
               ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -91,9 +91,14 @@ class MyProgramsCard extends ConsumerWidget {
 }
 
 /// "Browse programs →" section-header action — opens the Program Library.
-/// Lives on the "My Programs" header line (matches "View all" on Streaks).
-class _BrowseProgramsAction extends StatelessWidget {
-  const _BrowseProgramsAction();
+/// Public (was `_BrowseProgramsAction`) so the workout-card section header
+/// can reuse it after "My Programs" folded into the workout card (2026-08) —
+/// the active-program summary moved onto the card itself, but "browse the
+/// full library" still needs a reachable home, and this is the exact same
+/// action that used to live on the "My Programs" header line (matches
+/// "View all" on Streaks).
+class BrowseProgramsAction extends StatelessWidget {
+  const BrowseProgramsAction({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1411,12 +1411,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // else a hidden card would leave a phantom void.
       if (visible[i] == HomeSection.workoutCard) {
         // Program Library integration: today's program ADD-ONS sit as a slim
-        // row directly under the hero, and the user's enrolled programs ("My
-        // Programs") follow. Both self-hide when empty (My Programs shows its
-        // discovery empty-state on home only).
+        // row directly under the hero. "My Programs" no longer mounts here
+        // as its own card (2026-08) — the active program is what generates
+        // today's session, so its name + ACTIVE badge moved onto the
+        // workout card itself (see `_WorkoutHeroBody` in
+        // unified_home_widgets.dart); "Browse programs →" relocated to the
+        // trailing action above the card.
         slivers.add(const SliverToBoxAdapter(child: TodayAddonsRow()));
         slivers.add(const SliverToBoxAdapter(child: SetupChecklistCard()));
-        slivers.add(const SliverToBoxAdapter(child: MyProgramsCard()));
       }
     }
 
@@ -1450,12 +1452,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   children: [
                     _widgetForSection(section),
                     // If a My Space reorder pushed the workout card below the
-                    // fold, keep the add-ons row, Get Started Challenge, and My
-                    // Programs directly beneath it.
+                    // fold, keep the add-ons row and Get Started Challenge
+                    // directly beneath it (My Programs no longer mounts
+                    // separately — see the eager-path comment above).
                     if (section == HomeSection.workoutCard) ...[
                       const TodayAddonsRow(),
                       const SetupChecklistCard(),
-                      const MyProgramsCard(),
                     ],
                     SizedBox(height: gap),
                   ],
@@ -1524,12 +1526,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // in `_WorkoutHeroBody._metaLine` (see unified_home_widgets.dart).
         return const SizedBox.shrink();
       case HomeSection.workoutCard:
-        // Anchor for nav-tour step 2 ("Today's Workout"). Key lives on the
-        // active section widget (the legacy heroCarousel/tile_factory anchor
-        // never mounts in this layout → zero-rect → no spotlight).
-        return KeyedSubtree(
-          key: AppTourKeys.heroCarouselKey,
-          child: const HomeWorkoutCard(),
+        // "Browse programs →" relocated here (2026-08) from the standalone
+        // "My Programs" section header, which no longer mounts on Home — the
+        // active program's name + ACTIVE badge now live directly on the
+        // workout card below (see `_WorkoutHeroBody`), but the Program
+        // Library still needs a reachable discovery path from Home, so the
+        // same trailing action sits just above the card.
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+              child: BrowseProgramsAction(),
+            ),
+            // Anchor for nav-tour step 2 ("Today's Workout"). Key lives on
+            // the active section widget (the legacy heroCarousel/tile_factory
+            // anchor never mounts in this layout → zero-rect → no spotlight).
+            KeyedSubtree(
+              key: AppTourKeys.heroCarouselKey,
+              child: const HomeWorkoutCard(),
+            ),
+          ],
         );
       case HomeSection.nutritionCard:
         // Signature v2: Home leads with the compact one-line FUEL strip above

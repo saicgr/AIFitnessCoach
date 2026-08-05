@@ -69,6 +69,11 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   bool _done = false; // challenge fully completed (persisted)
   bool _justCompleted = false; // show the celebration this session
 
+  /// The completed one-line trophy was manually dismissed with the X
+  /// (persisted — never returns, same as the [_kTrophyWindowDays] auto-expiry
+  /// below, just triggered by the user instead of the clock).
+  bool _trophyDismissed = false;
+
   /// When the challenge was completed (persisted as an ISO8601 string), so
   /// the 7-day trophy window survives app restarts. Null if never completed,
   /// or completed before this field existed (treated as expired — see
@@ -100,6 +105,8 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   String _collapseKey(String uid) => 'get_started_challenge_collapsed_$uid';
   String _doneKey(String uid) => 'get_started_challenge_done_$uid';
   String _doneAtKey(String uid) => 'get_started_challenge_done_at_$uid';
+  String _trophyDismissKey(String uid) =>
+      'get_started_challenge_trophy_dismissed_$uid';
 
   Future<void> _init() async {
     final user = ref.read(currentUserProvider).valueOrNull;
@@ -123,6 +130,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
         final doneAtRaw = prefs.getString(_doneAtKey(user.id));
         _completedAt = doneAtRaw != null ? DateTime.tryParse(doneAtRaw) : null;
       }
+      _trophyDismissed = prefs.getBool(_trophyDismissKey(user.id)) ?? false;
     } catch (_) {/* ignore */}
 
     await _refreshAwarded();
@@ -194,6 +202,22 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
               DateTime.now().add(const Duration(days: 7)).toIso8601String(),
         }),
       );
+    } catch (_) {/* ignore */}
+  }
+
+  /// Manually dismiss the completed trophy card with the X. Persists
+  /// immediately (uid-scoped SharedPreferences bool, same mechanism as
+  /// [_dismissForWeek]/[_toggleCollapsed] above) so it never returns on a
+  /// later launch — this is the permanent counterpart to the
+  /// [_kTrophyWindowDays] auto-expiry, for the user who wants it gone now.
+  Future<void> _dismissTrophy() async {
+    final user = ref.read(currentUserProvider).valueOrNull;
+    HapticService.light();
+    setState(() => _trophyDismissed = true);
+    if (user == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_trophyDismissKey(user.id), true);
     } catch (_) {/* ignore */}
   }
 
@@ -286,7 +310,8 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
     // still open (collapsed one-liner, handled below) or it's expired (gone
     // for good). A missing timestamp (done before this field existed) is
     // treated as expired rather than resurrecting an old completion.
-    final trophyExpired = _completedAt == null ||
+    final trophyExpired = _trophyDismissed ||
+        _completedAt == null ||
         DateTime.now().difference(_completedAt!).inDays >= _kTrophyWindowDays;
     if (_done && !_justCompleted && trophyExpired) {
       return const SizedBox.shrink();
@@ -418,50 +443,66 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   }
 
   /// One-line trophy for a completed challenge — ring pinned at 100%, kicker,
-  /// and the XP total earned across every item. Tapping opens the reward
-  /// crate (same destination as the completion snackbar).
+  /// and the XP total earned across every item. Tapping the row opens the
+  /// reward crate (same destination as the completion snackbar); the X
+  /// dismisses the card for good (see [_dismissTrophy]) rather than waiting
+  /// out the [_kTrophyWindowDays] auto-expiry.
   Widget _buildTrophy(ThemeColors c, int total, int totalXp) {
-    return InkWell(
-      onTap: () {
-        HapticService.light();
-        context.push('/rewards');
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Row(
-        children: [
-          _ProgressRing(value: 1.0, accent: c.accent, track: c.cardBorder,
-              textColor: c.textPrimary),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      children: [
+        Expanded(
+          child: InkWell(
+            onTap: () {
+              HapticService.light();
+              context.push('/rewards');
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Row(
               children: [
-                Text(
-                  'GET STARTED CHALLENGE',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                    color: c.textMuted,
+                _ProgressRing(value: 1.0, accent: c.accent, track: c.cardBorder,
+                    textColor: c.textPrimary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'GET STARTED CHALLENGE',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: c.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'All $total done · +$totalXp XP',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'All $total done · +$totalXp XP',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: c.textPrimary,
-                  ),
-                ),
+                Icon(Icons.chevron_right, size: 20, color: c.textMuted),
               ],
             ),
           ),
-          Icon(Icons.chevron_right, size: 20, color: c.textMuted),
-        ],
-      ),
+        ),
+        InkWell(
+          onTap: _dismissTrophy,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(Icons.close, size: 16, color: c.textMuted),
+          ),
+        ),
+      ],
     );
   }
 
