@@ -498,13 +498,16 @@ def _lookup_library_exercise(
     injury screen. This is the single copy of what used to be duplicated in
     ``api/v1/workouts/exercises.py`` and ``api/v1/workouts/workout_operations.py``.
     """
-    from services.exercise_library_service import get_exercise_library_service
+    from services.exercise_library_service import get_exercise_library_service, escape_ilike
 
     lib = get_exercise_library_service()
     if exercise_id:
         found = lib.get_exercise_by_id(exercise_id)
         if found:
             return found
+    # `search_exercises` itself now prefers exact > prefix > substring, so this
+    # `limit=1` reliably returns the exact-name row when one exists instead of
+    # an arbitrary substring sibling.
     results = lib.search_exercises(exercise_name, limit=1)
     if results:
         return results[0]
@@ -512,6 +515,9 @@ def _lookup_library_exercise(
     try:
         from core.db import get_supabase_db
 
+        # Escaped: this is a genuine-miss fallback (search_exercises above
+        # found nothing at all), but the user-supplied name can still contain
+        # `%`/`_`, which ILIKE would otherwise treat as wildcards.
         cleaned = (
             get_supabase_db()
             .client.table("exercise_library_cleaned")
@@ -519,7 +525,7 @@ def _lookup_library_exercise(
                 "id, name, target_muscle, body_part, equipment, gif_url, "
                 "video_url, secondary_muscles, instructions"
             )
-            .ilike("name", exercise_name)
+            .ilike("name", escape_ilike(exercise_name))
             .limit(1)
             .execute()
         )

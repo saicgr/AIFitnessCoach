@@ -9,6 +9,7 @@ This service provides methods to query exercises by:
 """
 from typing import List, Dict, Any, Optional
 import random
+import re
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
@@ -22,6 +23,18 @@ logger = get_logger(__name__)
 # arbitrary heap-ordered slice and every generation drew from the same rows.
 POOL_OVERSAMPLE = 10
 MIN_POOL = 150
+
+# PostgREST forwards `.ilike()` patterns straight to Postgres ILIKE, where `%`
+# and `_` are wildcards and `\` is the escape character. A user-supplied name
+# containing one of those (e.g. "100% grip") must have them escaped before
+# being interpolated into a pattern, or the literal character turns into a
+# wildcard and silently widens the match.
+_ILIKE_SPECIAL_RE = re.compile(r"([%_\\])")
+
+
+def escape_ilike(value: str) -> str:
+    """Escape `%`, `_` and `\\` so ``value`` matches ILIKE literally."""
+    return _ILIKE_SPECIAL_RE.sub(r"\\\1", value or "")
 
 
 class ExerciseLibraryService:
@@ -260,15 +273,78 @@ class ExerciseLibraryService:
         query: str,
         limit: int = 20
     ) -> List[Dict[str, Any]]:
-        """Search exercises by name.
+        """Search exercises by name, preferring the closest name match.
+
+        Resolution order (register: prod incident — swapping/adding a
+        user-named exercise silently persisted a different, unrelated one):
+          1. case-insensitive EXACT name match
+          2. then PREFIX match
+          3. then substring match — only when nothing better exists
+
+        The old query was `.ilike(f"%{query}%").limit(limit)` with no ORDER
+        BY, so with `limit=1` the row handed back was whichever substring
+        match Postgres's heap order happened to put first — e.g. requesting
+        "jumping jack" could persist "Med ball jumping jacks", and
+        "Pull-Up normal grip" could persist "assisted Pull-Up normal grip".
+        A prod sweep found 723 library names are substrings of another.
 
         Returns exercises with normalized field names:
         - 'name' instead of 'exercise_name'
         - 'muscle_group' mapped from 'target_muscle' or 'body_part'
         """
         try:
-            result = self.client.table("exercise_library").select("*").ilike("exercise_name", f"%{query}%").limit(limit).execute()
-            exercises = result.data or []
+            q = (query or "").strip()
+            if not q:
+                return []
+            escaped = escape_ilike(q)
+            q_lower = q.lower()
+
+            # Exact-match probe as its OWN query — cheap, and guarantees the
+            # exact row is found whenever one exists, rather than hoping it
+            # survives a `limit=1` (or even a raised-limit) substring fetch.
+            # No wildcards in the pattern -> a literal case-insensitive match.
+            exact_result = (
+                self.client.table("exercise_library")
+                .select("*")
+                .ilike("exercise_name", escaped)
+                .limit(limit)
+                .execute()
+            )
+            exercises = exact_result.data or []
+
+            if len(exercises) < limit:
+                # Oversample substring candidates so prefix matches are
+                # actually IN the pool (mirrors get_exercises_by_body_part's
+                # pool-then-rank approach above), then rank in Python: prefix
+                # before mid-string substring. Deterministic ORDER BY makes
+                # the pool reproducible instead of heap-ordered.
+                pool_cap = max(limit * POOL_OVERSAMPLE, MIN_POOL)
+                pool_result = (
+                    self.client.table("exercise_library")
+                    .select("*")
+                    .ilike("exercise_name", f"%{escaped}%")
+                    .order("exercise_name")
+                    .limit(pool_cap)
+                    .execute()
+                )
+                pool = pool_result.data or []
+                seen_ids = {ex.get("id") for ex in exercises}
+                candidates = [ex for ex in pool if ex.get("id") not in seen_ids]
+
+                def _rank(ex: Dict[str, Any]) -> int:
+                    name = (ex.get("exercise_name") or "").strip().lower()
+                    if name == q_lower:
+                        return 0  # case-insensitive exact, caught again here
+                                  # in case the exact probe missed it (e.g.
+                                  # trailing whitespace variance in the row)
+                    if name.startswith(q_lower):
+                        return 1
+                    return 2
+
+                candidates.sort(key=_rank)
+                exercises = exercises + candidates
+
+            exercises = exercises[:limit]
 
             # Normalize field names to match expected format
             normalized = []
