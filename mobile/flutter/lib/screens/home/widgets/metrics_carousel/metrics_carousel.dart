@@ -28,7 +28,22 @@ class MetricsCarousel extends ConsumerStatefulWidget {
 
 class _MetricsCarouselState extends ConsumerState<MetricsCarousel> {
   final PageController _controller = PageController();
-  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Kick the loads this carousel needs ONCE, after the first frame.
+    //
+    // This used to sit in build(). ScoresState carries readiness and prStats in
+    // one object, so the PR write notified the readiness providers this widget
+    // watches -> rebuild -> another load: 255 req/min from an idle Home screen.
+    // The notifier now guards re-entry too, but a network call still does not
+    // belong in build() — build must be pure and can run any number of times.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ensureTrainingWeekStatsLoaded(ref, ref.read(authStateProvider).user?.id);
+    });
+  }
 
   @override
   void dispose() {
@@ -38,16 +53,16 @@ class _MetricsCarouselState extends ConsumerState<MetricsCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    // Defensive loads for data this widget needs that isn't already fetched
-    // elsewhere on Home (prStats, the 8-week volume series). Both providers
-    // guard their own in-flight/freshness state, so calling every build is a
-    // cheap no-op after the first successful load.
-    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
-    ensureTrainingWeekStatsLoaded(ref, userId);
+    // Re-kick the PR load when the ACCOUNT changes (initState covers the first
+    // load). `ref.listen` is the sanctioned place for a side effect that
+    // reacts to a provider — calling it directly in build is what produced the
+    // request loop this widget shipped with.
+    ref.listen(authStateProvider.select((s) => s.user?.id), (prev, next) {
+      if (next != null && next != prev) ensureTrainingWeekStatsLoaded(ref, next);
+    });
     // Touch the 8-week volume provider so it's requested even before the
     // Training/Volume-trend card builds (both read it via computed
-    // providers, but a plain `ref.watch` on the underlying data provider
-    // ensures the fetch kicks off exactly once here).
+    // providers). This one is a FutureProvider — watching it is idempotent.
     ref.watch(volumeProgressionProvider);
 
     final prefs = ref.watch(metricsCarouselPrefsProvider);
@@ -55,8 +70,6 @@ class _MetricsCarouselState extends ConsumerState<MetricsCarousel> {
     final pages = visibleCarouselPages(prefs, recoveryAvailable: recovery.isAvailable);
 
     if (pages.isEmpty) return const SizedBox.shrink();
-
-    if (_index >= pages.length) _index = pages.length - 1;
 
     final trainingConfig =
         prefs.pages.where((p) => p.id == CarouselPageId.training).firstOrNull;
@@ -72,7 +85,6 @@ class _MetricsCarouselState extends ConsumerState<MetricsCarousel> {
         child: PageView.builder(
           controller: _controller,
           itemCount: pages.length,
-          onPageChanged: (i) => setState(() => _index = i),
           itemBuilder: (context, i) {
             final pageId = pages[i];
             final config = prefs.pages.firstWhere((p) => p.id == pageId);

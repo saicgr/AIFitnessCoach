@@ -205,6 +205,22 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
   final ScoresRepository _repository;
   String? _currentUserId;
 
+  // Re-entry + freshness guards for loadPersonalRecords.
+  //
+  // 2026-08-05: the Home metrics carousel called this from `build()` on the
+  // stated assumption that "the provider's own in-flight/freshness guards make
+  // repeat calls cheap no-ops". No such guard existed. Because ScoresState is
+  // ONE object carrying readiness AND prStats, writing prStats notified the
+  // readiness watchers the carousel depends on -> carousel rebuilt -> called
+  // again. Render logged 255 requests/minute from a single idle device.
+  //
+  // The guard lives here rather than at the call site so every caller is
+  // covered, including ones added later that repeat the same assumption.
+  bool _prsInFlight = false;
+  String? _prsKey;
+  DateTime? _prsLoadedAt;
+  static const _prsFreshFor = Duration(minutes: 5);
+
   ScoresNotifier(this._repository)
       : super(_scoresInMemoryCache ?? const ScoresState());
 
@@ -505,10 +521,30 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
   }
 
   /// Load personal records
-  Future<void> loadPersonalRecords({String? userId, int limit = 10, int periodDays = 30}) async {
+  /// Loads PR stats. Safe to call repeatedly (including from a widget that
+  /// rebuilds often): concurrent calls collapse to one request, and a
+  /// successful load is reused for [_prsFreshFor]. Pass [force] to bypass the
+  /// freshness window after something that invalidates PRs (a finished workout).
+  Future<void> loadPersonalRecords({
+    String? userId,
+    int limit = 10,
+    int periodDays = 30,
+    bool force = false,
+  }) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) return;
     _currentUserId = uid;
+
+    final key = '$uid|$limit|$periodDays';
+    if (_prsInFlight && _prsKey == key) return;
+    if (!force &&
+        _prsKey == key &&
+        _prsLoadedAt != null &&
+        DateTime.now().difference(_prsLoadedAt!) < _prsFreshFor) {
+      return;
+    }
+    _prsInFlight = true;
+    _prsKey = key;
 
     try {
       final stats = await _repository.getPersonalRecords(
@@ -516,11 +552,17 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
         limit: limit,
         periodDays: periodDays,
       );
+      _prsLoadedAt = DateTime.now();
       state = state.copyWith(prStats: stats);
       debugPrint('✅ [ScoresProvider] Loaded personal records');
     } catch (e) {
       debugPrint('❌ [ScoresProvider] Error loading PRs: $e');
+      // Stamp the failure too. Without this a persistently failing endpoint
+      // re-enters on every rebuild — the same loop, just on the error path.
+      _prsLoadedAt = DateTime.now();
       state = state.copyWith(error: 'Failed to load PRs: $e');
+    } finally {
+      _prsInFlight = false;
     }
   }
 
