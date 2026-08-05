@@ -50,7 +50,16 @@ class SummaryFloatingPill extends StatelessWidget {
       bottom: 0,
       left: 0,
       right: 0,
+      // top: false — this box is anchored to the screen BOTTOM (Positioned
+      // above has no `top:`), so consuming the top safe-area inset here only
+      // inflates this widget's own bounding box with ~59pt of dead space
+      // above the capsule (harmless to paint/hit-testing, since Padding
+      // never intercepts taps in its own inset — but it silently poisons any
+      // caller that reasons about "does X overlap the pill" from
+      // `find.byType(SummaryFloatingPill)`'s rect, which is exactly how the
+      // clearance regression test measures it).
       child: SafeArea(
+        top: false,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.only(bottom: 16),

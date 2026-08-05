@@ -186,47 +186,14 @@ class _WorkoutSummaryScreenV2State
       );
     }
 
-    return Stack(
-      children: [
-        // Force Stack to fill the screen so the pill anchors to the real bottom
-        const SizedBox.expand(),
-
-        // The single rich Summary scroll. Positioned.fill so its
-        // SingleChildScrollView gets the full Stack width.
-        Positioned.fill(
-          child: WorkoutSummaryGeneral(
-            key: const ValueKey('summary'),
-            data: _summaryData,
-            metadata: _metadata,
-            topPadding: topPadding,
-          ),
-        ),
-
-        // Floating back button (Plan tab has its own).
-        PositionedDirectional(
-          top: topPadding + 8,
-          start: 16,
-          child: const GlassBackButton(),
-        ),
-
-        // Header action cluster — Share / Favorite / Save / Redo.
-        PositionedDirectional(
-          top: topPadding + 8,
-          end: 12,
-          child: _SummaryHeaderActions(
-            workoutId: widget.workoutId,
-            workout: _parsedWorkout,
-            summary: _summaryData,
-            metadata: _metadata,
-          ),
-        ),
-
-        // Floating pill at bottom
-        SummaryFloatingPill(
-          selectedIndex: _selectedView,
-          onChanged: (i) => setState(() => _selectedView = i),
-        ),
-      ],
+    return WorkoutSummaryTabBody(
+      workoutId: widget.workoutId,
+      workout: _parsedWorkout,
+      summary: _summaryData,
+      metadata: _metadata,
+      topPadding: topPadding,
+      selectedView: _selectedView,
+      onSelectedViewChanged: (i) => setState(() => _selectedView = i),
     );
   }
 
@@ -294,6 +261,183 @@ class _WorkoutSummaryScreenV2State
               expand: false,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUMMARY TAB BODY — content + header chrome + floating pill
+//
+// Two screenshot-confirmed defects lived in this composition:
+//   1. OCCLUSION AT REST. `WorkoutSummaryGeneral`'s SingleChildScrollView
+//      carried no bottom inset at all, so on a short/at-rest summary the
+//      DURATION / SETS · REPS stat cards, an exercise name, and a set row's
+//      data all rendered directly underneath the floating Plan|Summary pill
+//      — a fixed screen overlay painted on top of whatever this scroll view
+//      renders at that offset, independent of scroll position. Fixed by
+//      reserving [SummaryFloatingPill.clearanceOf] as bottom padding around
+//      the content, the same pattern `workouts_screen.dart` uses for the
+//      quick-log FAB.
+//   2. UNSHIELDED HEADER. The back button and the Share/Favorite/Save/Redo
+//      cluster floated directly over scrolling recap text with nothing behind
+//      them: unreadable against busy content, and a tap aimed at the gap
+//      between/around the buttons fell straight through to the card
+//      underneath instead of doing nothing — "a tap on the back button landed
+//      on the card underneath". [SummaryHeaderScrim] gives the whole header
+//      band a real background AND absorbs any tap it receives, so a near-miss
+//      can never reach content behind it; the actual buttons are declared
+//      AFTER it in the Stack and still win their own taps outright.
+//
+// Extracted to a public, directly-testable widget (rather than inlined in
+// `_buildBody`) so both invariants have a real geometry regression test —
+// see `test/screens/workout/workout_summary_tab_body_overlap_test.dart`.
+// ═══════════════════════════════════════════════════════════════════════════
+
+class WorkoutSummaryTabBody extends StatelessWidget {
+  final String workoutId;
+  final Workout? workout;
+  final WorkoutSummaryResponse? summary;
+  final Map<String, dynamic>? metadata;
+  final double topPadding;
+  final int selectedView;
+  final ValueChanged<int> onSelectedViewChanged;
+
+  const WorkoutSummaryTabBody({
+    super.key,
+    required this.workoutId,
+    required this.workout,
+    required this.summary,
+    required this.metadata,
+    required this.topPadding,
+    required this.selectedView,
+    required this.onSelectedViewChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Force Stack to fill the screen so the pill anchors to the real bottom
+        const SizedBox.expand(),
+
+        // The single rich Summary scroll. Positioned.fill so its
+        // SingleChildScrollView gets the full Stack width. Bottom-padded by
+        // the floating pill's own footprint so the LAST row of content can
+        // always scroll clear of it — see defect 1 above.
+        Positioned.fill(
+          child: Padding(
+            padding: EdgeInsetsDirectional.only(
+              bottom: SummaryFloatingPill.clearanceOf(context),
+            ),
+            child: WorkoutSummaryGeneral(
+              key: const ValueKey('summary'),
+              data: summary,
+              metadata: metadata,
+              topPadding: topPadding,
+            ),
+          ),
+        ),
+
+        // Header scrim — see defect 2 above. Declared BEFORE the buttons so
+        // they paint (and hit-test) on top of it.
+        SummaryHeaderScrim(topPadding: topPadding),
+
+        // Floating back button (Plan tab has its own).
+        PositionedDirectional(
+          top: topPadding + 8,
+          start: 16,
+          child: const GlassBackButton(),
+        ),
+
+        // Header action cluster — Share / Favorite / Save / Redo.
+        PositionedDirectional(
+          top: topPadding + 8,
+          end: 12,
+          child: _SummaryHeaderActions(
+            workoutId: workoutId,
+            workout: workout,
+            summary: summary,
+            metadata: metadata,
+          ),
+        ),
+
+        // Floating pill at bottom
+        SummaryFloatingPill(
+          selectedIndex: selectedView,
+          onChanged: onSelectedViewChanged,
+        ),
+      ],
+    );
+  }
+}
+
+/// Full-width scrim painted behind the Summary tab's floating back button and
+/// action cluster, from the top of the screen down through their real
+/// footprint ([topPadding] inset + the buttons' own height + a margin).
+///
+/// Two jobs:
+///  1. READABILITY — a gradient fade so the buttons read against busy
+///     scrolled content instead of nothing.
+///  2. HIT-TESTING — [HitTestBehavior.opaque] + a no-op [onTap] absorb any
+///     tap that lands in the header band but misses an actual button (the
+///     gap between the back button and the action cluster, or the margin
+///     around them), so it can never fall through to whatever card is
+///     scrolled underneath. The real buttons are declared AFTER this widget
+///     in the Stack, so they still receive and win their own taps outright —
+///     this scrim only catches what they don't.
+class SummaryHeaderScrim extends StatelessWidget {
+  const SummaryHeaderScrim({super.key, required this.topPadding});
+
+  final double topPadding;
+
+  /// Vertical offset of the header buttons from the top of the screen —
+  /// matches the `top:` both [PositionedDirectional] header rows use above.
+  static const double buttonTop = 8;
+
+  /// Both [GlassBackButton] and the `_GlassActionButton` circles are this
+  /// tall (glass_back_button.dart / the action cluster below).
+  static const double buttonHeight = 40;
+
+  /// Breathing room below the buttons' bottom edge so the scrim's fade starts
+  /// clear of them instead of cutting across the icons.
+  static const double bottomMargin = 12;
+
+  /// Total scrim height for a given [topPadding] — static so tests (and any
+  /// future caller) can assert the buttons' real footprint is fully inside it
+  /// without hand-deriving the sum themselves.
+  static double heightFor(double topPadding) =>
+      topPadding + buttonTop + buttonHeight + bottomMargin;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Matches this screen's own Scaffold background (see build() above) so
+    // the fade reads as "the app's chrome", not an arbitrary tint.
+    final scrimColor = isDark ? AppColors.pureBlack : Colors.white;
+
+    return Positioned(
+      top: 0,
+      left: 0,
+      right: 0,
+      height: heightFor(topPadding),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {},
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                scrimColor,
+                scrimColor,
+                scrimColor.withValues(alpha: 0.0),
+              ],
+              stops: const [0.0, 0.62, 1.0],
+            ),
+          ),
         ),
       ),
     );
