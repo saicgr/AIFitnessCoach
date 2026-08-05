@@ -1018,9 +1018,20 @@ class _MusclesWorkedSection extends StatelessWidget {
   List<_MuscleInfo> _extractMuscles() {
     final Map<String, _MuscleInfo> muscleMap = {};
 
-    // Count sets from set logs per exercise name
+    // Count sets from set logs per exercise name — COMPLETED sets only, same
+    // "what counts as completed" the headline SETS · REPS stat uses
+    // (SummarySessionTotals._inferCompleted): explicit is_completed, else any
+    // real output (reps, distance, a timed duration, or a custom metric).
+    // Reps alone would silently drop a legacy distance/timed set with no
+    // explicit completion flag — those legitimately log 0 reps.
     final Map<String, int> setCountByExercise = {};
     for (final log in setLogs) {
+      final isCompleted = log.isCompleted ??
+          (log.repsCompleted > 0 ||
+              (log.distanceMeters ?? 0) > 0 ||
+              (log.setDurationSeconds ?? 0) > 0 ||
+              (log.metrics?.isNotEmpty ?? false));
+      if (!isCompleted) continue;
       setCountByExercise[log.exerciseName.toLowerCase()] =
           (setCountByExercise[log.exerciseName.toLowerCase()] ?? 0) + 1;
     }

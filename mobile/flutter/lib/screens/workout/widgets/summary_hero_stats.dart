@@ -16,6 +16,8 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/workout.dart';
 import '../../../widgets/metric_grid.dart';
+import 'summary_exercise_table.dart'
+    show formatSetDistanceMeters, formatSetDurationSeconds;
 import 'summary_session_totals.dart';
 
 class SummaryHeroStats extends ConsumerWidget {
@@ -95,6 +97,8 @@ class SummaryHeroStats extends ConsumerWidget {
     final volumeKg = totals.volumeKg;
     final sets = totals.sets;
     final reps = totals.reps;
+    final distanceMeters = totals.distanceMeters;
+    final timedOnlySeconds = totals.timedOnlySeconds;
     // A 0 duration means "not tracked" → the cell is hidden; the old "0m" lie
     // is gone.
     final durationSeconds = totals.durationSeconds;
@@ -122,13 +126,43 @@ class SummaryHeroStats extends ConsumerWidget {
           icon: Icons.show_chart,
           accent: accent,
         ),
+      // A distance/timed session legitimately logs 0 reps for every set
+      // (easy_active_workout_state.dart zeroes reps for a timed/distance
+      // set) — showing "$sets · 0" reads as "0 reps", a real number that
+      // never happened. `reps == 0` here means "not applicable", so the
+      // cell shows whatever real metric the session DOES have instead of
+      // fabricating a rep count. A mixed session (some rep sets, some
+      // distance/timed) already has reps > 0 from its real rep sets, so it
+      // keeps the ordinary Sets · Reps reading — that number is true.
       if (sets > 0)
-        MetricCell(
-          label: 'Sets · Reps',
-          value: '$sets · $reps',
-          icon: Icons.layers_outlined,
-          accent: accent,
-        ),
+        if (reps > 0)
+          MetricCell(
+            label: 'Sets · Reps',
+            value: '$sets · $reps',
+            icon: Icons.layers_outlined,
+            accent: accent,
+          )
+        else if (distanceMeters > 0)
+          MetricCell(
+            label: 'Sets · Distance',
+            value: '$sets · ${formatSetDistanceMeters(distanceMeters)}',
+            icon: Icons.layers_outlined,
+            accent: accent,
+          )
+        else if (timedOnlySeconds > 0)
+          MetricCell(
+            label: 'Sets · Time',
+            value: '$sets · ${formatSetDurationSeconds(timedOnlySeconds)}',
+            icon: Icons.layers_outlined,
+            accent: accent,
+          )
+        else
+          MetricCell(
+            label: 'Sets',
+            value: '$sets',
+            icon: Icons.layers_outlined,
+            accent: accent,
+          ),
       MetricCell(
         label: 'Records',
         value: '$records',
