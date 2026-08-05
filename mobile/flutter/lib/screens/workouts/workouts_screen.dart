@@ -194,7 +194,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   /// Signature masthead — flat (pureBlack) band, no gradient / no glass.
   ///
   /// Line 1 names the SCREEN ("WORKOUTS") + the action cluster. Line 2 carries
-  /// the equipment-profile switcher (explicitly labelled) and today's date.
+  /// the equipment-profile switcher (explicitly labelled). No date here — the
+  /// day strip immediately below the masthead already highlights today, so a
+  /// "TODAY · AUG 5" label was redundant and was removed.
   ///
   /// E2E #32/#108: the gym name used to BE the title, rendered in the 30pt
   /// Anton display face and ellipsised to "COMMERC…" — so the tab appeared to
@@ -215,20 +217,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     // masthead without a seam — but no LinearGradient/blur glass.
     final scaffoldBg =
         isDark ? AppColors.background : AppColorsLight.background;
-    final tc = ThemeColors.of(context);
-
-    // Today's date, in the user's LOCAL calendar. Explicitly prefixed "TODAY"
-    // so it can never be misread as the day the carousel below is focused on
-    // (that day is asserted by the date strip + the card itself — see #21).
-    const mhMonths = [
-      'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
-    ];
-    final mhNow = DateTime.now();
-    // Kept deliberately short (no weekday — the strip below spells the week
-    // out and highlights today) so the gym name beside it has room to render
-    // in full rather than ellipsising to "COMMERC…" (#32/#108).
-    final mhToday = 'TODAY  ·  ${mhMonths[mhNow.month - 1]} ${mhNow.day}';
 
     return PositionedDirectional(
       top: 0,
@@ -308,22 +296,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               const SizedBox(height: 8),
               // Sub-line — the equipment-profile switcher (labelled, so the
               // chevron reads as "change which gym this plan is built for",
-              // not "change screen") plus today's date.
+              // not "change screen"). No date here — the day strip directly
+              // below already highlights today, so a "TODAY · AUG 5" label
+              // was redundant; removing it also frees the full row width for
+              // the gym name, which no longer has to share space with the
+              // date and can render in full instead of ellipsising.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Flexible(child: _EquipmentProfilePill()),
-                  const SizedBox(width: 10),
-                  Flexible(
-                    child: Text(
-                      mhToday,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.end,
-                      style: ZType.lbl(11.5,
-                          color: tc.textMuted, letterSpacing: 1.4),
-                    ),
-                  ),
                 ],
               ),
             ],

@@ -73,7 +73,6 @@ class _WorkoutPlannerSectionState
         // (see workouts_screen.dart) — no standalone line here, so the week
         // strip sits directly under the switcher with no wasted gap.
         _buildDateStrip(),
-        _buildFocusDayNotice(),
         const SizedBox(height: 8),
         // `workouts_v1` tour step 1 ("Start a workout") anchors here — the
         // today/hero workout card only, NOT the date strip above. Keying
@@ -127,65 +126,6 @@ class _WorkoutPlannerSectionState
       onPageChanged: _onCarouselPageChanged,
     );
   }
-
-  /// Explains WHY the strip/card duo is showing a day other than today
-  /// instead of silently disagreeing (E2E #151 — the carousel's default
-  /// focus skips a completed today's session and lands on the next
-  /// actionable day; without this the date strip and the hero card assert
-  /// two different days with no indication why). Zero height on a normal
-  /// today-focused view.
-  Widget _buildFocusDayNotice() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    if (_selectedDate == today) return const SizedBox.shrink();
-
-    // Best-effort reason: today's own carousel item is a completed workout.
-    final todayCompleted = _carouselItems.any((item) {
-      final d = item.date;
-      return item.isWorkout &&
-          item.workout?.isCompleted == true &&
-          d != null &&
-          d.year == today.year &&
-          d.month == today.month &&
-          d.day == today.day;
-    });
-
-    final dayDiff = _selectedDate.difference(today).inDays;
-    final dayLabel = dayDiff == 1
-        ? 'tomorrow'
-        : dayDiff == -1
-            ? 'yesterday'
-            : _weekdayName(_selectedDate);
-
-    final message = todayCompleted
-        ? "Today's workout is done — showing $dayLabel"
-        : 'Showing $dayLabel';
-
-    final mutedColor = Theme.of(context).colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.info_outline_rounded, size: 13, color: mutedColor),
-          const SizedBox(width: 6),
-          Text(
-            message,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: mutedColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static const List<String> _weekdayNames = [
-    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday',
-  ];
-  String _weekdayName(DateTime d) => _weekdayNames[d.weekday - 1];
 
   /// Single resolution point for "which local day is this section showing".
   /// Reads the focused carousel card's date and moves the strip's selection
