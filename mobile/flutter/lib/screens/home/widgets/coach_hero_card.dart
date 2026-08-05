@@ -1958,7 +1958,19 @@ class CoachNoticedBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
+          // Wrap, not Row: both labels come from the BACKEND
+          // (`accept_label` / `dismiss_label`), so their combined width is not
+          // knowable at build time. A Row overflowed by 3.7px the moment
+          // "Talk more" gained its 44pt minimum touch target next to the
+          // longest accept label ("Ease today's session further"), painting
+          // Flutter's hazard stripe across the card. Wrap drops the second
+          // button to its own line instead of overflowing, which also holds
+          // for a longer localized label or a larger accessibility text scale
+          // — neither of which a hand-tuned width would survive.
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -1980,7 +1992,6 @@ class CoachNoticedBanner extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
               // "Talk more" — was a bare ~70x15pt Text in a GestureDetector,
               // far under the 44x44 minimum touch target (the tap silently
               // missed for most users). Explicit BoxConstraints guarantee

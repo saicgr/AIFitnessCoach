@@ -62,6 +62,42 @@ CoachNoticed _buildNoticed({
   );
 }
 
+/// Width the banner actually gets on a 393pt-wide phone: screen minus the
+/// Home horizontal padding minus the coach card's own inset. The production
+/// card is width-CONSTRAINED; a test that renders the banner unbounded cannot
+/// see a horizontal overflow at all.
+const _kRealBannerWidth = 329.0;
+
+/// Renders at a real constrained width, unlike [_harness] which uses an
+/// `Align` and therefore hands the child unbounded width.
+Widget _constrainedHarness({
+  required double width,
+  CoachNoticed? noticed,
+  double textScale = 1.0,
+}) {
+  return MaterialApp(
+    theme: ThemeData.dark(),
+    home: Scaffold(
+      body: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: width,
+            child: CoachNoticedBanner(
+              noticed: noticed ?? _buildNoticed(),
+              collapsed: false,
+              onToggleCollapsed: () {},
+              onAccept: () {},
+              onTalkMore: () {},
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 Widget _harness({
   required bool collapsed,
   VoidCallback? onToggleCollapsed,
@@ -87,6 +123,7 @@ Widget _harness({
 }
 
 void main() {
+  group('CoachNoticedBanner — overflow (RIGHT OVERFLOWED BY 3.7 PIXELS)', _overflowTests);
   group('CoachNoticedBanner — "Talk more" tap target geometry', () {
     testWidgets('renders at least 44x44 in both dimensions when expanded',
         (tester) async {
@@ -307,5 +344,74 @@ void main() {
       prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool(_kCoachNoticedCollapsedKey), isFalse);
     });
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Overflow — the action row must fit the width it actually gets.
+//
+// A user photographed "RIGHT OVERFLOWED BY 3.7 PIXELS" across this card's
+// action row. The overflow was introduced by giving "Talk more" its 44pt
+// minimum touch target: the accent button plus a 12pt gap plus the new pill
+// exceeded the card by 3.7pt with the longest accept label.
+//
+// Every existing test in this file passed throughout, because the shared
+// harness renders the banner inside an `Align` — which hands the child
+// UNBOUNDED width, where a horizontal overflow is impossible by construction.
+// The tests measured the button and never checked it fit.
+//
+// Both labels are backend-authored (`accept_label` / `dismiss_label`), so
+// their combined width is not knowable at build time. These assert the layout
+// survives a long label, a narrow card and a large accessibility text scale.
+// ---------------------------------------------------------------------------
+void _expectNoOverflow(WidgetTester tester, String reason) {
+  final err = tester.takeException();
+  expect(err, isNull, reason: '$reason — got: $err');
+}
+
+void _overflowTests() {
+  testWidgets('action row does not overflow at the real card width',
+      (tester) async {
+    await tester.pumpWidget(_constrainedHarness(width: _kRealBannerWidth));
+    await tester.pump();
+    _expectNoOverflow(tester,
+        'the accept + Talk more row must fit the card it is painted in');
+  });
+
+  testWidgets('no overflow with the LONGEST backend accept label',
+      (tester) async {
+    await tester.pumpWidget(_constrainedHarness(
+      width: _kRealBannerWidth,
+      noticed: _buildNoticed(
+          acceptLabel: "Ease today's session further",
+          dismissLabel: 'Talk more'),
+    ));
+    await tester.pump();
+    _expectNoOverflow(
+        tester, 'this exact label pair is what overflowed on device');
+  });
+
+  testWidgets('no overflow on a narrow card', (tester) async {
+    await tester.pumpWidget(_constrainedHarness(width: 280));
+    await tester.pump();
+    _expectNoOverflow(tester, 'a narrower card must wrap, not overflow');
+  });
+
+  testWidgets('no overflow at 1.5x accessibility text scale', (tester) async {
+    await tester.pumpWidget(
+        _constrainedHarness(width: _kRealBannerWidth, textScale: 1.5));
+    await tester.pump();
+    _expectNoOverflow(tester,
+        'a larger text scale must wrap the buttons, not overflow the card');
+  });
+
+  testWidgets('both button labels remain fully visible when they wrap',
+      (tester) async {
+    await tester.pumpWidget(_constrainedHarness(width: 280));
+    await tester.pump();
+    // Wrapping must not be achieved by truncating either label — the whole
+    // point is that both actions stay readable.
+    expect(find.text("Ease today's session further"), findsOneWidget);
+    expect(find.text('Talk more'), findsOneWidget);
   });
 }
