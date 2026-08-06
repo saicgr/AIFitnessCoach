@@ -111,16 +111,31 @@ void main() {
     expect(overflowBoxSize.width, closeTo(323 / 3, 0.01));
   });
 
-  testWidgets('vacuity guard: without the slack the same Row DOES overflow',
+  testWidgets('the bare button no longer overflows — the slack is now belt-and-braces',
       (tester) async {
+    // This was a vacuity guard asserting the OPPOSITE: that a bare
+    // ZealovaButton overflows its fractional slot, proving the slack above
+    // was load-bearing. That premise was true when it was written and is not
+    // any more.
+    //
+    // ZealovaButton's label used to be a rigid Text in a Row, so anything
+    // wider than the button overflowed — the defect this whole file exists to
+    // pin down. The label is now Flexible and ellipsizes
+    // (lib/widgets/design_system/zealova_button.dart), which fixes it at the
+    // source for all 46 files that build the button, so the bare button
+    // clamps on its own.
+    //
+    // The assertion is inverted rather than deleted: it still fails loudly if
+    // that source fix is ever reverted, which is exactly what the original
+    // guard was protecting. The #141 slack above is kept as defence in depth
+    // for the fractional-flex geometry (335/3 = 111.66…), which is a separate
+    // concern from the label.
     await tester.pumpWidget(buildRow(withSlack: false));
     await tester.pump();
 
-    final error = tester.takeException();
-    expect(error, isNotNull,
-        reason: 'expected the bare ZealovaButton to overflow its fractional '
-            'slot — if it no longer does, the #141 gate above is vacuous');
-    expect(error.toString(), contains('overflowed'));
+    expect(tester.takeException(), isNull,
+        reason: 'ZealovaButton clamps its own label now; an overflow here '
+            'means that fix was reverted and 46 call sites are broken again');
   });
 }
 
