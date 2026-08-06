@@ -36,12 +36,29 @@ class ZealovaButton extends StatelessWidget {
     final tc = ThemeColors.of(context);
     final isPrimary = variant == ZealovaButtonVariant.primary;
     final fg = isPrimary ? tc.accentContrast : tc.textPrimary;
+    // The label is Flexible and ellipsizes rather than sitting rigid in the
+    // Row. It used to be a bare Text, so ANY label wider than the button —
+    // a long string, a longer translation, or a large accessibility text
+    // scale — overflowed instead of clamping. 46 files construct this button,
+    // so that was one of the widest-reach layout defects in the app; caught by
+    // test/ui_gates/no_overflow_gate_test.dart, which measured a 764px
+    // overflow on a realistic label.
+    //
+    // The trailing icon stays rigid: it is a fixed 18px and shrinking it
+    // would be worse than clipping a word off the label.
     final content = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(label.toUpperCase(),
-            style: ZType.lbl(14, color: fg, letterSpacing: 2.5)),
+        Flexible(
+          child: Text(
+            label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: ZType.lbl(14, color: fg, letterSpacing: 2.5),
+          ),
+        ),
         if (trailingIcon != null) ...[
           const SizedBox(width: 8),
           Icon(trailingIcon, size: 18, color: fg),
