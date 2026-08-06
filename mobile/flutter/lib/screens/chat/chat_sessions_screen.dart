@@ -210,7 +210,7 @@ class _ChatSessionsScreenState extends ConsumerState<ChatSessionsScreen> {
           session: session,
           colors: colors,
           onTap: () => _openSession(session),
-          onRename: () => _showRenameDialog(colors, session),
+          onRename: () => _showRenameDialog(session),
           onArchive: () => _archive(session),
           onDelete: () => _confirmDelete(colors, session),
           // Proactive mirrors touch_session → the unseen coach message is in
@@ -322,36 +322,11 @@ class _ChatSessionsScreenState extends ConsumerState<ChatSessionsScreen> {
     );
   }
 
-  Future<void> _showRenameDialog(ThemeColors colors, ChatSession session) async {
-    final controller = TextEditingController(text: session.title ?? '');
+  Future<void> _showRenameDialog(ChatSession session) async {
     final newTitle = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: colors.surface,
-        title: Text('Rename chat', style: TextStyle(color: colors.textPrimary)),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: TextStyle(color: colors.textPrimary),
-          decoration: InputDecoration(
-            hintText: 'Conversation name',
-            hintStyle: TextStyle(color: colors.textSecondary),
-          ),
-          onSubmitted: (v) => Navigator.of(ctx).pop(v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: Text('Save', style: TextStyle(color: colors.accent)),
-          ),
-        ],
-      ),
+      builder: (ctx) => _RenameChatDialog(initialTitle: session.title ?? ''),
     );
-    controller.dispose();
     if (newTitle == null || newTitle.isEmpty || newTitle == session.title) return;
     try {
       await ref.read(chatSessionsProvider.notifier).rename(session.id, newTitle);
@@ -417,6 +392,79 @@ class _ChatSessionsScreenState extends ConsumerState<ChatSessionsScreen> {
   void _toast(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+/// Rename-chat dialog content. A `StatefulWidget` so the [TextEditingController]
+/// is owned by THIS element's own lifecycle (`initState` → `dispose`) instead
+/// of being created by the caller and disposed manually right after
+/// `showDialog` returns.
+///
+/// That used to be a plain `TextEditingController` created in
+/// `_showRenameDialog`, handed to a `TextField` built inline in the
+/// `showDialog` builder, and `.dispose()`d the instant the awaited
+/// `showDialog<String>` future completed. But `showDialog`'s future resolves
+/// the moment `Navigator.pop()` is CALLED — not once the dialog route has
+/// actually finished being torn down (that happens over the next frame(s), as
+/// the exit transition plays and the Overlay rebuilds). So the controller was
+/// being disposed while its `TextField` — with `autofocus: true`, which had
+/// scheduled a "scroll the caret into view" callback for a later frame — was
+/// still mounted. That callback then fired against an already-detached
+/// render tree (`'attached': is not true`), which corrupted the following
+/// frame's element deactivation pass and threw
+/// `'_dependents.isEmpty': is not true` while the ROOT Overlay rebuilt —
+/// crashing the whole screen, not just the dialog. Reproduced with a widget
+/// test in test/screens/chat/chat_sessions_rename_crash_test.dart.
+///
+/// Letting Flutter dispose the controller as part of this State's own
+/// `dispose()` guarantees it only happens once the widget is actually
+/// unmounted — never mid-animation.
+class _RenameChatDialog extends StatefulWidget {
+  const _RenameChatDialog({required this.initialTitle});
+
+  final String initialTitle;
+
+  @override
+  State<_RenameChatDialog> createState() => _RenameChatDialogState();
+}
+
+class _RenameChatDialogState extends State<_RenameChatDialog> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.initialTitle);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+    return AlertDialog(
+      backgroundColor: colors.surface,
+      title: Text('Rename chat', style: TextStyle(color: colors.textPrimary)),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        style: TextStyle(color: colors.textPrimary),
+        decoration: InputDecoration(
+          hintText: 'Conversation name',
+          hintStyle: TextStyle(color: colors.textSecondary),
+        ),
+        onSubmitted: (v) => Navigator.of(context).pop(v.trim()),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancel', style: TextStyle(color: colors.textSecondary)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: Text('Save', style: TextStyle(color: colors.accent)),
+        ),
+      ],
+    );
   }
 }
 
