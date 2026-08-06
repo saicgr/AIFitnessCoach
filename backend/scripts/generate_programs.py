@@ -292,31 +292,39 @@ def determine_goals(program: dict) -> list[str]:
 # ============================================================================
 
 def determine_phase(week_num: int, total_weeks: int, category: str = "") -> str:
-    """Determine the training phase based on week number and total duration."""
+    """Determine the training phase based on week number and total duration.
+
+    Plain language only — this string is written verbatim to
+    `program_variant_weeks.phase` and rendered on the Schedule tab to ordinary
+    users (see CLAUDE.md "Program copy must be plain-language"). Do NOT
+    reintroduce exercise-science shorthand here even though it reads fine to a
+    trainer — "Intensification"/"Deload" is exactly the jargon
+    audit_program_copy_clarity.py exists to catch.
+    """
     progress = week_num / total_weeks
 
     # Special handling for HYROX programs
     if "hyrox" in category.lower():
         if progress <= 0.4:
-            return "Blueprint (Aerobic Foundation)"
+            return "Building Your Aerobic Base"
         elif progress <= 0.75:
-            return "Build (Race-Specific)"
+            return "Race-Specific Training"
         elif progress <= 0.95:
-            return "Race (Peak Performance)"
+            return "Peak Race Performance"
         else:
-            return "Taper/Race Week"
+            return "Tapering for Race Week"
 
     # General periodization
     if progress <= 0.25:
-        return "Foundation (Base Building)"
+        return "Building Your Foundation"
     elif progress <= 0.5:
-        return "Build (Progressive Overload)"
+        return "Building Strength and Volume"
     elif progress <= 0.75:
-        return "Peak (Intensification)"
+        return "Peak Effort"
     elif progress <= 0.9:
-        return "Taper (Deload)"
+        return "Easing Off to Recover"
     else:
-        return "Test/Maintenance"
+        return "Testing Your Progress"
 
 
 # ============================================================================

@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/injury_options.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -12,6 +11,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/injury_limitations_sheet.dart';
 import 'edit_personal_info_sheet.dart';
+import 'injury_entry_parser.dart';
 
 /// Shared "User Card" — avatar + display name + bio, plus (on the editable
 /// Profile sub-tab only) the email + tap-to-copy unique user ID + edit pencil.
@@ -80,11 +80,14 @@ class _UserCardState extends ConsumerState<UserCard> {
     // future social/add-by-handle. Falls back to nothing (we never show the
     // bare UUID).
     final handle = user?.username ?? '';
-    // Active injuries (canonical ids, e.g. 'lower_back') surfaced as removable
-    // chips below the handle. Stored as ids, rendered via injuryLabelFor.
-    final injuries = user == null
-        ? const <String>[]
-        : normalizeInjuryList(user.injuriesList);
+    // Active injuries surfaced as removable chips below the handle. Storage
+    // is heterogeneous (canonical id strings from onboarding, or structured
+    // {id, severity, body_part, ...} objects from the injury-recovery
+    // writer) — parsed straight from the raw JSON so structured entries get
+    // a real body-part label instead of `user.injuriesList`'s stringified
+    // Dart-map dump. See injury_entry_parser.dart.
+    final injuries =
+        user == null ? const <InjuryEntry>[] : parseActiveInjuries(user.activeInjuries);
     final photoUrl = user?.photoUrl;
     // The Overview tab mounts this as a read-only glance; identity details
     // (email + handle) live only on the editable Profile sub-tab so the
@@ -221,7 +224,7 @@ class _UserCardState extends ConsumerState<UserCard> {
   /// Both removing and adding persist via `updateUserProfile` which triggers
   /// the backend to regenerate upcoming workouts under the new safety
   /// constraints — we then refresh the Next-Workout hero so it reflects them.
-  Widget _buildInjurySection(List<String> injuries, bool isDark) {
+  Widget _buildInjurySection(List<InjuryEntry> injuries, bool isDark) {
     return Wrap(
       spacing: 6,
       runSpacing: 6,
@@ -236,9 +239,9 @@ class _UserCardState extends ConsumerState<UserCard> {
           ),
         ),
         ...injuries.map(
-          (id) => _InjuryChip(
-            label: injuryLabelFor(id),
-            onRemove: () => _removeInjury(id, injuries),
+          (entry) => _InjuryChip(
+            label: entry.label,
+            onRemove: () => _removeInjury(entry, injuries),
           ),
         ),
         _AddInjuryChip(
@@ -249,10 +252,13 @@ class _UserCardState extends ConsumerState<UserCard> {
     );
   }
 
-  /// Remove a single injury and persist + regenerate.
-  void _removeInjury(String id, List<String> current) {
+  /// Remove a single injury and persist + regenerate. Sends back the raw
+  /// values (string id OR structured object) for every entry EXCEPT the one
+  /// removed, so a structured entry's severity/dates survive an unrelated
+  /// removal — round-tripping the id list here would silently discard them.
+  void _removeInjury(InjuryEntry target, List<InjuryEntry> current) {
     HapticFeedback.lightImpact();
-    final next = current.where((e) => e != id).toList();
+    final next = current.where((e) => e != target).map((e) => e.raw).toList();
     ref
         .read(authStateProvider.notifier)
         .updateUserProfile({'active_injuries': next});
@@ -358,12 +364,20 @@ class _InjuryChip extends StatelessWidget {
         children: [
           const Icon(Icons.healing, size: 12, color: AppColors.error),  // accent-allowlist: error/destructive state — must stay red regardless of accent
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.1,
+          // Constrained + ellipsized so an unusually long label (e.g. several
+          // body parts on one injury entry) truncates within the chip instead
+          // of forcing a RenderFlex overflow across the rest of the card.
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 160),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+                letterSpacing: 0.1,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           GestureDetector(

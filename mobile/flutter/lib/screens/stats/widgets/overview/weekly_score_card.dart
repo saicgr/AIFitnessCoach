@@ -86,7 +86,37 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
       },
       child: (!hasAny && isInitialLoad)
           ? _buildSkeleton()
-          : _buildContent(context, accent, colors, breakdown),
+          : (!hasAny
+              ? _buildEmpty(colors)
+              : _buildContent(context, accent, colors, breakdown)),
+    );
+  }
+
+  /// Honest empty state: no fitness score has ever been calculated for this
+  /// account, so there is no week-over-week delta to report. Rendering "0"
+  /// here would read as "no change" rather than "no data" — the same
+  /// fabricated-zero defect the overview fitness breakdown had.
+  Widget _buildEmpty(ThemeColors colors) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ZealovaSectionKicker('Weekly Score'),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          '—',
+          maxLines: 1,
+          style: ZType.disp(48, color: colors.textMuted),
+        ),
+        const SizedBox(height: 6),
+        ZealovaRule(margin: const EdgeInsets.only(bottom: AppSpacing.sm)),
+        Text(
+          'NOT SCORED YET',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5),
+        ),
+      ],
     );
   }
 

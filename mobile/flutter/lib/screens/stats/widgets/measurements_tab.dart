@@ -40,6 +40,23 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
   MeasurementType _selectedType = MeasurementType.weight;
   List<MeasurementType> _measurementOrder = [];
 
+  // The quick-add FAB floats at a fixed screen position over the scrollable
+  // list, so any row that scrolls into its bottom-right footprint has its
+  // trailing value + chevron covered — not just the last row (the list is
+  // sorted by measurement type, so it can be any row depending on scroll
+  // position). Hiding the FAB while actively scrolling — and restoring it
+  // once the list is at rest — keeps every row's content reachable without
+  // reserving permanent dead space for the FAB's footprint.
+  final ScrollController _scrollController = ScrollController();
+  bool _fabVisible = true;
+
+  void _handleScroll() {
+    final atRest = !_scrollController.position.isScrollingNotifier.value;
+    if (atRest != _fabVisible) {
+      setState(() => _fabVisible = atRest);
+    }
+  }
+
   // ── fl_chart LineChartData memoization ──────────────────────────────
   // The hero chart's `LineChartData` is rebuilt on every `build()` — but it
   // only depends on the filtered entry list, the selected metric/period and
@@ -129,6 +146,14 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     super.initState();
     _loadOrder();
     _loadMeasurements();
+    _scrollController.addListener(_handleScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_handleScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadOrder() async {
@@ -251,6 +276,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
           onRefresh: _loadMeasurements,
           color: cyan,
           child: SingleChildScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -288,14 +314,26 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
           ),
         ),
 
-        // Floating FAB - quick add measurement
+        // Floating FAB - quick add measurement. Fixed at the screen's
+        // bottom-right, so it can cover whichever row happens to scroll into
+        // its footprint (the list is sorted by measurement type, not by
+        // recency, so it's never just "the last row"). Faded out while the
+        // list is actively scrolling and restored at rest, so a row's
+        // trailing value + chevron are never permanently unreachable.
         PositionedDirectional(end: 16,
           bottom: 16,
-          child: FloatingActionButton(
-            heroTag: 'measurements_quick_add_fab',
-              onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
-            backgroundColor: cyan,
-            child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
+          child: IgnorePointer(
+            ignoring: !_fabVisible,
+            child: AnimatedOpacity(
+              opacity: _fabVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 150),
+              child: FloatingActionButton(
+                heroTag: 'measurements_quick_add_fab',
+                  onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
+                backgroundColor: cyan,
+                child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
+              ),
+            ),
           ),
         ),
       ],

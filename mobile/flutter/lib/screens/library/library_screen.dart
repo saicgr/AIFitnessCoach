@@ -192,11 +192,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     if (filter != null) {
       const muscles = {'Chest', 'Back', 'Shoulders', 'Arms', 'Legs', 'Core', 'Glutes'};
       const equipment = {'Weights', 'Bodyweight', 'Machines', 'Cardio'};
-      // Clear all three filter axes before applying the new one so the
-      // Exercises tab reflects exactly one selection.
+      // Clear all three filter axes AND any leftover search text before
+      // applying the new one, so the Exercises tab reflects exactly the
+      // tapped selection — not that selection silently ANDed with whatever
+      // was still typed in the header search field (which has no visible
+      // clear affordance and isn't reset by switching tabs).
       ref.read(selectedMuscleGroupsProvider.notifier).state = {};
       ref.read(selectedEquipmentsProvider.notifier).state = {};
       ref.read(selectedCategoriesProvider.notifier).state = {};
+      ref.read(exerciseSearchProvider.notifier).state = '';
 
       final resolvedAxis = axis ??
           (muscles.contains(filter)
@@ -323,6 +327,34 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               contentPadding: EdgeInsets.zero,
                             ),
                           ),
+                        ),
+                        // Clear (X) affordance — only visible once there's
+                        // text to clear. `ListenableBuilder` rebuilds just
+                        // this icon off the controller directly (typing
+                        // doesn't otherwise rebuild this ConsumerState), so
+                        // it appears/disappears live as the user types.
+                        ListenableBuilder(
+                          listenable: _searchController,
+                          builder: (context, _) {
+                            if (_searchController.text.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
+                            return GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () {
+                                HapticService.light();
+                                _searchController.clear();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  color: textMuted,
+                                  size: 18,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

@@ -418,39 +418,59 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             ),
           )),
           const SizedBox(width: 12),
-          // Compare button
-          GestureDetector(
-            onTap: () {
-              HapticService.light();
-              if (widget.userId != null) {
-                Navigator.push(
-                  context,
-                  AppPageRoute(
-                    builder: (_) => ComparisonView(userId: widget.userId!),
+          // Compare button — the flow needs 2 photos to pick from (Layout →
+          // Select Photos → Customize). With fewer than 2, entering it always
+          // dead-ends on "No Photos Found" with a disabled Next, two steps in.
+          // Disabled (not hidden) so the control stays discoverable and its
+          // requirement is legible rather than a silent no-op.
+          Builder(builder: (context) {
+            final canCompare = totalPhotos >= 2;
+            return GestureDetector(
+              onTap: canCompare
+                  ? () {
+                      HapticService.light();
+                      if (widget.userId != null) {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            builder: (_) =>
+                                ComparisonView(userId: widget.userId!),
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: canCompare
+                      ? accentColor.withValues(alpha: 0.12)
+                      : textMuted.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: canCompare
+                        ? accentColor.withValues(alpha: 0.3)
+                        : textMuted.withValues(alpha: 0.2),
                   ),
-                );
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.compare_arrows_rounded,
+                        size: 14, color: canCompare ? accentColor : textMuted),
+                    const SizedBox(width: 4),
+                    Text(
+                      AppLocalizations.of(context).recipeHistoryCompare,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: canCompare ? accentColor : textMuted),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.compare_arrows_rounded, size: 14, color: accentColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    AppLocalizations.of(context).recipeHistoryCompare,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: accentColor),
-                  ),
-                ],
-              ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -570,6 +590,12 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
               height: 140,
               child: ListView(
                 scrollDirection: Axis.horizontal,
+                // Trailing gutter so the last card (and its label, e.g.
+                // "Back") isn't sliced flush against the screen edge —
+                // without it the strip's content width exactly matches the
+                // viewport and the final card renders partially off-screen
+                // with no scroll affordance to reveal the rest.
+                padding: const EdgeInsets.only(right: 16),
                 children: PhotoViewType.values.map((type) {
                   final photo = latest.getPhoto(type);
                   return _buildLatestViewCard(type, photo);

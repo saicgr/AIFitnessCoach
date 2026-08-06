@@ -55,6 +55,7 @@ import 'widgets/media_preview_strip.dart';
 import 'widgets/report_message_sheet.dart';
 import 'widgets/chat_quick_pills.dart';
 import 'widgets/chat_features_info_sheet.dart';
+import 'widgets/empty_session_state.dart';
 import 'widgets/enhanced_empty_state.dart';
 import 'widgets/coach_briefing_card.dart';
 import 'widgets/voice_message_widget.dart';
@@ -674,6 +675,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
   }
 
+  /// Row 53 (E2E) — see `widgets/empty_session_state.dart` for the full
+  /// rationale. Shown instead of [_buildEmptyOrGreeting] when the user
+  /// explicitly opened a saved session from HISTORY and it resolved to zero
+  /// messages.
+  Widget _buildEmptySessionState() {
+    return EmptySessionState(
+      onBackToChats: () {
+        HapticService.light();
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.push('/chat/sessions');
+        }
+      },
+    );
+  }
+
   Widget _buildEmptyOrGreeting(CoachPersona coach) {
     final Widget base = EnhancedEmptyState(
       key: const ValueKey('empty'),
@@ -880,6 +898,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// shared ext file) so the header relocation lives entirely in chat_screen.
   void _showOptionsMenuWithUsageInfo(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // Captured BEFORE showGlassSheet's `builder` shadows `context` with the
+    // sheet's own (about-to-be-popped) context. `Navigator.of(context).context`
+    // is the Navigator's own context, which stays mounted after the sheet
+    // closes — safe to reuse for reopening "Usage info" as a second sheet.
+    // Mirrors the `_minimizeToFloatingChat` pattern above. Without this, the
+    // "Usage info" tile popped the sheet and then called `Theme.of`/
+    // `ProviderScope.containerOf` on that just-deactivated sheet context,
+    // hitting "Looking up a deactivated widget's ancestor is unsafe."
+    final rootContext = Navigator.of(context).context;
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
@@ -900,7 +927,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 onTap: () {
                   Navigator.pop(context);
                   HapticService.light();
-                  _showUsageInfoSheet(context);
+                  if (rootContext.mounted) {
+                    _showUsageInfoSheet(rootContext);
+                  }
                 },
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
@@ -1378,6 +1407,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     // empty state with its "Try asking…" suggestions.
                     if (_isOrganicOpen && !_openLadderResolved) {
                       return _buildOpenComposingPlaceholder();
+                    }
+                    // Row 53 (E2E) — opening a saved session from HISTORY
+                    // that resolves to zero messages (its chat_history rows
+                    // are gone, even though the session shell and its
+                    // derived coach_memory survived) used to render this
+                    // IDENTICAL avatar-landing "Try asking…" empty state as
+                    // a genuinely brand-new chat — so the tap read as a
+                    // no-op with no way to tell the conversation was lost.
+                    // `currentChatSessionProvider != null` is exactly the
+                    // signal `_runOpenStateLadderBody` already uses to mean
+                    // "this is an existing session, not an organic new
+                    // chat" — reuse it here to show something honest instead.
+                    if (ref.read(currentChatSessionProvider) != null) {
+                      return _buildEmptySessionState();
                     }
                     return _buildEmptyOrGreeting(coach);
                   }

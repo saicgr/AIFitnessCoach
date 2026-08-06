@@ -27,10 +27,11 @@ from .performance_db_models import *  # noqa: F401, F403
 from .performance_db_endpoints import router as _endpoints_router
 
 import json
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
-from core.timezone_utils import user_today_date
+from core.timezone_utils import user_today_date, resolve_timezone
+from services.workout_completion_hooks import run_post_completion_hooks
 from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 from datetime import datetime, date, timedelta, timezone
@@ -596,6 +597,8 @@ async def get_exercise_last_performance(
 
 @router.post("/workout-logs", response_model=WorkoutLog)
 async def create_workout_log(log: WorkoutLogCreate,
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Create a workout log entry."""
@@ -668,6 +671,24 @@ async def create_workout_log(log: WorkoutLogCreate,
             raise safe_internal_error(ValueError("Failed to create workout log in database"), "performance_db")
 
         logger.info(f"Workout log created: id={created['id']}, user_id={log.user_id}")
+
+        # Chokepoint fix (row 1 CRIT / row 56 HIGH, UI_E2E 2026-08-05): a log
+        # created here with status='completed' fires migration 2256's
+        # trg_sync_workout_completion trigger, which flips
+        # workouts.is_completed DIRECTLY in Postgres — bypassing
+        # POST /workouts/{id}/complete entirely, and with it every background
+        # task (strength/fitness score recalc, trophy checks) that used to
+        # live ONLY on that endpoint. See services/workout_completion_hooks.py.
+        if derived_status == "completed":
+            tz_str = resolve_timezone(request, db, log.user_id)
+            background_tasks.add_task(
+                run_post_completion_hooks,
+                user_id=log.user_id,
+                supabase=db.client,
+                timezone_str=tz_str,
+                workout_id=log.workout_id,
+            )
+
         return row_to_workout_log(created)
 
     except HTTPException:
@@ -699,6 +720,8 @@ class WorkoutLogPatch(BaseModel):
 async def update_workout_log(
     log_id: str,
     patch: WorkoutLogPatch,
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Patch an existing workout_log row.
@@ -754,17 +777,39 @@ async def update_workout_log(
             raise HTTPException(status_code=400, detail="No updatable fields provided")
 
         # Authorize: ensure the row belongs to the requesting user.
-        owner = db.client.table("workout_logs").select("user_id").eq("id", log_id).maybe_single().execute()
+        owner = db.client.table("workout_logs").select("user_id, workout_id, status").eq("id", log_id).maybe_single().execute()
         if owner is None or owner.data is None:
             raise HTTPException(status_code=404, detail="Workout log not found")
         if owner.data.get("user_id") != current_user["id"]:
             raise HTTPException(status_code=403, detail="Not authorized to update this workout log")
+        was_already_completed = owner.data.get("status") == "completed"
 
         result = db.client.table("workout_logs").update(update_data).eq("id", log_id).execute()
         if not result.data:
             raise HTTPException(status_code=404, detail="Workout log not found")
 
         logger.info(f"Patched workout log {log_id}: fields={list(update_data.keys())}")
+
+        # Chokepoint fix (row 1 CRIT / row 56 HIGH, UI_E2E 2026-08-05): the
+        # Easy-tier finalize PATCH is what actually flips a session to
+        # 'completed' for that tier (see WorkoutLogPatch docstring above), and
+        # migration 2256's trg_sync_workout_completion trigger syncs that
+        # straight into workouts.is_completed without ever touching
+        # POST /workouts/{id}/complete. Only fire once (guard on the PRE-patch
+        # status) so a later no-op PATCH on an already-completed log doesn't
+        # re-debounce/re-check every time. See services/workout_completion_hooks.py.
+        if update_data.get("status") == "completed" and not was_already_completed:
+            user_id = owner.data.get("user_id")
+            workout_id = owner.data.get("workout_id")
+            tz_str = resolve_timezone(request, db, user_id)
+            background_tasks.add_task(
+                run_post_completion_hooks,
+                user_id=user_id,
+                supabase=db.client,
+                timezone_str=tz_str,
+                workout_id=workout_id,
+            )
+
         return row_to_workout_log(result.data[0])
 
     except HTTPException:

@@ -9,6 +9,7 @@ import '../../data/providers/gym_profile_provider.dart';
 import '../../data/providers/habit_provider.dart';
 import '../../data/providers/pending_celebrations_provider.dart';
 import '../../data/providers/secondary_tile_providers.dart';
+import '../../data/providers/timeline_provider.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/providers/weekly_plan_provider.dart';
 import '../../data/providers/xp_provider.dart';
@@ -76,6 +77,14 @@ Future<void> refreshAllHome(WidgetRef ref) async {
   ref.invalidate(weeklyPlanProvider);
   // Family wholesale-invalidate — all (userId) instances refetch.
   ref.invalidate(habitsProvider);
+  // TIMELINE — was missing entirely: a meal/water/workout logged in the
+  // SAME app session never appeared on Home's timeline (and its "nothing
+  // logged yet today" nudge kept contradicting the CALORIES tile above it),
+  // because nothing here ever told `timelineProvider` to refetch. Use its
+  // own `refresh()` (bypasses the 60s server cache) rather than
+  // `ref.invalidate` so an in-progress infinite-scroll history load isn't
+  // reset by a pull-to-refresh.
+  ref.read(timelineProvider.notifier).refresh();
 
   // Secondary kept-alive tiles (metric deck, home insights/patterns, achievement
   // + content rows). These are `keepAlive`d so they don't refetch on tab switch,

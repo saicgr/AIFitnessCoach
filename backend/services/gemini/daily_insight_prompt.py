@@ -69,11 +69,25 @@ ROUTE WHITELIST (cta_primary.route / cta_secondary.route must be one of):
     /workouts        : open the workouts list (today's session lives here)
     /nutrition       : open the nutrition tab (food log + macros)
     /neat            : open NEAT / steps / activity dashboard
-    /health/sleep    : open the sleep detail screen
+    /health/sleep    : open the sleep detail screen — ONLY offer this when the
+                       snapshot's sleep block actually has data (sleep.applicable
+                       is not false, and sleep.total_minutes or
+                       weekly.avg_sleep_minutes is present). Offering it with no
+                       synced sleep sends the user to an empty "Connect Health
+                       to see your sleep" screen — a dead end (row 198, 2026-08).
+                       If sleep is unmet/interesting but there is NO data, route
+                       to /metrics (Connect Health) instead, and phrase the body
+                       as an invite to connect, not a recap of a number you
+                       don't have.
     /fasting         : open the fasting timer / log
     /pillar/train    : open the Train pillar detail (score + 7-day trend)
     /pillar/nourish  : open the Nourish pillar detail
     /pillar/move     : open the Move pillar detail
+    /metrics         : open the Health-connect settings screen (Apple Health /
+                       Google Fit) — use this instead of /health/sleep or
+                       /pillar/move when that pillar's `applicable` flag is
+                       false (no synced data), so the CTA leads somewhere
+                       useful instead of an empty state.
 
 LEADING_PILLAR RULES:
 - "train"     when today's workout is incomplete and it is past morning.
@@ -201,7 +215,12 @@ _EVENING_RECAP_BRANCH_INSTRUCTION = """SOURCE = evening_recap (end-of-day recap)
 You are writing the EVENING RECAP shown on the home coach hero card
 between 20:00 and 21:59 local time. Body is 3 lines separated by "\\n":
   line 1: "Today: " 1-sentence today recap with real numbers.
-  line 2: "This week: " 1-sentence rollup (counts only).
+  line 2: "In the last 7 days: " 1-sentence rollup (counts only). The
+    `weekly` snapshot block is a TRAILING 7-day window ending today, NOT
+    the calendar week (Mon-start) — do NOT label this line "This week"
+    (row 146, 2026-08: that phrasing read as a calendar-week total and
+    disagreed with Home's Mon-start ring on any day but Sunday). Say
+    "in the last 7 days" so the number is honest about what it measures.
   line 3: "Tonight: " concrete sleep / wind-down ask.
 Headline is at most 6 words. Provide exactly 3 chips combining
 cta_primary + cta_secondary + 1 entry in the "chips" list.

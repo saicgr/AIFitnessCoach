@@ -30,7 +30,9 @@ class ContributeFoodDataSection extends ConsumerStatefulWidget {
 
 class _ContributeFoodDataSectionState
     extends ConsumerState<ContributeFoodDataSection> {
-  bool _enabled = true; // default ON, matches users.contribute_food_data DEFAULT TRUE
+  // null = unknown (not yet loaded, or load failed). Never fabricate a
+  // value here — the real setting comes only from the server response.
+  bool? _enabled;
   bool _loading = true;
   bool _saving = false;
   bool _deleting = false;
@@ -43,19 +45,24 @@ class _ContributeFoodDataSectionState
   }
 
   Future<void> _fetchCurrent() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final client = ref.read(apiClientProvider);
       final resp = await client.get('/users/me');
       final data = (resp.data as Map?) ?? {};
       if (!mounted) return;
       setState(() {
-        _enabled = (data['contribute_food_data'] as bool?) ?? true;
+        _enabled = data['contribute_food_data'] as bool?;
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
+        _enabled = null;
         _error = 'Could not load setting';
       });
     }
@@ -180,12 +187,30 @@ class _ContributeFoodDataSectionState
           const SizedBox(height: 16),
           if (_loading)
             const Center(child: CircularProgressIndicator())
+          else if (_error != null || _enabled == null)
+            // Real value is unknown — never render a switch in a state we
+            // haven't actually confirmed with the server.
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _error ?? 'Could not load setting',
+                    style: const TextStyle(color: Colors.red, fontSize: 13),  // accent-allowlist: error/destructive - must stay red
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: _fetchCurrent,
+                  child: Text(AppLocalizations.of(context).buttonRetry),
+                ),
+              ],
+            )
           else
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    _enabled
+                    _enabled!
                         ? AppLocalizations.of(context).contributeFoodDataSharingNovelDishesRecommen
                         : 'Not sharing novel dishes',
                     style: TextStyle(
@@ -196,19 +221,12 @@ class _ContributeFoodDataSectionState
                   ),
                 ),
                 Switch.adaptive(
-                  value: _enabled,
+                  value: _enabled!,
                   onChanged: _saving ? null : (v) => _toggle(v),
                   activeColor: accent,
                 ),
               ],
             ),
-          if (_error != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.red, fontSize: 12),  // accent-allowlist: error/destructive - must stay red
-            ),
-          ],
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: _deleting ? null : _confirmAndDelete,

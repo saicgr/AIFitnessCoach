@@ -1,3 +1,4 @@
+import '../../widgets/glass_back_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,6 +17,7 @@ import '../../widgets/exercise_image.dart';
 import '../../widgets/signature/signature.dart';
 import 'exercise_browse.dart';
 import 'program_library_screen.dart' show ProgramLibraryStartFlow;
+import 'schedule_volume_format.dart';
 import 'widgets/variant_picker.dart';
 import '../../core/theme/accent_color_provider.dart';
 
@@ -482,14 +484,28 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
       pinned: true,
       automaticallyImplyLeading: false,
       // Collapsed bar: back ‹ + program title + favorite heart.
-      leading: GestureDetector(
-        onTap: _back,
-        behavior: HitTestBehavior.opaque,
-        child: const Icon(
-          Icons.arrow_back_ios_new_rounded,
-          size: 18,
-          color: AppColors.textPrimary,
-        ),
+      //
+      // The chevron always sits on its own translucent circular scrim —
+      // previously it floated bare over the hero photo (near-invisible on a
+      // bright image, since the top-of-hero gradient scrim alone isn't
+      // reliably dark there) and only gained a solid backdrop once scrolled
+      // into the collapsed app bar, so the control visibly changed weight
+      // mid-scroll. The scrim now matches both states, so nothing changes as
+      // the user scrolls past the hero.
+      // Uses the canonical GlassBackButton rather than a hand-rolled circle.
+      // The intent above — a control that keeps the same weight over the hero
+      // photo and in the collapsed bar — is what `forceDarkScrim` is for, so
+      // the app's one back control already solves it.
+      //
+      // The earlier version was a bespoke 34x34 GestureDetector + Container,
+      // which test/ui_gates/nav_affordance_gate_test.dart flagged as a NEW
+      // deviation: a screenshot audit of 862 screens found this app already
+      // has no consistent back control (~35 routes circled vs ~36 bare), so
+      // adding a 3rd bespoke variant while fixing the scrim made that worse.
+      // It also gets the 44pt touch target for free — the bespoke one was 34.
+      leading: const Padding(
+        padding: EdgeInsets.only(left: 12),
+        child: Center(child: GlassBackButton(forceDarkScrim: true)),
       ),
       title: AnimatedOpacity(
         // Fade in the collapsed title only when actually collapsed (i.e. when
@@ -655,7 +671,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
             Expanded(
               child: _StatTile(
                 value: card.durationWeeks?.toString() ?? '—',
-                label: 'WEEKS',
+                label: card.durationWeeks == 1 ? 'WEEK' : 'WEEKS',
                 accented: true,
               ),
             ),
@@ -762,7 +778,17 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           for (final phase in phases)
             _PhaseBlock(
               phase: phase,
-              onTap: () => _jumpToScheduleWeek(phase.weekStart ?? 1),
+              // A phase can reference a week the program doesn't actually
+              // schedule (e.g. authored "Week 3-4" on a program whose
+              // duration_weeks is 1) — jumping there lands on a Schedule tab
+              // with no matching week chip, so the tap does nothing visible.
+              // Only wire the jump when the target week is within the
+              // program's real duration.
+              onTap:
+                  card.durationWeeks == null ||
+                      (phase.weekStart ?? 1) <= card.durationWeeks!
+                  ? () => _jumpToScheduleWeek(phase.weekStart ?? 1)
+                  : null,
             ),
           if (phases.isEmpty)
             Text(
@@ -1123,9 +1149,15 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   // Sticky bottom bar — JOINED <count> (real, hidden when 0/null) + START.
   // -------------------------------------------------------------------------
 
+  /// Below this, a real "N JOINED" count reads as broken rather than
+  /// persuasive social proof ("1 JOINED") — hide it instead of a
+  /// single/low-digit count. The number itself is never fabricated, only
+  /// its visibility floor changes.
+  static const int _kJoinedDisplayFloor = 10;
+
   Widget _buildBottomBar(ProgramLibraryCard card) {
     final joined = card.joinedCount;
-    final showJoined = joined != null && joined > 0;
+    final showJoined = joined != null && joined >= _kJoinedDisplayFloor;
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xFF09090B),
@@ -1388,7 +1420,9 @@ class _PhaseBlock extends StatelessWidget {
   final ProgramPhase phase;
 
   /// Tapping the card navigates to the schedule tab at [phase.weekStart].
-  final VoidCallback onTap;
+  /// Null when that week isn't actually within the program's schedule —
+  /// the card renders as a plain (non-tappable, no chevron) info block.
+  final VoidCallback? onTap;
 
   const _PhaseBlock({required this.phase, required this.onTap});
 
@@ -1396,9 +1430,10 @@ class _PhaseBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final weekLabel = phase.weekLabel;
     final subtitle = phase.subtitle?.trim();
+    final interactive = onTap != null;
     return GestureDetector(
       onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+      behavior: interactive ? HitTestBehavior.opaque : HitTestBehavior.translucent,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
@@ -1445,13 +1480,15 @@ class _PhaseBlock extends StatelessWidget {
                 ],
               ),
             ),
-            // Chevron is now meaningful — tapping navigates to that phase's
-            // first week in the Schedule tab.
-            Icon(
-              Icons.chevron_right_rounded,
-              size: 20,
-              color: context.accentColor,
-            ),
+            // Chevron is meaningful — tapping navigates to that phase's
+            // first week in the Schedule tab. Hidden when there's no
+            // matching week to land on (see [onTap]).
+            if (interactive)
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: context.accentColor,
+              ),
           ],
         ),
       ),
@@ -1585,7 +1622,7 @@ class _ScheduleDayCard extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '${day.dayName} · Rest',
+              restDayLabel(day.dayName),
               style: ZType.sans(
                 13,
                 color: AppColors.textSecondary,
@@ -1662,10 +1699,11 @@ class _ScheduleExerciseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final volume = ex.volumeLabel;
+    final resolved = resolveScheduleVolume(ex);
+    final volume = resolved.volume;
     // Program-authored subtitle: plain-English interval label, else the
     // authored intensity target. Additive — the volume label stays trailing.
-    final subtitle = ex.intervalLabel ?? ex.intensityGuidance;
+    final subtitle = resolved.subtitle;
     final hasSubtitle = subtitle != null && subtitle.trim().isNotEmpty;
     return GestureDetector(
       onTap: onTap,
@@ -1763,7 +1801,7 @@ class _LegacyScheduleDayTile extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              '${day.dayName} · Rest',
+              restDayLabel(day.dayName),
               style: ZType.sans(
                 13,
                 color: AppColors.textSecondary,

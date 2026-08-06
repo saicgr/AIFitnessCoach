@@ -260,6 +260,34 @@ class _CustomEquipmentManager extends ConsumerStatefulWidget {
 }
 
 
+/// Parses the `users.custom_equipment` field into a display-ready list.
+///
+/// The backend stores this either as a native JSON array or as a
+/// JSON-encoded string (e.g. `'[]'`, `'["Resistance Band"]'`). It must be
+/// decoded with [jsonDecode] — a raw comma-split previously turned the
+/// empty-array string `'[]'` into a phantom one-item list containing the
+/// literal text `"[]"`.
+List<String> parseCustomEquipment(dynamic customEquipmentData) {
+  if (customEquipmentData == null) return [];
+  if (customEquipmentData is List) {
+    return customEquipmentData.map((e) => e.toString()).toList();
+  }
+  if (customEquipmentData is String && customEquipmentData.isNotEmpty) {
+    try {
+      final decoded = jsonDecode(customEquipmentData);
+      if (decoded is List) {
+        return decoded
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('⚠️ [CustomEquipment] Error parsing: $e');
+    }
+  }
+  return [];
+}
+
 class _CustomEquipmentManagerState
     extends ConsumerState<_CustomEquipmentManager> {
   List<String> _customEquipment = [];
@@ -300,24 +328,7 @@ class _CustomEquipmentManagerState
         final userData = response.data as Map<String, dynamic>;
         final customEquipmentData = userData['custom_equipment'];
 
-        List<String> equipment = [];
-        if (customEquipmentData != null) {
-          if (customEquipmentData is List) {
-            equipment = customEquipmentData.cast<String>();
-          } else if (customEquipmentData is String && customEquipmentData.isNotEmpty) {
-            // Parse JSON string
-            try {
-              final parsed = List<String>.from(
-                (customEquipmentData).isNotEmpty
-                    ? List.from(Uri.decodeComponent(customEquipmentData).split(','))
-                    : [],
-              );
-              equipment = parsed;
-            } catch (e) {
-              debugPrint('⚠️ [CustomEquipment] Error parsing: $e');
-            }
-          }
-        }
+        final equipment = parseCustomEquipment(customEquipmentData);
 
         debugPrint('✅ [CustomEquipment] Loaded ${equipment.length} custom equipment items');
         setState(() {

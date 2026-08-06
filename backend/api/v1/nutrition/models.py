@@ -546,7 +546,10 @@ class NutritionPreferencesResponse(BaseModel):
     id: Optional[str] = None
     user_id: str
     nutrition_goals: List[str] = []
-    nutrition_goal: str = "maintain"
+    # No fabricated default: a user with no nutrition_preferences row has no
+    # nutrition goal until GET /preferences resolves one (see preferences.py),
+    # never a hardcoded "maintain" literal that can contradict users.primary_goal.
+    nutrition_goal: Optional[str] = None
     rate_of_change: Optional[str] = None
     goal_weight_kg: Optional[float] = None
     goal_date: Optional[str] = None

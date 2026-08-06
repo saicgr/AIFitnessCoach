@@ -180,15 +180,20 @@ class ProgramDurationService:
         return result.data[0] if result.data else None
 
     def _derive_phase(self, week_num: int, total_weeks: int) -> str:
-        """Determine training phase for extended weeks."""
+        """Determine training phase for extended weeks.
+
+        Plain language only — this is written into the week payload served
+        to the Schedule tab. Keep in sync with the identical mapping in
+        scripts/generate_programs.py / scripts/program_sql_helper.py.
+        """
         progress = week_num / total_weeks
         if progress <= 0.25:
-            return "Foundation (Base Building)"
+            return "Building Your Foundation"
         elif progress <= 0.5:
-            return "Build (Progressive Overload)"
+            return "Building Strength and Volume"
         elif progress <= 0.75:
-            return "Peak (Intensification)"
+            return "Peak Effort"
         elif progress <= 0.9:
-            return "Taper (Deload)"
+            return "Easing Off to Recover"
         else:
-            return "Test/Maintenance"
+            return "Testing Your Progress"

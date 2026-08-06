@@ -106,13 +106,21 @@ class LottieEmpty extends StatelessWidget {
       width: size,
       height: size,
       repeat: true,
+      // Tint the STROKES only.
+      //
+      // This used to be `ValueDelegate.colorFilter(['**'], srcATop)` — a
+      // wildcard filter over every layer of an illustration built from a dark
+      // fill plus a lighter outline (`empty_state.json`: a "Box" body + lid and
+      // a "Question Mark"). srcATop-ing one colour over all of it erased the
+      // fill/stroke contrast and left a single flat silhouette, which reads as
+      // a broken asset rather than an illustration (E2E row 97,
+      // docs/qa/screenshots/2026-08-05/ui_library_28_icon.png). Recolouring
+      // only the outlines keeps the artwork's internal structure while still
+      // following the caller's colour.
       delegates: color != null
           ? LottieDelegates(
               values: [
-                ValueDelegate.colorFilter(
-                  const ['**'],
-                  value: ColorFilter.mode(color!, BlendMode.srcATop),
-                ),
+                ValueDelegate.strokeColor(const ['**'], value: color),
               ],
             )
           : null,

@@ -107,14 +107,22 @@ class ExerciseCard extends ConsumerWidget {
     final difficultyColor =
         hasDifficulty ? DifficultyUtils.getColor(difficulty) : null;
 
-    // Barlow subtitle: `●<level> · <muscle> · <equipment>`. Only non-empty
+    // Barlow subtitle: `●<level> · <equipment> · <muscle>`. Only non-empty
     // parts are joined so a sparse exercise never shows dangling separators.
+    //
+    // Equipment goes BEFORE muscle (not after) deliberately: this is a
+    // single `maxLines: 1` line, and equipment is what a user actually scans
+    // for ("can I do this at my gym?") — it's also almost always the
+    // shorter token (Barbell, Cable, Bodyweight...) vs. muscle names that
+    // can run long (Quadriceps, Hamstrings...). Putting the short, load-
+    // bearing token first means the ellipsis eats the LEAST important part
+    // (muscle) far more often than not, instead of always eating equipment.
     final levelLabel =
         hasDifficulty ? DifficultyUtils.getDisplayName(difficulty) : null;
     final tailParts = <String>[
+      if (exercise.equipment.isNotEmpty) exercise.equipment.first,
       if (exercise.muscleGroup != null && exercise.muscleGroup!.isNotEmpty)
         exercise.muscleGroup!,
-      if (exercise.equipment.isNotEmpty) exercise.equipment.first,
     ];
 
     final isFavorite = ref.watch(
@@ -144,7 +152,12 @@ class ExerciseCard extends ConsumerWidget {
                 color: tc.textPrimary,
                 weight: FontWeight.w600,
               ),
-              maxLines: 1,
+              // 2 lines, not 1 — near-duplicate library entries differ only
+              // by a trailing qualifier ("45 Degree Hyperextension (No
+              // Equipment)" vs "...(Barbell)"), and a 1-line ellipsis was
+              // clipping exactly that qualifier, leaving two adjacent rows
+              // visually indistinguishable (E2E row 101).
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),

@@ -609,7 +609,47 @@ class MainShell extends ConsumerWidget {
                       // this, but don't assume that stays true forever.
                       return false;
                     },
-                    child: _child,
+                    // Lift every SnackBar shown from inside a tab clear of the
+                    // quick-log FAB (E2E row 125).
+                    //
+                    // The base clearance is `kSnackBarBottomInset` in the app
+                    // theme, but that alone is not enough: Flutter measures a
+                    // floating SnackBar's `insetPadding.bottom` from the RAW
+                    // screen edge (verified — the toast's rect is identical
+                    // with a 0pt and a 34pt bottom inset), whereas the FAB
+                    // below is positioned at `paddingOf(context).bottom +
+                    // kQuickLogFabBottomOffset`. So on any device with a home
+                    // indicator the button rises by the inset and lands back
+                    // on top of the toast. Re-applying the same runtime inset
+                    // here keeps the two anchored to the same origin.
+                    //
+                    // Occlusion is not merely cosmetic: the FAB is a
+                    // `Positioned` child added AFTER this content in the shell
+                    // Stack and uses `HitTestBehavior.opaque`, and Stack
+                    // hit-tests last-child-first — so a tap on an overlapped
+                    // SnackBarAction opened the quick-log sheet instead. On
+                    // the End Fast toast that action is UNDO, the app's only
+                    // caller of `undoEndFast`.
+                    child: Builder(
+                      builder: (innerContext) {
+                        final theme = Theme.of(innerContext);
+                        return Theme(
+                          data: theme.copyWith(
+                            snackBarTheme: theme.snackBarTheme.copyWith(
+                              insetPadding: EdgeInsets.only(
+                                left: 16,
+                                right: 16,
+                                top: 8,
+                                bottom: MediaQuery.paddingOf(innerContext)
+                                        .bottom +
+                                    kSnackBarBottomInset,
+                              ), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
+                            ),
+                          ),
+                          child: _child,
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],

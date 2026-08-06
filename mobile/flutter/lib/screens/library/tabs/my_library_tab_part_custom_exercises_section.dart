@@ -389,7 +389,11 @@ class _FavoritesSection extends ConsumerWidget {
               GestureDetector(
                 onTap: () {
                   HapticService.light();
-                  // View All could navigate to a full favorites screen
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const FavoriteExercisesScreen(),
+                    ),
+                  );
                 },
                 child: Text(
                   AppLocalizations.of(context).myLibraryTabViewAll,
@@ -427,7 +431,29 @@ class _FavoritesSection extends ConsumerWidget {
               }
 
               if (favoriteExercises.isEmpty) {
-                return _buildEmptyState(context, textMuted);
+                // The full catalog cross-reference above missed every
+                // favorite (e.g. `categoryExercisesProvider` only holds a
+                // subset of the library) — fall back to the real favorited
+                // names themselves rather than dropping to the empty state,
+                // which would contradict the header's non-zero count.
+                // Mirrors `_StaplesSection`'s identical fallback below.
+                return SizedBox(
+                  height: 130,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: favoritesState.favorites.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: EdgeInsetsDirectional.only(end: index < favoritesState.favorites.length - 1 ? 10 : 0,
+                        ),
+                        child: _FavoriteNameCard(
+                          name: favoritesState.favorites[index].exerciseName,
+                          isDark: isDark,
+                        ),
+                      ).animate().fadeIn(delay: (index * 80).ms).slideX(begin: 0.15);
+                    },
+                  ),
+                );
               }
 
               return SizedBox(
@@ -473,6 +499,68 @@ class _FavoritesSection extends ConsumerWidget {
   }
 }
 
+
+/// Name-only fallback card for a favorited exercise that couldn't be
+/// cross-referenced against `categoryExercisesProvider` (so no thumbnail /
+/// muscle-group data is available yet). Mirrors `_StapleNameCard`.
+class _FavoriteNameCard extends StatelessWidget {
+  final String name;
+  final bool isDark;
+
+  const _FavoriteNameCard({
+    required this.name,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final coral = context.accentColor;
+    return SizedBox(
+      width: 110,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: AlignmentDirectional.topStart,
+            end: AlignmentDirectional.bottomEnd,
+            colors: [
+              coral.withValues(alpha: 0.10),
+              coral.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: coral.withValues(alpha: 0.15),
+          ),
+        ),
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: coral.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.favorite, size: 18, color: coral),
+            ),
+            const Spacer(),
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // ============================================================================
 // STAPLES SECTION
@@ -816,6 +904,7 @@ class _RecentActivitySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final historyAsync = ref.watch(exerciseHistoryProvider);
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
 
@@ -840,7 +929,19 @@ class _RecentActivitySection extends ConsumerWidget {
                       return GestureDetector(
                         onTap: () {
                           HapticService.light();
-                          // Navigate to full history view (My Stats tab)
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => Scaffold(
+                                appBar: AppBar(
+                                  title: Text(
+                                    AppLocalizations.of(context)
+                                        .myLibraryTabRecentActivity,
+                                  ),
+                                ),
+                                body: const SafeArea(child: MyStatsTab()),
+                              ),
+                            ),
+                          );
                         },
                         child: Text(
                           AppLocalizations.of(context).myLibraryTabViewAll,
@@ -889,6 +990,7 @@ class _RecentActivitySection extends ConsumerWidget {
                   item: item,
                   isDark: isDark,
                   isLast: index == displayItems.length - 1,
+                  useKg: useKg,
                 ).animate().fadeIn(delay: (index * 50).ms).slideX(begin: -0.05);
               }).toList(),
             );

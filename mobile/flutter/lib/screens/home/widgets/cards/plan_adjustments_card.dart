@@ -90,6 +90,7 @@ class _PlanAdjustmentsCardState extends ConsumerState<PlanAdjustmentsCard> {
       rows.add(_SkipRow(
         weekday: skip.weekdayName,
         weeks: skip.weeksSkipped,
+        weeksObserved: skip.weeksObserved,
         alternative: skip.suggestedAlternative,
       ));
     }
@@ -460,10 +461,12 @@ class _RescheduleRow extends StatelessWidget {
 class _SkipRow extends StatelessWidget {
   final String weekday;
   final int weeks;
+  final int weeksObserved;
   final String alternative;
   const _SkipRow({
     required this.weekday,
     required this.weeks,
+    required this.weeksObserved,
     required this.alternative,
   });
 
@@ -472,8 +475,14 @@ class _SkipRow extends StatelessWidget {
     return _AdjustmentRow(
       icon: Icons.event_busy_rounded,
       title: '${weekday}s keep getting skipped',
+      // NOT "$weeks weeks in a row" — `weeks` is a rounded rate
+      // (missRate × weeksObserved) from dayOfWeekSkipSignalProvider, not a
+      // verified consecutive-week count (E2E row 51: it read "2 weeks in a
+      // row" for an account with exactly one missed Wednesday ever, on a
+      // day that Wednesday's session had already been completed). Framing
+      // it as a historical frequency stays true regardless.
       body:
-          "You've missed your $weekday workout $weeks weeks in a row. Want to shift it to $alternative?",
+          "You've missed your $weekday workout on $weeks of your last $weeksObserved weeks. Want to shift it to $alternative?",
       cta: _CtaButton(
         label: 'Reschedule',
         onPressed: () {

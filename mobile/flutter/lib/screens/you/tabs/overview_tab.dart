@@ -8,7 +8,7 @@
 ///
 /// Data sources:
 ///   • `userXpProvider` (backed by `/progress/xp/{id}`)   → level + XP bar
-///   • `unclaimedCratesCountProvider` (repo-backed)       → rewards ready count
+///   • `_availableRewardsCountProvider` (repo-backed)     → rewards ready count
 ///   • /achievements/user/{id}/streaks                    → active streaks row
 ///   • /summaries/user/{id}/latest                        → last weekly recap
 ///   • /trophies/{id}/summary + /trophies/{id}/recent     → earned-of-total + latest trophy
@@ -821,10 +821,15 @@ class _ActiveSkillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = (summary?['active_progressions'] as List?) ?? const [];
+    String title;
     String headline;
     String sub;
     if (active.isNotEmpty) {
       final first = active.first;
+      title = activeSkillTileTitle(
+        hasActive: true,
+        activeLabel: AppLocalizations.of(context).overviewActiveSkill,
+      );
       if (first is Map) {
         final chainName = first['chain_name'] as String? ?? 'Active skill';
         final stepName =
@@ -838,6 +843,10 @@ class _ActiveSkillCard extends StatelessWidget {
       }
     } else {
       final recommended = summary?['recommended_next_chain'];
+      title = activeSkillTileTitle(
+        hasActive: false,
+        activeLabel: AppLocalizations.of(context).overviewActiveSkill,
+      );
       if (recommended is Map) {
         headline = recommended['name'] as String? ?? 'Start a skill';
         sub = 'Try this next';
@@ -849,7 +858,7 @@ class _ActiveSkillCard extends StatelessWidget {
 
     return _HeadlineTile(
       leadingIcon: Icons.timeline_rounded,
-      title: AppLocalizations.of(context).overviewActiveSkill,
+      title: title,
       headline: headline,
       sub: sub,
       fg: fg,
@@ -860,9 +869,25 @@ class _ActiveSkillCard extends StatelessWidget {
   }
 }
 
-/// Rewards-ready headline tile. Reads `unclaimedCratesCountProvider`
-/// (canonical, repo-backed) rather than the removed `/xp/unclaimed-crates`
-/// raw endpoint call.
+/// Total actually-claimable rewards — daily crates + merch + unacknowledged
+/// level-ups, the SAME merged set `RewardsScreen`'s AVAILABLE list renders
+/// (`XPRepository.getAvailableRewards`, which backs `GET
+/// /progress-rewards/available`). `unclaimedCratesCountProvider` only counts
+/// daily crates, which undercounted this tile against the screen it opens
+/// onto (e.g. "6 ready" vs. 8 CLAIM rows once 2 unacknowledged level-ups are
+/// included).
+final _availableRewardsCountProvider =
+    FutureProvider.autoDispose<int>((ref) async {
+  final apiClient = ref.watch(apiClientProvider);
+  final userId = await apiClient.getUserId();
+  if (userId == null) return 0;
+  final repository = ref.watch(xpRepositoryProvider);
+  final rewards = await repository.getAvailableRewards(userId);
+  return rewards.length;
+});
+
+/// Rewards-ready headline tile. Reads [_availableRewardsCountProvider] so
+/// the count matches the destination screen's own AVAILABLE list exactly.
 class _RewardsReadyCard extends ConsumerWidget {
   final Color fg;
   final Color accent;
@@ -875,7 +900,7 @@ class _RewardsReadyCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ready = ref.watch(unclaimedCratesCountProvider);
+    final ready = ref.watch(_availableRewardsCountProvider).valueOrNull ?? 0;
     return _HeadlineTile(
       leadingIcon: Icons.card_giftcard_rounded,
       title: AppLocalizations.of(context).streakMilestoneRewards,
@@ -889,6 +914,20 @@ class _RewardsReadyCard extends ConsumerWidget {
     );
   }
 }
+
+/// Whether tapping the SOCIAL/leaderboard tile should navigate to
+/// `/xp-leaderboard`, vs. show the unlock message instead. Top-level (and
+/// unit-tested) because `/xp-leaderboard`'s destination screen enforces no
+/// gate of its own — this is the ONLY place `unlocked == false` is honored,
+/// so it must never regress back to navigating unconditionally.
+bool leaderboardTapShouldNavigate(bool? unlocked) => unlocked != false;
+
+/// Title for the ACTIVE SKILL / TRY A SKILL tile. Top-level (and
+/// unit-tested) so "ACTIVE SKILL" can never sit above a mere recommendation
+/// again — it must require a real active progression, matching the Rewards
+/// tab's "SKILLS · N active" reading of the same `user_skill_progress` data.
+String activeSkillTileTitle({required bool hasActive, required String activeLabel}) =>
+    hasActive ? activeLabel : 'TRY A SKILL';
 
 /// Leaderboard headline tile with three legible states:
 ///   • unlocked + percentile known → "Top N%" / "on global leaderboard"
@@ -944,6 +983,22 @@ class _LeaderboardCard extends StatelessWidget {
       accent: accent,
       isDark: isDark,
       route: '/xp-leaderboard',
+      // The destination screen has no gate of its own — it renders the full
+      // global board regardless of `unlocked`. Tapping this tile while it
+      // reads "N to unlock" must not silently open that full board (the tile
+      // would be lying about the gate), so navigation is replaced with the
+      // same unlock message instead.
+      onTapOverride: !leaderboardTapShouldNavigate(unlocked)
+          ? () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(workoutsNeeded == 1
+                      ? 'Log 1 more workout to unlock the leaderboard'
+                      : 'Log $workoutsNeeded more workouts to unlock the leaderboard'),
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                ),
+              )
+          : null,
     );
   }
 }
@@ -962,6 +1017,11 @@ class _HeadlineTile extends StatelessWidget {
   final bool isDark;
   final String route;
   final bool highlight;
+  // Overrides the default `context.push(route)` navigation — used when a
+  // tile's headline states a gate (e.g. "N to unlock") that the destination
+  // screen itself doesn't enforce, so tapping can't silently open the full
+  // feature and contradict what the tile just told the user.
+  final VoidCallback? onTapOverride;
 
   const _HeadlineTile({
     this.leadingIcon,
@@ -974,6 +1034,7 @@ class _HeadlineTile extends StatelessWidget {
     required this.isDark,
     required this.route,
     this.highlight = false,
+    this.onTapOverride,
   });
 
   @override
@@ -984,6 +1045,10 @@ class _HeadlineTile extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
+        if (onTapOverride != null) {
+          onTapOverride!();
+          return;
+        }
         context.push(route);
       },
       child: Container(

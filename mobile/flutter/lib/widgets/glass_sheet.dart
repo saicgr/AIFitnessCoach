@@ -17,6 +17,18 @@ class GlassSheetStyle {
   static const double handleHeight = 5.0;
   static const double handleTopPadding = 12.0;
 
+  /// Height of the handle BAND (the row that holds the centred drag handle and
+  /// the trailing close button) — not the handle bar itself.
+  ///
+  /// This exists because the band used to have no size of its own: the `Stack`
+  /// in [GlassSheetHandle] shrink-wrapped its only non-positioned child (the
+  /// 48×5 handle bar), so the `PositionedDirectional(end: 8)` close button was
+  /// laid out against a 48pt-wide, 5pt-tall box and landed *on top of* the
+  /// grabber in near-identical grey, clipped to the bar's height. Giving the
+  /// band an explicit size is what pushes the close button to the real trailing
+  /// edge of the sheet and gives it a tappable box.
+  static const double handleRowHeight = 24.0;
+
   static Color barrierColor() => Colors.black.withValues(alpha: 0.2);
 
   /// Stronger scrim used by opaque sheets (mandatory prompts) so the
@@ -180,29 +192,43 @@ class GlassSheet extends StatelessWidget {
           ),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (showHandle) GlassSheetHandle(isDark: isDark),
-          Flexible(
-            child: padding != null
-                ? Padding(padding: padding!, child: child)
-                : child,
-          ),
-          // When the keyboard is up, viewInsets.bottom > 0 — shift the entire
-          // sheet up by that amount via AnimatedPadding. When it's down,
-          // fall back to the safe-area bottom (home indicator). We don't add
-          // both — that would over-pad.
-          AnimatedPadding(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-            padding: EdgeInsets.only(
-              bottom: keyboardInset > 0
-                  ? keyboardInset
-                  : (reserveBottomInset ? safeAreaBottom : 0),
+      // Material ancestor for the sheet's content: ListTile (and other
+      // Material widgets like InkWell/Chip) paint their background/ink on
+      // the NEAREST Material ancestor, not the widget directly wrapping
+      // them. Without this, that nearest ancestor is whatever Material sits
+      // outside the modal route (or none), while the DecoratedBox above
+      // (the glass background) sits between the two and visually occludes
+      // the ink/background — triggering ListTile's
+      // "background color or ink splashes may be invisible" assertion.
+      // `type: transparency` keeps the glass background visible; this
+      // Material exists purely to give descendant ListTiles a paint target
+      // that isn't hidden by the decorated container above it.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showHandle) GlassSheetHandle(isDark: isDark),
+            Flexible(
+              child: padding != null
+                  ? Padding(padding: padding!, child: child)
+                  : child,
             ),
-          ),
-        ],
+            // When the keyboard is up, viewInsets.bottom > 0 — shift the entire
+            // sheet up by that amount via AnimatedPadding. When it's down,
+            // fall back to the safe-area bottom (home indicator). We don't add
+            // both — that would over-pad.
+            AnimatedPadding(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              padding: EdgeInsets.only(
+                bottom: keyboardInset > 0
+                    ? keyboardInset
+                    : (reserveBottomInset ? safeAreaBottom : 0),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -230,41 +256,52 @@ class GlassSheetHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: GlassSheetStyle.handleTopPadding),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Centered drag handle. Wrapped in Semantics so screen readers
-          // announce it as a resize/dismiss affordance (Fix #3 a11y).
-          Semantics(
-            label: AppLocalizations.of(context).glassDragToResize,
-            container: true,
-            child: Container(
-              width: GlassSheetStyle.handleWidth,
-              height: GlassSheetStyle.handleHeight,
-              decoration: BoxDecoration(
-                color: GlassSheetStyle.handleColor(isDark),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          // Close button on the right
-          PositionedDirectional(end: 8,
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pop(),
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  Icons.close,
-                  size: 20,
-                  color: isDark
-                      ? AppColors.textMuted
-                      : AppColorsLight.textMuted,
+      // The band MUST take the sheet's full width and an explicit height.
+      // Without it the Stack shrink-wraps to the 48×5 handle bar and the
+      // trailing close button is positioned relative to *that*, i.e. straight
+      // on top of the grabber (and clipped to 5pt tall).
+      child: SizedBox(
+        width: double.infinity,
+        height: GlassSheetStyle.handleRowHeight,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Centered drag handle. Wrapped in Semantics so screen readers
+            // announce it as a resize/dismiss affordance (Fix #3 a11y).
+            Semantics(
+              label: AppLocalizations.of(context).glassDragToResize,
+              container: true,
+              child: Container(
+                width: GlassSheetStyle.handleWidth,
+                height: GlassSheetStyle.handleHeight,
+                decoration: BoxDecoration(
+                  color: GlassSheetStyle.handleColor(isDark),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-          ),
-        ],
+            // Close button, pinned to the sheet's trailing edge.
+            PositionedDirectional(
+              end: 8,
+              top: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: GlassSheetStyle.handleRowHeight,
+                  child: Icon(
+                    Icons.close,
+                    size: 18,
+                    color: isDark
+                        ? AppColors.textMuted
+                        : AppColorsLight.textMuted,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

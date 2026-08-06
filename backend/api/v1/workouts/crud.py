@@ -131,7 +131,23 @@ async def create_workout(
         raise safe_internal_error(e, "crud")
 
 
-@router.get("/", response_model=List[Workout])
+class WorkoutListItem(Workout):
+    """`Workout` plus `estimated_calories` — LIST endpoint only.
+
+    `workouts.estimated_calories` is a real, populated column (the
+    server-computed kcal burn for the session) but the shared `Workout`
+    response model (models/schemas.py) never declared it, so FastAPI
+    silently stripped it from every row here — the Home metrics carousel's
+    KCAL BURNED tile got `estimated_calories: None` on every workout and
+    fell back to the client's own MET-based guess (docs/qa/UI_E2E_2026-08-05.md
+    row 47). Scoped to a local subclass (not a change to the shared
+    `Workout` model, which ~20 other endpoints across the codebase also
+    return) so this fix can't ripple into response shapes owned elsewhere.
+    """
+    estimated_calories: Optional[int] = None
+
+
+@router.get("/", response_model=List[WorkoutListItem])
 async def list_workouts(
     user_id: str = Query(..., description="User ID"),
     is_completed: Optional[bool] = None,
@@ -178,7 +194,39 @@ async def list_workouts(
         if assignment_meta:
             for row in rows:
                 apply_program_meta_to_row(row, assignment_meta)
-        return [row_to_workout(row) for row in rows]
+
+        # `db.list_workouts`'s column-scoped SELECT doesn't fetch
+        # estimated_calories (it's out of this router's ownership — a
+        # core/db change). Batch-fetch it by id here so this endpoint's
+        # response is complete without widening that shared query for every
+        # other caller of db.list_workouts.
+        calories_by_id: Dict[str, Optional[int]] = {}
+        row_ids = [str(r["id"]) for r in rows if r.get("id")]
+        if row_ids:
+            try:
+                cal_result = (
+                    db.client.table("workouts")
+                    .select("id, estimated_calories")
+                    .in_("id", row_ids)
+                    .execute()
+                )
+                calories_by_id = {
+                    str(cr["id"]): cr.get("estimated_calories")
+                    for cr in (cal_result.data or [])
+                }
+            except Exception as cal_err:  # noqa: BLE001
+                logger.warning(
+                    f"Failed to batch-fetch estimated_calories for {len(row_ids)} "
+                    f"workouts: {cal_err}"
+                )
+
+        return [
+            WorkoutListItem(
+                **row_to_workout(row).model_dump(),
+                estimated_calories=calories_by_id.get(str(row.get("id"))),
+            )
+            for row in rows
+        ]
 
     except Exception as e:
         logger.error(f"Failed to list workouts: {e}", exc_info=True)

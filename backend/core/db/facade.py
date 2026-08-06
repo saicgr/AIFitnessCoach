@@ -192,8 +192,34 @@ class SupabaseDB:
         return self._user_db.create_chat_message(data)
 
     def delete_chat_message(self, message_id: str, user_id: str) -> bool:
-        """Delete a single chat message by ID."""
-        return self._user_db.delete_chat_message(message_id, user_id)
+        """Delete a single chat message by ID, then resync the owning
+        session's message_count/last_message_at to match reality.
+
+        Row 53 (UI_E2E 2026-08-05): a plain DELETE here left chat_sessions'
+        denormalized message_count stale — a session whose only message just
+        got deleted still advertised message_count=1+ and stayed in the
+        sessions list, opening to a completely blank thread. See
+        SessionsDB.resync_message_count for the full root-cause writeup.
+        """
+        session_id = None
+        try:
+            row = (
+                self.client.table("chat_history")
+                .select("session_id")
+                .eq("id", message_id)
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if row.data:
+                session_id = row.data[0].get("session_id")
+        except Exception as e:
+            logger.warning(f"[SupabaseDB] session_id lookup before delete failed for message {message_id}: {e}")
+
+        deleted = self._user_db.delete_chat_message(message_id, user_id)
+        if deleted and session_id:
+            self._sessions_db.resync_message_count(session_id, user_id)
+        return deleted
 
     def search_chat_history(self, user_id: str, query: str, limit: int = 20, offset: int = 0) -> List[Dict[str, Any]]:
         """Search chat history for a user by keyword."""
@@ -204,12 +230,21 @@ class SupabaseDB:
         return self._user_db.toggle_chat_message_pin(message_id, user_id, is_pinned)
 
     def clear_chat_history(self, user_id: str) -> None:
-        """Delete all chat messages for a user."""
-        return self._user_db.clear_chat_history(user_id)
+        """Delete all chat messages for a user, then resync every one of
+        their chat_sessions rows to message_count=0 (see
+        SessionsDB.resync_all_sessions_for_user — row 53, same defect class
+        as the single-message delete: leaving the counters stale advertises
+        conversations that no longer have any messages)."""
+        result = self._user_db.clear_chat_history(user_id)
+        self._sessions_db.resync_all_sessions_for_user(user_id)
+        return result
 
     def delete_chat_history_by_user(self, user_id: str) -> bool:
-        """Delete all chat history for a user."""
-        return self._user_db.delete_chat_history_by_user(user_id)
+        """Delete all chat history for a user, then resync every one of
+        their chat_sessions rows (see clear_chat_history)."""
+        result = self._user_db.delete_chat_history_by_user(user_id)
+        self._sessions_db.resync_all_sessions_for_user(user_id)
+        return result
 
     # ==================== WORKOUT OPERATIONS ====================
     # Delegated to WorkoutDB

@@ -1674,9 +1674,17 @@ class HomeFuelStrip extends ConsumerWidget {
                       Text('FUEL', style: ZType.lbl(11, color: c.textMuted)),
                       const SizedBox(height: 4),
                       Text(
+                        // E2E row 195 — with no target, this and the large
+                        // value on the right both collapsed to `eatenCal`,
+                        // printing "648 logged" / "648 KCAL LOGGED" —
+                        // the same number twice with the right half
+                        // carrying zero extra information. The right side
+                        // is already the prominent display for this
+                        // number; this line just names what it's counting
+                        // instead of repeating it.
                         hasTargets
                             ? '${nf.format(eatenCal)} / ${nf.format(calTarget)}'
-                            : '${nf.format(eatenCal)} logged',
+                            : 'No target set',
                         style: ZType.lbl(11.5, color: c.textSecondary),
                         overflow: TextOverflow.ellipsis,
                         maxLines: 1,

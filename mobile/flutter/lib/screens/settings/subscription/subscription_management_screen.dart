@@ -13,7 +13,7 @@ import 'cancel_confirmation_sheet.dart';
 import 'pause_subscription_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../widgets/glass_sheet.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../common/app_refresh_indicator.dart';
@@ -276,7 +276,9 @@ class _SubscriptionManagementScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      // ZealovaAppBar (bare arrow inline with the Anton masthead) — matches
+      // the majority of settings sub-screens (E2E row 208).
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).subscriptionManagementManageSubscription,
       ),
       // Always render the page from `subscriptionProvider` data (tier, trial

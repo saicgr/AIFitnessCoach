@@ -22,6 +22,7 @@ import '../../data/providers/gym_profile_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/beast_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/services/health_service.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/pill_search_bar.dart';
 import '../../widgets/delete_account_flow.dart';
@@ -334,6 +335,47 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'ai speak', 'coach speak', 'language for ai', 'ai answers in',
     'chat in', 'coach chat language',
   ],
+  // Rows below were reachable only by accident (via a sibling section's
+  // keywords, e.g. "gym" via custom_content's "gym equipment") or not at all
+  // (AI Integrations, Meal Reminders, Cycle Tracking had zero index coverage
+  // — every one of their own sectionKeys was absent from this map, so no
+  // query could ever surface them). `_computeMatchingSections` only ever
+  // adds an entry's KEY to the match set, never the row's own sectionKeys —
+  // so a row's sectionKey is dead unless it's also a key here.
+  'gym': [
+    'gym', 'gyms', 'my gyms', 'manage gyms', 'gym profile', 'gym profiles',
+    'which gym', 'commercial gym', 'home gym', 'gym location',
+    'add gym', 'switch gym', 'gym equipment',
+  ],
+  'imports': [
+    'imports', 'import', 'shared', 'share', 'sharing', 'history',
+    'import history', 'workout history', 'import workouts',
+    'past workouts', 'csv', 'strong', 'hevy', 'import data',
+  ],
+  'coach_memory': [
+    'coach memory', 'memory', 'remember', 'forget', 'ai memory',
+    'clear memory', 'coach notes', 'what coach remembers',
+    'what does coach remember', 'delete memory',
+  ],
+  'ai_integrations': [
+    'ai integrations', 'integrations', 'mcp', 'claude', 'chatgpt', 'cursor',
+    'connect ai', 'connect claude', 'connect chatgpt', 'api key',
+    'personal access token', 'external ai', 'ai tools',
+  ],
+  'vacation': [
+    'vacation', 'vacation mode', 'pause', 'break', 'comeback', 'away',
+    'traveling', 'travel', 'holiday', 'time off', 'pause notifications',
+    'pause workouts', 'going away', 'out of town',
+  ],
+  'meal_reminders': [
+    'meal reminders', 'meal reminder', 'recipe schedules', 'recipe sharing',
+    'recipe versions', 'recipe', 'cooking reminder', 'meal notification',
+  ],
+  'cycle': [
+    'cycle', 'cycle tracking', 'period', 'menstrual', 'fertility',
+    'ovulation', 'period tracking', 'menstrual cycle', 'period reminder',
+    'my period', 'track period',
+  ],
 };
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -444,9 +486,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _launchExternalUrl(String url) async {
+  void _launchExternalUrl(
+    String url, {
+    LaunchMode mode = LaunchMode.externalApplication,
+  }) async {
+    // launchUrl returns `false` when there's no handler for the URL (e.g. no
+    // mail client for a `mailto:` link) — it does NOT throw, so a try/catch
+    // alone never fires and the user gets zero feedback (E2E row 83). The
+    // return value must be checked explicitly.
     try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      final launched = await launchUrl(Uri.parse(url), mode: mode);
+      if (!launched && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open $url'),
+            backgroundColor: AppColors.error,  // accent-allowlist: error/destructive - must stay red
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -772,8 +829,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.rocket_launch_rounded,
             iconColor: context.accentColor,
-            title: AppLocalizations.of(context).settingsComingSoon,
-            value: AppLocalizations.of(context).settings24UpcomingFeatures,
+            // Was "Coming Soon" — that promises shipped-soon features, but
+            // this opens FeatureVotingScreen (a user voting board of unbuilt
+            // requests, real title "Feature Requests"). Relabeled to match
+            // what actually opens (E2E row 85).
+            title: 'Feature Requests',
+            value: 'Vote on what we build next',
             sectionKeys: const [
               'coming_soon', 'upcoming', 'new_features',
               'feature requests', 'roadmap', 'vote', 'suggest',
@@ -792,7 +853,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: Icons.favorite_outline,
             iconColor: isDark ? AppColors.error : AppColorsLight.error,  // accent-allowlist: error/destructive - must stay red
             title: AppLocalizations.of(context).settingsHealthDevices,
-            value: Platform.isIOS ? AppLocalizations.of(context).workoutHistoryImportAppleHealth : AppLocalizations.of(context).settingsHealthConnect,
+            // Every sibling row in this column shows STATE ("Off", "Dark",
+            // "4 days") — a bare platform name here reads as "connected".
+            // Reflect the real connection state (E2E row 84), same source
+            // the destination screen (HealthSyncSection) uses.
+            value: ref.watch(healthSyncProvider).isConnected
+                ? AppLocalizations.of(context).healthSyncConnected
+                : AppLocalizations.of(context).healthSyncNotConnected,
             route: '/settings/health-devices',
             sectionKeys: const ['nutrition_fasting', 'health_sync', 'wear_os'],
           ),
@@ -866,14 +933,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             iconColor: textMuted,
             title: AppLocalizations.of(context).settingsPrivacyPolicy,
             sectionKeys: const ['privacy_policy', 'support'],
-            onTap: () => _launchExternalUrl(AppLinks.privacyPolicy),
+            // inAppBrowserView (SFSafariViewController / Custom Tabs) keeps
+            // the user inside the app's context with a real, prominent
+            // "Done" close button — externalApplication fully leaves the
+            // app into Safari, whose only way back is a tiny status-bar
+            // link (E2E settings row 218).
+            onTap: () => _launchExternalUrl(
+              AppLinks.privacyPolicy,
+              mode: LaunchMode.inAppBrowserView,
+            ),
           ),
           _SettingsRow(
             icon: Icons.description_outlined,
             iconColor: textMuted,
             title: AppLocalizations.of(context).settingsTermsOfService,
             sectionKeys: const ['terms_of_service', 'support'],
-            onTap: () => _launchExternalUrl(AppLinks.termsOfService),
+            onTap: () => _launchExternalUrl(
+              AppLinks.termsOfService,
+              mode: LaunchMode.inAppBrowserView,
+            ),
           ),
           _SettingsRow(
             icon: Icons.star_outline,
@@ -890,17 +968,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     ];
 
+    // The floating search control (collapsed FAB or expanded bar) is a
+    // 56px-tall element pinned at `bottom: bottomPadding + 16` in raw screen
+    // coordinates — NOT relative to the scroll content. On real phone
+    // heights, ordinary settings rows (the Appearance row on load, Sign Out
+    // once scrolled to the end) land exactly in that fixed rectangle and
+    // render underneath it with no visual separation (E2E row 78). Give the
+    // scrollable viewport a real bottom exclusion — not just extra padding
+    // at the tail — so no row, at any scroll position, is ever laid out
+    // behind the floating control; reaching it always requires a genuine
+    // scroll instead of it being visually parked there.
+    final searchControlExclusion = bottomPadding + 16 + 56 + 12;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
-          SafeArea(
+          Positioned.fill(bottom: searchControlExclusion, child: SafeArea(
+            key: const Key('settings_scroll_area'),
+            bottom: false,
             child: SingleChildScrollView(
               padding: EdgeInsets.only(
                 left: 16,
                 right: 16,
                 top: 72,
-                bottom: 80 + bottomPadding,
+                bottom: 24,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1087,60 +1179,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ],
               ),
             ),
-          ),
+          )),
 
           // Top masthead — Signature Anton title + back chevron + help action.
+          // Opaque background (matches every other settings sub-screen's
+          // masthead) so scrolled list rows never show through the title —
+          // the transparent version let row text, icon boxes, dividers and
+          // chevrons all overprint "SETTINGS" while scrolling (E2E row 23).
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 16,
-            right: 16,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Back chevron
-                GestureDetector(
-                  onTap: () {
-                    HapticService.light();
-                    // Settings can be reached via deep link
-                    // (notifications-prime → settings); guard so the
-                    // back chevron never throws "nothing to pop"
-                    // (FITWIZ-FLUTTER-71). Fall back to /home if root.
-                    if (context.canPop()) {
-                      context.pop();
-                    } else {
-                      context.go('/home');
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
-                    child: Icon(
-                      Icons.arrow_back_rounded,
-                      color: textPrimary,
-                      size: 24,
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              key: const Key('settings_masthead_background'),
+              color: backgroundColor,
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: 16,
+                right: 16,
+                bottom: 12,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Back chevron
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      // Settings can be reached via deep link
+                      // (notifications-prime → settings); guard so the
+                      // back chevron never throws "nothing to pop"
+                      // (FITWIZ-FLUTTER-71). Fall back to /home if root.
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/home');
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+                      child: Icon(
+                        Icons.arrow_back_rounded,
+                        color: textPrimary,
+                        size: 24,
+                      ),
                     ),
                   ),
-                ),
-                // Anton masthead title
-                Expanded(
-                  child: Text(
-                    AppLocalizations.of(context).settingsTitle.toUpperCase(),
-                    style: ZType.disp(30, color: textPrimary),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // Help action — opens email support directly
-                GestureDetector(
-                  onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Help'),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.help_outline_rounded,
-                      color: textMuted,
-                      size: 22,
+                  // Anton masthead title
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context).settingsTitle.toUpperCase(),
+                      style: ZType.disp(30, color: textPrimary),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  // Help action — opens email support directly
+                  GestureDetector(
+                    onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Help'),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.help_outline_rounded,
+                        color: textMuted,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
 

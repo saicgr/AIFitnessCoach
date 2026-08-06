@@ -290,7 +290,14 @@ class HabitsSection extends ConsumerWidget {
   }
 
   void _showAddHabitSheet(BuildContext context, WidgetRef ref) {
-    context.push('/habits?addHabit=true');
+    // NOTE: `?addHabit=true` used to auto-open the add-habit sheet on
+    // HabitsScreen, but that path mutates `_autoOpenFiredProvider` from
+    // inside build() (habits_screen.dart, outside this lane's ownership),
+    // which Riverpod rejects and renders the error-boundary dead end with
+    // no way back. Route to the plain habits screen (same destination the
+    // working "View all" entry point uses) until that provider write is
+    // moved out of build() at the source.
+    context.push('/habits');
   }
 }
 

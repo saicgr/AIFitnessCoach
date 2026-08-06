@@ -882,6 +882,59 @@ async def get_saved_workouts(
         raise safe_internal_error(e, "saved_workouts")
 
 
+@router.get("/upcoming")
+async def get_upcoming_saved_workouts(
+    user_id: str = Query(..., description="User ID"),
+    limit: int = Query(default=7, ge=1, le=100),
+    current_user: dict = Depends(get_current_user),
+):
+    """Bare-list upcoming-workouts preview for the Weekly Wrapped screen.
+
+    `weekly_wrapped_screen.dart` calls `GET /saved-workouts/upcoming` — that
+    path never had a route. FastAPI matched it against `GET /{workout_id}`
+    below instead (it's registered first), which passed the literal string
+    "upcoming" straight to Postgres as a UUID filter and got a 400
+    (`invalid input syntax for type uuid: "upcoming"`, 22P02) — every load,
+    every user (docs/qa/UI_E2E_2026-08-05.md row 58). MUST stay registered
+    ABOVE `/{workout_id}` (route-declaration-order matching, same class as
+    the `/me` vs `/{user_id}` bug in users/profile.py).
+
+    Distinct from `GET /scheduled/upcoming` (which returns
+    `{scheduled: [...], total_count}`) — the client's `Future.wait` branch
+    checks `response.data is List`, so this returns a bare JSON array, with
+    `name`/`scheduled_date` keys (what the Next-Week-Preview card reads),
+    not the `workout_name` key the ScheduledWorkout model itself uses.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    try:
+        supabase = get_supabase_client()
+        result = (
+            supabase.table("upcoming_scheduled_workouts")
+            .select("id, workout_name, scheduled_date, status")
+            .eq("user_id", user_id)
+            .order("scheduled_date")
+            .limit(limit)
+            .execute()
+        )
+        return [
+            {
+                "id": row.get("id"),
+                "name": row.get("workout_name"),
+                "scheduled_date": (
+                    str(row["scheduled_date"]) if row.get("scheduled_date") else None
+                ),
+                "status": row.get("status"),
+            }
+            for row in (result.data or [])
+        ]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_upcoming_saved_workouts: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
+
+
 @router.get("/{workout_id}", response_model=SavedWorkout)
 async def get_saved_workout(
     user_id: str,

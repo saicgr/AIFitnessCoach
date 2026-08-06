@@ -824,7 +824,12 @@ final _categoryTypes = [
   _EquipmentData(
     'Cardio',
     Icons.directions_run,
-    (isDark) => isDark ? AppColors.red : AppColorsLight.coral,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
+    // Same "Cardio" identity as the equipment-axis entry above (yellow) —
+    // this list previously colored it red/coral instead, so the identical
+    // label + icon read as two different categories depending on which
+    // Browse section it appeared under. "Fixed per-category color" only
+    // holds if a category has exactly one color everywhere it shows up.
+    (isDark) => isDark ? AppColors.yellow : const Color(0xFFCA8A04),  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(
     'Stretching',
@@ -848,7 +853,10 @@ final _categoryTypes = [
   ),
   _EquipmentData(
     'Power',
-    Icons.flash_on,
+    // `Icons.flash_on` reads as the same lightning-bolt glyph as
+    // Plyometric's `Icons.bolt` at chip size — `speed` (explosive rate of
+    // force) is visually distinct while staying on-theme.
+    Icons.speed,
     (isDark) => isDark ? AppColors.warning : AppColorsLight.warning,  // accent-allowlist: category badge identity — fixed per-category color across the equipment/type filter chips (10-category palette), recoloring collides categories together, not tied to accent
   ),
   _EquipmentData(

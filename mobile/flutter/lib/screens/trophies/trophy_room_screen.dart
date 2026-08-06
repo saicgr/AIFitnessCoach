@@ -24,6 +24,16 @@ part 'trophy_room_screen_part_trophy_card.dart';
 part 'trophy_room_screen_ui.dart';
 
 
+/// (discovered, total) mystery counts using the same `isMystery` predicate
+/// (is_secret OR is_hidden, per [TrophyProgress.isMystery]) that builds the
+/// Mystery Trophies section — top-level so both the stat strip and the
+/// section pull from one source of truth and a unit test can pin the
+/// contract without spinning up the widget tree.
+(int, int) mysteryStats(List<TrophyProgress> trophies) {
+  final mystery = trophies.where((t) => t.isMystery).toList();
+  return (mystery.where((t) => t.isEarned).length, mystery.length);
+}
+
 /// Trophy Room - View all trophies with search, filters, and collapsible sections
 class TrophyRoomScreen extends ConsumerStatefulWidget {
   const TrophyRoomScreen({super.key});
@@ -130,6 +140,15 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     final filteredTrophies = _filterTrophies(allTrophies);
     final groupedTrophies = _groupByCategory(filteredTrophies);
     final mysteryTrophies = _getMysteryTrophies(filteredTrophies);
+    // Unfiltered mystery count for the top stat strip — must use the same
+    // `isMystery` predicate (is_secret OR is_hidden) as the Mystery Trophies
+    // section below, computed from the full trophy list so it doesn't move
+    // when a status filter narrows `mysteryTrophies`. Previously the strip
+    // read `summary.secretDiscovered/totalSecret` from the backend, which
+    // only counts is_secret trophies (30) while the section below counts
+    // is_secret OR is_hidden (40) — two different denominators for the same
+    // "Mystery" label on screen at once.
+    final (mysteryDiscovered, mysteryTotal) = mysteryStats(allTrophies);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -187,6 +206,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                     elevatedColor,
                     cardBorder,
                     accentColor,
+                    mysteryDiscovered,
+                    mysteryTotal,
                   ),
                 ),
 
@@ -459,6 +480,8 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     Color elevatedColor,
     Color cardBorder,
     Color accentColor,
+    int mysteryDiscovered,
+    int mysteryTotal,
   ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -489,7 +512,10 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
           _buildStatDivider(textMuted),
           _buildStatItem(
             icon: Icons.help_outline,
-            value: '${summary.secretDiscovered}/${summary.totalSecret}',
+            // Same is_secret-OR-is_hidden count as the Mystery Trophies
+            // section below (not summary.secretDiscovered/totalSecret,
+            // which only counts is_secret and disagreed with the section).
+            value: '$mysteryDiscovered/$mysteryTotal',
             label: AppLocalizations.of(context).trophyRoomMystery,
             color: AppColors.purple, // accent-allowlist: trophy status color (earned=green/mystery=purple/in-progress=orange), consistent status system
             textMuted: textMuted,

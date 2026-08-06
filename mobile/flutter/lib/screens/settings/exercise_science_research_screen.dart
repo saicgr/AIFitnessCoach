@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -404,7 +404,9 @@ class _ExerciseScienceResearchScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: const PillAppBar(
+      // ZealovaAppBar (bare arrow inline with the Anton masthead) — matches
+      // the majority of settings sub-screens (E2E row 208).
+      appBar: const ZealovaAppBar(
         title: 'Research',
       ),
       body: SingleChildScrollView(

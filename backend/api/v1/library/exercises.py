@@ -43,6 +43,34 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _merge_equipment_case_variants(counts_by_raw_name: Dict[str, int]) -> Dict[str, int]:
+    """Row 26 (UI_E2E_2026-08-05.md): `exercise_library_cleaned.equipment` has
+    case-variant duplicates for the same real-world equipment — e.g.
+    'Bodyweight' (661 rows) / 'bodyweight' (71), 'Yoga Mat' (37) / 'yoga mat'
+    (31), 'Pull-Up Bar' (30) / 'Pull-up Bar' (3) / 'pull-up bar' (12) —
+    confirmed live against exercise_library_cleaned. Building the
+    filter-options dict off the raw string shipped BOTH as separate chips: the
+    Filters sheet showed two BODYWEIGHT rows, and each variant only matched
+    its own exact casing, silently splitting the exercises between them (the
+    FE chip widget already compares case-insensitively for selection, which
+    is exactly why tapping one highlighted both — a symptom of the dupe data).
+
+    Merges by a case-insensitive key, keeping whichever ACTUAL casing was
+    seen most often as the canonical display string — not a mechanical
+    `.title()` reformat, which would also rewrite untouched values that never
+    had a case dupe (e.g. 'EZ Bar' -> 'Ez Bar') for no reason.
+    """
+    counts_by_norm: Dict[str, int] = {}
+    best_casing: Dict[str, tuple] = {}  # norm -> (count of that casing, display string)
+    for raw_name, count in counts_by_raw_name.items():
+        norm = raw_name.lower()
+        counts_by_norm[norm] = counts_by_norm.get(norm, 0) + count
+        current_best = best_casing.get(norm)
+        if current_best is None or count > current_best[0]:
+            best_casing[norm] = (count, raw_name)
+    return {best_casing[norm][1]: total for norm, total in counts_by_norm.items()}
+
+
 @router.get("/exercises/filter-options", response_model=Dict[str, Any])
 async def get_filter_options(response: Response):
     """
@@ -73,7 +101,7 @@ async def get_filter_options(response: Response):
 
         # Count dictionaries
         body_part_counts: Dict[str, int] = {}
-        equipment_counts: Dict[str, int] = {}
+        equipment_counts_raw: Dict[str, int] = {}  # keyed by exact string as stored; merged below
         exercise_type_counts: Dict[str, int] = {}
         goal_counts: Dict[str, int] = {}
         suitable_counts: Dict[str, int] = {}
@@ -87,12 +115,10 @@ async def get_filter_options(response: Response):
             # Body part
             body_part_counts[bp] = body_part_counts.get(bp, 0) + 1
 
-            # Equipment (normalize)
-            if eq and eq.strip():
-                eq_simplified = eq.strip()
-                equipment_counts[eq_simplified] = equipment_counts.get(eq_simplified, 0) + 1
-            else:
-                equipment_counts["Bodyweight"] = equipment_counts.get("Bodyweight", 0) + 1
+            # Equipment — raw tally here; case-variant duplicates (row 26)
+            # are merged into `equipment_counts` after the loop.
+            eq_key = eq.strip() if eq and eq.strip() else "Bodyweight"
+            equipment_counts_raw[eq_key] = equipment_counts_raw.get(eq_key, 0) + 1
 
             # Exercise type — derived from name/category/video path so the
             # Warmup + Stretching pills surface real exercises (the library has
@@ -118,6 +144,8 @@ async def get_filter_options(response: Response):
             avoids = row.get("avoid_if") or []
             for a in avoids:
                 avoid_counts[a] = avoid_counts.get(a, 0) + 1
+
+        equipment_counts = _merge_equipment_case_variants(equipment_counts_raw)
 
         # Sort each by count
         def sorted_options(counts: Dict[str, int], limit: int = None) -> List[Dict[str, Any]]:
@@ -188,14 +216,16 @@ async def get_equipment_types():
         # Get all exercises from cleaned view
         all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "equipment")
 
-        # Count by equipment
-        equipment_counts: Dict[str, int] = {}
+        # Count by equipment. Same case-variant duplicate class as row 26
+        # (see `_merge_equipment_case_variants`'s docstring) — raw tally here,
+        # merged below.
+        equipment_counts_raw: Dict[str, int] = {}
         for row in all_rows:
             eq = row.get("equipment")
-            if eq and eq.strip():
-                equipment_counts[eq] = equipment_counts.get(eq, 0) + 1
-            else:
-                equipment_counts["Bodyweight"] = equipment_counts.get("Bodyweight", 0) + 1
+            eq_key = eq.strip() if eq and eq.strip() else "Bodyweight"
+            equipment_counts_raw[eq_key] = equipment_counts_raw.get(eq_key, 0) + 1
+
+        equipment_counts = _merge_equipment_case_variants(equipment_counts_raw)
 
         # Sort by count descending
         sorted_equipment = sorted(
@@ -368,12 +398,23 @@ async def list_exercises(
 
         # When searching, ALWAYS use fuzzy search for typo tolerance
         # (e.g., "threadmill" -> "Treadmill", "benchpress" -> "Bench Press")
+        #
+        # `fetch_fuzzy_search_results` / the underlying `fuzzy_search_exercises_api`
+        # RPC takes only a candidate-count cap, never an offset — it has no concept
+        # of "page 2". So ALWAYS pull a generous, fixed-size candidate pool here
+        # (same 2000 cap the post-filter branch below already uses), relevance-sort
+        # the WHOLE pool, and let the offset/limit slice at the bottom of this
+        # function (now applied to every search, not just needs_post_filter) turn
+        # that into the requested page. Passing `limit` straight through here used
+        # to mean every page of a plain search re-fetched and re-returned the same
+        # first `limit` candidates — offset was silently dropped (docs/qa/
+        # UI_E2E_2026-08-05.md row 24).
         if search:
             all_rows = await fetch_fuzzy_search_results(
                 db, search,
                 equipment_filter=equipment_list[0] if len(equipment_list) == 1 else None,
                 body_part_filter=body_parts_list[0] if len(body_parts_list) == 1 else None,
-                limit=limit if not needs_post_filter else 2000
+                limit=2000
             )
         elif needs_post_filter:
             # Fetch all rows (with DB-level filters only)
@@ -477,9 +518,39 @@ async def list_exercises(
         if categories_list:
             exercises = [e for e in exercises if (e.category or "").lower() in categories_list]
 
-        # Apply offset and limit AFTER filtering
-        if needs_post_filter:
+        # Apply offset and limit AFTER filtering. Needed both for the post-filter
+        # branch (filters applied in Python) AND for search (the RPC/fetch above
+        # always returns a fixed 2000-candidate pool with no offset applied) —
+        # the DB-level `else` branch above already paginates at the query level
+        # and must NOT be re-sliced here or it would double-apply the offset.
+        #
+        # Row 25 (UI_E2E_2026-08-05.md): the client's "N EXERCISES FOUND" label
+        # had no authoritative total to read, only the page it had loaded so
+        # far, so it always showed exactly the page size and grew with every
+        # scroll. Capture the true match count HERE, before the slice:
+        #   - search / needs_post_filter: `exercises` at this point already
+        #     holds every match (fetch_all_rows has no cap; the search RPC is
+        #     capped at 2000 candidates — see the comment above the fuzzy-search
+        #     call — so a search with >2000 matches under-reports; still exact
+        #     for the overwhelming majority of queries and strictly better than
+        #     the previous "always page size" bug).
+        #   - plain DB-paginated branch: `exercises` here is only the current
+        #     page, so get the real total via a lightweight count-only query
+        #     mirroring the same filters.
+        if needs_post_filter or search:
+            total_count = len(exercises)
             exercises = exercises[offset:offset + limit]
+        else:
+            count_query = db.client.table("exercise_library_cleaned").select("id", count="exact")
+            if len(equipment_list) == 1:
+                count_query = count_query.ilike("equipment", f"%{equipment_list[0]}%")
+            if difficulty:
+                count_query = count_query.eq("difficulty_level", difficulty)
+            count_result = count_query.limit(1).execute()
+            counted = getattr(count_result, "count", None)
+            total_count = counted if counted is not None else len(exercises)
+
+        response.headers["X-Total-Count"] = str(total_count)
 
         elapsed_ms = (time.perf_counter() - started) * 1000
         logger.info(

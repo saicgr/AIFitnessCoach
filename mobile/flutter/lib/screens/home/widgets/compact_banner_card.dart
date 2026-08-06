@@ -76,7 +76,15 @@ class CompactBannerCard extends StatelessWidget {
                         fontSize: 12,
                         color: textSecondary,
                       ),
-                      maxLines: 1,
+                      // 2 lines, not 1 — every banner type shares this
+                      // component, and a 1-line cap was clipping mid-word
+                      // with real horizontal room still unused (E2E rows
+                      // 118, 132: "6 exerci…", "track your daily …",
+                      // "and c…"). The fixed 84px `cardHeight` has plenty of
+                      // headroom for a 2-line subtitle at this font size —
+                      // this does not change card height or the stack's
+                      // peek-offset math.
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],

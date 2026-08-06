@@ -175,17 +175,24 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     super.initState();
     final prefs = ref.read(nutritionPreferencesProvider).preferences;
 
+    // No hardcoded 2000/150/200/65 fallbacks — those are fabricated numbers
+    // that don't belong to this account. When the field isn't configured yet
+    // the controller starts EMPTY; it gets filled a few lines below (after
+    // `_computeRecommended()` runs) with a value actually derived from this
+    // user's TDEE/goal/bodyweight — or stays empty if even that can't be
+    // computed (e.g. a brand-new account with 0 nutrition_preferences rows),
+    // in which case SAVE TARGETS simply no-ops until the user enters a value.
     _caloriesController = TextEditingController(
-      text: (prefs?.targetCalories ?? 2000).toString(),
+      text: prefs?.targetCalories?.toString() ?? '',
     );
     _proteinController = TextEditingController(
-      text: (prefs?.targetProteinG ?? 150).toString(),
+      text: prefs?.targetProteinG?.toString() ?? '',
     );
     _carbsController = TextEditingController(
-      text: (prefs?.targetCarbsG ?? 200).toString(),
+      text: prefs?.targetCarbsG?.toString() ?? '',
     );
     _fatController = TextEditingController(
-      text: (prefs?.targetFatG ?? 65).toString(),
+      text: prefs?.targetFatG?.toString() ?? '',
     );
 
     _selectedRate = prefs?.rateOfChange;
@@ -263,14 +270,6 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // first even-split edge case can still restore a real ratio.
     _rememberCarbsFatRatio();
 
-    // B10: snapshot the opening state for the Reset action.
-    _initialCalories = _caloriesController.text;
-    _initialProtein = _proteinController.text;
-    _initialCarbs = _carbsController.text;
-    _initialFat = _fatController.text;
-    _initialRate = _selectedRate;
-    _initialPreset = _selectedPreset;
-
     // Per-field listeners. While typing these ONLY refresh the live display
     // (calculated kcal / split bar). The actual lock-calories rebalance of
     // the OTHER two macros runs on COMMIT — see `_onMacroFocusChange` and the
@@ -281,6 +280,37 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     _fatController.addListener(() => _onMacroChanged(_MacroField.fat));
 
     _computeRecommended();
+
+    // Row #139 fix: fields that opened empty (no saved target) get filled
+    // with the just-computed recommendation — a real number derived from
+    // THIS user's TDEE/goal/bodyweight, the same source the "Recommended"
+    // hint text already cites — instead of the banned 2000/150/200/65
+    // literals. If the recommendation itself couldn't be computed (no TDEE
+    // yet, e.g. a fresh account with 0 nutrition_preferences rows) the field
+    // is left genuinely empty rather than guessing.
+    if (_caloriesController.text.isEmpty && _recommendedCalories != null) {
+      _caloriesController.text = _recommendedCalories.toString();
+    }
+    if (_proteinController.text.isEmpty && _recommendedProtein != null) {
+      _proteinController.text = _recommendedProtein.toString();
+    }
+    if (_carbsController.text.isEmpty && _recommendedCarbs != null) {
+      _carbsController.text = _recommendedCarbs.toString();
+    }
+    if (_fatController.text.isEmpty && _recommendedFat != null) {
+      _fatController.text = _recommendedFat.toString();
+    }
+
+    // B10: snapshot the opening state for the Reset action — taken AFTER the
+    // empty-field recommendation fallback above so Reset reverts to what the
+    // user actually saw on open, not to a blank field they never saw.
+    _initialCalories = _caloriesController.text;
+    _initialProtein = _proteinController.text;
+    _initialCarbs = _carbsController.text;
+    _initialFat = _fatController.text;
+    _initialRate = _selectedRate;
+    _initialPreset = _selectedPreset;
+
     _recalculate();
 
     // Default the By-Day macro editors to the daily targets when no config
@@ -361,9 +391,34 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     }
   }
 
+  /// Row #140 fix: `NutritionPreferences.primaryGoalEnum` silently resolves
+  /// to the literal 'maintain' default whenever `nutritionGoals` is empty —
+  /// which is exactly the state of a never-configured account (the backend
+  /// returns `nutrition_goals: []` on 0 rows). That default isn't a user
+  /// choice, and every goal-dependent computation in this sheet
+  /// (`_computeRecommended`, `_proteinAnchor`, `_showRateSelector`, the goal
+  /// banner) was reading it as if it were one. When no nutrition-specific
+  /// goal has been configured, fall back to the user's own onboarding
+  /// fitness goal (`users.primary_goal` / `users.goals`, e.g. `build_muscle`)
+  /// whenever its vocabulary overlaps [NutritionGoal] — a real signal about
+  /// this user, not a fabricated one — before finally giving up on
+  /// 'maintain' when truly nothing is known.
+  NutritionGoal _resolveGoal(NutritionPreferences? prefs) {
+    if (prefs != null && prefs.nutritionGoals.isNotEmpty) {
+      return prefs.primaryGoalEnum;
+    }
+    final rawGoal = ref.read(currentUserProvider).value?.primaryGoal;
+    if (rawGoal != null) {
+      for (final g in NutritionGoal.values) {
+        if (g.value == rawGoal) return g;
+      }
+    }
+    return NutritionGoal.maintain;
+  }
+
   bool get _showRateSelector {
     final prefs = ref.read(nutritionPreferencesProvider).preferences;
-    final goal = prefs?.primaryGoalEnum;
+    final goal = _resolveGoal(prefs);
     return goal == NutritionGoal.loseFat || goal == NutritionGoal.buildMuscle;
   }
 
@@ -380,7 +435,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // and applies the gender-specific minimum-calorie floor. The previous
     // implementation used `goal.calorieAdjustment` (a static -500) which
     // ignored the rate selector and gave wrong recommendations.
-    final goal = prefs.primaryGoalEnum;
+    final goal = _resolveGoal(prefs);
     final rate = RateOfChange.fromString(_selectedRate ?? prefs.rateOfChange ?? 'moderate');
     final user = ref.read(currentUserProvider).value;
     final gender = user?.gender ?? 'male';
@@ -442,8 +497,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final user = ref.read(currentUserProvider).value;
     final bodyweightKg = state.latestWeight ?? user?.weightKg ?? 0;
     if (bodyweightKg <= 0) return null;
-    final goal =
-        state.preferences?.primaryGoalEnum ?? NutritionGoal.maintain;
+    final goal = _resolveGoal(state.preferences);
     return NutritionCalculator.resolveProteinAnchor(
       bodyweightKg: bodyweightKg,
       goal: goal,
@@ -846,11 +900,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         _fatController.text = fat.toString();
       } else if (prefs != null) {
         // Recommendation not computable (no TDEE) — fall back to the
-        // backend-persisted targets so the fields aren't left stale.
-        _caloriesController.text = (prefs.targetCalories ?? 2000).toString();
-        _proteinController.text = (prefs.targetProteinG ?? 150).toString();
-        _carbsController.text = (prefs.targetCarbsG ?? 200).toString();
-        _fatController.text = (prefs.targetFatG ?? 65).toString();
+        // backend-persisted targets, leaving a field EMPTY (never a
+        // fabricated 2000/150/200/65 literal) when even that isn't set.
+        _caloriesController.text = prefs.targetCalories?.toString() ?? '';
+        _proteinController.text = prefs.targetProteinG?.toString() ?? '';
+        _carbsController.text = prefs.targetCarbsG?.toString() ?? '';
+        _fatController.text = prefs.targetFatG?.toString() ?? '';
       }
       _balancing = false;
       setState(() => _macroOverflowWarning = null);
@@ -1990,8 +2045,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final calories = int.tryParse(_caloriesController.text);
     final canToggleToPercent = calories != null && calories > 0;
 
-    // Percentage mode validation
-    final percentOk = !_isPercentageMode || _percentageSum == 100;
+    // Percentage mode validation, plus (now that Calories can legitimately
+    // open empty — no fabricated 2000 default) a real-value check so SAVE
+    // TARGETS visibly disables instead of silently no-oping when the field
+    // is blank.
+    final percentOk =
+        canToggleToPercent && (!_isPercentageMode || _percentageSum == 100);
 
     // Goal timeline
     final timelineWidget = _buildGoalTimeline(isDark, textMuted, accent);
@@ -2685,7 +2744,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final prefs = ref.watch(nutritionPreferencesProvider).preferences;
     if (prefs == null) return const SizedBox.shrink();
 
-    final goal = prefs.primaryGoalEnum;
+    final goal = _resolveGoal(prefs);
     final state = ref.watch(nutritionPreferencesProvider);
     final user = ref.watch(currentUserProvider).value;
     // Current weight: prefer the latest logged weight, fall back to the
@@ -2997,12 +3056,11 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final stops = const [0.8, 1.2, 1.6, 2.0, 2.4];
     final fmt = NumberFormat.decimalPattern();
 
-    // B3: goal-aware "recommended" protein g/kg. The goal may be genuinely
-    // unknown (no preferences row) — distinguish that from `maintain` so the
-    // copy + default ratio are honestly generic rather than maintain-tinted.
-    final NutritionGoal? goalOrNull =
-        ref.watch(nutritionPreferencesProvider).preferences?.primaryGoalEnum;
-    final goal = goalOrNull ?? NutritionGoal.maintain;
+    // B3: goal-aware "recommended" protein g/kg. Row #140 fix: resolve
+    // through `_resolveGoal` (real onboarding fitness goal as a fallback)
+    // rather than reading `primaryGoalEnum` directly, which silently reads
+    // as `maintain` for any account that hasn't configured a nutrition goal.
+    final goal = _resolveGoal(ref.watch(nutritionPreferencesProvider).preferences);
     final recRatio =
         (goal == NutritionGoal.loseFat || goal == NutritionGoal.buildMuscle)
             ? 2.0
@@ -3023,7 +3081,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // B3: goal-adaptive recommendation label. The "g/kg" shown is the
     // g/kg-of-anchor figure so the caption and number are consistent.
     final String recLabel;
-    switch (goalOrNull) {
+    switch (goal) {
       case NutritionGoal.loseFat:
         recLabel =
             'Recommended to keep muscle while losing fat: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
@@ -3038,13 +3096,13 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             'Recommended to maintain lean mass: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
         break;
       default:
-        // Goal null / improveEnergy / eatHealthier — generic phrasing.
+        // improveEnergy / eatHealthier (or truly unresolvable) — generic phrasing.
         recLabel =
             'Recommended protein: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
     }
     // B3: goal-adaptive science caption. Generic when the goal is unknown.
     final String recCaption;
-    switch (goalOrNull) {
+    switch (goal) {
       case NutritionGoal.loseFat:
         recCaption =
             'A high protein intake protects lean mass in a calorie deficit.';
@@ -3372,7 +3430,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
     final currentWeight = user.weightKg;
     final goalWeight = user.targetWeightKg;
-    final nutritionGoal = prefs.primaryGoalEnum;
+    final nutritionGoal = _resolveGoal(prefs);
     final tdee = prefs.calculatedTdee;
     final enteredCal = int.tryParse(_caloriesController.text);
 
@@ -3879,7 +3937,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final warnings = <String>[];
     final prefs = ref.read(nutritionPreferencesProvider).preferences;
     final user = ref.read(currentUserProvider).value;
-    final goal = prefs?.primaryGoalEnum;
+    final goal = _resolveGoal(prefs);
     final tdee = prefs?.calculatedTdee;
     final enteredCal = int.tryParse(_caloriesController.text);
 

@@ -701,6 +701,8 @@ def _mirror_proactive_to_chat(
     message: str,
     context_json: dict,
     log_tag: str = "Nudge",
+    source_surface: Optional[str] = None,
+    insight_id: Optional[str] = None,
 ) -> Optional[str]:
     """Insert an AI-initiated coach message into chat_history, ATTACHED to a
     chat session so it is actually visible in the app.
@@ -709,6 +711,13 @@ def _mirror_proactive_to_chat(
     without session_id never renders — the historical bug that made every
     proactive message invisible. Always touches the session so the coach's
     message bumps to the top of the sessions list, like a real text.
+
+    `source_surface` / `insight_id` (migration 2098) identify which app
+    surface seeded the turn and, when it came from a coach_daily_insights row,
+    which one — so `/chat?source=coach_hero&insight_id=X` opens on a REAL
+    persisted turn instead of a client-synthesized bubble that vanishes on
+    the next app relaunch (row 55, UI_E2E 2026-08-05). Both are optional and
+    default to NULL so every other nudge_type call site is unaffected.
 
     Best-effort: returns the chat_history row id, or None on failure (a failed
     mirror must never block the push itself).
@@ -723,6 +732,10 @@ def _mirror_proactive_to_chat(
         }
         if session_id:
             row["session_id"] = session_id
+        if source_surface:
+            row["source_surface"] = source_surface
+        if insight_id:
+            row["insight_id"] = insight_id
         chat_msg = supabase.client.table("chat_history").insert(row).execute()
         chat_message_id = chat_msg.data[0].get("id") if chat_msg.data else None
     except Exception as e:
@@ -738,6 +751,42 @@ def _mirror_proactive_to_chat(
         except Exception:
             pass  # Non-critical — the message is saved; only the sort bump failed.
     return chat_message_id
+
+
+def _already_seeded_today(
+    supabase, user_id: str, source_surface: str, timezone_str: str
+) -> bool:
+    """True when a chat_history row with this `source_surface` already exists
+    for the user's LOCAL today.
+
+    Guards `_mirror_proactive_to_chat` against re-seeding every time the
+    caller regenerates a fresh coach_daily_insights row within the same day
+    (e.g. cache invalidation after a workout log) — the delete-then-insert
+    persist pattern stamps a NEW `insight_id` on every regeneration, so a
+    per-insight_id dedup would never catch same-day reruns; this checks the
+    user's local calendar day instead (see core.timezone_utils.local_day_bounds,
+    the project's local-day-window chokepoint). Fails OPEN (returns False, i.e.
+    allows the mirror) on any error — a rare duplicate seed is far better than
+    silently losing the seed turn.
+    """
+    try:
+        from core.timezone_utils import get_user_today, local_day_bounds
+
+        start, end = local_day_bounds(get_user_today(timezone_str), timezone_str)
+        resp = (
+            supabase.client.table("chat_history")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("source_surface", source_surface)
+            .gte("timestamp", start)
+            .lt("timestamp", end)
+            .limit(1)
+            .execute()
+        )
+        return bool(resp.data)
+    except Exception as e:
+        logger.warning(f"[Nudge] _already_seeded_today check failed for {user_id}: {e}")
+        return False
 
 
 # ─── Core Nudge Sender ──────────────────────────────────────────────────────

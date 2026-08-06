@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/models/exercise.dart';
 // Prefixed: `empty_state.dart` also exports a `SkeletonCard`, so the shared
 // instant-load skeleton kit is namespaced to disambiguate.
 import '../../../core/widgets/skeleton/skeleton.dart' as skel;
@@ -83,6 +84,28 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     );
   }
 
+  /// Client-side "performed only" (HISTORY toggle) reduction, shared between
+  /// the header count and the actual list so they can never disagree — the
+  /// two used to be computed independently (count from the raw unfiltered
+  /// page, list from this same filter applied a second time further down),
+  /// which is exactly how "4 EXERCISES FOUND" over an empty "No exercises
+  /// found" body happened.
+  List<LibraryExercise> _performedOnlyFiltered(
+    List<LibraryExercise> source,
+    bool performedOnlyActive,
+  ) {
+    if (!performedOnlyActive) return source;
+    final historyAsync = ref.watch(exerciseHistoryProvider);
+    final performedNames = historyAsync.valueOrNull
+            ?.map((e) => e.exerciseName.toLowerCase())
+            .toSet() ??
+        <String>{};
+    if (performedNames.isEmpty) return source;
+    return source
+        .where((e) => performedNames.contains(e.name.toLowerCase()))
+        .toList();
+  }
+
   /// The muscle-group labels shown in the inline quick-filter chip row.
   ///
   /// Prefer the authoritative body-part list from `filterOptionsProvider` (kept
@@ -159,8 +182,19 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
         searchQuery.isEmpty &&
         totalExercises != null) {
       countLabel = '$totalExercises exercises';
+    } else if (!performedOnly && exercisesState.totalCount != null) {
+      // Authoritative match count from the backend (E2E row 25) — NOT
+      // `exercises.length`, which is only how many rows this page has
+      // loaded so far. Skipped when the HISTORY toggle is active: that
+      // filter is purely client-side, so the backend total wouldn't
+      // reflect it (see `_performedOnlyFiltered` / row 92).
+      countLabel = '${exercisesState.totalCount} exercises found';
     } else {
-      countLabel = '${exercisesState.exercises.length} exercises found';
+      final visibleCount = _performedOnlyFiltered(
+        exercisesState.exercises,
+        performedOnly,
+      ).length;
+      countLabel = '$visibleCount exercises found';
     }
 
     return Column(
@@ -358,21 +392,13 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     }
 
     // Show exercises (backend handles both filters AND search now)
-    // Client-side "performed only" filter
+    // Client-side "performed only" filter — shared with the header count via
+    // `_performedOnlyFiltered` so the two can never disagree.
     final performedOnlyActive = ref.watch(performedOnlyProvider);
-    var filtered = exercisesState.exercises;
-    if (performedOnlyActive) {
-      final historyAsync = ref.watch(exerciseHistoryProvider);
-      final performedNames = historyAsync.valueOrNull
-              ?.map((e) => e.exerciseName.toLowerCase())
-              .toSet() ??
-          <String>{};
-      if (performedNames.isNotEmpty) {
-        filtered = filtered
-            .where((e) => performedNames.contains(e.name.toLowerCase()))
-            .toList();
-      }
-    }
+    var filtered = _performedOnlyFiltered(
+      exercisesState.exercises,
+      performedOnlyActive,
+    );
 
     if (filtered.isEmpty && !exercisesState.isLoading) {
       return EmptyState.noExercises(

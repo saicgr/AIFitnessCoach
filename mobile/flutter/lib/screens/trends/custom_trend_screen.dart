@@ -1193,10 +1193,16 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           runSpacing: 8,
           children: [
             for (final kind in TrendEventKind.values)
-              // Hide the Period pill while cycle phases is on — they paint
-              // the same dates. The pill comes back the moment the user
-              // toggles cycle phases off.
-              if (!(cyclePhasesOn && kind == TrendEventKind.period))
+              if (kind != TrendEventKind.period)
+                _eventChip(colors, kind, eventsAsync.valueOrNull)
+              // Period has no possible data source without hormonal tracking
+              // (no cycle-log table exists at all for a non-tracking
+              // account) — gate it the same way the cycle-phases and
+              // compare-last-cycle pills below already are. When tracking IS
+              // on, still hide it while cycle phases is on — they paint the
+              // same dates. The pill comes back the moment the user toggles
+              // cycle phases off.
+              else if (hasHormonalTracking && !cyclePhasesOn)
                 _eventChip(colors, kind, eventsAsync.valueOrNull),
             // Cycle phases pill — only for users with hormonal tracking.
             if (hasHormonalTracking)

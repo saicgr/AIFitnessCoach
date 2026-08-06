@@ -212,9 +212,14 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                   SettingItemData(
                     icon: Icons.checklist_rounded,
                     title: AppLocalizations.of(context).workoutSettingsIncompleteExerciseWarning,
+                    // Same underlying setting as Equipment → Incomplete
+                    // Exercise Warning (both read/write the
+                    // 'skip_incomplete_warning_dismissed' pref) — called out
+                    // so it doesn't look like a second, possibly-conflicting
+                    // control (E2E row 91).
                     subtitle: !_skipWarningDismissed
-                        ? 'ON — Warns before finishing with unlogged sets'
-                        : 'OFF — No warning on incomplete logs',
+                        ? 'ON — Warns before finishing with unlogged sets. Also in Equipment.'
+                        : 'OFF — No warning on incomplete logs. Also in Equipment.',
                     onTap: () => _toggleSkipWarning(_skipWarningDismissed),
                     trailing: ZealovaToggle(
                       value: !_skipWarningDismissed,
@@ -247,7 +252,10 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: AppLocalizations.of(context).workoutSettingsWeightIncrements,
                     subtitle: AppLocalizations.of(context)!.workoutSettingsPageStepSizeTapTo(ref.watch(weightIncrementsProvider).unit.toUpperCase()),
                     onTap: () => showWeightIncrementsSheet(context),
-                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    // Was a grey icon tile among orange siblings on this card
+                    // (E2E settings row 164) — no semantic reason for it to
+                    // differ (not a warning/error/disabled state).
+                    iconColor: context.accentColor,
                   ),
                   SettingItemData(
                     icon: Icons.show_chart,
@@ -282,7 +290,9 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     title: AppLocalizations.of(context).workoutSettingsImportWorkoutHistory,
                     subtitle: AppLocalizations.of(context).workoutSettingsAddPastWorkoutsFor,
                     isWorkoutHistoryImport: true,
-                    iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                    // Was a grey icon tile among accent-colored siblings on
+                    // this card (E2E settings row 164).
+                    iconColor: isDark ? context.accentColor : AppColorsLight.cyan,
                   ),
                 ],
               ),

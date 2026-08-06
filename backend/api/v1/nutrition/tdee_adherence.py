@@ -38,6 +38,13 @@ _REASON_HEADER = "X-Nutrition-Adherence-Unavailable"
 _REASON_NO_TARGETS = "targets-not-configured"
 _REASON_NO_LOGS = "no-logs-in-window"
 
+# Same "there is nothing to report" signal as _REASON_HEADER, for the
+# detailed-TDEE endpoint specifically — kept as its own header/reason space
+# (rather than reusing the adherence one) since the two are unrelated
+# unknowns that can independently be true or false for the same user.
+_TDEE_REASON_HEADER = "X-Nutrition-TDEE-Unavailable"
+_TDEE_REASON_INSUFFICIENT_DATA = "insufficient-data"
+
 
 class _NoConfiguredTargets(Exception):
     """Internal control-flow signal: the user has no nutrition targets set.
@@ -123,7 +130,32 @@ def _adherence_unavailable(reason: str) -> Response:
     )
 
 
-@router.get("/tdee/{user_id}/detailed", response_model=DetailedTDEEResponse)
+def _tdee_unavailable(reason: str) -> Response:
+    """``200 OK`` with a JSON ``null`` body — "there is no TDEE estimate to
+    report yet". Same rationale as `_adherence_unavailable` (see its
+    docstring): a populated body here used to fabricate `tdee=0`,
+    `confidence_low/high=0`, `avg_daily_intake=0`, `weight_change_kg=0.0`
+    and a bare `confidence_level="insufficient_data"` machine token — the
+    client rendered that as a live "0 cal/day ±0 cal" reading, a
+    "Weight: Stable" trend (0.0 change read as literally no change), and the
+    raw enum string as a badge, all for a user the service has ITSELF
+    classified as having insufficient data (docs/qa/UI_E2E_2026-08-05.md
+    row 14). `NutritionRepository.getDetailedTDEE` already has the correct
+    branch for this (`response.data == null -> return null`) — it just never
+    used to fire because this endpoint never sent a null body — and
+    `TDEECard` already renders a proper "Not enough data for TDEE estimate"
+    empty state when the value is null; this makes that path reachable
+    instead of shadowing it with a populated-but-fake object.
+    """
+    return Response(
+        content="null",
+        media_type="application/json",
+        status_code=200,
+        headers={_TDEE_REASON_HEADER: reason},
+    )
+
+
+@router.get("/tdee/{user_id}/detailed", response_model=Optional[DetailedTDEEResponse])
 async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(default=14, ge=7, le=30), current_user: dict = Depends(get_current_user)):
     """
     Get TDEE with confidence intervals, weight trend, and metabolic adaptation status.
@@ -221,24 +253,15 @@ async def get_detailed_tdee(request: Request, user_id: str, days: int = Query(de
         calculation = tdee_service.calculate_tdee_with_confidence(food_logs, weight_logs, days)
 
         if not calculation:
-            return DetailedTDEEResponse(
-                tdee=0,
-                confidence_low=0,
-                confidence_high=0,
-                uncertainty_display="N/A",
-                uncertainty_calories=0,
-                data_quality_score=0.0,
-                weight_change_kg=0.0,
-                avg_daily_intake=0,
-                start_weight_kg=0.0,
-                end_weight_kg=0.0,
-                days_analyzed=days,
-                food_logs_count=len(food_logs),
-                weight_logs_count=len(weight_logs),
-                weight_trend={"status": "insufficient_data", "message": "Need at least 5 food logs and 2 weight entries"},
-                metabolic_adaptation=None,
-                confidence_level="insufficient_data",
+            # The service has ITSELF classified this as insufficient data
+            # (fewer than 5 food logs / 2 weight entries) — never substitute
+            # a plausible-looking 0 cal/day estimate for "unknown". See
+            # _tdee_unavailable's docstring.
+            logger.info(
+                "TDEE insufficient data for user %s: %d food logs, %d weight logs",
+                user_id, len(food_logs), len(weight_logs),
             )
+            return _tdee_unavailable(_TDEE_REASON_INSUFFICIENT_DATA)
 
         # Get weight trend
         trend = tdee_service.get_weight_trend(weight_logs)

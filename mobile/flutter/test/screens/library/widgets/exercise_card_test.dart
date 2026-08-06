@@ -262,5 +262,60 @@ void main() {
       expect(find.textContaining('D-Handle'), findsNothing);
       expect(find.textContaining('Extra Handle'), findsNothing);
     });
+
+    testWidgets(
+      'metadata line puts equipment BEFORE muscle group (E2E row 120) so a '
+      'long muscle name eats itself in the maxLines:1 ellipsis, not the '
+      'short, load-bearing equipment token',
+      (WidgetTester tester) async {
+        final exercise = createExercise(
+          name: 'Barbell Squat',
+          bodyPart: 'Quadriceps',
+          equipment: 'Barbell',
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: ExerciseCard(exercise: exercise),
+              ),
+            ),
+          ),
+        );
+
+        // Level is absent, so the whole tail is ONE Text widget — its exact
+        // content pins the order directly. The old order rendered
+        // "QUADRICEPS · BARBELL", putting equipment last (and therefore
+        // first in line to be ellipsized on a long muscle name).
+        expect(find.text('BARBELL · QUADRICEPS'), findsOneWidget);
+        expect(find.text('QUADRICEPS · BARBELL'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'the exercise-name Text allows 2 lines (E2E row 101) so a '
+      'distinguishing trailing qualifier is not always clipped',
+      (WidgetTester tester) async {
+        final exercise = createExercise(
+          name: '45 Degree Hyperextension (No Equipment)',
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: ExerciseCard(exercise: exercise),
+              ),
+            ),
+          ),
+        );
+
+        final nameText = tester.widget<Text>(
+          find.text('45 Degree Hyperextension (No Equipment)'),
+        );
+        expect(nameText.maxLines, 2);
+      },
+    );
   });
 }

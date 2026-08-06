@@ -430,6 +430,124 @@ class TestExerciseEndpoints:
         # Should be excluded because exercise has "Stresses Shoulders" in avoid_if
         assert len(result) == 0
 
+    def test_list_exercises_search_pagination_returns_different_pages(
+        self, mock_supabase_db, sample_exercise_row
+    ):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 24.
+
+        `fetch_fuzzy_search_results` (the `fuzzy_search_exercises_api` RPC
+        wrapper) has no offset concept — it only takes a candidate-count cap.
+        Page 2 of a search (`offset=100`) used to silently re-serve page 1's
+        rows because `offset` was never applied on the search path (only on
+        `needs_post_filter`). This asserts two consecutive pages of the SAME
+        search are disjoint, not identical.
+        """
+        # 250 distinct candidate rows, as if the RPC returned everything it
+        # matched for a broad search term — `list_exercises` must be the one
+        # slicing this into pages now, not the RPC.
+        candidates = []
+        for i in range(250):
+            row = dict(sample_exercise_row)
+            row["id"] = f"ex-{i:04d}"
+            row["name"] = f"Barbell Exercise {i:04d}"
+            row["original_name"] = row["name"]
+            candidates.append(row)
+
+        with patch(
+            "api.v1.library.exercises.fetch_fuzzy_search_results",
+            new=AsyncMock(return_value=candidates),
+        ):
+            page1 = _list_exercises(search="Barbell", limit=100, offset=0)
+            page2 = _list_exercises(search="Barbell", limit=100, offset=100)
+
+        ids_page1 = {e.id for e in page1}
+        ids_page2 = {e.id for e in page2}
+
+        assert len(page1) == 100
+        assert len(page2) == 100
+        assert ids_page1.isdisjoint(ids_page2), (
+            "page 2 of a search re-served page 1's rows — offset was dropped "
+            "on the search path"
+        )
+
+    def test_list_exercises_search_sets_x_total_count_header(
+        self, mock_supabase_db, sample_exercise_row
+    ):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 25.
+
+        The client's "N EXERCISES FOUND" label had no authoritative total to
+        read — only the page it had loaded so far — so it always showed
+        exactly the page size and grew with every scroll. `list_exercises`
+        must set `X-Total-Count` to the TRUE match count (not the page size).
+        """
+        from fastapi import Response
+        from api.v1.library.exercises import list_exercises
+
+        candidates = []
+        for i in range(37):
+            row = dict(sample_exercise_row)
+            row["id"] = f"ex-{i:04d}"
+            row["name"] = f"Barbell Exercise {i:04d}"
+            row["original_name"] = row["name"]
+            candidates.append(row)
+
+        with patch(
+            "api.v1.library.exercises.fetch_fuzzy_search_results",
+            new=AsyncMock(return_value=candidates),
+        ):
+            response = Response()
+            result = asyncio.get_event_loop().run_until_complete(
+                list_exercises(
+                    response,
+                    body_parts=None, equipment=None, exercise_types=None, categories=None,
+                    difficulty=None, search="Barbell", goals=None, suitable_for=None,
+                    avoid_if=None, limit=10, offset=0,
+                )
+            )
+
+        assert len(result) == 10, "page size itself is unaffected"
+        assert response.headers.get("x-total-count") == "37", (
+            "X-Total-Count must report the TRUE match count, not the page size "
+            f"({len(result)}) — that was exactly the row-25 bug"
+        )
+
+    def test_get_filter_options_merges_equipment_case_variants(
+        self, mock_supabase_db, sample_exercise_row
+    ):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 26.
+
+        `exercise_library_cleaned.equipment` has case-variant duplicates for
+        the same real-world equipment (confirmed live: 'Bodyweight'/661 rows
+        vs 'bodyweight'/71, 'Yoga Mat'/37 vs 'yoga mat'/31). Building the
+        filter-options dict off the raw string shipped BOTH as separate
+        chips. This asserts they merge into ONE entry with the summed count.
+        """
+        from fastapi import Response
+        from api.v1.library.exercises import get_filter_options
+
+        rows = []
+        for i, eq in enumerate(["Bodyweight", "bodyweight", "BODYWEIGHT", "Yoga Mat", "yoga mat"]):
+            row = dict(sample_exercise_row)
+            row["id"] = f"ex-eq-{i}"
+            row["name"] = f"Exercise {i}"
+            row["equipment"] = eq
+            rows.append(row)
+        mock_supabase_db.client.rows = rows
+
+        result = asyncio.get_event_loop().run_until_complete(
+            get_filter_options(Response())
+        )
+
+        equipment_names_lower = [e["name"].lower() for e in result["equipment"]]
+        assert equipment_names_lower.count("bodyweight") == 1, (
+            f"expected exactly one 'bodyweight' chip, got {result['equipment']}"
+        )
+        assert equipment_names_lower.count("yoga mat") == 1
+        bodyweight_entry = next(e for e in result["equipment"] if e["name"].lower() == "bodyweight")
+        assert bodyweight_entry["count"] == 3, "the 3 case variants must sum, not overwrite"
+        yoga_entry = next(e for e in result["equipment"] if e["name"].lower() == "yoga mat")
+        assert yoga_entry["count"] == 2
+
     def test_get_exercises_grouped(self, mock_supabase_db, sample_exercise_row):
         """Test getting exercises grouped by body part."""
         from api.v1.library.exercises import get_exercises_grouped
@@ -742,6 +860,53 @@ class TestRowConversion:
         assert result.id == "ex-456"
         assert result.name == "Squat"  # Cleaned from Squat_Female
         assert result.original_name == "Squat_Female"
+
+    def test_row_to_library_exercise_humanizes_snake_case_target_muscle(self):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 93.
+
+        33 exercise_library_cleaned rows carry an un-normalized snake_case
+        target_muscle (e.g. 'hip_flexors', 'rear_delts') instead of the
+        Title Case every clean row uses ('Pectoralis Major'). Both
+        `from_cleaned_view=True` and `=False` paths must humanize it — a
+        raw DB enum must never reach the muscle chip verbatim.
+        """
+        from api.v1.library import row_to_library_exercise
+
+        cleaned_row = {
+            "id": "ex-hipcars",
+            "name": "Hip Cars",
+            "original_name": "Hip Cars",
+            "target_muscle": "hip_flexors",
+            # Mixed list: one already-clean value (no underscore — passes
+            # through unchanged) and one snake_case value (gets humanized).
+            "secondary_muscles": ["hip external rotators", "gluteus_medius"],
+        }
+        result = row_to_library_exercise(cleaned_row, from_cleaned_view=True)
+        assert result.target_muscle == "Hip Flexors"
+        assert result.secondary_muscles == [
+            "hip external rotators",
+            "Gluteus Medius",
+        ]
+
+        base_row = {
+            "id": "ex-base",
+            "exercise_name": "Ankle Cars",
+            "target_muscle": "lower_back",
+        }
+        result2 = row_to_library_exercise(base_row, from_cleaned_view=False)
+        assert result2.target_muscle == "Lower Back"
+
+    def test_row_to_library_exercise_leaves_clean_target_muscle_unchanged(
+        self, sample_exercise_row
+    ):
+        """A value with no underscore (the normal case) must pass through
+        byte-for-byte — no mechanical re-casing of already-correct catalog
+        values (e.g. 'Pectoralis Major' must not become 'Pectoralis Major'
+        via a different code path that could mangle acronyms/hyphens)."""
+        from api.v1.library import row_to_library_exercise
+
+        result = row_to_library_exercise(sample_exercise_row, from_cleaned_view=True)
+        assert result.target_muscle == "Pectoralis Major"
 
     def test_row_to_library_program(self, sample_program_row):
         """Test converting a `branded_programs` row.

@@ -14,6 +14,10 @@ name: Android Release Build
 #   - ANDROID_KEY_PASSWORD            key password
 #   - PLAY_SERVICE_ACCOUNT_JSON       JSON for Play Console service account
 #                                     with "Release manager" role on this app
+#   - REVENUECAT_ANDROID_KEY          RevenueCat "Public app-specific" API key
+#                                     for Android (starts with "goog_"). Without
+#                                     it, Purchases.configure() never runs and
+#                                     the Play Store build ships a dead paywall.
 #
 # To add: GitHub → Repo → Settings → Secrets and variables → Actions → New
 #         repository secret.
@@ -83,12 +87,25 @@ jobs:
         working-directory: mobile/flutter
         run: flutter pub get
 
+      - name: Validate RevenueCat key
+        run: |
+          # environment_config.dart reads the Android key under the dart-define
+          # name REVENUECAT_GOOGLE_KEY (NOT REVENUECAT_ANDROID_KEY — that was a
+          # naming mismatch here that meant this workflow, if ever run, would
+          # ship a build where Purchases.configure() silently never fires
+          # because EnvironmentConfig.revenueCatGoogleApiKey falls back to
+          # 'test_key_placeholder'). Fail the build loudly instead.
+          if [ -z "${{ secrets.REVENUECAT_ANDROID_KEY }}" ]; then
+            echo "::error::REVENUECAT_ANDROID_KEY secret is empty/unset — refusing to build a Play Store artifact with a dead paywall."
+            exit 1
+          fi
+
       - name: Build AAB
         working-directory: mobile/flutter
         run: |
           flutter build appbundle \
             --release \
-            --dart-define=REVENUECAT_ANDROID_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }} \
+            --dart-define=REVENUECAT_GOOGLE_KEY=${{ secrets.REVENUECAT_ANDROID_KEY }} \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
             --dart-define=SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
 

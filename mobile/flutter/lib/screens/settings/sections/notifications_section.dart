@@ -219,6 +219,18 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       isDark: isDark,
                       textMuted: textMuted,
                     ),
+                    // 'off' is a real stored value (same field as AI Coach's
+                    // "Nudge Intensity" control, which offers it) — must be
+                    // representable here too or picking it on the other
+                    // screen leaves every chip here unselected.
+                    _buildToneChip(
+                      label: 'Off',
+                      value: 'off',
+                      selected: notifPrefs.accountabilityIntensity == 'off',
+                      accent: accent,
+                      isDark: isDark,
+                      textMuted: textMuted,
+                    ),
                   ],
                 ),
               ],
@@ -1273,6 +1285,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                             child: Text(
                               subtitle,
                               style: TextStyle(fontSize: 12, color: textMuted),
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -1356,6 +1369,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                 Text(
                   subtitle,
                   style: TextStyle(fontSize: 12, color: textMuted),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],

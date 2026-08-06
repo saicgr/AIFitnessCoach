@@ -57,6 +57,17 @@ class StrengthScoreCard extends ConsumerWidget {
     final score = ref.watch(
       scoresProvider.select((s) => s.overallStrengthScore),
     );
+    // `overall_strength_score`/`overall_strength_level` on the overview payload
+    // are non-nullable on the backend — it defaults them to 0/"beginner" when
+    // the account has never had a muscle group scored, so their mere presence
+    // can't distinguish "scored zero" from "never scored". `muscle_scores_summary`
+    // is only populated from real `latest_strength_scores` rows, so an empty map
+    // is the honest signal that no strength score exists yet.
+    final hasMuscleScores = ref.watch(scoresProvider.select(
+      (s) =>
+          (s.strengthScores?.muscleScores.isNotEmpty ?? false) ||
+          (s.overview?.muscleScoresSummary.isNotEmpty ?? false),
+    ));
     // True only on the very first load with nothing cached to paint.
     final isInitialLoad = ref.watch(
       scoresProvider.select((s) => s.isLoading && s.overview == null),
@@ -75,7 +86,7 @@ class StrengthScoreCard extends ConsumerWidget {
       },
       child: (!hasData && isInitialLoad)
           ? _buildSkeleton(context)
-          : _buildContent(context, accent, isDark, score, overview),
+          : _buildContent(context, accent, isDark, score, overview, hasMuscleScores),
     );
   }
 
@@ -85,11 +96,13 @@ class StrengthScoreCard extends ConsumerWidget {
     bool isDark,
     int score,
     ScoresOverview? overview,
+    bool hasMuscleScores,
   ) {
     final colors = ThemeColors.of(context);
     final level = overview?.strengthLevel ?? StrengthLevel.beginner;
-    // Score 0 with no overview yet → an honest "—" rather than a fake 0.
-    final badgeValue = overview == null ? '—' : '$score';
+    // No overview yet, or an overview with nothing to score → an honest "—"
+    // rather than the backend's fabricated 0/"beginner" default.
+    final badgeValue = (overview == null || !hasMuscleScores) ? '—' : '$score';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -107,7 +120,7 @@ class StrengthScoreCard extends ConsumerWidget {
         const SizedBox(height: 6),
         ZealovaRule(margin: const EdgeInsets.only(bottom: AppSpacing.sm)),
         Text(
-          _levelLabel(level).toUpperCase(),
+          hasMuscleScores ? _levelLabel(level).toUpperCase() : 'NOT SCORED YET',
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: ZType.lbl(12, color: colors.textSecondary, letterSpacing: 1.5),

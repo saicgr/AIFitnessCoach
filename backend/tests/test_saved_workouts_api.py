@@ -756,6 +756,54 @@ class TestScheduledWorkouts:
         data = response.json()
         assert data["total_count"] == 1
 
+    def test_get_upcoming_bare_alias_is_routed_not_swallowed_by_workout_id(
+        self, mock_supabase, sample_user_id
+    ):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 58.
+
+        weekly_wrapped_screen.dart calls the bare `GET
+        /saved-workouts/upcoming`, which had no route — FastAPI matched the
+        literal segment "upcoming" against `GET /{workout_id}` (registered
+        first) and Postgres 400'd trying to filter by `id = 'upcoming'`
+        (22P02, invalid uuid). Must resolve to a real handler and return a
+        bare JSON LIST (the client's Future.wait branch checks
+        `response.data is List`, not the `{scheduled: [...]}` shape
+        `/scheduled/upcoming` uses).
+        """
+        scheduled_id = str(uuid.uuid4())
+        mock_supabase.table.return_value.select.return_value.eq.return_value.order.return_value.limit.return_value.execute.return_value = MagicMock(
+            data=[
+                {
+                    "id": scheduled_id,
+                    "workout_name": "Push Day",
+                    "scheduled_date": (datetime.now() + timedelta(days=2)).date().isoformat(),
+                    "status": "scheduled",
+                }
+            ]
+        )
+
+        response = client.get(
+            f"/api/v1/saved-workouts/upcoming?user_id={sample_user_id}&limit=7"
+        )
+
+        assert response.status_code == 200, response.text
+        data = response.json()
+        assert isinstance(data, list), (
+            f"must be a bare list (client checks `data is List`), got {type(data)}"
+        )
+        assert data[0]["id"] == scheduled_id
+        assert data[0]["name"] == "Push Day"  # NOT "workout_name" — what the client reads
+        assert data[0]["scheduled_date"]
+
+    def test_get_upcoming_bare_alias_rejects_other_users(
+        self, mock_supabase, sample_user_id
+    ):
+        response = client.get(
+            "/api/v1/saved-workouts/upcoming",
+            params={"user_id": str(uuid.uuid4())},  # not sample_user_id
+        )
+        assert response.status_code == 403
+
     def test_update_scheduled_workout(self, mock_supabase, sample_user_id):
         """Test updating a scheduled workout."""
         scheduled_id = str(uuid.uuid4())

@@ -1224,26 +1224,42 @@ class _FastingActiveBar extends ConsumerWidget {
                   trackColor: colors.cardBorder,
                 ),
                 const SizedBox(height: 6),
-                // Row 3: elapsed / remaining
+                // Row 3: elapsed / remaining. Row #124: `spaceBetween` alone
+                // collapses to zero gap (and overflows) once both labels'
+                // natural widths meet or exceed the row — "elapsed" ran
+                // straight into "15h" with no separator, clipping "left".
+                // `Flexible` + an explicit minimum gap guarantees a visible
+                // separator and lets either label ellipsize before the row
+                // ever overflows.
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${fasting.elapsedTimeFormatted} elapsed',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: colors.textSecondary,
+                    Flexible(
+                      child: Text(
+                        '${fasting.elapsedTimeFormatted} elapsed',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: colors.textSecondary,
+                        ),
                       ),
                     ),
-                    Text(
-                      remainingLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isOvertime
-                            ? stage.color
-                            : colors.textSecondary,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        remainingLabel,
+                        textAlign: TextAlign.right,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isOvertime
+                              ? stage.color
+                              : colors.textSecondary,
+                        ),
                       ),
                     ),
                   ],

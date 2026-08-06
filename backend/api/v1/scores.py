@@ -726,10 +726,14 @@ async def get_readiness_history(
         for r in records
     ]
 
-    # Calculate trend
+    # Calculate trend. `current_score` must be None (not 0) when there is no
+    # history row at all — a literal 0 here would fabricate "readiness of
+    # zero" for a user who has simply never checked in, indistinguishable
+    # from a genuinely terrible score. calculate_readiness_trend is already
+    # None-safe (13a0be3a) for exactly this reason.
     scores = [r.readiness_score for r in readiness_scores]
     trend_data = readiness_service.calculate_readiness_trend(
-        scores[0] if scores else 0,
+        scores[0] if scores else None,
         scores[1:] if len(scores) > 1 else [],
         days,
     )

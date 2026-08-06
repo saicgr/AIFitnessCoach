@@ -1902,29 +1902,51 @@ async def library_program_schedule(
                     for _ex in (_w.get("exercises") or []):
                         if isinstance(_ex, dict) and _ex.get("exercise_id"):
                             _json_ex_ids.add(str(_ex["exercise_id"]))
+            # Row 5 (docs/qa/UI_E2E_2026-08-05.md): when enforce_injury_safety
+            # substitutes a DIFFERENT exercise into a session slot (mutating
+            # `weeks_resp.data` in place before this point, via
+            # `_customize_preview_weeks` above), the substitute's own
+            # `exercise_id` is the ONLY trustworthy identity for that slot —
+            # `_media_pos_map`/`_media_map` below still describe whatever was
+            # AUTHORED at that position/name, which is a different exercise
+            # once a substitution happened. Fetch image AND video/gif by id so
+            # a substituted slot never falls back to the authored exercise's
+            # media (previously image/video/gif silently stayed on the old
+            # exercise while the name changed — e.g. "180 Jump Turns" shown
+            # with Cable Goblet Squat's thumbnail).
             _img_by_id: Dict[str, str] = {}
+            _vid_by_id: Dict[str, str] = {}
+            _gif_by_id: Dict[str, str] = {}
             if _json_ex_ids:
                 try:
                     _r = (
                         db.client.table("exercise_library")
-                        .select("id, image_s3_path")
+                        .select("id, image_s3_path, video_s3_path, gif_url")
                         .in_("id", list(_json_ex_ids))
                         .execute()
                     )
                     for _row in (_r.data or []):
                         if _row.get("image_s3_path"):
                             _img_by_id[str(_row["id"])] = _row["image_s3_path"]
+                        if _row.get("video_s3_path"):
+                            _vid_by_id[str(_row["id"])] = _row["video_s3_path"]
+                        if _row.get("gif_url"):
+                            _gif_by_id[str(_row["id"])] = _row["gif_url"]
                     _missing = [i for i in _json_ex_ids if i not in _img_by_id]
                     if _missing:
                         _r2 = (
                             db.client.table("exercise_library_cleaned")
-                            .select("id, image_url")
+                            .select("id, image_url, video_url, gif_url")
                             .in_("id", _missing)
                             .execute()
                         )
                         for _row in (_r2.data or []):
                             if _row.get("image_url"):
                                 _img_by_id[str(_row["id"])] = _row["image_url"]
+                            if _row.get("video_url") and str(_row["id"]) not in _vid_by_id:
+                                _vid_by_id[str(_row["id"])] = _row["video_url"]
+                            if _row.get("gif_url") and str(_row["id"]) not in _gif_by_id:
+                                _gif_by_id[str(_row["id"])] = _row["gif_url"]
                 except Exception as _bid_err:  # noqa: BLE001
                     logger.warning(
                         "schedule: by-id media fallback failed: %s", _bid_err
@@ -1958,8 +1980,25 @@ async def library_program_schedule(
                         # PRIMARY: positional match (view idx is 1-based; loop is
                         # 0-based). Falls back to name-based maps only if position
                         # has no row (e.g. view/JSON length drift).
+                        #
+                        # Row 5 guard: the positional row describes whatever was
+                        # AUTHORED at this slot. If enforce_injury_safety (run
+                        # in-memory above, before this loop) substituted a
+                        # different exercise into this slot, `ex_name` is now the
+                        # SUBSTITUTE's name while the positional row's own
+                        # `exercise_name_normalized` is still the AUTHORED name —
+                        # a mismatch is the signal that row belongs to an
+                        # exercise no longer shown here. Discard it rather than
+                        # pairing the new name with the old exercise's media/id.
+                        _pos_media = _media_pos_map.get((week_num, wi + 1, ei + 1))
+                        if _pos_media is not None:
+                            _authored_name = (
+                                _pos_media.get("exercise_name_normalized") or ""
+                            ).strip().lower()
+                            if _authored_name and _authored_name != ex_name_lower:
+                                _pos_media = None
                         media = (
-                            _media_pos_map.get((week_num, wi + 1, ei + 1))
+                            _pos_media
                             or _media_map.get((week_num, ex_name_lower))
                             or _media_name_map.get(ex_name_lower)
                             or {}
@@ -1984,14 +2023,22 @@ async def library_program_schedule(
                             or json_ex_id
                         )
 
-                        # View media first; when the view can't map the name,
-                        # fall back to the verified exercise_id in the blob.
+                        # View media first; when the view can't map the name
+                        # (including the row-5 stale-position case above), fall
+                        # back to the verified exercise_id in the blob for
+                        # image, video, AND gif — a substituted slot must never
+                        # keep serving the previous occupant's media.
                         img_s3 = media.get("image_s3_path") or (
                             _img_by_id.get(json_ex_id) if json_ex_id else None
                         )
                         image_url = _presign_s3_path(img_s3)
-                        video_url = _presign_s3_path(media.get("video_s3_path"))
-                        gif_url = media.get("gif_url") or None
+                        video_s3 = media.get("video_s3_path") or (
+                            _vid_by_id.get(json_ex_id) if json_ex_id else None
+                        )
+                        video_url = _presign_s3_path(video_s3)
+                        gif_url = media.get("gif_url") or (
+                            (_gif_by_id.get(json_ex_id) if json_ex_id else None)
+                        )
 
                         exercises_out.append({
                             "exercise_id": exercise_id,

@@ -32,13 +32,29 @@ from core.supabase_client import get_supabase  # noqa: E402
 # boundary, bare `RPE` used as a noun ("Push the RPE on your main compounds") is
 # caught too; requiring a digit let that form through every pass.
 JARGON = re.compile(
-    r"\b(supercompensation|CNS|neural|RPE|\d*\s*RM\b|mechanical tension|motor unit"
+    r"\b(supercompensation|CNS|neural|neuromuscular|RPE|\d*\s*RM\b|mechanical tension|motor unit"
     r"|anaerobic|unilateral|eccentric|concentric|time under tension"
     # Bare `metabolic` — "metabolic conditioning" / "metabolic limits" slipped
     # past the three-noun enumeration this used to be.
     r"|metabolic|hypertrophy|propriocept\w*"
     r"|glycolytic|lactate|myofibrillar|sarcoplasmic|autoregulat\w*"
-    r"|supramaximal|potentiation|contractile|osteogenic|periodization)\b",
+    # `deload`/`intensification` — the deterministic phase-label helpers
+    # (determine_phase / _derive_phase) used to emit "Peak (Intensification)"
+    # / "Taper (Deload)" straight into program_variant_weeks.phase; this gate
+    # never caught it because neither word was in the list (see row 35/102,
+    # 2026-08). "Taper" alone is left unblocked — it's ordinary English
+    # ("taper off"), unlike "deload"/"intensification" which are gym jargon.
+    r"|deload\w*|intensification"
+    r"|supramaximal|potentiation|contractile|osteogenic|periodization"
+    # `recruitment`/`accumulation` — "neuromuscular recruitment", "deep core
+    # recruitment", "volume accumulation" (row 35, 2026-08). "Recruitment" as
+    # used elsewhere in the app (hiring) never appears in program copy, so no
+    # false-positive carve-out is needed.
+    r"|recruitment|accumulation"
+    # "leave 1-2 reps in reserve" / bare "RIR" — the RPE-equivalent reserve
+    # notation program_session_filler.py's backfilled accessories used while
+    # authored exercises already said "effort 9 out of 10" (row 103, 2026-08).
+    r"|reps? in reserve|\bRIR\b)\b",
     re.IGNORECASE,
 )
 
@@ -50,6 +66,20 @@ SHORTHAND = [
     re.compile(r"—\s*(Volume|Strength|Intensity)\s+\d+s\b"),  # "Volume 8s"
     re.compile(r"^Run/Walk \d"),                   # "Run/Walk 1:1.5"
     re.compile(r"\d\s*×\s*\d+×\d+"),               # "1 × 4×4"
+    # "Day N — 40s + Side", "Day 30 — Final 180s Test" (30-Day Plank
+    # Challenge, row 111 2026-08). The bare `^\d+s\b` rule above only fires
+    # when the STRING starts with the digits; here "Day 5 — " precedes it, so
+    # it never matched. Anchored to the "Day N —" title shape specifically so
+    # it doesn't flag an unrelated "the 1990s" mid-sentence elsewhere.
+    re.compile(r"^Day \d+\s*[—-]\s*.*\b\d+s\b", re.IGNORECASE),
+    # Authoring scaffolding that leaked into user-facing copy: Gemini
+    # referring to its own multi-phase generation structure ("...to prepare
+    # for increased intensity in Phase 2") instead of describing the workout.
+    re.compile(r"\bin Phase \d+\b", re.IGNORECASE),
+    # Fractional minutes ("0.5 min easy", "1.5 min hard") — nobody reads a
+    # rest interval as a decimal minute; the generator divided a seconds
+    # value by 60 without converting back to whole seconds (row 110, 2026-08).
+    re.compile(r"\b\d+\.\d+\s*min(?:ute)?s?\b", re.IGNORECASE),
 ]
 
 
@@ -201,6 +231,49 @@ def iter_workout_copy(workouts):
                         yield f"{label}.{f}", v
 
 
+def fetch_base_blob_programs(db):
+    """Published programs with NO variant (variant_base_id IS NULL) — the
+    Schedule tab serves these straight from `programs.workouts` (a dict
+    wrapping a `workouts` list), not `program_variant_weeks`. This gate used
+    to only ever query program_variant_weeks, so these programs were
+    completely unscanned — the 30-Day Plank Challenge's "Day 5 — 40s + Side"
+    day titles (row 111, 2026-08) shipped and stayed invisible to every run
+    of this gate. Returns [(program_id, editorial_name, workouts_list), ...].
+    """
+    rows = (
+        db.client.table("programs")
+        .select("id, editorial_name, workouts")
+        .is_("variant_base_id", "null")
+        .eq("is_published", True)
+        .execute()
+        .data
+        or []
+    )
+    out = []
+    for r in rows:
+        blob = r.get("workouts")
+        sessions = blob.get("workouts") if isinstance(blob, dict) else blob
+        if isinstance(sessions, list):
+            out.append((r["id"], r.get("editorial_name"), sessions))
+    return out
+
+
+def fetch_program_phases(db):
+    """(program_id, editorial_name, phases) for every program's Overview-tab
+    phase list — `programs.phases[].title/subtitle`. A SEPARATE authored
+    source from `program_variant_weeks.phase/focus` (the Schedule tab), so
+    jargon here shipped even after the Schedule side was cleaned (row 102,
+    2026-08). This gate never scanned it at all before this sweep."""
+    rows = (
+        db.client.table("programs")
+        .select("id, editorial_name, phases")
+        .execute()
+        .data
+        or []
+    )
+    return [(r["id"], r.get("editorial_name"), r["phases"]) for r in rows if isinstance(r.get("phases"), list)]
+
+
 def lint(text):
     if not text:
         return None
@@ -237,6 +310,34 @@ def main():
             why = lint(text)
             if why:
                 failures.setdefault((path, text), []).append(r["variant_id"])
+
+    # Base-blob-only programs (no variant_base_id) — see fetch_base_blob_programs.
+    db = get_supabase()
+    base_programs = fetch_base_blob_programs(db)
+    print(f"linting {len(base_programs)} base-blob programs ...")
+    for prog_id, name, sessions in base_programs:
+        for path, text in iter_workout_copy(sessions):
+            why = lint(text)
+            if why:
+                failures.setdefault((f"base:{path}", text), []).append(
+                    f"{name} ({prog_id})"
+                )
+
+    # Overview-tab phase list — see fetch_program_phases.
+    phase_programs = fetch_program_phases(db)
+    print(f"linting {len(phase_programs)} programs' Overview phase lists ...")
+    for prog_id, name, phases in phase_programs:
+        for ph in phases:
+            if not isinstance(ph, dict):
+                continue
+            for f in ("title", "subtitle"):
+                v = ph.get(f)
+                if isinstance(v, str) and v.strip():
+                    why = lint(v)
+                    if why:
+                        failures.setdefault((f"overview.{f}", v), []).append(
+                            f"{name} ({prog_id})"
+                        )
 
     if not failures:
         print("OK: no jargon or cryptic shorthand in program copy")

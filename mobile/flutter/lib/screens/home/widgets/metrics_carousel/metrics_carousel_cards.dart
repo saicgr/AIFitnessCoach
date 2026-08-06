@@ -29,6 +29,14 @@ const double kCarouselCardWidth = 330;
 const double kCarouselCardHeightNormal = 170;
 const double kCarouselCardHeightTall = 240;
 
+/// Horizontal clearance any card content must leave along the top-right
+/// corner so it never sits under [_EditButton] (26px wide, offset 12px from
+/// the card edge, painted in a separate `Positioned` layer OUTSIDE the
+/// card's own content padding — cards must reserve this space themselves).
+/// E2E row 133: `VolumeTrendCard`'s top-right delta readout ("— —") had no
+/// such clearance and rendered straight through the pencil icon.
+const double kCarouselEditButtonClearance = 34;
+
 // ---------------------------------------------------------------------------
 // Shell — chrome shared by every page: surface, edit button, pagination.
 // ---------------------------------------------------------------------------
@@ -54,66 +62,84 @@ class CarouselCardShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: kCarouselCardWidth),
-      child: SizedBox(
-        height: tall ? kCarouselCardHeightTall : kCarouselCardHeightNormal,
-        child: Container(
-          decoration: BoxDecoration(
-            color: c.surface,
-            // Matches the Home cards this sits between (the challenge card and
-            // the program card both use radius 16 / padding 14). It used to be
-            // radius 14 / padding 13 — off by one on both, and off the 8px
-            // grid, which is exactly why the card read as "inconsistent"
-            // against its neighbours without an obvious cause.
-            borderRadius: BorderRadius.circular(kHomeCardRadius),
-            border: Border.all(
-              color: isPlaceholder ? c.textMuted.withValues(alpha: 0.3) : c.cardBorder,
-              style: BorderStyle.solid,
-            ),
+    // NOT `ConstrainedBox(maxWidth: kCarouselCardWidth)` — that pinned the
+    // card to a flat 330pt regardless of the width the PageView item slot
+    // actually offers (device width minus the shared `kHomeHPad` gutters,
+    // e.g. 358pt on a 390pt phone), leaving an unexplained ~28pt gap on the
+    // right that every neighbouring Home card (health strip, coach card,
+    // workout-complete card) fills (E2E row 137). `width: double.infinity`
+    // fills whatever width the PageView item slot provides, matching them.
+    //
+    // Height is ALSO `double.infinity`, NOT this shell's own `tall ? ... :
+    // ...` (E2E row 194): `metrics_carousel.dart` sizes the shared PageView
+    // VIEWPORT from the Training page's `tall` flag alone (only Training
+    // supports the taller variant), so every page's ITEM SLOT is already
+    // exactly `kCarouselCardHeightTall` once Training opts in — but this
+    // shell used to independently re-derive its own height from ITS OWN
+    // page's `tall` (always false for every other page), leaving an ~87pt
+    // dead gap between the (170px) card and "Browse programs" below on
+    // every page except Training. Filling the ambient tight height the
+    // item slot already provides keeps every page's card exactly as tall
+    // as the viewport it's actually painted in, with no separate
+    // computation to drift out of sync.
+    return SizedBox(
+      width: double.infinity,
+      height: double.infinity,
+      child: Container(
+        decoration: BoxDecoration(
+          color: c.surface,
+          // Matches the Home cards this sits between (the challenge card and
+          // the program card both use radius 16 / padding 14). It used to be
+          // radius 14 / padding 13 — off by one on both, and off the 8px
+          // grid, which is exactly why the card read as "inconsistent"
+          // against its neighbours without an obvious cause.
+          borderRadius: BorderRadius.circular(kHomeCardRadius),
+          border: Border.all(
+            color: isPlaceholder ? c.textMuted.withValues(alpha: 0.3) : c.cardBorder,
+            style: BorderStyle.solid,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: Stack(
-            children: [
-              Padding(
-                // Bottom is the shared inset PLUS room for the page dots that
-                // sit inside this card, rather than an unexplained 34.
-                padding: const EdgeInsets.fromLTRB(
-                  kHomeCardPadding,
-                  kHomeCardPadding,
-                  kHomeCardPadding,
-                  kHomeCardPadding + kCarouselDotsAllowance,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Padding(
+              // Bottom is the shared inset PLUS room for the page dots that
+              // sit inside this card, rather than an unexplained 34.
+              padding: const EdgeInsets.fromLTRB(
+                kHomeCardPadding,
+                kHomeCardPadding,
+                kHomeCardPadding,
+                kHomeCardPadding + kCarouselDotsAllowance,
+              ),
+              child: child,
+            ),
+            Positioned(
+              top: 12,
+              right: 12,
+              child: _EditButton(onTap: onEdit, c: c),
+            ),
+            // Pagination guard: a single page hides the control entirely —
+            // "a lone dot is a control that does nothing" (build spec).
+            if (pageCount > 1) ...[
+              Positioned(
+                left: 13,
+                bottom: 14,
+                child: _PaginationDots(
+                  index: pageIndex,
+                  count: pageCount,
+                  c: c,
                 ),
-                child: child,
               ),
               Positioned(
-                top: 12,
-                right: 12,
-                child: _EditButton(onTap: onEdit, c: c),
+                right: 13,
+                bottom: 12,
+                child: Text(
+                  '${pageIndex + 1} of $pageCount',
+                  style: ZType.data(8, color: c.textMuted),
+                ),
               ),
-              // Pagination guard: a single page hides the control entirely —
-              // "a lone dot is a control that does nothing" (build spec).
-              if (pageCount > 1) ...[
-                Positioned(
-                  left: 13,
-                  bottom: 14,
-                  child: _PaginationDots(
-                    index: pageIndex,
-                    count: pageCount,
-                    c: c,
-                  ),
-                ),
-                Positioned(
-                  right: 13,
-                  bottom: 12,
-                  child: Text(
-                    '${pageIndex + 1} of $pageCount',
-                    style: ZType.data(8, color: c.textMuted),
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -250,7 +276,14 @@ class TrainingCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('STREAK', style: ZType.data(8.5, color: c.textMuted)),
+                      // NOT a training streak — `stats.streakDays` is the
+                      // app-open (login) streak (metrics_carousel_data_
+                      // provider.dart wires it from xpCurrentStreakProvider).
+                      // On a card that's otherwise all training metrics
+                      // ("1 OF 4 sessions", volume, PRs), a bare "STREAK"
+                      // read as training days and could flatly contradict
+                      // the sessions ring next to it (E2E row 134).
+                      Text('LOGIN STREAK', style: ZType.data(8.5, color: c.textMuted)),
                       const SizedBox(height: 4),
                       Text.rich(
                         TextSpan(
@@ -476,30 +509,36 @@ class VolumeTrendCard extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Guard: fewer than 2 weeks of history → "— —", never 0%.
-                Text(
-                  delta == null
-                      ? '— —'
-                      : '${delta >= 0 ? '▲' : '▼'} ${delta.abs().toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontFamily: 'Archivo',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                    color: delta == null
-                        ? c.textMuted
-                        : (delta >= 0 ? c.accent : c.textMuted),
+            Padding(
+              // Clears the shell's top-right edit button (E2E row 133) — the
+              // "— —" no-comparison placeholder used to render straight
+              // through the pencil icon.
+              padding: const EdgeInsets.only(right: kCarouselEditButtonClearance),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Guard: fewer than 2 weeks of history → "— —", never 0%.
+                  Text(
+                    delta == null
+                        ? '— —'
+                        : '${delta >= 0 ? '▲' : '▼'} ${delta.abs().toStringAsFixed(0)}%',
+                    style: TextStyle(
+                      fontFamily: 'Archivo',
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                      color: delta == null
+                          ? c.textMuted
+                          : (delta >= 0 ? c.accent : c.textMuted),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  delta == null ? 'no comparison yet' : 'vs last week',
-                  style: ZType.data(8, color: c.textMuted),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    delta == null ? 'no comparison yet' : 'vs last week',
+                    style: ZType.data(8, color: c.textMuted),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

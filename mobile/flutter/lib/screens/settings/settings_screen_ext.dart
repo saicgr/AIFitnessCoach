@@ -201,7 +201,10 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
       (
         'workout_tour',
         'Active Workout',
-        'Easy / Simple / Advanced walkthroughs',
+        // 'Simple' is a deprecated tier (workout_ui_mode_sheet.dart maps it
+        // to Easy) — Workout Mode only offers Easy/Advanced, so advertising
+        // a third tier here was a real mismatch (E2E settings row 167).
+        'Easy / Advanced walkthroughs',
         Icons.fitness_center,
         [
           'tour_seen_easy',

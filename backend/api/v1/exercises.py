@@ -9,6 +9,13 @@ ENDPOINTS:
 - DELETE /api/v1/exercises/{id} - Delete exercise
 - POST /api/v1/exercises/index - Index all exercises for RAG search
 - GET  /api/v1/exercises/rag/stats - Get RAG index statistics
+- GET  /api/v1/exercises/{exercise_id}/alternatives - Swap-sheet alternatives
+  (UUID exercise_library_cleaned id — a DIFFERENT id space from the int
+  `exercise_id` used by the CRUD routes above. Same handler as
+  GET /api/v1/exercise-preferences/exercises/{id}/alternatives — registered
+  here too because the Flutter client calls the bare /exercises path
+  (exercise_alternatives_provider.dart) and that path 404'd otherwise;
+  see docs/qa/UI_E2E_2026-08-05.md row 4.)
 
 CUSTOM EXERCISE ENDPOINTS:
 - GET  /api/v1/exercises/custom/{user_id} - Get user's custom exercises
@@ -20,6 +27,7 @@ from core.locale import parse_accept_language, overlay_exercise_i18n
 
 from .exercises_models import *  # noqa: F401, F403
 from .exercises_endpoints import router as _endpoints_router
+from .exercise_preferences_endpoints import get_exercise_alternatives as _get_exercise_alternatives
 
 from fastapi import APIRouter, Header, HTTPException, Query, Depends, Response
 from typing import List, Optional
@@ -357,3 +365,18 @@ class CustomExerciseResponse(BaseModel):
 
 # Include secondary endpoints
 router.include_router(_endpoints_router)
+
+# Alias GET /{exercise_id}/alternatives onto the bare /exercises prefix.
+# The real implementation lives in exercise_preferences_endpoints.py
+# (mounted under /exercise-preferences), but exercise_alternatives_provider.dart
+# calls the bare /exercises path, which had no route registered — a 404 on
+# every swap-sheet "Alternatives" open (docs/qa/UI_E2E_2026-08-05.md row 4).
+# Registering the SAME handler object here (not a copy) keeps one
+# implementation. Two path segments ("/{exercise_id}/alternatives") can't be
+# shadowed by the single-segment GET "/{exercise_id}" route above regardless
+# of registration order — FastAPI/Starlette match by segment count.
+router.add_api_route(
+    "/{exercise_id}/alternatives",
+    _get_exercise_alternatives,
+    methods=["GET"],
+)

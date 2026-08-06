@@ -391,6 +391,37 @@ async def get_user_by_auth(auth_id: str,
         raise safe_internal_error(e, "users")
 
 
+@router.get("/me")
+async def get_me(
+    current_user: dict = Depends(get_current_user),
+):
+    """Get the authenticated caller's own full user row.
+
+    Returns the raw row (not the strict `User` response model) so callers
+    reading ad-hoc columns not on that model — e.g. the privacy toggle
+    reading `contribute_food_data` — see the real persisted value instead
+    of a field the strict model would silently strip.
+
+    MUST stay registered ABOVE `/{user_id}`: FastAPI matches path routes
+    in declaration order, so a bare "/me" segment below `/{user_id}` gets
+    swallowed as that route's `user_id` path param, and
+    `verify_user_ownership` then compares the literal string "me" against
+    the caller's real UUID and always 403s (docs/qa/UI_E2E_2026-08-05.md
+    row 2 — GET /api/v1/users/me 403ing for every user).
+    """
+    try:
+        db = get_supabase_db()
+        row = db.get_user(current_user["id"])
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+        return row
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get current user (/me): {e}", exc_info=True)
+        raise safe_internal_error(e, "users")
+
+
 @router.get("/{user_id}", response_model=User)
 async def get_user(user_id: str,
     current_user: dict = Depends(get_current_user),

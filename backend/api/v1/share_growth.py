@@ -20,13 +20,13 @@ Imports routes.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query, Request
 
 from core.auth import get_current_user
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 from services import referral_service, share_data_service
 
 logger = get_logger(__name__)
@@ -131,16 +131,26 @@ async def resolve_share_token(token: str = Path(...)):
 # --------------------------------------------------------------------------- #
 @router.get("/share/on-this-day")
 async def on_this_day(
+    request: Request,
     user_id: Optional[str] = Query(None),
-    date: Optional[str] = Query(None, description="YYYY-MM-DD (defaults to today UTC)"),
+    date: Optional[str] = Query(None, description="YYYY-MM-DD (defaults to the user's local today)"),
     current_user: dict = Depends(get_current_user),
 ):
-    """Past workouts + meals on this month/day in prior years (deterministic)."""
+    """Past workouts + meals on this month/day in prior years (deterministic).
+
+    Local-day-window fix: was defaulting to UTC "today" and building each
+    prior year's window at UTC midnight — same defect class as
+    /share/day-in-proof. Both the default and every per-year window now
+    resolve against the user's own timezone.
+    """
     uid = str(current_user["id"])
     if user_id and str(user_id) != uid:
         raise HTTPException(status_code=403, detail="Access denied")
-    date_iso = date or datetime.now(timezone.utc).date().isoformat()
+    from core.db.facade import get_supabase_db
+    db = get_supabase_db()
+    tz = resolve_timezone(request, db, uid)
+    date_iso = date or get_user_today(tz)
     try:
-        return share_data_service.on_this_day(uid, date_iso)
+        return share_data_service.on_this_day(uid, date_iso, tz)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date (use YYYY-MM-DD)")

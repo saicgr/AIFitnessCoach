@@ -443,10 +443,23 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             const SizedBox(height: AppSpacing.lg),
 
             // ── 5. ACHIEVEMENTS (compact) ────────────────────────────────
-            SectionHeader(
-              title: AppLocalizations.of(context).overviewRecentAchievements,
-              onViewAll: () => context.push('/achievements'),
-            ),
+            // "Recent Achievements" only when the preview actually has an
+            // EARNED badge to show — the preview back-fills empty achieved
+            // slots with locked "upcoming" ones, and calling those "recent"
+            // (e.g. "FIRST WORKOUT" greyed out for an account with completed
+            // workouts) reads as a broken/contradictory claim rather than a
+            // to-do list.
+            Consumer(builder: (context, ref, _) {
+              final hasAchieved = ref.watch(milestonesProvider
+                      .select((s) => s.achieved.isNotEmpty)) ||
+                  (_diskMilestones?.achieved.isNotEmpty ?? false);
+              return SectionHeader(
+                title: hasAchieved
+                    ? AppLocalizations.of(context).overviewRecentAchievements
+                    : 'ACHIEVEMENTS TO UNLOCK',
+                onViewAll: () => context.push('/achievements'),
+              );
+            }),
             const SizedBox(height: AppSpacing.sm),
             _AchievementsPreview(diskFallback: _diskMilestones),
 
@@ -844,23 +857,47 @@ class _BadgeIcon extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Hairline-framed glyph; tier identity color stays on the unlocked
-          // icon only — locked badges read fully desaturated.
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: tc.surface,
-              border: Border.all(
-                color: unlocked ? color.withValues(alpha: 0.5) : AppColors.cardBorder,
-                width: 1,
+          // icon only — locked badges read fully desaturated, plus an
+          // explicit lock glyph so "not yet earned" doesn't rely on a subtle
+          // color difference alone.
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: tc.surface,
+                  border: Border.all(
+                    color: unlocked
+                        ? color.withValues(alpha: 0.5)
+                        : AppColors.cardBorder,
+                    width: 1,
+                  ),
+                ),
+                child: Icon(
+                  iconData,
+                  size: 22,
+                  color: unlocked ? color : tc.textMuted,
+                ),
               ),
-            ),
-            child: Icon(
-              iconData,
-              size: 22,
-              color: unlocked ? color : tc.textMuted,
-            ),
+              if (!unlocked)
+                Positioned(
+                  right: -2,
+                  bottom: -2,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: tc.surface,
+                      border: Border.all(color: AppColors.cardBorder, width: 1),
+                    ),
+                    child: Icon(Icons.lock, size: 10, color: tc.textMuted),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
@@ -1143,7 +1180,11 @@ class PRListWidget extends ConsumerWidget {
               Text(
                 AppLocalizations.of(context).overviewPersonalRecordsAreTracked,
                 textAlign: TextAlign.center,
-                style: ZType.data(11, color: tc.textMuted),
+                // Body copy — was `ZType.data` (Space Mono, the telemetry/
+                // numeric-readout face), which reads as monospaced code next
+                // to every sibling empty state's sans body text. `ZType.ser`
+                // (Archivo) is this app's human-line body face.
+                style: ZType.ser(11, color: tc.textMuted),
               ),
             ],
           ),

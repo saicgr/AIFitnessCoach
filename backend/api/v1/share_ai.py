@@ -17,13 +17,13 @@ services.share_data_service (pure SQL assembly).
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
 
 from core.auth import get_current_user
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, get_user_today
 from services import share_ai_service, share_data_service
 
 logger = get_logger(__name__)
@@ -94,6 +94,7 @@ async def ai_restyle_quota(current_user: dict = Depends(get_current_user)):
 # --------------------------------------------------------------------------- #
 @router.get("/share/insight-line")
 async def insight_line(
+    request: Request,
     workout_id: Optional[str] = Query(None),
     food_log_id: Optional[str] = Query(None),
     date: Optional[str] = Query(None, description="YYYY-MM-DD (food/day variant)"),
@@ -173,7 +174,8 @@ async def insight_line(
 
     if date:
         # Day-level food line from that day's aggregate.
-        grade = share_data_service._meal_grade_for_day(user_id, date)
+        tz = resolve_timezone(request, db, user_id)
+        grade = share_data_service._meal_grade_for_day(user_id, date, tz)
         stats = {}
         if grade:
             stats = {"health_score": grade["score"], "metric": f"{grade['protein_g']}g protein"}
@@ -191,17 +193,30 @@ async def insight_line(
 # --------------------------------------------------------------------------- #
 @router.get("/share/day-in-proof")
 async def day_in_proof(
+    request: Request,
     user_id: Optional[str] = Query(None),
-    date: Optional[str] = Query(None, description="YYYY-MM-DD (defaults to today UTC)"),
+    date: Optional[str] = Query(None, description="YYYY-MM-DD (defaults to the user's local today)"),
     current_user: dict = Depends(get_current_user),
 ):
     """Cross-domain card: top PR + meal letter-grade + streak + one cached line.
-    Pure SQL assembly; no new LLM call beyond the cached F2 line."""
+    Pure SQL assembly; no new LLM call beyond the cached F2 line.
+
+    Local-day-window fix: was defaulting `date` to UTC "today" and querying a
+    bare UTC-midnight window — for any user west of UTC, that reads as
+    "tomorrow" for hours every evening (a card at 21:56 America/Chicago read
+    the UTC date, which had already rolled to the next calendar day) and
+    silently misses hours of the user's actual evening logs even when a date
+    IS passed. Both the default and the query window now resolve against the
+    user's own timezone.
+    """
     uid = str(current_user["id"])
     if user_id and str(user_id) != uid:
         raise HTTPException(status_code=403, detail="Access denied")
-    date_iso = date or datetime.now(timezone.utc).date().isoformat()
+    from core.db.facade import get_supabase_db
+    db = get_supabase_db()
+    tz = resolve_timezone(request, db, uid)
+    date_iso = date or get_user_today(tz)
     try:
-        return share_data_service.day_in_proof(uid, date_iso)
+        return share_data_service.day_in_proof(uid, date_iso, tz)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date (use YYYY-MM-DD)")

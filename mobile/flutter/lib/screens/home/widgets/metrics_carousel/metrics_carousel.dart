@@ -88,16 +88,20 @@ class _MetricsCarouselState extends ConsumerState<MetricsCarousel> {
           itemBuilder: (context, i) {
             final pageId = pages[i];
             final config = prefs.pages.firstWhere((p) => p.id == pageId);
-            return Align(
-              alignment: Alignment.topLeft,
-              child: CarouselCardShell(
-                pageIndex: i,
-                pageCount: pages.length,
-                tall: config.tall,
-                isPlaceholder: !pageId.hasBuiltCard,
-                onEdit: () => showCarouselEditSheet(context),
-                child: _buildPageBody(pageId, config),
-              ),
+            // NOT wrapped in `Align(topLeft, ...)` — that gave the shell
+            // loose constraints so it shrink-wrapped to its old fixed
+            // `kCarouselCardWidth`, leaving the item slot's real width
+            // (device width minus `kHomeHPad`) unused on the right (E2E row
+            // 137). `CarouselCardShell` now fills whatever tight width
+            // PageView's viewport slot hands it, same as every other Home
+            // card between which it sits.
+            return CarouselCardShell(
+              pageIndex: i,
+              pageCount: pages.length,
+              tall: config.tall,
+              isPlaceholder: !pageId.hasBuiltCard,
+              onEdit: () => showCarouselEditSheet(context),
+              child: _buildPageBody(pageId, config),
             );
           },
         ),
@@ -117,9 +121,16 @@ class _MetricsCarouselState extends ConsumerState<MetricsCarousel> {
         final data = ref.watch(recoverySnapshotProvider);
         return RecoveryCard(data: data);
       case CarouselPageId.muscleBalance:
+        // Unconditional placeholder — no provider backs this page at all
+        // (unlike training/volumeTrend/recovery above, which each watch a
+        // real one). The old copy ("needs 3+ muscle groups trained to
+        // compare") implied a data-readiness gate that would clear once the
+        // user trained enough; it doesn't — E2E row 135 found an account
+        // that already had 3 muscle groups logged still stuck here. Say
+        // plainly that the feature isn't built yet, not a false precondition.
         return const ComingSoonCard(
           title: 'Muscle balance',
-          subtitle: 'Coming soon — needs 3+ muscle\ngroups trained to compare.',
+          subtitle: "Coming soon — we're building\nmuscle-group comparison.",
         );
       case CarouselPageId.prLadder:
         return const ComingSoonCard(

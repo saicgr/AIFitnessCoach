@@ -322,48 +322,57 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
 
   /// Resolve the image + video URLs from the backend. Pure network — the
   /// caller (`_loadMediaAndAutoplay`) routes it through [loadCacheFirst].
+  ///
+  /// The image and video lookups are independent endpoints, so they run
+  /// concurrently (`Future.wait`) rather than one after another — sequential
+  /// awaits here made the hero render as an empty box for as long as BOTH
+  /// 10s-timeout calls took combined (up to ~20s worst case) instead of just
+  /// the slower of the two.
   Future<Map<String, dynamic>> _resolveMediaUrls(String exerciseName) async {
     final apiClient = ref.read(apiClientProvider);
-    String? imageUrl;
-    String? videoUrl;
 
-    // Authoritative S3 illustration. Pass exercise_id so we hit the exact
-    // library row — without it the backend ilike-on-name path is
-    // non-deterministic when multiple rows share a display name.
-    try {
-      final libraryUuid =
-          widget.exercise.exerciseId ?? widget.exercise.libraryId;
-      final queryParams = <String, dynamic>{};
-      if (libraryUuid != null) queryParams['exercise_id'] = libraryUuid;
-      final imageResponse = await apiClient
-          .get(
-            '/exercise-images/${Uri.encodeComponent(exerciseName)}',
-            queryParameters: queryParams.isEmpty ? null : queryParams,
-          )
-          .timeout(const Duration(seconds: 10));
-      if (imageResponse.statusCode == 200 && imageResponse.data != null) {
-        imageUrl = imageResponse.data['url'] as String?;
-      }
-    } catch (_) {}
+    Future<String?> fetchImageUrl() async {
+      // Authoritative S3 illustration. Pass exercise_id so we hit the exact
+      // library row — without it the backend ilike-on-name path is
+      // non-deterministic when multiple rows share a display name.
+      try {
+        final libraryUuid =
+            widget.exercise.exerciseId ?? widget.exercise.libraryId;
+        final queryParams = <String, dynamic>{};
+        if (libraryUuid != null) queryParams['exercise_id'] = libraryUuid;
+        final imageResponse = await apiClient
+            .get(
+              '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+              queryParameters: queryParams.isEmpty ? null : queryParams,
+            )
+            .timeout(const Duration(seconds: 10));
+        if (imageResponse.statusCode == 200 && imageResponse.data != null) {
+          return imageResponse.data['url'] as String?;
+        }
+      } catch (_) {}
 
-    // Fall back to the exercise's own gifUrl if the API gave nothing.
-    if (imageUrl == null) {
+      // Fall back to the exercise's own gifUrl if the API gave nothing.
       final gif = widget.exercise.gifUrl;
-      if (gif != null && gif.isNotEmpty) imageUrl = gif;
+      if (gif != null && gif.isNotEmpty) return gif;
+      return null;
     }
 
-    try {
-      final videoResponse = await apiClient
-          .get('/videos/by-exercise/${Uri.encodeComponent(exerciseName)}')
-          .timeout(const Duration(seconds: 10));
-      if (videoResponse.statusCode == 200 && videoResponse.data != null) {
-        videoUrl = videoResponse.data['url'] as String?;
+    Future<String?> fetchVideoUrl() async {
+      try {
+        final videoResponse = await apiClient
+            .get('/videos/by-exercise/${Uri.encodeComponent(exerciseName)}')
+            .timeout(const Duration(seconds: 10));
+        if (videoResponse.statusCode == 200 && videoResponse.data != null) {
+          return videoResponse.data['url'] as String?;
+        }
+      } catch (e) {
+        debugPrint('Video lookup failed for $exerciseName: $e');
       }
-    } catch (e) {
-      debugPrint('Video lookup failed for $exerciseName: $e');
+      return null;
     }
 
-    return {'imageUrl': imageUrl, 'videoUrl': videoUrl};
+    final results = await Future.wait([fetchImageUrl(), fetchVideoUrl()]);
+    return {'imageUrl': results[0], 'videoUrl': results[1]};
   }
 
   Future<void> _loadMediaAndAutoplay() async {

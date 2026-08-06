@@ -4545,13 +4545,32 @@ class _FoodGroup extends StatelessWidget {
   /// the backend no longer clobbers aiFeedback with that placeholder, but
   /// old rows predating the fix would still contain it, so we defensively
   /// prefer the food-names join on image sources.
+  /// Row #127: the backend falls back to a literal `"Logged via
+  /// {source_type}"` placeholder in `ai_feedback` whenever the client sent no
+  /// `userQuery`/`aiSuggestion` (e.g. the Quick-log copy path, `input_type`
+  /// `copy`) — this is a template string, not real analysis, and must never
+  /// be shown as the meal's headline. Matches the exact server-generated
+  /// shape only, so a genuine AI comment that happens to start similarly is
+  /// never misclassified.
+  static final RegExp _placeholderFeedback = RegExp(r'^Logged via \w+$');
+
   String _groupTitle() {
     String truncate(String s) => s.length <= 40 ? s : '${s.substring(0, 40)}…';
 
     final q = meal.userQuery?.trim();
     if (q != null && q.isNotEmpty) return truncate(q);
 
-    if (meal.sourceType == 'image' && meal.foodItems.isNotEmpty) {
+    final fb = meal.aiFeedback?.trim();
+    final isPlaceholder = fb != null && _placeholderFeedback.hasMatch(fb);
+
+    // Row #127: this branch used to be gated to `sourceType == 'image'`
+    // only, so a text-sourced quick-log copy (aiFeedback == the placeholder
+    // above) skipped straight past its own food-item names to the
+    // placeholder fallback below. Any source with a real item list and
+    // nothing better to show gets the same "what did you actually log"
+    // treatment image sources already had.
+    if ((meal.sourceType == 'image' || isPlaceholder) &&
+        meal.foodItems.isNotEmpty) {
       final names = meal.foodItems
           .map((f) => f.name.trim())
           .where((n) => n.isNotEmpty)
@@ -4563,8 +4582,7 @@ class _FoodGroup extends StatelessWidget {
       }
     }
 
-    final fb = meal.aiFeedback?.trim();
-    if (fb != null && fb.isNotEmpty) {
+    if (fb != null && fb.isNotEmpty && !isPlaceholder) {
       final firstSentenceEnd = fb.indexOf(RegExp(r'[.!?]'));
       final first = firstSentenceEnd > 0 ? fb.substring(0, firstSentenceEnd) : fb;
       return truncate(first);

@@ -392,16 +392,25 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     // instead of a second, disagreeing hardcoded number.
     final water = ref.watch(hydrationProvider.select(
         (h) => (summary: h.todaySummary, dailyGoalMl: h.dailyGoalMl)));
+    // E2E row 139 — for the first several seconds after a cold launch,
+    // `todaySummary` is null (nothing fetched yet) and this used to fall
+    // straight to a literal 0, telling the user in the to-do list they'd
+    // drunk nothing today before the real answer had even arrived. `null`
+    // means "unknown", not "zero" — show a neutral loading fragment instead
+    // of a number until the first real summary lands (same hazard the
+    // volume-trend carousel card's own null-vs-0 guard already documents).
+    final waterLoaded = water.summary != null;
     final waterMl = water.summary?.totalMl ?? 0;
     final waterGoalMl = water.summary?.goalMl ?? water.dailyGoalMl;
-    final waterDone = waterGoalMl > 0 && waterMl >= waterGoalMl;
+    final waterDone = waterLoaded && waterGoalMl > 0 && waterMl >= waterGoalMl;
     tasks.add(_TodoTask(
       icon: Icons.local_drink_rounded,
       done: waterDone,
       label: 'Stay hydrated',
-      trailing: '${(waterMl / 1000).toStringAsFixed(1)}L',
-      detail:
-          '${(waterMl / 1000).toStringAsFixed(1)} / ${(waterGoalMl / 1000).toStringAsFixed(1)} L',
+      trailing: waterLoaded ? '${(waterMl / 1000).toStringAsFixed(1)}L' : '···',
+      detail: waterLoaded
+          ? '${(waterMl / 1000).toStringAsFixed(1)} / ${(waterGoalMl / 1000).toStringAsFixed(1)} L'
+          : 'Loading…',
       actionLabel: 'Log water',
       onTap: () async {
         final result = await showHydrationDialog(
@@ -426,6 +435,14 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     final sleep = ref.watch(sleepScoreProvider.select((a) => a.valueOrNull));
     final logged = sleep?.hasData ?? false;
     final mins = sleep?.summary.totalMinutes ?? 0;
+    // E2E row 143 — sleep is Health-sourced only; there is no manual
+    // sleep-entry surface anywhere in the app. Without a Health connection
+    // this to-do's destination (/health/sleep) is ONLY a "Connect Health"
+    // empty state, so an unconnected account must not be told "Log sleep" —
+    // that promises an action the destination can't fulfill. The sibling
+    // "Log water" row is genuinely actionable and is untouched.
+    final sleepHealthConnected =
+        ref.watch(healthSyncProvider.select((s) => s.isConnected));
     tasks.add(_TodoTask(
       icon: Icons.bedtime_rounded,
       done: logged,
@@ -433,8 +450,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       trailing: logged ? '${mins ~/ 60}h ${mins % 60}m' : 'tonight',
       detail: logged
           ? "Last night — ${mins ~/ 60}h ${mins % 60}m logged"
-          : "Last night — not logged",
-      actionLabel: 'Log sleep',
+          : sleepHealthConnected
+              ? "Last night — not logged"
+              : "Connect Health to track sleep",
+      actionLabel: sleepHealthConnected ? 'Log sleep' : 'Connect Health',
       onTap: () => context.push('/health/sleep'),
     ));
 
@@ -1105,7 +1124,23 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           _openChat(context, insight);
         }
       },
-      onTalkMore: () => _openChat(context, insight),
+      // E2E row 142: this used to always call `_openChat`, which lands on
+      // an EMPTY generic chat thread (its synthetic-turn seeding is a
+      // separate, currently-broken contract — see row 55) and drops the
+      // hamstring/quad context the user just tapped into entirely. `cn`
+      // already carries a server-authored `chatSeed` for exactly this
+      // button (parsed from `chat_seed`, previously never read anywhere) —
+      // route through `_openChatWithPrompt`, the same mechanism the
+      // recovery-fuel chip already uses, so "Talk more" actually lands the
+      // user on the coach's answer instead of a blank "TRY ASKING…" screen.
+      onTalkMore: () {
+        final seed = cn.chatSeed;
+        if (seed != null && seed.isNotEmpty) {
+          _openChatWithPrompt(context, seed);
+        } else {
+          _openChat(context, insight);
+        }
+      },
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/widgets/empty_state.dart';
+import 'package:fitwiz/widgets/lottie_animations.dart';
 import '../helpers/test_helpers.dart';
 import 'package:fitwiz/l10n/generated/app_localizations.dart';
 
@@ -13,9 +14,6 @@ void main() {
             icon: Icons.search,
             title: 'Test Title',
             subtitle: 'Test Subtitle',
-            // The default empty state renders a Lottie animation instead of
-            // the icon; opt into the icon variant to assert on it.
-            useLottie: false,
           ),
         ),
       );
@@ -220,7 +218,23 @@ void main() {
         ),
       );
 
-      expect(find.byType(Center), findsOneWidget);
+      // `findsOneWidget` would be wrong here: Icon builds its own internal
+      // Center, so counting Centers app-wide measures the icon, not the
+      // layout. Assert the EmptyState's OWN outermost Center and the centred
+      // Column it wraps.
+      final outerCenter = find
+          .descendant(of: find.byType(EmptyState), matching: find.byType(Center))
+          .first;
+      expect(outerCenter, findsOneWidget);
+      final column = tester.widget<Column>(
+        find
+            .descendant(
+              of: find.byType(EmptyState),
+              matching: find.byType(Column),
+            )
+            .first,
+      );
+      expect(column.mainAxisAlignment, MainAxisAlignment.center);
     });
 
     testWidgets('should work in dark mode', (tester) async {
@@ -259,6 +273,58 @@ void main() {
       );
 
       expect(find.text('Light Mode'), findsOneWidget);
+    });
+
+    // E2E row 97. `useLottie` defaulted to true, so the required `icon`
+    // argument every caller fills in deliberately was silently discarded and
+    // every empty state in the app rendered the same anonymous
+    // box-and-question-mark Lottie — tinted with a wildcard srcATop filter that
+    // flattened it into an orange silhouette reading as a broken asset.
+    //
+    // The pre-existing assertions in the "factory constructors" group read
+    // `tester.widget<EmptyState>(...).icon`, i.e. the CONSTRUCTOR ARGUMENT, so
+    // they passed happily while nothing of the sort was on screen. These assert
+    // what is actually painted.
+    group('renders the semantic icon it was given (row 97)', () {
+      testWidgets('by default, not the generic Lottie', (tester) async {
+        await tester.pumpWidget(
+          createWidgetUnderTest(
+            child: const EmptyState(
+              icon: Icons.search_off,
+              title: 'No exercises found',
+              subtitle: 'Try adjusting your filters',
+            ),
+          ),
+        );
+
+        expect(find.byIcon(Icons.search_off), findsOneWidget);
+        expect(find.byType(LottieEmpty), findsNothing);
+      });
+
+      testWidgets('through the noExercises factory', (tester) async {
+        await tester.pumpWidget(
+          createWidgetUnderTest(
+            child: Builder(
+              builder: (context) =>
+                  EmptyState.noExercises(context, onAction: () {}),
+            ),
+          ),
+        );
+
+        expect(find.byIcon(Icons.search_off), findsOneWidget);
+        expect(find.byType(LottieEmpty), findsNothing);
+      });
+
+      testWidgets('distinct empty states render distinct icons', (tester) async {
+        await tester.pumpWidget(
+          createWidgetUnderTest(
+            child: Builder(builder: (context) => EmptyState.offline(context)),
+          ),
+        );
+
+        expect(find.byIcon(Icons.wifi_off), findsOneWidget);
+        expect(find.byIcon(Icons.search_off), findsNothing);
+      });
     });
   });
 

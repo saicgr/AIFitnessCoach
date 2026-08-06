@@ -124,6 +124,13 @@ class ExercisesNotifier extends StateNotifier<ExercisesState>
     with CacheFirstMixin {
   final Ref _ref;
 
+  /// Set when a `refresh: true` call arrives while a previous load is still
+  /// in flight (e.g. the user kept typing). The in-flight request's `finally`
+  /// re-runs `loadExercises(refresh: true)` once against whatever
+  /// filters/search are current AT THAT TIME — see the race this closes in
+  /// `loadExercises`'s doc comment.
+  bool _pendingSearchReload = false;
+
   ExercisesNotifier(this._ref) : super(const ExercisesState());
 
   /// Whether the current filter providers represent the pristine default view
@@ -223,20 +230,42 @@ class ExercisesNotifier extends StateNotifier<ExercisesState>
     ].join('|');
   }
 
+  /// Fetch (or re-fetch) the exercises list.
+  ///
+  /// `refresh: true` callers that arrive while a previous load is still in
+  /// flight are NOT silently dropped (E2E row 3 — "search doesn't find an
+  /// exact match"). Root cause: `ExercisesTab.build()` fires a new
+  /// `loadExercises(refresh: true)` on every keystroke of the search field
+  /// via a post-frame callback, but ALSO eagerly advances its own
+  /// `_prevSearch` bookkeeping in that same build regardless of whether the
+  /// fetch actually ran. Typing "Barbell Bench Press" fires ~19 of these
+  /// calls; with an unconditional `if (state.isLoading) return;`, only the
+  /// FIRST character's request ever actually reached the network — every
+  /// later keystroke's call was silently no-op'd while that first request
+  /// was in flight, and because `_prevSearch` had already "caught up" to the
+  /// final text, no later build ever re-attempted the fetch. The list was
+  /// left showing trigram/first-letter matches for a 1-2 character prefix
+  /// (explaining "B-Skip, Burpee, Barbell Curl…" instead of the exact
+  /// match — which the backend DOES rank first for the full query).
   Future<void> loadExercises({bool refresh = false}) async {
-    if (state.isLoading) return;
-    if (!refresh && !state.hasMore) return;
-
-    // Skip-refetch guard: identical filters + populated list → no network call.
-    // This protects against a fresh `_ExercisesTabState` (created on every tab
-    // re-entry) firing the post-frame "filters changed" callback when in fact
-    // they haven't.
-    final currentSignature = _currentFilterSignature();
-    if (!refresh &&
-        state.exercises.isNotEmpty &&
-        state.filterSignature == currentSignature) {
+    if (state.isLoading) {
+      // Remember that a fresh load is still owed once the in-flight one
+      // settles, instead of dropping it.
+      if (refresh) _pendingSearchReload = true;
       return;
     }
+    if (!refresh && !state.hasMore) return;
+
+    // Skip-refetch guard: identical filters + populated list + a caller that
+    // explicitly asked for a fresh load (`refresh: true`, e.g. a fresh
+    // `_ExercisesTabState` re-entering the tab and firing its post-frame
+    // "filters changed" callback when in fact they haven't) → no network
+    // call. Deliberately `refresh`-only: pagination (`_onScroll` / "Load
+    // more") calls this with `refresh: false` and an UNCHANGED signature on
+    // every page after the first by design — an unconditional version of
+    // this guard silently killed all pagination beyond page 1 (page never
+    // advanced past 100 results, no matter how far the user scrolled).
+    final currentSignature = _currentFilterSignature();
     if (refresh && state.exercises.isNotEmpty &&
         state.filterSignature == currentSignature && state.error == null) {
       return;
@@ -305,6 +334,12 @@ class ExercisesNotifier extends StateNotifier<ExercisesState>
       final suggestion = response.headers.value('x-search-suggestion');
       _ref.read(searchSuggestionProvider.notifier).state = suggestion;
 
+      // Authoritative match count (E2E row 25) — absent on an older backend
+      // build, in which case the count label falls back to loaded-so-far.
+      final totalCountHeader = response.headers.value('x-total-count');
+      final totalCount =
+          totalCountHeader != null ? int.tryParse(totalCountHeader) : null;
+
       if (response.statusCode == 200) {
         try {
           final data = response.data as List;
@@ -319,6 +354,8 @@ class ExercisesNotifier extends StateNotifier<ExercisesState>
             hasMore: newExercises.length >= exercisesPageSize,
             offset: newOffset + newExercises.length,
             filterSignature: currentSignature,
+            totalCount: totalCount,
+            clearTotalCount: totalCount == null,
           );
         } catch (e) {
           // JSON parsing error
@@ -349,6 +386,14 @@ class ExercisesNotifier extends StateNotifier<ExercisesState>
         isLoading: false,
         error: appException.userMessage,
       );
+    }
+
+    // A `refresh: true` call arrived while THIS request was in flight and
+    // got coalesced instead of dropped (see the doc comment above) — chase
+    // it now, against whatever filters/search are current at this moment.
+    if (_pendingSearchReload) {
+      _pendingSearchReload = false;
+      await loadExercises(refresh: true);
     }
   }
 }

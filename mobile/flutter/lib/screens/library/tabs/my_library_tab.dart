@@ -7,6 +7,8 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
+import '../../../core/providers/user_provider.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -18,6 +20,8 @@ import '../../workout/exercise_browse.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';
 import '../../common/app_refresh_indicator.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../settings/exercise_preferences/favorite_exercises_screen.dart';
+import 'my_stats_tab.dart';
 
 part 'my_library_tab_part_custom_exercises_section.dart';
 part 'my_library_tab_part_history_timeline_card.dart';

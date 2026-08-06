@@ -159,6 +159,76 @@ class SessionsDB(BaseDB):
             },
         )
 
+    def resync_message_count(self, session_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+        """Recompute message_count + last_message_at from the ACTUAL chat_history
+        rows for this session — the source of truth — instead of trusting the
+        denormalized counter `touch_session` maintains incrementally.
+
+        WHY THIS EXISTS (UI_E2E 2026-08-05 row 53): `touch_session` only ever
+        ADDS 1, so any chat_history DELETE (single-message delete, a whole-
+        history clear) that doesn't ALSO call this leaves the session
+        permanently overcounted. A session whose message_count says 1+ but
+        whose last real row was just deleted then advertises a saved
+        conversation in the sessions list that opens completely blank —
+        verified live: session 64127e54's message_count read 2 against
+        exactly 1 real chat_history row for it. Call this after every
+        chat_history delete path (delete_chat_message here in the facade;
+        resync_all_sessions_for_user after a whole-history wipe).
+        """
+        try:
+            count_res = (
+                self.client.table("chat_history")
+                .select("id", count="exact")
+                .eq("session_id", session_id)
+                .eq("user_id", user_id)
+                .execute()
+            )
+            real_count = count_res.count or 0
+
+            last_res = (
+                self.client.table("chat_history")
+                .select("timestamp")
+                .eq("session_id", session_id)
+                .eq("user_id", user_id)
+                .order("timestamp", desc=True)
+                .limit(1)
+                .execute()
+            )
+            last_message_at = last_res.data[0]["timestamp"] if last_res.data else None
+
+            return self.update_session(
+                session_id,
+                user_id,
+                {"message_count": real_count, "last_message_at": last_message_at},
+            )
+        except Exception as e:
+            logger.warning(
+                f"[SessionsDB] resync_message_count failed for session={session_id} "
+                f"user={user_id}: {e}",
+                exc_info=True,
+            )
+            return None
+
+    def resync_all_sessions_for_user(self, user_id: str) -> None:
+        """Bulk resync — call after a whole-history wipe (clear_chat_history /
+        delete_chat_history_by_user) so every one of the user's sessions
+        reflects reality (0, since none of its messages exist anymore)
+        instead of staying stale at whatever count it held before the wipe.
+        Best-effort per-session; one failure never blocks the rest.
+        """
+        try:
+            rows = (
+                self.client.table("chat_sessions")
+                .select("id")
+                .eq("user_id", user_id)
+                .execute()
+            ).data or []
+        except Exception as e:
+            logger.warning(f"[SessionsDB] resync_all_sessions_for_user list failed for {user_id}: {e}")
+            return
+        for row in rows:
+            self.resync_message_count(row["id"], user_id)
+
     def delete_session(self, session_id: str, user_id: str) -> bool:
         """Delete a session; chat_history rows cascade via the FK."""
         result = (

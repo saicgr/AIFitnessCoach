@@ -144,22 +144,29 @@ class EnhancedEmptyState extends StatelessWidget {
     bool isDark,
   ) {
     // No haptic here — ChatPromptPill already fires selection on tap.
+    //
+    // Row 197 (E2E) — `_SuggestionsSheet` below is a fully self-contained
+    // sheet: its own `DraggableScrollableSheet`, its own glassmorphic
+    // `BackdropFilter`/border/shadow, its own drag-handle pill, and its own
+    // close button. Wrapping it in `GlassSheet` (which draws ALL of that
+    // itself, including its own `GlassSheetHandle` pill+close) stacked two
+    // grabbers and two close controls in ~35pt of vertical space — nothing
+    // distinguished the pair, so it read as the sheet having been drawn
+    // twice. `GlassSheet` is for content that does NOT manage its own
+    // chrome; `_SuggestionsSheet` isn't that, so it goes to `showGlassSheet`
+    // directly, unwrapped.
     showGlassSheet<void>(
       context: context,
-      builder: (sheetContext) {
-        return GlassSheet(
-          child: _SuggestionsSheet(
-            coach: coach,
-            colors: colors,
-            isDark: isDark,
-            suggestions: _suggestions,
-            onSuggestionTap: (text) {
-              Navigator.of(sheetContext).pop();
-              onSuggestionTap(text);
-            },
-          ),
-        );
-      },
+      builder: (sheetContext) => _SuggestionsSheet(
+        coach: coach,
+        colors: colors,
+        isDark: isDark,
+        suggestions: _suggestions,
+        onSuggestionTap: (text) {
+          Navigator.of(sheetContext).pop();
+          onSuggestionTap(text);
+        },
+      ),
     );
   }
 }

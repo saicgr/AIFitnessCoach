@@ -484,6 +484,26 @@ def normalize_body_part(target_muscle: str) -> str:
         return "Other"
 
 
+def humanize_muscle_label(value: Optional[str]) -> Optional[str]:
+    """Row 93 (UI_E2E_2026-08-05.md): un-normalized catalog rows leak a raw
+    DB-style snake_case value straight to the muscle chip (e.g.
+    'hip_flexors', 'rear_delts') instead of the Title Case every clean row
+    already uses ('Pectoralis Major', 'Latissimus Dorsi' — confirmed 33
+    underscored target_muscle rows + 39 underscored secondary_muscles
+    entries live in exercise_library_cleaned).
+
+    A GENERIC underscore -> space + Title Case transform — NOT a lookup
+    table of specific muscle names (no hardcoded enumerations) — so it
+    self-heals for any future row with the same authoring slip, and happens
+    to reproduce the catalog's own existing convention exactly
+    ('latissimus_dorsi' -> 'Latissimus Dorsi'). Values that are already
+    clean (no underscore) pass through byte-for-byte unchanged.
+    """
+    if not value or "_" not in value:
+        return value
+    return value.replace("_", " ").strip().title()
+
+
 def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> LibraryExercise:
     """Convert a Supabase row to LibraryExercise model.
 
@@ -506,8 +526,11 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             original_name=row.get("original_name", ""),
             body_part=row.get("display_body_part") or normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
             equipment=row.get("equipment", ""),
-            target_muscle=row.get("target_muscle"),
-            secondary_muscles=row.get("secondary_muscles"),
+            target_muscle=humanize_muscle_label(row.get("target_muscle")),
+            secondary_muscles=(
+                [humanize_muscle_label(m) for m in row.get("secondary_muscles")]
+                if row.get("secondary_muscles") else row.get("secondary_muscles")
+            ),
             instructions=row.get("instructions"),
             difficulty_level=row.get("difficulty_level"),
             category=row.get("category"),
@@ -552,8 +575,11 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             original_name=original_name,
             body_part=normalize_body_part(row.get("target_muscle") or row.get("body_part", "")),
             equipment=row.get("equipment", ""),
-            target_muscle=row.get("target_muscle"),
-            secondary_muscles=row.get("secondary_muscles"),
+            target_muscle=humanize_muscle_label(row.get("target_muscle")),
+            secondary_muscles=(
+                [humanize_muscle_label(m) for m in row.get("secondary_muscles")]
+                if row.get("secondary_muscles") else row.get("secondary_muscles")
+            ),
             instructions=row.get("instructions"),
             difficulty_level=row.get("difficulty_level"),
             category=row.get("category"),

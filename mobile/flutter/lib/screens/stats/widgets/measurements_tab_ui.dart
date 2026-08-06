@@ -142,6 +142,13 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                         final isSelected = type == _selectedType;
                         final hasData =
                             (state.historyByType[type]?.isNotEmpty) ?? false;
+                        // Every row must show ITS OWN trailing value — a
+                        // scored row with `trailing: null` renders as an
+                        // empty gap where the value belongs, and the selected
+                        // row (typically Weight, since it's onboarded first)
+                        // is the one most likely to have real data, making
+                        // the omission conspicuous.
+                        final latest = state.summary?.latestByType[type];
                         return ListTile(
                           dense: true,
                           leading: Icon(
@@ -162,16 +169,18 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                                   : FontWeight.normal,
                             ),
                           ),
-                          trailing: hasData
-                              ? null
-                              : Text(
-                                  AppLocalizations.of(context).measurementsTabUiNoData,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color:
-                                        textPrimary.withValues(alpha: 0.4),
-                                  ),
-                                ),
+                          trailing: Text(
+                            hasData && latest != null
+                                ? '${_formatValue(latest.value)} ${latest.unit}'
+                                : AppLocalizations.of(context)
+                                    .measurementsTabUiNoData,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: hasData
+                                  ? textPrimary.withValues(alpha: 0.7)
+                                  : textPrimary.withValues(alpha: 0.4),
+                            ),
+                          ),
                           onTap: () {
                             HapticService.light();
                             setState(() => _selectedType = type);

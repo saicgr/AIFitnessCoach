@@ -1,5 +1,6 @@
 """Nutrition preferences and dynamic targets endpoints."""
 import asyncio
+import json
 from core.db import get_supabase_db
 from datetime import datetime
 from typing import List, Optional
@@ -65,8 +66,44 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
         )
 
         if not result or not result.data:
-            # Return default preferences
-            return NutritionPreferencesResponse(user_id=user_id)
+            # No nutrition_preferences row yet (pre-nutrition-onboarding).
+            # Do NOT fabricate a "maintain" goal — that literal doesn't exist
+            # anywhere in the DB for this user and can silently contradict
+            # users.primary_goal (e.g. a build_muscle account rendered as
+            # "Maintain Weight"). Fall back to the user's real onboarding
+            # goal/target instead; only leave it null when the account
+            # genuinely has none set anywhere.
+            user_result = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: db.client.table("users")
+                .select("primary_goal, goals, target_weight_kg")
+                .eq("id", user_id)
+                .maybe_single()
+                .execute(),
+            )
+            user_data = user_result.data if user_result and user_result.data else {}
+            primary_goal = user_data.get("primary_goal")
+            # users.goals is a legacy VARCHAR that stores a JSON-encoded array
+            # ('["build_muscle", "increase_strength"]'), not a native array —
+            # decode it rather than passing the raw string through as a
+            # single-item list.
+            raw_goals = user_data.get("goals")
+            if isinstance(raw_goals, str):
+                try:
+                    parsed_goals = json.loads(raw_goals)
+                    goals_list = parsed_goals if isinstance(parsed_goals, list) else [raw_goals]
+                except (json.JSONDecodeError, TypeError):
+                    goals_list = [raw_goals] if raw_goals.strip() else []
+            elif isinstance(raw_goals, list):
+                goals_list = raw_goals
+            else:
+                goals_list = [primary_goal] if primary_goal else []
+            return NutritionPreferencesResponse(
+                user_id=user_id,
+                nutrition_goals=goals_list,
+                nutrition_goal=primary_goal or (goals_list[0] if goals_list else None),
+                goal_weight_kg=user_data.get("target_weight_kg"),
+            )
 
         data = result.data
         # Get nutrition_goals, fallback to single goal in array if not present

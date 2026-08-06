@@ -546,8 +546,20 @@ async def check_consistency_achievements(user_id: str) -> List[Dict]:
 
         total_workouts = total_result.count or 0
 
-        # Total workout trophies
+        # Total workout trophies. "first_workout" (Day One, threshold=1) was
+        # missing from this list entirely — the lowest bucket was bronze at
+        # 10 — so a brand-new user's very first completed workout could never
+        # earn the one trophy explicitly designed to celebrate it, even after
+        # the check ran. Verified live: achievement_types has 464 rows total
+        # and only ~36 ids are referenced anywhere in this file; first_workout
+        # is the one row-56-evidenced gap fixed here. The other ~428
+        # uncovered achievement_types (exercise_mastery/personal_records/
+        # secret/discover/body/social/coach/nutrition/fasting/hidden/
+        # cardio/habit/weight/strength categories) are a much larger,
+        # separate systemic gap — out of scope for this fix, flagged
+        # separately.
         total_trophies = [
+            ("first_workout", 1),
             ("consistency_workouts_bronze", 10),
             ("consistency_workouts_silver", 50),
             ("consistency_workouts_gold", 200),

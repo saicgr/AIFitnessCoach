@@ -26,6 +26,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from services.user_context_service import UserContextService, EventType
+from api.v1.library.utils import humanize_muscle_label
 
 from .exercises_models import (
     CustomExerciseCreate,
@@ -908,7 +909,7 @@ async def search_exercise_library(
                 "name": row["exercise_name"],
                 "body_part": row.get("body_part"),
                 "equipment": row.get("equipment"),
-                "target_muscle": row.get("target_muscle"),
+                "target_muscle": humanize_muscle_label(row.get("target_muscle")),
             }
             for row in result.data
         ]

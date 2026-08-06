@@ -278,7 +278,15 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
       add(_SmartPill(
         kind: _SmartPillKind.recent,
         title: _recentTitle(log),
-        subtitle: _exactMacroSubtitle(log.totalCalories),
+        // Row #189: two "log it again" pills for the SAME food logged under
+        // different meal slots are de-duped per-slot, so both render — but
+        // shared an identical title AND (by chance, from the shared
+        // minute-seeded copy pool) often an identical subtitle too, making
+        // them indistinguishable. Prefix the cross-slot copy with its slot
+        // so it's the deterministic differentiator, not luck-of-the-minute.
+        subtitle: sameSlot
+            ? _exactMacroSubtitle(log.totalCalories)
+            : '${logSlot.label} · ${_exactMacroSubtitle(log.totalCalories)}',
         glyph: '↺',
         score: sameSlot ? 34 : 26,
         // Key on the log's OWN slot (not the selected one) so it shares a key
@@ -629,37 +637,128 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
     );
   }
 
+  /// Row #126: an external `ScaffoldMessenger` SnackBar renders wherever its
+  /// resolved messenger's Scaffold lives, which is BELOW this modal sheet's
+  /// route in z-order — `rootNavigator: true` only changes which messenger
+  /// instance is FOUND, not where it paints. The sheet stays open after a
+  /// one-tap log by design, so the confirmation has to be part of the sheet
+  /// itself to be guaranteed visible. See [_buildSmartPillConfirmBanner].
   void _showSmartPillLoggedSnack(String title, {VoidCallback? undo}) {
-    final messenger = ScaffoldMessenger.maybeOf(
-      Navigator.of(context, rootNavigator: true).overlay?.context ?? context,
-    );
-    if (messenger == null) return;
-    messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text('Logged $title'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-        action: undo == null
-            ? null
-            : SnackBarAction(
-                label: AppLocalizations.of(context).foodHistoryUndo,
-                onPressed: undo,
-              ),
-      ),
-    );
+    _smartPillConfirmTimer?.cancel();
+    setState(() {
+      _smartPillConfirmMessage = 'Logged $title';
+      _smartPillConfirmUndo = undo;
+      _smartPillConfirmIsError = false;
+    });
+    _smartPillConfirmTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() {
+        _smartPillConfirmMessage = null;
+        _smartPillConfirmUndo = null;
+      });
+    });
   }
 
   void _showSmartPillFailedSnack() {
-    final messenger = ScaffoldMessenger.maybeOf(
-      Navigator.of(context, rootNavigator: true).overlay?.context ?? context,
-    );
-    if (messenger == null) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).logMealSheetCouldnTSaveYour),
-        behavior: SnackBarBehavior.floating,
-      ),
+    _smartPillConfirmTimer?.cancel();
+    setState(() {
+      _smartPillConfirmMessage =
+          AppLocalizations.of(context).logMealSheetCouldnTSaveYour;
+      _smartPillConfirmUndo = null;
+      _smartPillConfirmIsError = true;
+    });
+    _smartPillConfirmTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() => _smartPillConfirmMessage = null);
+    });
+  }
+
+  /// In-sheet confirmation banner — see [_showSmartPillLoggedSnack]. Empty
+  /// (zero-height) when there's nothing to show, so it never reserves space
+  /// it isn't using.
+  Widget _buildSmartPillConfirmBanner(bool isDark) {
+    final message = _smartPillConfirmMessage;
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      alignment: Alignment.topCenter,
+      child: message == null
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              key: ValueKey(message),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: (_smartPillConfirmIsError
+                          ? AppColors.error
+                          : AppColors.success)
+                      .withValues(alpha: isDark ? 0.16 : 0.10),  // accent-allowlist: success/error state
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: (_smartPillConfirmIsError
+                            ? AppColors.error
+                            : AppColors.success)
+                        .withValues(alpha: 0.4),  // accent-allowlist: success/error state
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _smartPillConfirmIsError
+                          ? Icons.error_outline_rounded
+                          : Icons.check_circle_outline_rounded,
+                      size: 16,
+                      color: _smartPillConfirmIsError
+                          ? AppColors.error  // accent-allowlist: error state
+                          : AppColors.success,  // accent-allowlist: success state
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        message,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? AppColors.textPrimary
+                              : AppColorsLight.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (_smartPillConfirmUndo != null)
+                      TextButton(
+                        onPressed: () {
+                          final undo = _smartPillConfirmUndo;
+                          _smartPillConfirmTimer?.cancel();
+                          setState(() {
+                            _smartPillConfirmMessage = null;
+                            _smartPillConfirmUndo = null;
+                          });
+                          undo?.call();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: Text(
+                          AppLocalizations.of(context).foodHistoryUndo,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: _smartPillConfirmIsError
+                                ? AppColors.error  // accent-allowlist: error state
+                                : AppColors.success,  // accent-allowlist: success state
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 
@@ -755,60 +854,88 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
   Widget _buildQuickLogList(bool isDark) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Row #126 — in-sheet confirmation banner (see [_showSmartPillLoggedSnack])
+    // pinned above the list so a tap's result is visible without scrolling,
+    // on every state of the list below (skeleton / empty / populated).
+    final banner = _buildSmartPillConfirmBanner(isDark);
+
     // Skeleton while the first source resolves (same gate as the rail).
     if (!_smartPillsLoaded && !_frequentMealsLoaded) {
-      return ListView(
-        padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
+      return Column(
         children: [
-          for (int i = 0; i < 5; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Container(
-                height: 60,
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.surface : AppColorsLight.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                      color: isDark
-                          ? AppColors.cardBorder
-                          : AppColorsLight.cardBorder),
-                ),
-              ),
+          banner,
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
+              children: [
+                for (int i = 0; i < 5; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color:
+                            isDark ? AppColors.surface : AppColorsLight.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: isDark
+                                ? AppColors.cardBorder
+                                : AppColorsLight.cardBorder),
+                      ),
+                    ),
+                  ),
+              ],
             ),
+          ),
         ],
       );
     }
 
     final pills = _rankedSmartPills();
     if (pills.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.bolt_rounded, color: textMuted, size: 40),
-              const SizedBox(height: 12),
-              Text(
-                "No quick meals yet — log a meal and it'll show up here",
-                style: TextStyle(color: textMuted, fontSize: 14, height: 1.4),
-                textAlign: TextAlign.center,
+      return Column(
+        children: [
+          banner,
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.bolt_rounded, color: textMuted, size: 40),
+                    const SizedBox(height: 12),
+                    Text(
+                      "No quick meals yet — log a meal and it'll show up here",
+                      style:
+                          TextStyle(color: textMuted, fontSize: 14, height: 1.4),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
     final busy =
         _isAnalyzing || _describeAnalyzing || _isLoading || _smartPillLogging;
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
-      itemCount: pills.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, i) => _buildSmartPill(isDark, pills[i], busy,
-          fullWidth: true),
+    return Column(
+      children: [
+        banner,
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 120),
+            itemCount: pills.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (_, i) => _buildSmartPill(isDark, pills[i], busy,
+                fullWidth: true),
+          ),
+        ),
+      ],
     );
   }
 

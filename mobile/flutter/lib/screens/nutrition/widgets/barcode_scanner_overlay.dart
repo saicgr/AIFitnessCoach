@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart' as ph;
 import '../../../core/constants/app_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -18,6 +21,16 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
   MobileScannerController? _controller;
   bool _hasDetected = false;
 
+  /// Row #129: `MobileScanner`'s default error view has no retry / Open
+  /// Settings action, so denying the camera permission once left the sheet a
+  /// permanent dead end — and the static footer below kept instructing
+  /// "Point your camera at a product barcode" even though no camera was
+  /// showing. Tracked so the footer can be swapped for real guidance and the
+  /// scanner can be reconstructed after the user grants permission from
+  /// Settings (re-opening the sheet alone didn't re-check it — a fresh
+  /// [MobileScannerController] does, since `autoStart` re-requests on init).
+  MobileScannerErrorCode? _errorCode;
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +39,24 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
       facing: CameraFacing.back,
       formats: [BarcodeFormat.ean13, BarcodeFormat.ean8, BarcodeFormat.upcA, BarcodeFormat.upcE],
     );
+  }
+
+  /// Tears down and rebuilds the controller so a fresh `start()` re-checks
+  /// the OS permission state — the only way to recover after the user grants
+  /// it from Settings without leaving this sheet entirely.
+  Future<void> _retryAfterSettings() async {
+    await ph.openAppSettings();
+    if (!mounted) return;
+    final old = _controller;
+    setState(() {
+      _errorCode = null;
+      _controller = MobileScannerController(
+        detectionSpeed: DetectionSpeed.normal,
+        facing: CameraFacing.back,
+        formats: [BarcodeFormat.ean13, BarcodeFormat.ean8, BarcodeFormat.upcA, BarcodeFormat.upcE],
+      );
+    });
+    unawaited(old?.dispose());
   }
 
   @override
@@ -78,27 +109,111 @@ class _BarcodeScannerOverlayState extends State<BarcodeScannerOverlay> {
                           }
                         }
                       },
+                      errorBuilder: (errorContext, error) {
+                        // Deferred: this runs during MobileScanner's own
+                        // build, so flip the sibling footer/target state on
+                        // the NEXT frame rather than calling setState here.
+                        if (_errorCode != error.errorCode) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              setState(() => _errorCode = error.errorCode);
+                            }
+                          });
+                        }
+                        return _buildScannerError(
+                          error.errorCode, isDark, textPrimary, textMuted, teal);
+                      },
                     ),
                   ),
                 ),
-                Center(
-                  child: Container(
-                    width: 250,
-                    height: 250,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: teal, width: 2),
-                      borderRadius: BorderRadius.circular(16),
+                if (_errorCode == null)
+                  Center(
+                    child: Container(
+                      width: 250,
+                      height: 250,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: teal, width: 2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Text(AppLocalizations.of(context).barcodeScannerOverlayPointYourCameraAt, style: TextStyle(fontSize: 14, color: textMuted)),
+            child: Text(
+              _errorCode == null
+                  ? AppLocalizations.of(context).barcodeScannerOverlayPointYourCameraAt
+                  : 'Grant camera access to scan a barcode.',
+              style: TextStyle(fontSize: 14, color: textMuted),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Row #129: replaces `MobileScanner`'s bare error text with the real
+  /// recovery affordance it was missing — "Open Settings" for a denied
+  /// permission (the only way to grant it once denied on iOS/Android without
+  /// leaving the app), a plain retry for anything else.
+  Widget _buildScannerError(
+    MobileScannerErrorCode code,
+    bool isDark,
+    Color textPrimary,
+    Color textMuted,
+    Color teal,
+  ) {
+    final isPermissionDenied = code == MobileScannerErrorCode.permissionDenied;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isPermissionDenied
+                  ? Icons.no_photography_outlined
+                  : Icons.error_outline_rounded,
+              size: 40,
+              color: textMuted,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              code.message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (isPermissionDenied)
+              OutlinedButton(
+                onPressed: _retryAfterSettings,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: teal,
+                  side: BorderSide(color: teal),
+                ),
+                child: const Text('OPEN SETTINGS'),
+              )
+            else
+              OutlinedButton(
+                onPressed: () {
+                  setState(() => _errorCode = null);
+                  _controller?.start();
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: teal,
+                  side: BorderSide(color: teal),
+                ),
+                child: const Text('RETRY'),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -78,7 +78,16 @@ class _PagesLevel extends ConsumerWidget {
     final c = ThemeColors.of(context);
     final prefs = ref.watch(metricsCarouselPrefsProvider);
     final healthConnected = ref.watch(healthSyncProvider).isConnected;
-    final shownCount = prefs.pages.where((p) => p.enabled).length;
+    // NOT a bare `enabled` sum (E2E row 136) — the carousel itself drops
+    // Recovery whenever Health isn't connected (metrics_carousel_prefs.dart),
+    // so an enabled-but-unconnected Recovery toggle here must not count
+    // toward "N shown" or this header disagrees with the carousel's own
+    // "x of y" page counter.
+    final shownCount = prefs.pages
+        .where((p) =>
+            p.enabled &&
+            !(p.id == CarouselPageId.recovery && !healthConnected))
+        .length;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -291,40 +300,22 @@ class _SlotsLevel extends ConsumerWidget {
         ),
         if (unselected.isNotEmpty) ...[
           const Divider(height: 20),
+          // E2E row 192 — at the slot cap, `toggleSlot`'s own guard
+          // (metrics_carousel_prefs_provider.dart) silently no-ops rather
+          // than enabling a slot past `maxSlots`, but every remaining row
+          // still rendered as a live, full-opacity switch — tapping did
+          // nothing with no toast, no hint, no disabled styling. Mirror the
+          // "Needs Health" treatment below: dim + genuinely disable, don't
+          // leave a control that looks live but silently refuses.
           for (final slot in unselected)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Opacity(
-                      opacity: slot.needsHealth && !healthConnected ? 0.55 : 1,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(slot.label,
-                              style: TextStyle(
-                                  fontFamily: 'Archivo',
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: c.textPrimary)),
-                          if (slot.needsHealth && !healthConnected)
-                            Text('Needs Health',
-                                style: TextStyle(fontSize: 11, color: c.textMuted)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (slot.needsHealth && !healthConnected)
-                    _ConnectCta(onTap: () => context.push('/settings/health-devices'))
-                  else
-                    _EditSheetToggle(
-                      value: false,
-                      onChanged: (_) => notifier.toggleSlot(pageId, slot, true),
-                    ),
-                ],
-              ),
+            _UnselectedSlotRow(
+              slot: slot,
+              needsHealthGate: slot.needsHealth && !healthConnected,
+              atCap: selected.length >= page.maxSlots,
+              maxSlots: page.maxSlots,
+              c: c,
+              onConnectHealth: () => context.push('/settings/health-devices'),
+              onEnable: (_) => notifier.toggleSlot(pageId, slot, true),
             ),
         ],
         Padding(
@@ -337,11 +328,45 @@ class _SlotsLevel extends ConsumerWidget {
                   style: TextStyle(fontSize: 11, color: c.textMuted),
                 ),
               ),
+              // E2E row 193 — this used to be one-way (only ever called
+              // with `true`, no way back once tapped). `setTall` itself
+              // always took a plain bool, so the fix is just offering the
+              // reverse link when already tall.
               if (!page.tall)
                 InkWell(
                   onTap: () => notifier.setTall(pageId, true),
                   child: Text(
                     'Make the card taller ›',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c.accent),
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: () async {
+                    await notifier.setTall(pageId, false);
+                    // Slots enabled at the tall 6-slot cap don't auto-trim
+                    // when the cap drops back to 4 — `toggleSlot`'s cap
+                    // guard only blocks enabling past the cap, so an
+                    // over-cap slot list would otherwise just sit there,
+                    // silently overflowing the short card's stat strip.
+                    // Re-read the post-setTall state (not the stale
+                    // `page`/`selected` this closure captured) and disable
+                    // the trailing excess.
+                    final current = ref
+                        .read(metricsCarouselPrefsProvider)
+                        .pages
+                        .firstWhere((p) => p.id == pageId);
+                    final excess =
+                        current.slots.length - kCarouselMaxSlotsNormal;
+                    if (excess > 0) {
+                      for (final slot
+                          in current.slots.reversed.take(excess)) {
+                        await notifier.toggleSlot(pageId, slot, false);
+                      }
+                    }
+                  },
+                  child: Text(
+                    'Make it shorter ›',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: c.accent),
                   ),
                 ),
@@ -357,9 +382,76 @@ class _SlotsLevel extends ConsumerWidget {
 // Shared row controls
 // ---------------------------------------------------------------------------
 
+/// One row for an unselected (off) slot in [_SlotsLevel] — dims + disables
+/// itself when unavailable, either because it needs a Health connection or
+/// (E2E row 192) because the page is already at its slot cap.
+class _UnselectedSlotRow extends StatelessWidget {
+  final CarouselSlotId slot;
+  final bool needsHealthGate;
+  final bool atCap;
+  final int maxSlots;
+  final ThemeColors c;
+  final VoidCallback onConnectHealth;
+  final ValueChanged<bool> onEnable;
+
+  const _UnselectedSlotRow({
+    required this.slot,
+    required this.needsHealthGate,
+    required this.atCap,
+    required this.maxSlots,
+    required this.c,
+    required this.onConnectHealth,
+    required this.onEnable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Opacity(
+              opacity: needsHealthGate || atCap ? 0.55 : 1,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(slot.label,
+                      style: TextStyle(
+                          fontFamily: 'Archivo',
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: c.textPrimary)),
+                  if (needsHealthGate)
+                    Text('Needs Health',
+                        style: TextStyle(fontSize: 11, color: c.textMuted))
+                  else if (atCap)
+                    Text('$maxSlots slot limit reached',
+                        style: TextStyle(fontSize: 11, color: c.textMuted)),
+                ],
+              ),
+            ),
+          ),
+          if (needsHealthGate)
+            _ConnectCta(onTap: onConnectHealth)
+          else
+            _EditSheetToggle(
+              value: false,
+              onChanged: atCap ? null : onEnable,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _EditSheetToggle extends StatelessWidget {
   final bool value;
-  final ValueChanged<bool> onChanged;
+  /// Nullable so a slot row at the max-slots cap can render a genuinely
+  /// disabled (non-interactive, greyed) switch instead of a live-looking
+  /// one that silently no-ops on tap (E2E row 192).
+  final ValueChanged<bool>? onChanged;
   const _EditSheetToggle({required this.value, required this.onChanged});
 
   @override

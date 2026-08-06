@@ -199,7 +199,14 @@ def _build_session_exercise(
         "sets": int(template.get("sets") or 3),
         "reps": template.get("reps") if template.get("reps") not in (None, "") else 10,
         "rest_seconds": int(template.get("rest_seconds") or 60),
-        "weight_guidance": "Moderate — leave 1-2 reps in reserve",
+        # Plain language, matching the vocabulary Gemini-authored exercises use
+        # ("Effort 9 out of 10") — this used to say "Moderate — leave 1-2 reps
+        # in reserve", which is RIR shorthand a normal user can't parse and put
+        # a second, contradictory effort vocabulary in the same session card
+        # next to authored exercises (row 103, 2026-08). No specific effort
+        # number is fabricated here (we don't compute one for a backfilled
+        # accessory) — "moderate, not to failure" is the honest claim.
+        "weight_guidance": "Moderate effort — stop with a couple of reps left in the tank",
         "equipment": cand.get("equipment") or "",
         "body_part": cand.get("body_part") or "",
         "primary_muscle": cand.get("target_muscle") or "",

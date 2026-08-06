@@ -554,12 +554,20 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
         ),
       );
     }
-    return ZealovaButton(
-      label: _hasUnsavedChanges
-          ? AppLocalizations.of(context).vacationModeSaveChanges
-          : AppLocalizations.of(context).vacationModeNoChanges,
-      variant: ZealovaButtonVariant.primary,
-      onTap: canSave ? _save : null,
+    // ZealovaButton (lib/widgets/design_system/) renders full-brightness
+    // regardless of onTap — it has no built-in disabled treatment. Dim it
+    // here at the call site so a "no changes to save" state doesn't read as
+    // the screen's live primary CTA (E2E row 81).
+    return Opacity(
+      key: const Key('vacation_save_button_opacity'),
+      opacity: canSave ? 1.0 : 0.4,
+      child: ZealovaButton(
+        label: _hasUnsavedChanges
+            ? AppLocalizations.of(context).vacationModeSaveChanges
+            : AppLocalizations.of(context).vacationModeNoChanges,
+        variant: ZealovaButtonVariant.primary,
+        onTap: canSave ? _save : null,
+      ),
     );
   }
 }

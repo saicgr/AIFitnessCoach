@@ -336,6 +336,51 @@ class TestUserEndpoints:
         # Should be 404 or 500 (if DB error), but endpoint should exist
         assert response.status_code in [404, 500]
 
+    @patch('api.v1.users.profile.get_supabase_db')
+    def test_get_me_returns_200_with_full_row_not_403(self, mock_db, client):
+        """GET /api/v1/users/me must resolve to the dedicated /me handler,
+        not fall through to /{user_id} (which would treat the literal
+        string "me" as a user_id, fail ownership verification against the
+        real caller id, and 403 for every user — the regression this test
+        guards against). It must also return ad-hoc columns like
+        `contribute_food_data` that the strict `User` response model on
+        /{user_id} would silently strip.
+        """
+        _authenticate_as("1aa02a24-0224-4a5a-b1e5-3f24dcd60bdc")
+
+        mock_db_instance = MagicMock()
+        mock_db_instance.get_user.return_value = {
+            "id": "1aa02a24-0224-4a5a-b1e5-3f24dcd60bdc",
+            "email": "qa@example.com",
+            "contribute_food_data": False,
+        }
+        mock_db.return_value = mock_db_instance
+
+        response = client.get("/api/v1/users/me")
+
+        assert response.status_code == 200, response.text
+        body = response.json()
+        assert body["contribute_food_data"] is False
+        # The handler must have been called with the CALLER's id, proving
+        # "me" was resolved via the dedicated route and not matched as a
+        # literal user_id path param.
+        mock_db_instance.get_user.assert_called_once_with(
+            "1aa02a24-0224-4a5a-b1e5-3f24dcd60bdc"
+        )
+
+    def test_get_me_not_found_returns_404(self, client):
+        """GET /me for a caller with no DB row returns 404, not a 403 from
+        ownership verification (which only applies to /{user_id})."""
+        with patch('api.v1.users.profile.get_supabase_db') as mock_db:
+            _authenticate_as("ghost-user-id")
+            mock_db_instance = MagicMock()
+            mock_db_instance.get_user.return_value = None
+            mock_db.return_value = mock_db_instance
+
+            response = client.get("/api/v1/users/me")
+
+            assert response.status_code == 404
+
     def test_users_list_endpoint_exists(self, client):
         """Test that users list endpoint exists."""
         response = client.get("/api/v1/users/")

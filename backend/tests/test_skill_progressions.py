@@ -268,6 +268,63 @@ class TestGetAllChains:
             assert response.status_code == 200
             assert response.json() == []
 
+    def test_get_all_chains_reports_real_step_counts_not_placeholder(
+        self, client, mock_supabase
+    ):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 57.
+
+        `exercise_progression_chains` has NO `total_steps` column — the real
+        DB row simply doesn't carry that key (unlike `generate_mock_chain`'s
+        clean fixture, which sets it directly and would mask this bug).
+        Before the fix, `_parse_chain`'s `data.get("total_steps", 0)`
+        default always fired, so every one of the 7 skill cards on
+        ALL SKILLS showed "? steps" (progression_chain_card.dart's `?? "?"`
+        placeholder) despite the DB knowing the exact count per chain.
+        """
+        chain_a = generate_mock_chain(
+            chain_id="chain-a", name="Pushup Mastery", category="push"
+        )
+        chain_a.pop("total_steps", None)
+        chain_b = generate_mock_chain(
+            chain_id="chain-b", name="Pullup Journey", category="pull"
+        )
+        chain_b.pop("total_steps", None)
+
+        chains_result = MagicMock()
+        chains_result.data = [chain_a, chain_b]
+        # chain-a has 10 steps, chain-b has 8 — same shape exercise_progression_steps
+        # rows carry (only chain_id matters for the count query).
+        steps_result = MagicMock()
+        steps_result.data = (
+            [{"chain_id": "chain-a"}] * 10 + [{"chain_id": "chain-b"}] * 8
+        )
+
+        def mock_table_side_effect(table_name):
+            mock_table = MagicMock()
+            if table_name == "exercise_progression_chains":
+                mock_table.select.return_value.order.return_value.order.return_value.execute.return_value = (
+                    chains_result
+                )
+            else:
+                mock_table.select.return_value.in_.return_value.execute.return_value = (
+                    steps_result
+                )
+            return mock_table
+
+        mock_supabase.table.side_effect = mock_table_side_effect
+
+        with patch("api.v1.skill_progressions.get_supabase_db") as mock_get_db:
+            mock_db = MagicMock()
+            mock_db.client = mock_supabase
+            mock_get_db.return_value = mock_db
+
+            response = client.get("/api/v1/skill-progressions/chains")
+
+        assert response.status_code == 200, response.text
+        by_id = {c["id"]: c for c in response.json()}
+        assert by_id["chain-a"]["total_steps"] == 10
+        assert by_id["chain-b"]["total_steps"] == 8
+
 
 # ============ Tests: Get Chain with Steps ============
 
@@ -331,6 +388,71 @@ class TestGetChainWithSteps:
             response = client.get(f"/api/v1/skill-progressions/chains/{mock_chain_id}")
 
             assert response.status_code == 404
+
+    def test_get_chain_with_steps_survives_real_db_column_shapes(
+        self, client, mock_supabase, mock_chain_id
+    ):
+        """Regression test for docs/qa/UI_E2E_2026-08-05.md row 9.
+
+        `exercise_progression_steps` does NOT store the shapes the
+        `ProgressionStep` model types: `difficulty_level` is an int 1-10
+        (not the 'beginner'/.../'elite' enum), `prerequisites` is a
+        JSON-encoded list STRING, and `tips` is one free-text string (never
+        a list at all). Every one of the 52 real rows had this shape, so
+        every one of the 7 skill-chain detail screens 500'd. This test uses
+        the DB's REAL shapes (not the clean fixtures `generate_mock_step`
+        produces) to prove `_parse_step` survives them.
+        """
+        chain = generate_mock_chain(chain_id=mock_chain_id, total_steps=1)
+        db_real_step = {
+            "id": str(uuid.uuid4()),
+            "chain_id": mock_chain_id,
+            "exercise_name": "Wall Pushups",
+            "step_order": 1,
+            "difficulty_level": 1,  # int, not 'beginner'
+            "prerequisites": '["None - this is the starting point"]',  # JSON string
+            "unlock_criteria": {"reps": 20, "sets": 3, "consecutive_sessions": 2},
+            "tips": (
+                "Stand arm's length from the wall. Keep your body straight "
+                "and core engaged. Focus on full range of motion."
+            ),  # free-text string, not a list
+            "common_mistakes": None,  # column doesn't exist in some deployments
+            "video_url": None,
+            "image_url": None,
+            "description": None,
+            "sets_recommendation": "3",
+            "reps_recommendation": "20",
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat(),
+        }
+
+        mock_chain_result = MagicMock()
+        mock_chain_result.data = [chain]
+        mock_steps_result = MagicMock()
+        mock_steps_result.data = [db_real_step]
+
+        def mock_table_side_effect(table_name):
+            mock_table = MagicMock()
+            if table_name == "exercise_progression_chains":
+                mock_table.select.return_value.eq.return_value.execute.return_value = mock_chain_result
+            else:
+                mock_table.select.return_value.eq.return_value.order.return_value.execute.return_value = mock_steps_result
+            return mock_table
+
+        mock_supabase.table.side_effect = mock_table_side_effect
+
+        with patch("api.v1.skill_progressions.get_supabase_db") as mock_get_db:
+            mock_db = MagicMock()
+            mock_db.client = mock_supabase
+            mock_get_db.return_value = mock_db
+
+            response = client.get(f"/api/v1/skill-progressions/chains/{mock_chain_id}")
+
+        assert response.status_code == 200, response.text
+        step = response.json()["steps"][0]
+        assert step["difficulty_level"] == "beginner"
+        assert step["prerequisites"] == ["None - this is the starting point"]
+        assert isinstance(step["tips"], list) and len(step["tips"]) == 3
 
 
 # ============ Tests: Get Chain Steps ============

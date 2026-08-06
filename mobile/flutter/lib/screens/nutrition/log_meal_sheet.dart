@@ -364,6 +364,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   /// same exact-macro pill can't fire two logs before the row rebuilds.
   bool _smartPillLogging = false;
 
+  /// Row #126 — in-sheet confirmation banner for a Quick-log pill tap. The
+  /// sheet deliberately stays open after a one-tap log so the user can keep
+  /// logging, but that means an external `ScaffoldMessenger` SnackBar (which
+  /// renders through whatever Scaffold/Overlay context it resolves to) can
+  /// end up hidden behind the still-open modal sheet — invisible until the
+  /// sheet is dismissed. Rendering the confirmation as part of THIS sheet's
+  /// own widget tree instead guarantees it's always visible the instant the
+  /// tap resolves, regardless of navigator/overlay plumbing.
+  String? _smartPillConfirmMessage;
+  VoidCallback? _smartPillConfirmUndo;
+  bool _smartPillConfirmIsError = false;
+  Timer? _smartPillConfirmTimer;
+
   // Mood tracking state
   FoodMood? _moodBefore;
   FoodMood? _moodAfter;
@@ -457,6 +470,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   void dispose() {
     debugPrint('🍽️ [LogMeal] Sheet disposed | userId=${widget.userId}');
     _loadingDelayTimer?.cancel();
+    _smartPillConfirmTimer?.cancel();
     _descriptionController.removeListener(_onDescriptionChanged);
     _descriptionController.dispose();
     _describeInstructionController.dispose();

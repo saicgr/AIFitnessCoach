@@ -15,7 +15,8 @@ import 'skeleton_box.dart';
 /// optional leading circle (avatar/icon) and a short stack of text lines.
 ///
 /// Sized to roughly match a typical content card so the skeleton → content
-/// swap is reflow-free; pass [height] to pin it exactly to your real card.
+/// swap is reflow-free; pass [height] as a target to line up with your real
+/// card.
 class SkeletonCard extends StatelessWidget {
   /// Show a leading [SkeletonCircle] (e.g. for avatar/icon rows).
   final bool showLeading;
@@ -26,7 +27,17 @@ class SkeletonCard extends StatelessWidget {
   /// Number of text lines inside the card.
   final int lines;
 
-  /// Fixed card height. Null → the card sizes to its content.
+  /// Target card height. Null → the card sizes to its content. When set,
+  /// this is a MINIMUM, not a tight constraint: [Container]'s `decoration`
+  /// (the border here) adds its own `border.dimensions` on top of [padding]
+  /// (see `BoxDecoration.padding`), so a target picked to exactly fit
+  /// [padding] + content leaves zero slack for that border inset — any
+  /// caller combination of [leadingSize]/[lines]/[padding] that lands on an
+  /// exact fit overflows the moment the border (or a future padding/line
+  /// tweak) claims even one more pixel than assumed. Letting the box grow
+  /// past [height] when content needs more room means it can never overflow,
+  /// for any combination of the knobs above, while still matching the target
+  /// exactly whenever content fits inside it (the common case).
   final double? height;
 
   /// Inner padding.
@@ -49,7 +60,7 @@ class SkeletonCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
     return Container(
-      height: height,
+      constraints: height != null ? BoxConstraints(minHeight: height!) : null,
       padding: padding,
       decoration: BoxDecoration(
         color: c.surface,

@@ -521,6 +521,53 @@ def format_onboarding_preferences(user_id: Optional[str]) -> str:
     )
 
 
+# Destinations whose screen surfaces achievement/PR data — when the coach
+# navigates a user here it must ground any celebratory language in the REAL
+# counts, never free-associate from the navigation alone. Row 54, 2026-08:
+# "Share my PRs this month" got "Nice work on your progress this month!" for
+# an account with 0 personal_records / 0 user_achievements rows, because the
+# acknowledgment prompt (coach_action_node) had zero visibility into whether
+# any existed — rag_context_used was False for that turn.
+_ACHIEVEMENT_DESTINATIONS = {
+    "trophy_room", "achievements", "milestones", "leaderboard", "rewards",
+}
+
+
+def format_achievement_grounding(user_id: Optional[str], destination: Optional[str]) -> str:
+    """Real personal_records / user_achievements counts for the gamification
+    destinations above, so the action-acknowledgment prompt can speak
+    accurately instead of congratulating the user for accomplishments it
+    never checked.
+
+    FAIL-OPEN: returns "" on any error or when the destination doesn't need
+    grounding, so nothing is appended and behavior for every other
+    destination is byte-identical to before.
+    """
+    if not user_id or destination not in _ACHIEVEMENT_DESTINATIONS:
+        return ""
+    try:
+        from core.db import get_supabase_db
+        db = get_supabase_db()
+        pr_count = len(
+            db.client.table("personal_records").select("id")
+            .eq("user_id", user_id).limit(1000).execute().data or []
+        )
+        ach_count = len(
+            db.client.table("user_achievements").select("id")
+            .eq("user_id", user_id).limit(1000).execute().data or []
+        )
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"[coach] achievement grounding skipped for {user_id}: {e}")
+        return ""
+    return (
+        f"\nREAL DATA for this screen: {pr_count} personal record(s) logged, "
+        f"{ach_count} achievement(s) earned. If either is 0, do NOT congratulate "
+        "the user on records/achievements they don't have yet — say plainly "
+        "there's nothing there yet and encourage them to log a workout to "
+        "start earning some."
+    )
+
+
 def format_profile_extras(profile: Dict[str, Any]) -> List[str]:
     """Gap 17 — extra USER PROFILE lines (age/sex/size + weight goal).
 
@@ -919,6 +966,10 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
         profile = state["user_profile"]
     if action_context:
         context_parts.append(f"\nACTION: {action_context}")
+    if intent == CoachIntent.NAVIGATE:
+        grounding = format_achievement_grounding(state.get("user_id"), state.get("destination"))
+        if grounding:
+            context_parts.append(grounding)
 
     context = "\n".join(context_parts)
 
@@ -935,7 +986,14 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
 CONTEXT:
 {context}
 
-You just performed an app action for the user. Acknowledge it naturally and briefly. Stay in character — your persona is defined above.""" + _locale_system_suffix(state.get("locale") or "en")
+You just performed an app action for the user. Acknowledge it naturally and
+briefly. Stay in character — your persona is defined above. Only reference
+concrete numbers, records, or accomplishments that appear in the CONTEXT
+above (or earlier in this conversation) — you have no other visibility into
+the user's data. Never congratulate the user on progress, PRs, streaks, or
+milestones you were not actually given data for; if you weren't given any,
+just describe what you did (e.g. "here's your trophy room") without
+presuming what's in it.""" + _locale_system_suffix(state.get("locale") or "en")
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

@@ -19,6 +19,7 @@ from typing import Dict, List, Optional, Tuple
 from core.db import get_supabase_db
 from services.coach.memory.retriever import retrieve_for_chat
 from services.coach.memory.schemas import MEMORY_BLOCK_CHAR_BUDGET
+from services.coach.memory.voice import to_second_person
 
 logger = logging.getLogger("coach_memory.injector")
 
@@ -84,7 +85,8 @@ def build_memory_block(
 
     for m in open_loops:
         rp = (m.get("resolution_prompt") or "").strip()
-        line = f"- [follow up] {m.get('content')}" + (f" (ask: {rp})" if rp else "")
+        content = to_second_person(m.get("content") or "")
+        line = f"- [follow up] {content}" + (f" (ask: {rp})" if rp else "")
         if len(line) <= budget:
             lines.append(line)
             referenced_ids.append(m.get("id"))
@@ -92,7 +94,8 @@ def build_memory_block(
 
     for m in facts:
         tag = m.get("category") or m.get("memory_type") or "note"
-        line = f"- [{tag}] {m.get('content')}"
+        content = to_second_person(m.get("content") or "")
+        line = f"- [{tag}] {content}"
         if len(line) > budget:
             continue
         lines.append(line)
@@ -147,14 +150,14 @@ def build_memory_block_for_briefing(user_id: str) -> Dict:
     open_loops = [
         {
             "id": m.get("id"),
-            "content": m.get("content"),
+            "content": to_second_person(m.get("content") or ""),
             "resolution_prompt": m.get("resolution_prompt"),
             "category": m.get("category"),
         }
         for m in recall.get("open_loops", [])
     ]
     facts = [
-        {"content": m.get("content"), "category": m.get("category")}
+        {"content": to_second_person(m.get("content") or ""), "category": m.get("category")}
         for m in recall.get("facts", [])
     ]
     return {"open_loops": open_loops, "facts": facts}

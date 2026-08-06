@@ -58,6 +58,10 @@ class _UnusedRepository implements ScoresRepository {
 FitnessScoreBreakdown _breakdown() => const FitnessScoreBreakdown(
       fitnessScore: FitnessScoreData(
         userId: 'u1',
+        // A real computed score always carries a `calculated_date` — only the
+        // backend's un-scored default response leaves it null (see the
+        // "never calculated" test below).
+        calculatedDate: '2026-08-01',
         strengthScore: 80,
         readinessScore: 65,
         consistencyScore: 70,
@@ -67,6 +71,23 @@ FitnessScoreBreakdown _breakdown() => const FitnessScoreBreakdown(
       ),
       levelDescription: 'Solid base',
       levelColor: '#00BCD4',
+    );
+
+/// What `GET /scores/fitness` actually returns for an account that has never
+/// had a fitness score calculated: NOT a 404, NOT null — a
+/// `FitnessScoreBreakdown` with `overall_fitness_score=0`,
+/// `fitness_level="beginner"` and `calculated_date` unset (see
+/// `backend/api/v1/scores_endpoints.py` `default_score`).
+FitnessScoreBreakdown _neverCalculatedBreakdown() => const FitnessScoreBreakdown(
+      fitnessScore: FitnessScoreData(
+        userId: 'u1',
+        calculatedDate: null,
+        overallFitnessScore: 0,
+        fitnessLevel: 'beginner',
+      ),
+      breakdown: [],
+      levelDescription: 'Starting your fitness journey - focus on consistency.',
+      levelColor: '#9E9E9E',
     );
 
 void main() {
@@ -142,6 +163,24 @@ void main() {
         reason: 'the retry affordance must actually retry');
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets(
+      'renders an honest "not scored yet" state for the backend\'s unscored '
+      'default — never a fabricated 0/Beginner', (tester) async {
+    await pumpCard(tester, result: _neverCalculatedBreakdown());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+    await tester.pumpAndSettle();
+
+    // The defect: the backend's default response (overall_fitness_score=0,
+    // fitness_level="beginner") rendered as if it were a real grade.
+    expect(find.text('0'), findsNothing,
+        reason: 'a never-scored account must not show a fabricated 0');
+    expect(find.text('BEGINNER'), findsNothing,
+        reason: 'a never-scored account must not show a fabricated level');
+    expect(find.text('—'), findsOneWidget);
+    expect(find.textContaining('Not scored yet'), findsOneWidget);
   });
 
   testWidgets('the card asks for its own data when nothing primed it',

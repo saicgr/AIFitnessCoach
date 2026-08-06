@@ -10,7 +10,7 @@ import '../../../data/models/training_intensity.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../utils/share_report_helper.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -54,13 +54,15 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.background,
-      appBar: PillAppBar(
+      // ZealovaAppBar (bare arrow inline with the Anton masthead) — matches
+      // the majority of settings sub-screens (E2E row 208).
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).workoutSettingsMy1rms,
         actions: [
           if (!oneRMsState.isLoading && oneRMsState.oneRMs.isNotEmpty)
-            PillAppBarAction(
-              icon: Icons.ios_share_rounded,
-              onTap: () => shareReportScreen(
+            IconButton(
+              icon: Icon(Icons.ios_share_rounded, color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary),
+              onPressed: () => shareReportScreen(
                 context: context,
                 repaintKey: _reportKey,
                 caption: 'My ${Branding.appName} 1-rep max report',
@@ -68,9 +70,9 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
               ),
             ),
           if (!oneRMsState.isLoading)
-            PillAppBarAction(
-              icon: Icons.auto_awesome,
-              onTap: _autoPopulate,
+            IconButton(
+              icon: Icon(Icons.auto_awesome, color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary),
+              onPressed: _autoPopulate,
             ),
         ],
       ),

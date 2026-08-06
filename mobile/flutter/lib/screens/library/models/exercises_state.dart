@@ -17,6 +17,15 @@ class ExercisesState {
   /// users navigate back into the Library tab.
   final String? filterSignature;
 
+  /// Authoritative match count for the CURRENT filters/search, from the
+  /// backend's `X-Total-Count` response header — distinct from
+  /// `exercises.length`, which is only how many rows have been loaded into
+  /// this page so far. Null when the backend hasn't answered yet (or an
+  /// older backend build omits the header); callers must not treat null as
+  /// zero. See E2E row 25 — "N EXERCISES FOUND" used to silently mean
+  /// "loaded so far", not "found".
+  final int? totalCount;
+
   const ExercisesState({
     this.exercises = const [],
     this.isLoading = false,
@@ -24,6 +33,7 @@ class ExercisesState {
     this.offset = 0,
     this.error,
     this.filterSignature,
+    this.totalCount,
   });
 
   ExercisesState copyWith({
@@ -33,6 +43,8 @@ class ExercisesState {
     int? offset,
     String? error,
     String? filterSignature,
+    int? totalCount,
+    bool clearTotalCount = false,
   }) {
     return ExercisesState(
       exercises: exercises ?? this.exercises,
@@ -41,6 +53,7 @@ class ExercisesState {
       offset: offset ?? this.offset,
       error: error,
       filterSignature: filterSignature ?? this.filterSignature,
+      totalCount: clearTotalCount ? null : (totalCount ?? this.totalCount),
     );
   }
 
@@ -52,6 +65,7 @@ class ExercisesState {
         other.hasMore == hasMore &&
         other.offset == offset &&
         other.error == error &&
+        other.totalCount == totalCount &&
         _listEquals(other.exercises, exercises);
   }
 
@@ -69,5 +83,6 @@ class ExercisesState {
       isLoading.hashCode ^
       hasMore.hashCode ^
       offset.hashCode ^
-      error.hashCode;
+      error.hashCode ^
+      totalCount.hashCode;
 }

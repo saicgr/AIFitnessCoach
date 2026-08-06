@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
+import '../constants/chrome_constants.dart';
 import 'seeded_scheme.dart';
 
 /// Theme mode provider
@@ -300,6 +301,27 @@ class AppThemeLight {
         ),
       ),
 
+      // Date / Time pickers — light mirror of AppTheme.buildDarkTheme's
+      // datePickerTheme/timePickerTheme. See the comment there for why this
+      // belongs in the theme and not at the 35 showDatePicker call sites.
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: AppColorsLight.elevated,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: AppColorsLight.elevated,
+        headerForegroundColor: AppColorsLight.textSecondary,
+        dividerColor: AppColorsLight.cardBorder,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: AppColorsLight.elevated,
+        dialBackgroundColor: AppColorsLight.glassSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+
       // Bottom Sheet
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColorsLight.elevated,
@@ -323,8 +345,9 @@ class AppThemeLight {
           borderRadius: BorderRadius.circular(12),
         ),
         behavior: SnackBarBehavior.floating,
-        // Clear the floating nav bar (52px + bottom safe area + gap)
-        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 80, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
+        // Clear the floating nav bar AND the quick-log FAB that floats
+        // above it — see [kSnackBarBottomInset] (E2E row 125).
+        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: kSnackBarBottomInset, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
       ),
 
       // Switch
@@ -651,8 +674,9 @@ class SeniorTheme {
           borderRadius: BorderRadius.circular(16),
         ),
         behavior: SnackBarBehavior.floating,
-        // Clear the floating nav bar (52px + bottom safe area + gap)
-        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 80, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
+        // Clear the floating nav bar AND the quick-log FAB that floats
+        // above it — see [kSnackBarBottomInset] (E2E row 125).
+        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: kSnackBarBottomInset, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
       ),
 
       // Dialog - Larger

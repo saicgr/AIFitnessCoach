@@ -58,17 +58,33 @@ class _FitnessScoreBreakdownSectionState
     final tc = ThemeColors.of(context);
 
     final overview = ref.watch(scoresProvider.select((s) => s.overview));
+    // Nullable getters only — the plain `overallFitnessScore` /`fitnessLevel`
+    // getters fabricate 0/"beginner" for an account that has never been
+    // scored (see the FABRICATES doc comments on ScoresState). Rendering that
+    // fabricated pair as "OVERALL FITNESS BEGINNER — 0" told a brand-new
+    // account it had already been graded.
     final overallScore =
-        ref.watch(scoresProvider.select((s) => s.overallFitnessScore));
-    final level = ref.watch(scoresProvider.select((s) => s.fitnessLevel));
-    final strengthScore =
-        ref.watch(scoresProvider.select((s) => s.overallStrengthScore));
+        ref.watch(scoresProvider.select((s) => s.overallFitnessScoreOrNull));
+    final level = ref.watch(scoresProvider.select((s) => s.fitnessLevelOrNull));
     final nutritionScore =
-        ref.watch(scoresProvider.select((s) => s.nutritionScoreValue));
+        ref.watch(scoresProvider.select((s) => s.nutritionScoreOrNull));
     final consistencyScore =
-        ref.watch(scoresProvider.select((s) => s.consistencyScore));
+        ref.watch(scoresProvider.select((s) => s.consistencyScoreOrNull));
     final readinessScore =
-        ref.watch(scoresProvider.select((s) => s.readinessScore));
+        ref.watch(scoresProvider.select((s) => s.readinessScoreOrNull));
+    // `overall_strength_score` on both `strengthScores` and `overview` is
+    // non-nullable on the backend (defaults to 0 when unscored), so it can't
+    // signal "never scored" on its own — `muscle_scores_summary` /
+    // `muscleScores` are only populated from real rows, so an empty map is
+    // the honest "no strength score yet" signal.
+    final hasMuscleScores = ref.watch(scoresProvider.select(
+      (s) =>
+          (s.strengthScores?.muscleScores.isNotEmpty ?? false) ||
+          (s.overview?.muscleScoresSummary.isNotEmpty ?? false),
+    ));
+    final strengthScore = ref.watch(
+      scoresProvider.select((s) => s.overallStrengthScore),
+    );
     final breakdown = ref.watch(scoresProvider.select((s) => s.fitnessScore));
     final isInitialLoad = ref.watch(
       scoresProvider.select((s) => s.isLoading && s.overview == null),
@@ -93,7 +109,7 @@ class _FitnessScoreBreakdownSectionState
           ),
           const SizedBox(height: AppSpacing.md),
           _BreakdownGrid(
-            strengthScore: strengthScore,
+            strengthScore: hasMuscleScores ? strengthScore : null,
             consistencyScore: consistencyScore,
             nutritionScore: nutritionScore,
             readinessScore: readinessScore,
@@ -135,8 +151,8 @@ class _FitnessScoreBreakdownSectionState
 /// The overall fitness-score hero: a hairline-framed card with a level kicker,
 /// a big Anton numeral + hairline progress ring, and a week-over-week delta.
 class _ScoreHero extends StatelessWidget {
-  final int overallScore;
-  final FitnessLevel level;
+  final int? overallScore;
+  final FitnessLevel? level;
   final int? scoreChange;
   final String? trend;
   final ThemeColors tc;
@@ -152,6 +168,72 @@ class _ScoreHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = tc.accent;
+    // No fitness score has ever been calculated for this account — an honest
+    // "—" and "NOT SCORED YET" rather than the fabricated 0/"Beginner"/"Same
+    // as last week" trio (which asserts a grade and a week-over-week trend
+    // that don't exist yet).
+    if (overallScore == null || level == null) {
+      return ZealovaCard(
+        variant: ZealovaCardVariant.hero,
+        radius: AppRadius.lg,
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 96,
+              height: 96,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 96,
+                    height: 96,
+                    child: CircularProgressIndicator(
+                      value: 0,
+                      strokeWidth: 5,
+                      backgroundColor: AppColors.hairlineStrong,
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(AppColors.hairlineStrong),
+                      strokeCap: StrokeCap.round,
+                    ),
+                  ),
+                  Text('—', style: ZType.disp(38, color: tc.textMuted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'OVERALL FITNESS',
+                    style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 2),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'NOT SCORED YET',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZType.lbl(20,
+                        color: tc.textPrimary, letterSpacing: 0.8),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Log workouts, nutrition and check-ins to get your first score.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 0.4),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final change = scoreChange ?? 0;
     final isUp = change > 0 || trend == 'improving';
     final isDown = change < 0 || trend == 'declining';
@@ -183,7 +265,7 @@ class _ScoreHero extends StatelessWidget {
                   width: 96,
                   height: 96,
                   child: CircularProgressIndicator(
-                    value: (overallScore / 100).clamp(0.0, 1.0),
+                    value: (overallScore! / 100).clamp(0.0, 1.0),
                     strokeWidth: 5,
                     backgroundColor: AppColors.hairlineStrong,
                     valueColor: AlwaysStoppedAnimation<Color>(accent),
@@ -209,7 +291,7 @@ class _ScoreHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  level.displayName.toUpperCase(),
+                  level!.displayName.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: ZType.lbl(20,
@@ -243,10 +325,10 @@ class _ScoreHero extends StatelessWidget {
 
 /// The 2x2 grid of weighted component scores.
 class _BreakdownGrid extends StatelessWidget {
-  final int strengthScore;
-  final int consistencyScore;
-  final int nutritionScore;
-  final int readinessScore;
+  final int? strengthScore;
+  final int? consistencyScore;
+  final int? nutritionScore;
+  final int? readinessScore;
   final ThemeColors tc;
 
   const _BreakdownGrid({
@@ -325,7 +407,7 @@ class _ComponentTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String weight;
-  final int score;
+  final int? score;
   final ThemeColors tc;
 
   const _ComponentTile({
@@ -338,7 +420,8 @@ class _ComponentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = tc.accent;
+    final hasScore = score != null;
+    final accent = hasScore ? tc.accent : tc.textMuted;
     return ZealovaCard(
       variant: ZealovaCardVariant.outlined,
       radius: AppRadius.lg,
@@ -359,7 +442,7 @@ class _ComponentTile extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '$score',
+            hasScore ? '$score' : '—',
             style: ZType.disp(30, color: accent),
           ),
           const SizedBox(height: 2),
@@ -369,6 +452,9 @@ class _ComponentTile extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           // Hairline progress track (3px) — accent fill, no LinearProgress.
+          // An un-scored component renders an empty track rather than a full
+          // grey one, since a filled-looking track at "score 0" reads as
+          // "measured and empty" rather than "not measured".
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: SizedBox(
@@ -376,10 +462,11 @@ class _ComponentTile extends StatelessWidget {
               child: Stack(
                 children: [
                   Container(color: AppColors.hairlineStrong),
-                  FractionallySizedBox(
-                    widthFactor: (score / 100).clamp(0.0, 1.0),
-                    child: Container(color: accent),
-                  ),
+                  if (hasScore)
+                    FractionallySizedBox(
+                      widthFactor: (score! / 100).clamp(0.0, 1.0),
+                      child: Container(color: accent),
+                    ),
                 ],
               ),
             ),
@@ -407,7 +494,10 @@ class _WeightsFooter extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Strength 40 · Consistency 30 · Nutrition 20 · Readiness 10',
+              // Explicit '%' — without it this reads like a second set of
+              // scores next to four zeros above, not the weights the cards
+              // already show in their top-right corner.
+              'Strength 40% · Consistency 30% · Nutrition 20% · Readiness 10%',
               style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 0.6),
             ),
           ),

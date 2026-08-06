@@ -5,19 +5,24 @@ Zero LLM calls. Pure SQL aggregation + the existing score->grade mapping. The
 only non-deterministic dependency is the F2 insight line, which is itself
 cached/deterministic-first (services.share_ai_service.insight_line).
 
-  F3  day_in_proof(user_id, date)
+  F3  day_in_proof(user_id, date, timezone_str)
         The cross-domain card only Zealova can make: that day's top PR + meal
         letter-grade + current streak + one cached insight line.
-  F16 on_this_day(user_id, date)
+  F16 on_this_day(user_id, date, timezone_str)
         Workouts + meals logged on this month/day in prior years.
+
+`timezone_str` is REQUIRED on every day-window function here — every "what
+happened on the user's day X" query must resolve against the user's own
+local day, never a bare UTC date. See `_day_bounds`.
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
 from core.db.facade import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import local_day_bounds
 
 logger = get_logger(__name__)
 
@@ -44,11 +49,18 @@ def score_to_grade(score: Optional[float]) -> Optional[str]:
     return "F"
 
 
-def _day_bounds(date_iso: str) -> tuple[str, str]:
-    """[midnight, next-midnight) UTC ISO bounds for a YYYY-MM-DD date."""
-    d = datetime.fromisoformat(date_iso).date()
-    start = datetime(d.year, d.month, d.day, tzinfo=timezone.utc)
-    return start.isoformat(), (start + timedelta(days=1)).isoformat()
+def _day_bounds(date_iso: str, timezone_str: str) -> tuple[str, str]:
+    """Half-open [local midnight, next local midnight) UTC ISO bounds for a
+    YYYY-MM-DD date, in the USER's timezone.
+
+    Was a bare UTC-midnight window regardless of the user's actual timezone
+    (CLAUDE.md's "local-day window" defect class) — a card built at 21:56
+    America/Chicago read about 2026-08-06 (already tomorrow in UTC) instead
+    of the user's actual "today", so an evening PR/workout/meal logged
+    hours earlier came up empty. Delegates to the chokepoint helper so this
+    can never drift from the other local-day-window call sites again.
+    """
+    return local_day_bounds(date_iso, timezone_str)
 
 
 def _current_streak(user_id: str) -> int:
@@ -65,9 +77,9 @@ def _current_streak(user_id: str) -> int:
     return 0
 
 
-def _top_pr_for_day(user_id: str, date_iso: str) -> Optional[Dict[str, Any]]:
+def _top_pr_for_day(user_id: str, date_iso: str, timezone_str: str) -> Optional[Dict[str, Any]]:
     db = get_supabase_db()
-    start, end = _day_bounds(date_iso)
+    start, end = _day_bounds(date_iso, timezone_str)
     try:
         resp = (
             db.client.table("personal_records")
@@ -95,10 +107,10 @@ def _top_pr_for_day(user_id: str, date_iso: str) -> Optional[Dict[str, Any]]:
     }
 
 
-def _meal_grade_for_day(user_id: str, date_iso: str) -> Optional[Dict[str, Any]]:
+def _meal_grade_for_day(user_id: str, date_iso: str, timezone_str: str) -> Optional[Dict[str, Any]]:
     """Average health_score across that day's non-deleted food logs -> grade."""
     db = get_supabase_db()
-    start, end = _day_bounds(date_iso)
+    start, end = _day_bounds(date_iso, timezone_str)
     try:
         resp = (
             db.client.table("food_logs")
@@ -127,9 +139,9 @@ def _meal_grade_for_day(user_id: str, date_iso: str) -> Optional[Dict[str, Any]]
     }
 
 
-def _top_workout_for_day(user_id: str, date_iso: str) -> Optional[Dict[str, Any]]:
+def _top_workout_for_day(user_id: str, date_iso: str, timezone_str: str) -> Optional[Dict[str, Any]]:
     db = get_supabase_db()
-    start, end = _day_bounds(date_iso)
+    start, end = _day_bounds(date_iso, timezone_str)
     try:
         resp = (
             db.client.table("workouts")
@@ -161,13 +173,17 @@ def _fmt_num(v: Any) -> str:
         return str(v or "")
 
 
-def day_in_proof(user_id: str, date_iso: str) -> Dict[str, Any]:
+def day_in_proof(user_id: str, date_iso: str, timezone_str: str) -> Dict[str, Any]:
     """F3 — deterministic cross-domain card. Includes one cached F2 insight line.
     `has_data` is False when the day has neither a workout, PR, nor a meal grade
-    (caller shows an empty state rather than a fabricated card)."""
-    pr = _top_pr_for_day(user_id, date_iso)
-    grade = _meal_grade_for_day(user_id, date_iso)
-    workout = _top_workout_for_day(user_id, date_iso)
+    (caller shows an empty state rather than a fabricated card).
+
+    `timezone_str` is REQUIRED — every "what happened on the user's day X" query
+    must resolve against the user's own local day, never a bare UTC date (see
+    `_day_bounds`)."""
+    pr = _top_pr_for_day(user_id, date_iso, timezone_str)
+    grade = _meal_grade_for_day(user_id, date_iso, timezone_str)
+    workout = _top_workout_for_day(user_id, date_iso, timezone_str)
     streak = _current_streak(user_id)
 
     has_data = bool(pr or grade or workout)
@@ -210,10 +226,15 @@ def day_in_proof(user_id: str, date_iso: str) -> Dict[str, Any]:
     }
 
 
-def on_this_day(user_id: str, date_iso: str) -> Dict[str, Any]:
+def on_this_day(user_id: str, date_iso: str, timezone_str: str) -> Dict[str, Any]:
     """F16 — workouts + meals on this month/day in prior years. Deterministic
     query over completed workouts and food logs whose month+day match and whose
-    year is strictly earlier than the requested date's year."""
+    year is strictly earlier than the requested date's year.
+
+    `timezone_str` is REQUIRED — each prior year's window is the USER's local
+    day, not a bare UTC date (same defect class as `_day_bounds`; a workout
+    logged at 22:00 local on the anniversary date was invisible to a UTC-built
+    window for any user west of UTC)."""
     target = datetime.fromisoformat(date_iso).date()
     db = get_supabase_db()
 
@@ -228,8 +249,7 @@ def on_this_day(user_id: str, date_iso: str) -> Dict[str, Any]:
             d = date(y, target.month, target.day)
         except ValueError:
             continue  # Feb 29 in a non-leap prior year
-        start = datetime(d.year, d.month, d.day, tzinfo=timezone.utc).isoformat()
-        end = (datetime(d.year, d.month, d.day, tzinfo=timezone.utc) + timedelta(days=1)).isoformat()
+        start, end = local_day_bounds(d.isoformat(), timezone_str)
         found_this_year = False
 
         try:

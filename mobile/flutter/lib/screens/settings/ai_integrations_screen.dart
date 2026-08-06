@@ -365,18 +365,10 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Grabber.
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: theme.dividerColor,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              // GlassSheet (the parent, ai_integrations_screen.dart:152)
+              // already renders its own grabber (showHandle defaults true) —
+              // this used to draw a second one, stacking two handles (E2E
+              // settings row 168).
               Text(
                 AppLocalizations.of(context).aiIntegrationsCreateConnection,
                 style: theme.textTheme.titleLarge?.copyWith(

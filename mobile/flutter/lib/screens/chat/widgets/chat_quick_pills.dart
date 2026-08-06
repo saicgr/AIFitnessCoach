@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,6 +31,60 @@ class ChatQuickPills extends ConsumerStatefulWidget {
 }
 
 class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
+  // Row 39 (E2E) — a pinned-width `ShaderMask` fade at the strip's trailing
+  // edge cannot tell "a pill that legitimately ends here" from "a pill that's
+  // 90% cut off" — it only knows pixels-from-the-edge. Depending on which
+  // pill's label happens to land at the boundary (varies by locale, text
+  // scale, and which quick actions the user has configured), that produces
+  // either the ALREADY-FIXED failure (E2E #33 / row 108: a fully-visible
+  // pill's tail needlessly faded) or THIS one: a pill sliced down to "a book
+  // icon + the bare letter A", fully opaque because the visible sliver sits
+  // entirely outside the fade's fixed 12px. No fixed width can satisfy both
+  // at once. So instead of guessing a width, we MEASURE: every pill gets a
+  // key, and after each layout/scroll we check whether it is fully inside the
+  // viewport. A pill that's only partially inside is faded all the way to 0
+  // rather than left readable-but-truncated — the strip only ever shows whole
+  // pills, and the (already-existing) fade + pinned More button still signal
+  // "there's more to scroll to."
+  final _pillsScrollController = ScrollController();
+  final _viewportKey = GlobalKey();
+  List<GlobalKey> _pillKeys = const [];
+  Set<int> _clippedPillIndices = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _pillsScrollController.addListener(_recomputeClippedPills);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recomputeClippedPills());
+  }
+
+  @override
+  void dispose() {
+    _pillsScrollController.removeListener(_recomputeClippedPills);
+    _pillsScrollController.dispose();
+    super.dispose();
+  }
+
+  void _recomputeClippedPills() {
+    if (!mounted) return;
+    final viewportBox = _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null || !viewportBox.attached) return;
+    final viewportWidth = viewportBox.size.width;
+    const epsilon = 0.5; // sub-pixel rounding slop, not a visible gap
+    final clipped = <int>{};
+    for (var i = 0; i < _pillKeys.length; i++) {
+      final pillBox = _pillKeys[i].currentContext?.findRenderObject() as RenderBox?;
+      if (pillBox == null || !pillBox.attached) continue;
+      final left = pillBox.localToGlobal(Offset.zero, ancestor: viewportBox).dx;
+      final right = left + pillBox.size.width;
+      final fullyVisible = left >= -epsilon && right <= viewportWidth + epsilon;
+      if (!fullyVisible) clipped.add(i);
+    }
+    if (!setEquals(clipped, _clippedPillIndices)) {
+      setState(() => _clippedPillIndices = clipped);
+    }
+  }
+
   void _handlePillTap(ChatQuickAction action) {
     if (widget.isLoading) return;
     HapticService.selection();
@@ -159,6 +214,14 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
     final colors = ThemeColors.of(context);
     final isDark = colors.isDark;
 
+    if (_pillKeys.length != pills.length) {
+      _pillKeys = List.generate(pills.length, (_) => GlobalKey());
+      // The pill set changed (customized order, loading state, locale) — the
+      // previous clipped-index set no longer lines up with the new list.
+      // Recompute once the new pills have actually been laid out.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _recomputeClippedPills());
+    }
+
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
@@ -193,6 +256,7 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
               // to the right" without destroying a word, and the pinned More
               // button remains the real affordance.
               child: ShaderMask(
+                key: _viewportKey,
                 shaderCallback: (rect) {
                   const fadeWidth = 12.0;
                   final solidStop = rect.width <= fadeWidth
@@ -211,20 +275,33 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                 },
                 blendMode: BlendMode.dstIn,
                 child: SingleChildScrollView(
+                  controller: _pillsScrollController,
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      // Same pill as every other prompt surface in chat.
-                      ...pills.map((action) => Padding(
-                            padding: const EdgeInsetsDirectional.only(end: 8),
-                            child: ChatPromptPill(
-                              label: action.label,
-                              icon: action.icon,
-                              enabled: !widget.isLoading,
-                              onTap: () => _handlePillTap(action),
-                              onLongPress: _showMoreSheet,
+                      // Same pill as every other prompt surface in chat. Any
+                      // pill whose bounds aren't fully inside the viewport
+                      // (measured in _recomputeClippedPills) fades all the
+                      // way to invisible instead of showing a truncated
+                      // fragment — see the class comment on this State.
+                      for (var i = 0; i < pills.length; i++)
+                        Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 8),
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 120),
+                            opacity: _clippedPillIndices.contains(i) ? 0.0 : 1.0,
+                            child: KeyedSubtree(
+                              key: _pillKeys[i],
+                              child: ChatPromptPill(
+                                label: pills[i].label,
+                                icon: pills[i].icon,
+                                enabled: !widget.isLoading,
+                                onTap: () => _handlePillTap(pills[i]),
+                                onLongPress: _showMoreSheet,
+                              ),
                             ),
-                          )),
+                          ),
+                        ),
                       // Breathing room so the last pill can scroll clear of
                       // the fade instead of dying under the More button.
                       const SizedBox(width: 24),
@@ -450,6 +527,19 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
   Widget _buildEditMode(BuildContext context, bool isDark) {
     final colors = ThemeColors.of(context);
     final order = ref.watch(chatQuickActionOrderProvider);
+    // Row 144 (E2E) — this list iterates the RAW saved order, but the strip
+    // above the composer renders `chatVisiblePillsProvider`, which — until
+    // the user's first manual reorder — re-sorts the top 5 by time of day
+    // (`_daypartPreferredOrder`, chat_quick_action_provider.dart). Numbering
+    // rows here by their RAW index (`index + 1`) badged "Check My Form" as 1
+    // when it was actually rendering 5th on the strip. The badge must show
+    // where an action ACTUALLY lands on the strip, not its row position in
+    // this (still raw-ordered, so dragging behaves exactly as before) list —
+    // so rank comes from the SAME provider the strip itself renders from.
+    final visibleRank = <String, int>{
+      for (final (i, action) in ref.watch(chatVisiblePillsProvider).indexed)
+        action.id: i + 1,
+    };
 
     return GlassSheet(
       child: SafeArea(
@@ -523,7 +613,8 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                 itemBuilder: (context, index) {
                   final actionId = order[index];
                   final action = chatQuickActionRegistry[actionId]!;
-                  final isTop5 = index < 5;
+                  final rank = visibleRank[actionId];
+                  final isTop5 = rank != null;
                   final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
                   return Container(
@@ -578,7 +669,7 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                             ),
                             child: Center(
                               child: Text(
-                                '${index + 1}',
+                                '$rank',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,

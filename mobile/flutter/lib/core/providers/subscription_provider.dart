@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -320,6 +321,48 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     return _expectedStoreErrorNames.contains(name) ? name : null;
   }
 
+  /// True on a real iOS/Android device; false on the iOS Simulator or an
+  /// Android emulator. Cached after the first read — the device class can't
+  /// change mid-process. Fails open (treats unknown as "physical") so a
+  /// `device_info_plus` error never suppresses a real production alert.
+  ///
+  /// Not private (`_`-prefixed) so tests can exercise it directly against a
+  /// mocked `device_info_plus` platform channel — the whole point of this
+  /// method is the decision behind the FITWIZ-FLUTTER-1B fix, so it must be
+  /// unit-testable on its own.
+  @visibleForTesting
+  static bool? isPhysicalDeviceCache;
+
+  @visibleForTesting
+  static Future<bool> isPhysicalDeviceForBilling() async {
+    final cached = isPhysicalDeviceCache;
+    if (cached != null) return cached;
+    bool result = true;
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isIOS) {
+        result = (await deviceInfo.iosInfo).isPhysicalDevice;
+      } else if (Platform.isAndroid) {
+        result = (await deviceInfo.androidInfo).isPhysicalDevice;
+      }
+    } catch (_) {
+      // Unknown — fail open so we don't accidentally swallow a real alert.
+      result = true;
+    }
+    isPhysicalDeviceCache = result;
+    return result;
+  }
+
+  /// Records whether the last "missing API key at configure" event was
+  /// escalated to a Sentry alert (`true`), only breadcrumbed (`false`), or
+  /// hasn't happened yet (`null`). `SentryService.captureMessage`/
+  /// `addBreadcrumb` are silent no-ops until `SentryService.init()` has run
+  /// (never true in a unit test), so this is the only way to observe which
+  /// branch [configureRevenueCat] took without standing up the real Sentry
+  /// SDK — that observability is the whole point of the FITWIZ-FLUTTER-1B fix.
+  @visibleForTesting
+  static bool? lastMissingApiKeyAlertedToSentry;
+
   /// Configure RevenueCat SDK (call once at app startup)
   static Future<void> configureRevenueCat() async {
     if (_revenueCatInitialized) return;
@@ -329,17 +372,38 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           ? ApiConstants.revenueCatAppleApiKey
           : ApiConstants.revenueCatGoogleApiKey;
 
-      // Skip configuration if API key is empty or placeholder. In prod this
-      // means the build is broken (missing --dart-define) and no purchase can
-      // complete — surface it to Sentry so we notice without relying on
-      // support tickets.
+      // Skip configuration if API key is empty or placeholder. On a real
+      // device this means the build is broken (missing --dart-define) and no
+      // purchase can complete — surface it to Sentry loudly so we notice
+      // without relying on support tickets.
+      //
+      // On the iOS Simulator / an Android emulator this is EXPECTED, not a
+      // bug: our local run scripts (run_ios.sh, run_ios_debug.sh, etc.) only
+      // pass REVENUECAT_APPLE_KEY/REVENUECAT_GOOGLE_KEY when a developer
+      // explicitly exports them, and no simulator/emulator can complete a
+      // real IAP regardless of whether a key is configured. Alerting on that
+      // masquerades dev/QA sessions as production purchase outages (this
+      // exact confusion produced a false "15 real users can't subscribe"
+      // read on FITWIZ-FLUTTER-1B — every affected "user" was
+      // device.simulator=true). Breadcrumb only in that case, mirroring
+      // [_expectedStoreErrorNames] below.
       if (apiKey.isEmpty || apiKey == 'test_key_placeholder') {
         debugPrint('⚠️ RevenueCat: Skipping - no API key configured');
-        unawaited(SentryService.captureMessage(
-          'RevenueCat API key missing at configure',
-          level: SentryLevel.warning,
-          tags: {'subsystem': 'billing', 'stage': 'configure', 'platform': Platform.isIOS ? 'ios' : 'android'},
-        ));
+        final isPhysical = await isPhysicalDeviceForBilling();
+        lastMissingApiKeyAlertedToSentry = isPhysical;
+        if (isPhysical) {
+          unawaited(SentryService.captureMessage(
+            'RevenueCat API key missing at configure',
+            level: SentryLevel.warning,
+            tags: {'subsystem': 'billing', 'stage': 'configure', 'platform': Platform.isIOS ? 'ios' : 'android'},
+          ));
+        } else {
+          SentryService.addBreadcrumb(
+            message: 'RevenueCat API key missing at configure (simulator/emulator — expected)',
+            category: 'billing',
+            data: {'platform': Platform.isIOS ? 'ios' : 'android'},
+          );
+        }
         return;
       }
 

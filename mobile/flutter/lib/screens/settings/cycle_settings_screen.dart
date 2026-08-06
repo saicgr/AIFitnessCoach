@@ -18,6 +18,19 @@ import '../../widgets/design_system/zealova.dart';
 import '../onboarding/cycle_onboarding_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
+/// Whether the per-type cycle reminder toggles can actually fire.
+///
+/// Both gates matter: the reminders master switch AND cycle tracking itself
+/// (with tracking off there is no cycle prediction to base a reminder on).
+/// A stored `cycleRemindersMaster: true` from before tracking was turned off
+/// must not render this section as live (E2E settings row 86).
+bool cycleRemindersActiveNow({
+  required bool trackingEnabled,
+  required bool remindersMaster,
+}) =>
+    trackingEnabled && remindersMaster;
+
 /// Cycle settings — the in-app home for everything cycle-related that is a
 /// preference rather than logged data.
 ///
@@ -114,13 +127,20 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
     final notifier = ref.read(notificationPreferencesProvider.notifier);
     final isTtc = prefs.cycleTrackingMode == 'ttc';
     final isPregnancy = prefs.cycleTrackingMode == 'pregnancy';
-    // The per-type toggles only do anything when the master toggle is on.
-    final remindersOn = prefs.cycleRemindersMaster;
 
     // Master gate — `hormonal_profiles.menstrual_tracking_enabled`.
     final trackingEnabled =
         ref.watch(hormonalProfileProvider).value?.menstrualTrackingEnabled ??
             false;
+    // The per-type toggles only do anything when the reminders master AND
+    // cycle tracking itself are both on — with no tracked cycle data there
+    // is nothing to base a "period approaching" / "period start" reminder
+    // on, so a stored `cycleRemindersMaster: true` from before tracking was
+    // turned off must not render this whole block as live (E2E row 86).
+    final remindersOn = cycleRemindersActiveNow(
+      trackingEnabled: trackingEnabled,
+      remindersMaster: prefs.cycleRemindersMaster,
+    );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -218,9 +238,11 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     icon: Icons.notifications_active_outlined,
                     accent: accent,
                     title: AppLocalizations.of(context).cycleSettingsCycleReminders,
-                    subtitle: AppLocalizations.of(context).cycleSettingsMasterSwitchForAll,
-                    value: prefs.cycleRemindersMaster,
-                    onChanged: notifier.setCycleRemindersMaster,
+                    subtitle: trackingEnabled
+                        ? AppLocalizations.of(context).cycleSettingsMasterSwitchForAll
+                        : 'Turn on Cycle Tracking above to enable reminders',
+                    value: remindersOn,
+                    onChanged: trackingEnabled ? notifier.setCycleRemindersMaster : null,
                     isDark: isDark,
                   ),
                   if (isPregnancy)
@@ -238,9 +260,9 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                       icon: Icons.event_outlined,
                       accent: accent,
                       title: AppLocalizations.of(context).cycleSettingsPeriodApproaching,
-                      subtitle:
-                          'A heads-up ${prefs.cyclePeriodApproachingLeadDays} '
-                          'day(s) before your predicted period',
+                      subtitle: 'A heads-up ${prefs.cyclePeriodApproachingLeadDays} '
+                          '${prefs.cyclePeriodApproachingLeadDays == 1 ? 'day' : 'days'} '
+                          'before your predicted period',
                       value: prefs.cyclePeriodApproaching,
                       onChanged: notifier.setCyclePeriodApproaching,
                       isDark: isDark,

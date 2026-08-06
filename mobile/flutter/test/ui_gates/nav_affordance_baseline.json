@@ -1,0 +1,222 @@
+{
+  "_comment": "Grandfathered nav-affordance-gate findings (screens that build a back-navigation icon some way OTHER than GlassBackButton — see nav_affordance_scan.dart doc comment). `nav_affordance_gate_test.dart` fails only on findings NOT listed here, so the known ~50/50 backlog cannot grow. Keyed by file + rule + matched wrapper source (not line numbers — those churn on every unrelated edit). Regenerate with `dart run test/ui_gates/nav_affordance_scan.dart > test/ui_gates/nav_affordance_baseline.json` after intentionally fixing (or intentionally accepting) findings — never hand-edit to silence a fresh violation.",
+  "total": 36,
+  "findings": [
+    {
+      "file": "lib/screens/auth/email_sign_in_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () => context.pop(), child: ClipRRect( borderRadius: BorderRadius.circular(22), child: BackdropFilter( filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12)",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/auth/sign_in_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( // Pop one screen back if anything pushed us here (demo-tasks, // capability-and-community, etc.). Only fall back to /intro // when sign-in is the root (deep-",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/body_analyzer/body_analyzer_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( tooltip: AppLocalizations.of(context).commonBack, icon: const Icon(Icons.arrow_back), onPressed: () { if (Navigator.of(context).canPop()) { Navigator.of(conte",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/chat/chat_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () { HapticService.light(); _exitToHistory(); }, child: Container( height: 44, width: 44, decoration: BoxDecoration( color: topBarColor, borderRadius: ",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/chat/chat_sessions_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back_rounded, color: colors.textPrimary), onPressed: () { HapticService.light(); context.pop(); }, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/chat/widgets/fullscreen_image_viewer.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: onBack, child: Container( width: 44, height: 44, decoration: pillDecor, child: const Icon(Icons.arrow_back_rounded, color: textPrimary, size: 22), ), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/cycle/cycle_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back_rounded, color: fg), onPressed: () => Navigator.of(context).maybePop(), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/demo/demo_active_workout_screen_ui_1.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: textPrimary), onPressed: _skipStretches, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/demo/demo_workout_screen_ui.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () => context.pop(), child: Container( height: 44, width: 44, decoration: BoxDecoration( color: isDark ? const Color(0xFF1C1C1E) : AppColorsLight.eleva",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/demo/plan_preview_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () => context.pop(), child: Container( width: 40, height: 40, decoration: BoxDecoration( color: isDark ? AppColors.elevated : AppColorsLight.elevated, ",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/dev_tools/exercise_safety_audit_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: colors.textPrimary), onPressed: () => Navigator.of(context).pop(), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/discover/discover_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back_rounded, color: textColor, size: 22), tooltip: MaterialLocalizations.of(context) .backButtonTooltip, onPressed: () => Navigator.of",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/home/widgets/import_equipment_sheet.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back_rounded, color: textPrimary), onPressed: _reset, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/library/tabs/netflix_exercises_tab_ext.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () { HapticService.light(); setState(() => _expandedSection = null); }, child: Row( children: [ Icon( Icons.arrow_back_ios, size: 16, color: isDark ? A",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/nutrition/log_meal_sheet_ui_2.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( behavior: HitTestBehavior.opaque, onTap: busy ? null : () => setState(() => _aiMode = _AiLogMode.search), child: Padding( padding: const EdgeInsets.symmetric(",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/nutrition/log_meal_sheet_ui_2.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: _handleBackToResults, child: Row( children: [ Icon(Icons.arrow_back_ios, size: 14, color: isDark ? AppColors.textMuted : AppColorsLight.textMuted), con",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/nutrition/recipe_detail_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: const Icon(Icons.arrow_back), tooltip: 'Back', onPressed: () { if (context.canPop()) { context.pop(); } else { context.go('/nutrition'); } }, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/nutrition/widgets/ai_coach_meal_suggestion_sheet.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( borderRadius: BorderRadius.circular(18), onTap: _closeCuisineChooser, child: Container( decoration: BoxDecoration( shape: BoxShape.circle, border: Border.all(",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/nutrition/widgets/recipes_tab.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: _closeSearch, customBorder: const CircleBorder(), child: Padding( padding: const EdgeInsets.all(8), child: Icon(Icons.arrow_back_rounded, size: 22, col",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/settings/settings_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () { HapticService.light(); // Settings can be reached via deep link // (notifications-prime → settings); guard so the // back chevron never throws \"no",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/social/story_create_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( onPressed: () => setState(() => _selectedImage = null), icon: const Icon(Icons.arrow_back_rounded, color: Colors.white), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/custom_workout_builder_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: const Icon(Icons.arrow_back), onPressed: () => setState(() => _showExerciseSearch = false), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/easy/widgets/easy_top_bar.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( borderRadius: BorderRadius.circular(20), onTap: onTap, child: Container( width: 40, height: 40, decoration: BoxDecoration( color: (isDark ? Colors.white : Col",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/foldable/foldable_warmup_layout.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: textPrimary), onPressed: widget.onQuitRequested, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/foldable/foldable_workout_left_pane.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon( Icons.arrow_back_rounded, color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800, size: 22, ), onPressed: onQuitRequested, splashRadius:",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/mixins/workout_ui_builders_mixin.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, size: 20, color: textPrimary), onPressed: handleBack, padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 36, m",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/program_detail_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: _back, behavior: HitTestBehavior.opaque, child: const Icon( Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.textPrimary, ), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/exercise_info_sheet.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( onPressed: () { HapticFeedback.selectionClick(); Navigator.pop(context); }, icon: Icon( Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 20, ), )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/exercise_options_sheet.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( onPressed: () { HapticFeedback.selectionClick(); setState(() => _showProgressionPicker = false); }, icon: Icon( Icons.arrow_back_ios_new_rounded, color: textP",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/stretch_controller.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: textPrimary), onPressed: controller.skipAll, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/stretch_phase_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: textPrimary), onPressed: widget.onSkipAll, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/warmup_controller.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: textPrimary), onPressed: onQuit, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/warmup_phase_screen.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: Icon(Icons.arrow_back, color: textPrimary), onPressed: widget.onQuitRequested, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/widgets/workout_top_bar_v2.dart",
+      "rule": "raw-icon-button",
+      "snippet": "( icon: showBackButton ? Icons.arrow_back_rounded : Icons.arrow_back_rounded, onTap: showBackButton ? (onBackTap ?? onCloseTap) : onCloseTap, isDark: isDark, )",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_detail_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () => context.canPop() ? context.pop() : context.go('/workouts'), child: Container( height: 44, width: 44, decoration: BoxDecoration( color: isDark ? c",
+      "count": 1
+    },
+    {
+      "file": "lib/screens/workout/workout_detail_screen.dart",
+      "rule": "bare-icon-tap",
+      "snippet": "( onTap: () { HapticService.light(); if (context.canPop()) context.pop(); }, child: Container( height: 44, width: 44, decoration: BoxDecoration( color: isDark ?",
+      "count": 1
+    }
+  ]
+}

@@ -443,6 +443,15 @@ class _SkipWarningToggleState extends State<_SkipWarningToggle> {
                   AppLocalizations.of(context).warmupSettingsWarnBeforeFinishingWith,
                   style: TextStyle(fontSize: 12, color: textMuted),
                 ),
+                // Same underlying setting as Workout Settings → Live
+                // Coaching's Incomplete Exercise Warning (both read/write
+                // 'skip_incomplete_warning_dismissed') — called out so it
+                // doesn't look like a second, possibly-conflicting control
+                // (E2E row 91).
+                Text(
+                  'Also in Workout Settings',
+                  style: TextStyle(fontSize: 11, color: textMuted.withValues(alpha: 0.7)),
+                ),
               ],
             ),
           ),

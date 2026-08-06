@@ -146,29 +146,34 @@ def infer_difficulty(name: str, category: str, description: str = "") -> str:
 
 
 def determine_phase(week_num: int, total_weeks: int, category: str = "") -> str:
-    """Determine training phase based on week number and total duration."""
+    """Determine training phase based on week number and total duration.
+
+    Plain language only — written verbatim to `program_variant_weeks.phase`
+    and rendered on the Schedule tab. Keep in sync with the identical
+    function in generate_programs.py.
+    """
     if total_weeks <= 1:
         return "Single Session"
     progress = week_num / total_weeks
     if "hyrox" in category.lower():
         if progress <= 0.4:
-            return "Blueprint (Aerobic Foundation)"
+            return "Building Your Aerobic Base"
         elif progress <= 0.75:
-            return "Build (Race-Specific)"
+            return "Race-Specific Training"
         elif progress <= 0.95:
-            return "Race (Peak Performance)"
+            return "Peak Race Performance"
         else:
-            return "Taper/Race Week"
+            return "Tapering for Race Week"
     if progress <= 0.25:
-        return "Foundation (Base Building)"
+        return "Building Your Foundation"
     elif progress <= 0.5:
-        return "Build (Progressive Overload)"
+        return "Building Strength and Volume"
     elif progress <= 0.75:
-        return "Peak (Intensification)"
+        return "Peak Effort"
     elif progress <= 0.9:
-        return "Taper (Deload)"
+        return "Easing Off to Recover"
     else:
-        return "Test/Maintenance"
+        return "Testing Your Progress"
 
 
 def determine_goals(name: str, category: str, description: str = "") -> list:

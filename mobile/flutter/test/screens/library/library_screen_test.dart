@@ -10,16 +10,22 @@ import '../../helpers/fake_supabase.dart';
 /// (unoverridden) walks `gymProfilesProvider` → Supabase. Widget tests have no
 /// initialized Supabase instance, so pin the profile to "none" — the ranking
 /// provider then returns its beginner-friendly defaults with no network reach.
-Widget _app({ThemeData? theme}) {
+Widget _app({
+  ThemeData? theme,
+  String? initialCategory,
+  String? initialSearch,
+}) {
   return ProviderScope(
     overrides: [
       activeGymProfileProvider.overrideWith((ref) => null),
+      if (initialSearch != null)
+        exerciseSearchProvider.overrideWith((ref) => initialSearch),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       theme: theme,
-      home: const LibraryScreen(),
+      home: LibraryScreen(initialCategory: initialCategory),
     ),
   );
 }
@@ -96,5 +102,74 @@ void main() {
       expect(find.text('LIBRARY'), findsOneWidget);
       expect(find.text('EXERCISES'), findsOneWidget);
     });
+  });
+
+  group('LibraryScreen — search field (E2E row 96)', () {
+    testWidgets(
+      'clear (X) icon appears only once there is text, and clears the field',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(_app());
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.close_rounded), findsNothing);
+
+        await tester.enterText(find.byType(TextField), 'Hay Bale');
+        await tester.pump();
+
+        expect(find.byIcon(Icons.close_rounded), findsOneWidget);
+
+        await tester.tap(find.byIcon(Icons.close_rounded));
+        await tester.pump();
+
+        expect(find.byIcon(Icons.close_rounded), findsNothing);
+        final field = tester.widget<TextField>(find.byType(TextField));
+        expect(field.controller!.text, isEmpty);
+      },
+    );
+
+    testWidgets(
+      'a Discover category deep-link clears a leftover search query instead '
+      'of silently ANDing it with the new filter',
+      (WidgetTester tester) async {
+        final container = ProviderContainer(overrides: [
+          activeGymProfileProvider.overrideWith((ref) => null),
+          exerciseSearchProvider.overrideWith((ref) => 'Hay Bale'),
+        ]);
+        addTearDown(container.dispose);
+
+        expect(container.read(exerciseSearchProvider), 'Hay Bale');
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: const LibraryScreen(initialCategory: 'strength'),
+            ),
+          ),
+        );
+        // The deep-link fires from a post-frame callback in initState.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(
+          container.read(exerciseSearchProvider),
+          isEmpty,
+          reason: 'switching to a category filter must drop the stale '
+              'search text, not silently AND it with the new filter',
+        );
+        expect(
+          container.read(selectedCategoriesProvider),
+          {'strength'},
+        );
+
+        // Tear the screen down so the in-flight network-provider timers
+        // (filter-options, category-exercises — this harness has no live
+        // backend) are cancelled before the binding's end-of-test check.
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      },
+    );
   });
 }

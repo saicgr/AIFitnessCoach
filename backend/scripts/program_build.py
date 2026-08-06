@@ -145,13 +145,25 @@ def _rewrite_minutes_text(text: Any, new_seconds: int) -> Any:
         if n:
             return new_text
 
-    new_minutes = round(new_seconds / 60, 1)
-    new_minutes_str = str(int(new_minutes)) if new_minutes == int(new_minutes) else str(new_minutes)
+    # Row 110, 2026-08: `round(new_seconds / 60, 1)` produced decimal
+    # minutes ("0.5 min easy", "1.5 min hard") whenever a scaled duration
+    # (Easy/Hard intensity variants apply a 0.85x/1.15x factor) wasn't a
+    # clean multiple of 60 — nobody reads a rest interval as a fractional
+    # minute. Use whole minutes when the value divides evenly; otherwise
+    # swap the UNIT to seconds rather than forcing a fraction.
+    if new_seconds % 60 == 0:
+        new_minutes_str = str(new_seconds // 60)
 
-    def _sub_min(m: "re.Match") -> str:
-        return f"{new_minutes_str}{m.group(2)}"
+        def _sub_min(m: "re.Match") -> str:
+            return f"{new_minutes_str}{m.group(2)}"
 
-    new_text, n = _MINUTES_TEXT_RE.subn(_sub_min, text, count=1)
+        new_text, n = _MINUTES_TEXT_RE.subn(_sub_min, text, count=1)
+        return new_text if n else text
+
+    def _sub_min_to_sec(m: "re.Match") -> str:
+        return f"{new_seconds} sec"
+
+    new_text, n = _MINUTES_TEXT_RE.subn(_sub_min_to_sec, text, count=1)
     return new_text if n else text
 
 

@@ -200,6 +200,17 @@ class _TodayBreakdown extends StatelessWidget {
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Row #117: `DailyHydrationSummary` has no dedicated `coffee_ml` bucket —
+    // the backend folds Coffee logs into `other_ml` — but a Coffee tile is
+    // offered right below in OTHER DRINKS, so it must show up here too.
+    // Derive it client-side from the raw `entries` (already fetched for
+    // TODAY'S LOG) and subtract it back out of `otherMl` so the five rows
+    // still sum to the real total instead of double-counting.
+    final coffeeMl = summary.entries
+        .where((e) => DrinkType.fromValue(e.drinkType) == DrinkType.coffee)
+        .fold<int>(0, (sum, e) => sum + e.amountMl);
+    final adjustedOtherMl = (summary.otherMl - coffeeMl).clamp(0, summary.otherMl);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -239,10 +250,19 @@ class _TodayBreakdown extends StatelessWidget {
             unit: unit,
             isDark: isDark,
           ),
+          if (coffeeMl > 0)
+            _BreakdownRow(
+              emoji: DrinkType.coffee.emoji,
+              label: DrinkType.coffee.label,
+              value: coffeeMl,
+              total: summary.totalMl,
+              unit: unit,
+              isDark: isDark,
+            ),
           _BreakdownRow(
             emoji: '🥛',
             label: AppLocalizations.of(context).hydrationTabPartOther,
-            value: summary.otherMl,
+            value: adjustedOtherMl,
             total: summary.totalMl,
             unit: unit,
             isDark: isDark,
@@ -355,8 +375,11 @@ class _LogEntry extends StatelessWidget {
       label: 'Workout',
     ),
     HydrationSource.nutrition: (
+      // Row #184: "Fuel" was a stale name for this tab from before it became
+      // the standalone Hydration screen — the live surface (and this
+      // screen's own kicker) is "Nutrition".
       icon: Icons.restaurant_outlined,
-      label: 'Fuel',
+      label: 'Nutrition',
     ),
     HydrationSource.chat: (icon: Icons.smart_toy_outlined, label: 'Chat'),
     HydrationSource.unknown: (icon: Icons.help_outline, label: 'Other'),
@@ -365,8 +388,14 @@ class _LogEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final type = DrinkType.fromValue(log.drinkType);
-    final time = log.loggedAt != null
-        ? '${log.loggedAt!.hour.toString().padLeft(2, '0')}:${log.loggedAt!.minute.toString().padLeft(2, '0')}'
+    // Row #116: `loggedAt` comes straight off the PostgREST `…+00:00` string
+    // (`DateTime.parse` → `isUtc == true`), so this MUST convert to local
+    // before reading `.hour`/`.minute` or the row shows the UTC clock — every
+    // sibling surface in this app already does this (`.toLocal()` is a no-op
+    // on an already-local DateTime, so it's safe either way).
+    final localLoggedAt = log.loggedAt?.toLocal();
+    final time = localLoggedAt != null
+        ? '${localLoggedAt.hour.toString().padLeft(2, '0')}:${localLoggedAt.minute.toString().padLeft(2, '0')}'
         : '';
 
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;

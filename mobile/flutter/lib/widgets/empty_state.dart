@@ -12,6 +12,17 @@ class EmptyState extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final Color? iconColor;
+
+  /// Render the generic `empty_state.json` Lottie INSTEAD of [icon].
+  ///
+  /// Defaults to **false**. It used to default to true, which meant [icon] —
+  /// a required parameter every caller fills in deliberately (`search_off`,
+  /// `history`, `fitness_center`, `wifi_off`) — was silently discarded and
+  /// every empty state in the app rendered the same anonymous box-and-question-
+  /// mark animation. Tinted with the accent through a wildcard colour filter it
+  /// collapsed to a flat orange silhouette that reads as a broken asset rather
+  /// than an empty state (E2E row 97,
+  /// docs/qa/screenshots/2026-08-05/ui_library_28_icon.png).
   final bool useLottie;
 
   const EmptyState({
@@ -22,7 +33,7 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.iconColor,
-    this.useLottie = true,
+    this.useLottie = false,
   });
 
   // Pre-defined empty states for common scenarios

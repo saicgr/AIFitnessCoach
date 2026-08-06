@@ -38,16 +38,34 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
 
   Future<void> _startRecording() async {
     final status = await Permission.microphone.request();
-    if (!status.isGranted) return;
+    if (!status.isGranted) {
+      // Row 147 (E2E) — a denied/restricted permission used to leave this
+      // exactly as silent as a plain tap: no toast, no state change, nothing
+      // on screen. Say so, and only once per press (not spammed by a
+      // long-press repeatedly re-triggering).
+      _showHint("Zealova needs microphone access to record a voice message. "
+          'Enable it in Settings.');
+      return;
+    }
 
-    final dir = Directory.systemTemp;
-    final path =
-        '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
-    await _recorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc),
-      path: path,
-    );
+    // Row 147 (E2E) — `_recorder.start()` had no error handling: a recorder
+    // failure (no audio input, device in use elsewhere) left `_isRecording`
+    // false and showed the user nothing — a long-press that visibly did
+    // nothing, identical to the permission-denied no-op it was already
+    // confused with.
+    try {
+      final dir = Directory.systemTemp;
+      final path =
+          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _recorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc),
+        path: path,
+      );
+    } catch (e) {
+      debugPrint('❌ [VoiceRecorder] start() failed: $e');
+      _showHint("Couldn't start recording. Please try again.");
+      return;
+    }
 
     setState(() {
       _isRecording = true;
@@ -58,6 +76,14 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() => _elapsedSeconds++);
     });
+  }
+
+  void _showHint(String message) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _stopRecording() async {
@@ -85,44 +111,65 @@ class _VoiceRecorderButtonState extends State<VoiceRecorderButton> {
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 
+  /// Row 147 (E2E) — a plain tap on this push-to-talk button was a complete
+  /// no-op: no recording UI, no tooltip, no hint, nothing changed on screen,
+  /// and it sits in the exact slot the send button occupies once text is
+  /// typed — so a tap (the gesture users actually try first) reads as
+  /// broken. This can't start a recording from a tap (that's what the
+  /// long-press IS), but it must say why nothing happened.
+  void _handlePlainTap() {
+    if (_isRecording) return;
+    _showHint('Press and hold to record a voice message');
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
 
-    return GestureDetector(
-      onLongPressStart: (_) => _startRecording(),
-      onLongPressEnd: (_) => _stopRecording(),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: _isRecording ? AppColors.red.withValues(alpha: 0.15) : colors.glassSurface,  // accent-allowlist: recording indicator
-          shape: BoxShape.circle,
+    return Tooltip(
+      message: 'Hold to record a voice message',
+      child: GestureDetector(
+        onTap: _handlePlainTap,
+        onLongPressStart: (_) => _startRecording(),
+        onLongPressEnd: (_) => _stopRecording(),
+        child: Semantics(
+          button: true,
+          label: _isRecording
+              ? 'Recording, ${_formatSeconds(_elapsedSeconds)}. Release to send.'
+              : 'Record a voice message. Press and hold.',
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _isRecording ? AppColors.red.withValues(alpha: 0.15) : colors.glassSurface,  // accent-allowlist: recording indicator
+              shape: BoxShape.circle,
+            ),
+            child: _isRecording
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          color: AppColors.red,  // accent-allowlist: recording indicator
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _formatSeconds(_elapsedSeconds),
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  )
+                : Icon(Icons.mic, color: colors.textSecondary, size: 22),
+          ),
         ),
-        child: _isRecording
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: AppColors.red,  // accent-allowlist: recording indicator
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatSeconds(_elapsedSeconds),
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              )
-            : Icon(Icons.mic, color: colors.textSecondary, size: 22),
       ),
     );
   }

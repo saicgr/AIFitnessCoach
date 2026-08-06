@@ -849,7 +849,21 @@ class _TimelineEvent {
 }
 
 /// Fixed width of the left time gutter — keeps every spine vertically aligned.
-const double _kGutterWidth = 46;
+///
+/// Was 46 (E2E row 140): with the 8pt right padding that left only 38pt for
+/// the label text, which clipped the WORST-case gutter string —
+/// `_fmtTimeShort`'s 7-character "12:30pm" — right at the am/pm marker
+/// ("1:08…", "9:46…"), leaving every event's time ambiguous between AM and
+/// PM. 60 gives the 2 extra am/pm characters real room at the 10.5pt/w700
+/// style actually used. (Widget-test-measured pixel verification isn't
+/// reliable here — `flutter test` falls back to the Ahem placeholder font
+/// for any family not explicitly loaded in `flutter_test_config.dart`,
+/// which renders every glyph as a fixed fontSize-wide square and so
+/// dramatically overstates real proportional-font width — so this value is
+/// a reasoned estimate, not test-verified to the pixel; see
+/// `test/screens/home/widgets/timeline_gutter_width_test.dart` for the
+/// regression-value guard this ships with instead.)
+const double _kGutterWidth = 60;
 
 class _TimelineRow extends StatelessWidget {
   final _TimelineEvent event;

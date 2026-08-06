@@ -25,7 +25,7 @@
 /// neither of which normal onboarding triggers. In practice it sat unchecked
 /// for most users, stalling the ring at 5/6 forever.
 ///
-/// At 100% the card collapses to a one-line trophy ("All N done · +XP") for
+/// At 100% the card collapses to a one-line trophy ("All N done") for
 /// [_kTrophyWindowDays] days (persisted as a completion timestamp, so the
 /// window survives app restarts), then disappears from Home for good.
 library;
@@ -356,7 +356,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       _Item(
         icon: Icons.flag_rounded,
         label: 'Set your goal',
-        xp: 25,
         done: goalDone,
         route: '/profile',
         claimKey: 'first_goal_set',
@@ -364,7 +363,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       _Item(
         icon: Icons.auto_awesome,
         label: 'Generate your first workout plan',
-        xp: 50,
         done: planDone,
         route: '/workouts',
         claimKey: 'first_plan_generated',
@@ -372,7 +370,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       _Item(
         icon: Icons.fitness_center,
         label: 'Complete your first workout',
-        xp: 150,
         done: workoutDone,
         route: '/workouts',
         claimKey: 'first_workout',
@@ -380,7 +377,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       _Item(
         icon: Icons.restaurant_rounded,
         label: 'Log your first meal',
-        xp: 50,
         done: mealDone,
         route: '/nutrition',
         claimKey: null, // awarded by the meal-logging flow
@@ -388,7 +384,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
       _Item(
         icon: Icons.chat_bubble_rounded,
         label: 'Chat with your AI coach',
-        xp: 15,
         done: chatDone,
         route: '/chat',
         claimKey: null, // awarded by the chat flow
@@ -405,7 +400,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
     // orange border means something is waiting on you; a finished challenge
     // is information, not a to-do).
     if (_done && !_justCompleted) {
-      final totalXp = items.fold<int>(0, (sum, i) => sum + i.xp);
       return Container(
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
         padding: const EdgeInsets.all(14),
@@ -414,7 +408,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: c.cardBorder),
         ),
-        child: _buildTrophy(c, items.length, totalXp),
+        child: _buildTrophy(c, items.length),
       );
     }
 
@@ -443,11 +437,17 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
   }
 
   /// One-line trophy for a completed challenge — ring pinned at 100%, kicker,
-  /// and the XP total earned across every item. Tapping the row opens the
-  /// reward crate (same destination as the completion snackbar); the X
-  /// dismisses the card for good (see [_dismissTrophy]) rather than waiting
-  /// out the [_kTrophyWindowDays] auto-expiry.
-  Widget _buildTrophy(ThemeColors c, int total, int totalXp) {
+  /// Tapping the row opens the reward crate (same destination as the
+  /// completion snackbar); the X dismisses the card for good (see
+  /// [_dismissTrophy]) rather than waiting out the [_kTrophyWindowDays]
+  /// auto-expiry.
+  ///
+  /// Deliberately does NOT print a specific "+N XP" total: the actual XP
+  /// credited per item is server-gated (diminishing/first-time-bonus rules
+  /// this card has no visibility into) and does not match any client-side
+  /// constant — see E2E row 50. Never fabricate that number here again;
+  /// if a real earned-total is wanted, it must come from the server.
+  Widget _buildTrophy(ThemeColors c, int total) {
     return Row(
       children: [
         Expanded(
@@ -477,7 +477,7 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'All $total done · +$totalXp XP',
+                        'All $total done',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -587,9 +587,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
                 ),
               ),
             ),
-            if (item.xp > 0)
-              _XpPill(xp: item.xp, done: item.done, accent: c.accent,
-                  muted: c.textMuted, track: c.cardBorder),
             if (!item.done) ...[
               const SizedBox(width: 4),
               Icon(Icons.chevron_right, size: 16, color: c.textMuted),
@@ -623,7 +620,10 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
         ),
         const SizedBox(height: 6),
         Text(
-          'You earned +100 XP and a reward crate. Nice work getting set up.',
+          // Was hardcoded "+100 XP" — the real finish-bonus transaction is
+          // server-gated and did not match that constant (E2E row 50); never
+          // print a specific figure here without a real server value.
+          'You earned a reward crate. Nice work getting set up.',
           style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w500, color: c.textMuted),
         ),
@@ -659,7 +659,6 @@ class _SetupChecklistCardState extends ConsumerState<SetupChecklistCard> {
 class _Item {
   final IconData icon;
   final String label;
-  final int xp;
   final bool done;
   final String route;
 
@@ -670,7 +669,6 @@ class _Item {
   const _Item({
     required this.icon,
     required this.label,
-    required this.xp,
     required this.done,
     required this.route,
     required this.claimKey,
@@ -722,36 +720,3 @@ class _ProgressRing extends StatelessWidget {
   }
 }
 
-/// "+150" style XP reward pill; filled-accent when done.
-class _XpPill extends StatelessWidget {
-  final int xp;
-  final bool done;
-  final Color accent;
-  final Color muted;
-  final Color track;
-  const _XpPill(
-      {required this.xp,
-      required this.done,
-      required this.accent,
-      required this.muted,
-      required this.track});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: done ? accent.withValues(alpha: 0.18) : track.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        '+$xp XP',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: done ? accent : muted,
-        ),
-      ),
-    );
-  }
-}

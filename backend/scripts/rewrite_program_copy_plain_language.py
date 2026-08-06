@@ -59,6 +59,29 @@ SESSION_PROSE_FIELDS = (
 # Muscle Growth" rather than "Back & Shoulders Muscle growth".
 SESSION_TITLE_FIELDS = ("workout_name",)
 
+# Exact-match rewrite for `program_variant_weeks.phase` (row 35, 2026-08).
+# These are precisely the labels determine_phase()/​_derive_phase() used to
+# emit (scripts/generate_programs.py, scripts/program_sql_helper.py,
+# services/program_duration_service.py — since fixed to plain language
+# directly). Existing rows generated before that fix still carry the old
+# jargon, so this maps them onto the SAME new labels those functions now
+# produce, keeping old and newly-generated programs consistent. Case-sensitive
+# exact match only — anything not listed here falls through to the
+# word-level `rewrite()` below (covers the long tail of one-off phase strings
+# like "Volume Accumulation" via the `_PHRASES` jargon-word rules).
+PHASE_LABEL_MAP = {
+    "Foundation (Base Building)": "Building Your Foundation",
+    "Build (Progressive Overload)": "Building Strength and Volume",
+    "Peak (Intensification)": "Peak Effort",
+    "Taper (Deload)": "Easing Off to Recover",
+    "Test/Maintenance": "Testing Your Progress",
+    "Deload": "Recovery Week",
+    "Blueprint (Aerobic Foundation)": "Building Your Aerobic Base",
+    "Build (Race-Specific)": "Race-Specific Training",
+    "Race (Peak Performance)": "Peak Race Performance",
+    "Taper/Race Week": "Tapering for Race Week",
+}
+
 
 # ---------------------------------------------------------------------------
 # Atom 1 — RPE n[-m]  ->  effort n[-m] out of 10
@@ -80,6 +103,53 @@ def _rpe(m: re.Match) -> str:
     lo, hi = m.group(1), m.group(2)
     span = f"{lo}-{hi}" if hi else lo
     return f"effort {span} out of 10"
+
+
+# ---------------------------------------------------------------------------
+# Atom 1b — RIR ("reps in reserve") notation -> plain language (row 103/35).
+# Real catalog forms (2026-08 sweep of `weight_guidance`): "RIR 1-2
+# (Bodyweight)", "Bodyweight (RIR 1-2)", "RIR 0 (failure)", "Effort 9 out of
+# 10 (1-2 RIR)" (number BEFORE "RIR" too), plus the spelled-out "leave 1-2
+# reps in reserve" / "should feel 2 reps in reserve" / "plenty of reps in
+# reserve". All of these collapse to ONE plain noun phrase — "N reps in the
+# tank" — kept as a noun phrase (not a full sentence rewrite) so it drops
+# into any of the surrounding grammar without contorting it, same discipline
+# _rm_noun() uses below. Ordered most-specific first.
+# ---------------------------------------------------------------------------
+_RIR_PAREN = re.compile(
+    r"\(RIR\s*(\d+(?:\s*[-–—]\s*\d+)?)\)", re.IGNORECASE
+)
+# Reversed order — "(1-2 RIR)".
+_NUM_RIR_PAREN = re.compile(
+    r"\((\d+(?:\s*[-–—]\s*\d+)?)\s*RIR\)", re.IGNORECASE
+)
+_RIR_BARE_NUM = re.compile(
+    r"\bRIR\s*(\d+(?:\s*[-–—]\s*\d+)?)\b", re.IGNORECASE
+)
+_NUM_RIR_BARE = re.compile(
+    r"\b(\d+(?:\s*[-–—]\s*\d+)?)\s*RIR\b", re.IGNORECASE
+)
+# "leave 1-2 reps in reserve" / "should feel 2 reps in reserve" / "aim for
+# 0-1 reps in reserve" — the verb phrase before the number varies, so only the
+# number-and-noun tail is captured and re-composed.
+_REPS_IN_RESERVE_NUM = re.compile(
+    r"\b(\d+(?:\s*[-–—]\s*\d+)?)\s+reps?\s+in\s+reserve\b", re.IGNORECASE
+)
+_REPS_IN_RESERVE_BARE = re.compile(r"\breps?\s+in\s+reserve\b", re.IGNORECASE)
+_RIR_BARE = re.compile(r"\bRIR\b")
+
+
+def _reserve_span(span: str) -> str:
+    return re.sub(r"\s*[-–—]\s*", "-", span.strip())
+
+
+def _rir_noun(span: str) -> str:
+    n = _reserve_span(span)
+    return f"{n} rep{'' if n == '1' else 's'} in the tank"
+
+
+def _reps_in_reserve_num(m: re.Match) -> str:
+    return _rir_noun(m.group(1))
 
 
 # ---------------------------------------------------------------------------
@@ -166,6 +236,29 @@ _PHRASES = [
     (re.compile(r"\bcontractile\b", re.I), "muscle-working"),
     (re.compile(r"\bosteogenic\b", re.I), "bone-strengthening"),
     (re.compile(r"\bCNS\b"), "nervous system"),
+    # 2026-08 sweep (row 35/102) — phase-label + focus-line jargon that shipped
+    # to thousands of program_variant_weeks rows while the old JARGON list
+    # reported clean. Compound phrases before the single words they contain.
+    (re.compile(r"\bneuromuscular recruitment\b", re.I), "muscle engagement"),
+    (re.compile(r"\bmuscle recruitment\b", re.I), "muscle engagement"),
+    (re.compile(r"\bdeep core recruitment\b", re.I), "deep core engagement"),
+    (re.compile(r"\bneuromuscular\b", re.I), "muscle-and-nerve"),
+    (re.compile(r"\brecruitment\b", re.I), "engagement"),
+    (re.compile(r"\bvolume accumulation\b", re.I), "training volume buildup"),
+    (re.compile(r"\baccumulation\b", re.I), "buildup"),
+    (re.compile(r"\bintensification\b", re.I), "harder effort"),
+    (re.compile(r"\bdeloaded\b", re.I), "eased off the load"),
+    (re.compile(r"\bdeloading\b", re.I), "easing off the load"),
+    (re.compile(r"\bto deload\b", re.I), "to ease off the load"),
+    (re.compile(r"\bdeload\b", re.I), "recovery week"),
+    (re.compile(r"\bprogressive overload\b", re.I), "gradually adding weight"),
+    # Authoring scaffolding that leaked into user-facing focus text — Gemini
+    # referencing its own multi-phase generation structure instead of
+    # describing the workout (row 102: "...in Phase 2"). Translated, not
+    # deleted, per repo policy — "in the next phase" reads naturally in every
+    # sentence this appeared in ("...to prepare for increased intensity in
+    # the next phase").
+    (re.compile(r"\bin Phase \d+\b", re.I), "in the next phase"),
 ]
 
 # ---------------------------------------------------------------------------
@@ -180,6 +273,15 @@ _SET_REP_SHORTHAND = re.compile(
 _SECONDS = re.compile(r"\b(\d+)s\b")
 _BW = re.compile(r"%\s*BW\b")
 _PER_BW = re.compile(r"\bBW\b(?!\s*[)\]])")
+# Row 110, 2026-08: interval descriptions like "3 rounds: 1 min hard, 0.5 min
+# easy" — a decimal minute is not how anyone reads a rest interval. Convert
+# to whole seconds instead ("0.5 min" -> "30 sec", "1.5 min" -> "90 sec").
+_FRACTIONAL_MIN = re.compile(r"\b(\d+\.\d+)\s*(?:minutes?|min)\b", re.IGNORECASE)
+
+
+def _fractional_min_to_sec(m: "re.Match") -> str:
+    seconds = round(float(m.group(1)) * 60)
+    return f"{seconds} sec"
 
 
 def _preserve_case(original: str, replacement: str) -> str:
@@ -225,6 +327,20 @@ def rewrite(text: str, *, title: bool = False) -> str:
 
     out = _RPE.sub(_rpe, text)
     out = _RPE_BARE.sub(lambda m: _shape(m, "effort level"), out)
+    # RIR ("reps in reserve") — most-specific forms first, same discipline
+    # as RPE above: the numbered forms must run before the bare noun phrase
+    # they contain, or "leave 1-2 reps in reserve" would half-translate then
+    # get re-touched by the bare rule. Parenthetical (both orders) before
+    # bare, since "(RIR 1-2)" and "(1-2 RIR)" both contain a bare-number form.
+    out = _RIR_PAREN.sub(lambda m: f"({_rir_noun(m.group(1))})", out)
+    out = _NUM_RIR_PAREN.sub(lambda m: f"({_rir_noun(m.group(1))})", out)
+    out = _REPS_IN_RESERVE_NUM.sub(_reps_in_reserve_num, out)
+    out = _RIR_BARE_NUM.sub(lambda m: _shape(m, _rir_noun(m.group(1))), out)
+    out = _NUM_RIR_BARE.sub(lambda m: _shape(m, _rir_noun(m.group(1))), out)
+    out = _REPS_IN_RESERVE_BARE.sub(
+        lambda m: _shape(m, "reps in the tank"), out
+    )
+    out = _RIR_BARE.sub(lambda m: _shape(m, "reps in the tank"), out)
     out = _RM_PCT_LIFT.sub(_rm_pct_lift, out)
     out = _RM_PCT.sub(_rm_pct, out)
     out = _RM_PLAIN.sub(lambda m: _shape(m, _rm_noun(m.group(1))), out)
@@ -242,6 +358,7 @@ def rewrite(text: str, *, title: bool = False) -> str:
     )
     if re.search(r"(^\s*\d+s\b|\b\d+s\s*/\s*\d+s\b|\b\d+s\b)", out):
         out = _SECONDS.sub(lambda m: f"{m.group(1)} seconds", out)
+    out = _FRACTIONAL_MIN.sub(_fractional_min_to_sec, out)
     out = _BW.sub("% of your body weight", out)
     out = _PER_BW.sub("body weight", out)
     out = re.sub(r"\s{2,}", " ", out).strip()
@@ -323,7 +440,17 @@ def main() -> int:
     for r in cur:
         focus, phase = r["focus"], r["phase"]
         new_focus = rewrite(focus) if isinstance(focus, str) else focus
-        new_phase = rewrite(phase) if isinstance(phase, str) else phase
+        # `phase` is a short label, not a sentence — exact-match it against
+        # the canonical labels determine_phase() now produces first (keeps old
+        # rows byte-identical to newly generated ones), then fall through to
+        # the word-level rewrite (title-cased, since it's a heading) for any
+        # phase string not in that fixed set.
+        if isinstance(phase, str) and phase in PHASE_LABEL_MAP:
+            new_phase = PHASE_LABEL_MAP[phase]
+        elif isinstance(phase, str):
+            new_phase = rewrite(phase, title=True)
+        else:
+            new_phase = phase
         workouts = r["workouts"]
         new_workouts, changed = rewrite_workouts(workouts)
         col_changed = (new_focus != focus) + (new_phase != phase)
@@ -334,6 +461,8 @@ def main() -> int:
         if len(samples) < args.samples:
             if new_focus != focus:
                 samples.append(("focus", focus, new_focus))
+            if new_phase != phase:
+                samples.append(("phase", phase, new_phase))
         backups.append((
             r["id"], r["variant_id"], r["week_number"], focus, phase,
             json.dumps(workouts) if workouts is not None else None,

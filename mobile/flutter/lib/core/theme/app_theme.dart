@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
+import '../constants/chrome_constants.dart';
 import 'seeded_scheme.dart';
 
 /// App theme configuration - Dark OLED optimized
@@ -317,8 +318,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
         ),
         behavior: SnackBarBehavior.floating,
-        // Clear the floating nav bar (52px + bottom safe area + gap)
-        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 80, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
+        // Clear the floating nav bar AND the quick-log FAB that floats above
+        // it. This was the literal `80`, which put the toast band straight
+        // across the FAB — see [kSnackBarBottomInset] for why that made UNDO
+        // both unreadable and untappable (E2E row 125).
+        insetPadding: const EdgeInsets.only(left: 16, right: 16, bottom: kSnackBarBottomInset, top: 8), // rtl-keep: SnackBarThemeData.insetPadding requires EdgeInsets
       ),
 
       // Dialog
@@ -331,6 +335,38 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
+        ),
+      ),
+
+      // Date / Time pickers
+      //
+      // Without these the Material pickers are the ONLY app surfaces that
+      // paint themselves from the seeded tonal palette instead of the brand
+      // tokens: `DatePickerThemeData.backgroundColor` defaults to
+      // `colorScheme.surfaceContainerHigh`, and `colorScheme.surface` (the
+      // only surface role this theme overrides) is not consulted. With an
+      // orange seed that tonal role resolves to a brown/tan panel — an
+      // obviously off-brand dialog dropped into a black-and-accent app.
+      //
+      // Fixing it here rather than at the call sites is the point: 35 call
+      // sites across the app open `showDatePicker`/`showTimePicker`, only 8 of
+      // which hand-rolled their own `builder: (ctx, child) => Theme(...)`
+      // wrapper. A theme entry covers all of them, including every future one.
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: AppColors.elevated,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: AppColors.elevated,
+        headerForegroundColor: AppColors.textSecondary,
+        dividerColor: AppColors.cardBorder,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: AppColors.elevated,
+        dialBackgroundColor: AppColors.glassSurface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
 

@@ -61,6 +61,66 @@ ProgramVariantOption resolveProgramVariant(
   return variants.first;
 }
 
+/// Resolve the variant to land on when the user switches INTENSITY while
+/// keeping [weeks] and [sessions] as close as possible to the current
+/// selection.
+///
+/// Priority: (1) exact match on weeks + sessions + intensity; (2) same weeks
+/// + intensity, nearest sessions; (3) same intensity, nearest weeks (then
+/// nearest sessions); (4) the first variant. Never returns null while
+/// [variants] is non-empty.
+///
+/// Picking "the first variant in list order that matches the intensity" (the
+/// previous behaviour) silently dropped the user's PER WEEK / DURATION
+/// selection even when an exact match existed elsewhere in the list, because
+/// list order has no relationship to how close a candidate is to the current
+/// selection.
+ProgramVariantOption _resolveIntensityChange(
+  List<ProgramVariantOption> variants,
+  String intensity,
+  int weeks,
+  int sessions,
+) {
+  // 1. Exact match.
+  for (final v in variants) {
+    if (v.weeks == weeks && v.sessionsPerWeek == sessions && v.intensity == intensity) {
+      return v;
+    }
+  }
+
+  // 2. Same weeks + intensity, nearest sessions.
+  final sameWeekIntensity = variants
+      .where((v) => v.weeks == weeks && v.intensity == intensity)
+      .toList();
+  if (sameWeekIntensity.isNotEmpty) {
+    sameWeekIntensity.sort((a, b) {
+      final da = (a.sessionsPerWeek - sessions).abs();
+      final db = (b.sessionsPerWeek - sessions).abs();
+      if (da != db) return da.compareTo(db);
+      return a.sessionsPerWeek.compareTo(b.sessionsPerWeek);
+    });
+    return sameWeekIntensity.first;
+  }
+
+  // 3. Same intensity anywhere, nearest weeks then nearest sessions.
+  final sameIntensity = variants.where((v) => v.intensity == intensity).toList();
+  if (sameIntensity.isNotEmpty) {
+    sameIntensity.sort((a, b) {
+      final dwa = (a.weeks - weeks).abs();
+      final dwb = (b.weeks - weeks).abs();
+      if (dwa != dwb) return dwa.compareTo(dwb);
+      final dsa = (a.sessionsPerWeek - sessions).abs();
+      final dsb = (b.sessionsPerWeek - sessions).abs();
+      return dsa.compareTo(dsb);
+    });
+    return sameIntensity.first;
+  }
+
+  // 4. First variant (should be unreachable when `intensity` came from the
+  // widget's own distinct-intensities list, but keeps this total).
+  return variants.first;
+}
+
 /// The program's default/recommended variant, or null when single-plan
 /// (`variants.length <= 1`). Prefers `is_default`, then [defaultVariantId],
 /// then the first option.
@@ -245,14 +305,17 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
             onSelect: (intensity) {
               final currentWeeks =
                   selected?.weeks ?? widget.variants.first.weeks;
-              final candidate = widget.variants.firstWhere(
-                (v) => v.intensity == intensity && v.weeks == currentWeeks,
-                orElse: () => widget.variants.firstWhere(
-                  (v) => v.intensity == intensity,
-                  orElse: () => widget.variants.first,
+              final currentSessions =
+                  selected?.sessionsPerWeek ??
+                  widget.variants.first.sessionsPerWeek;
+              widget.onSelect(
+                _resolveIntensityChange(
+                  widget.variants,
+                  intensity,
+                  currentWeeks,
+                  currentSessions,
                 ),
               );
-              widget.onSelect(candidate);
             },
           ),
         ],
@@ -275,7 +338,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
       options: [
         for (final w in weekOptions)
           _PickerOption(
-            label: '$w weeks',
+            label: w == 1 ? '1 week' : '$w weeks',
             isSelected: selected?.weeks == w,
             isRecommended: def?.weeks == w,
             onTap: () => widget.onSelect(

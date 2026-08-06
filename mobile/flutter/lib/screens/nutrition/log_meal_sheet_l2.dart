@@ -587,6 +587,10 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Row #126 — in-sheet confirmation for a Quick-log pill tap. Placed
+          // above the pills row so it's immediately visible without scrolling
+          // the instant a tap resolves.
+          _buildSmartPillConfirmBanner(isDark),
           // WS6 smart quick-log pills + L2 meal-slot prediction hint + strip.
           _buildQuickLogPills(isDark),
           _buildMealSlotPredictionHint(isDark),

@@ -58,7 +58,19 @@ class ZealovaCard extends StatelessWidget {
     if (isHero) {
       card = ClipRRect(
         borderRadius: BorderRadius.circular(radius),
+        // `fit: passthrough` is load-bearing, not decoration. The default
+        // StackFit.loose hands non-positioned children LOOSE constraints, so
+        // the decorated Container above would shrink-wrap to its content's
+        // intrinsic width even when the parent (an Expanded, a full-width
+        // Column) gave this card a TIGHT width — the Stack itself still took
+        // the full width, so the visible surface + border rendered narrower
+        // than the card's real box and its background watermark got sliced at
+        // the card edge. Passthrough forwards the incoming constraints
+        // unchanged: tight stays tight (fills, matching the outlined/flat
+        // variants), loose stays loose (so intrinsic sizing still works in
+        // unbounded-width contexts).
         child: Stack(
+          fit: StackFit.passthrough,
           children: [
             card,
             PositionedDirectional(

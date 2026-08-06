@@ -12,8 +12,10 @@ from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import datetime, timezone
+import json
+import re
 import uuid
 
 from core.logger import get_logger
@@ -84,6 +86,73 @@ def _normalize_category(raw: str) -> str:
     return key if key in valid else "push"
 
 
+def _coerce_difficulty_level(raw: Any) -> str:
+    """Map `exercise_progression_steps.difficulty_level` onto the 4-tier
+    `DifficultyLevel` enum the API contract exposes.
+
+    The column is stored as a finer-grained authoring scale (int 1-10, e.g.
+    step 1 of Push-up Mastery = 1, step 10 = 9) — NOT the enum string. Every
+    one of the 52 rows in the table fails `ProgressionStep` validation as-is,
+    500-ing every skill-chain detail screen (docs/qa/UI_E2E_2026-08-05.md
+    row 9). Bucket the int into the same tiers used everywhere else in the
+    app; pass an already-valid enum string through unchanged (forward
+    compatible if the column is ever migrated to the enum directly); fail
+    open to 'beginner' for anything else rather than 500ing the request.
+    """
+    valid = {"beginner", "intermediate", "advanced", "elite"}
+    if isinstance(raw, str):
+        low = raw.strip().lower()
+        if low in valid:
+            return low
+        try:
+            raw = int(low)
+        except (TypeError, ValueError):
+            return "beginner"
+    try:
+        n = int(raw)
+    except (TypeError, ValueError):
+        return "beginner"
+    if n <= 3:
+        return "beginner"
+    if n <= 6:
+        return "intermediate"
+    if n <= 8:
+        return "advanced"
+    return "elite"
+
+
+def _coerce_str_list(raw: Any) -> List[str]:
+    """Coerce a field the API contract types as `List[str]` but that the DB
+    may hand back as a JSON-encoded list-string (`prerequisites`, e.g.
+    `'["Wall Pushups: 20 reps x 3 sets"]'`) or as one free-text string
+    (`tips`, e.g. a period-separated paragraph with no list structure at
+    all) — both fail `List[str]` validation as raw strings and 500 every
+    skill-chain detail screen (docs/qa/UI_E2E_2026-08-05.md row 9). Never
+    raises; worst case returns the original string as a single-item list.
+    """
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(v) for v in raw if v is not None]
+    if isinstance(raw, str):
+        s = raw.strip()
+        if not s:
+            return []
+        if s.startswith("["):
+            try:
+                parsed = json.loads(s)
+                if isinstance(parsed, list):
+                    return [str(v) for v in parsed if v is not None]
+            except (json.JSONDecodeError, TypeError):
+                pass
+        # Free-text paragraph (tips is stored this way) — split into
+        # sentence-like bullets so multi-tip text renders as a real list
+        # instead of one run-on paragraph.
+        parts = [p.strip() for p in re.split(r"(?<=[.!?])\s+", s) if p.strip()]
+        return parts or [s]
+    return [str(raw)]
+
+
 def _parse_chain(data: dict) -> ProgressionChain:
     """Parse a progression chain from database row."""
     return ProgressionChain(
@@ -116,11 +185,11 @@ def _parse_step(data: dict) -> ProgressionStep:
         chain_id=str(data["chain_id"]),
         exercise_name=data["exercise_name"],
         step_order=data["step_order"],
-        difficulty_level=data["difficulty_level"],
-        prerequisites=data.get("prerequisites", []),
+        difficulty_level=_coerce_difficulty_level(data["difficulty_level"]),
+        prerequisites=_coerce_str_list(data.get("prerequisites")),
         unlock_criteria=unlock_criteria,
-        tips=data.get("tips", []),
-        common_mistakes=data.get("common_mistakes", []),
+        tips=_coerce_str_list(data.get("tips")),
+        common_mistakes=_coerce_str_list(data.get("common_mistakes")),
         video_url=data.get("video_url"),
         image_url=data.get("image_url"),
         description=data.get("description"),
@@ -199,8 +268,37 @@ async def get_all_progression_chains(
             query = query.eq("category", category.value)
 
         result = query.order("category").order("name").execute()
+        chains = result.data or []
 
-        return [_parse_chain(c) for c in result.data]
+        # `exercise_progression_chains` has no `total_steps` column — the
+        # single-chain endpoint below only shows the right count because it
+        # separately joins `exercise_progression_steps`. This list endpoint
+        # never did, so `_parse_chain`'s `data.get("total_steps", 0)` default
+        # always fired and every card here rendered "? steps"
+        # (progression_chain_card.dart's `?? "?"` placeholder), even though
+        # the DB has known counts per chain (docs/qa/UI_E2E_2026-08-05.md
+        # row 57). One grouped-by-chain_id query, not N+1 per chain.
+        chain_ids = [c["id"] for c in chains if c.get("id")]
+        step_counts: dict = {}
+        if chain_ids:
+            try:
+                steps_result = (
+                    db.client.table("exercise_progression_steps")
+                    .select("chain_id")
+                    .in_("chain_id", chain_ids)
+                    .execute()
+                )
+                for s in (steps_result.data or []):
+                    cid = s.get("chain_id")
+                    if cid:
+                        step_counts[cid] = step_counts.get(cid, 0) + 1
+            except Exception as count_err:  # noqa: BLE001
+                logger.warning(f"Failed to compute chain step counts: {count_err}")
+
+        for c in chains:
+            c["total_steps"] = step_counts.get(c.get("id"), 0)
+
+        return [_parse_chain(c) for c in chains]
 
     except Exception as e:
         logger.error(f"Failed to get progression chains: {e}", exc_info=True)

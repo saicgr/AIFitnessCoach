@@ -275,11 +275,27 @@ class TestApplyWarmupTemplate:
         assert response["success"] is True
         assert response["exercises"] == template_row["exercises_json"]
 
-        # The old row was superseded (is_current=False)...
-        update_call = db.client.table.return_value.update.call_args
-        assert update_call.args[0]["is_current"] is False
+        # `.update()` on this table is called TWICE (demote, then re-point —
+        # see the ordering comment in apply_warmup_template). `.call_args`
+        # only reflects the LAST call, so grabbing it alone silently checks
+        # the wrong payload — this exact mistake let the test pass while
+        # asserting on a KeyError-shaped no-op (`is_current` isn't in the
+        # re-point payload at all). Assert on the full call list instead so
+        # a regression to the old single-update ordering is actually caught.
+        update_calls = db.client.table.return_value.update.call_args_list
+        assert len(update_calls) == 2
+        demote_call, repoint_call = update_calls
+        # 1) The old row was superseded (is_current=False) BEFORE the new
+        #    row exists — no `superseded_by` pointer yet.
+        assert demote_call.args[0]["is_current"] is False
+        assert "superseded_by" not in demote_call.args[0]
         # ...and a new row was inserted with the version bumped.
         insert_call = db.client.table.return_value.insert.call_args
         assert insert_call.args[0]["is_current"] is True
         assert insert_call.args[0]["version_number"] == 3
         assert insert_call.args[0]["workout_id"] == "w1"
+        # 2) Only AFTER the new row exists does the old row get pointed at
+        #    it — the self-referencing FK (`warmups_superseded_by_fkey`)
+        #    would reject `superseded_by` naming a row that isn't inserted
+        #    yet, which is exactly how this 500'd in production.
+        assert repoint_call.args[0]["superseded_by"] == insert_call.args[0]["id"]

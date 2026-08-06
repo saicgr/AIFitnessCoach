@@ -1,5 +1,20 @@
 part of 'subscription_management_screen.dart';
 
+/// Subtitle for the current-plan card's non-lifetime, non-trial,
+/// non-paused branch.
+///
+/// Must never say "Active subscription" for a tier that isn't actually
+/// active — `SubscriptionTier.free` reaching this branch means the trial
+/// ended without converting (it is NOT trialing, or `_buildCurrentPlanCard`
+/// would already be on the trial-badge branch instead), so the headline
+/// (`_getTierDisplayName`, which reads "Inactive" here) and this subtitle
+/// must agree.
+String activePlanSubtitle(SubscriptionTier tier) {
+  return tier == SubscriptionTier.free
+      ? 'No active subscription'
+      : 'Active subscription';
+}
+
 /// UI builder methods extracted from _SubscriptionManagementScreenState
 extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenState {
 
@@ -127,7 +142,7 @@ extension _SubscriptionManagementScreenStateUI on _SubscriptionManagementScreenS
                           Text(
                             isLifetime
                                 ? AppLocalizations.of(context).subscriptionManagementScreenAccessNeverExpires
-                                : 'Active subscription',
+                                : activePlanSubtitle(tier),
                             style: TextStyle(
                               fontSize: 14,
                               color: textSecondary,

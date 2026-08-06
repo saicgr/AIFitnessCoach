@@ -371,9 +371,14 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
 
   Future<void> _quickLog(int amountMl) async {
     if (widget.userId.isEmpty) return;
+    // Row #183: this screen IS the Nutrition tab's Hydration detail screen —
+    // every quick-add here happens from Nutrition, not Home. Without an
+    // explicit source the repository's `HydrationSource.home` default mis-tags
+    // every log made from this screen.
     final success = await ref.read(hydrationProvider.notifier).quickLog(
           userId: widget.userId,
           amountMl: amountMl,
+          source: HydrationSource.nutrition,
         );
     if (success && mounted) {
       ref.read(posthogServiceProvider).capture(

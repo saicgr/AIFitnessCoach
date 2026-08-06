@@ -9,7 +9,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../custom_exercises/widgets/create_exercise_sheet.dart';
 import '../../custom_exercises/widgets/custom_exercise_card.dart';
 import 'favorite_exercises_screen.dart';
@@ -67,7 +67,10 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: AppLocalizations.of(context).myExercisesExercisePreferences),
+      // ZealovaAppBar (bare arrow inline with the Anton masthead) — matches
+      // the majority of settings sub-screens; this used to be the odd one
+      // out with a circled back + separate pill title (E2E row 208).
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).myExercisesExercisePreferences),
       body: Stack(
         children: [
           // The full-screen tab body fills behind the floating pill bar so

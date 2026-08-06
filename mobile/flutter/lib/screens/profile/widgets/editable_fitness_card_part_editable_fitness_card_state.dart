@@ -37,7 +37,13 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   double _selectedDurationMax = 45; // Duration range max in minutes
   int _selectedWarmupDuration = 5; // Warmup duration in minutes (1-15)
   int _selectedStretchDuration = 5; // Stretch duration in minutes (1-15)
+  bool _warmupEnabled = true; // Whether the warmup phase is on (users.preferences.warmup_enabled)
+  bool _stretchEnabled = true; // Whether the stretch/cooldown phase is on
   int _selectedStepGoal = 10000;   // Daily steps goal (backend-driven)
+  // Whether the daily-steps goal is an actual stored target vs. this
+  // screen's editor default — the collapsed row must say "Not set" rather
+  // than present the default as a fact the user never configured.
+  bool _stepGoalConfigured = false;
 
   /// Common step-goal options — pulled from general activity guidelines
   /// (WHO: 10k/day, athletic: 12-15k). Users can tap "Custom" for any value.
@@ -78,8 +84,14 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final warmupState = ref.read(warmupDurationProvider);
     _selectedWarmupDuration = warmupState.warmupDurationMinutes;
     _selectedStretchDuration = warmupState.stretchDurationMinutes;
+    _warmupEnabled = warmupState.warmupEnabled;
+    _stretchEnabled = warmupState.stretchEnabled;
 
-    // Load daily steps goal from NEAT provider (backend-driven).
+    // Load daily steps goal from NEAT provider (backend-driven). A null
+    // `currentGoal` means the account has no stored target — the picker
+    // still needs a starting value, but the collapsed row must not present
+    // that starting value as a fact (see `_stepGoalConfigured` below).
+    _stepGoalConfigured = ref.read(neatProvider).currentGoal != null;
     _selectedStepGoal = ref.read(stepGoalProvider);
   }
 
@@ -250,7 +262,13 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.whatshot_outlined,
             iconColor: context.accentColor,
             label: l10n.editableFitnessCardWarmup,
-            value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin(_selectedWarmupDuration),
+            // A warmup duration is meaningless (and misleading) to show while
+            // the phase itself is switched off — respect
+            // `preferences.warmup_enabled` instead of always printing a
+            // duration the user may have explicitly disabled.
+            value: !_warmupEnabled
+                ? 'Off'
+                : AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin(_selectedWarmupDuration),
             isEditing: _isEditing,
             editWidget: _buildWarmupSelector(context.accentColor, cardBorder, textSecondary),
             isDark: isDark,
@@ -263,7 +281,9 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.self_improvement_outlined,
             iconColor: context.accentColor,
             label: l10n.editableFitnessCardStretch,
-            value: AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin2(_selectedStretchDuration),
+            value: !_stretchEnabled
+                ? 'Off'
+                : AppLocalizations.of(context)!.editableFitnessCardPartEditableFitnessCardStateMin2(_selectedStretchDuration),
             isEditing: _isEditing,
             editWidget: _buildStretchSelector(context.accentColor, cardBorder, textSecondary),
             isDark: isDark,
@@ -322,7 +342,11 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.directions_walk,
             iconColor: AppColors.green,  // accent-allowlist: success/positive state — must stay green regardless of accent
             label: l10n.editableFitnessCardDailySteps,
-            value: _formatStepGoal(_selectedStepGoal),
+            // No stored NEAT goal for this account — don't present the
+            // editor's starting value as a fact the user configured.
+            value: !_stepGoalConfigured
+                ? l10n.editableFitnessCardNotSet
+                : _formatStepGoal(_selectedStepGoal),
             isEditing: _isEditing,
             editWidget: _buildStepGoalSelector(AppColors.green, cardBorder, textSecondary),  // accent-allowlist: success/positive state — must stay green regardless of accent
             isDark: isDark,
@@ -335,9 +359,18 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
             icon: Icons.healing,
             iconColor: AppColors.error,  // accent-allowlist: error/destructive state — must stay red regardless of accent
             label: l10n.editableFitnessCardInjuries,
-            value: _selectedInjuries.isEmpty
-                ? l10n.editableFitnessCardNone
-                : _selectedInjuries.map(injuryLabelFor).join(', '),
+            // `_selectedInjuries` (canonical ids only, used by the checkbox
+            // selector below) can't represent a structured injury-recovery
+            // entry, so the collapsed row reads the raw storage directly —
+            // same parser as the profile UserCard — instead of joining
+            // `_selectedInjuries` and printing a stringified Dart map for
+            // any structured entry.
+            value: () {
+              final entries = parseActiveInjuries(widget.user?.activeInjuries);
+              return entries.isEmpty
+                  ? l10n.editableFitnessCardNone
+                  : entries.map((e) => e.label).join(', ');
+            }(),
             isEditing: _isEditing,
             editWidget: _buildInjurySelector(cardBorder, textSecondary),
             isDark: isDark,

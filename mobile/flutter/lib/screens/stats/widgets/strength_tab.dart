@@ -265,6 +265,16 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
       );
     }
 
+    // `GET /scores/fitness` never 404s for an unscored account — it returns a
+    // default `FitnessScoreResponse` with `overall_fitness_score=0`,
+    // `fitness_level="beginner"` and an empty `breakdown` list, so a null
+    // check alone can't tell "never scored" from "scored zero". The default
+    // path is the only one that leaves `calculated_date` unset, so its
+    // nullness is the honest "never calculated" signal.
+    if (fitnessBreakdown.fitnessScore.calculatedDate == null) {
+      return const _FitnessScoreNeverCalculated();
+    }
+
     final overallScore = fitnessBreakdown.overallScore;
 
     final components = [
@@ -415,6 +425,55 @@ class _FitnessScoreUnavailable extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Honest empty state for a never-calculated Fitness Score. Distinct from
+/// [_FitnessScoreUnavailable] (a failed fetch): there is nothing to retry
+/// here, the account genuinely has no score yet.
+class _FitnessScoreNeverCalculated extends StatelessWidget {
+  const _FitnessScoreNeverCalculated();
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('—', style: ZType.disp(56, color: tc.textMuted)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)
+                          .strengthFitnessScore
+                          .toUpperCase(),
+                      style: ZType.lbl(13,
+                          color: tc.textSecondary, letterSpacing: 1.5),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Not scored yet — log workouts, nutrition and check-ins to get your first Fitness Score.',
+                      style: ZType.lbl(11,
+                          color: tc.textMuted, letterSpacing: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

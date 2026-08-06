@@ -3,10 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/background_sync_service.dart';
+import '../../../data/services/health_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../sections/sections.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
+/// Whether the "auto-import workouts" toggle can actually do anything.
+/// Requires BOTH the stored preference AND a real platform health-store
+/// connection — a stored `true` from before the user disconnected Apple
+/// Health / Health Connect must not render as a live, firing setting
+/// (E2E settings row 86, same pattern as the Cycle reminders fix).
+bool autoImportActiveNow({
+  required bool isConnected,
+  required bool storedEnabled,
+}) =>
+    isConnected && storedEnabled;
+
 class HealthDevicesPage extends ConsumerWidget {
   const HealthDevicesPage({super.key});
 
@@ -46,15 +59,16 @@ class HealthDevicesPage extends ConsumerWidget {
 /// Health Connect) into the user's Zealova workout history. Backed by
 /// [BackgroundSyncService]'s SharedPreferences-persisted flag, which the
 /// periodic background sync task reads on each firing.
-class _AutoImportWorkoutsCard extends StatefulWidget {
+class _AutoImportWorkoutsCard extends ConsumerStatefulWidget {
   const _AutoImportWorkoutsCard();
 
   @override
-  State<_AutoImportWorkoutsCard> createState() =>
+  ConsumerState<_AutoImportWorkoutsCard> createState() =>
       _AutoImportWorkoutsCardState();
 }
 
-class _AutoImportWorkoutsCardState extends State<_AutoImportWorkoutsCard> {
+class _AutoImportWorkoutsCardState
+    extends ConsumerState<_AutoImportWorkoutsCard> {
   bool? _enabled; // null until the SharedPreferences read resolves.
 
   @override
@@ -83,7 +97,14 @@ class _AutoImportWorkoutsCardState extends State<_AutoImportWorkoutsCard> {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    final enabled = _enabled ?? true;
+    // Nothing to import if the platform health store was never connected —
+    // an ON-looking toggle here would be a setting that cannot possibly
+    // fire (E2E row 86, same pattern as the Cycle reminders fix).
+    final isConnected = ref.watch(healthSyncProvider).isConnected;
+    final enabled = autoImportActiveNow(
+      isConnected: isConnected,
+      storedEnabled: _enabled ?? true,
+    );
 
     return ZealovaCard(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -106,8 +127,11 @@ class _AutoImportWorkoutsCardState extends State<_AutoImportWorkoutsCard> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Pull workouts logged by other apps in Apple Health / '
-                    'Health Connect into your Zealova history automatically.',
+                    isConnected
+                        ? 'Pull workouts logged by other apps in Apple Health / '
+                            'Health Connect into your Zealova history automatically.'
+                        : 'Connect Apple Health / Health Connect above to '
+                            'enable auto-import.',
                     style: TextStyle(
                       fontSize: 12.5,
                       height: 1.4,
@@ -131,7 +155,7 @@ class _AutoImportWorkoutsCardState extends State<_AutoImportWorkoutsCard> {
           else
             ZealovaToggle(
               value: enabled,
-              onChanged: _set,
+              onChanged: isConnected ? _set : null,
             ),
         ],
       ),

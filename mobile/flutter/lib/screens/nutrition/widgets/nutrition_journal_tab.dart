@@ -109,6 +109,26 @@ const List<String> _kEmptySubtitles = <String>[
   'The first picture is the hardest. After that it gets satisfying.',
 ];
 
+/// Row #190: MY FOODS shows 0 SAVED foods, which is a completely different
+/// (and often perfectly normal) empty state from "you haven't logged
+/// anything" — an account can have logged dozens of meals and still have
+/// never tapped Save on one. Reusing [_kEmptyTitles] claimed nothing had
+/// been logged at all, contradicting the FEED sub-tab and the DAILY header
+/// on the very same account. Same ≥4-variant dynamic-copy convention, but
+/// describing an empty ALBUM, not an empty JOURNAL.
+const List<String> _kSavedFoodsEmptyTitles = <String>[
+  'Your album is empty',
+  'Nothing saved — yet',
+  'No favorites yet',
+  'Your food album awaits',
+];
+const List<String> _kSavedFoodsEmptySubtitles = <String>[
+  'Foods you save and re-log build your personal album here.',
+  'Tap the bookmark on a logged meal to add it here.',
+  'Save a favorite meal and it\'ll show up here for one-tap re-logging.',
+  'Your most-loved meals, one tap away — start by saving one.',
+];
+
 /// Image-first food Journal — the "what happened" memory surface that sits
 /// between RECIPES and PATTERNS. Two internal views: a photo-collage Calendar
 /// (default) and a scrapbook Feed, plus a collectible My Foods photo grid.
@@ -670,8 +690,10 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
   Widget _buildMyFoods(ThemeColors tc) => _MyFoodsGrid(
         savedFoods: _savedFoods,
         loading: _loadingSaved,
-        emptyTitle: _kEmptyTitles[_emptySeed],
-        emptySubtitle: _kEmptySubtitles[_emptySeed],
+        // Row #190: dedicated saved-foods copy pool — NOT _kEmptyTitles,
+        // which describes an empty journal (a different, unrelated state).
+        emptyTitle: _kSavedFoodsEmptyTitles[_emptySeed % _kSavedFoodsEmptyTitles.length],
+        emptySubtitle: _kSavedFoodsEmptySubtitles[_emptySeed % _kSavedFoodsEmptySubtitles.length],
       );
 
   // ── Shared empty state ─────────────────────────────────────────────────────
@@ -1521,7 +1543,7 @@ class _MyFoodsGridState extends State<_MyFoodsGrid> {
                       .copyWith(height: 1.2)),
               const SizedBox(height: 8),
               Text(
-                'Foods you save and re-log build your personal album here.',
+                widget.emptySubtitle,
                 textAlign: TextAlign.center,
                 style: ZType.sans(14, color: tc.textMuted, weight: FontWeight.w500)
                     .copyWith(height: 1.4),

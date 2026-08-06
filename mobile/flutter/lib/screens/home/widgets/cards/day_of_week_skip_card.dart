@@ -19,11 +19,27 @@ import '../../../../data/services/haptic_service.dart';
 /// referenced `weeksSkipped` and `suggestedAlternative` stay legible.
 class DayOfWeekSkipSignal {
   final String weekdayName; // e.g. "Wednesday"
-  final int weeksSkipped; // count of weeks with a miss on that weekday
+
+  /// Approximate count of weeks with a miss on [weekdayName] within the
+  /// observed window — a ROUNDED PRODUCT of a rate (`missRate ×
+  /// weeksObserved`), not a verified count of distinct consecutive weeks.
+  /// Never render this with "in a row" / "X weeks in a row" language — E2E
+  /// row 51 caught it asserting "2 weeks in a row" for an account with
+  /// exactly one missed Wednesday ever (a duplicate same-day workout row
+  /// double-counted in the rate), on a day that Wednesday's own session had
+  /// already been completed. Frame it as a historical frequency over
+  /// [weeksObserved] instead — that's what the number actually measures.
+  final int weeksSkipped;
+
+  /// Denominator the rate was computed over — always render alongside
+  /// [weeksSkipped] so the figure reads as "N of the last M weeks", never a
+  /// bare, unqualified count.
+  final int weeksObserved;
   final String suggestedAlternative; // adjacent weekday
   const DayOfWeekSkipSignal({
     required this.weekdayName,
     required this.weeksSkipped,
+    required this.weeksObserved,
     required this.suggestedAlternative,
   });
 }
@@ -38,9 +54,14 @@ final dayOfWeekSkipSignalProvider =
   if (data == null || !data.hasPattern) return null;
 
   // Approximate "weeks_skipped" from miss_rate × weeks_observed (the
-  // backend returns the rate, the card UI talks in week count).
+  // backend returns the rate, the card UI talks in week count). Clamped to
+  // weeksObserved: a duplicate same-day workout row can push the rate above
+  // 1.0/week (e.g. 2 missed rows on one calendar week), which would
+  // otherwise round to a count that exceeds its own denominator and read as
+  // nonsense ("N of the last M weeks" with N > M).
   final weeksObserved = data.weeksObserved;
-  final approxWeeks = ((data.missRate ?? 0) * weeksObserved).round();
+  final approxWeeks =
+      ((data.missRate ?? 0) * weeksObserved).round().clamp(0, weeksObserved);
   // Suggest the adjacent weekday (next day in the calendar). 0=Sun..6=Sat.
   const names = [
     'Sunday', 'Monday', 'Tuesday', 'Wednesday',
@@ -51,6 +72,7 @@ final dayOfWeekSkipSignalProvider =
   return DayOfWeekSkipSignal(
     weekdayName: data.weekdayName ?? names[data.weekday ?? 0],
     weeksSkipped: approxWeeks,
+    weeksObserved: weeksObserved,
     suggestedAlternative: names[altIndex],
   );
 });
@@ -98,7 +120,12 @@ class DayOfWeekSkipCard extends ConsumerWidget {
           ]),
           const SizedBox(height: 8),
           Text(
-            'You\'ve missed your ${signal.weekdayName} workout ${signal.weeksSkipped} weeks in a row. Want to shift it to ${signal.suggestedAlternative}?',
+            // NOT "N weeks in a row" — weeksSkipped is an approximate rate
+            // over the observed window, not a verified consecutive-week
+            // count (see DayOfWeekSkipSignal doc). Framing it as a
+            // historical frequency stays true regardless of how the
+            // underlying miss-rate was computed.
+            'You\'ve missed your ${signal.weekdayName} workout on ${signal.weeksSkipped} of your last ${signal.weeksObserved} weeks. Want to shift it to ${signal.suggestedAlternative}?',
             style: TextStyle(fontSize: 12.5, height: 1.4, color: c.textSecondary),
           ),
           const SizedBox(height: 12),

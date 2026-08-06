@@ -1,0 +1,2221 @@
+[
+  {
+    "file": "lib/screens/ai_settings/ai_settings_screen.dart",
+    "kind": "padding",
+    "line": 1431,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/auth/intro_demo/demo_scenes.dart",
+    "kind": "radius",
+    "line": 192,
+    "value": 5.0,
+    "lineText": "bottomEnd: Radius.circular(5),"
+  },
+  {
+    "file": "lib/screens/auth/intro_demo/demo_scenes.dart",
+    "kind": "radius",
+    "line": 265,
+    "value": 5.0,
+    "lineText": "bottomEnd: Radius.circular(5),"
+  },
+  {
+    "file": "lib/screens/auth/intro_demo/demo_scenes.dart",
+    "kind": "radius",
+    "line": 409,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/auth/intro_demo/demo_scenes.dart",
+    "kind": "radius",
+    "line": 957,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/auth/intro_demo/demo_scenes.dart",
+    "kind": "radius",
+    "line": 1182,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 676,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 716,
+    "value": 27.0,
+    "lineText": "borderRadius: BorderRadius.circular(27),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 727,
+    "value": 27.0,
+    "lineText": "borderRadius: BorderRadius.circular(27),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 758,
+    "value": 27.0,
+    "lineText": "borderRadius: BorderRadius.circular(27),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 767,
+    "value": 27.0,
+    "lineText": "borderRadius: BorderRadius.circular(27),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 848,
+    "value": 25.0,
+    "lineText": "borderRadius: BorderRadius.circular(25),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 1025,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/auth/sign_in_screen.dart",
+    "kind": "radius",
+    "line": 1054,
+    "value": 5.0,
+    "lineText": "borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),"
+  },
+  {
+    "file": "lib/screens/body_analyzer/body_analyzer_capture_screen.dart",
+    "kind": "padding",
+    "line": 295,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/cardio/race_predictor_detail_screen.dart",
+    "kind": "padding",
+    "line": 208,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/cardio/vo2max_detail_screen.dart",
+    "kind": "padding",
+    "line": 201,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/custom_exercises/widgets/create_exercise_sheet.dart",
+    "kind": "radius",
+    "line": 608,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/cycle/widgets/cycle_temperature_chart.dart",
+    "kind": "padding",
+    "line": 578,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/cycle/widgets/cycle_temperature_chart.dart",
+    "kind": "radius",
+    "line": 595,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/cycle/widgets/today_fertility_window_strip.dart",
+    "kind": "radius",
+    "line": 134,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/cycle/widgets/today_fertility_window_strip.dart",
+    "kind": "radius",
+    "line": 150,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/demo/demo_workout_screen_ui.dart",
+    "kind": "radius",
+    "line": 459,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/exercises/import_exercise_screen.dart",
+    "kind": "padding",
+    "line": 1016,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/exercises/import_exercise_screen.dart",
+    "kind": "radius",
+    "line": 1044,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/fasting/fasting_screen_redesigned.dart",
+    "kind": "radius",
+    "line": 724,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/fasting/widgets/fasting_history_list.dart",
+    "kind": "padding",
+    "line": 167,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/fasting/widgets/fasting_stage_card.dart",
+    "kind": "padding",
+    "line": 41,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/fasting/widgets/fasting_timeline_pager.dart",
+    "kind": "padding",
+    "line": 342,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/fasting/widgets/fasting_timeline_pager.dart",
+    "kind": "padding",
+    "line": 465,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/fasting/widgets/fasting_timeline_pager.dart",
+    "kind": "radius",
+    "line": 468,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/fasting/widgets/fasting_types_section.dart",
+    "kind": "radius",
+    "line": 441,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/features/feature_voting_screen.dart",
+    "kind": "radius",
+    "line": 582,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/features/feature_voting_screen.dart",
+    "kind": "radius",
+    "line": 631,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/features/feature_voting_screen.dart",
+    "kind": "radius",
+    "line": 658,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/features/widgets/feature_detail_sheet.dart",
+    "kind": "padding",
+    "line": 228,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/gym_profile/widgets/travel_mode_tile.dart",
+    "kind": "radius",
+    "line": 159,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/habits/habit_detail_screen_part_compact_hero_section.dart",
+    "kind": "radius",
+    "line": 648,
+    "value": 5.0,
+    "lineText": "borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),"
+  },
+  {
+    "file": "lib/screens/habits/habit_detail_screen_part_yearly_heatmap_state.dart",
+    "kind": "radius",
+    "line": 132,
+    "value": 2.5,
+    "lineText": "borderRadius: BorderRadius.circular(2.5),"
+  },
+  {
+    "file": "lib/screens/habits/habits_screen_part_add_habit_sheet_content.dart",
+    "kind": "radius",
+    "line": 392,
+    "value": 17.0,
+    "lineText": "borderRadius: BorderRadius.circular(17),"
+  },
+  {
+    "file": "lib/screens/home/home_my_space_screen.dart",
+    "kind": "radius",
+    "line": 494,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5))),"
+  },
+  {
+    "file": "lib/screens/home/home_my_space_screen.dart",
+    "kind": "radius",
+    "line": 498,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5))),"
+  },
+  {
+    "file": "lib/screens/home/home_my_space_screen.dart",
+    "kind": "padding",
+    "line": 678,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/home/home_my_space_screen.dart",
+    "kind": "padding",
+    "line": 1105,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/home/home_my_space_screen.dart",
+    "kind": "padding",
+    "line": 1161,
+    "value": 2.5,
+    "lineText": "padding: const EdgeInsets.all(2.5),"
+  },
+  {
+    "file": "lib/screens/home/widgets/cards/coach_persona_pickup_tile.dart",
+    "kind": "padding",
+    "line": 87,
+    "value": 9.0,
+    "lineText": "padding: const EdgeInsets.all(9),"
+  },
+  {
+    "file": "lib/screens/home/widgets/cards/next_workout_card.dart",
+    "kind": "radius",
+    "line": 487,
+    "value": 15.0,
+    "lineText": "bottom: Radius.circular(15),"
+  },
+  {
+    "file": "lib/screens/home/widgets/cards/stale_score_nudge_card.dart",
+    "kind": "padding",
+    "line": 199,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/home/widgets/coach_hero_card.dart",
+    "kind": "radius",
+    "line": 1737,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/home/widgets/first_action_prompt.dart",
+    "kind": "padding",
+    "line": 98,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/home/widgets/habit_card.dart",
+    "kind": "padding",
+    "line": 200,
+    "value": 1.5,
+    "lineText": "margin: const EdgeInsets.all(1.5),"
+  },
+  {
+    "file": "lib/screens/home/widgets/hero_workout_card.dart",
+    "kind": "radius",
+    "line": 707,
+    "value": 23.0,
+    "lineText": "borderRadius: BorderRadius.circular(23),"
+  },
+  {
+    "file": "lib/screens/home/widgets/hero_workout_card.dart",
+    "kind": "radius",
+    "line": 985,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/home/widgets/hero_workout_card_modes.dart",
+    "kind": "radius",
+    "line": 594,
+    "value": 23.0,
+    "lineText": "borderRadius: BorderRadius.circular(23),"
+  },
+  {
+    "file": "lib/screens/home/widgets/hero_workout_card_part_completed_workout_hero_card.dart",
+    "kind": "radius",
+    "line": 67,
+    "value": 19.0,
+    "lineText": "top: Radius.circular(19),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/home_timeline.dart",
+    "kind": "radius",
+    "line": 892,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/home_timeline.dart",
+    "kind": "radius",
+    "line": 1050,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/metric_summary_deck.dart",
+    "kind": "padding",
+    "line": 1063,
+    "value": 7.0,
+    "lineText": "padding: const EdgeInsets.all(7),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/reports_recap_row.dart",
+    "kind": "padding",
+    "line": 119,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "radius",
+    "line": 479,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "radius",
+    "line": 839,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "radius",
+    "line": 1910,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "radius",
+    "line": 2238,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "padding",
+    "line": 2345,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "radius",
+    "line": 2655,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/home/widgets/home/unified_home_widgets.dart",
+    "kind": "radius",
+    "line": 2697,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/home/widgets/quick_log_sheet.dart",
+    "kind": "radius",
+    "line": 310,
+    "value": 17.0,
+    "lineText": "borderRadius: BorderRadius.circular(17),"
+  },
+  {
+    "file": "lib/screens/home/widgets/sectioned_hero_area.dart",
+    "kind": "radius",
+    "line": 313,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/home/widgets/today_score_detail_sheet.dart",
+    "kind": "padding",
+    "line": 137,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/home/widgets/today_score_detail_sheet.dart",
+    "kind": "padding",
+    "line": 198,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/injuries/injury_detail_screen.dart",
+    "kind": "radius",
+    "line": 420,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/injuries/injury_detail_screen.dart",
+    "kind": "radius",
+    "line": 426,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/injuries/report_injury_screen.dart",
+    "kind": "radius",
+    "line": 340,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/leaderboard/xp_leaderboard_screen.dart",
+    "kind": "radius",
+    "line": 793,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/library/library_screen.dart",
+    "kind": "radius",
+    "line": 362,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/library/tabs/my_library_tab_part_custom_exercises_section.dart",
+    "kind": "radius",
+    "line": 822,
+    "value": 13.0,
+    "lineText": "top: Radius.circular(13),"
+  },
+  {
+    "file": "lib/screens/library/widgets/exercise_card.dart",
+    "kind": "padding",
+    "line": 307,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/measurements/measurement_detail_screen.dart",
+    "kind": "radius",
+    "line": 397,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/measurements/measurement_detail_screen.dart",
+    "kind": "radius",
+    "line": 403,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/measurements/measurements_screen_ui.dart",
+    "kind": "padding",
+    "line": 459,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/measurements/widgets/measurement_value_pill.dart",
+    "kind": "padding",
+    "line": 483,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/neat/widgets/neat_gamification_widgets_part_leaderboard_row.dart",
+    "kind": "radius",
+    "line": 315,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/neat/widgets/neat_gamification_widgets_part_leaderboard_row.dart",
+    "kind": "radius",
+    "line": 323,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/nutrition/food_history_screen_part_frequent_food_chip.dart",
+    "kind": "padding",
+    "line": 44,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/nutrition/food_history_screen_part_frequent_food_chip.dart",
+    "kind": "padding",
+    "line": 271,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/log_meal_sheet_ui.dart",
+    "kind": "padding",
+    "line": 860,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/log_meal_sheet_ui_2.dart",
+    "kind": "padding",
+    "line": 164,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/nutrition/log_meal_sheet_ui_2.dart",
+    "kind": "radius",
+    "line": 167,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/nutrition/log_meal_sheet_ui_2.dart",
+    "kind": "padding",
+    "line": 587,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/nutrition/menu_analysis_sheet.dart",
+    "kind": "padding",
+    "line": 2208,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/nutrition/saved_hub_screen.dart",
+    "kind": "radius",
+    "line": 708,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/nutrition/saved_hub_screen.dart",
+    "kind": "radius",
+    "line": 718,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/ai_recommendation_sheet.dart",
+    "kind": "radius",
+    "line": 333,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/ai_recommendation_sheet.dart",
+    "kind": "padding",
+    "line": 591,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/ai_recommendation_sheet.dart",
+    "kind": "radius",
+    "line": 665,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 1465,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "padding",
+    "line": 1500,
+    "value": 2.0,
+    "lineText": "margin: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 1525,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 1574,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 1741,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 1804,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 1909,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "padding",
+    "line": 2236,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 2550,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 2575,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "padding",
+    "line": 2939,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 3253,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/edit_targets_sheet.dart",
+    "kind": "radius",
+    "line": 3740,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/fasting_panel.dart",
+    "kind": "padding",
+    "line": 33,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/fasting_panel.dart",
+    "kind": "radius",
+    "line": 141,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_browser_panel_part_display_mode_toggle.dart",
+    "kind": "padding",
+    "line": 56,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_browser_panel_part_food_browser_item.dart",
+    "kind": "padding",
+    "line": 307,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_browser_panel_part_food_browser_item.dart",
+    "kind": "padding",
+    "line": 465,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_browser_panel_part_food_browser_item.dart",
+    "kind": "padding",
+    "line": 551,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_browser_panel_part_n_l_item_section_state.dart",
+    "kind": "padding",
+    "line": 804,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_browser_panel_part_n_l_item_section_state.dart",
+    "kind": "padding",
+    "line": 822,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_item_ranking_card.dart",
+    "kind": "padding",
+    "line": 880,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/food_item_ranking_card.dart",
+    "kind": "padding",
+    "line": 888,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/logged_meals_section.dart",
+    "kind": "radius",
+    "line": 5089,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/nutrition/widgets/nutrition_patterns_tab.dart",
+    "kind": "padding",
+    "line": 369,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/onboarding/coach_selection_screen_ui.dart",
+    "kind": "radius",
+    "line": 387,
+    "value": 17.0,
+    "lineText": "borderRadius: BorderRadius.circular(17),"
+  },
+  {
+    "file": "lib/screens/onboarding/demo_tasks_screen.dart",
+    "kind": "padding",
+    "line": 259,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/onboarding/fitness_assessment_screen.dart",
+    "kind": "radius",
+    "line": 305,
+    "value": 17.0,
+    "lineText": "borderRadius: BorderRadius.circular(17),"
+  },
+  {
+    "file": "lib/screens/onboarding/health_connect_onboarding_screen.dart",
+    "kind": "padding",
+    "line": 620,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/onboarding/nutrition_showcase_screen.dart",
+    "kind": "padding",
+    "line": 795,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/onboarding/onboarding_blocker_screen.dart",
+    "kind": "radius",
+    "line": 602,
+    "value": 17.0,
+    "lineText": "borderRadius: BorderRadius.circular(17),"
+  },
+  {
+    "file": "lib/screens/onboarding/onboarding_reflect_screen.dart",
+    "kind": "radius",
+    "line": 170,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/onboarding/onboarding_reflect_screen.dart",
+    "kind": "radius",
+    "line": 479,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/onboarding/onboarding_value_screen.dart",
+    "kind": "radius",
+    "line": 241,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/onboarding/value_beats/social_proof_beat.dart",
+    "kind": "padding",
+    "line": 93,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_preview_chat.dart",
+    "kind": "radius",
+    "line": 327,
+    "value": 15.0,
+    "lineText": "topLeft: const Radius.circular(15),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_preview_chat.dart",
+    "kind": "radius",
+    "line": 328,
+    "value": 15.0,
+    "lineText": "topRight: const Radius.circular(15),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_preview_chat.dart",
+    "kind": "radius",
+    "line": 397,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_profile_card.dart",
+    "kind": "radius",
+    "line": 149,
+    "value": 23.0,
+    "lineText": "topLeft: Radius.circular(23),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_profile_card.dart",
+    "kind": "radius",
+    "line": 150,
+    "value": 23.0,
+    "lineText": "topRight: Radius.circular(23),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_profile_card.dart",
+    "kind": "radius",
+    "line": 194,
+    "value": 23.0,
+    "lineText": "topLeft: Radius.circular(23),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/coach_profile_card.dart",
+    "kind": "radius",
+    "line": 195,
+    "value": 23.0,
+    "lineText": "topRight: Radius.circular(23),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/equipment_weight_sheet.dart",
+    "kind": "padding",
+    "line": 323,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/equipment_weight_sheet.dart",
+    "kind": "radius",
+    "line": 326,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_body_metrics.dart",
+    "kind": "padding",
+    "line": 498,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_body_metrics_ext.dart",
+    "kind": "padding",
+    "line": 24,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_body_metrics_ext.dart",
+    "kind": "padding",
+    "line": 126,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_body_metrics_ui.dart",
+    "kind": "padding",
+    "line": 139,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_body_metrics_ui.dart",
+    "kind": "padding",
+    "line": 221,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_body_metrics_ui.dart",
+    "kind": "padding",
+    "line": 403,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_equipment.dart",
+    "kind": "radius",
+    "line": 815,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_equipment.dart",
+    "kind": "radius",
+    "line": 854,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_equipment.dart",
+    "kind": "radius",
+    "line": 1941,
+    "value": 7.0,
+    "lineText": "borderRadius: const BorderRadius.horizontal(left: Radius.circular(7)),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_equipment.dart",
+    "kind": "radius",
+    "line": 1967,
+    "value": 7.0,
+    "lineText": "borderRadius: const BorderRadius.horizontal(right: Radius.circular(7)),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_personalization_gate.dart",
+    "kind": "radius",
+    "line": 1461,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_personalization_gate.dart",
+    "kind": "padding",
+    "line": 1520,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/onboarding/widgets/quiz_primary_goal.dart",
+    "kind": "radius",
+    "line": 258,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/onboarding/workout_showcase_screen.dart",
+    "kind": "padding",
+    "line": 721,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/onboarding/workout_showcase_screen.dart",
+    "kind": "padding",
+    "line": 1287,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/onboarding/workout_showcase_screen.dart",
+    "kind": "radius",
+    "line": 1289,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/onboarding/workout_showcase_screen.dart",
+    "kind": "padding",
+    "line": 1951,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/onboarding/workout_showcase_screen.dart",
+    "kind": "radius",
+    "line": 3090,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/paywall/paywall_features_screen.dart",
+    "kind": "radius",
+    "line": 474,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/paywall/paywall_pricing_screen_part_accent_border_card.dart",
+    "kind": "padding",
+    "line": 622,
+    "value": 2.5,
+    "lineText": "padding: const EdgeInsets.all(2.5),"
+  },
+  {
+    "file": "lib/screens/paywall/paywall_pricing_screen_part_accent_border_card.dart",
+    "kind": "radius",
+    "line": 624,
+    "value": 26.5,
+    "lineText": "borderRadius: BorderRadius.circular(26.5),"
+  },
+  {
+    "file": "lib/screens/paywall/widgets/benefit_strip.dart",
+    "kind": "padding",
+    "line": 65,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/paywall/widgets/price_comparison.dart",
+    "kind": "padding",
+    "line": 258,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/paywall/widgets/price_comparison.dart",
+    "kind": "radius",
+    "line": 261,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/paywall/widgets/price_comparison.dart",
+    "kind": "radius",
+    "line": 283,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/paywall/widgets/price_comparison.dart",
+    "kind": "radius",
+    "line": 348,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/profile/synced_workouts_history_screen.dart",
+    "kind": "padding",
+    "line": 665,
+    "value": 1.5,
+    "lineText": "margin: const EdgeInsets.all(1.5),"
+  },
+  {
+    "file": "lib/screens/profile/widgets/edit_personal_info_sheet_ui.dart",
+    "kind": "padding",
+    "line": 212,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/profile/widgets/user_card.dart",
+    "kind": "radius",
+    "line": 138,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/profile/widgets/user_card.dart",
+    "kind": "padding",
+    "line": 387,
+    "value": 3.0,
+    "lineText": "padding: EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/progress/comparison_layouts.dart",
+    "kind": "radius",
+    "line": 248,
+    "value": 1.0,
+    "lineText": "const Radius.circular(1),"
+  },
+  {
+    "file": "lib/screens/progress/comparison_layouts.dart",
+    "kind": "radius",
+    "line": 347,
+    "value": 1.0,
+    "lineText": "const Radius.circular(1),"
+  },
+  {
+    "file": "lib/screens/progress/muscle_analytics/muscle_detail_screen.dart",
+    "kind": "radius",
+    "line": 735,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/progress/photo_editor_screen.dart",
+    "kind": "padding",
+    "line": 891,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/progress/photo_editor_screen.dart",
+    "kind": "radius",
+    "line": 1228,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/progress/photo_editor_screen.dart",
+    "kind": "radius",
+    "line": 1238,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/progress/photo_editor_screen.dart",
+    "kind": "radius",
+    "line": 1247,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/progress/progress_screen_part_analytics_nav_card.dart",
+    "kind": "padding",
+    "line": 33,
+    "value": 15.0,
+    "lineText": "padding: const EdgeInsets.all(15),"
+  },
+  {
+    "file": "lib/screens/progress/progress_screen_ui.dart",
+    "kind": "radius",
+    "line": 461,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "padding",
+    "line": 377,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "padding",
+    "line": 693,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "padding",
+    "line": 769,
+    "value": 22.0,
+    "lineText": "padding: const EdgeInsets.all(22),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "padding",
+    "line": 920,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "padding",
+    "line": 1003,
+    "value": 22.0,
+    "lineText": "padding: const EdgeInsets.all(22),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "padding",
+    "line": 1166,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/progress/share_templates/progress_share_templates.dart",
+    "kind": "radius",
+    "line": 1224,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/progress/widgets/strength_overview_card.dart",
+    "kind": "radius",
+    "line": 378,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/progress/widgets/strength_overview_card_ui.dart",
+    "kind": "radius",
+    "line": 29,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/progress/widgets/strength_overview_card_ui.dart",
+    "kind": "padding",
+    "line": 146,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/progress/widgets/strength_overview_card_ui.dart",
+    "kind": "radius",
+    "line": 247,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/progress/widgets/strength_overview_card_ui.dart",
+    "kind": "radius",
+    "line": 281,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/reports/reports_hub_screen.dart",
+    "kind": "radius",
+    "line": 1197,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/reports/share_templates/report_trading_card_template.dart",
+    "kind": "padding",
+    "line": 34,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/schedule/schedule_screen.dart",
+    "kind": "radius",
+    "line": 885,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/schedule/schedule_screen_part_week_selector.dart",
+    "kind": "radius",
+    "line": 195,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/schedule/widgets/manage_programs_sheet.dart",
+    "kind": "padding",
+    "line": 215,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/schedule/widgets/manage_programs_sheet.dart",
+    "kind": "padding",
+    "line": 293,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/schedule/widgets/manage_programs_sheet.dart",
+    "kind": "padding",
+    "line": 396,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/schedule/widgets/program_session_card.dart",
+    "kind": "radius",
+    "line": 305,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/schedule/widgets/schedule_filter_sheet.dart",
+    "kind": "radius",
+    "line": 477,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/schedule/widgets/schedule_filter_sheet.dart",
+    "kind": "radius",
+    "line": 488,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/settings/beast_mode/widgets/ai_models_section.dart",
+    "kind": "radius",
+    "line": 574,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/settings/exercise_preferences/staple_exercises_screen_part_staple_exercise_tile.dart",
+    "kind": "padding",
+    "line": 121,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/settings/pages/workout_ui_mode_sheet.dart",
+    "kind": "padding",
+    "line": 296,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/settings/sections/ble_heart_rate_section.dart",
+    "kind": "radius",
+    "line": 658,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/settings/subscription/pause_subscription_sheet.dart",
+    "kind": "padding",
+    "line": 506,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/settings/widgets/inline_theme_selector.dart",
+    "kind": "padding",
+    "line": 32,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/share/on_this_day_sheet.dart",
+    "kind": "radius",
+    "line": 183,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/share/share_hub_screen.dart",
+    "kind": "radius",
+    "line": 199,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/skills/chain_detail_screen.dart",
+    "kind": "radius",
+    "line": 510,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/skills/chain_detail_screen.dart",
+    "kind": "radius",
+    "line": 625,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/skills/widgets/practice_attempt_sheet.dart",
+    "kind": "radius",
+    "line": 285,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/social/tabs/messages_tab.dart",
+    "kind": "padding",
+    "line": 250,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/social/widgets/stories_ring.dart",
+    "kind": "padding",
+    "line": 194,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/social/widgets/stories_ring.dart",
+    "kind": "padding",
+    "line": 293,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/splash/splash_screen.dart",
+    "kind": "radius",
+    "line": 98,
+    "value": 21.0,
+    "lineText": "borderRadius: BorderRadius.circular(21),"
+  },
+  {
+    "file": "lib/screens/splash/splash_screen.dart",
+    "kind": "radius",
+    "line": 112,
+    "value": 21.0,
+    "lineText": "borderRadius: BorderRadius.circular(21),"
+  },
+  {
+    "file": "lib/screens/splash/splash_screen.dart",
+    "kind": "padding",
+    "line": 115,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/stats/widgets/muscle_score_breakdown_sheet.dart",
+    "kind": "radius",
+    "line": 333,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/stats/widgets/muscle_score_breakdown_sheet.dart",
+    "kind": "radius",
+    "line": 341,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/stats/widgets/photos_tab.dart",
+    "kind": "radius",
+    "line": 640,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/stats/widgets/photos_tab_ui.dart",
+    "kind": "padding",
+    "line": 130,
+    "value": 2.0,
+    "lineText": "padding: isSelected ? const EdgeInsets.all(2) : EdgeInsets.zero,"
+  },
+  {
+    "file": "lib/screens/stats/widgets/share_templates/stats_level_up_template.dart",
+    "kind": "radius",
+    "line": 156,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/stats/widgets/share_templates/stats_level_up_template.dart",
+    "kind": "radius",
+    "line": 170,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/stats/widgets/strength_tab.dart",
+    "kind": "radius",
+    "line": 356,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/summaries/insights_screen_part_body_card.dart",
+    "kind": "radius",
+    "line": 307,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/workout/custom_workout_builder_screen.dart",
+    "kind": "radius",
+    "line": 841,
+    "value": 23.0,
+    "lineText": "borderRadius: BorderRadius.circular(23)),"
+  },
+  {
+    "file": "lib/screens/workout/custom_workout_builder_screen.dart",
+    "kind": "padding",
+    "line": 1437,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/workout/customization_studio_sheet.dart",
+    "kind": "radius",
+    "line": 1036,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_completed_dots.dart",
+    "kind": "radius",
+    "line": 235,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_completed_dots.dart",
+    "kind": "radius",
+    "line": 260,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_last_time_chip.dart",
+    "kind": "radius",
+    "line": 85,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_last_time_chip.dart",
+    "kind": "radius",
+    "line": 121,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_score_target_pill.dart",
+    "kind": "radius",
+    "line": 94,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_top_bar.dart",
+    "kind": "radius",
+    "line": 145,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/easy/widgets/easy_top_bar.dart",
+    "kind": "padding",
+    "line": 191,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/workout/exercise_detail_screen.dart",
+    "kind": "padding",
+    "line": 763,
+    "value": 9.0,
+    "lineText": "padding: const EdgeInsets.all(9),"
+  },
+  {
+    "file": "lib/screens/workout/exercise_detail_screen.dart",
+    "kind": "radius",
+    "line": 825,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 789,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(8, cy), width: 5, height: 20), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 794,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(size.width - 8, cy), width: 5, height: 20), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 799,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(14, cy), width: 4, height: 14), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 804,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(size.width - 14, cy), width: 4, height: 14), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 829,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(9, cy), width: 4, height: 15), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 833,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(size.width - 9, cy), width: 4, height: 15), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 873,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(5, cy), width: 4, height: 13), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/mixins/workout_sheets_mixin_ui.dart",
+    "kind": "radius",
+    "line": 877,
+    "value": 1.0,
+    "lineText": "RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(w - 5, cy), width: 4, height: 13), const Radius.circular(1)),"
+  },
+  {
+    "file": "lib/screens/workout/program_library_screen.dart",
+    "kind": "padding",
+    "line": 1458,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/workout/program_library_screen.dart",
+    "kind": "radius",
+    "line": 1981,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/workout/program_library_screen.dart",
+    "kind": "padding",
+    "line": 3581,
+    "value": 13.0,
+    "lineText": "padding: const EdgeInsets.all(13),"
+  },
+  {
+    "file": "lib/screens/workout/program_library_screen.dart",
+    "kind": "radius",
+    "line": 4943,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/workout/program_template_builder_screen.dart",
+    "kind": "radius",
+    "line": 1588,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/workout/program_template_builder_screen.dart",
+    "kind": "padding",
+    "line": 2151,
+    "value": 7.0,
+    "lineText": "padding: const EdgeInsets.all(7),"
+  },
+  {
+    "file": "lib/screens/workout/shared/unit_chip.dart",
+    "kind": "padding",
+    "line": 69,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/barbell_plate_indicator.dart",
+    "kind": "radius",
+    "line": 481,
+    "value": 2.5,
+    "lineText": "const Radius.circular(2.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/barbell_plate_indicator.dart",
+    "kind": "radius",
+    "line": 493,
+    "value": 1.5,
+    "lineText": "const Radius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/barbell_plate_indicator.dart",
+    "kind": "radius",
+    "line": 532,
+    "value": 1.0,
+    "lineText": "const Radius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/barbell_plate_indicator.dart",
+    "kind": "radius",
+    "line": 542,
+    "value": 1.0,
+    "lineText": "const Radius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/barbell_plate_indicator.dart",
+    "kind": "radius",
+    "line": 564,
+    "value": 1.5,
+    "lineText": "const Radius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/barbell_plate_indicator.dart",
+    "kind": "radius",
+    "line": 577,
+    "value": 1.5,
+    "lineText": "const Radius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/edit_weights_sheet.dart",
+    "kind": "radius",
+    "line": 1496,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/exercise_thumbnail_strip_v2_part_gap_drop_target.dart",
+    "kind": "padding",
+    "line": 88,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/exercise_thumbnail_strip_v2_part_gap_drop_target.dart",
+    "kind": "padding",
+    "line": 408,
+    "value": 2.5,
+    "lineText": "padding: const EdgeInsets.all(2.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/exercise_thumbnail_strip_v2_part_gap_drop_target.dart",
+    "kind": "padding",
+    "line": 442,
+    "value": 2.5,
+    "lineText": "padding: const EdgeInsets.all(2.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/exercise_thumbnail_strip_v2_part_gap_drop_target.dart",
+    "kind": "padding",
+    "line": 749,
+    "value": 2.5,
+    "lineText": "padding: const EdgeInsets.all(2.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/expanded_exercise_card_ui_1.dart",
+    "kind": "padding",
+    "line": 798,
+    "value": 1.5,
+    "lineText": "padding: const EdgeInsets.all(1.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/metric_picker_sheet.dart",
+    "kind": "radius",
+    "line": 191,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7)),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/report_pain_sheet.dart",
+    "kind": "padding",
+    "line": 344,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/score_level_up_celebration.dart",
+    "kind": "padding",
+    "line": 183,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/score_level_up_celebration.dart",
+    "kind": "radius",
+    "line": 214,
+    "value": 13.0,
+    "lineText": "borderRadius: BorderRadius.circular(13),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/set_dial.dart",
+    "kind": "radius",
+    "line": 158,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/set_tracking_table_part_set_number_badge.dart",
+    "kind": "radius",
+    "line": 372,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/set_tracking_table_part_set_number_badge.dart",
+    "kind": "padding",
+    "line": 593,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/set_tracking_table_part_set_number_badge.dart",
+    "kind": "padding",
+    "line": 1019,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/superset_indicator.dart",
+    "kind": "radius",
+    "line": 275,
+    "value": 11.5,
+    "lineText": "top: Radius.circular(11.5), // Account for border width"
+  },
+  {
+    "file": "lib/screens/workout/widgets/superset_indicator.dart",
+    "kind": "radius",
+    "line": 285,
+    "value": 11.5,
+    "lineText": "top: Radius.circular(11.5),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart",
+    "kind": "radius",
+    "line": 251,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/superset_pair_sheet_part_superset_pair_sheet_state.dart",
+    "kind": "radius",
+    "line": 277,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/superset_reorder_sheet.dart",
+    "kind": "radius",
+    "line": 556,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/trophy_celebration_overlay.dart",
+    "kind": "radius",
+    "line": 230,
+    "value": 30.0,
+    "lineText": "borderRadius: BorderRadius.circular(30),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/workout_ai_recap_card.dart",
+    "kind": "padding",
+    "line": 262,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/workout_bottom_bar.dart",
+    "kind": "padding",
+    "line": 490,
+    "value": 3.0,
+    "lineText": "margin: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/workout_mini_player.dart",
+    "kind": "radius",
+    "line": 187,
+    "value": 15.0,
+    "lineText": "borderRadius: BorderRadius.circular(15),"
+  },
+  {
+    "file": "lib/screens/workout/widgets/workout_top_bar_v2.dart",
+    "kind": "padding",
+    "line": 329,
+    "value": 2.0,
+    "lineText": "padding: const EdgeInsets.all(2),"
+  },
+  {
+    "file": "lib/screens/workout/workout_complete_screen.dart",
+    "kind": "radius",
+    "line": 870,
+    "value": 26.0,
+    "lineText": "borderRadius: BorderRadius.circular(26),"
+  },
+  {
+    "file": "lib/screens/workout/workout_complete_screen_ui_1.dart",
+    "kind": "padding",
+    "line": 568,
+    "value": 5.0,
+    "lineText": "padding: const EdgeInsets.all(5),"
+  },
+  {
+    "file": "lib/screens/workout/workout_detail_screen_ui_2.dart",
+    "kind": "padding",
+    "line": 934,
+    "value": 9.0,
+    "lineText": "padding: const EdgeInsets.all(9),"
+  },
+  {
+    "file": "lib/screens/workout/workout_detail_screen_ui_2.dart",
+    "kind": "radius",
+    "line": 937,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/workout/your_programs_screen.dart",
+    "kind": "padding",
+    "line": 537,
+    "value": 18.0,
+    "lineText": "padding: const EdgeInsets.all(18),"
+  },
+  {
+    "file": "lib/screens/workout/your_programs_screen.dart",
+    "kind": "radius",
+    "line": 659,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/managed_gym_card.dart",
+    "kind": "radius",
+    "line": 115,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/my_program_sheet.dart",
+    "kind": "padding",
+    "line": 536,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/my_program_sheet.dart",
+    "kind": "padding",
+    "line": 598,
+    "value": 11.0,
+    "lineText": "padding: const EdgeInsets.all(11),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/workout_library_grid.dart",
+    "kind": "radius",
+    "line": 123,
+    "value": 11.0,
+    "lineText": "borderRadius: BorderRadius.circular(11),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/workout_library_grid.dart",
+    "kind": "radius",
+    "line": 146,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/workout_stats/workout_stats_recent_prs.dart",
+    "kind": "radius",
+    "line": 188,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/workouts/widgets/workout_stats/workout_stats_trend_chart.dart",
+    "kind": "padding",
+    "line": 325,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/screens/workouts/workouts_screen.dart",
+    "kind": "padding",
+    "line": 683,
+    "value": 15.0,
+    "lineText": "padding: const EdgeInsets.all(15),"
+  },
+  {
+    "file": "lib/screens/wrapped/cards/favorites_card.dart",
+    "kind": "radius",
+    "line": 136,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/screens/wrapped/wrapped_viewer_screen.dart",
+    "kind": "radius",
+    "line": 351,
+    "value": 1.5,
+    "lineText": "borderRadius: BorderRadius.circular(1.5),"
+  },
+  {
+    "file": "lib/screens/you/widgets/weight_tracking_card.dart",
+    "kind": "radius",
+    "line": 371,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/screens/you/widgets/weight_tracking_card.dart",
+    "kind": "padding",
+    "line": 386,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/widgets/activity_heatmap.dart",
+    "kind": "radius",
+    "line": 640,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/widgets/app_tour/app_tour_tooltip_card.dart",
+    "kind": "radius",
+    "line": 313,
+    "value": 19.0,
+    "lineText": "borderRadius: BorderRadius.circular(19),"
+  },
+  {
+    "file": "lib/widgets/design_system/zealova_card.dart",
+    "kind": "padding",
+    "line": 30,
+    "value": 15.0,
+    "lineText": "this.padding = const EdgeInsets.all(15),"
+  },
+  {
+    "file": "lib/widgets/level_up_dialog_part_progress_bar.dart",
+    "kind": "radius",
+    "line": 23,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/widgets/level_up_dialog_part_progress_bar.dart",
+    "kind": "radius",
+    "line": 27,
+    "value": 7.0,
+    "lineText": "borderRadius: BorderRadius.circular(7),"
+  },
+  {
+    "file": "lib/widgets/main_shell_part_edge_panel_handle.dart",
+    "kind": "radius",
+    "line": 451,
+    "value": 1.0,
+    "lineText": "borderRadius: BorderRadius.circular(1),"
+  },
+  {
+    "file": "lib/widgets/main_shell_part_edge_panel_handle.dart",
+    "kind": "radius",
+    "line": 742,
+    "value": 21.0,
+    "lineText": "borderRadius: BorderRadius.circular(21),"
+  },
+  {
+    "file": "lib/widgets/minigame/nutrient_rush_game.dart",
+    "kind": "radius",
+    "line": 1928,
+    "value": 13.0,
+    "lineText": "RRect.fromRectAndRadius(rect, const Radius.circular(13)),"
+  },
+  {
+    "file": "lib/widgets/minigame/nutrient_rush_game.dart",
+    "kind": "radius",
+    "line": 1955,
+    "value": 13.0,
+    "lineText": "RRect.fromRectAndRadius(rect, const Radius.circular(13)),"
+  },
+  {
+    "file": "lib/widgets/sync_status_widget.dart",
+    "kind": "padding",
+    "line": 55,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/widgets/top_segmented_control.dart",
+    "kind": "padding",
+    "line": 48,
+    "value": 3.0,
+    "lineText": "padding: const EdgeInsets.all(3),"
+  },
+  {
+    "file": "lib/widgets/trends/premium_metric_chart.dart",
+    "kind": "radius",
+    "line": 318,
+    "value": 7.0,
+    "lineText": "topLeft: const Radius.circular(7),"
+  },
+  {
+    "file": "lib/widgets/trends/premium_metric_chart.dart",
+    "kind": "radius",
+    "line": 319,
+    "value": 7.0,
+    "lineText": "topRight: const Radius.circular(7),"
+  },
+  {
+    "file": "lib/widgets/trends/trend_ai_insight_card.dart",
+    "kind": "padding",
+    "line": 151,
+    "value": 7.0,
+    "lineText": "padding: const EdgeInsets.all(7),"
+  },
+  {
+    "file": "lib/widgets/xp_level_bar.dart",
+    "kind": "radius",
+    "line": 402,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/widgets/xp_progress_card.dart",
+    "kind": "radius",
+    "line": 330,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  },
+  {
+    "file": "lib/widgets/xp_progress_card.dart",
+    "kind": "radius",
+    "line": 340,
+    "value": 5.0,
+    "lineText": "borderRadius: BorderRadius.circular(5),"
+  }
+]

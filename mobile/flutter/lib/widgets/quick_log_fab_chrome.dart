@@ -52,41 +52,18 @@ import '../core/theme/theme_colors.dart';
 //     screen-reader user never hears the control change identity.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/// Height of the quick-log FAB.
-const double kQuickLogFabHeight = 44.0;
-
-/// Gap between the top of the nav pill and the bottom of the FAB.
-///
-/// Register #177 (a #16 recurrence): #16 fixed the FAB covering content it
-/// scrolls PAST (the trailing `kQuickLogFabClearance` reservation below).
-/// It did not fix — because it's a different failure mode — the FAB
-/// covering content it floats ON TOP of at rest: on Home it clipped the
-/// hero card's title ("LOWER BODY STRE▮"), and on the Workout tab it
-/// visually covered the PROGRAMS tile. Both are the SAME fixed
-/// `Positioned(bottom:)` pill painted over whatever the scroll view happens
-/// to render at that screen offset, independent of scroll position, on
-/// every tab that shows it. Raised from 14 → 26 (docs/planning/mockups/
-/// home-density-2026-08-01.html "after" panel: fab bottom 52 → 64, the same
-/// +12 delta) — the single shared token every tab's FAB position derives
-/// from, so the extra clearance applies everywhere the button floats, not
-/// just Home. Only the resting offset moved; size, styling, tap target and
-/// always-on-top behaviour are unchanged.
-const double kQuickLogFabGapAboveNav = 26.0;
-
-/// Distance from the bottom safe-area inset to the BOTTOM of the FAB.
-/// This is the value `Positioned(bottom:)` must use, minus the inset itself.
-const double kQuickLogFabBottomOffset =
-    kMainNavBarHeight + kMainNavBottomGap + kQuickLogFabGapAboveNav;
-
-/// Vertical space (above the safe-area inset) a tab screen must reserve so its
-/// content can scroll clear of BOTH the floating nav pill and the quick-log
-/// FAB that floats above it.
-///
-/// Use this instead of [kMainNavClearance] on any tab that renders the FAB
-/// (Home, Workout, Nutrition, You). [kMainNavClearance] remains correct for
-/// surfaces with no FAB — the Coach tab, and full-screen pushed routes.
-const double kQuickLogFabClearance =
-    kQuickLogFabBottomOffset + kQuickLogFabHeight + 12;
+// The FAB's geometry tokens moved to `core/constants/chrome_constants.dart`
+// (the file that already owns the nav pill's geometry) so non-widget chrome
+// can derive from them too — specifically the app's SnackBar bottom inset,
+// which has to clear this button (E2E row 125). They are re-exported here, so
+// every existing `import '.../quick_log_fab_chrome.dart'` keeps resolving
+// `kQuickLogFabClearance` and friends unchanged.
+export '../core/constants/chrome_constants.dart'
+    show
+        kQuickLogFabHeight,
+        kQuickLogFabGapAboveNav,
+        kQuickLogFabBottomOffset,
+        kQuickLogFabClearance;
 
 /// Corner radius of the quick-log button.
 ///

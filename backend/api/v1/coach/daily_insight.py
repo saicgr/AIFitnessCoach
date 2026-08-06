@@ -103,6 +103,12 @@ _VALID_ROUTES = {
     "/chat", "/home",
     "/workouts", "/nutrition", "/neat", "/health/sleep", "/fasting",
     "/pillar/train", "/pillar/nourish", "/pillar/move",
+    # Row 198, 2026-08: the evening recap offered "View sleep" -> /health/sleep
+    # for an account with zero synced sleep, landing on an empty "Connect
+    # Health to see your sleep" screen. /metrics is the real Health-connect
+    # settings screen — the prompt now routes here instead when sleep/move
+    # isn't `applicable`.
+    "/metrics",
 }
 _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 
@@ -195,7 +201,13 @@ def _grounded_greeting_lines(
         else:
             lines.append(f"{nm} is on the plan today.")
 
-    # --- This week. ---
+    # --- Last 7 days. `weekly` is a trailing 7-day window (see the
+    # snapshot builder above), NOT the calendar week — labeling it
+    # "This week" reads as a Mon-start-of-week total and disagrees with
+    # Home's calendar-week ring on any day that isn't Sunday (row 146,
+    # 2026-08: recap said "2 workouts" for the week while Home's ring said
+    # "1 of 4" — both numbers were correct for what they each measured, only
+    # the recap's label was wrong). Keep the phrasing honest to the window. ---
     weekly = snapshot.get("weekly") or {}
     wk_bits: List[str] = []
     wc = weekly.get("workouts_completed")
@@ -205,7 +217,7 @@ def _grounded_greeting_lines(
     if avg_sleep:
         wk_bits.append(f"averaging {_fmt_sleep(int(avg_sleep))} sleep")
     if wk_bits:
-        lines.append("This week: " + ", ".join(wk_bits) + ".")
+        lines.append("In the last 7 days: " + ", ".join(wk_bits) + ".")
 
     # --- Cycle / injury / streak (qualitative, no fabricated numbers). ---
     phase = snapshot.get("cycle_phase")
@@ -1354,7 +1366,7 @@ _FALLBACK_TEMPLATES: Dict[str, Dict[str, list]] = {
             "{first_name}, recovery is the lever. Plan for a longer night and the rest of the plan flows.",
             "{first_name}, an extra forty minutes tonight beats an extra rep today.",
         ],
-        "cta_primary": {"label": "View sleep", "route": "/sleep"},
+        "cta_primary": {"label": "View sleep", "route": "/health/sleep"},
     },
     "all_done": {
         "headline": [
@@ -1396,7 +1408,13 @@ def _pick_fallback_pillar(snapshot: Dict[str, Any]) -> str:
     move_open = move.get("applicable") and (move.get("step_target") or 0) > 0 and (
         (move.get("steps") or 0) < (move.get("step_target") or 0) * 0.5
     )
-    sleep_open = (sleep.get("target_hours") or 0) > 0 and (
+    # Gate on `applicable` (set False in _collect_snapshot when today has no
+    # synced sleep_minutes) for the same reason move_open gates on it above:
+    # without this, a disconnected/no-sleep-logged account still reads
+    # total_hours=0 < target_hours=8, so sleep_open was True unconditionally
+    # and this fallback picked "sleep" -> a "View sleep" CTA pointing at an
+    # empty detail screen (same dead-end class as row 198, 2026-08).
+    sleep_open = sleep.get("applicable", True) and (sleep.get("target_hours") or 0) > 0 and (
         (sleep.get("total_hours") or 0) < (sleep.get("target_hours") or 0) - 0.5
     )
 
@@ -2478,6 +2496,44 @@ async def daily_insight(
             except Exception as e:
                 # Persist failure is non-fatal — still return the payload.
                 logger.warning(f"[daily_insight] persist failed: {e}")
+
+            # ---- Mirror the Home coach-hero card's own opening turn into
+            # chat_history (migration 2098 / row 55, UI_E2E 2026-08-05) -----
+            # Without this, /chat?source=coach_hero&insight_id=X had nothing
+            # server-side to point at: the client had to synthesize the
+            # opening bubble itself, which vanished on the next app relaunch
+            # and left any follow-up ("Why?") hanging off nothing. Reuses the
+            # SAME chokepoint push_nudge_cron.py uses for every other
+            # proactive coach message (CLAUDE.md: never a hand-rolled insert).
+            # Gated to `source == "home"` (the coach-hero card specifically)
+            # and to once per LOCAL day — the delete-then-insert persist
+            # above stamps a fresh insight_id on every same-day regeneration
+            # (e.g. after a workout completes and busts the cache), and
+            # mirroring each of those would spam duplicate opening bubbles.
+            if insight_id and source == "home":
+                try:
+                    from api.v1.push_nudge_cron import (
+                        _already_seeded_today,
+                        _mirror_proactive_to_chat,
+                    )
+
+                    if not _already_seeded_today(sb, user_id, "coach_hero", tz_resolved):
+                        _mirror_proactive_to_chat(
+                            supabase=sb,
+                            user_id=user_id,
+                            nudge_type="daily_insight_home",
+                            message=f"{payload['headline']}\n\n{payload['body']}",
+                            context_json={
+                                "proactive": True,
+                                "source": source,
+                                "insight_id": insight_id,
+                            },
+                            log_tag="CoachHero",
+                            source_surface="coach_hero",
+                            insight_id=insight_id,
+                        )
+                except Exception as e:
+                    logger.warning(f"[daily_insight] coach_hero chat mirror failed: {e}")
 
         # Advance the open-loop nag budget for any loops this fresh briefing
         # surfaced (migration 2217). Cache hits + the greeting path return

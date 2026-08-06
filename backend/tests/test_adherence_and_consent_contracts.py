@@ -42,6 +42,7 @@ TEST_USER_ID = "contract-test-user"
 
 ACTIVITY_SYNC_PATH = "/api/v1/activity/sync"
 ADHERENCE_PATH = f"/api/v1/nutrition/adherence/{TEST_USER_ID}/summary"
+TDEE_DETAILED_PATH = f"/api/v1/nutrition/tdee/{TEST_USER_ID}/detailed"
 
 
 # ── fixtures ────────────────────────────────────────────────────────────────
@@ -313,6 +314,66 @@ def test_one_logged_week_is_not_diluted_by_the_empty_weeks_around_it(client):
     # Not 20% — the three unlogged weeks contribute NOTHING to the average.
     assert body["average_adherence"] == pytest.approx(100.0)
     assert body["sustainability_rating"] == "high"
+
+
+# ── 3b. the TDEE "insufficient data" contract (row 14) ──────────────────────
+
+
+def test_tdee_insufficient_data_returns_json_null_not_fabricated_zeros(client):
+    """Regression test for docs/qa/UI_E2E_2026-08-05.md row 14.
+
+    Before the fix, a user with too few food/weight logs got a fully
+    populated `DetailedTDEEResponse` with `tdee=0`, `confidence_low/high=0`,
+    `avg_daily_intake=0`, `weight_change_kg=0.0`, and the raw machine token
+    `confidence_level="insufficient_data"` — the client rendered that as a
+    live "0 cal/day ±0 cal" reading, a "Weight: Stable" trend, and the enum
+    string as a badge. The service has itself already classified this
+    account as insufficient data; the API must say so (JSON null), not
+    fabricate a plausible-looking number in a shape a client already knows
+    how to treat as "no data" (see `_assert_client_reads_this_as_null`,
+    which encodes exactly what `NutritionRepository.getDetailedTDEE` /
+    `TDEECard`'s null branch require).
+    """
+    db = _fake_db(
+        {
+            # 2 food logs (< 5) and 0 weight logs (< 2) — the service's own
+            # documented floor for a TDEE estimate.
+            "food_logs": [
+                {
+                    "logged_at": "2026-08-01T12:00:00+00:00",
+                    "total_calories": 1800,
+                    "protein_g": 120,
+                    "carbs_g": 180,
+                    "fat_g": 60,
+                },
+                {
+                    "logged_at": "2026-08-02T12:00:00+00:00",
+                    "total_calories": 1900,
+                    "protein_g": 125,
+                    "carbs_g": 190,
+                    "fat_g": 62,
+                },
+            ],
+            "weight_logs": [],
+            "adaptive_nutrition_calculations": [],
+        }
+    )
+    with patch("api.v1.nutrition.tdee_adherence.get_supabase_db", return_value=db):
+        response = client.get(
+            TDEE_DETAILED_PATH, headers={"X-User-Timezone": "UTC"}, params={"days": 14}
+        )
+
+    # Same wire contract as `_assert_client_reads_this_as_null` (JSON
+    # content-type + a body that decodes to null — the only shape Dio
+    # 5.9.2's FusedTransformer turns into `response.data == null` on the
+    # client), but on the TDEE-specific reason header — a distinct
+    # namespace from the adherence "unavailable" signal since the two are
+    # unrelated unknowns.
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/json")
+    assert response.content == b"null"
+    assert response.json() is None
+    assert response.headers.get("X-Nutrition-TDEE-Unavailable") == "insufficient-data"
 
 
 # ── 4. service-level: a week with no logs is unknown, not zero ──────────────

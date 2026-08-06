@@ -75,8 +75,12 @@ Fields per operation:
       resolution_prompt to the short question the coach should ask later
       (e.g. "How's the back feeling this morning?")
 - category: short tag (e.g. %s)
-- content: the fact in concise third-person-neutral form
-  (e.g. "Has lower back pain, started this week", "Prefers morning workouts")
+- content: the fact in concise SECOND-PERSON form, addressing the user
+  directly as "you" — this is shown verbatim on the user's own "What Coach
+  remembers" settings screen, so it must read like something written TO
+  them, not a database record ABOUT them.
+  (e.g. "You have lower back pain, started this week", "You prefer morning
+  workouts" — never "User has..." or "Has lower back pain" with no subject)
 - salience: 0..1 importance for surfacing later
 - confidence: 0..1 how sure you are the user actually asserted this
 - sensitive: true for medical/pain/mental-health facts

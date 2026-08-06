@@ -15,6 +15,39 @@ import '../../../widgets/main_shell.dart';
 import '../sections/sections.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
+/// Every value `accountability_intensity` ("Nudge Intensity" here, "Coach
+/// tone" on Sound & Notifications — same backend field) can hold. 'auto' is
+/// the field's own default (see `NotificationPreferences`), so it MUST be
+/// representable here or the segmented control renders with nothing
+/// selected for every user who hasn't picked a fixed tone (regression:
+/// E2E settings row 22). Keep in sync with the "Coach tone" chips in
+/// `notifications_section.dart`, which must cover the same value set.
+const List<String> kNudgeIntensitySegmentValues = [
+  'auto',
+  'gentle',
+  'balanced',
+  'tough_love',
+  'off',
+];
+
+String _nudgeIntensityLabel(BuildContext context, String value) {
+  switch (value) {
+    case 'auto':
+      return 'Auto';
+    case 'gentle':
+      return AppLocalizations.of(context).aiCoachGentle;
+    case 'balanced':
+      return AppLocalizations.of(context).quizProgressionConstraintsBalanced;
+    case 'tough_love':
+      return AppLocalizations.of(context).aiCoachTough;
+    case 'off':
+      return AppLocalizations.of(context).programBuilderPartOff;
+    default:
+      return value;
+  }
+}
+
 /// Sub-page for AI Coach settings: voice, edge handle, privacy.
 ///
 /// Layout: essentials (Coach card, voice, nudge intensity + AI-personalized
@@ -163,12 +196,15 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 width: double.infinity,
                 child: SegmentedButton<String>(
                   showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(value: 'gentle', label: Text(AppLocalizations.of(context).aiCoachGentle, style: TextStyle(fontSize: 11))),
-                    ButtonSegment(value: 'balanced', label: Text(AppLocalizations.of(context).quizProgressionConstraintsBalanced, style: TextStyle(fontSize: 11))),
-                    ButtonSegment(value: 'tough_love', label: Text(AppLocalizations.of(context).aiCoachTough, style: TextStyle(fontSize: 11))),
-                    ButtonSegment(value: 'off', label: Text(AppLocalizations.of(context).programBuilderPartOff, style: TextStyle(fontSize: 11))),
-                  ],
+                  segments: kNudgeIntensitySegmentValues
+                      .map((value) => ButtonSegment(
+                            value: value,
+                            label: Text(
+                              _nudgeIntensityLabel(context, value),
+                              style: TextStyle(fontSize: 11),
+                            ),
+                          ))
+                      .toList(),
                   selected: {prefs.accountabilityIntensity},
                   onSelectionChanged: (values) {
                     HapticFeedback.selectionClick();

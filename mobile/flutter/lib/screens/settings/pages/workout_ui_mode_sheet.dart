@@ -27,8 +27,11 @@ import '../../../l10n/generated/app_localizations.dart';
 Future<void> showWorkoutUiModeSheet(BuildContext context) {
   return showGlassSheet<void>(
     context: context,
+    // showHandle defaults to true — this sheet used to opt out, leaving it
+    // the one sheet in the app with zero dismiss affordance (no grabber, no
+    // ×, no Cancel/Done). It's tap-outside dismissible, but nothing on
+    // screen said so (E2E settings row 215).
     builder: (_) => const GlassSheet(
-      showHandle: false,
       child: _WorkoutUiModeSheet(),
     ),
   );

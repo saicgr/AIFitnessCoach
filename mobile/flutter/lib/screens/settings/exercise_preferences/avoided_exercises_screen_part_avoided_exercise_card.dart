@@ -1,5 +1,29 @@
 part of 'avoided_exercises_screen.dart';
 
+/// Reasons are either free text the user typed in the manual "avoid this
+/// exercise" sheet, OR a structured machine token written by the in-workout
+/// "report pain" flow (`reason: 'pain:$severity'`, avoided_provider.dart) —
+/// never meant to be shown verbatim. Humanize the known machine convention;
+/// pass everything else (real free text) through unchanged.
+String humanizeAvoidReason(String raw) {
+  if (!raw.startsWith('pain:')) return raw;
+  final severity = raw.substring('pain:'.length);
+  switch (severity) {
+    case 'mild':
+      return 'Reported mild pain';
+    case 'sharp':
+      return 'Reported sharp pain';
+    case 'severe':
+      return 'Reported severe pain';
+    default:
+      return 'Reported pain';
+  }
+}
+
+/// Unambiguous, locale-independent date display — "Aug 19, 2026" instead of
+/// raw D/M/Y digits, which read as the wrong date to US-convention users
+/// (E2E settings row 82).
+String formatAvoidUntilDate(DateTime date) => DateFormat('MMM d, yyyy').format(date);
 
 /// Card widget for an avoided exercise
 class _AvoidedExerciseCard extends ConsumerWidget {
@@ -63,7 +87,7 @@ class _AvoidedExerciseCard extends ConsumerWidget {
                     if (exercise.reason != null) ...[
                       const SizedBox(height: 4),
                       Text(
-                        exercise.reason!,
+                        humanizeAvoidReason(exercise.reason!),
                         style: TextStyle(
                           fontSize: 13,
                           color: textMuted,
@@ -77,7 +101,7 @@ class _AvoidedExerciseCard extends ConsumerWidget {
                           Icon(Icons.timer, size: 12, color: context.accentColor),
                           const SizedBox(width: 4),
                           Text(
-                            'Until ${exercise.endDate!.day}/${exercise.endDate!.month}/${exercise.endDate!.year}',
+                            'Until ${formatAvoidUntilDate(exercise.endDate!)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: context.accentColor,
@@ -266,7 +290,7 @@ class _SubstitutesSheetState extends ConsumerState<_SubstitutesSheet> {
                         Icon(Icons.medical_services, size: 14, color: context.accentColor),
                         const SizedBox(width: 6),
                         Text(
-                          widget.reason!,
+                          humanizeAvoidReason(widget.reason!),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

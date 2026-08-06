@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from api.v1.timeline_cache import get_timeline_cache, set_timeline_cache
+from api.v1.hydration import get_user_hydration_goal
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.logger import get_logger
@@ -367,6 +368,11 @@ async def get_timeline(
         "workouts", "food", "water", "weight", "mood",
         "habits", "streak", "xp", "personal_records",
     ]
+    # The per-user hydration goal rides the same fan-out (not a fixed
+    # DB-shaped query, so it's kept out of _DOMAIN_NAMES/_rows) — this is the
+    # single source of truth (user_settings.hydration_goal_ml via
+    # api.v1.hydration.get_user_hydration_goal) the water tile below reads,
+    # so the timeline can never disagree with GET /hydration/goal/{user_id}.
     try:
         results = await asyncio.gather(
             loop.run_in_executor(None, _q_workouts),
@@ -378,13 +384,22 @@ async def get_timeline(
             loop.run_in_executor(None, _q_streak),
             loop.run_in_executor(None, _q_xp),
             loop.run_in_executor(None, _q_personal_records),
+            get_user_hydration_goal(user_id),
             return_exceptions=True,
         )
     except Exception as e:
         # gather() with return_exceptions=True effectively never raises; this
         # only fires on a catastrophic scheduling failure.
         logger.error(f"[Timeline] aggregator scheduling failed: {e}", exc_info=True)
-        results = [None] * len(_DOMAIN_NAMES)
+        results = [None] * (len(_DOMAIN_NAMES) + 1)
+
+    _hydration_goal_result = results[len(_DOMAIN_NAMES)] if len(results) > len(_DOMAIN_NAMES) else None
+    if isinstance(_hydration_goal_result, Exception) or _hydration_goal_result is None:
+        logger.warning(f"[Timeline] hydration goal query failed: {_hydration_goal_result}")
+        from api.v1.hydration import DEFAULT_DAILY_GOAL_ML as _HYDRATION_DEFAULT_GOAL_ML
+        hydration_goal_ml = _HYDRATION_DEFAULT_GOAL_ML
+    else:
+        hydration_goal_ml = _hydration_goal_result
 
     def _rows(idx: int) -> List[Dict[str, Any]]:
         r = results[idx]
@@ -612,7 +627,7 @@ async def get_timeline(
             ),
             "protein_g": sum(e["metadata"].get("protein_g") or 0 for e in food_today),
             "water_ml": sum(e["metadata"].get("amount_ml") or 0 for e in water_today),
-            "water_goal_ml": 2400,  # default until per-user goal wiring lands
+            "water_goal_ml": hydration_goal_ml,
             "sleep_minutes": sum(
                 e["metadata"].get("duration_minutes") or 0 for e in sleep_today
             ),

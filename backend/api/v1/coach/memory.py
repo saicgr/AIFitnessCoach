@@ -25,6 +25,7 @@ from pydantic import BaseModel
 from core.auth import get_current_user
 from core.config import get_settings
 from core.db import get_supabase_db
+from services.coach.memory.voice import to_second_person
 
 logger = logging.getLogger("coach_memory_api")
 
@@ -66,7 +67,13 @@ def _to_item(row: dict) -> MemoryItem:
         id=row.get("id"),
         memory_type=row.get("memory_type") or "semantic",
         category=row.get("category") or "other",
-        content=row.get("content") or "",
+        # Row 199, 2026-08: memories written before the extraction prompt
+        # required second person ("You perform workouts in the morning")
+        # still read in third person ("User performs workouts in the
+        # morning") on this screen — every other string here addresses the
+        # user directly. Deterministic, no-LLM safety net; a no-op on
+        # content already written in second person.
+        content=to_second_person(row.get("content") or ""),
         status=row.get("status") or "active",
         salience=float(row.get("salience") or 0.5),
         sensitive=bool(row.get("sensitive")),

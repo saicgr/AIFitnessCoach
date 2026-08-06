@@ -183,24 +183,27 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
                     const SizedBox(height: 2),
                     Text(
                       'HYDRATED',
-                      // Barlow Condensed uppercase caption.
+                      // Row #182: below 40% fill this used plain
+                      // `AppColors.textMuted` (#71717A on #0A0A0B ≈ 4.09:1 —
+                      // under WCAG AA's 4.5:1 for this caption size), and the
+                      // muscle line-art underneath is drawn in nearly the
+                      // same grey, so the letters camouflaged into the
+                      // figure. Use the same high-contrast textColor + shadow
+                      // treatment the >40% state already gets instead of a
+                      // separate low-fill-only muted style.
                       style: ZType.lbl(
                         widget.width * 0.07,
                         color: fillValue > 0.4
                             ? Colors.white.withValues(alpha: 0.8)
-                            : (widget.isDark
-                                ? AppColors.textMuted
-                                : AppColorsLight.textMuted),
+                            : textColor.withValues(alpha: 0.8),
                         letterSpacing: 1.5,
                       ).copyWith(
-                        shadows: fillValue > 0.4
-                            ? [
-                                Shadow(
-                                  color: Colors.black.withValues(alpha: 0.3),
-                                  blurRadius: 4,
-                                )
-                              ]
-                            : null,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            blurRadius: 4,
+                          )
+                        ],
                       ),
                     ),
                   ],

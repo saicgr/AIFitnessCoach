@@ -11,8 +11,8 @@ import '../repositories/nutrition_repository.dart';
 import '../repositories/hydration_repository.dart';
 import '../providers/nutrition_preferences_provider.dart';
 import '../providers/coach_unread_provider.dart';
+import '../providers/daily_coach_insight_provider.dart' show dailyCoachInsightProvider;
 import 'notification_service.dart';
-import '../../core/providers/timezone_provider.dart';
 import '../../utils/tz.dart';
 import 'api_client.dart';
 import 'data_cache_service.dart';
@@ -280,7 +280,7 @@ class BootstrapPrefetchService {
         await _cacheCoachInsight(uid, coachFromBootstrap);
       } else {
         // ignore: unawaited_futures
-        _prefetchCoachInsight(ref, uid);
+        prefetchCoachInsight(ref, uid);
       }
 
       // Persist the raw blob to disk so the NEXT cold start can pre-hydrate
@@ -427,41 +427,42 @@ class BootstrapPrefetchService {
     }
   }
 
-  /// Fetch the coach daily-insight in parallel with the rest of bootstrap and
-  /// write it through to the disk cache the hero reads cache-first (J). Skips
-  /// the network entirely when a non-expired, same-local-day entry already
-  /// exists (a warm start already paints from it), so this only costs a round
-  /// trip on the genuine cold/first-paint case. Best-effort — a failure just
-  /// means the hero falls back to its own provider fetch, exactly as before.
-  static Future<void> _prefetchCoachInsight(Ref ref, String uid) async {
+  /// Warm the coach hero's cache by reading THROUGH [dailyCoachInsightProvider]
+  /// — never by issuing our own independent `/coach/daily-insight` request.
+  ///
+  /// This used to make its own raw `api.get()` call, racing the SAME endpoint
+  /// against `dailyCoachInsightProvider`'s own fetch (triggered the moment
+  /// CoachHeroCard builds, or by MainShell's prewarm waves). Both checked the
+  /// disk cache first, but check-then-fetch has no lock between two unrelated
+  /// callers: on a genuine cold start (no cache yet — a fresh install or a new
+  /// calendar day) both callers saw a cache miss and both fired their own GET,
+  /// two concurrent requests to the exact same Gemini-backed endpoint that
+  /// itself takes up to the full 30s receive-timeout window. That's the
+  /// Sentry-flagged pair: FITWIZ-FLUTTER-FY ("N+1 API Call" — the duplicate
+  /// `/coach/daily-insight` shape) and FITWIZ-FLUTTER-AX (the 30s receive
+  /// timeout), both tagged route=/splash — the redundant call fired right in
+  /// the app's most latency-sensitive cold-start window, doubling the chance
+  /// either request eats the timeout and doubling backend load for zero
+  /// benefit.
+  ///
+  /// Routing through the provider's own `.future` makes Riverpod's normal
+  /// single-in-flight-Future-per-provider-instance behavior do the
+  /// deduplication: whichever caller (this prefetch, or CoachHeroCard's
+  /// `ref.watch`) reads it first starts the ONE real fetch; every other reader
+  /// — including this one, if it's second — awaits that same Future instead of
+  /// starting a second network round trip. The provider still does everything
+  /// this method used to do by hand (disk-cache-first, write-through cache,
+  /// `ref.keepAlive()` on success), so behavior for the hero card is
+  /// unchanged — it just no longer has a duplicate racer.
+  ///
+  /// Public (not `_`-prefixed) + `@visibleForTesting` so the regression test
+  /// can drive this exact chokepoint directly instead of the full `prefetch`
+  /// flow (which needs a real Supabase session + `/home/bootstrap` response
+  /// this bug has nothing to do with).
+  @visibleForTesting
+  static Future<void> prefetchCoachInsight(Ref ref, String uid) async {
     try {
-      // Already warm? Don't burn a fetch — the provider will paint from disk.
-      final existing = await DataCacheService.instance.getCached(
-        DataCacheService.coachInsightKey,
-        userId: uid,
-      );
-      if (existing != null) return;
-
-      // Resolve the timezone the same way the provider does. The notifier
-      // hydrates from cache synchronously on creation, so reading it here in
-      // the redirect window almost always yields the real IANA zone; if it's
-      // still loading we fall back to the device offset name (the server treats
-      // an unknown tz leniently and the morning refresh corrects it).
-      final tzState = ref.read(timezoneProvider);
-      final tz = tzState.isLoading ? DateTime.now().timeZoneName : tzState.timezone;
-
-      final api = ref.read(apiClientProvider);
-      final res = await api.get<Map<String, dynamic>>(
-        '/coach/daily-insight',
-        queryParameters: {
-          'date': Tz.localDate(),
-          'tz': tz,
-          'source': 'home',
-        },
-      );
-      final data = res.data;
-      if (data is! Map<String, dynamic>) return;
-      await _cacheCoachInsight(uid, data);
+      await ref.read(dailyCoachInsightProvider.future);
       debugPrint('⚡ [Bootstrap] Coach insight prefetched + cached');
     } catch (e) {
       debugPrint('⚠️ [Bootstrap] Coach insight prefetch failed: $e');

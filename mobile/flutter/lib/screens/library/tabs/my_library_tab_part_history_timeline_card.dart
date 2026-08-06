@@ -5,11 +5,13 @@ class _HistoryTimelineCard extends StatelessWidget {
   final ExerciseHistoryItem item;
   final bool isDark;
   final bool isLast;
+  final bool useKg;
 
   const _HistoryTimelineCard({
     required this.item,
     required this.isDark,
     required this.isLast,
+    required this.useKg,
   });
 
   @override
@@ -87,7 +89,12 @@ class _HistoryTimelineCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
-                          maxLines: 1,
+                          // 2 lines, not 1 — the variant qualifier that tells
+                          // this row apart from a sibling exercise (e.g.
+                          // "... Resistance Band Seated" vs "... Standing")
+                          // is almost always at the END of the name, so a
+                          // 1-line ellipsis is exactly what eats it.
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
@@ -99,10 +106,20 @@ class _HistoryTimelineCard extends StatelessWidget {
                               color: textMuted,
                             ),
                           ),
-                        if (item.maxWeight != null && item.maxReps != null) ...[
+                        // Only a real logged weight is a "Best" — a bodyweight
+                        // move or a stretch has no weight/rep concept, and the
+                        // backend represents that as 0/0, not null. Showing
+                        // "Best: 0kg x 0" would be a fabricated stat, so gate
+                        // on > 0 rather than merely non-null. Unit follows the
+                        // user's workout-weight preference (defaults lbs),
+                        // never a hard-coded "kg".
+                        if (item.maxWeight != null &&
+                            item.maxWeight! > 0 &&
+                            item.maxReps != null &&
+                            item.maxReps! > 0) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Best: ${item.maxWeight!.toStringAsFixed(item.maxWeight! == item.maxWeight!.roundToDouble() ? 0 : 1)}kg x ${item.maxReps}',
+                            'Best: ${WeightUtils.formatWorkoutWeight(item.maxWeight!, useKg: useKg)} x ${item.maxReps}',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
