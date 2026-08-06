@@ -103,34 +103,51 @@ class ZealovaTextTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    return Row(
-      children: [
-        for (var i = 0; i < tabs.length; i++) ...[
-          GestureDetector(
-            onTap: () => onChanged?.call(i),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  tabs[i].toUpperCase(),
-                  style: ZType.lbl(
-                    12.5,
-                    color: i == activeIndex ? tc.textPrimary : tc.textMuted,
-                    letterSpacing: 1.5,
+    // Scrolls horizontally rather than overflowing.
+    //
+    // This was a plain Row with fixed 18px gaps, so a set of tabs that fits at
+    // the default text scale overflows once the user raises system text size —
+    // measured at 2.0x by test/ui_gates/no_overflow_gate_test.dart. 14 files
+    // build this, across stats, nutrition, skills, achievements, rewards,
+    // leaderboard, injuries, streaks and progress.
+    //
+    // Scrolling, not ellipsizing: a tab label truncated to "Measure…" stops
+    // being a usable navigation control, whereas a scrollable strip keeps
+    // every label whole. When the tabs already fit, the scroll view lays out
+    // identically to the old Row, so nothing changes visually in the common
+    // case.
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const ClampingScrollPhysics(),
+      child: Row(
+        children: [
+          for (var i = 0; i < tabs.length; i++) ...[
+            GestureDetector(
+              onTap: () => onChanged?.call(i),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    tabs[i].toUpperCase(),
+                    style: ZType.lbl(
+                      12.5,
+                      color: i == activeIndex ? tc.textPrimary : tc.textMuted,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  height: 2,
-                  width: 18,
-                  color: i == activeIndex ? tc.accent : Colors.transparent,
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Container(
+                    height: 2,
+                    width: 18,
+                    color: i == activeIndex ? tc.accent : Colors.transparent,
+                  ),
+                ],
+              ),
             ),
-          ),
-          if (i != tabs.length - 1) const SizedBox(width: 18),
+            if (i != tabs.length - 1) const SizedBox(width: 18),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
