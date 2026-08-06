@@ -48,13 +48,22 @@ class BrandedErrorWidget extends StatelessWidget {
                   color: _amber, size: 20),
             );
           }
+          // Scrollable, and deliberately so: this Column is a fixed stack of
+          // text in a slot whose height it does not control, so at a large
+          // accessibility text scale it overflowed its own card (46px at 1.3x,
+          // caught by test/ui_gates/no_overflow_gate_test.dart). An error
+          // boundary that itself overflows is the worst possible failure — it
+          // is what users see precisely when something has already gone wrong.
+          // Scrolling means it cannot overflow at ANY text scale or slot size,
+          // rather than fitting at the scales someone happened to check.
           return Container(
             color: _bg,
-            alignment: Alignment.center,
             padding: const EdgeInsets.all(28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
                 Container(
                   width: 60,
                   height: 60,
@@ -85,20 +94,48 @@ class BrandedErrorWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(color: _muted, fontSize: 13, height: 1.4),
                 ),
-                if (kDebugMode) ...[
-                  const SizedBox(height: 14),
-                  Text(
-                    details.exceptionAsString(),
-                    textAlign: TextAlign.center,
-                    maxLines: 6,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                        color: Color(0xFFEF4444), // accent-allowlist: error state color, semantic
-                        fontSize: 11,
-                        fontFamily: 'monospace'),
+                // The copy says "Go back" — so give them something to go back
+                // WITH. A screenshot audit of 862 screens found this was the
+                // only route type in the app rendering zero controls, while
+                // instructing the user to navigate away. Guarded on
+                // `canPop()`: this widget also replaces small inline widgets
+                // mid-screen and can surface before any Navigator exists, and
+                // a dead button would be worse than none.
+                if (Navigator.maybeOf(context)?.canPop() ?? false) ...[
+                  const SizedBox(height: 20),
+                  TextButton.icon(
+                    onPressed: () => Navigator.maybeOf(context)?.maybePop(),
+                    icon: const Icon(Icons.arrow_back_rounded,
+                        size: 18, color: _amber),
+                    label: const Text('Go back',
+                        style: TextStyle(
+                            color: _amber,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                    style: TextButton.styleFrom(
+                      // Meets the 44pt minimum touch target — a "Talk more"
+                      // control elsewhere in this app was ~70x15pt and taps
+                      // silently missed it.
+                      minimumSize: const Size(88, 44),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                    ),
                   ),
                 ],
-              ],
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      details.exceptionAsString(),
+                      textAlign: TextAlign.center,
+                      maxLines: 6,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          color: Color(0xFFEF4444), // accent-allowlist: error state color, semantic
+                          fontSize: 11,
+                          fontFamily: 'monospace'),
+                    ),
+                  ],
+                ],
+              ),
             ),
           );
         },
