@@ -11,6 +11,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/lottie_animations.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/theme_colors.dart';
 /// Exercise picker for the program-template builder (plan B.3).
 ///
 /// A draggable bottom sheet that searches the shared exercise library
@@ -523,7 +524,7 @@ class _Thumb extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(Icons.fitness_center_rounded,
-          size: 20, color: AppColors.textSecondary),
+          size: 20, color: ThemeColors.of(context).textSecondary),
     );
     if (url == null || url!.isEmpty) return placeholder;
     return ClipRRect(

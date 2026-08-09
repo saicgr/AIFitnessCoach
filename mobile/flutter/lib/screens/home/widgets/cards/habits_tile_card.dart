@@ -9,6 +9,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// Habits Tile Card - Shows today's habits with quick toggle
 /// Displays habit checklist with completion progress
@@ -24,10 +25,10 @@ class HabitsTileCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     // Get user ID
     final authState = ref.watch(authStateProvider);

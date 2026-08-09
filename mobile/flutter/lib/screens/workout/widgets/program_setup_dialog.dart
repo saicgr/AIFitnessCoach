@@ -24,6 +24,7 @@ import '../../../data/models/program_template.dart' show ProgramParseException;
 import '../../../data/repositories/program_template_repository.dart'
     show AssignResult;
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 enum _Phase { working, success, error }
 
@@ -107,10 +108,10 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
       // No backing out mid-assign — the server call is already in flight.
       canPop: _phase != _Phase.working,
       child: Dialog(
-        backgroundColor: AppColors.elevated,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.cardBorder),
+          side: BorderSide(color: ThemeColors.of(context).cardBorder),
         ),
         insetPadding: const EdgeInsets.symmetric(horizontal: 28),
         child: Padding(
@@ -148,11 +149,11 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
         const SizedBox(height: 6),
         Text(
           widget.programName,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             height: 1.15,
-            color: AppColors.textPrimary,
+            color: ThemeColors.of(context).textPrimary,
           ),
         ),
         const SizedBox(height: 18),
@@ -168,9 +169,9 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
           if (i < _steps.length - 1) const SizedBox(height: 12),
         ],
         const SizedBox(height: 18),
-        const Text(
+        Text(
           'This can take a few seconds for multi-week programs.',
-          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 12, color: ThemeColors.of(context).textMuted),
         ),
       ],
     );
@@ -198,11 +199,11 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
         const SizedBox(height: 14),
         Text(
           '${widget.programName} is ready',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             height: 1.15,
-            color: AppColors.textPrimary,
+            color: ThemeColors.of(context).textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -210,8 +211,8 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
           r.workoutsCreated > 0
               ? '${r.workoutsCreated} workouts are on your calendar.'
               : 'Your program is on your calendar.',
-          style: const TextStyle(
-              fontSize: 13.5, height: 1.4, color: AppColors.textSecondary),
+          style: TextStyle(
+              fontSize: 13.5, height: 1.4, color: ThemeColors.of(context).textSecondary),
         ),
         if (cs.isApplied || cs.isFailed) ...[
           const SizedBox(height: 12),
@@ -219,9 +220,9 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
             width: double.infinity,
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: ThemeColors.of(context).surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +232,7 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
                       ? Icons.auto_awesome
                       : Icons.info_outline_rounded,
                   size: 16,
-                  color: cs.isApplied ? context.accentColor : AppColors.textMuted,
+                  color: cs.isApplied ? context.accentColor : ThemeColors.of(context).textMuted,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -239,10 +240,10 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
                     cs.isApplied
                         ? cs.humanPhrase
                         : "Tailoring couldn't run — started with the standard plan.",
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 12.5,
                         height: 1.4,
-                        color: AppColors.textSecondary),
+                        color: ThemeColors.of(context).textSecondary),
                   ),
                 ),
               ],
@@ -256,7 +257,7 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
+                  foregroundColor: ThemeColors.of(context).textSecondary,
                   padding: const EdgeInsets.symmetric(vertical: 13),
                 ),
                 child: const Text('Done',
@@ -309,20 +310,20 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
               color: AppColors.error, size: 28),  // accent-allowlist: error/destructive — must stay red
         ),
         const SizedBox(height: 14),
-        const Text(
+        Text(
           "Couldn't start the program",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w800,
             height: 1.15,
-            color: AppColors.textPrimary,
+            color: ThemeColors.of(context).textPrimary,
           ),
         ),
         const SizedBox(height: 8),
         Text(
           _errorMessage,
-          style: const TextStyle(
-              fontSize: 13.5, height: 1.4, color: AppColors.textSecondary),
+          style: TextStyle(
+              fontSize: 13.5, height: 1.4, color: ThemeColors.of(context).textSecondary),
         ),
         const SizedBox(height: 20),
         SizedBox(
@@ -330,12 +331,12 @@ class _ProgramSetupDialogState extends State<ProgramSetupDialog> {
           child: FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.surface,
-              foregroundColor: AppColors.textPrimary,
+              backgroundColor: ThemeColors.of(context).surface,
+              foregroundColor: ThemeColors.of(context).textPrimary,
               padding: const EdgeInsets.symmetric(vertical: 13),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
-                side: const BorderSide(color: AppColors.cardBorder),
+                side: BorderSide(color: ThemeColors.of(context).cardBorder),
               ),
             ),
             child: const Text('Close',
@@ -366,7 +367,7 @@ class _StepRow extends StatelessWidget {
               strokeWidth: 2, color: context.accentColor),
         ),
       _StepState.pending => Icon(Icons.circle_outlined,
-          size: 18, color: AppColors.textMuted.withValues(alpha: 0.5)),
+          size: 18, color: ThemeColors.of(context).textMuted.withValues(alpha: 0.5)),
     };
     return Row(
       children: [
@@ -380,8 +381,8 @@ class _StepRow extends StatelessWidget {
               fontWeight:
                   state == _StepState.active ? FontWeight.w700 : FontWeight.w500,
               color: state == _StepState.pending
-                  ? AppColors.textMuted
-                  : AppColors.textPrimary,
+                  ? ThemeColors.of(context).textMuted
+                  : ThemeColors.of(context).textPrimary,
             ),
             child: Text(label),
           ),

@@ -17,6 +17,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'exercise_info_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Rep progression types
 enum RepProgressionType {
   straight,
@@ -250,7 +251,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                       : Colors.black.withOpacity(0.03),
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.electricBlue,
+                      color: ThemeColors.of(context).electricBlue,
                       strokeWidth: 2,
                     ),
                   ),
@@ -534,7 +535,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                         subtitle,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.electricBlue,
+                          color: ThemeColors.of(context).electricBlue,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -625,7 +626,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.electricBlue.withOpacity(0.1)
+                ? ThemeColors.of(context).electricBlue.withOpacity(0.1)
                 : Colors.transparent,
             border: Border(
               bottom: BorderSide(
@@ -643,7 +644,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.electricBlue.withOpacity(0.2)
+                      ? ThemeColors.of(context).electricBlue.withOpacity(0.2)
                       : (isDark
                           ? Colors.white.withOpacity(0.08)
                           : Colors.black.withOpacity(0.05)),
@@ -651,7 +652,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                 ),
                 child: Icon(
                   type.icon,
-                  color: isSelected ? AppColors.electricBlue : textMuted,
+                  color: isSelected ? ThemeColors.of(context).electricBlue : textMuted,
                   size: 22,
                 ),
               ),
@@ -668,7 +669,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? AppColors.electricBlue : textPrimary,
+                        color: isSelected ? ThemeColors.of(context).electricBlue : textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -687,7 +688,7 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
               if (isSelected)
                 Icon(
                   Icons.check_circle_rounded,
-                  color: AppColors.electricBlue,
+                  color: ThemeColors.of(context).electricBlue,
                   size: 24,
                 ),
             ],

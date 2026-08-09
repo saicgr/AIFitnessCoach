@@ -8,6 +8,7 @@ import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Single carousel slide that aggregates all Health-Connect / Apple-Health
 /// synced workouts for one day. Replaces the prior "one cyan card per synced
 /// row" design which crowded the carousel when a watch logged 6+ activities.
@@ -265,7 +266,7 @@ class _SyncedWorkoutsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.surface : Colors.white;
+    final bg = ThemeColors.of(context).surface;
     final cyan = context.accentColor;
 
     return DraggableScrollableSheet(

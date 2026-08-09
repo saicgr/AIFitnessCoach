@@ -217,7 +217,7 @@ class FastingStatsCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: AppColors.hairlineStrong,
+            backgroundColor: tc.cardBorder,
             valueColor: AlwaysStoppedAnimation<Color>(
               complete ? AppColors.success : tc.accent, // accent-allowlist: fasting stats status severity
             ),
@@ -240,7 +240,7 @@ class FastingStatsCard extends StatelessWidget {
             ),
           ),
         ),
-        _buildDivider(),
+        _buildDivider(tc),
         Expanded(
           child: Center(
             child: ZealovaStatTile(
@@ -251,7 +251,7 @@ class FastingStatsCard extends StatelessWidget {
             ),
           ),
         ),
-        _buildDivider(),
+        _buildDivider(tc),
         Expanded(
           child: Center(
             child: ZealovaStatTile(
@@ -262,7 +262,7 @@ class FastingStatsCard extends StatelessWidget {
             ),
           ),
         ),
-        _buildDivider(),
+        _buildDivider(tc),
         Expanded(
           child: Center(
             child: ZealovaStatTile(
@@ -277,11 +277,11 @@ class FastingStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDivider() {
+  Widget _buildDivider(ThemeColors tc) {
     return Container(
       width: 1,
       height: 32,
-      color: AppColors.hairline,
+      color: tc.cardBorder,
       margin: const EdgeInsets.symmetric(horizontal: 8),
     );
   }
@@ -406,7 +406,7 @@ class _WeightStat extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.background,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

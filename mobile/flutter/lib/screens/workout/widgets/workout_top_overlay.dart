@@ -10,6 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Top overlay with workout controls - simplified design
 class WorkoutTopOverlay extends StatelessWidget {
@@ -102,7 +103,7 @@ class WorkoutTopOverlay extends StatelessWidget {
               const SizedBox(height: 12),
 
               // Progress bar
-              _buildProgressBar(isDark),
+              _buildProgressBar(context, isDark),
             ],
           ),
         ),
@@ -187,7 +188,7 @@ class WorkoutTopOverlay extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressBar(bool isDark) {
+  Widget _buildProgressBar(BuildContext context, bool isDark) {
     return Container(
       height: 6,
       decoration: BoxDecoration(
@@ -206,14 +207,14 @@ class WorkoutTopOverlay extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.electricBlue,
-                    AppColors.electricBlue.withOpacity(0.8),
+                    ThemeColors.of(context).electricBlue,
+                    ThemeColors.of(context).electricBlue.withOpacity(0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(3),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.electricBlue.withOpacity(0.4),
+                    color: ThemeColors.of(context).electricBlue.withOpacity(0.4),
                     blurRadius: 8,
                     spreadRadius: 0,
                   ),

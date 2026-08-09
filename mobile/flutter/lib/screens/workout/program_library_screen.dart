@@ -15,6 +15,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/workout_mutation_coordinator.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/providers/equipment_coverage_provider.dart';
 import '../../data/providers/gym_profile_provider.dart'
@@ -353,7 +354,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.pureBlack,
+        backgroundColor: ThemeColors.of(context).background,
         body: SafeArea(
           bottom: false,
           child: Column(
@@ -398,7 +399,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
     return Container(
       // No bottom border — the masthead flows seamlessly into the search area.
       // (The pinned controls keep their own divider that appears on scroll.)
-      decoration: const BoxDecoration(color: Color(0xFF09090B)),
+      decoration: BoxDecoration(color: ThemeColors.of(context).background),
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -406,12 +407,12 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           GestureDetector(
             onTap: _handleBack,
             behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.only(right: 8, top: 2, bottom: 2),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8, top: 2, bottom: 2),
               child: Text(
                 '‹',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: ThemeColors.of(context).textPrimary,
                   fontSize: 32,
                   height: 1.0,
                   fontWeight: FontWeight.w400,
@@ -426,7 +427,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   : AppLocalizations.of(context).programLibraryProgramLibrary,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: ZType.disp(30, color: AppColors.textPrimary),
+              style: ZType.disp(30, color: ThemeColors.of(context).textPrimary),
             ),
           ),
           // Your Programs hub (Active / Favorites / Custom / AI-made).
@@ -501,7 +502,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
   /// doesn't bleed through; a divider appears once it overlaps content.
   Widget _buildStickyControls(bool overlapping) {
     return Container(
-      color: AppColors.pureBlack,
+      color: ThemeColors.of(context).background,
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -513,7 +514,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           const SizedBox(height: 10),
           _buildCategoryQuickChips(),
           if (overlapping)
-            const Divider(height: 1, color: AppColors.hairlineStrong),
+            Divider(height: 1, color: ThemeColors.of(context).cardBorder),
         ],
       ),
     );
@@ -634,9 +635,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
           Container(
             height: panelH,
             decoration: BoxDecoration(
-              color: AppColors.surface2,
+              color: ThemeColors.of(context).elevated,
               borderRadius: BorderRadius.circular(22),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
           ),
         ],
@@ -681,7 +682,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
               'BROWSE PROGRAMS',
               style: ZType.lbl(
                 13,
-                color: AppColors.textPrimary,
+                color: ThemeColors.of(context).textPrimary,
                 letterSpacing: 1.8,
               ),
             ),
@@ -726,17 +727,17 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       height: _kControlHeight,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         padding: const EdgeInsets.only(left: 10, right: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(
+            Icon(
               Icons.search_rounded,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
               size: 18,
             ),
             const SizedBox(width: 6),
@@ -745,7 +746,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 controller: _searchController,
                 style: ZType.sans(
                   13.5,
-                  color: AppColors.textPrimary,
+                  color: ThemeColors.of(context).textPrimary,
                   weight: FontWeight.w500,
                 ),
                 cursorColor: context.accentColor,
@@ -765,7 +766,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   ).programLibrarySearchPrograms,
                   hintStyle: ZType.sans(
                     13.5,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -779,11 +780,11 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   _applyFilters();
                 },
                 behavior: HitTestBehavior.opaque,
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: Icon(
                     Icons.close_rounded,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                     size: 16,
                   ),
                 ),
@@ -796,7 +797,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 padding: const EdgeInsets.only(left: 2, right: 2),
                 child: Icon(
                   _listening ? Icons.mic_rounded : Icons.mic_none_rounded,
-                  color: _listening ? context.accentColor : AppColors.textMuted,
+                  color: _listening ? context.accentColor : ThemeColors.of(context).textMuted,
                   size: 18,
                 ),
               ),
@@ -815,10 +816,10 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
       child: Container(
         height: _kControlHeight,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: ThemeColors.of(context).surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: count > 0 ? context.accentColor : AppColors.cardBorder,
+            color: count > 0 ? context.accentColor : ThemeColors.of(context).cardBorder,
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -828,14 +829,14 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
             Icon(
               Icons.tune_rounded,
               size: 15,
-              color: count > 0 ? context.accentColor : AppColors.textPrimary,
+              color: count > 0 ? context.accentColor : ThemeColors.of(context).textPrimary,
             ),
             const SizedBox(width: 7),
             Text(
               'FILTER',
               style: ZType.lbl(
                 11,
-                color: count > 0 ? context.accentColor : AppColors.textPrimary,
+                color: count > 0 ? context.accentColor : ThemeColors.of(context).textPrimary,
                 letterSpacing: 1.5,
               ),
             ),
@@ -1025,7 +1026,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                   'BROWSE BY CATEGORY',
                   style: ZType.lbl(
                     13,
-                    color: AppColors.textPrimary,
+                    color: ThemeColors.of(context).textPrimary,
                     letterSpacing: 1.8,
                   ),
                 ),
@@ -1140,7 +1141,7 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
                 total == 1 ? '1 PROGRAM' : '$total PROGRAMS',
                 style: ZType.lbl(
                   11,
-                  color: AppColors.textMuted,
+                  color: ThemeColors.of(context).textMuted,
                   letterSpacing: 1.4,
                 ),
               ),
@@ -1417,9 +1418,9 @@ class _RailSkeleton extends StatelessWidget {
           width: 118,
           height: 154,
           decoration: BoxDecoration(
-            color: AppColors.surface2,
+            color: ThemeColors.of(context).elevated,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
         ),
       ),
@@ -1451,9 +1452,9 @@ class _CategoryHubTile extends StatelessWidget {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         padding: const EdgeInsets.all(13),
         child: Stack(
@@ -1465,7 +1466,7 @@ class _CategoryHubTile extends StatelessWidget {
               child: Icon(
                 theme.icon,
                 size: 58,
-                color: AppColors.textMuted.withValues(alpha: 0.14),
+                color: ThemeColors.of(context).textMuted.withValues(alpha: 0.14),
               ),
             ),
             // Count, top-right.
@@ -1474,7 +1475,7 @@ class _CategoryHubTile extends StatelessWidget {
               right: 0,
               child: Text(
                 '$count',
-                style: ZType.data(11, color: AppColors.textSecondary),
+                style: ZType.data(11, color: ThemeColors.of(context).textSecondary),
               ),
             ),
             Column(
@@ -1487,7 +1488,7 @@ class _CategoryHubTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: theme.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(9),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   alignment: Alignment.center,
                   child: Icon(theme.icon, size: 17, color: context.accentColor),
@@ -1498,7 +1499,7 @@ class _CategoryHubTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: ZType.lbl(
                     12.5,
-                    color: AppColors.textPrimary,
+                    color: ThemeColors.of(context).textPrimary,
                     weight: FontWeight.w800,
                     letterSpacing: 0.6,
                   ),
@@ -1527,7 +1528,7 @@ class _ShimmerBox extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -1552,10 +1553,10 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_rounded,
               size: 44,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
             const SizedBox(height: 12),
             Text(
@@ -1563,7 +1564,7 @@ class _ErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: ZType.sans(
                 14,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w500,
               ),
             ),
@@ -1598,10 +1599,10 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.search_off_rounded,
               size: 44,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
             const SizedBox(height: 12),
             Text(
@@ -1613,7 +1614,7 @@ class _EmptyState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: ZType.sans(
                 14,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w500,
               ),
             ),
@@ -1709,8 +1710,8 @@ class _ProgramFilterSheetState extends ConsumerState<_ProgramFilterSheet> {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: ThemeColors.of(context).surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
           ),
           child: Column(
@@ -1726,7 +1727,7 @@ class _ProgramFilterSheetState extends ConsumerState<_ProgramFilterSheet> {
                   children: [
                     Text(
                       'FILTER',
-                      style: ZType.disp(28, color: AppColors.textPrimary),
+                      style: ZType.disp(28, color: ThemeColors.of(context).textPrimary),
                     ),
                     const Spacer(),
                     GestureDetector(
@@ -1736,7 +1737,7 @@ class _ProgramFilterSheetState extends ConsumerState<_ProgramFilterSheet> {
                         'RESET',
                         style: ZType.lbl(
                           11,
-                          color: AppColors.textMuted,
+                          color: ThemeColors.of(context).textMuted,
                           letterSpacing: 1.5,
                         ),
                       ),
@@ -1923,7 +1924,7 @@ class _ProgramFilterSheetState extends ConsumerState<_ProgramFilterSheet> {
               key.toUpperCase(),
               style: ZType.lbl(
                 11,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
                 letterSpacing: 2.2,
               ),
             ),
@@ -1977,16 +1978,16 @@ class _HeaderActionButton extends StatelessWidget {
               decoration: BoxDecoration(
                 color: accent
                     ? context.accentColor.withValues(alpha: 0.16)
-                    : AppColors.surface,
+                    : ThemeColors.of(context).surface,
                 borderRadius: BorderRadius.circular(11),
                 border: Border.all(
-                  color: accent ? context.accentColor : AppColors.cardBorder,
+                  color: accent ? context.accentColor : ThemeColors.of(context).cardBorder,
                 ),
               ),
               child: Icon(
                 icon,
                 size: 19,
-                color: accent ? context.accentColor : AppColors.textPrimary,
+                color: accent ? context.accentColor : ThemeColors.of(context).textPrimary,
               ),
             ),
             const SizedBox(height: 3),
@@ -1994,7 +1995,7 @@ class _HeaderActionButton extends StatelessWidget {
               label,
               style: ZType.lbl(
                 9,
-                color: accent ? context.accentColor : AppColors.textSecondary,
+                color: accent ? context.accentColor : ThemeColors.of(context).textSecondary,
                 letterSpacing: 0.4,
               ),
             ),
@@ -2371,7 +2372,7 @@ class _StartProgramFlowSheetState
         data: Theme.of(context).copyWith(
           colorScheme: ColorScheme.dark(
             primary: context.accentColor,
-            surface: AppColors.surface,
+            surface: ThemeColors.of(context).surface,
           ),
         ),
         child: child!,
@@ -2501,8 +2502,8 @@ class _StartProgramFlowSheetState
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: ThemeColors.of(context).surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
           ),
           child: Column(
@@ -2514,12 +2515,12 @@ class _StartProgramFlowSheetState
                   children: [
                     Text(
                       'START PROGRAM',
-                      style: ZType.disp(26, color: AppColors.textPrimary),
+                      style: ZType.disp(26, color: ThemeColors.of(context).textPrimary),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       widget.card.displayName,
-                      style: ZType.ser(14, color: AppColors.textSecondary),
+                      style: ZType.ser(14, color: ThemeColors.of(context).textSecondary),
                     ),
                     const SizedBox(height: 20),
 
@@ -2539,9 +2540,9 @@ class _StartProgramFlowSheetState
                           vertical: 13,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.surface2,
+                          color: ThemeColors.of(context).elevated,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.cardBorder),
+                          border: Border.all(color: ThemeColors.of(context).cardBorder),
                         ),
                         child: Row(
                           children: [
@@ -2555,15 +2556,15 @@ class _StartProgramFlowSheetState
                               _fmtDate(_startDate),
                               style: ZType.sans(
                                 14,
-                                color: AppColors.textPrimary,
+                                color: ThemeColors.of(context).textPrimary,
                                 weight: FontWeight.w600,
                               ),
                             ),
                             const Spacer(),
-                            const Icon(
+                            Icon(
                               Icons.edit_calendar_rounded,
                               size: 16,
-                              color: AppColors.textMuted,
+                              color: ThemeColors.of(context).textMuted,
                             ),
                           ],
                         ),
@@ -2616,9 +2617,9 @@ class _StartProgramFlowSheetState
                 ),
               ),
               Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(top: BorderSide(color: AppColors.cardBorder)),
+                decoration: BoxDecoration(
+                  color: ThemeColors.of(context).surface,
+                  border: Border(top: BorderSide(color: ThemeColors.of(context).cardBorder)),
                 ),
                 child: SafeArea(
                   top: false,
@@ -2676,9 +2677,9 @@ class _StartProgramFlowSheetState
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -2694,7 +2695,7 @@ class _StartProgramFlowSheetState
               'No training-day selection needed.',
               style: ZType.sans(
                 12.5,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w500,
               ),
             ),
@@ -2727,12 +2728,12 @@ class _StartProgramFlowSheetState
                   decoration: BoxDecoration(
                     color: _days.contains(i)
                         ? context.accentColor
-                        : AppColors.surface2,
+                        : ThemeColors.of(context).elevated,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: _days.contains(i)
                           ? context.accentColor
-                          : AppColors.cardBorder,
+                          : ThemeColors.of(context).cardBorder,
                     ),
                   ),
                   child: Text(
@@ -2741,7 +2742,7 @@ class _StartProgramFlowSheetState
                       10.5,
                       color: _days.contains(i)
                           ? Colors.white
-                          : AppColors.textSecondary,
+                          : ThemeColors.of(context).textSecondary,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -2758,7 +2759,7 @@ class _StartProgramFlowSheetState
             style: ZType.sans(
               11.5,
               color: _days.length == target
-                  ? AppColors.textMuted
+                  ? ThemeColors.of(context).textMuted
                   : context.accentColor,
               weight: FontWeight.w500,
             ),
@@ -2864,18 +2865,18 @@ class _StartProgramFlowSheetState
             parts.join(' · '),
             style: ZType.sans(
               13,
-              color: AppColors.textPrimary,
+              color: ThemeColors.of(context).textPrimary,
               weight: FontWeight.w700,
             ),
           ),
         ),
         if (_previewLoading)
-          const SizedBox(
+          SizedBox(
             width: 13,
             height: 13,
             child: CircularProgressIndicator(
               strokeWidth: 1.6,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
           ),
       ],
@@ -2999,7 +3000,7 @@ class _StartProgramFlowSheetState
             'Pick at least one training day to preview the schedule.',
             style: ZType.sans(
               12.5,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
               weight: FontWeight.w500,
             ),
           ),
@@ -3009,7 +3010,7 @@ class _StartProgramFlowSheetState
           'workout as an Extra.',
           style: ZType.sans(
             11.5,
-            color: AppColors.textMuted,
+            color: ThemeColors.of(context).textMuted,
             weight: FontWeight.w500,
             height: 1.35,
           ),
@@ -3045,9 +3046,9 @@ class _StartProgramFlowSheetState
       width: double.infinity,
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3117,7 +3118,7 @@ class _StartProgramFlowSheetState
         dayChip,
         style: ZType.lbl(
           11,
-          color: AppColors.textSecondary,
+          color: ThemeColors.of(context).textSecondary,
           letterSpacing: 0.5,
         ),
       ),
@@ -3147,7 +3148,7 @@ class _StartProgramFlowSheetState
                       text: '   →   ',
                       style: ZType.sans(
                         12.5,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -3155,7 +3156,7 @@ class _StartProgramFlowSheetState
                       text: _sessionLabel(program),
                       style: ZType.sans(
                         12.5,
-                        color: AppColors.textPrimary,
+                        color: ThemeColors.of(context).textPrimary,
                         weight: FontWeight.w600,
                       ),
                     ),
@@ -3214,7 +3215,7 @@ class _StartProgramFlowSheetState
                         '• ${_existingLabel(c)}',
                         style: ZType.sans(
                           11.5,
-                          color: AppColors.textSecondary,
+                          color: ThemeColors.of(context).textSecondary,
                           weight: FontWeight.w500,
                         ),
                       ),
@@ -3254,7 +3255,7 @@ class _StartProgramFlowSheetState
                   '${_sessionLabel(program)} adds as an Extra.',
                   style: ZType.sans(
                     11,
-                    color: AppColors.textSecondary,
+                    color: ThemeColors.of(context).textSecondary,
                     weight: FontWeight.w500,
                     height: 1.35,
                   ),
@@ -3297,7 +3298,7 @@ class _StartProgramFlowSheetState
                   '↺ $keepText  ($progName doesn\'t use $dayChip)',
                   style: ZType.sans(
                     12,
-                    color: AppColors.textSecondary,
+                    color: ThemeColors.of(context).textSecondary,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -3320,7 +3321,7 @@ class _StartProgramFlowSheetState
               'Rest day',
               style: ZType.sans(
                 12,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
               ).copyWith(fontStyle: FontStyle.italic),
             ),
           ],
@@ -3418,10 +3419,10 @@ class _StartProgramFlowSheetState
         decoration: BoxDecoration(
           color: selected
               ? context.accentColor.withValues(alpha: 0.16)
-              : AppColors.surface,
+              : ThemeColors.of(context).surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? context.accentColor : AppColors.cardBorder,
+            color: selected ? context.accentColor : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Row(
@@ -3432,7 +3433,7 @@ class _StartProgramFlowSheetState
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_unchecked_rounded,
               size: 15,
-              color: selected ? context.accentColor : AppColors.textMuted,
+              color: selected ? context.accentColor : ThemeColors.of(context).textMuted,
             ),
             const SizedBox(width: 7),
             Flexible(
@@ -3443,8 +3444,8 @@ class _StartProgramFlowSheetState
                 style: ZType.sans(
                   12,
                   color: selected
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? ThemeColors.of(context).textPrimary
+                      : ThemeColors.of(context).textSecondary,
                   weight: FontWeight.w600,
                 ),
               ),
@@ -3495,9 +3496,9 @@ class _StartProgramFlowSheetState
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3519,16 +3520,16 @@ class _StartProgramFlowSheetState
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.cloud_off_rounded,
             size: 16,
-            color: AppColors.textMuted,
+            color: ThemeColors.of(context).textMuted,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -3536,7 +3537,7 @@ class _StartProgramFlowSheetState
               "Couldn't preview schedule. You can still start.",
               style: ZType.sans(
                 12.5,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
                 weight: FontWeight.w500,
               ),
             ),
@@ -3611,14 +3612,14 @@ class _StartProgramFlowSheetState
               summary,
               style: ZType.sans(
                 12.5,
-                color: AppColors.textPrimary,
+                color: ThemeColors.of(context).textPrimary,
                 weight: FontWeight.w600,
               ),
             ),
           ],
           if (showReview) ...[
             const SizedBox(height: 6),
-            Text(review, style: ZType.ser(13, color: AppColors.textSecondary)),
+            Text(review, style: ZType.ser(13, color: ThemeColors.of(context).textSecondary)),
           ] else if (_reviewLoading && review == null) ...[
             const SizedBox(height: 8),
             const _ShimmerBox(width: 200, height: 11),
@@ -3673,7 +3674,7 @@ class _StartProgramFlowSheetState
           text,
           style: ZType.sans(
             12,
-            color: AppColors.textSecondary,
+            color: ThemeColors.of(context).textSecondary,
             weight: FontWeight.w600,
           ),
         ),
@@ -3683,7 +3684,7 @@ class _StartProgramFlowSheetState
 
   Widget _impactDot() => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 10),
-    child: Text('·', style: ZType.sans(12, color: AppColors.textMuted)),
+    child: Text('·', style: ZType.sans(12, color: ThemeColors.of(context).textMuted)),
   );
 
   /// Pretty equipment-slug list for copy ("barbell" → "Barbell"), capped.
@@ -3744,16 +3745,16 @@ class _StartProgramFlowSheetState
         child: Container(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           decoration: BoxDecoration(
-            color: AppColors.surface2,
+            color: ThemeColors.of(context).elevated,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.fitness_center_rounded,
                 size: 16,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -3762,7 +3763,7 @@ class _StartProgramFlowSheetState
                   'what you have.',
                   style: ZType.sans(
                     11.5,
-                    color: AppColors.textSecondary,
+                    color: ThemeColors.of(context).textSecondary,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -3819,7 +3820,7 @@ class _StartProgramFlowSheetState
                         'Needs gear not in $whereTxt',
                         style: ZType.sans(
                           13,
-                          color: AppColors.textPrimary,
+                          color: ThemeColors.of(context).textPrimary,
                           weight: FontWeight.w700,
                         ),
                       ),
@@ -3830,7 +3831,7 @@ class _StartProgramFlowSheetState
                         'what you have.',
                         style: ZType.sans(
                           11.5,
-                          color: AppColors.textSecondary,
+                          color: ThemeColors.of(context).textSecondary,
                           weight: FontWeight.w500,
                         ),
                       ),
@@ -3869,10 +3870,10 @@ class _StartProgramFlowSheetState
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 14, 10),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: _aiTailor ? context.accentColor : AppColors.cardBorder,
+          color: _aiTailor ? context.accentColor : ThemeColors.of(context).cardBorder,
         ),
       ),
       child: Column(
@@ -3895,7 +3896,7 @@ class _StartProgramFlowSheetState
               'Let AI tailor it to me',
               style: ZType.sans(
                 13.5,
-                color: AppColors.textPrimary,
+                color: ThemeColors.of(context).textPrimary,
                 weight: FontWeight.w700,
               ),
             ),
@@ -3903,13 +3904,13 @@ class _StartProgramFlowSheetState
               'Adapt sets/reps to your level, swap for injuries, fit your gear.',
               style: ZType.sans(
                 11.5,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
                 weight: FontWeight.w500,
               ),
             ),
           ),
           if (_aiTailor) ...[
-            const Divider(height: 16, color: AppColors.cardBorder),
+            Divider(height: 16, color: ThemeColors.of(context).cardBorder),
             _aiSubToggle('Adapt sets/reps to my level', _adaptToLevel, (v) {
               setState(() => _adaptToLevel = v);
               _schedulePreview();
@@ -3990,7 +3991,7 @@ class _StartProgramFlowSheetState
                   label,
                   style: ZType.sans(
                     12.5,
-                    color: AppColors.textSecondary,
+                    color: ThemeColors.of(context).textSecondary,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -4007,7 +4008,7 @@ class _StartProgramFlowSheetState
                             hint,
                             style: ZType.sans(
                               10.5,
-                              color: AppColors.textMuted,
+                              color: ThemeColors.of(context).textMuted,
                               weight: FontWeight.w500,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -4119,7 +4120,7 @@ class _StartProgramFlowSheetState
                 text,
                 style: ZType.sans(
                   12,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -4129,7 +4130,7 @@ class _StartProgramFlowSheetState
                   caption,
                   style: ZType.sans(
                     10.5,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                     weight: FontWeight.w500,
                   ),
                 ),
@@ -4150,7 +4151,7 @@ class _StartFlowLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: ZType.lbl(11, color: AppColors.textMuted, letterSpacing: 2.0),
+      style: ZType.lbl(11, color: ThemeColors.of(context).textMuted, letterSpacing: 2.0),
     );
   }
 }
@@ -4294,7 +4295,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                       'IMPORT FROM',
                       style: ZType.lbl(
                         12,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                         letterSpacing: 2.0,
                       ),
                     ),
@@ -4407,8 +4408,8 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
+          decoration: BoxDecoration(
+            color: ThemeColors.of(context).surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
           ),
           child: _busy
@@ -4427,7 +4428,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                         const SizedBox(width: 8),
                         Text(
                           'CREATE WITH AI',
-                          style: ZType.disp(24, color: AppColors.textPrimary),
+                          style: ZType.disp(24, color: ThemeColors.of(context).textPrimary),
                         ),
                       ],
                     ),
@@ -4438,7 +4439,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                       'GENERATE FROM A PROMPT',
                       style: ZType.lbl(
                         12,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                         letterSpacing: 1.8,
                       ),
                     ),
@@ -4449,7 +4450,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                       minLines: 3,
                       style: ZType.sans(
                         13.5,
-                        color: AppColors.textPrimary,
+                        color: ThemeColors.of(context).textPrimary,
                         weight: FontWeight.w500,
                         height: 1.4,
                       ),
@@ -4460,23 +4461,23 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                             'dumbbells only, focused on building my back.',
                         hintStyle: ZType.sans(
                           12.5,
-                          color: AppColors.textMuted,
+                          color: ThemeColors.of(context).textMuted,
                           weight: FontWeight.w500,
                           height: 1.4,
                         ),
                         filled: true,
-                        fillColor: AppColors.surface2,
+                        fillColor: ThemeColors.of(context).elevated,
                         contentPadding: const EdgeInsets.all(14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.cardBorder,
+                          borderSide: BorderSide(
+                            color: ThemeColors.of(context).cardBorder,
                           ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: AppColors.cardBorder,
+                          borderSide: BorderSide(
+                            color: ThemeColors.of(context).cardBorder,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
@@ -4511,7 +4512,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                     ),
 
                     const SizedBox(height: 22),
-                    const Divider(color: AppColors.cardBorder, height: 1),
+                    Divider(color: ThemeColors.of(context).cardBorder, height: 1),
                     const SizedBox(height: 18),
 
                     // 2) Import from photo/PDF.
@@ -4563,7 +4564,7 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
                 _busyLabel,
                 style: ZType.sans(
                   14,
-                  color: AppColors.textPrimary,
+                  color: ThemeColors.of(context).textPrimary,
                   weight: FontWeight.w700,
                 ),
               ),
@@ -4574,9 +4575,9 @@ class _AiCreateSheetState extends ConsumerState<_AiCreateSheet> {
             Container(
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.surface2,
+                color: ThemeColors.of(context).elevated,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
               ),
             ),
             const SizedBox(height: 10),
@@ -4613,7 +4614,7 @@ class _SourceTile extends StatelessWidget {
         label,
         style: ZType.sans(
           14.5,
-          color: AppColors.textPrimary,
+          color: ThemeColors.of(context).textPrimary,
           weight: FontWeight.w600,
         ),
       ),
@@ -4638,7 +4639,7 @@ class _AiEntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface2,
+      color: ThemeColors.of(context).elevated,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: onTap,
@@ -4666,7 +4667,7 @@ class _AiEntryRow extends StatelessWidget {
                       title,
                       style: ZType.sans(
                         14.5,
-                        color: AppColors.textPrimary,
+                        color: ThemeColors.of(context).textPrimary,
                         weight: FontWeight.w700,
                       ),
                     ),
@@ -4675,7 +4676,7 @@ class _AiEntryRow extends StatelessWidget {
                       subtitle,
                       style: ZType.sans(
                         12.5,
-                        color: AppColors.textSecondary,
+                        color: ThemeColors.of(context).textSecondary,
                         weight: FontWeight.w500,
                         height: 1.35,
                       ),
@@ -4683,9 +4684,9 @@ class _AiEntryRow extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 size: 20,
               ),
             ],
@@ -4819,7 +4820,7 @@ class _BigHeroCard extends StatelessWidget {
                           card.displayName.toUpperCase(),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: ZType.disp(38, color: AppColors.textPrimary)
+                          style: ZType.disp(38, color: ThemeColors.of(context).textPrimary)
                               .copyWith(
                                 shadows: const [
                                   Shadow(
@@ -4836,7 +4837,7 @@ class _BigHeroCard extends StatelessWidget {
                             subtitle,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: ZType.ser(14, color: AppColors.textSecondary)
+                            style: ZType.ser(14, color: ThemeColors.of(context).textSecondary)
                                 .copyWith(
                                   shadows: const [
                                     Shadow(
@@ -4889,8 +4890,8 @@ class _BigHeroCard extends StatelessWidget {
               flex: 2,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-                  side: const BorderSide(color: AppColors.cardBorder),
+                  foregroundColor: ThemeColors.of(context).textPrimary,
+                  side: BorderSide(color: ThemeColors.of(context).cardBorder),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -4901,7 +4902,7 @@ class _BigHeroCard extends StatelessWidget {
                   'PREVIEW',
                   style: ZType.lbl(
                     13,
-                    color: AppColors.textSecondary,
+                    color: ThemeColors.of(context).textSecondary,
                     letterSpacing: 1.8,
                   ),
                 ),
@@ -4977,7 +4978,7 @@ class _HeroDifficultyPill extends StatelessWidget {
             level.toUpperCase(),
             style: ZType.lbl(
               10.5,
-              color: AppColors.textPrimary,
+              color: ThemeColors.of(context).textPrimary,
               letterSpacing: 1.4,
             ),
           ),
@@ -5000,7 +5001,7 @@ class _HeroStatChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
-      child: Text(label, style: ZType.data(11, color: AppColors.textPrimary)),
+      child: Text(label, style: ZType.data(11, color: ThemeColors.of(context).textPrimary)),
     );
   }
 }

@@ -7,6 +7,7 @@ import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 // =============================================================================
 // Tracking pills visibility state + provider
 // =============================================================================
@@ -164,8 +165,8 @@ class EditTrackingSheet extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final pillsState = ref.watch(trackingPillsProvider);
     final notifier = ref.read(trackingPillsProvider.notifier);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     final pills = [
       _PillOption(
@@ -334,8 +335,8 @@ class EditTrackingSheet extends ConsumerWidget {
     required bool isLastEnabled,
     required ValueChanged<bool> onChanged,
   }) {
-    final cardColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardColor = ThemeColors.of(context).elevated;
+    final borderColor = ThemeColors.of(context).cardBorder;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

@@ -11,6 +11,7 @@ import '../../../../data/repositories/recipe_repository.dart';
 import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 class CoachReviewSheet extends ConsumerStatefulWidget {
   final CoachReviewSubject subjectType;
   final String subjectId;
@@ -122,9 +123,9 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: ThemeColors.of(context).surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
         ),
         child: Row(children: [
           Stack(alignment: Alignment.center, children: [

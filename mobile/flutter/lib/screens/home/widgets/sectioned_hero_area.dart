@@ -14,6 +14,7 @@ import 'hero_workout_carousel.dart';
 import 'hero_workout_card.dart';
 import 'recovery_pills_row.dart';
 import 'hero_nutrition_card.dart';
+import '../../../core/theme/theme_colors.dart';
 // TODO: Re-enable when fasting feature launches
 // import 'hero_fasting_card.dart';
 import 'week_calendar_strip.dart';
@@ -271,8 +272,8 @@ class _HeroTabPills extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final startsSunday = ref.watch(weekStartsSundayProvider);
 
     return Padding(

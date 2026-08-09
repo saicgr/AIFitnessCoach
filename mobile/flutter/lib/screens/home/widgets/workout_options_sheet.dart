@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/quick_workout_provider.dart';
@@ -100,10 +101,10 @@ Future<void> showWorkoutOptionsSheet(
                 if (_isQuickWorkout(workout))
                   tile(Icons.close_rounded, 'Dismiss Quick',
                       () => _dismissQuick(context, ref, workout),
-                      color: AppColors.textMuted),
+                      color: ThemeColors.of(context).textMuted),
                 tile(Icons.skip_next_outlined, 'Skip Workout',
                     () => _skipWorkout(context, ref, workout),
-                    color: AppColors.textMuted),
+                    color: ThemeColors.of(context).textMuted),
               ],
             ),
           ),
@@ -240,7 +241,7 @@ Future<void> _skipWorkout(
     if (success) {
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
       ref.read(workoutsProvider.notifier).silentRefresh();
-      _snack(context, 'Workout skipped', AppColors.textMuted);
+      _snack(context, 'Workout skipped', ThemeColors.of(context).textMuted);
     }
   } catch (_) {
     _snack(context, 'Could not skip workout', AppColors.error);  // accent-allowlist: error/destructive -- must stay red
@@ -267,10 +268,10 @@ Future<void> _dismissQuick(
     if (!context.mounted) return;
     if (!ok) {
       _snack(context, 'Dismissed offline — will sync when online',
-          AppColors.textMuted);
+          ThemeColors.of(context).textMuted);
     } else {
       ref.read(workoutsProvider.notifier).silentRefresh();
-      _snack(context, 'Quick workout dismissed', AppColors.textMuted);
+      _snack(context, 'Quick workout dismissed', ThemeColors.of(context).textMuted);
     }
   } catch (_) {
     _snack(context, 'Could not dismiss workout', AppColors.error);  // accent-allowlist: error/destructive -- must stay red
@@ -294,7 +295,7 @@ void _shareToSocial(BuildContext context, WidgetRef ref, Workout workout) {
   );
   if (shareable == null) {
     _snack(context, 'Nothing to share yet — log a workout first',
-        AppColors.textMuted);
+        ThemeColors.of(context).textMuted);
     return;
   }
   final allowPublicLinks = ref.read(publicShareLinksProvider);
@@ -338,7 +339,7 @@ Future<void> _shareDoMyWorkout(
   if (!ref.read(publicShareLinksProvider)) {
     if (context.mounted) {
       _snack(context, 'Enable public share links in Settings to share workouts.',
-          AppColors.textMuted);
+          ThemeColors.of(context).textMuted);
     }
     return;
   }
@@ -358,7 +359,7 @@ Future<void> _shareDoMyWorkout(
   } catch (e) {
     if (context.mounted) {
       _snack(context, "Couldn't create a share link. Please try again.",
-          AppColors.textMuted);
+          ThemeColors.of(context).textMuted);
     }
   }
 }
@@ -369,7 +370,7 @@ void _glanceWorkout(BuildContext context, Workout workout) {
     context: context,
     barrierColor: Colors.black54,
     builder: (dialogContext) => Dialog(
-      backgroundColor: isDark ? AppColors.elevated : Colors.white,
+      backgroundColor: ThemeColors.of(context).elevated,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20),

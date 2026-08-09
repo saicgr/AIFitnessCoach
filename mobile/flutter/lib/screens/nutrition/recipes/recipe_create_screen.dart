@@ -308,7 +308,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
                 color: surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _photo != null ? accent : AppColors.cardBorder,
+                  color: _photo != null ? accent : ThemeColors.of(context).cardBorder,
                   width: _photo != null ? 1.5 : 1,
                 ),
                 image: _photo != null
@@ -484,13 +484,13 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
         fillColor: surface,
         enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.cardBorder)),
+            borderSide: BorderSide(color: ThemeColors.of(context).cardBorder)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.cardBorder)),
+            borderSide: BorderSide(color: ThemeColors.of(context).cardBorder)),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.cardBorder)),
+            borderSide: BorderSide(color: ThemeColors.of(context).cardBorder)),
       );
 }
 
@@ -590,15 +590,15 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
                 fillColor: surface,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                  borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                  borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                  borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                 ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -826,7 +826,7 @@ class _CategoryChips extends StatelessWidget {
                 ? accent
                 : isDashed
                     ? accent.withValues(alpha: 0.6)
-                    : AppColors.cardBorder,
+                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
             width: isSelected ? 1.5 : 1,
           ),
         ),

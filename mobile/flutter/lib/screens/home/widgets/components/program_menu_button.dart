@@ -16,6 +16,7 @@ import '../edit_program_sheet.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../data/providers/root_messenger.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Settings icon button for the home screen header
 /// Navigates directly to settings screen
 class SettingsButton extends StatelessWidget {
@@ -29,7 +30,7 @@ class SettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return IconButton(
       onPressed: () {
@@ -66,8 +67,8 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
 
   @override
   Widget build(BuildContext context) {
-    final elevatedColor = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     // Watch for current program name
     final currentProgramName = ref.watch(currentProgramNameProvider);
@@ -138,11 +139,10 @@ class _CustomizeProgramButtonState extends ConsumerState<CustomizeProgramButton>
 
   void _showProgramMenu(BuildContext context) {
     HapticService.light();
-    final isDark = widget.isDark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     // Hide nav bar while sheet is open
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
@@ -714,7 +714,7 @@ class MySpaceButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     return Material(
       color: elevatedColor,

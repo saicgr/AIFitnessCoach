@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// A dense list row scaffold with a bottom 1px hairline rule — the signature-v2
 /// alternative to a boxed card for lists. NOT a [Card]; it reads as a compact
@@ -64,11 +64,12 @@ class ZHairlineRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     Widget content = Container(
       padding: EdgeInsets.symmetric(vertical: verticalPadding),
       decoration: showDivider
-          ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          ? BoxDecoration(
+              border: Border(bottom: BorderSide(color: tc.hairline)),
             )
           : null,
       child: Row(

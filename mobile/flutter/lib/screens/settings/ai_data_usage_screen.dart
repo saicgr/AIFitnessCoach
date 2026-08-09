@@ -44,7 +44,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                     height: 56,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: tc.cardBorder),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
@@ -176,7 +176,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                 height: 36,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: tc.textSecondary, size: 18),

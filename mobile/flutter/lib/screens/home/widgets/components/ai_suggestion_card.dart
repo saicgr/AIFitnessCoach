@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'sheet_theme_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// A card displaying an AI workout suggestion
@@ -25,9 +26,9 @@ class AISuggestionCard extends StatelessWidget {
     required this.onTap,
   });
 
-  Color _getTypeColor(String type, bool isDark) {
+  Color _getTypeColor(BuildContext context, String type) {
     // Use monochrome for all workout types
-    return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return ThemeColors.of(context).textSecondary;
   }
 
   @override
@@ -44,9 +45,8 @@ class AISuggestionCard extends StatelessWidget {
     final sampleExercises =
         (suggestion['sample_exercises'] as List?)?.cast<String>() ?? [];
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final difficultyColor = getDifficultyColor(difficulty, isDark: isDark);
-    final typeColor = _getTypeColor(type, isDark);
+    final difficultyColor = getDifficultyColor(context, difficulty);
+    final typeColor = _getTypeColor(context, type);
 
     // Ranking label based on position
     String rankLabel;

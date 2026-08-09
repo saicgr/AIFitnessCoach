@@ -12,6 +12,7 @@ import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class PublicRecipeScreen extends ConsumerWidget {
   final String slug;
   final bool isDark;
@@ -74,9 +75,9 @@ class PublicRecipeScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         Wrap(spacing: 8, runSpacing: 8, children: [
           if (v.caloriesPerServing != null)
-            _statChip('${v.caloriesPerServing} KCAL/SERV', text),
+            _statChip(context, '${v.caloriesPerServing} KCAL/SERV', text),
           if (v.proteinPerServingG != null)
-            _statChip('${v.proteinPerServingG!.toStringAsFixed(0)}G P', AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
+            _statChip(context, '${v.proteinPerServingG!.toStringAsFixed(0)}G P', AppColors.macroProtein),  // accent-allowlist: macro identity — protein is always this colour
         ]),
         const SizedBox(height: 24),
         ZealovaSectionKicker(AppLocalizations.of(context).recipeSuggestionCardIngredients),
@@ -125,10 +126,10 @@ class PublicRecipeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _statChip(String label, Color color) => Container(
+  Widget _statChip(BuildContext context, String label, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(label.toUpperCase(), style: ZType.lbl(11, color: color, letterSpacing: 1.3)),

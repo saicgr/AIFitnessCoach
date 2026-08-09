@@ -23,6 +23,7 @@ import '../../../data/models/exercise.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Shows the exercise preview overlay before starting an exercise
 /// Returns true if dismissed naturally (countdown finished), false if tapped early
 Future<bool> showExercisePreview({
@@ -181,7 +182,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
               fit: BoxFit.contain,
               placeholder: (context, url) => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.electricBlue,
+                  color: ThemeColors.of(context).electricBlue,
                   strokeWidth: 2,
                 ),
               ),
@@ -200,13 +201,13 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppColors.electricBlue.withOpacity(0.15),
+              color: ThemeColors.of(context).electricBlue.withOpacity(0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.fitness_center_rounded,
               size: 40,
-              color: AppColors.electricBlue,
+              color: ThemeColors.of(context).electricBlue,
             ),
           ),
           const SizedBox(height: 12),
@@ -340,7 +341,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.electricBlue,
+                          ThemeColors.of(context).electricBlue,
                           context.accentColor,
                         ],
                       ),
@@ -360,7 +361,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.electricBlue,
+              color: ThemeColors.of(context).electricBlue,
             ),
           ),
         ],
@@ -375,10 +376,10 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.electricBlue.withOpacity(0.12),
+          color: ThemeColors.of(context).electricBlue.withOpacity(0.12),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: AppColors.electricBlue.withOpacity(0.3),
+            color: ThemeColors.of(context).electricBlue.withOpacity(0.3),
           ),
         ),
         child: Row(
@@ -387,7 +388,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
             Icon(
               Icons.touch_app_rounded,
               size: 20,
-              color: AppColors.electricBlue,
+              color: ThemeColors.of(context).electricBlue,
             ),
             const SizedBox(width: 8),
             Text(
@@ -395,7 +396,7 @@ class _ExercisePreviewOverlayState extends State<ExercisePreviewOverlay>
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.electricBlue,
+                color: ThemeColors.of(context).electricBlue,
               ),
             ),
           ],

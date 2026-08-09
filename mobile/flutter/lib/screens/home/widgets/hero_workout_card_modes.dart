@@ -93,7 +93,7 @@ extension _HeroSmartModeExt on _HeroWorkoutCardState {
         return _HeroBase(
           isDark: isDark,
           pill: l10n.heroModesPillPaused,
-          pillColor: AppColors.textMuted,
+          pillColor: ThemeColors.of(context).textMuted,
           body: l10n.heroModesBodyPaused,
           primary: _PrimaryButton(
             label: l10n.heroWorkoutCardResumeNow,

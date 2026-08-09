@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/xp_repository.dart'
     show DailyCratesState, CrateReward, CrateRewardResult;
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/crate_opening_play.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -129,10 +130,9 @@ class _DailyCrateBannerState extends ConsumerState<DailyCrateBanner>
   }
 
   Widget _buildBanner(BuildContext context, DailyCratesState cratesState) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final backgroundColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // Use a gold/amber accent for the crate banner
     const crateColor = Color(0xFFFFB300); // Amber  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
@@ -433,9 +433,11 @@ class _DailyCrateSelectionSheetState
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    // nearBlack has no ThemeColors accessor; it's ~identical to pureBlack
+    // (0xFF0A0A0A vs 0xFF0A0A0B) so tc.background is a safe substitute.
+    final backgroundColor = ThemeColors.of(context).background;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     return SafeArea(
         top: false,
@@ -586,9 +588,9 @@ class _CrateOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     final effectiveColor = isLocked ? textSecondary.withOpacity(0.5) : color;
 

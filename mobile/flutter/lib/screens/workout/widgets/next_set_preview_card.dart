@@ -16,6 +16,7 @@ import '../../../core/providers/user_provider.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Data class for next set preview from the backend
 class NextSetPreviewData {
@@ -127,12 +128,12 @@ class NextSetPreviewCard extends ConsumerWidget {
             ),
             borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
             border: Border.all(
-              color: AppColors.glowCyan.withValues(alpha: 0.3),
+              color: ThemeColors.of(context).accent.withValues(alpha: 0.3),
               width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.glowCyan.withValues(alpha: 0.15),
+                color: ThemeColors.of(context).accent.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -166,12 +167,12 @@ class NextSetPreviewCard extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.glowCyan.withValues(alpha: 0.2),
+              color: ThemeColors.of(context).accent.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome,
-              color: AppColors.glowCyan,
+              color: ThemeColors.of(context).accent,
               size: 20,
             ),
           ),
@@ -189,7 +190,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.glowCyan,
+                        color: ThemeColors.of(context).accent,
                         letterSpacing: 1,
                       ),
                     ),
@@ -274,8 +275,8 @@ class NextSetPreviewCard extends ConsumerWidget {
                 onUseThis!();
               },
               style: TextButton.styleFrom(
-                backgroundColor: AppColors.glowCyan.withValues(alpha: 0.2),
-                foregroundColor: AppColors.glowCyan,
+                backgroundColor: ThemeColors.of(context).accent.withValues(alpha: 0.2),
+                foregroundColor: ThemeColors.of(context).accent,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,
@@ -321,22 +322,22 @@ class NextSetPreviewCard extends ConsumerWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.glowCyan.withValues(alpha: 0.3),
-                      AppColors.glowPurple.withValues(alpha: 0.2),
+                      ThemeColors.of(context).accent.withValues(alpha: 0.3),
+                      ThemeColors.of(context).accent.withValues(alpha: 0.2),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.auto_awesome,
-                  color: AppColors.glowCyan,
+                  color: ThemeColors.of(context).accent,
                   size: isSmallScreen ? 22 : 26,
                 ),
               )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .shimmer(
                     duration: 2000.ms,
-                    color: AppColors.glowCyan.withValues(alpha: 0.3),
+                    color: ThemeColors.of(context).accent.withValues(alpha: 0.3),
                   ),
               const SizedBox(width: 14),
               Expanded(
@@ -350,7 +351,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: isSmallScreen ? 10 : 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.glowCyan,
+                            color: ThemeColors.of(context).accent,
                             letterSpacing: 1,
                           ),
                         ),
@@ -433,7 +434,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: isSmallScreen ? 32 : 38,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.glowCyan,
+                              color: ThemeColors.of(context).accent,
                             ),
                           ),
                           Padding(
@@ -591,7 +592,7 @@ class NextSetPreviewCard extends ConsumerWidget {
                   onUseThis!();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.glowCyan,
+                  backgroundColor: ThemeColors.of(context).accent,
                   foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(
                     vertical: isSmallScreen ? 14 : 16,
@@ -658,7 +659,7 @@ class NextSetPreviewLoading extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
             border: Border.all(
-              color: AppColors.glowCyan.withValues(alpha: 0.3),
+              color: ThemeColors.of(context).accent.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -667,7 +668,7 @@ class NextSetPreviewLoading extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.glowCyan.withValues(alpha: 0.2),
+                  color: ThemeColors.of(context).accent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: SizedBox(
@@ -676,7 +677,7 @@ class NextSetPreviewLoading extends StatelessWidget {
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.glowCyan,
+                      ThemeColors.of(context).accent,
                     ),
                   ),
                 ),
@@ -692,7 +693,7 @@ class NextSetPreviewLoading extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.glowCyan,
+                        color: ThemeColors.of(context).accent,
                         letterSpacing: 1,
                       ),
                     ),

@@ -25,6 +25,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../providers/active_workout_live_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Keys ("$workoutId|$yyyymmdd") for which the reshape gate already ran today.
 final preWorkoutReshapeDoneProvider =
@@ -577,18 +578,18 @@ class _ReshapeDiffDialog extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(top: 1, right: 6),
+                Padding(
+                  padding: const EdgeInsets.only(top: 1, right: 6),
                   child: Icon(Icons.verified_outlined,
-                      size: 13, color: AppColors.textMuted),
+                      size: 13, color: ThemeColors.of(context).textMuted),
                 ),
                 Expanded(
                   child: Text(
                     provenance,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontStyle: FontStyle.italic,
-                      color: AppColors.textMuted,
+                      color: ThemeColors.of(context).textMuted,
                     ),
                   ),
                 ),

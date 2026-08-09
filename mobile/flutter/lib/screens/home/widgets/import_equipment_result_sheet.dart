@@ -20,6 +20,7 @@ import '../../../data/repositories/gym_profile_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Environment choices — must match backend `workout_environment` enum values.
 const List<(String, String)> _kEnvironmentOptions = [
   ('commercial_gym', 'Commercial Gym'),
@@ -150,9 +151,9 @@ class _ImportEquipmentResultSheetState
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
     final matchedKeptCount = _keptCanonical.length;
@@ -280,7 +281,7 @@ class _ImportEquipmentResultSheetState
             child: DropdownButton<String>(
               value: _environment,
               isExpanded: true,
-              dropdownColor: isDark ? AppColors.elevated : Colors.white,
+              dropdownColor: ThemeColors.of(context).elevated,
               style: TextStyle(color: textPrimary, fontSize: 14),
               icon: Icon(Icons.arrow_drop_down_rounded, color: textSecondary),
               items: _kEnvironmentOptions
@@ -516,7 +517,7 @@ class _ImportEquipmentResultSheetState
         MediaQuery.of(context).padding.bottom + 12,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        color: ThemeColors.of(context).elevated,
         border: Border(
           top: BorderSide(
             color: isDark
@@ -596,7 +597,7 @@ class _MatchedChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     final bg = kept
         ? Colors.green.withValues(alpha: 0.14)  // accent-allowlist: success/positive state -- must stay green regardless of accent

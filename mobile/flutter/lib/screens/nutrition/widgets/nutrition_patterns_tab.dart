@@ -1837,7 +1837,7 @@ class _AskChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
@@ -2094,7 +2094,7 @@ class _CorrelatedFoodTile extends StatelessWidget {
               color: (isDark ? Colors.white : Colors.black)
                   .withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
               image: food.imageUrl != null
                   ? DecorationImage(
                       image: NetworkImage(food.imageUrl!),

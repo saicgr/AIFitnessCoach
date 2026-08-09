@@ -207,11 +207,11 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                     fillColor: surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.cardBorder),
+                      borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.cardBorder),
+                      borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),

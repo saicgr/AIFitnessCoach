@@ -84,7 +84,7 @@ class _AiHeroCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: tc.elevated,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: tc.cardBorder),
               ),
               child: Icon(
                 Icons.auto_awesome,
@@ -180,7 +180,7 @@ class _ForYouSection extends StatelessWidget {
               decoration: BoxDecoration(
                 color: tc.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: tc.cardBorder),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -637,7 +637,7 @@ class _MusclePill extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 color: tc.surface,
                 border: Border.all(
-                  color: AppColors.cardBorder,
+                  color: tc.cardBorder,
                   width: 1,
                 ),
               ),
@@ -729,7 +729,7 @@ class _EquipmentPill extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 color: tc.surface,
                 border: Border.all(
-                  color: AppColors.cardBorder,
+                  color: tc.cardBorder,
                   width: 1,
                 ),
               ),

@@ -1,8 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import 'signature_theme.dart';
 
 /// A compact ~118×154 poster card for horizontal rails (e.g. a "Featured
@@ -63,6 +63,7 @@ class ZPosterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final theme = categoryTheme(category);
     final hasDifficulty =
         difficultyLevel != null && difficultyLevel!.trim().isNotEmpty;
@@ -73,13 +74,13 @@ class ZPosterCard extends StatelessWidget {
       height: height,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: hasImage
           ? _imageContent(theme, hasDifficulty)
-          : _gradientContent(theme, hasDifficulty),
+          : _gradientContent(theme, hasDifficulty, tc),
     );
 
     if (onTap == null) return card;
@@ -91,11 +92,13 @@ class ZPosterCard extends StatelessWidget {
   }
 
   /// Category gradient header + glyph above name/stat — the image-free default.
-  Widget _gradientContent(CategoryTheme theme, bool hasDifficulty) {
+  Widget _gradientContent(CategoryTheme theme, bool hasDifficulty, ThemeColors tc) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Tinted gradient header with the category icon.
+        // Tinted gradient header with the category icon. Deliberately
+        // theme-invariant white glyph — it sits on the category-tinted
+        // gradient (a media-like colored badge), not on the card surface.
         Container(
           height: height * 0.42,
           decoration: BoxDecoration(gradient: theme.headerGradient),
@@ -103,7 +106,7 @@ class ZPosterCard extends StatelessWidget {
           child: Icon(
             theme.icon,
             size: 26,
-            color: AppColors.textPrimary.withValues(alpha: 0.85),
+            color: Colors.white.withValues(alpha: 0.85),
           ),
         ),
         // Body.
@@ -123,7 +126,7 @@ class ZPosterCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: ZType.sans(13,
-                        color: AppColors.textPrimary,
+                        color: tc.textPrimary,
                         weight: FontWeight.w700,
                         height: 1.15),
                   ),
@@ -133,7 +136,7 @@ class ZPosterCard extends StatelessWidget {
                     stat!.toUpperCase(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: ZType.data(9.5, color: AppColors.textMuted),
+                    style: ZType.data(9.5, color: tc.textMuted),
                   ),
               ],
             ),

@@ -170,7 +170,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
         color: isEditing
             ? context.accentColor.withOpacity(0.15)
             : isCurrent
-                ? AppColors.electricBlue.withOpacity(0.15)
+                ? ThemeColors.of(context).electricBlue.withOpacity(0.15)
                 : isCompleted
                     ? AppColors.success.withOpacity(0.05)  // accent-allowlist: success/positive state — must stay green regardless of accent
                     : Colors.transparent,
@@ -181,7 +181,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
               )
             : isCurrent
                 ? Border.all(
-                    color: AppColors.electricBlue.withOpacity(0.4),
+                    color: ThemeColors.of(context).electricBlue.withOpacity(0.4),
                     width: 2,
                   )
                 : Border(
@@ -263,7 +263,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.electricBlue,
+                                color: ThemeColors.of(context).electricBlue,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text(
@@ -282,16 +282,16 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                               height: 28,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: AppColors.electricBlue.withOpacity(0.2),
-                                border: Border.all(color: AppColors.electricBlue, width: 2),
+                                color: ThemeColors.of(context).electricBlue.withOpacity(0.2),
+                                border: Border.all(color: ThemeColors.of(context).electricBlue, width: 2),
                               ),
                               child: Center(
                                 child: Text(
                                   setNumberDisplay,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.electricBlue,
+                                    color: ThemeColors.of(context).electricBlue,
                                   ),
                                 ),
                               ),
@@ -429,7 +429,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                     isDecimal: true,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    accentColor: isEditing ? context.accentColor : AppColors.electricBlue,
+                    accentColor: isEditing ? context.accentColor : ThemeColors.of(context).electricBlue,
                   )
                 : GestureDetector(
                     onTap: isCompleted
@@ -470,7 +470,7 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
                     isDecimal: false,
                     isDark: isDark,
                     textPrimary: textPrimary,
-                    accentColor: isEditing ? context.accentColor : AppColors.electricBlue,
+                    accentColor: isEditing ? context.accentColor : ThemeColors.of(context).electricBlue,
                   )
                 : GestureDetector(
                     onTap: isCompleted
@@ -558,15 +558,15 @@ extension _SetTrackingOverlayStateUI2 on _SetTrackingOverlayState {
             ? Container(
                 alignment: AlignmentDirectional.centerStart,
                 padding: const EdgeInsetsDirectional.only(start: 24),
-                color: AppColors.electricBlue.withOpacity(0.15),
+                color: ThemeColors.of(context).electricBlue.withOpacity(0.15),
                 child: Row(
                   children: [
-                    Icon(Icons.edit, color: AppColors.electricBlue, size: 20),
+                    Icon(Icons.edit, color: ThemeColors.of(context).electricBlue, size: 20),
                     SizedBox(width: 8),
                     Text(
                       AppLocalizations.of(context).commonEdit,
                       style: TextStyle(
-                        color: AppColors.electricBlue,
+                        color: ThemeColors.of(context).electricBlue,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

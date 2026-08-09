@@ -717,7 +717,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
               title: const Text('New chat'),
               subtitle: Text(
                 'Start a fresh conversation',
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: ThemeColors.of(context).textSecondary),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -731,7 +731,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
               title: Text(AppLocalizations.of(context).chatScreenExtReportAProblem),
               subtitle: Text(
                 AppLocalizations.of(context).chatScreenExtEmailOurSupportTeam,
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: ThemeColors.of(context).textSecondary),
               ),
               onTap: () {
                 Navigator.pop(context);
@@ -745,7 +745,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
               title: Text(AppLocalizations.of(context).coachSelectionScreenChangeCoach),
               subtitle: Text(
                 AppLocalizations.of(context).chatScreenExtSwitchToADifferent,
-                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, color: ThemeColors.of(context).textSecondary),
               ),
               onTap: () {
                 Navigator.pop(context);

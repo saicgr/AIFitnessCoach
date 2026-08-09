@@ -13,6 +13,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../gym_profile/widgets/travel_mode_tile.dart';
 import 'add_gym_profile_sheet.dart';
 import 'components/sheet_theme_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import 'edit_gym_profile_sheet.dart';
 import 'manage_gym_profiles_sheet.dart';
 
@@ -141,7 +142,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
   /// no alarming "Loading gym…" text. Used both for the provider loading
   /// state and the pre-cache-check `data([])` state.
   Widget _buildShimmerDot(bool isDark) {
-    final color = (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary)
+    final color = (ThemeColors.of(context).textSecondary)
         .withValues(alpha: 0.4);
     return Container(
       width: 60,
@@ -154,7 +155,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
   }
 
   Widget _buildErrorState(bool isDark, Object error) {
-    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final color = ThemeColors.of(context).textSecondary;
     return GestureDetector(
       onTap: () => ref.invalidate(gymProfilesProvider),
       child: Row(
@@ -183,7 +184,7 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
   }
 
   Widget _buildEmptyState(BuildContext context, bool isDark) {
-    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final color = ThemeColors.of(context).textSecondary;
     return GestureDetector(
       onTap: () {
         HapticService.light();
@@ -222,12 +223,8 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
     List<GymProfile> profiles,
     bool isDark,
   ) {
-    final textColor = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final secondaryColor = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final secondaryColor = ThemeColors.of(context).textSecondary;
 
     // Find active profile
     final activeProfile = profiles.firstWhere(
@@ -1020,9 +1017,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: widget.isDark
-              ? AppColors.elevated
-              : AppColorsLight.elevated,
+          backgroundColor: ThemeColors.of(context).elevated,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -1135,9 +1130,7 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: widget.isDark
-                ? AppColors.elevated
-                : AppColorsLight.elevated,
+            backgroundColor: ThemeColors.of(context).elevated,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),

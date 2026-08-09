@@ -29,6 +29,7 @@ import '../../../core/constants/stat_typography.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -491,6 +492,7 @@ class _WeeklyRecapTeaser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final weekStart = summary['week_start'] as String? ?? '';
     final workouts = summary['workouts_completed'] ?? 0;
     final prs = summary['prs_achieved'] ?? 0;
@@ -504,9 +506,9 @@ class _WeeklyRecapTeaser extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
         ),
         child: Row(
           children: [
@@ -517,11 +519,11 @@ class _WeeklyRecapTeaser extends StatelessWidget {
               height: 30,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: tc.cardBorder),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.auto_awesome_rounded,
-                  color: AppColors.textSecondary, size: 17),
+              child: Icon(Icons.auto_awesome_rounded,
+                  color: tc.textSecondary, size: 17),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -531,13 +533,13 @@ class _WeeklyRecapTeaser extends StatelessWidget {
                   Text(
                     AppLocalizations.of(context).overviewLastWeek.toUpperCase(),
                     style: ZType.lbl(10,
-                        color: AppColors.textMuted, letterSpacing: 1.5),
+                        color: tc.textMuted, letterSpacing: 1.5),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '$workouts workouts · $prs PRs',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: tc.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -545,8 +547,8 @@ class _WeeklyRecapTeaser extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textMuted, size: 18),
+            Icon(Icons.chevron_right,
+                color: tc.textMuted, size: 18),
           ],
         ),
       ),
@@ -596,6 +598,7 @@ class _StreakHeroTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     // Parse every entry, dropping malformed ones.
     final parsed = streaks
         .map(_parse)
@@ -632,11 +635,11 @@ class _StreakHeroTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
           border: serious
-              ? Border.all(color: AppColors.cardBorder)
-              : Border.all(color: AppColors.cardBorder, width: 1),
+              ? Border.all(color: tc.cardBorder)
+              : Border.all(color: tc.cardBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,7 +654,7 @@ class _StreakHeroTile extends StatelessWidget {
                   height: 40,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: tc.cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Text('🔥', style: TextStyle(fontSize: 20)),
@@ -673,7 +676,7 @@ class _StreakHeroTile extends StatelessWidget {
                       Text(
                         heroLabel.toUpperCase(),
                         style: ZType.lbl(10,
-                            color: AppColors.textMuted, letterSpacing: 1.5),
+                            color: tc.textMuted, letterSpacing: 1.5),
                       ),
                     ],
                   ),
@@ -685,10 +688,10 @@ class _StreakHeroTile extends StatelessWidget {
                     Text(
                       'View all'.toUpperCase(),
                       style: ZType.lbl(10,
-                          color: AppColors.textMuted, letterSpacing: 1.2),
+                          color: tc.textMuted, letterSpacing: 1.2),
                     ),
-                    const Icon(Icons.chevron_right,
-                        color: AppColors.textMuted, size: 18),
+                    Icon(Icons.chevron_right,
+                        color: tc.textMuted, size: 18),
                   ],
                 ),
               ],
@@ -705,14 +708,14 @@ class _StreakHeroTile extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: tc.surface,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.cardBorder),
+                        border: Border.all(color: tc.cardBorder),
                       ),
                       child: Text(
                         '🔥 ${s.count} · ${_humanize(s.type)}',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
+                        style: TextStyle(
+                          color: tc.textSecondary,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1039,6 +1042,7 @@ class _HeadlineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     // Signature hairline tile. `highlight` (action-ready) earns the accent
     // left edge; otherwise a flat warm hairline border. Framed glyph box,
     // Barlow kicker, Anton headline.
@@ -1054,11 +1058,11 @@ class _HeadlineTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
           border: highlight
-              ? Border.all(color: AppColors.cardBorder, width: 1)
-              : Border.all(color: AppColors.cardBorder),
+              ? Border.all(color: tc.cardBorder, width: 1)
+              : Border.all(color: tc.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1072,17 +1076,17 @@ class _HeadlineTile extends StatelessWidget {
                     height: 28,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: tc.cardBorder),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(leadingIcon,
-                        color: AppColors.textSecondary, size: 16),
+                        color: tc.textSecondary, size: 16),
                   ),
             const SizedBox(height: 10),
             Text(
               title.toUpperCase(),
               style: ZType.lbl(10,
-                  color: AppColors.textMuted, letterSpacing: 1.5),
+                  color: tc.textMuted, letterSpacing: 1.5),
             ),
             const SizedBox(height: 5),
             Flexible(
@@ -1103,8 +1107,8 @@ class _HeadlineTile extends StatelessWidget {
             Flexible(
               child: Text(
                 sub,
-                style: const TextStyle(
-                  color: AppColors.textMuted,
+                style: TextStyle(
+                  color: tc.textMuted,
                   fontSize: 11,
                 ),
                 maxLines: 2,
@@ -1199,6 +1203,7 @@ class _CycleHubRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
     final profileAsync = ref.watch(hormonalProfileProvider);
     final enabled = profileAsync.value?.menstrualTrackingEnabled ?? false;
     if (!enabled) return const SizedBox.shrink();
@@ -1224,9 +1229,9 @@ class _CycleHubRow extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: tc.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
           ),
           child: Row(
             children: [
@@ -1238,7 +1243,7 @@ class _CycleHubRow extends ConsumerWidget {
                 height: 30,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.favorite_rounded,
@@ -1254,21 +1259,21 @@ class _CycleHubRow extends ConsumerWidget {
                     Text(
                       AppLocalizations.of(context).overviewCycle.toUpperCase(),
                       style: ZType.lbl(10,
-                          color: AppColors.textMuted, letterSpacing: 1.5),
+                          color: tc.textMuted, letterSpacing: 1.5),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       sub,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: tc.textSecondary,
                         fontSize: 12.5,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right,
-                  color: AppColors.textMuted, size: 18),
+              Icon(Icons.chevron_right,
+                  color: tc.textMuted, size: 18),
             ],
           ),
         ),

@@ -6,6 +6,7 @@ import '../../../core/providers/week_start_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Compact week progress strip showing day circles and completion count
 /// Displays M T W T F S S with visual states for completed/today/upcoming
@@ -16,9 +17,9 @@ class WeekProgressStrip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // Watch the workouts provider to get this week's data
     final workoutsAsync = ref.watch(workoutsProvider);
@@ -215,8 +216,8 @@ class _DayCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     // Monochrome accent - white in dark mode, black in light mode
     final accentColor = textPrimary;
 

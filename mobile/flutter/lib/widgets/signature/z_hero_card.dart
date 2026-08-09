@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import 'signature_theme.dart';
 import 'z_poster_card.dart';
 
@@ -76,6 +76,7 @@ class ZHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final theme = categoryTheme(category);
     final hasDifficulty =
         difficultyLevel != null && difficultyLevel!.trim().isNotEmpty;
@@ -84,9 +85,9 @@ class ZHeroCard extends StatelessWidget {
       height: height,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -100,10 +101,14 @@ class ZHeroCard extends StatelessWidget {
               children: [
                 if (hasDifficulty) ZDifficultyRibbon(level: difficultyLevel!),
                 const Spacer(),
+                // Deliberately theme-invariant: sits on the category-tinted
+                // gradient header (a media-like colored badge), not on the
+                // card's own surface — same white-ish glyph reads in both
+                // themes, like a scrim icon.
                 Icon(
                   theme.icon,
                   size: 24,
-                  color: AppColors.textPrimary.withValues(alpha: 0.85),
+                  color: Colors.white.withValues(alpha: 0.85),
                 ),
               ],
             ),
@@ -129,8 +134,7 @@ class ZHeroCard extends StatelessWidget {
                             title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                ZType.disp(22, color: AppColors.textPrimary),
+                            style: ZType.disp(22, color: tc.textPrimary),
                           ),
                         ),
                         if (description != null &&
@@ -141,8 +145,7 @@ class ZHeroCard extends StatelessWidget {
                               description!,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style:
-                                  ZType.ser(13, color: AppColors.textSecondary),
+                              style: ZType.ser(13, color: tc.textSecondary),
                             ),
                           ),
                         ],
@@ -155,7 +158,7 @@ class ZHeroCard extends StatelessWidget {
                       meta!.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: ZType.data(10.5, color: AppColors.textMuted),
+                      style: ZType.data(10.5, color: tc.textMuted),
                     ),
                   ],
                   if (primaryLabel != null || ghostLabel != null) ...[
@@ -233,6 +236,7 @@ class _GhostButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -242,14 +246,13 @@ class _GhostButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
         ),
         child: Text(
           label.toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style:
-              ZType.lbl(13, color: AppColors.textSecondary, letterSpacing: 1.4),
+          style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.4),
         ),
       ),
     );
@@ -292,6 +295,7 @@ class ZCarouselDots extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (count <= 1) return const SizedBox.shrink();
+    final tc = ThemeColors.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -305,7 +309,7 @@ class ZCarouselDots extends StatelessWidget {
             width: active ? 18 : 6,
             height: 6,
             decoration: BoxDecoration(
-              color: active ? context.accentColor : AppColors.hairlineStrong,
+              color: active ? context.accentColor : tc.hairlineStrong,
               borderRadius: BorderRadius.circular(3),
             ),
           );
@@ -325,13 +329,14 @@ class _Arrow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return GestureDetector(
       onTap: enabled ? onTap : null,
       behavior: HitTestBehavior.opaque,
       child: Text(
         glyph,
         style: TextStyle(
-          color: enabled ? AppColors.textSecondary : AppColors.hairlineStrong,
+          color: enabled ? tc.textSecondary : tc.hairlineStrong,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           height: 1.0,

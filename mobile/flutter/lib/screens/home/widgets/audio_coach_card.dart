@@ -8,6 +8,7 @@ import '../../../data/repositories/body_analyzer_repository.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Home-screen tile that plays a 15–20 s personalised audio brief.
 ///
 /// Off by default — the card only renders when the user has opted in via
@@ -72,11 +73,10 @@ class _AudioCoachCardState extends ConsumerState<AudioCoachCard> {
     if (_loading) return const SizedBox.shrink();
     final b = _brief;
     if (b == null) return const SizedBox.shrink();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Container(
       padding: const EdgeInsets.all(14),

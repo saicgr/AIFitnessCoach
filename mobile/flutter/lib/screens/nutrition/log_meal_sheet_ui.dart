@@ -84,7 +84,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
           decoration: BoxDecoration(
             color: tc.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -562,7 +562,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -1153,7 +1153,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   decoration: BoxDecoration(
                     color: ThemeColors.of(context).surface,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Row(
                     children: [
@@ -2115,7 +2115,7 @@ class _CaptureChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: tc.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

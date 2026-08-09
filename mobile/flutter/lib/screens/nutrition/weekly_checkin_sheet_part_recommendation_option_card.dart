@@ -308,7 +308,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                     : Icons.info_outline,
                 size: 16,
                 color: calculation.dataQualityScore >= 0.7
-                    ? AppColors.textPrimary
+                    ? ThemeColors.of(context).textPrimary
                     : Colors.orange,  // accent-allowlist: warning severity — insufficient data quality
               ),
               const SizedBox(width: 8),
@@ -449,7 +449,7 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                     isComplete ? 'Complete!' : '$current / $target days',
                     style: TextStyle(
                       fontSize: 12,
-                      color: isComplete ? AppColors.textPrimary : textMuted,
+                      color: isComplete ? textPrimary : textMuted,
                       fontWeight: isComplete ? FontWeight.w600 : FontWeight.normal,
                     ),
                   ),

@@ -145,10 +145,9 @@ extension __HomeScreenStateExt on _HomeScreenState {
 
   /// Displays the edit mode coach mark/tooltip dialog
   void _showEditModeCoachMark() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     showDialog(
       context: context,
@@ -241,9 +240,9 @@ extension __HomeScreenStateExt on _HomeScreenState {
 
 
   void _showAddTileSheet(bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     // Get tile types that are not already added
     final existingTypes = _editingTiles.map((t) => t.type).toSet();
@@ -274,7 +273,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                  color: ThemeColors.of(context).textMuted,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -428,9 +427,9 @@ extension __HomeScreenStateExt on _HomeScreenState {
 
 
   void _showDiscoverSheet(bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     showGlassSheet(
       context: context,
@@ -449,7 +448,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                color: ThemeColors.of(context).textMuted,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -486,7 +485,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Material(
-                color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                color: ThemeColors.of(context).glassSurface,
                 borderRadius: BorderRadius.circular(12),
                 child: InkWell(
                   onTap: () => _resetToDefaultLayout(),
@@ -574,9 +573,8 @@ extension __HomeScreenStateExt on _HomeScreenState {
   void _showDailyLoginCelebration(dynamic result) {
     if (!mounted) return;
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     // Build message based on what was earned
     String title = '🎉 Welcome Back!';

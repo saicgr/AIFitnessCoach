@@ -10,6 +10,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/charts/mini_sparkline.dart';
 import 'nutrient_explorer.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// F5 — full-screen "Vitamins & minerals" detail view.
 ///
@@ -163,7 +164,7 @@ class _CoverageBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -262,7 +263,7 @@ class _AntioxidantCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

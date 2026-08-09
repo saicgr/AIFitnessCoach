@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/copy/training_explainers.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Shared visual helpers for the active-workout set rows.
 ///
@@ -49,11 +50,15 @@ class SetRowVisuals {
     if (!progressiveOverloadEnabled) return null;
     if (isFirstSetEver) {
       // TODO(i18n): 'Starter weight' is in a static method with no BuildContext — cannot use AppLocalizations here
-      return const Text(
+      return Text(
         'Starter weight',
         style: TextStyle(
           fontSize: 9,
-          color: AppColors.textMuted,
+          // No BuildContext guaranteed at this optional-context call site
+          // (see class doc) — fall back to the dark-theme literal.
+          color: context != null
+              ? ThemeColors.of(context).textMuted
+              : AppColors.textMuted,  // accent-allowlist: no BuildContext available at this optional-context call site (see class doc)
           fontStyle: FontStyle.italic,
         ),
       );
@@ -121,7 +126,9 @@ class SetRowVisuals {
       color = AppColors.error;  // accent-allowlist: error/destructive — must stay red
       icon = Icons.arrow_downward;
     } else {
-      color = AppColors.textMuted;
+      color = context != null
+          ? ThemeColors.of(context).textMuted
+          : AppColors.textMuted;  // accent-allowlist: no BuildContext available at this optional-context call site (see class doc)
       icon = null;
     }
 

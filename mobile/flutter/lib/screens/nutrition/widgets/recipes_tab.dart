@@ -353,7 +353,7 @@ class _UpcomingCard extends StatelessWidget {
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
         // Hairline surface with an accent left rail (hero-card cue).
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       child: Row(
         children: [
@@ -411,7 +411,7 @@ class _LeftoverCard extends StatelessWidget {
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
         // Hairline surface; status colour rides the left rail only.
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       child: Row(
         children: [
@@ -677,7 +677,7 @@ class _QuickActionChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -980,7 +980,7 @@ class _SearchIconButton extends StatelessWidget {
           color: active ? accent : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: active ? accent : AppColors.cardBorder,
+            color: active ? accent : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Stack(
@@ -1068,7 +1068,7 @@ class _SortDropdown extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1118,7 +1118,7 @@ class _FiltersButton extends StatelessWidget {
           color: active ? accent : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? accent : AppColors.cardBorder,
+            color: active ? accent : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Row(
@@ -1662,7 +1662,7 @@ class _SheetAction extends StatelessWidget {
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           children: [
@@ -1671,7 +1671,7 @@ class _SheetAction extends StatelessWidget {
               height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: accent, size: 22),

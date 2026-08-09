@@ -121,7 +121,7 @@ class SoundSettingsSection extends ConsumerWidget {
               Divider(height: 1, color: cardBorder),
               _SoundCategoryRow(
                 icon: Icons.fitness_center,
-                iconColor: AppColors.textPrimary,
+                iconColor: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                 title: AppLocalizations.of(context).soundSettingsExerciseCompletion,
                 subtitle: AppLocalizations.of(context).soundSettingsPlaySoundWhenAll,
                 enabled: prefs.exerciseCompletionSoundEnabled,
@@ -153,7 +153,7 @@ class SoundSettingsSection extends ConsumerWidget {
               Divider(height: 1, color: cardBorder),
               SettingTile(
                 icon: Icons.volume_up,
-                iconColor: AppColors.textSecondary,
+                iconColor: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
                 title: AppLocalizations.of(context).soundSettingsSoundVolume,
                 subtitle: '${(prefs.soundEffectsVolume * 100).round()}%',
               ),

@@ -80,7 +80,7 @@ class _FridgeCookModeState extends State<FridgeCookMode> {
                         child: LinearProgressIndicator(
                           value: progress,
                           minHeight: 4,
-                          backgroundColor: AppColors.cardBorder,
+                          backgroundColor: ThemeColors.of(context).cardBorder,
                           valueColor: AlwaysStoppedAnimation(accent),
                         ),
                       ),
@@ -185,7 +185,7 @@ class _FridgeCookModeState extends State<FridgeCookMode> {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: primary ? tc.accent : Colors.transparent,
-            border: primary ? null : Border.all(color: AppColors.cardBorder),
+            border: primary ? null : Border.all(color: ThemeColors.of(context).cardBorder),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(

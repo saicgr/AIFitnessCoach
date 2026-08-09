@@ -24,6 +24,7 @@ import '../../exercises/import_exercise_screen.dart';
 import 'equipment_snap_flow.dart';
 import 'snapped_equipment_section.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 
 part 'exercise_swap_sheet_part_exercise_swap_sheet_state.dart';

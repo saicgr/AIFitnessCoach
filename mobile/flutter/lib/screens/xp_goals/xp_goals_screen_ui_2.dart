@@ -13,6 +13,7 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final awardedBonuses = ref.watch(awardedBonusesProvider);
 
@@ -75,8 +76,8 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
         // Summary meta line — Anton hero counts + Barlow labels on a hairline
         Container(
           padding: const EdgeInsets.only(bottom: 12),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: tc.hairline)),
           ),
           child: Row(
             children: [
@@ -101,9 +102,9 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
         // Bonuses list — hairline rows; gold open / green awarded
         ...bonuses.map((bonus) => Container(
               padding: const EdgeInsets.symmetric(vertical: 11),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: AppColors.hairline),
+                  top: BorderSide(color: tc.hairline),
                 ),
               ),
               child: Row(

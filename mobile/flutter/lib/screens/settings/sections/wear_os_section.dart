@@ -468,7 +468,9 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
       case WatchConnectionState.noApp:
         return context.accentColor;
       case WatchConnectionState.noDevice:
-        return AppColors.textMuted;
+        return Theme.of(context).brightness == Brightness.dark
+            ? AppColors.textMuted
+            : AppColorsLight.textMuted;
       case WatchConnectionState.error:
         return AppColors.error;  // accent-allowlist: error/destructive - must stay red
     }

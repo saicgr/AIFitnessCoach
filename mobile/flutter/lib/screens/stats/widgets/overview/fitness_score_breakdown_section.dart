@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/skeleton/skeleton.dart';
@@ -191,9 +190,9 @@ class _ScoreHero extends StatelessWidget {
                     child: CircularProgressIndicator(
                       value: 0,
                       strokeWidth: 5,
-                      backgroundColor: AppColors.hairlineStrong,
+                      backgroundColor: tc.hairlineStrong,
                       valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.hairlineStrong),
+                          AlwaysStoppedAnimation<Color>(tc.hairlineStrong),
                       strokeCap: StrokeCap.round,
                     ),
                   ),
@@ -267,7 +266,7 @@ class _ScoreHero extends StatelessWidget {
                   child: CircularProgressIndicator(
                     value: (overallScore! / 100).clamp(0.0, 1.0),
                     strokeWidth: 5,
-                    backgroundColor: AppColors.hairlineStrong,
+                    backgroundColor: tc.hairlineStrong,
                     valueColor: AlwaysStoppedAnimation<Color>(accent),
                     strokeCap: StrokeCap.round,
                   ),
@@ -461,7 +460,7 @@ class _ComponentTile extends StatelessWidget {
               height: 3,
               child: Stack(
                 children: [
-                  Container(color: AppColors.hairlineStrong),
+                  Container(color: tc.hairlineStrong),
                   if (hasScore)
                     FractionallySizedBox(
                       widthFactor: (score! / 100).clamp(0.0, 1.0),

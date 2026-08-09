@@ -46,7 +46,7 @@ class _NutrientScoreCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -122,7 +122,7 @@ class _NutrientScoreCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: (score / 100).clamp(0.0, 1.0),
                     minHeight: 6,
-                    backgroundColor: AppColors.hairlineStrong,
+                    backgroundColor: ThemeColors.of(context).cardBorder,
                     color: scoreColor,
                   ),
                 ),
@@ -266,7 +266,7 @@ class _NutrientSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,7 +281,7 @@ class _NutrientSection extends StatelessWidget {
                   height: 32,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(9),
                   ),
                   child: Icon(
@@ -381,7 +381,7 @@ class _NutrientRow extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: (displayPercentage / 100).clamp(0.0, 1.0),
                       minHeight: 8,
-                      backgroundColor: AppColors.hairlineStrong,
+                      backgroundColor: ThemeColors.of(context).cardBorder,
                       color: statusColor,
                     ),
                   ),
@@ -456,7 +456,7 @@ class _NutrientLoadingSkeleton extends StatelessWidget {
     final skeleton = BoxDecoration(
       color: tc.surface,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.cardBorder),
+      border: Border.all(color: ThemeColors.of(context).cardBorder),
     );
 
     return SingleChildScrollView(
@@ -477,7 +477,7 @@ class _NutrientLoadingSkeleton extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                 ),
               ),
             ),
@@ -529,7 +529,7 @@ class _EmptyNutrientState extends StatelessWidget {
               height: 80,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
@@ -608,10 +608,10 @@ class _ThreeTierProgressBar extends StatelessWidget {
     final currentPercent = (currentValue / maxValue).clamp(0.0, 1.0);
 
     // Determine zone colors
-    Color deficientColor = AppColors.textMuted; // Red - below floor
-    Color lowColor = AppColors.textSecondary; // Yellow - between floor and target
-    Color optimalColor = AppColors.textPrimary; // Green - at target or above
-    Color excessiveColor = AppColors.textMuted; // Red - over ceiling
+    Color deficientColor = ThemeColors.of(context).textMuted; // Red - below floor
+    Color lowColor = ThemeColors.of(context).textSecondary; // Yellow - between floor and target
+    Color optimalColor = ThemeColors.of(context).textPrimary; // Green - at target or above
+    Color excessiveColor = ThemeColors.of(context).textMuted; // Red - over ceiling
 
     return Column(
       children: [
@@ -773,7 +773,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
               _TierLabel(
                 label: AppLocalizations.of(context).nutrientExplorerPartFloor,
                 value: '${floorValue!.toStringAsFixed(0)}$unit',
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
               )
             else
               const SizedBox(width: 60),
@@ -782,7 +782,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
             _TierLabel(
               label: AppLocalizations.of(context).workoutSummaryAdvancedTarget,
               value: '${targetValue.toStringAsFixed(0)}$unit',
-              color: AppColors.textPrimary,
+              color: ThemeColors.of(context).textPrimary,
               isCenter: true,
             ),
 
@@ -791,7 +791,7 @@ class _ThreeTierProgressBar extends StatelessWidget {
               _TierLabel(
                 label: AppLocalizations.of(context).nutrientExplorerPartCeiling,
                 value: '${ceilingValue!.toStringAsFixed(0)}$unit',
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
               )
             else
               const SizedBox(width: 60),

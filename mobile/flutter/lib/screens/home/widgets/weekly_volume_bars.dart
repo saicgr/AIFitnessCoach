@@ -6,6 +6,7 @@ import '../../../data/models/body_analyzer.dart';
 import '../../../data/repositories/body_analyzer_repository.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Per-muscle weekly-volume bars. Bars extend toward the `cap_sets` value
 /// from `muscle_volume_caps`; a red segment appears when the user's weekly
 /// sets meet or exceed the cap so overreach is obvious.
@@ -48,11 +49,10 @@ class _WeeklyVolumeBarsState extends ConsumerState<WeeklyVolumeBars> {
     }
     final entries = _entries;
     if (entries == null || entries.isEmpty) return const SizedBox.shrink();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Container(
       padding: const EdgeInsets.all(16),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/mood.dart';
@@ -79,7 +78,7 @@ class _MoodWorkoutPreStartScreenState
     // defensively so a hot-reload edge case doesn't show a blank screen.
     final tc = ThemeColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: ThemeColors.of(context).background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

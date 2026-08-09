@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 
@@ -43,7 +42,7 @@ class ZealovaChip extends StatelessWidget {
         // and packs horizontally like a real chip.
         decoration: BoxDecoration(
           border: Border.all(
-              color: selected ? tc.accent : AppColors.cardBorder),
+              color: selected ? tc.accent : tc.cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(

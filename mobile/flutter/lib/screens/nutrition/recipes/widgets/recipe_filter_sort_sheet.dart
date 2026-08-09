@@ -25,6 +25,7 @@ import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Sentinel class for [RecipeFilterSortState.copyWith]. A dedicated class is
 /// used (rather than `Object()`, which is NOT a const constructor) so callers
 /// can explicitly pass `mealType: null` to clear the meal-type filter,
@@ -468,7 +469,7 @@ class _FilterChipPill extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? accent : AppColors.cardBorder,
+            color: selected ? accent : ThemeColors.of(context).cardBorder,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -517,7 +518,7 @@ class _ClearAllPill extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: enabled ? accent : AppColors.cardBorder),
+          border: Border.all(color: enabled ? accent : ThemeColors.of(context).cardBorder),
         ),
         child: Text(
           AppLocalizations.of(context).settingsCardPartClearAll.toUpperCase(),

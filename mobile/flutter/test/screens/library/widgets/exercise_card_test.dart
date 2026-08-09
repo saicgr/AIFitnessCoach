@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitwiz/core/constants/app_colors.dart';
 import 'package:fitwiz/screens/library/widgets/exercise_card.dart';
 import 'package:fitwiz/data/models/exercise.dart';
 import 'package:fitwiz/widgets/signature/signature.dart';
@@ -315,6 +316,78 @@ void main() {
           find.text('45 Degree Hyperextension (No Equipment)'),
         );
         expect(nameText.maxLines, 2);
+      },
+    );
+
+    // Regression gate for the light-mode "black block" bug: the leading
+    // thumbnail's fill/border were painted with `AppColors.surface2` /
+    // `AppColors.cardBorder` (dark-theme literals) regardless of the active
+    // theme, so in light mode the 40×40 icon tile rendered as a near-black
+    // square on an otherwise white row. The thumbnail now resolves its fill
+    // and border through `ThemeColors.of(context)`. This test pumps the card
+    // under `ThemeData.light()` and asserts the RESOLVED decoration colors —
+    // not just that the widget renders — so a regression back to a raw
+    // `AppColors.*` literal fails the assertion instead of silently
+    // reintroducing the bug.
+    testWidgets(
+      'leading thumbnail resolves a light-theme fill and border in light '
+      'mode, not the dark-theme literal',
+      (WidgetTester tester) async {
+        final exercise = createExercise(
+          name: 'Face Pull',
+          bodyPart: 'Back', // -> Icons.airline_seat_flat fallback icon
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              theme: ThemeData.light(),
+              home: Scaffold(
+                body: ExerciseCard(exercise: exercise),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final iconFinder = find.byIcon(Icons.airline_seat_flat);
+        expect(iconFinder, findsOneWidget);
+
+        final thumbContainer = tester.widget<Container>(
+          find
+              .ancestor(of: iconFinder, matching: find.byType(Container))
+              .first,
+        );
+        final deco = thumbContainer.decoration as BoxDecoration;
+        final fill = deco.color;
+        final border = deco.border as Border?;
+        final borderColor = border?.top.color;
+
+        expect(fill, isNotNull);
+        expect(borderColor, isNotNull);
+
+        // Must NOT be the dark-theme literals this bug regresses to.
+        expect(fill, isNot(equals(AppColors.surface2)),
+            reason: 'Thumbnail fill must not be the dark-theme literal '
+                '(AppColors.surface2) while the active theme is light.');
+        expect(borderColor, isNot(equals(AppColors.cardBorder)),
+            reason: 'Thumbnail border must not be the dark-theme literal '
+                '(AppColors.cardBorder) while the active theme is light.');
+
+        // Must resolve to the actual light-theme tokens.
+        expect(fill, equals(AppColorsLight.surface));
+        expect(borderColor, equals(AppColorsLight.cardBorder));
+
+        // Contrast is real, not just "a different token": the fallback
+        // icon color must read against the resolved fill.
+        final iconWidget = tester.widget<Icon>(iconFinder);
+        final iconColor = iconWidget.color!;
+        final fillLuminance = fill!.computeLuminance();
+        final iconLuminance = iconColor.computeLuminance();
+        expect((fillLuminance - iconLuminance).abs(), greaterThan(0.15),
+            reason: 'Fill and icon luminance must contrast; a near-equal '
+                'pair is unreadable even if both are "correct" colors '
+                'individually.');
       },
     );
   });

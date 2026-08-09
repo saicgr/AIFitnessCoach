@@ -722,7 +722,7 @@ class _FastingScreenRedesignedState
           foregroundColor: fg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
-            side: const BorderSide(color: AppColors.cardBorder),
+            side: BorderSide(color: ThemeColors.of(context).cardBorder),
           ),
         ),
         child: Row(
@@ -1163,7 +1163,7 @@ class _FastingScreenRedesignedState
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1303,7 +1303,7 @@ class _FastingScreenRedesignedState
                   decoration: BoxDecoration(
                     color: colors.surface,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Icon(Icons.timer_outlined,
                       size: 48, color: colors.accent),

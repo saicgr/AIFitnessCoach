@@ -21,6 +21,7 @@ import 'widgets/recipe_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../common/app_refresh_indicator.dart';
+import '../../../core/theme/theme_colors.dart';
 class DiscoverScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -327,7 +328,7 @@ class _Chip extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? accent : AppColors.cardBorder,
+            color: selected ? accent : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Text(

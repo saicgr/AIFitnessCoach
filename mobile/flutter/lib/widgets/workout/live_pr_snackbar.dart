@@ -125,7 +125,7 @@ void showLivePrSnackBar(
             padding: const EdgeInsets.only(left: 8),
             child: Icon(
               Icons.close,
-              color: AppColors.textSecondary.withOpacity(0.6),
+              color: AppColors.textSecondary.withOpacity(0.6), // accent-allowlist: sits on the snackbar's own fixed dark pill background (#1A1A1A, deliberately theme-invariant like the gold celebration marks above), not the app surface
               size: 18,
             ),
           ),

@@ -26,6 +26,7 @@ import 'timeline_entry_tile.dart';
 import 'timeline_entry_detail_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class TimelineSection extends ConsumerStatefulWidget {
   const TimelineSection({super.key});
 
@@ -49,8 +50,8 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
     final notifier = ref.read(timelineProvider.notifier);
     final visibleDays = notifier.visibleDays;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
 
     return Column(
@@ -133,9 +134,7 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
                           fontWeight: FontWeight.w600,
                         ),
                         selectedColor: accent,
-                        backgroundColor: isDark
-                            ? AppColors.elevated
-                            : AppColorsLight.elevated,
+                        backgroundColor: ThemeColors.of(context).elevated,
                       ),
                     ))
                 .toList(growable: false),

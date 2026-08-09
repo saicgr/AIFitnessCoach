@@ -983,7 +983,7 @@ class _DayCell extends StatelessWidget {
     final tc = ThemeColors.of(context);
     final border = isToday
         ? Border.all(color: tc.accent, width: 1.5)
-        : Border.all(color: AppColors.cardBorder);
+        : Border.all(color: ThemeColors.of(context).cardBorder);
 
     return GestureDetector(
       onTap: onTap,
@@ -1181,7 +1181,7 @@ class _FeedCard extends StatelessWidget {
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: highlight ? tc.accent : AppColors.cardBorder,
+          color: highlight ? tc.accent : ThemeColors.of(context).cardBorder,
           width: highlight ? 1.5 : 1,
         ),
       ),
@@ -1566,7 +1566,7 @@ class _MyFoodsGridState extends State<_MyFoodsGrid> {
             decoration: BoxDecoration(
               color: tc.surface,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: TextField(
               controller: _controller,
@@ -1656,7 +1656,7 @@ class _SavedFoodTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
           image: hasImage
               ? DecorationImage(
                   image: NetworkImage(food.imageUrl!),

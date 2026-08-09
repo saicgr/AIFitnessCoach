@@ -172,8 +172,8 @@ extension _HomeScreenStateUI3 on _HomeScreenState {
 
 
   Widget _buildTodaySectionHeader(bool isDark) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),

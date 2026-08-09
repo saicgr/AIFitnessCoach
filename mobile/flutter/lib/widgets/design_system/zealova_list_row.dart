@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 
@@ -42,7 +41,7 @@ class ZealovaListRow extends StatelessWidget {
         height: 30,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, size: 15, color: tc.textSecondary),
@@ -51,8 +50,8 @@ class ZealovaListRow extends StatelessWidget {
     final row = Container(
       padding: const EdgeInsets.symmetric(vertical: 13),
       decoration: hairline
-          ? const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          ? BoxDecoration(
+              border: Border(bottom: BorderSide(color: tc.hairline)),
             )
           : null,
       child: Row(
@@ -122,8 +121,8 @@ class ZealovaToggle extends StatelessWidget {
       activeThumbColor: tc.accentContrast,
       activeTrackColor: tc.accent,
       inactiveThumbColor: tc.textMuted,
-      inactiveTrackColor: AppColors.surface,
-      trackOutlineColor: WidgetStatePropertyAll(AppColors.cardBorder),
+      inactiveTrackColor: tc.surface,
+      trackOutlineColor: WidgetStatePropertyAll(tc.cardBorder),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
     );
   }

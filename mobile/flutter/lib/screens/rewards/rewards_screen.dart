@@ -577,8 +577,8 @@ class _RewardCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.hairline)),
       ),
       child: Row(
         children: [

@@ -8,6 +8,7 @@ import '../../../widgets/empty_state.dart';
 import 'food_search_bar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// A results list widget for food search
 class FoodSearchResults extends ConsumerWidget {
   final String userId;
@@ -747,7 +748,7 @@ class _NoResultsState extends StatelessWidget {
             icon: Icons.search_off_rounded,
             title: AppLocalizations.of(context).foodSearchResultsNoFoodsFound,
             subtitle: AppLocalizations.of(context)!.foodSearchResultsNoSavedFoodsMatch(query),
-            iconColor: AppColors.textMuted,
+            iconColor: ThemeColors.of(context).textMuted,
             useLottie: false,
           ),
           if (onAnalyzeWithAI != null) ...[

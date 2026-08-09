@@ -20,6 +20,7 @@ import '../../gym_profile/gym_location_picker_screen.dart';
 import 'gym_equipment_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 part 'edit_gym_profile_sheet_ui.dart';
 
 part 'edit_gym_profile_sheet_ext.dart';
@@ -233,9 +234,9 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final backgroundColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final selectedColorObj = GymProfileColors.fromHex(_selectedColor);
 
     return GlassSheet(

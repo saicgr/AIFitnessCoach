@@ -45,7 +45,7 @@ class _FrequentFoodChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +159,7 @@ class _FoodLogTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Row(
             children: [
@@ -211,7 +211,7 @@ class _FoodLogTile extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.cardBorder),
+                            border: Border.all(color: ThemeColors.of(context).cardBorder),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(

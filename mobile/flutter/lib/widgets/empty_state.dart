@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
+import '../core/theme/theme_colors.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'lottie_animations.dart';
 
@@ -77,7 +78,7 @@ class EmptyState extends StatelessWidget {
       icon: Icons.search,
       title: l10n.emptyStateNoResults,
       subtitle: l10n.emptyStateWeCouldnTFind,
-      iconColor: AppColors.textMuted,
+      iconColor: ThemeColors.of(context).textMuted,
     );
   }
 

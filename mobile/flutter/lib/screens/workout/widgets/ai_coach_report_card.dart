@@ -8,6 +8,7 @@ import '../../library/providers/muscle_group_images_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Compact AI Coach report card for the workout complete screen.
 /// Shows AI insight, muscles worked with images, and quick performance stats.
 class AiCoachReportCard extends StatelessWidget {
@@ -298,7 +299,7 @@ class _AiInsightSection extends StatelessWidget {
             child: Icon(
               isExpanded ? Icons.expand_less : Icons.expand_more,
               size: 16,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
           ),
       ],

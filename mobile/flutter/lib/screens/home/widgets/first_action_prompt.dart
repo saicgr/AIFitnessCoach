@@ -9,6 +9,7 @@ import '../../../core/services/posthog_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// First Action Prompt — Onboarding v5 (Day 0 activation)
 ///
 /// Shown ONCE on first home-screen load after signup. Surfaces a single
@@ -89,9 +90,9 @@ class _FirstActionPromptState extends ConsumerState<FirstActionPrompt> {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -199,18 +200,18 @@ class _ActionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.pureBlack.withValues(alpha: 0.4)
-              : AppColorsLight.pureWhite.withValues(alpha: 0.6),
+          color: ThemeColors.of(context)
+              .background
+              .withValues(alpha: isDark ? 0.4 : 0.6),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../schedule_date_utils.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/api_constants.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -106,17 +107,12 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textSecondary = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
     final accentColor = context.accentColor;
-    final cardBorder = isDark
-        ? AppColors.cardBorder
-        : AppColorsLight.cardBorder;
+    final cardBorder = tc.cardBorder;
 
     return SafeArea(
       child: Column(
@@ -393,7 +389,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
               primary: context.accentColor,
-              surface: AppColors.nearBlack,
+              surface: AppColors.nearBlack,  // deliberately-dark: forces a dark date-picker regardless of app theme; ColorScheme.dark() pairs it with matching light on-surface text, so it's internally consistent
             ),
           ),
           child: child!,
@@ -880,9 +876,9 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         widget.onRefresh?.call();
         unawaited(refreshAfterWorkoutMutation(source: 'skip', workoutId: wid));
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Workout skipped'),
-            backgroundColor: AppColors.textMuted,
+          SnackBar(
+            content: const Text('Workout skipped'),
+            backgroundColor: ThemeColors.of(context).textMuted,
           ),
         );
       } else {
@@ -921,8 +917,7 @@ class _GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
       child: Align(
@@ -961,12 +956,9 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textSecondary = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
     final accentColor = context.accentColor;
     final errorColor = isDark ? AppColors.error : AppColorsLight.error;  // accent-allowlist: error/destructive — must stay red
 
@@ -1035,8 +1027,8 @@ class _VersionHistorySheet extends ConsumerWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.nearBlack,
+      decoration: BoxDecoration(
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1048,7 +1040,7 @@ class _VersionHistorySheet extends ConsumerWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withOpacity(0.3),
+              color: ThemeColors.of(context).textMuted.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1089,14 +1081,14 @@ class _VersionHistorySheet extends ConsumerWidget {
                         Icon(
                           Icons.history,
                           size: 48,
-                          color: AppColors.textMuted,
+                          color: ThemeColors.of(context).textMuted,
                         ),
                         SizedBox(height: 16),
                         Text(
                           AppLocalizations.of(
                             context,
                           ).workoutActionsNoVersionHistory,
-                          style: TextStyle(color: AppColors.textMuted),
+                          style: TextStyle(color: ThemeColors.of(context).textMuted),
                         ),
                       ],
                     ),
@@ -1119,7 +1111,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: isCurrent
                                 ? context.accentColor.withOpacity(0.2)
-                                : AppColors.elevated,
+                                : ThemeColors.of(context).elevated,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -1128,7 +1120,7 @@ class _VersionHistorySheet extends ConsumerWidget {
                               style: TextStyle(
                                 color: isCurrent
                                     ? context.accentColor
-                                    : AppColors.textMuted,
+                                    : ThemeColors.of(context).textMuted,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -1225,8 +1217,8 @@ class _WarmupStretchesSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.8,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.nearBlack,
+      decoration: BoxDecoration(
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -1238,7 +1230,7 @@ class _WarmupStretchesSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withOpacity(0.3),
+              color: ThemeColors.of(context).textMuted.withOpacity(0.3),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -1290,7 +1282,7 @@ class _WarmupStretchesSheet extends StatelessWidget {
                   margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.elevated,
+                    color: ThemeColors.of(context).elevated,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -1330,9 +1322,9 @@ class _WarmupStretchesSheet extends StatelessWidget {
                               const SizedBox(height: 4),
                               Text(
                                 instructions,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: AppColors.textMuted,
+                                  color: ThemeColors.of(context).textMuted,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -1349,15 +1341,15 @@ class _WarmupStretchesSheet extends StatelessWidget {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.glassSurface,
+                          color: ThemeColors.of(context).glassSurface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           '${duration}s',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                           ),
                         ),
                       ),

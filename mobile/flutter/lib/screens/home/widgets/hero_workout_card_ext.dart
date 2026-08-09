@@ -33,7 +33,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
           rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).heroWorkoutCardDismissedOfflineWillSync),
-              backgroundColor: AppColors.textMuted,
+              backgroundColor: ThemeColors.of(context).textMuted,
             ),
           );
         }
@@ -43,7 +43,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
         rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).heroWorkoutCardQuickWorkoutDismissed),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
           ),
         );
       }
@@ -251,13 +251,13 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
               // cleared atomically and todayWorkoutProvider is invalidated.
               if (_isQuickWorkout(widget.workout))
                 ListTile(
-                  leading: const Icon(
+                  leading: Icon(
                     Icons.close_rounded,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                   ),
                   title: Text(
                     AppLocalizations.of(context).heroWorkoutCardDismissQuick,
-                    style: TextStyle(color: AppColors.textMuted),
+                    style: TextStyle(color: ThemeColors.of(context).textMuted),
                   ),
                   onTap: () {
                     Navigator.pop(sheetContext);
@@ -266,13 +266,13 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
                 ),
               // Skip Workout
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.skip_next_outlined,
-                  color: AppColors.textMuted,
+                  color: ThemeColors.of(context).textMuted,
                 ),
                 title: Text(
                   AppLocalizations.of(context).heroWorkoutCardSkipWorkout,
-                  style: TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: ThemeColors.of(context).textMuted),
                 ),
                 onTap: () {
                   Navigator.pop(sheetContext);
@@ -296,7 +296,7 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
       context: context,
       barrierColor: Colors.black54,
       builder: (dialogContext) => Dialog(
-        backgroundColor: isDark ? AppColors.elevated : Colors.white,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(20),

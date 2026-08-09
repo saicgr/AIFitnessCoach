@@ -507,7 +507,7 @@ class _StartFastSheetState extends State<StartFastSheet> {
             colorScheme: isDark
                 ? ColorScheme.dark(
                     primary: context.accentColor,
-                    surface: AppColors.elevated,
+                    surface: ThemeColors.of(context).elevated,
                   )
                 : ColorScheme.light(
                     primary: context.accentColor,

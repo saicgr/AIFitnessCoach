@@ -297,7 +297,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     decoration: BoxDecoration(
                       color: elevated,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: tc.cardBorder),
                     ),
                     child: Row(
                       children: [
@@ -395,7 +395,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                                 border: Border.all(
                                   color: isSelected
                                       ? accentColor
-                                      : AppColors.cardBorder,
+                                      : tc.cardBorder,
                                 ),
                               ),
                               child: Text(

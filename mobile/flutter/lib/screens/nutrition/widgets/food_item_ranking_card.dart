@@ -3,6 +3,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 class CollapsibleFoodItemsSection extends StatefulWidget {
   final List<FoodItemRanking> foodItems;
@@ -245,9 +246,9 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
 
   Color _getScoreColor() {
     if (widget.item.goalScore == null) return Colors.grey;
-    if (widget.item.goalScore! >= 8) return AppColors.textMuted;
-    if (widget.item.goalScore! >= 5) return AppColors.textSecondary;
-    return AppColors.textPrimary;
+    if (widget.item.goalScore! >= 8) return ThemeColors.of(context).textMuted;
+    if (widget.item.goalScore! >= 5) return ThemeColors.of(context).textSecondary;
+    return ThemeColors.of(context).textPrimary;
   }
 
   void _updateWeight(double newWeight, {bool fromPreset = false}) {

@@ -69,15 +69,15 @@ class _WeeklyGoalsCardState extends ConsumerState<WeeklyGoalsCard> {
   @override
   Widget build(BuildContext context) {
     final elevatedColor =
-        widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+        ThemeColors.of(context).elevated;
     final cardBorder =
-        widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        ThemeColors.of(context).cardBorder;
     final textPrimary =
-        widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     final textMuted =
-        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textMuted;
 
     if (_isLoading) {
       return Padding(

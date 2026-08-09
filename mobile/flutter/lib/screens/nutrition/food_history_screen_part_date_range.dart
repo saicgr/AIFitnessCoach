@@ -98,7 +98,7 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                 color: cardBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: _hasActiveFilters ? accent : AppColors.cardBorder),
+                    color: _hasActiveFilters ? accent : ThemeColors.of(context).cardBorder),
               ),
               child: Row(
                 children: [
@@ -262,7 +262,7 @@ class _QuickStatsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -273,7 +273,7 @@ class _QuickStatsCard extends StatelessWidget {
               align: CrossAxisAlignment.center,
             ),
           ),
-          _statDivider(),
+          _statDivider(context),
           Expanded(
             child: ZealovaStatTile(
               value: '${stats.avgDailyCals}',
@@ -282,7 +282,7 @@ class _QuickStatsCard extends StatelessWidget {
               align: CrossAxisAlignment.center,
             ),
           ),
-          _statDivider(),
+          _statDivider(context),
           Expanded(
             child: ZealovaStatTile(
               value: '${stats.totalProteinG.round()}',
@@ -291,7 +291,7 @@ class _QuickStatsCard extends StatelessWidget {
               align: CrossAxisAlignment.center,
             ),
           ),
-          _statDivider(),
+          _statDivider(context),
           Expanded(
             child: ZealovaStatTile(
               value: '${stats.daysTracked}',
@@ -304,12 +304,12 @@ class _QuickStatsCard extends StatelessWidget {
     );
   }
 
-  Widget _statDivider() {
+  Widget _statDivider(BuildContext context) {
     return Container(
       width: 1,
       height: 28,
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      color: AppColors.hairline,
+      color: ThemeColors.of(context).cardBorder,
     );
   }
 }
@@ -336,7 +336,7 @@ class _SearchResultsView extends ConsumerWidget {
     final textPrimary = tc.textPrimary;
     final textSecondary = tc.textSecondary;
     final cardBg = tc.surface;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = ThemeColors.of(context).cardBorder;
     final teal = tc.accent;
 
     return searchState.when(
@@ -451,7 +451,7 @@ class _SearchResultTile extends StatelessWidget {
           height: 36,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(

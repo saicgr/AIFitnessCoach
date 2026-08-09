@@ -15,6 +15,7 @@ import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
 // METRIC KIND — reps vs distance/time/custom
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -898,12 +899,12 @@ void _showSetNotesSheet({
                           children: [
                             CircleAvatar(
                               radius: 10,
-                              backgroundColor: AppColors.electricBlue
+                              backgroundColor: ThemeColors.of(context).electricBlue
                                   .withValues(alpha: 0.18),
                               child: Text(
                                 '${i + 1}',
                                 style: TextStyle(
-                                  color: AppColors.electricBlue,
+                                  color: ThemeColors.of(context).electricBlue,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                 ),

@@ -22,6 +22,7 @@ import '../../nutrition/widgets/micro_settings_sheet.dart';
 import '../../nutrition/widgets/calories_burned_sheet.dart';
 import '../../nutrition/widgets/nutrition_goals_card.dart'
     show showNutritionCalculationSheet;
+import '../../../core/theme/theme_colors.dart';
 import '../../nutrition/widgets/edit_targets_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
@@ -240,13 +241,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textSecondary = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
     final accent = AccentColorScope.of(context).getColor(isDark);
     final l10n = AppLocalizations.of(context);
 
@@ -346,7 +343,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
           color: cardBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            color: ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Padding(
@@ -1212,9 +1209,7 @@ class _MacroPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final tile = color.withValues(alpha: isDark ? 0.16 : 0.10);
     final chipBg = color.withValues(alpha: isDark ? 0.28 : 0.18);
-    final labelColor = (isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary);
+    final labelColor = (ThemeColors.of(context).textSecondary);
 
     // The pill body, built once. No fixed height — the pill stretches to fill
     // the Expanded slot the macro page gives it, so the 3-pill stack matches
@@ -1389,9 +1384,7 @@ class _MicroTile extends StatelessWidget {
     final c = spec.color;
     final tile = c.withValues(alpha: isDark ? 0.16 : 0.10);
     final chipBg = c.withValues(alpha: isDark ? 0.28 : 0.18);
-    final labelColor = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final labelColor = ThemeColors.of(context).textSecondary;
 
     final start = (0.2 + order * 0.06).clamp(0.0, 0.9);
     final local = ((entrance.value - start) / (1 - start)).clamp(0.0, 1.0);

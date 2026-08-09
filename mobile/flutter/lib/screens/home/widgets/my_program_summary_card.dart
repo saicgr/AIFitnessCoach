@@ -7,6 +7,7 @@ import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// A compact, always-visible card showing the user's workout program settings.
 /// Displays workout days, experience level, and primary goal with tap-to-edit.
 class MyProgramSummaryCard extends ConsumerWidget {
@@ -21,10 +22,9 @@ class MyProgramSummaryCard extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // Extract user preferences
     final workoutDays = user.workoutDaysFormatted;

@@ -276,7 +276,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                 color: selected ? accent : surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: selected ? accent : AppColors.cardBorder),
+                    color: selected ? accent : ThemeColors.of(context).cardBorder),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -441,7 +441,7 @@ class _MealSlotCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: surface, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,9 +492,9 @@ class _MealSlotCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: ThemeColors.of(context).surface,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.cardBorder),
+                            border: Border.all(color: ThemeColors.of(context).cardBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -559,7 +559,7 @@ class _MacroProjection extends StatelessWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,7 +653,7 @@ class _MacroBar extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             child: Container(
               height: 6,
-              color: AppColors.hairlineStrong,
+              color: ThemeColors.of(context).cardBorder,
               child: FractionallySizedBox(
                 alignment: Alignment.centerLeft,
                 widthFactor: pct.toDouble(),

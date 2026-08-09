@@ -515,7 +515,7 @@ class _NutritionSettingsScreenState
                     context,
                     'Fasting Window',
                     Icons.timer_outlined,
-                    AppColors.teal,
+                    ThemeColors.of(context).teal,
                     textPrimary,
                   ),
                   const SizedBox(height: 12),
@@ -545,7 +545,7 @@ class _NutritionSettingsScreenState
                               : null,
                         ),
                         icon: Icons.timer_outlined,
-                        iconColor: AppColors.teal,
+                        iconColor: ThemeColors.of(context).teal,
                         textPrimary: textPrimary,
                         textMuted: textMuted,
                       ),
@@ -718,7 +718,7 @@ class _NutritionSettingsScreenState
                 Text(AppLocalizations.of(context).nutritionSettingsStreakFreezeUsedYour),
               ],
             ),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -728,7 +728,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -755,7 +755,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).nutritionSettingsTargetsRecalculatedFromYour),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -765,7 +765,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -837,7 +837,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving settings: $e'),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -882,7 +882,7 @@ class _NutritionSettingsScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error saving settings: $e'),
-            backgroundColor: AppColors.textMuted,
+            backgroundColor: ThemeColors.of(context).textMuted,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -922,7 +922,7 @@ class _NutritionSettingsScreenState
             height: 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(icon, color: textPrimary, size: 17),
@@ -943,7 +943,7 @@ class _NutritionSettingsScreenState
             decoration: BoxDecoration(
               color: ThemeColors.of(context).surface,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: DropdownButton<int>(
           value: hour.clamp(0, 23),
@@ -1035,7 +1035,7 @@ class _NutritionSettingsScreenState
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Material(
         color: Colors.transparent,
@@ -1059,7 +1059,7 @@ class _NutritionSettingsScreenState
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.tune_rounded, color: textPrimary, size: 19),

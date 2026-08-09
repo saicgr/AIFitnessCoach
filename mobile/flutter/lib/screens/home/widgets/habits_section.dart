@@ -375,9 +375,7 @@ class _HabitDotRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isDark
-                        ? AppColors.hairlineStrong
-                        : AppColorsLight.cardBorder,
+                    color: c.hairlineStrong,
                     width: 1,
                   ),
                 ),
@@ -456,8 +454,8 @@ class _DotsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final emptyColor =
-        isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;
+    final c = ThemeColors.of(context);
+    final emptyColor = c.hairlineStrong;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

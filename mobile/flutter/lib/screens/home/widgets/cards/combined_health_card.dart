@@ -8,6 +8,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Compact entry-point card into the Combined Health hub (`/health/combined`).
 ///
 /// Self-hiding sibling card (the `DeloadRecommendationCard` pattern — no new
@@ -27,13 +28,12 @@ class CombinedHealthCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        ThemeColors.of(context).cardBorder;
 
     final sync = ref.watch(healthSyncProvider);
     // Not connected → hide; the steps tile already shows the connect CTA.
@@ -51,13 +51,13 @@ class CombinedHealthCard extends ConsumerWidget {
       accent = recovery.score >= 80
           ? AppColors.success  // accent-allowlist: success/positive state -- must stay green regardless of accent
           : recovery.score >= 60
-              ? AppColors.teal
+              ? ThemeColors.of(context).teal
               : recovery.score >= 40
                   ? AppColors.warning  // accent-allowlist: warning severity
                   : AppColors.error;  // accent-allowlist: error/destructive -- must stay red
     } else {
       caption = 'Steps, heart rate, sleep and recovery';
-      accent = AppColors.teal;
+      accent = ThemeColors.of(context).teal;
     }
 
     return Padding(

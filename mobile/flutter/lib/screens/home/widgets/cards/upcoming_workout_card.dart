@@ -4,6 +4,7 @@ import '../../../../data/models/workout.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// A compact card for displaying upcoming workouts in a list
 class UpcomingWorkoutCard extends StatelessWidget {
   /// The workout to display
@@ -21,8 +22,8 @@ class UpcomingWorkoutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textMuted = ThemeColors.of(context).textMuted;
     final typeColor =
         AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
 

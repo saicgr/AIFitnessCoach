@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
@@ -81,7 +80,7 @@ class StrengthTab extends ConsumerWidget {
             decoration: BoxDecoration(
               color: tc.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: tc.cardBorder),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.15),
@@ -357,7 +356,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                     child: LinearProgressIndicator(
                       value: c.score / 100,
                       minHeight: 3,
-                      backgroundColor: AppColors.hairline,
+                      backgroundColor: tc.hairline,
                       valueColor: AlwaysStoppedAnimation(barColor),
                     ),
                   ),
@@ -514,7 +513,7 @@ class _FloatingNavButton extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
           ),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
           child: Row(

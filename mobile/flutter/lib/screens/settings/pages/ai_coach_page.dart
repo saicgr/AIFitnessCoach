@@ -376,8 +376,8 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
           padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: isLast
               ? null
-              : const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: AppColors.hairline)),
+              : BoxDecoration(
+                  border: Border(bottom: BorderSide(color: tc.hairline)),
                 ),
           child: Row(
             children: [
@@ -386,7 +386,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                 height: 30,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, size: 15,
@@ -458,8 +458,8 @@ class _AdvancedToggleRow extends StatelessWidget {
     // sitting on a hairline (no boxed card). Reuses the .st-row archetype.
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 13),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: tc.hairline)),
       ),
       child: Row(
         children: [
@@ -468,7 +468,7 @@ class _AdvancedToggleRow extends StatelessWidget {
             height: 30,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: tc.cardBorder),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(Icons.tune, size: 15,

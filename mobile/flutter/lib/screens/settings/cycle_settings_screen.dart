@@ -194,7 +194,7 @@ class _CycleSettingsScreenState extends ConsumerState<CycleSettingsScreen> {
                     height: 36,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: tc.cardBorder),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(Icons.favorite_rounded,
@@ -476,7 +476,7 @@ class _ToggleRow extends StatelessWidget {
               height: 30,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: tc.cardBorder),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon,
@@ -565,7 +565,7 @@ class _TimeRow extends StatelessWidget {
               height: 30,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: tc.cardBorder),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: textMuted, size: 15),
@@ -594,7 +594,7 @@ class _TimeRow extends StatelessWidget {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: tc.surface,
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: tc.cardBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -637,7 +637,7 @@ class _LeadDaysRow extends StatelessWidget {
               data: SliderTheme.of(context).copyWith(
                 activeTrackColor: accent,
                 thumbColor: accent,
-                inactiveTrackColor: AppColors.cardBorder,
+                inactiveTrackColor: tc.cardBorder,
               ),
               child: Slider(
                 value: days.toDouble().clamp(1, 5),

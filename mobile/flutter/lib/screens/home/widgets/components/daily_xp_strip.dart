@@ -6,6 +6,7 @@ import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// Compact horizontal strip showing today's XP goals progress
 /// Positioned above the hero card on home screen
@@ -89,9 +90,9 @@ class _DailyXPStripState extends ConsumerState<DailyXPStrip>
   Widget _buildContent(BuildContext context) {
     final ref = this.ref;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final bgColor = ThemeColors.of(context).glassSurface;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // Get dynamic accent color
     final accentEnum = ref.watch(accentColorProvider);

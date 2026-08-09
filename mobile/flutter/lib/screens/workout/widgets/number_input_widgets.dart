@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Inline number input with +/- buttons
 class InlineNumberInput extends StatefulWidget {
@@ -595,7 +596,7 @@ class InlineNumberInputWithLabel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withOpacity(0.4)),
       ),
@@ -893,7 +894,7 @@ class CompletedRepsDisplay extends StatelessWidget {
             '/$targetReps',
             style: TextStyle(
               fontSize: 10,
-              color: AppColors.textMuted.withOpacity(0.7),
+              color: ThemeColors.of(context).textMuted.withOpacity(0.7),
             ),
           ),
           const SizedBox(width: 4),

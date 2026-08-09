@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 
@@ -76,7 +75,7 @@ class ZealovaButton extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isPrimary ? tc.accent : Colors.transparent,
-            border: isPrimary ? null : Border.all(color: AppColors.cardBorder),
+            border: isPrimary ? null : Border.all(color: tc.cardBorder),
             borderRadius: BorderRadius.circular(height / 2),
           ),
           child: content,
@@ -107,7 +106,7 @@ class ZealovaPlusButton extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: tc.surface,
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(Icons.add, size: 24, color: tc.textPrimary),

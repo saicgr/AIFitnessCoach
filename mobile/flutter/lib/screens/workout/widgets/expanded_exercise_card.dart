@@ -801,7 +801,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                           widget.exercise.name,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -834,7 +834,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.glassSurface,
+                  color: ThemeColors.of(context).glassSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -850,7 +850,7 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                         breathingPattern['tip']!['text']!,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: ThemeColors.of(context).textSecondary,
                         ),
                       ),
                     ),

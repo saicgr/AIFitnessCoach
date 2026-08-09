@@ -207,7 +207,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,7 +221,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.favorite_rounded,
@@ -455,7 +455,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
             decoration: BoxDecoration(
               color: tc.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Column(
               children: [
@@ -567,7 +567,7 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
             decoration: BoxDecoration(
               color: tc.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Row(
               children: [

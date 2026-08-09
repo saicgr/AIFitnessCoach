@@ -251,7 +251,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               height: 30,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(row.icon, color: textMuted, size: 16),
@@ -644,7 +644,7 @@ class _PrimaryGoalPill extends StatelessWidget {
                 Text(
                   'PRIMARY GOAL',
                   style: ZType.lbl(10,
-                      color: AppColors.textMuted, letterSpacing: 1.8),
+                      color: ThemeColors.of(context).textMuted, letterSpacing: 1.8),
                 ),
                 const SizedBox(height: 3),
                 Text(

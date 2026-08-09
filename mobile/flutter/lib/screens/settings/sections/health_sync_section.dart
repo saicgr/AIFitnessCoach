@@ -941,7 +941,8 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(AppLocalizations.of(context).proposedChangeCardNotNow,
-                style: TextStyle(color: AppColors.textMuted)),
+                style: TextStyle(
+                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),

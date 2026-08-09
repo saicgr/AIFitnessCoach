@@ -7,6 +7,7 @@ import '../../../data/models/user_xp.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/xp_repository.dart'
     show UnclaimedCrate, CrateRewardResult;
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/crate_opening_play.dart';
@@ -345,8 +346,8 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // When the sheet was opened via the "Open All" banner shortcut, we
     // claim immediately and skip the selection grid entirely \u2014 show a
@@ -459,7 +460,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate, deep-orange=streak crate), gamification tier convention
                             foregroundColor: Colors.white,
-                            disabledBackgroundColor: (isDark ? AppColors.elevated : Colors.grey[200]),
+                            disabledBackgroundColor: ThemeColors.of(context).elevated,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -544,12 +545,12 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOut,
               decoration: BoxDecoration(
-                color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                color: ThemeColors.of(context).elevated,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: selected
                       ? option.typeColor
-                      : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                      : (ThemeColors.of(context).cardBorder),
                   width: selected ? 2.5 : 1,
                 ),
                 boxShadow: selected

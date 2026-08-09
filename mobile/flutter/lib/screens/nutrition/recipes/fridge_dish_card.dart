@@ -45,9 +45,9 @@ class _BrandedFallback extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.surface,
-            AppColors.surface2,
-            Color.alphaBlend(accent.withValues(alpha: 0.10), AppColors.pureBlack),
+            ThemeColors.of(context).surface,
+            ThemeColors.of(context).surface,
+            Color.alphaBlend(accent.withValues(alpha: 0.10), ThemeColors.of(context).background),
           ],
         ),
       ),
@@ -229,7 +229,7 @@ class FridgeDishCard extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Stack(
               fit: StackFit.expand,

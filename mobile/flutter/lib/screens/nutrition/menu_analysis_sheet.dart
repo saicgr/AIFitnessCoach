@@ -1280,14 +1280,14 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                       child: Row(
                         children: [
                           Icon(Icons.auto_awesome,
-                              size: 12, color: AppColors.textMuted),
+                              size: 12, color: ThemeColors.of(context).textMuted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               AppLocalizations.of(context).menuAnalysisAutoDetectedFromThe,
                               style: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.textMuted),
+                                  color: ThemeColors.of(context).textMuted),
                             ),
                           ),
                         ],
@@ -1504,14 +1504,14 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                       child: Row(
                         children: [
                           Icon(Icons.auto_awesome,
-                              size: 12, color: AppColors.textMuted),
+                              size: 12, color: ThemeColors.of(context).textMuted),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               AppLocalizations.of(context).menuAnalysisAutoDetectedFromThe,
                               style: TextStyle(
                                   fontSize: 11,
-                                  color: AppColors.textMuted),
+                                  color: ThemeColors.of(context).textMuted),
                             ),
                           ),
                         ],

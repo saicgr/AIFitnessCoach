@@ -13,6 +13,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Quick Log Weight Tile - Inline weight logging on home screen
 /// Shows last logged weight and allows quick logging
 class QuickLogWeightCard extends ConsumerStatefulWidget {
@@ -165,10 +166,10 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
 
   @override
   Widget build(BuildContext context) {
-    final elevatedColor = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);

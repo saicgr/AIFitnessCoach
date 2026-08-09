@@ -15,6 +15,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 // ════════════════════════════════════════════════════════════════════════
 // Cycle-aware weight intelligence (Phase G — MacroFactor 1.1 / 1.3 / 1.11 /
@@ -272,10 +273,10 @@ class WeightTrendCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     final nutritionState = ref.watch(nutritionPreferencesProvider);
     final weightTrend = nutritionState.weightTrend;
@@ -348,7 +349,7 @@ class WeightTrendCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: context.accentColor.withOpacity(0.15),
@@ -409,7 +410,7 @@ class WeightTrendCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: context.accentColor.withOpacity(0.15),
@@ -734,7 +735,7 @@ class _CyclePhaseWeightChart extends StatelessWidget {
         ),
     ];
 
-    final lineColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final lineColor = ThemeColors.of(context).textPrimary;
 
     return SizedBox(
       height: 96,
@@ -776,9 +777,7 @@ class _CyclePhaseWeightChart extends StatelessWidget {
                               ? cyclePhaseOverlayColor(phase)
                               : lineColor,
                           strokeWidth: 1.5,
-                          strokeColor: isDark
-                              ? AppColors.elevated
-                              : AppColorsLight.elevated,
+                          strokeColor: ThemeColors.of(context).elevated,
                         );
                       },
                     ),

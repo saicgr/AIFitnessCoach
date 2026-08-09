@@ -31,16 +31,16 @@ class _TypingIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.elevated : Colors.grey.shade100,
+          color: tc.elevated,
           border: Border.all(
-            color: isDark ? AppColors.cardBorder : Colors.grey.shade300,
+            color: tc.cardBorder,
           ),
           borderRadius: BorderRadius.circular(14).copyWith(
             bottomLeft: const Radius.circular(4),
@@ -55,7 +55,7 @@ class _TypingIndicator extends StatelessWidget {
                 height: 8,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+                  color: tc.textMuted,
                   shape: BoxShape.circle,
                 ),
               )
@@ -73,8 +73,7 @@ class _TypingIndicator extends StatelessWidget {
                       statusText!,
                       style: TextStyle(
                         fontSize: 12,
-                        color:
-                            isDark ? AppColors.textMuted : Colors.grey.shade500,
+                        color: tc.textMuted,
                       ),
                     )
                   : ValueListenableBuilder<String>(
@@ -83,9 +82,7 @@ class _TypingIndicator extends StatelessWidget {
                         elapsed.isEmpty ? statusText! : '$statusText $elapsed',
                         style: TextStyle(
                           fontSize: 12,
-                          color: isDark
-                              ? AppColors.textMuted
-                              : Colors.grey.shade500,
+                          color: tc.textMuted,
                         ),
                       ),
                     ),
@@ -208,7 +205,6 @@ class _InputBarState extends State<_InputBar> {
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
-    final isDark = colors.isDark;
 
     // Single safe-area-aware bottom inset. On a notched device the home
     // indicator already provides spacing, so we DON'T also add a constant
@@ -227,9 +223,9 @@ class _InputBarState extends State<_InputBar> {
         bottomInset,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.pureBlack : Colors.white,
-        border: const Border(
-          top: BorderSide(color: AppColors.hairline),
+        color: colors.background,
+        border: Border(
+          top: BorderSide(color: colors.cardBorder),
         ),
       ),
       child: Column(
@@ -501,6 +497,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
   Widget _buildAvailabilityInfo() {
     return Consumer(
       builder: (context, ref, child) {
+        final tc = ThemeColors.of(context);
         final availabilityAsync = ref.watch(liveChatAvailabilityProvider);
         return availabilityAsync.when(
           data: (availability) {
@@ -546,9 +543,9 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                         if (availability.currentQueueSize > 0)
                           Text(
                             '${availability.currentQueueSize} people in queue',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: tc.textSecondary,
                             ),
                           ),
                       ],
@@ -575,7 +572,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                   AppLocalizations.of(context).chatScreenPartCheckingAvailability,
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: tc.textSecondary,
                   ),
                 ),
               ],
@@ -584,7 +581,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
           error: (_, __) => Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withOpacity(0.1),
+              color: tc.textMuted.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -592,14 +589,14 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
                 Icon(
                   Icons.info_outline,
                   size: 20,
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                 ),
                 SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context).chatScreenPartWaitTimeUnavailable,
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: tc.textSecondary,
                   ),
                 ),
               ],
@@ -618,7 +615,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
         children: [
           Text(
             AppLocalizations.of(context).chatScreenPartYouWillBeConnected,
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: ThemeColors.of(context).textSecondary),
           ),
           const SizedBox(height: 20),
           Text(
@@ -718,7 +715,7 @@ class _EscalateToHumanDialogState extends ConsumerState<_EscalateToHumanDialog> 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: AppColors.elevated,
+      backgroundColor: ThemeColors.of(context).elevated,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),

@@ -182,7 +182,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
 
   void _showIconPicker() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
     final selectedColorObj = GymProfileColors.fromHex(_selectedColor);
 
     showGlassSheet(
@@ -250,15 +250,14 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
 
 
   void _showRenameDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
     final selectedColorObj = GymProfileColors.fromHex(_selectedColor);
     final tempController = TextEditingController(text: _nameController.text);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : Colors.white,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           AppLocalizations.of(context).editGymProfileRenameGym,
@@ -745,7 +744,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
 
   void _showFocusPicker(int dayIdx) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
     final dayName = _EditGymProfileSheetState._dayNames[dayIdx];
     showGlassSheet(
       context: context,
@@ -796,7 +795,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     required int dayIdx,
   }) {
     final selected = _dayFocusOverride[dayIdx] == id;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
     return InkWell(
       onTap: () {
         HapticService.light();

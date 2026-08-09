@@ -582,108 +582,117 @@ class _ChatQuickActionsSheetState extends ConsumerState<_ChatQuickActionsSheet> 
                 style: TextStyle(fontSize: 13, color: colors.textMuted),
               ),
             ),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.55,
-              ),
-              child: ReorderableListView.builder(
-                shrinkWrap: true,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                proxyDecorator: (child, index, animation) {
-                  return AnimatedBuilder(
-                    animation: animation,
-                    builder: (context, child) {
-                      final elevation = Tween<double>(begin: 0, end: 8).evaluate(animation);
-                      return Material(
-                        elevation: elevation,
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.transparent,
-                        child: child,
-                      );
-                    },
-                    child: child,
-                  );
-                },
-                onReorderStart: (_) => HapticFeedback.mediumImpact(),
-                onReorder: (oldIndex, newIndex) {
-                  HapticFeedback.lightImpact();
-                  ref.read(chatQuickActionOrderProvider.notifier).reorder(oldIndex, newIndex);
-                },
-                itemCount: order.length,
-                itemBuilder: (context, index) {
-                  final actionId = order[index];
-                  final action = chatQuickActionRegistry[actionId]!;
-                  final rank = visibleRank[actionId];
-                  final isTop5 = rank != null;
-                  final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+            // Flexible, not a bare ConstrainedBox: GlassSheet caps the whole
+            // sheet at 0.9 x screen height, so a list hard-capped at 0.55 x
+            // screen height PLUS this Column's header, hint line and Reset
+            // footer can add up to more than the sheet is allowed to be — the
+            // Column then overflows (RenderFlex overflowed by 0.5px). Flexible
+            // lets the list take only the space actually left over; the 0.55
+            // cap still stops it eating the whole sheet on tall screens.
+            Flexible(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.55,
+                ),
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  proxyDecorator: (child, index, animation) {
+                    return AnimatedBuilder(
+                      animation: animation,
+                      builder: (context, child) {
+                        final elevation = Tween<double>(begin: 0, end: 8).evaluate(animation);
+                        return Material(
+                          elevation: elevation,
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.transparent,
+                          child: child,
+                        );
+                      },
+                      child: child,
+                    );
+                  },
+                  onReorderStart: (_) => HapticFeedback.mediumImpact(),
+                  onReorder: (oldIndex, newIndex) {
+                    HapticFeedback.lightImpact();
+                    ref.read(chatQuickActionOrderProvider.notifier).reorder(oldIndex, newIndex);
+                  },
+                  itemCount: order.length,
+                  itemBuilder: (context, index) {
+                    final actionId = order[index];
+                    final action = chatQuickActionRegistry[actionId]!;
+                    final rank = visibleRank[actionId];
+                    final isTop5 = rank != null;
+                    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-                  return Container(
-                    key: ValueKey(actionId),
-                    margin: const EdgeInsets.only(bottom: 4),
-                    decoration: BoxDecoration(
-                      color: isTop5
-                          ? context.accentColor.withOpacity(isDark ? 0.12 : 0.08)
-                          : elevatedColor,
-                      borderRadius: BorderRadius.circular(12),
-                      border: isTop5
-                          ? Border.all(color: context.accentColor.withOpacity(0.3))
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        ReorderableDragStartListener(
-                          index: index,
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Icon(Icons.drag_handle, color: colors.textMuted, size: 20),
-                          ),
-                        ),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: context.accentColor.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(action.icon, color: context.accentColor, size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            action.label,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: colors.textPrimary,
+                    return Container(
+                      key: ValueKey(actionId),
+                      margin: const EdgeInsets.only(bottom: 4),
+                      decoration: BoxDecoration(
+                        color: isTop5
+                            ? context.accentColor.withOpacity(isDark ? 0.12 : 0.08)
+                            : elevatedColor,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isTop5
+                            ? Border.all(color: context.accentColor.withOpacity(0.3))
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          ReorderableDragStartListener(
+                            index: index,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Icon(Icons.drag_handle, color: colors.textMuted, size: 20),
                             ),
                           ),
-                        ),
-                        if (isTop5)
                           Container(
-                            width: 24,
-                            height: 24,
-                            margin: const EdgeInsetsDirectional.only(end: 12),
+                            width: 32,
+                            height: 32,
                             decoration: BoxDecoration(
-                              color: context.accentColor,
-                              borderRadius: BorderRadius.circular(12),
+                              color: context.accentColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Center(
-                              child: Text(
-                                '$rank',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
+                            child: Icon(action.icon, color: context.accentColor, size: 18),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              action.label,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textPrimary,
                               ),
                             ),
-                          )
-                        else
-                          const SizedBox(width: 12),
-                      ],
-                    ),
-                  );
-                },
+                          ),
+                          if (isTop5)
+                            Container(
+                              width: 24,
+                              height: 24,
+                              margin: const EdgeInsetsDirectional.only(end: 12),
+                              decoration: BoxDecoration(
+                                color: context.accentColor,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  '$rank',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 12),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
             Padding(

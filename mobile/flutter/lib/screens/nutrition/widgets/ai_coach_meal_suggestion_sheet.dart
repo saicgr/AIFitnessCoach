@@ -772,7 +772,7 @@ class _AiCoachMealSuggestionSheetState
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: colors.surface,
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(Icons.chat_bubble_outline_rounded,
@@ -853,7 +853,7 @@ class _AiCoachMealSuggestionSheetState
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -947,7 +947,7 @@ class _AiCoachMealSuggestionSheetState
                 child: Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   padding: const EdgeInsets.all(6),
                   child: Icon(
@@ -982,7 +982,7 @@ class _AiCoachMealSuggestionSheetState
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: ThemeColors.of(context).cardBorder),
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -1035,7 +1035,7 @@ class _AiCoachMealSuggestionSheetState
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -1115,7 +1115,7 @@ class _AiCoachMealSuggestionSheetState
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-                color: selected ? accent : AppColors.cardBorder),
+                color: selected ? accent : ThemeColors.of(context).cardBorder),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
@@ -1273,7 +1273,7 @@ class _AiCoachMealSuggestionSheetState
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1623,7 +1623,7 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
                   fillColor: colors.surface,
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorder),
+                    borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1631,7 +1631,7 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.cardBorder),
+                    borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1717,7 +1717,7 @@ class _MorePillRow extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: colors.surface,
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(pill.icon, size: 18, color: colors.textSecondary),

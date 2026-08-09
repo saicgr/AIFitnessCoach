@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
+import '../core/theme/theme_colors.dart';
 import '../data/models/consistency.dart';
 import '../data/models/workout_day_detail.dart';
 import '../data/providers/consistency_provider.dart';
@@ -31,8 +32,6 @@ class WorkoutDayDetailSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final apiClient = ref.watch(apiClientProvider);
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.7,
@@ -81,6 +80,7 @@ class _DetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final dateTime = detail.dateTime;
     final formattedDate = DateFormat('EEEE, MMMM d, yyyy').format(dateTime);
 
@@ -95,7 +95,7 @@ class _DetailContent extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textMuted.withOpacity(0.3),
+                color: tc.textMuted.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -126,6 +126,7 @@ class _DetailContent extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, String formattedDate) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -157,7 +158,7 @@ class _DetailContent extends StatelessWidget {
               Text(
                 detail.workoutType!,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: tc.textSecondary,
                     ),
               ),
           ],
@@ -202,6 +203,7 @@ class _DetailContent extends StatelessWidget {
   }
 
   Widget _buildHealthImportContent(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final meta = detail.importMetadata;
     final sourceApp = meta?['source_app'] as String?;
     final calories = meta?['calories_burned'];
@@ -237,7 +239,7 @@ class _DetailContent extends StatelessWidget {
               Text(
                 'Source: $sourceApp',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: tc.textSecondary,
                     ),
               ),
             ],
@@ -288,6 +290,7 @@ class _DetailContent extends StatelessWidget {
   }
 
   List<Widget> _buildCompletedContent(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return [
       // Exercises section
       if (detail.exercises.isNotEmpty) ...[
@@ -340,7 +343,7 @@ class _DetailContent extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.glassSurface,
+                    color: tc.glassSurface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: context.accentColor.withOpacity(0.2),
@@ -360,7 +363,7 @@ class _DetailContent extends StatelessWidget {
                           detail.coachFeedback!,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: tc.textSecondary,
                                   ),
                         ),
                       ),
@@ -375,6 +378,7 @@ class _DetailContent extends StatelessWidget {
   }
 
   Widget _buildMissedContent(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Container(
@@ -406,7 +410,7 @@ class _DetailContent extends StatelessWidget {
                   ? 'Scheduled: ${detail.workoutName}'
                   : 'No workout completed this day',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: tc.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -417,19 +421,20 @@ class _DetailContent extends StatelessWidget {
   }
 
   Widget _buildRestContent(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppColors.glassSurface,
+          color: tc.glassSurface,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
             Icon(
               Icons.self_improvement,
-              color: AppColors.teal,
+              color: AppColors.teal, // accent-allowlist: workout-day status identity (completed/missed/rest/upcoming) - calendar status scale, not accent
               size: 48,
             ),
             const SizedBox(height: 16),
@@ -443,7 +448,7 @@ class _DetailContent extends StatelessWidget {
             Text(
               AppLocalizations.of(context).workoutDayDetailRecoveryIsJustAs,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: tc.textSecondary,
                   ),
               textAlign: TextAlign.center,
             ),
@@ -462,6 +467,7 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final (color, text, icon) = switch (status) {
       CalendarStatus.completed => (
           AppColors.success, // accent-allowlist: workout-day status identity (completed/missed/rest/upcoming) - calendar status scale, not accent
@@ -469,8 +475,8 @@ class _StatusBadge extends StatelessWidget {
           Icons.check_circle
         ),
       CalendarStatus.missed => (AppColors.coral, 'Missed', Icons.cancel), // accent-allowlist: workout-day status identity (completed/missed/rest/upcoming) - calendar status scale, not accent
-      CalendarStatus.rest => (AppColors.teal, 'Rest', Icons.bedtime),
-      CalendarStatus.future => (AppColors.textMuted, 'Upcoming', Icons.schedule),
+      CalendarStatus.rest => (AppColors.teal, 'Rest', Icons.bedtime), // accent-allowlist: workout-day status identity (completed/missed/rest/upcoming) - calendar status scale, not accent
+      CalendarStatus.future => (tc.textMuted, 'Upcoming', Icons.schedule),
     };
 
     return Container(
@@ -511,12 +517,13 @@ class _QuickStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Expanded(
       child: Container(
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: AppColors.glassSurface,
+          color: tc.glassSurface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -532,7 +539,7 @@ class _QuickStat extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
+                    color: tc.textMuted,
                     fontSize: 10,
                   ),
             ),
@@ -551,13 +558,14 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: tc.textSecondary,
             ),
       ),
     );
@@ -572,11 +580,12 @@ class _ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: tc.glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: exercise.hasPr
             ? Border.all(color: AppColors.yellow.withOpacity(0.4)) // accent-allowlist: personal-record (PR) celebration/achievement color, consistent gold regardless of accent
@@ -602,7 +611,7 @@ class _ExerciseCard extends StatelessWidget {
                     Text(
                       exercise.muscleGroup,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.textMuted,
+                            color: tc.textMuted,
                           ),
                     ),
                   ],
@@ -650,7 +659,7 @@ class _ExerciseCard extends StatelessWidget {
           // Best set summary
           if (exercise.bestSetWeight != null && exercise.bestSetReps != null) ...[
             const SizedBox(height: 8),
-            const Divider(color: AppColors.cardBorder),
+            Divider(color: tc.cardBorder),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -658,7 +667,7 @@ class _ExerciseCard extends StatelessWidget {
                 Text(
                   AppLocalizations.of(context).workoutDayDetailBestSet,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
+                        color: tc.textMuted,
                       ),
                 ),
                 Text(
@@ -685,6 +694,7 @@ class _SetRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -696,7 +706,7 @@ class _SetRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: set.isPr
                   ? AppColors.yellow.withOpacity(0.2) // accent-allowlist: personal-record (PR) celebration/achievement color, consistent gold regardless of accent
-                  : AppColors.cardBorder,
+                  : tc.cardBorder,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
@@ -704,7 +714,7 @@ class _SetRow extends StatelessWidget {
                 '${set.setNumber}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: set.isPr ? AppColors.yellow : AppColors.textSecondary, // accent-allowlist: personal-record (PR) celebration/achievement color, consistent gold regardless of accent
+                      color: set.isPr ? AppColors.yellow : tc.textSecondary, // accent-allowlist: PR-branch only (gold, deliberate); non-PR branch already uses tc for theme contrast
                     ),
               ),
             ),
@@ -771,10 +781,11 @@ class _ImportStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: tc.glassSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -790,7 +801,7 @@ class _ImportStat extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                   fontSize: 10,
                 ),
           ),
@@ -825,6 +836,7 @@ class _ErrorContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -845,7 +857,7 @@ class _ErrorContent extends StatelessWidget {
             Text(
               error,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textMuted,
+                    color: tc.textMuted,
                   ),
               textAlign: TextAlign.center,
             ),

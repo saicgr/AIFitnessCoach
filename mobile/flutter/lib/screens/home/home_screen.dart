@@ -743,11 +743,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     Navigator.pop(context); // Close the sheet
 
     // Show confirmation dialog
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     showDialog(
       context: context,
@@ -770,9 +767,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         content: Text(
           AppLocalizations.of(context)!.homeScreenApplyPresetBody(preset.name),
           style: TextStyle(
-            color: isDark
-                ? AppColors.textSecondary
-                : AppColorsLight.textSecondary,
+            color: ThemeColors.of(context).textSecondary,
           ),
         ),
         actions: [
@@ -781,9 +776,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Text(
               AppLocalizations.of(context)!.homeScreenCancel,
               style: TextStyle(
-                color: isDark
-                    ? AppColors.textSecondary
-                    : AppColorsLight.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
               ),
             ),
           ),
@@ -831,11 +824,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     Navigator.pop(context); // Close the sheet
 
     // Show confirmation dialog
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     showDialog(
       context: context,
@@ -856,9 +846,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         content: Text(
           AppLocalizations.of(context)!.homeScreenResetToDefaultBody,
           style: TextStyle(
-            color: isDark
-                ? AppColors.textSecondary
-                : AppColorsLight.textSecondary,
+            color: ThemeColors.of(context).textSecondary,
           ),
         ),
         actions: [
@@ -867,9 +855,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Text(
               AppLocalizations.of(context)!.homeScreenCancel,
               style: TextStyle(
-                color: isDark
-                    ? AppColors.textSecondary
-                    : AppColorsLight.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
               ),
             ),
           ),
@@ -1126,11 +1112,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark
-        ? AppColors.pureBlack
-        : AppColorsLight.pureWhite;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final backgroundColor = ThemeColors.of(context).background;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     // Perf marker: 'home_first_content'. `_isInitializing` is true until the
     // first workout check completes — once false, Home is rendering real

@@ -271,7 +271,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                     Text(
                       l.exerciseSwapFindingAlternatives,
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: ThemeColors.of(context).textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),

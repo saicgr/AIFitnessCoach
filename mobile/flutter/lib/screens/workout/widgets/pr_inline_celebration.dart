@@ -10,13 +10,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/services/pr_detection_service.dart';
 import 'pr_details_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Shows inline PR celebration banner
 ///
 /// Returns when the banner is dismissed
@@ -111,7 +111,7 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
                         ]
                       : [
                           context.accentColor,
-                          AppColors.electricBlue,
+                          ThemeColors.of(context).electricBlue,
                         ],
                 ),
                 borderRadius: BorderRadius.circular(16),

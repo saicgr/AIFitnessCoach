@@ -21,7 +21,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         children: [
@@ -35,7 +35,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -80,7 +80,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                     decoration: BoxDecoration(
                       color: ThemeColors.of(context).surface,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: ThemeColors.of(context).cardBorder),
                     ),
                     child: Text(
                       streak?.weeklyGoalEnabled == true
@@ -115,7 +115,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
           height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: textPrimary, size: 15),
@@ -142,7 +142,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(children: children),
     );
@@ -170,7 +170,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
             height: 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
               borderRadius: BorderRadius.circular(9),
             ),
             child: Icon(icon, color: textPrimary, size: 17),
@@ -242,7 +242,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Material(
         color: Colors.transparent,
@@ -258,7 +258,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: textPrimary, size: 19),
@@ -323,7 +323,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,7 +342,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   decoration: BoxDecoration(
                     color: ThemeColors.of(context).surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -456,7 +456,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
               decoration: BoxDecoration(
                 color: ThemeColors.of(context).surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
               ),
               child: Row(
                 children: [

@@ -715,10 +715,11 @@ class _HeatmapError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: tc.elevated,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.error.withOpacity(0.3)), // accent-allowlist: failed-to-load error state, semantic
       ),
@@ -732,7 +733,7 @@ class _HeatmapError extends StatelessWidget {
               AppLocalizations.of(context).myLibraryTabFailedToLoadActivity,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: tc.textSecondary,
                   ),
             ),
             if (onRetry != null) ...[
@@ -743,8 +744,8 @@ class _HeatmapError extends StatelessWidget {
                 label: Text(AppLocalizations.of(context).buttonRetry),
                 style: OutlinedButton.styleFrom(
                   visualDensity: VisualDensity.compact,
-                  foregroundColor: AppColors.textSecondary,
-                  side: BorderSide(color: AppColors.cardBorder),
+                  foregroundColor: tc.textSecondary,
+                  side: BorderSide(color: tc.cardBorder),
                 ),
               ),
             ],
@@ -801,23 +802,24 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final searchQuery = ref.watch(exerciseSearchQueryProvider);
 
     return Column(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: tc.elevated,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
           ),
           child: Row(
             children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 12),
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
                 child: Icon(
                   Icons.search,
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                   size: 20,
                 ),
               ),
@@ -829,7 +831,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context).activityHeatmapSearchExercise,
                     hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textMuted,
+                          color: tc.textMuted,
                         ),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(
@@ -852,7 +854,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
               if (searchQuery != null)
                 IconButton(
                   icon: const Icon(Icons.close, size: 20),
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                   onPressed: () {
                     _controller.clear();
                     ref.read(exerciseSearchQueryProvider.notifier).state = null;
@@ -874,6 +876,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
   }
 
   Widget _buildSuggestions(BuildContext context, String userId) {
+    final tc = ThemeColors.of(context);
     final suggestionsAsync = ref.watch(
       exerciseSuggestionsProvider((userId: userId, query: _controller.text)),
     );
@@ -888,9 +891,9 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
           margin: const EdgeInsets.only(top: 4),
           constraints: const BoxConstraints(maxHeight: 200),
           decoration: BoxDecoration(
-            color: AppColors.elevated,
+            color: tc.elevated,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.3),
@@ -914,7 +917,7 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
                 subtitle: Text(
                   '${suggestion.timesPerformed} times',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textMuted,
+                        color: tc.textMuted,
                       ),
                 ),
                 onTap: () {
@@ -934,9 +937,9 @@ class _ExerciseSearchBarState extends ConsumerState<ExerciseSearchBar> {
         margin: const EdgeInsets.only(top: 4),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: tc.elevated,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
         ),
         child: const Center(
           child: SizedBox(

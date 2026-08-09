@@ -14,6 +14,7 @@ import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class RecipeScheduleScreen extends ConsumerStatefulWidget {
   final Recipe recipe;
   final String userId;
@@ -74,7 +75,7 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
             decoration: BoxDecoration(
               color: surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.cardBorder, width: 1),
+              border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             ),
             child: Row(children: [
               Icon(Icons.restaurant_menu, color: accent),
@@ -283,7 +284,7 @@ class _BatchSlotRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       child: Row(children: [
         TextButton(

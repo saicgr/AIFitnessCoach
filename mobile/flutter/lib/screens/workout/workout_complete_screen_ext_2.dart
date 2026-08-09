@@ -199,7 +199,7 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                       size: 18,
                       color: (starIdx + 1) <= rating
                           ? ThemeColors.of(context).accent
-                          : AppColors.textMuted,
+                          : ThemeColors.of(context).textMuted,
                     ),
                   );
                 }),
@@ -523,10 +523,10 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
     return Builder(
       builder: (context) {
         final isDarkFeedback = Theme.of(context).brightness == Brightness.dark;
-        final elevatedFeedback = isDarkFeedback ? AppColors.elevated : AppColorsLight.elevated;
-        final cardBorderFeedback = isDarkFeedback ? AppColors.cardBorder : AppColorsLight.cardBorder;
-        final textSecondaryFeedback = isDarkFeedback ? AppColors.textSecondary : AppColorsLight.textSecondary;
-        final textPrimaryFeedback = isDarkFeedback ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final elevatedFeedback = isDarkFeedback ? ThemeColors.of(context).elevated : AppColorsLight.elevated;
+        final cardBorderFeedback = isDarkFeedback ? ThemeColors.of(context).cardBorder : AppColorsLight.cardBorder;
+        final textSecondaryFeedback = isDarkFeedback ? ThemeColors.of(context).textSecondary : AppColorsLight.textSecondary;
+        final textPrimaryFeedback = isDarkFeedback ? ThemeColors.of(context).textPrimary : AppColorsLight.textPrimary;
 
         return Container(
           width: double.infinity,
@@ -723,9 +723,9 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
     return Builder(
       builder: (context) {
         final isDarkProgress = Theme.of(context).brightness == Brightness.dark;
-        final elevatedProgress = isDarkProgress ? AppColors.elevated : AppColorsLight.elevated;
-        final cardBorderProgress = isDarkProgress ? AppColors.cardBorder : AppColorsLight.cardBorder;
-        final textSecondaryProgress = isDarkProgress ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final elevatedProgress = isDarkProgress ? ThemeColors.of(context).elevated : AppColorsLight.elevated;
+        final cardBorderProgress = isDarkProgress ? ThemeColors.of(context).cardBorder : AppColorsLight.cardBorder;
+        final textSecondaryProgress = isDarkProgress ? ThemeColors.of(context).textSecondary : AppColorsLight.textSecondary;
 
         return Container(
           width: double.infinity,
@@ -805,10 +805,10 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
     return Builder(
       builder: (context) {
         final isDarkTile = Theme.of(context).brightness == Brightness.dark;
-        final textPrimaryTile = isDarkTile ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        final textSecondaryTile = isDarkTile ? AppColors.textSecondary : AppColorsLight.textSecondary;
-        final textMutedTile = isDarkTile ? AppColors.textMuted : AppColorsLight.textMuted;
-        final cardBorderTile = isDarkTile ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        final textPrimaryTile = isDarkTile ? ThemeColors.of(context).textPrimary : AppColorsLight.textPrimary;
+        final textSecondaryTile = isDarkTile ? ThemeColors.of(context).textSecondary : AppColorsLight.textSecondary;
+        final textMutedTile = isDarkTile ? ThemeColors.of(context).textMuted : AppColorsLight.textMuted;
+        final cardBorderTile = isDarkTile ? ThemeColors.of(context).cardBorder : AppColorsLight.cardBorder;
 
         return Column(
           children: [

@@ -175,7 +175,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
   /// Build fixed trends section with progress cards
   /// Shows DailyStats and QuickLogWeight
   Widget _buildTrendsSection(bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -380,7 +380,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
               // Add Tile button
               Expanded(
                 child: Material(
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  color: ThemeColors.of(context).glassSurface,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     onTap: () => _showAddTileSheet(isDark),
@@ -422,7 +422,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
               // Discover button
               Expanded(
                 child: Material(
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  color: ThemeColors.of(context).glassSurface,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     onTap: () => _showDiscoverSheet(isDark),
@@ -471,7 +471,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
             AppLocalizations.of(context).homeScreenUiDragToReorderTap,
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
             textAlign: TextAlign.center,
           ),
@@ -519,7 +519,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
               // Add Tile button
               Expanded(
                 child: Material(
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  color: ThemeColors.of(context).glassSurface,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     onTap: () => _showAddTileSheet(isDark),
@@ -561,7 +561,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
               // Discover button
               Expanded(
                 child: Material(
-                  color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+                  color: ThemeColors.of(context).glassSurface,
                   borderRadius: BorderRadius.circular(16),
                   child: InkWell(
                     onTap: () => _showDiscoverSheet(isDark),
@@ -610,7 +610,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
             AppLocalizations.of(context).homeScreenUiDragToReorderTap,
             style: TextStyle(
               fontSize: 13,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
             textAlign: TextAlign.center,
           ),
@@ -644,7 +644,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
     AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     bool isAIGenerating,
   ) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     // Build the actual tile content
     Widget tileContent;
@@ -763,7 +763,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           tile.isVisible
                               ? Icons.visibility_rounded
                               : Icons.visibility_off_rounded,
-                          color: tile.isVisible ? context.accentColor : AppColors.textMuted,
+                          color: tile.isVisible ? context.accentColor : ThemeColors.of(context).textMuted,
                           size: 22,
                         ),
                       ),
@@ -790,7 +790,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
     dynamic nextWorkout,
     bool isAIGenerating,
   ) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     // Build the actual tile content
     Widget tileContent;
@@ -916,7 +916,7 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
                           tile.isVisible
                               ? Icons.visibility_rounded
                               : Icons.visibility_off_rounded,
-                          color: tile.isVisible ? context.accentColor : AppColors.textMuted,
+                          color: tile.isVisible ? context.accentColor : ThemeColors.of(context).textMuted,
                           size: 24,
                         ),
                       ),

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/cache/cache_first_mixin.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../core/constants/stat_typography.dart';
@@ -689,7 +688,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       width: 1,
       height: 38,
-      color: AppColors.hairline,
+      color: ThemeColors.of(context).hairline,
     );
   }
 }
@@ -872,7 +871,7 @@ class _BadgeIcon extends StatelessWidget {
                   border: Border.all(
                     color: unlocked
                         ? color.withValues(alpha: 0.5)
-                        : AppColors.cardBorder,
+                        : tc.cardBorder,
                     width: 1,
                   ),
                 ),
@@ -892,7 +891,7 @@ class _BadgeIcon extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: tc.surface,
-                      border: Border.all(color: AppColors.cardBorder, width: 1),
+                      border: Border.all(color: tc.cardBorder, width: 1),
                     ),
                     child: Icon(Icons.lock, size: 10, color: tc.textMuted),
                   ),
@@ -1119,7 +1118,7 @@ class _GoalProgressTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: (pct / 100).clamp(0.0, 1.0),
-                    backgroundColor: AppColors.hairlineStrong,
+                    backgroundColor: tc.hairlineStrong,
                     valueColor: AlwaysStoppedAnimation<Color>(accent),
                     minHeight: 4,
                   ),

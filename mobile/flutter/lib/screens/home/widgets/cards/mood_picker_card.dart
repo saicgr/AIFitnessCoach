@@ -10,6 +10,7 @@ import '../../../../data/repositories/workout_repository.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Mood picker card for home screen.
 /// Allows users to select a mood and instantly generate a tailored workout.
 class MoodPickerCard extends ConsumerStatefulWidget {
@@ -46,9 +47,9 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final moodState = ref.watch(moodWorkoutProvider);
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     // Listen for generated workout to navigate
     ref.listen<MoodWorkoutState>(moodWorkoutProvider, (prev, next) {
@@ -108,7 +109,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.cardBorder, width: 1),
+              border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,9 +201,9 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
     MoodWorkoutState state,
     bool isDark,
   ) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final mood = state.selectedMood ?? Mood.good;
     final moodColor = mood.color;
 
@@ -313,8 +314,8 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
   }
 
   Widget _buildErrorCard(BuildContext context, String error, bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
     final errorColor = Colors.red.shade400;  // accent-allowlist: error/destructive -- must stay red
 
     return Padding(
@@ -579,8 +580,7 @@ class _MoodButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     return Material(
       color: isSelected ? mood.color.withOpacity(0.15) : elevatedColor,
@@ -628,7 +628,7 @@ class _MoodButton extends StatelessWidget {
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   color: isSelected
                       ? mood.color
-                      : (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+                      : (ThemeColors.of(context).textMuted),
                 ),
               ),
             ],

@@ -25,6 +25,7 @@ import '../../../widgets/coach_avatar.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Quick prompt for workout context
 class _QuickPrompt {
   final String label;
@@ -104,7 +105,7 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
           prompt:
               AppLocalizations.of(context)!.inlineWorkoutChatHowManySetsShould(widget.currentExercise.name),
           icon: Icons.format_list_numbered,
-          color: AppColors.electricBlue,
+          color: ThemeColors.of(context).electricBlue,
         ),
         // Issue 2: "What's this?" — open camera to identify a piece of
         // gym equipment. Tapping the pill triggers `_pickImageFromCamera`
@@ -595,7 +596,7 @@ User question: $message
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: isUser
-                    ? AppColors.electricBlue
+                    ? ThemeColors.of(context).electricBlue
                     : (isDark
                         ? AppColors.elevated
                         : Colors.grey.shade100),
@@ -752,7 +753,7 @@ User question: $message
                     decoration: BoxDecoration(
                       gradient: canSend
                           ? LinearGradient(
-                              colors: [context.accentColor, AppColors.electricBlue],
+                              colors: [context.accentColor, ThemeColors.of(context).electricBlue],
                             )
                           : null,
                       color: canSend

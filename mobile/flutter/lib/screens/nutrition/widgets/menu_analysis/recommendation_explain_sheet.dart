@@ -6,6 +6,7 @@ import '../../../../services/menu_recommendation_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// "Why this pick?" glass sheet — renders the top positive + negative
 /// signal contributions with substituted user numbers so the
 /// recommendation feels transparent instead of magical.
@@ -54,7 +55,7 @@ class RecommendationExplainSheet extends StatelessWidget {
               'Score ${(pick.weightedScore * 10).toStringAsFixed(1)} / 10 · '
               'Rank #$rank of $totalAccepted',
               style: TextStyle(
-                fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600,
+                fontSize: 11, color: ThemeColors.of(context).textMuted, fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 16),

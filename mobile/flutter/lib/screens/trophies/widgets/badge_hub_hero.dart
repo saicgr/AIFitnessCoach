@@ -91,7 +91,7 @@ class _HeroBadge extends StatelessWidget {
         border: Border.all(
           color: gold
               ? AppColors.gamGold.withValues(alpha: 0.5) // accent-allowlist: badge rarity gold
-              : AppColors.cardBorder,
+              : tc.cardBorder,
         ),
       ),
       child: Text(emoji, style: const TextStyle(fontSize: 15)),

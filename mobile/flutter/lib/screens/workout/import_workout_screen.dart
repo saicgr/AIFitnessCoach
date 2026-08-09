@@ -21,6 +21,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout_import.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/workout_import_service.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Public entry — pushes the importer full-screen. Resolves to the saved
 /// workout id (or null if the user backed out).
@@ -390,7 +391,7 @@ class _ImportWorkoutScreenState extends ConsumerState<ImportWorkoutScreen> {
                   decoration: BoxDecoration(
                     color: fill,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Row(
                     children: [

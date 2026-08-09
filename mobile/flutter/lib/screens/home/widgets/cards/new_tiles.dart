@@ -48,9 +48,9 @@ class StreakCounterCard extends ConsumerWidget {
     final workoutsNotifier = ref.read(workoutsProvider.notifier);
     final currentStreak = workoutsNotifier.currentStreak;
 
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final orangeColor = context.accentColor;
 
     if (size == TileSize.compact) {

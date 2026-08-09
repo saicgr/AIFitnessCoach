@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
@@ -86,8 +85,8 @@ class _ChallengeRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: isLast
           ? null
-          : const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          : BoxDecoration(
+              border: Border(bottom: BorderSide(color: tc.hairline)),
             ),
       child: Row(
         children: [
@@ -141,7 +140,7 @@ class _JoinPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(

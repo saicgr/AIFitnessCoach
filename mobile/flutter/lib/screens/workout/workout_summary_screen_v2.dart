@@ -231,7 +231,7 @@ class _WorkoutSummaryScreenV2State
               height: 56,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(

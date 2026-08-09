@@ -1462,8 +1462,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         // Header - matches active workout screen: Set | Previous | Target (weight × reps + RIR)
         Container(
           padding: const EdgeInsets.only(bottom: 10),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.hairlineStrong)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: cardBorder)),
           ),
           child: Row(
             children: [

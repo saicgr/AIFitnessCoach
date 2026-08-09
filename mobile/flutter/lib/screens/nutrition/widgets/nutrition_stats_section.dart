@@ -292,7 +292,7 @@ class _NutritionScalarStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: weeklySummary.when(
         loading: () => const _ScalarStripSkeleton(),
@@ -607,7 +607,7 @@ class _NutritionStatsEmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.hairline),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

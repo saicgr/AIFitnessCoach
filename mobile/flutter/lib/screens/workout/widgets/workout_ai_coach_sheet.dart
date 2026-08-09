@@ -24,6 +24,7 @@ import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Show AI coach sheet during workout
 Future<void> showWorkoutAICoachSheet({
   required BuildContext context,
@@ -126,7 +127,7 @@ class _WorkoutAICoachSheetState extends ConsumerState<WorkoutAICoachSheet> {
       label: AppLocalizations.of(context).workoutSummaryGeneralSets,
       prompt: AppLocalizations.of(context)!.workoutAiCoachSheetHowManySetsShould(widget.currentExercise.name),
       icon: Icons.format_list_numbered,
-      color: AppColors.electricBlue,
+      color: ThemeColors.of(context).electricBlue,
     ),
   ];
 
@@ -648,7 +649,7 @@ User question: $message
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isUser
-                    ? AppColors.electricBlue
+                    ? ThemeColors.of(context).electricBlue
                     : (isDark ? AppColors.elevated : Colors.grey.shade100),
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),

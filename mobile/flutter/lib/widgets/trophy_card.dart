@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../core/theme/theme_colors.dart';
 import '../data/models/trophy.dart';
 
 import '../l10n/generated/app_localizations.dart';
@@ -69,6 +70,7 @@ class _TrophyCardState extends State<TrophyCard>
     bool isEarned,
     TrophyTier tier,
   ) {
+    final tc = ThemeColors.of(context);
     final primaryColor = tier.primaryColor;
 
     return InkWell(
@@ -79,12 +81,12 @@ class _TrophyCardState extends State<TrophyCard>
         decoration: BoxDecoration(
           color: isEarned
               ? primaryColor.withValues(alpha: 0.15)
-              : AppColors.elevated,
+              : tc.elevated,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isEarned
                 ? primaryColor.withValues(alpha: 0.4)
-                : AppColors.cardBorder,
+                : tc.cardBorder,
           ),
         ),
         child: Row(
@@ -101,8 +103,8 @@ class _TrophyCardState extends State<TrophyCard>
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isEarned
-                          ? AppColors.textPrimary
-                          : AppColors.textMuted,
+                          ? tc.textPrimary
+                          : tc.textMuted,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -131,7 +133,7 @@ class _TrophyCardState extends State<TrophyCard>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                 ),
               ),
           ],
@@ -146,6 +148,7 @@ class _TrophyCardState extends State<TrophyCard>
     bool isEarned,
     TrophyTier tier,
   ) {
+    final tc = ThemeColors.of(context);
     final primaryColor = tier.primaryColor;
 
     return InkWell(
@@ -156,12 +159,12 @@ class _TrophyCardState extends State<TrophyCard>
         decoration: BoxDecoration(
           color: isEarned
               ? primaryColor.withValues(alpha: 0.1)
-              : AppColors.elevated,
+              : tc.elevated,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isEarned
                 ? primaryColor.withValues(alpha: 0.4)
-                : AppColors.cardBorder,
+                : tc.cardBorder,
             width: isEarned ? 2 : 1,
           ),
           boxShadow: isEarned
@@ -192,8 +195,8 @@ class _TrophyCardState extends State<TrophyCard>
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: isEarned
-                              ? AppColors.textPrimary
-                              : AppColors.textMuted,
+                              ? tc.textPrimary
+                              : tc.textMuted,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -212,7 +215,7 @@ class _TrophyCardState extends State<TrophyCard>
                 else
                   Icon(
                     Icons.lock_outline,
-                    color: AppColors.textMuted,
+                    color: tc.textMuted,
                     size: 24,
                   ),
               ],
@@ -226,7 +229,7 @@ class _TrophyCardState extends State<TrophyCard>
                 widget.trophyProgress.displayDescription,
                 style: TextStyle(
                   fontSize: 13,
-                  color: isEarned ? AppColors.textSecondary : AppColors.textMuted,
+                  color: isEarned ? tc.textSecondary : tc.textMuted,
                   height: 1.4,
                 ),
                 maxLines: 2,
@@ -319,6 +322,7 @@ class _TrophyCardState extends State<TrophyCard>
     TrophyTier tier, {
     double size = 48,
   }) {
+    final tc = ThemeColors.of(context);
     final primaryColor = tier.primaryColor;
     final gradientColors = tier.gradientColors;
 
@@ -329,9 +333,9 @@ class _TrophyCardState extends State<TrophyCard>
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: AppColors.textMuted.withValues(alpha: 0.2),
+          color: tc.textMuted.withValues(alpha: 0.2),
           border: Border.all(
-            color: AppColors.textMuted.withValues(alpha: 0.3),
+            color: tc.textMuted.withValues(alpha: 0.3),
           ),
         ),
         child: Center(
@@ -339,7 +343,7 @@ class _TrophyCardState extends State<TrophyCard>
             trophy.icon,
             style: TextStyle(
               fontSize: size * 0.5,
-              color: AppColors.textMuted,
+              color: tc.textMuted,
             ),
           ),
         ),
@@ -384,15 +388,16 @@ class _TrophyCardState extends State<TrophyCard>
   }
 
   Widget _buildTierBadge(TrophyTier tier, bool isEarned) {
+    final tc = ThemeColors.of(context);
     final color = tier.primaryColor;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: isEarned ? color.withValues(alpha: 0.2) : AppColors.cardBorder,
+        color: isEarned ? color.withValues(alpha: 0.2) : tc.cardBorder,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: isEarned ? color.withValues(alpha: 0.5) : AppColors.textMuted.withValues(alpha: 0.3),
+          color: isEarned ? color.withValues(alpha: 0.5) : tc.textMuted.withValues(alpha: 0.3),
         ),
       ),
       child: Text(
@@ -400,13 +405,14 @@ class _TrophyCardState extends State<TrophyCard>
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w600,
-          color: isEarned ? color : AppColors.textMuted,
+          color: isEarned ? color : tc.textMuted,
         ),
       ),
     );
   }
 
   Widget _buildProgressBar(TrophyTier tier) {
+    final tc = ThemeColors.of(context);
     final progress = widget.trophyProgress.progressFraction;
     final color = tier.primaryColor;
 
@@ -420,7 +426,7 @@ class _TrophyCardState extends State<TrophyCard>
               AppLocalizations.of(context).navProgress,
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted,
+                color: tc.textMuted,
               ),
             ),
             Text(
@@ -428,7 +434,7 @@ class _TrophyCardState extends State<TrophyCard>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: tc.textSecondary,
               ),
             ),
           ],
@@ -440,7 +446,7 @@ class _TrophyCardState extends State<TrophyCard>
               height: 6,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(3),
-                color: AppColors.textMuted.withValues(alpha: 0.2),
+                color: tc.textMuted.withValues(alpha: 0.2),
               ),
             ),
             FractionallySizedBox(
@@ -530,6 +536,7 @@ class TrophyCategoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Row(
@@ -537,15 +544,15 @@ class TrophyCategoryHeader extends StatelessWidget {
           Icon(
             category.iconData,
             size: 20,
-            color: AppColors.textSecondary,
+            color: tc.textSecondary,
           ),
           const SizedBox(width: 8),
           Text(
             category.displayName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: tc.textPrimary,
             ),
           ),
           const Spacer(),
@@ -554,7 +561,7 @@ class TrophyCategoryHeader extends StatelessWidget {
             decoration: BoxDecoration(
               color: earnedCount > 0
                   ? AppColors.green.withValues(alpha: 0.15) // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
-                  : AppColors.cardBorder,
+                  : tc.cardBorder,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -562,7 +569,7 @@ class TrophyCategoryHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: earnedCount > 0 ? AppColors.green : AppColors.textMuted, // accent-allowlist: trophy reward-type badge (XP=gold, merch=purple) and earned-count success color
+                color: earnedCount > 0 ? AppColors.green : tc.textMuted, // accent-allowlist: earned-branch only (green success color, deliberate); empty-count branch already uses tc for theme contrast
               ),
             ),
           ),

@@ -17,9 +17,9 @@ class ActiveChallengeCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final pinkColor = context.accentColor;
 
     final userId = ref.watch(currentUserIdProvider);
@@ -145,9 +145,9 @@ class RestDayTipCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final tealColor = context.accentColor;
 
     const tips = [
@@ -229,9 +229,9 @@ class WorkoutHistoryMiniCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final cyanColor = ref.colors(context).accent;
 
     final summaryAsync = ref.watch(workoutScreenSummaryProvider);
@@ -342,9 +342,9 @@ class StepsCounterCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final greenColor = AppColors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
 
     final steps = ref.watch(currentStepsProvider);
@@ -428,9 +428,9 @@ class HeartRateCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final redColor = AppColors.error;  // accent-allowlist: error/destructive -- must stay red
 
     final recoveryAsync = ref.watch(recoveryProvider);

@@ -9,6 +9,7 @@ import '../../../../data/repositories/auth_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// ============================================================
 /// HABITS CARD
@@ -30,10 +31,10 @@ class HabitsCard extends ConsumerWidget {
     final authState = ref.watch(authStateProvider);
     final userId = authState.user?.id;
 
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = AppColors.teal;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final accentColor = ThemeColors.of(context).teal;
 
     // No user logged in
     if (userId == null) {
@@ -50,7 +51,7 @@ class HabitsCard extends ConsumerWidget {
 
     // Loading state
     if (habitsState.isLoading && habitsState.habits.isEmpty) {
-      return _buildLoadingSkeleton(elevatedColor, textMuted, accentColor);
+      return _buildLoadingSkeleton(elevatedColor, textMuted, accentColor, ThemeColors.of(context).cardBorder);
     }
 
     // Error state
@@ -96,6 +97,7 @@ class HabitsCard extends ConsumerWidget {
     Color elevatedColor,
     Color textMuted,
     Color accentColor,
+    Color cardBorderColor,
   ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -104,7 +106,7 @@ class HabitsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: cardBorderColor, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
@@ -186,7 +188,7 @@ class HabitsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
@@ -259,7 +261,7 @@ class HabitsCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder, width: 1),
+            border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
                 color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
@@ -360,7 +362,7 @@ class HabitsCard extends ConsumerWidget {
 
   Widget _buildTemplateChip(
       BuildContext context, HabitTemplate template, Color textColor) {
-    final templateColor = _parseColor(template.color);
+    final templateColor = _parseColor(context, template.color);
     return InkWell(
       onTap: () {
         HapticService.light();
@@ -425,7 +427,7 @@ class HabitsCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder, width: 1),
+            border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
                 color: AppColors.green.withOpacity(0.15),  // accent-allowlist: success/positive state -- must stay green regardless of accent
@@ -657,7 +659,7 @@ class HabitsCard extends ConsumerWidget {
     Color textMuted,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    final habitColor = _parseColor(habit.color);
+    final habitColor = _parseColor(context, habit.color);
 
     return Row(
       children: [
@@ -807,12 +809,12 @@ class HabitsCard extends ConsumerWidget {
   }
 
   /// Parse hex color string to Color
-  Color _parseColor(String colorString) {
+  Color _parseColor(BuildContext context, String colorString) {
     try {
       final hex = colorString.replaceAll('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (e) {
-      return AppColors.teal;
+      return ThemeColors.of(context).teal;
     }
   }
 

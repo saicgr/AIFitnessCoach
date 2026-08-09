@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// A compact badge displaying a stat with an icon
 /// Used in the home screen header for workout counts
@@ -26,7 +27,6 @@ class StatBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -56,7 +56,7 @@ class StatBadge extends StatelessWidget {
         message: tooltip!,
         preferBelow: true,
         decoration: BoxDecoration(
-          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
@@ -67,7 +67,7 @@ class StatBadge extends StatelessWidget {
           ],
         ),
         textStyle: TextStyle(
-          color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+          color: ThemeColors.of(context).textPrimary,
           fontSize: 13,
         ),
         child: badge,
@@ -95,11 +95,10 @@ class StatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+        ThemeColors.of(context).glassSurface;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

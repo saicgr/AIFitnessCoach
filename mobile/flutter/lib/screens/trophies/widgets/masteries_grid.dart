@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/masteries_provider.dart';
@@ -66,7 +65,7 @@ class _MasteryCell extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Column(
         children: [
@@ -101,7 +100,7 @@ class _MasteryCell extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: tc.cardBorder),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -236,7 +235,7 @@ class _EmptyState extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Text(
         AppLocalizations.of(context).masteriesGridYourMasteriesWillLevel,

@@ -22,6 +22,7 @@ import 'recipe_create_screen.dart';
 import 'widgets/embedded_camera_panel.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class RecipeImportScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -217,10 +218,10 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
         hintText: hint,
         hintStyle: TextStyle(color: muted, fontSize: 14),
         filled: true,
-        fillColor: AppColors.surface,
+        fillColor: ThemeColors.of(context).surface,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.cardBorder),
+          borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -228,7 +229,7 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.cardBorder),
+          borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
         ),
       );
 
@@ -262,9 +263,9 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: ThemeColors.of(context).surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder, width: 1),
+              border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             ),
             child: Row(
               children: [
@@ -356,9 +357,9 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: ThemeColors.of(context).surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder, width: 1),
+              border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             ),
             child: Row(
               children: [
@@ -516,7 +517,7 @@ class _ProgressFooter extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: surface,
-        border: Border(top: BorderSide(color: AppColors.cardBorder, width: 1)),
+        border: Border(top: BorderSide(color: ThemeColors.of(context).cardBorder, width: 1)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: SafeArea(

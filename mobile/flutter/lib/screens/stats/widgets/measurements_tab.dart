@@ -231,7 +231,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     final elevated = tc.surface;
     final textPrimary = tc.textPrimary;
     final textMuted = tc.textMuted;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = tc.cardBorder;
     // Signature accent (gym-override aware). Kept under the legacy `cyan` name
     // since it threads through every helper's params; ≤1 accent element/section.
     final cyan = tc.accent;
@@ -331,7 +331,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                 heroTag: 'measurements_quick_add_fab',
                   onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
                 backgroundColor: cyan,
-                child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
+                child: Icon(Icons.add, color: tc.accentContrast),
               ),
             ),
           ),
@@ -662,7 +662,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                 radius: 3,
                 color: cyan,
                 strokeWidth: 1.5,
-                strokeColor: isDark ? AppColors.pureBlack : Colors.white,
+                strokeColor: ThemeColors.of(context).accentContrast,
               ),
             ),
             belowBarData: BarAreaData(
@@ -771,7 +771,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               : BorderSide.none,
           bottom: isLast
               ? BorderSide.none
-              : const BorderSide(color: AppColors.hairline, width: 1),
+              : BorderSide(color: cardBorder, width: 1),
         ),
       ),
       child: Column(

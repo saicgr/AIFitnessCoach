@@ -461,7 +461,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 color: isSelected ? tc.accent : tc.surface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected ? tc.accent : AppColors.cardBorder,
+                  color: isSelected ? tc.accent : ThemeColors.of(context).cardBorder,
                 ),
               ),
               child: Text(

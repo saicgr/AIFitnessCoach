@@ -63,6 +63,25 @@ class ThemeColors {
 
   Color get cardBorder => isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
+  /// The 1px rule that replaces boxed-card stacks in the Signature language.
+  ///
+  /// Deliberately NOT `isDark ? AppColors.hairline : AppColorsLight.hairline`
+  /// — `AppColorsLight` has no `hairline`/`hairlineStrong` members (by
+  /// design: see `light_mode_gate_test.dart`'s "tokens with no light
+  /// counterpart stay OUT of scope" case), so the light literal is inlined
+  /// here instead of added to the palette. Adding it to `AppColorsLight`
+  /// would flip `AppColors.hairline` from "no light counterpart" to
+  /// "theme-mapped" in the light-mode gate's derived token set, which would
+  /// retroactively flag every pre-existing `AppColors.hairline` reference
+  /// across lib/screens/** (a different lane's files, not touched here) as a
+  /// newly-in-scope violation against a baseline that doesn't grandfather
+  /// them. Same subtlety intent as the dark literal (barely off the
+  /// background) without widening that gate's blast radius.
+  Color get hairline =>
+      isDark ? AppColors.hairline : const Color(0xFFEDEDEF);
+  Color get hairlineStrong =>
+      isDark ? AppColors.hairlineStrong : const Color(0xFFD4D4D8);
+
   // ─────────────────────────────────────────────────────────────────
   // Text Colors
   // ─────────────────────────────────────────────────────────────────

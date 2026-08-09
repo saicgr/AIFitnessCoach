@@ -516,7 +516,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           borderRadius: BorderRadius.circular(14),
           // Gold left edge is the sanctioned gamification accent (≤1/screen,
           // distinct from the reserved app accent). Stronger when earned.
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
         ),
         child: Row(
           children: [
@@ -535,7 +535,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                         border: Border.all(
                           color: hasAchievements
                               ? AppColors.gamGold.withOpacity(0.5)  // accent-allowlist: medal/rarity tier
-                              : AppColors.cardBorder,
+                              : ThemeColors.of(context).cardBorder,
                         ),
                       ),
                       child: Icon(
@@ -703,10 +703,10 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       builder: (context) {
         final isDarkProg = Theme.of(context).brightness == Brightness.dark;
         final elevatedProg = isDarkProg
-            ? AppColors.elevated
+            ? ThemeColors.of(context).elevated
             : AppColorsLight.elevated;
         final textSecondaryProg = isDarkProg
-            ? AppColors.textSecondary
+            ? ThemeColors.of(context).textSecondary
             : AppColorsLight.textSecondary;
 
         return Container(
@@ -781,13 +781,13 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       builder: (context) {
         final isDarkCard = Theme.of(context).brightness == Brightness.dark;
         final elevatedCard = isDarkCard
-            ? AppColors.elevated
+            ? ThemeColors.of(context).elevated
             : AppColorsLight.elevated;
         final textPrimaryCard = isDarkCard
-            ? AppColors.textPrimary
+            ? ThemeColors.of(context).textPrimary
             : AppColorsLight.textPrimary;
         final textSecondaryCard = isDarkCard
-            ? AppColors.textSecondary
+            ? ThemeColors.of(context).textSecondary
             : AppColorsLight.textSecondary;
 
         return Container(
@@ -938,7 +938,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           builder: (context) {
             final isDarkPR = Theme.of(context).brightness == Brightness.dark;
             final textPrimaryPR = isDarkPR
-                ? AppColors.textPrimary
+                ? ThemeColors.of(context).textPrimary
                 : AppColorsLight.textPrimary;
 
             return Container(
@@ -1764,9 +1764,9 @@ class _LedgerRow extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppColors.hairlineStrong, width: 1),
+          top: BorderSide(color: ThemeColors.of(context).cardBorder, width: 1),
           bottom: last
-              ? BorderSide(color: AppColors.hairlineStrong, width: 1)
+              ? BorderSide(color: ThemeColors.of(context).cardBorder, width: 1)
               : BorderSide.none,
         ),
       ),

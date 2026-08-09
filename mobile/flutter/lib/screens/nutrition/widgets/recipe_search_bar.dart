@@ -81,7 +81,7 @@ class _RecipeSearchBarState extends ConsumerState<RecipeSearchBar> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(

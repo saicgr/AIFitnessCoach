@@ -24,9 +24,7 @@ class _MoreActionsButton extends ConsumerWidget {
       },
       label: AppLocalizations.of(context).homeMore,
       icon: Icons.more_horiz,
-      iconColor: isDark
-          ? AppColors.textPrimary
-          : AppColorsLight.textPrimary,
+      iconColor: ThemeColors.of(context).textPrimary,
       muteChip: true,
     );
   }

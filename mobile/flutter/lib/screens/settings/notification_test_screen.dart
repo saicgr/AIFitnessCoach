@@ -256,7 +256,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
           const SizedBox(height: 24),
 
           // Hydration Notifications
-          _buildSectionHeader('Hydration Notifications', Icons.water_drop, AppColors.electricBlue, textPrimary),
+          _buildSectionHeader('Hydration Notifications', Icons.water_drop, context.accentColor, textPrimary),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
@@ -269,7 +269,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.water_drop_outlined,
                   title: AppLocalizations.of(context).notificationTestLowProgress40,
                   subtitle: AppLocalizations.of(context).notificationTestStayHydratedYouRe,
-                  color: AppColors.electricBlue,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Hydration Low', 'hydration-reminder', queryParams: {'current_ml': 800, 'goal_ml': 2000}),
                   isLoading: _sendingType == 'Hydration Low',
                   textPrimary: textPrimary,
@@ -280,7 +280,7 @@ class _NotificationTestScreenState extends ConsumerState<NotificationTestScreen>
                   icon: Icons.water_drop,
                   title: AppLocalizations.of(context).notificationTestGoodProgress70,
                   subtitle: AppLocalizations.of(context).notificationTestKeepItUpAlmost,
-                  color: AppColors.electricBlue,
+                  color: context.accentColor,
                   onTap: () => _sendNotification('Hydration Good', 'hydration-reminder', queryParams: {'current_ml': 1400, 'goal_ml': 2000}),
                   isLoading: _sendingType == 'Hydration Good',
                   textPrimary: textPrimary,

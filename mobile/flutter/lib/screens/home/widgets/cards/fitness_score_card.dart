@@ -105,8 +105,8 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
         strengthScore != null ||
         nutritionScore != null ||
         consistencyScore != null;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
 
     // Don't show if still loading initial data
     if (initialLoading) {
@@ -158,7 +158,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.cardBorder, width: 1),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
                   ),
                   child: Column(
                   children: [
@@ -273,8 +273,8 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
   }
 
   Widget _buildLoadingCard(bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accentColor = ref.colors(context).accent;
 
     return Padding(
@@ -286,7 +286,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.cardBorder, width: 1),
+            border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
           ),
           child: Column(
             children: [
@@ -318,10 +318,10 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
   /// rings at 0 and no level badge — a score that does not exist is never
   /// drawn as a zero.
   Widget _buildStartingStateCard(bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accentColor = ref.colors(context).accent;
 
     return Padding(
@@ -339,7 +339,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.cardBorder, width: 1),
+              border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,7 +400,7 @@ const String _kNoValue = '—';
 
 /// Band colour for a score, or a neutral grey when there is no score to band.
 Color _scoreColor(int? score) {
-  if (score == null) return AppColors.textMuted;
+  if (score == null) return AppColors.textMuted;  // accent-allowlist: neutral no-score grey; top-level function has no BuildContext (matches this function's other bands)
   if (score >= 80) return AppColors.green;  // accent-allowlist: success/positive state -- must stay green regardless of accent
   if (score >= 60) return AppColors.cyan;  // accent-allowlist: score-band tier colour (matches compliance/readiness traffic-light convention); top-level function has no BuildContext
   if (score >= 40) return AppColors.yellow;  // accent-allowlist: warning severity
@@ -495,8 +495,8 @@ class _ScoreItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final scoreColor = _getScoreColor(score);
     final progress = (score ?? 0) / 100.0;
 
@@ -572,7 +572,7 @@ class _BottomIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -595,7 +595,7 @@ class _BottomIndicator extends StatelessWidget {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+            color: ThemeColors.of(context).textPrimary,
           ),
         ),
       ],

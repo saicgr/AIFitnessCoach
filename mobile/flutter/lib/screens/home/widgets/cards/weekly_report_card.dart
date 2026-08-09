@@ -11,6 +11,7 @@ import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Home-screen entry point into Reports & Insights.
 ///
 /// Shows a compact this-week progress ring + current streak + PR count and
@@ -35,12 +36,12 @@ class WeeklyReportCard extends ConsumerWidget {
     final purple = context.accentColor;
     final cyan = isDark ? context.accentColor : AppColorsLight.cyan;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        ThemeColors.of(context).textSecondary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final elevated = ThemeColors.of(context).elevated;
+    final border = ThemeColors.of(context).cardBorder;
 
     final progress =
         scheduled > 0 ? (completed / scheduled).clamp(0.0, 1.0) : 0.0;

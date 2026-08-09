@@ -866,7 +866,7 @@ class _HeaderCard extends StatelessWidget {
                 height: 40,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.hub_outlined, color: accent, size: 22),
@@ -935,7 +935,7 @@ class _IntegrationCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 alignment: Alignment.center,
@@ -1121,7 +1121,7 @@ class _ScopeChip extends StatelessWidget {
         border: Border.all(
           color: _isWriteScope
               ? accent.withValues(alpha: 0.5)
-              : AppColors.cardBorder,
+              : tc.cardBorder,
         ),
       ),
       child: Text(
@@ -1154,7 +1154,7 @@ class _EmptyState extends StatelessWidget {
             height: 56,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: tc.cardBorder),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(Icons.power_outlined, color: accent, size: 28),

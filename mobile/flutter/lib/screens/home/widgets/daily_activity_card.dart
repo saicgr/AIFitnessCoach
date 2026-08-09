@@ -7,6 +7,7 @@ import '../../../widgets/health_connect_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 class DailyActivityCard extends ConsumerStatefulWidget {
   const DailyActivityCard({super.key});
 
@@ -30,11 +31,11 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
     final activityState = ref.watch(dailyActivityProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     // If not connected to Health Connect, show connect prompt
     if (!syncState.isConnected) {

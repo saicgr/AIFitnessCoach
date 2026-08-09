@@ -88,8 +88,8 @@ class _PhotoHeroCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final cardBg = isDark
         ? Colors.white.withValues(alpha: 0.08)
         : Colors.black.withValues(alpha: 0.05);
@@ -177,8 +177,8 @@ class _FastingHeroCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final activeFast = fastingState.activeFast;
 
     final cardBg = isDark
@@ -468,8 +468,8 @@ Future<int?> showCustomWaterAmountPicker(
   BuildContext context, {
   required bool isDark,
 }) async {
-  final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-  final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+  final textColor = ThemeColors.of(context).textPrimary;
+  final textMuted = ThemeColors.of(context).textMuted;
   final accent = quickActionRegistry['water']!.color;
 
   return showGlassSheet<int>(
@@ -693,8 +693,8 @@ Future<int?> showCustomWaterAmountPicker(
 Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
   HapticService.medium();
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-  final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+  final textColor = ThemeColors.of(context).textPrimary;
+  final textMuted = ThemeColors.of(context).textMuted;
 
   const sizes = <({int ml, String label, IconData icon})>[
     (ml: 250, label: '250ml', icon: Icons.local_cafe_outlined),
@@ -906,8 +906,8 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
   void _showWaterSizeOptions() {
     HapticService.medium();
     final isDark = widget.isDark;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
@@ -1123,7 +1123,7 @@ class _FastGridActionItem extends ConsumerWidget {
                   color: AppColors.success,  // accent-allowlist: success/positive state -- must stay green regardless of accent
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+                    color: ThemeColors.of(context).elevated,
                     width: 1,
                   ),
                 ),
@@ -1154,10 +1154,8 @@ class _WaterSizeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isDark
-        ? AppColors.cardBorder.withValues(alpha: 0.3)
-        : AppColorsLight.cardBorder.withValues(alpha: 0.3);
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final cardColor = ThemeColors.of(context).cardBorder.withValues(alpha: 0.3);
+    final textColor = ThemeColors.of(context).textPrimary;
 
     return Material(
       color: Colors.transparent,
@@ -1261,11 +1259,9 @@ class _CustomWaterPresetTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = quickActionRegistry['water']!.color;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final baseCard = isDark
-        ? AppColors.cardBorder.withValues(alpha: 0.3)
-        : AppColorsLight.cardBorder.withValues(alpha: 0.3);
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final baseCard = ThemeColors.of(context).cardBorder.withValues(alpha: 0.3);
     return Material(
       color: Colors.transparent,
       child: InkWell(

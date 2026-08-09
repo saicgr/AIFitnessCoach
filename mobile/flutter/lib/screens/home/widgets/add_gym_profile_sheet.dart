@@ -12,6 +12,7 @@ import '../../../widgets/sheet_header.dart';
 import 'gym_equipment_sheet.dart';
 import 'import_equipment_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 part 'add_gym_profile_sheet_part_equipment_follow_up.dart';
 
@@ -394,15 +395,14 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   }
 
   void _showFollowUpDialog(_EquipmentFollowUp followUp) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           _followUpTitle(followUp.suggest, l10n),
@@ -530,9 +530,9 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final backgroundColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final accentColor = isDark ? context.accentColor : AppColorsLight.cyan;
 
     return GlassSheet(

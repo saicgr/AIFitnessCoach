@@ -128,7 +128,7 @@ class FridgePref extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? accent.withValues(alpha: 0.14) : tc.surface,
           border: Border.all(
-              color: selected ? accent.withValues(alpha: 0.5) : AppColors.cardBorder),
+              color: selected ? accent.withValues(alpha: 0.5) : ThemeColors.of(context).cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
@@ -191,7 +191,7 @@ class _FridgeFiltersSheetState extends State<FridgeFiltersSheet> {
                         const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
                     enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.cardBorder)),
+                        borderSide: BorderSide(color: ThemeColors.of(context).cardBorder)),
                     focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: tc.accent)),
@@ -215,7 +215,7 @@ class _FridgeFiltersSheetState extends State<FridgeFiltersSheet> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.cardBorder)),
+                border: Border(top: BorderSide(color: ThemeColors.of(context).cardBorder)),
               ),
               child: Row(
                 children: [
@@ -287,7 +287,7 @@ class _FridgeFiltersSheetState extends State<FridgeFiltersSheet> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: primary ? tc.accent : Colors.transparent,
-          border: primary ? null : Border.all(color: AppColors.cardBorder),
+          border: primary ? null : Border.all(color: ThemeColors.of(context).cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(

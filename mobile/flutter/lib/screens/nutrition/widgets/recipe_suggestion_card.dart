@@ -55,8 +55,8 @@ class RecipeSuggestionCard extends StatelessWidget {
                         spacing: 8,
                         runSpacing: 6,
                         children: [
-                          _buildChip(recipe.cuisine.toUpperCase(), textMuted),
-                          _buildChip(recipe.category.toUpperCase(), textMuted),
+                          _buildChip(context, recipe.cuisine.toUpperCase(), textMuted),
+                          _buildChip(context, recipe.category.toUpperCase(), textMuted),
                         ],
                       ),
                     ],
@@ -107,8 +107,8 @@ class RecipeSuggestionCard extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: tc.surface,
-                border: const Border(
-                  left: BorderSide(color: AppColors.cardBorder, width: 3),
+                border: Border(
+                  left: BorderSide(color: tc.cardBorder, width: 3),
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -226,11 +226,11 @@ class RecipeSuggestionCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(String label, Color color) {
+  Widget _buildChip(BuildContext context, String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -311,7 +311,7 @@ class RecipeSuggestionCard extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: surface,
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: ThemeColors.of(context).cardBorder),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(

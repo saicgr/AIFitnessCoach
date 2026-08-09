@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Row 53 (E2E) — shown instead of the "TRY ASKING…" new-chat landing when
 /// the user explicitly opened a saved session from HISTORY and it resolved
@@ -49,7 +49,7 @@ class EmptySessionState extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
               ),
             ),
             const SizedBox(height: 20),

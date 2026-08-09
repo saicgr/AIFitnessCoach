@@ -298,7 +298,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
           ),
           padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
           child: Row(
@@ -309,7 +309,7 @@ class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
                 decoration: BoxDecoration(
                   color: tc.elevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                 ),
                 child: Icon(
                   Icons.fitness_center_rounded,

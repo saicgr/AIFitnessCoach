@@ -17,11 +17,11 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
     showDialog(
       context: _ctx,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.elevated,
+        backgroundColor: ThemeColors.of(dialogContext).elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           isDecimal ? 'Enter Weight (${useKg ? 'kg' : 'lbs'})' : AppLocalizations.of(context).workoutSheetsMixinEnterReps,
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: ThemeColors.of(dialogContext).textPrimary),
         ),
         content: TextField(
           controller: editController,
@@ -37,7 +37,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
           textAlign: TextAlign.center,
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppColors.pureBlack,
+            fillColor: ThemeColors.of(dialogContext).background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: ref.watch(accentColorProvider).getColor(Theme.of(dialogContext).brightness == Brightness.dark)),
@@ -59,7 +59,7 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child:
-                Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: AppColors.textMuted)),
+                Text(AppLocalizations.of(context).buttonCancel, style: TextStyle(color: ThemeColors.of(dialogContext).textMuted)),
           ),
           TextButton(
             onPressed: () {

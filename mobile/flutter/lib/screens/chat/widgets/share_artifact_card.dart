@@ -12,6 +12,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import 'package:fitwiz/data/services/share_service.dart';
 
@@ -91,13 +92,14 @@ class ShareArtifactCard extends StatelessWidget {
     }
     final url = _url;
     if (url == null) return const SizedBox.shrink();
+    final tc = ThemeColors.of(context);
 
     return Container(
       margin: const EdgeInsets.only(top: 10),
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: tc.elevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+        border: Border.all(color: tc.cardBorder, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,9 +114,9 @@ class ShareArtifactCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     _label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: tc.textPrimary,
                     ),
                   ),
                 ),
@@ -127,15 +129,15 @@ class ShareArtifactCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.pureBlack.withOpacity(0.4),
+                color: tc.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 url.replaceFirst(RegExp(r'^https?://'), ''),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 12,
-                  color: AppColors.textSecondary,
+                  color: tc.textSecondary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -163,7 +165,7 @@ class ShareArtifactCard extends StatelessWidget {
               Container(
                 width: 0.5,
                 height: 36,
-                color: AppColors.cardBorder,
+                color: tc.cardBorder,
               ),
               Expanded(
                 child: TextButton.icon(
@@ -171,7 +173,7 @@ class ShareArtifactCard extends StatelessWidget {
                   icon: const Icon(Icons.arrow_forward_rounded, size: 16),
                   label: Text(AppLocalizations.of(context).shareArtifactCardOpenInApp),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.textPrimary,
+                    foregroundColor: tc.textPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.only(

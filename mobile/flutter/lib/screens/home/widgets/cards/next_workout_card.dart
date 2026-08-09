@@ -162,7 +162,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
           rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
-              backgroundColor: AppColors.textMuted,
+              backgroundColor: ThemeColors.of(context).textMuted,
             ),
           );
         }
@@ -185,15 +185,14 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+        ThemeColors.of(context).glassSurface;
 
     final workout = widget.workout;
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final exercises = workout.exercises;
 
     return Container(
@@ -438,7 +437,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                       Container(
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: AppColors.textMuted.withValues(alpha: 0.5),
+                            color: ThemeColors.of(context).textMuted.withValues(alpha: 0.5),
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -458,7 +457,7 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                                   ),
                                 )
                               : const Icon(Icons.skip_next, size: 20),
-                          color: AppColors.textMuted,
+                          color: ThemeColors.of(context).textMuted,
                           tooltip: AppLocalizations.of(context).onboardingSkip,
                         ),
                       ),
@@ -560,16 +559,16 @@ class _MoreBadge extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Text(
         AppLocalizations.of(context)!.nextWorkoutCardValue(count),
         style: TextStyle(
           fontSize: size * 0.32,
           fontWeight: FontWeight.w700,
-          color: AppColors.textSecondary,
+          color: ThemeColors.of(context).textSecondary,
         ),
       ),
     );

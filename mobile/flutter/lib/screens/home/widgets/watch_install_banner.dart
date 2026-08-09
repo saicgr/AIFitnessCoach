@@ -10,6 +10,7 @@ import '../../../data/services/wearable_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../data/providers/root_messenger.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Apple AirPods-style banner to prompt WearOS app installation.
 ///
 /// Shows when:
@@ -188,10 +189,9 @@ class _WatchInstallBannerState extends ConsumerState<WatchInstallBanner>
       return const SizedBox.shrink();
     }
 
-    final isDark = widget.isDark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final accentColor = context.accentColor;
 
     return AnimatedBuilder(

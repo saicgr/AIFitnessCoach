@@ -31,7 +31,7 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -45,7 +45,7 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
                   height: 36,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -85,7 +85,7 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
                     decoration: BoxDecoration(
                       color: ThemeColors.of(context).surface,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.cardBorder),
+                      border: Border.all(color: ThemeColors.of(context).cardBorder),
                     ),
                     child: Text(
                       AppLocalizations.of(context).nutritionSettingsScreenDue.toUpperCase(),

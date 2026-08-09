@@ -248,7 +248,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           color: tc.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: AppColors.cardBorder),
+            side: BorderSide(color: ThemeColors.of(context).cardBorder),
           ),
           onSelected: (unit) => setState(() => _selectedUnit = unit),
           itemBuilder: (ctx) => HydrationUnit.values.map((unit) {
@@ -268,7 +268,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
             height: 28,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
               borderRadius: BorderRadius.circular(999),
             ),
             child: Row(
@@ -337,7 +337,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           Container(
             width: 1,
             height: 40,
-            color: AppColors.cardBorder,
+            color: ThemeColors.of(context).cardBorder,
           ),
           Expanded(
             child: _StatItem(
@@ -352,7 +352,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           Container(
             width: 1,
             height: 40,
-            color: AppColors.cardBorder,
+            color: ThemeColors.of(context).cardBorder,
           ),
           Expanded(
             child: _StatItem(

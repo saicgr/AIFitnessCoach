@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/trophy.dart';
@@ -99,8 +98,8 @@ class _RarityTile extends StatelessWidget {
     final metal = tier.primaryColor;
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 11, 4, 10),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: tc.hairline)),
       ),
       child: Column(
         children: [
@@ -163,8 +162,8 @@ class _EmptyShowcase extends StatelessWidget {
     final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 28),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: tc.hairline)),
       ),
       child: Column(
         children: [

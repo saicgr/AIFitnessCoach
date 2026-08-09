@@ -180,13 +180,13 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textSecondary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+        ThemeColors.of(context).cardBorder;
+    final elevated = ThemeColors.of(context).elevated;
 
     final importState = ref.watch(healthImportProvider);
     final pending = importState.pendingImports;
@@ -789,7 +789,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
     required Color textSecondary,
   }) {
     final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        ThemeColors.of(context).cardBorder;
 
     return SizedBox(
       width: double.infinity,

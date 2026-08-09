@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -71,6 +72,7 @@ class _UserCardState extends ConsumerState<UserCard> {
     final authState = ref.watch(authStateProvider);
     final user = authState.user;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final fg = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final userName =
         user?.displayName ?? user?.name ?? user?.username ?? 'You';
@@ -180,8 +182,8 @@ class _UserCardState extends ConsumerState<UserCard> {
                         const SizedBox(height: 3),
                         Text(
                           userEmail,
-                          style: const TextStyle(
-                              fontSize: 12.5, color: AppColors.textMuted),
+                          style: TextStyle(
+                              fontSize: 12.5, color: tc.textMuted),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -197,8 +199,8 @@ class _UserCardState extends ConsumerState<UserCard> {
                   ),
                 ),
                 if (widget.editable)
-                  const Icon(Icons.edit_outlined,
-                      size: 16, color: AppColors.textMuted),
+                  Icon(Icons.edit_outlined,
+                      size: 16, color: tc.textMuted),
               ],
             ),
             if (_bioLoaded && _bio != null && _bio!.isNotEmpty) ...[
@@ -232,9 +234,9 @@ class _UserCardState extends ConsumerState<UserCard> {
       children: [
         Text(
           'Injuries',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textMuted,
+            color: ThemeColors.of(context).textMuted,
             letterSpacing: 0.1,
           ),
         ),
@@ -304,6 +306,7 @@ class _UserHandleChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     return GestureDetector(
       // Own gesture so tapping the handle copies it instead of opening the editor.
       behavior: HitTestBehavior.opaque,
@@ -322,17 +325,17 @@ class _UserHandleChip extends StatelessWidget {
             Flexible(
               child: Text(
                 '@$handle',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                   letterSpacing: 0.1,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.copy_rounded,
-                size: 13, color: AppColors.textMuted),
+            Icon(Icons.copy_rounded,
+                size: 13, color: tc.textMuted),
           ],
         ),
       ),
@@ -351,6 +354,7 @@ class _InjuryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.only(left: 8, right: 3, top: 4, bottom: 4),
       decoration: BoxDecoration(
@@ -371,9 +375,9 @@ class _InjuryChip extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 160),
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textSecondary,
+                color: tc.textSecondary,
                 letterSpacing: 0.1,
               ),
               maxLines: 1,
@@ -383,10 +387,10 @@ class _InjuryChip extends StatelessWidget {
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: onRemove,
-            child: const Padding(
-              padding: EdgeInsets.all(3),
+            child: Padding(
+              padding: const EdgeInsets.all(3),
               child: Icon(Icons.close_rounded,
-                  size: 13, color: AppColors.textMuted),
+                  size: 13, color: tc.textMuted),
             ),
           ),
         ],

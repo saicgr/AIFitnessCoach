@@ -6,6 +6,7 @@ import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Mixin providing exercise management functionality for workout screens.
 /// This includes reordering, skipping, swapping, and superset management.
 mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
@@ -96,10 +97,10 @@ mixin ExerciseManagementMixin<T extends StatefulWidget> on State<T> {
           children: [
             Text(
               exercise.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: ThemeColors.of(context).textPrimary,
               ),
             ),
             const SizedBox(height: 20),

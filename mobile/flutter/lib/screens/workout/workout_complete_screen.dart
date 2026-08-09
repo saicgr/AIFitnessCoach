@@ -991,7 +991,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             // on the DONE CTA (Signature v2 orange-once rule).
                             color: starIndex <= _rating
                                 ? ThemeColors.of(context).textPrimary
-                                : AppColors.textMuted,
+                                : ThemeColors.of(context).textMuted,
                           ),
                         ),
                       );
@@ -1142,7 +1142,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           Icons.hot_tub_rounded,
                           size: 16,
                           color: _saunaMinutes != null
-                              ? AppColors.textMuted
+                              ? ThemeColors.of(context).textMuted
                               : textSecondary,
                         ),
                         label: Text(
@@ -1274,7 +1274,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               Icon(
                                 Icons.more_horiz,
                                 size: 16,
-                                color: AppColors.textMuted,
+                                color: ThemeColors.of(context).textMuted,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -1304,7 +1304,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         decoration: BoxDecoration(
                           color: ThemeColors.of(context).surface,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppColors.cardBorder),
+                          border: Border.all(color: ThemeColors.of(context).cardBorder),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -1394,7 +1394,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       decoration: BoxDecoration(
                         color: ThemeColors.of(context).surface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.cardBorder),
+                        border: Border.all(color: ThemeColors.of(context).cardBorder),
                       ),
                       child: _buildCompactExerciseFeedback(),
                     ),

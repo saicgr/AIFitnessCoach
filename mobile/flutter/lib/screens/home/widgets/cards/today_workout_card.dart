@@ -9,6 +9,7 @@ import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Today's Workout Card Widget
 ///
 /// A prominent home screen card that provides a "Quick Start" / "Today's Workout"
@@ -70,12 +71,11 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
   @override
   Widget build(BuildContext context) {
     final todayWorkoutAsync = ref.watch(todayWorkoutProvider);
-    final isDark = widget.isDark;
 
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -488,10 +488,10 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.glassSurface.withValues(alpha: 0.5),
+                color: ThemeColors.of(context).glassSurface.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.textMuted.withValues(alpha: 0.2),
+                  color: ThemeColors.of(context).textMuted.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(

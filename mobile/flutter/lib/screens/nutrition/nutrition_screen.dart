@@ -1053,7 +1053,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 decoration: BoxDecoration(
                   color: ThemeColors.of(context).surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                 ),
                 child: Icon(Icons.more_vert_rounded, size: 18, color: textSecondary),
               ),
@@ -1075,7 +1075,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 decoration: BoxDecoration(
                   color: ThemeColors.of(context).surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                 ),
                 child: Icon(Icons.show_chart_rounded, size: 18, color: textSecondary),
               ),
@@ -1100,7 +1100,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               decoration: BoxDecoration(
                 color: ThemeColors.of(context).surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
               ),
               child: Icon(Icons.settings_outlined, size: 18, color: textSecondary),
             ),

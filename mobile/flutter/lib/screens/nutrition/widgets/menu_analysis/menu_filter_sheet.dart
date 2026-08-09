@@ -8,6 +8,7 @@ import 'diet_heuristics.dart';
 import 'menu_filter_state.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Goal-oriented filter sheet for Menu Analysis.
 ///
 /// Design principles:
@@ -306,21 +307,21 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         child: Row(
           children: [
-            Icon(Icons.tune, size: 16, color: AppColors.textSecondary),
+            Icon(Icons.tune, size: 16, color: ThemeColors.of(context).textSecondary),
             const SizedBox(width: 6),
             Text(
               _advancedOpen ? AppLocalizations.of(context).menuFilterHideAdvancedFilters : AppLocalizations.of(context).menuFilterAdvancedFilters,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
               ),
             ),
             const Spacer(),
             Icon(
               _advancedOpen ? Icons.expand_less : Icons.expand_more,
               size: 20,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
           ],
         ),
@@ -531,7 +532,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
             const SizedBox(height: 2),
             Text(
               caption,
-              style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.3),
+              style: TextStyle(fontSize: 11, color: ThemeColors.of(context).textMuted, height: 1.3),
             ),
           ],
           const SizedBox(height: 10),
@@ -555,7 +556,7 @@ class _MenuFilterSheetState extends State<MenuFilterSheet> {
     final enabled = value != null;
     final midpoint = ((min + max) / 2).roundToDouble();
     final current = (value ?? midpoint).clamp(min, max).toDouble();
-    final offColor = AppColors.textMuted.withValues(alpha: 0.6);
+    final offColor = ThemeColors.of(context).textMuted.withValues(alpha: 0.6);
     final activeColor = context.accentColor;
 
     return Padding(
@@ -684,7 +685,7 @@ class _PresetChip extends StatelessWidget {
                     hint,
                     style: TextStyle(
                       fontSize: 10,
-                      color: AppColors.textMuted,
+                      color: ThemeColors.of(context).textMuted,
                     ),
                   ),
                 ],
@@ -777,7 +778,7 @@ class _SwitchRow extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 1),
                     child: Text(
                       subtitle!,
-                      style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 11, color: ThemeColors.of(context).textMuted),
                     ),
                   ),
               ],

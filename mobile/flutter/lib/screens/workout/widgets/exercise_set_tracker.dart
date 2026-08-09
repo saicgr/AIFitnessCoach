@@ -7,6 +7,7 @@ import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/exercise.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Represents a single set's data (current session)
 class SetData {
@@ -167,9 +168,9 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: ThemeColors.of(context).glassSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -185,7 +186,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                 widget.exercise.notes!,
                 style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary.withAlpha(200),
+                  color: ThemeColors.of(context).textSecondary.withAlpha(200),
                 ),
               ),
             ),
@@ -196,12 +197,12 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 controller: _notesController,
-                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+                style: TextStyle(color: ThemeColors.of(context).textPrimary, fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Add notes here...',
-                  hintStyle: TextStyle(color: AppColors.textMuted.withAlpha(150)),
+                  hintStyle: TextStyle(color: ThemeColors.of(context).textMuted.withAlpha(150)),
                   filled: true,
-                  fillColor: AppColors.elevated,
+                  fillColor: ThemeColors.of(context).elevated,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
@@ -274,7 +275,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                     widget.exercise.muscleGroup!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textMuted.withAlpha(180),
+                      color: ThemeColors.of(context).textMuted.withAlpha(180),
                     ),
                   ),
               ],
@@ -283,7 +284,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
 
           // Options menu
           IconButton(
-            icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+            icon: Icon(Icons.more_vert, color: ThemeColors.of(context).textSecondary),
             onPressed: widget.onShowOptions ?? () {},
           ),
         ],
@@ -296,7 +297,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(Icons.fitness_center, color: context.accentColor, size: 24),
@@ -378,7 +379,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                       width: 36,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.textMuted.withAlpha(80),
+                        color: ThemeColors.of(context).textMuted.withAlpha(80),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -386,10 +387,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                   const SizedBox(height: 16),
                   Text(
                     'Rest target',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: ThemeColors.of(context).textPrimary,
                     ),
                   ),
                   if (muscle != null && muscle.isNotEmpty)
@@ -399,7 +400,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                         AppLocalizations.of(context)!.exerciseSetTrackerSavedAsYourDefault(muscle),
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textMuted.withAlpha(200),
+                          color: ThemeColors.of(context).textMuted.withAlpha(200),
                         ),
                       ),
                     ),
@@ -497,13 +498,13 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: AppColors.elevated.withAlpha(100),
+            color: ThemeColors.of(context).elevated.withAlpha(100),
           ),
           child: Row(
             children: [
-              const SizedBox(width: 36, child: Text('Set', style: _headerStyle)),
+              SizedBox(width: 36, child: Text('Set', style: _headerStyle)),
               // Target column - increased flex for "30 kg x 10" + RIR chip
-              const Expanded(flex: 5, child: Text('Target', style: _headerStyle)),
+              Expanded(flex: 5, child: Text('Target', style: _headerStyle)),
               Expanded(
                 flex: 2,
                 child: GestureDetector(
@@ -511,7 +512,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.swap_horiz, size: 14, color: AppColors.textMuted),
+                      Icon(Icons.swap_horiz, size: 14, color: ThemeColors.of(context).textMuted),
                       const SizedBox(width: 2),
                       Text(
                         widget.useKg ? 'kg' : 'lbs',
@@ -521,7 +522,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                   ),
                 ),
               ),
-              const Expanded(flex: 2, child: Text('Reps', style: _headerStyle)),
+              Expanded(flex: 2, child: Text('Reps', style: _headerStyle)),
               const SizedBox(width: 44), // Checkmark column
             ],
           ),
@@ -535,14 +536,14 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                 Icon(
                   Icons.info_outline,
                   size: 12,
-                  color: AppColors.textMuted.withOpacity(0.7),
+                  color: ThemeColors.of(context).textMuted.withOpacity(0.7),
                 ),
                 const SizedBox(width: 4),
                 Text(
                   'Weight includes ${widget.useKg ? '20kg' : '45lb'} barbell',
                   style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.textMuted.withOpacity(0.7),
+                    color: ThemeColors.of(context).textMuted.withOpacity(0.7),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -553,10 +554,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     );
   }
 
-  static const _headerStyle = TextStyle(
+  TextStyle get _headerStyle => TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.bold,
-    color: AppColors.textMuted,
+    color: ThemeColors.of(context).textMuted,
     letterSpacing: 0.5,
   );
 
@@ -601,7 +602,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     if (set.isWarmup || set.setType == 'warmup') return AppColors.orange;  // accent-allowlist: set-type legend — warm-up sets are always this orange
     if (set.isFailureSet) return Colors.red;  // accent-allowlist: error/destructive — must stay red
     if (set.isDropSet) return Colors.purple;  // accent-allowlist: set-type legend — drop sets are always this purple
-    return AppColors.textPrimary;
+    return ThemeColors.of(context).textPrimary;
   }
 
   /// Get RIR chip color based on intensity. RIR scale — each band needs
@@ -648,7 +649,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
       decoration: BoxDecoration(
         color: set.isCompleted ? context.accentColor.withAlpha(20) : Colors.transparent,
         border: Border(
-          bottom: BorderSide(color: AppColors.cardBorder.withAlpha(50)),
+          bottom: BorderSide(color: ThemeColors.of(context).cardBorder.withAlpha(50)),
         ),
       ),
       child: Row(
@@ -687,7 +688,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                      color: ThemeColors.of(context).textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.visible,
@@ -741,10 +742,10 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: set.isCompleted ? context.accentColor : AppColors.elevated,
+                  color: set.isCompleted ? context.accentColor : ThemeColors.of(context).elevated,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: set.isCompleted ? context.accentColor : AppColors.cardBorder,
+                    color: set.isCompleted ? context.accentColor : ThemeColors.of(context).cardBorder,
                     width: 2,
                   ),
                 ),
@@ -766,20 +767,20 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.elevated,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.cardBorder, style: BorderStyle.solid),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, style: BorderStyle.solid),
         ),
-        // TODO(i18n): 'Add Set' is inside a const Row in a method without BuildContext — refactor to pass AppLocalizations
-        child: const Row(
+        // TODO(i18n): 'Add Set' text is hardcoded — refactor to pass AppLocalizations
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add, color: AppColors.textSecondary, size: 18),
-            SizedBox(width: 6),
+            Icon(Icons.add, color: ThemeColors.of(context).textSecondary, size: 18),
+            const SizedBox(width: 6),
             Text(
               'Add Set',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -842,7 +843,7 @@ class _EditableCellState extends State<_EditableCell> {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         margin: const EdgeInsetsDirectional.only(end: 8),
         decoration: BoxDecoration(
-          color: widget.isCompleted ? Colors.transparent : AppColors.elevated,
+          color: widget.isCompleted ? Colors.transparent : ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(6),
         ),
         child: _isEditing
@@ -854,7 +855,7 @@ class _EditableCellState extends State<_EditableCell> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: widget.isCompleted ? context.accentColor : AppColors.textPrimary,
+                  color: widget.isCompleted ? context.accentColor : ThemeColors.of(context).textPrimary,
                 ),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
@@ -876,7 +877,7 @@ class _EditableCellState extends State<_EditableCell> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: widget.isCompleted ? context.accentColor : AppColors.textPrimary,
+                  color: widget.isCompleted ? context.accentColor : ThemeColors.of(context).textPrimary,
                 ),
               ),
       ),
@@ -941,7 +942,7 @@ class _RestPresetChip extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? context.accentColor
-                : AppColors.cardBorder,
+                : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Text(
@@ -949,7 +950,7 @@ class _RestPresetChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: isSelected ? context.accentColor : AppColors.textSecondary,
+            color: isSelected ? context.accentColor : ThemeColors.of(context).textSecondary,
           ),
         ),
       ),

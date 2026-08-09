@@ -638,7 +638,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                             valueSize: 26,
                           ),
                         ),
-                        Container(width: 1, height: 32, color: AppColors.hairline),
+                        Container(width: 1, height: 32, color: ThemeColors.of(context).cardBorder),
                         const SizedBox(width: 16),
                         Expanded(
                           child: ZealovaStatTile(
@@ -647,7 +647,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                             valueSize: 26,
                           ),
                         ),
-                        Container(width: 1, height: 32, color: AppColors.hairline),
+                        Container(width: 1, height: 32, color: ThemeColors.of(context).cardBorder),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Row(
@@ -711,7 +711,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         decoration: BoxDecoration(
                           color: ThemeColors.of(context).surface,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppColors.cardBorder),
+                          border: Border.all(color: ThemeColors.of(context).cardBorder),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,

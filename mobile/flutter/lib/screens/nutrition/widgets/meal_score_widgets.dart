@@ -5,6 +5,7 @@ import 'inflammation_chip.dart' show inflammationColor;
 import 'score_explain_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Animated calorie chip with count-up and shimmer effect
 class AnimatedCalorieChip extends StatefulWidget {
   final int calories;
@@ -273,7 +274,7 @@ class MealScoreBreakdownRow extends StatelessWidget {
     // 3-tier scheme aligned with ScoreExplainSheet's legend bands so the
     // "Health X/10" pill colour always matches the explainer sheet:
     // >=7 GOOD (green), >=4 AVERAGE (teal-600), else POOR (coral).
-    // NOT AppColors.teal — that constant is #C0C0C0 (silver grey), which made
+    // NOT ThemeColors.of(context).teal — that constant is #C0C0C0 (silver grey), which made
     // the "Health X/10" pill icon + text unreadable. Real teal (teal-600).
     if (score >= 7) return AppColors.green;  // accent-allowlist: success/positive state (logged, synced, completed)
     if (score >= 4) return const Color(0xFF0D9488);  // accent-allowlist: score severity scale — medium tier (real teal-600, not AppColors.teal grey)

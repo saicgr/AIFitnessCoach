@@ -274,6 +274,7 @@ class _Thumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty;
+    final tc = ThemeColors.of(context);
 
     return Hero(
       tag: 'exercise-image-${exercise.name}',
@@ -281,9 +282,9 @@ class _Thumb extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -298,19 +299,19 @@ class _Thumb extends StatelessWidget {
                 placeholder: (context, url) => Icon(
                   fallbackIcon,
                   size: 18,
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                 ),
                 errorWidget: (context, url, error) => Icon(
                   fallbackIcon,
                   size: 18,
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                 ),
               )
             else
               Icon(
                 fallbackIcon,
                 size: 18,
-                color: AppColors.textMuted,
+                color: tc.textMuted,
               ),
             if (hasVideo)
               Positioned(
@@ -365,12 +366,12 @@ class _RowAction extends StatelessWidget {
           decoration: BoxDecoration(
             color: active
                 ? context.accentColor.withValues(alpha: 0.10)
-                : AppColors.surface2,
+                : tc.surface,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: active
                   ? context.accentColor.withValues(alpha: 0.55)
-                  : AppColors.cardBorder,
+                  : tc.cardBorder,
             ),
           ),
           child: Icon(
@@ -559,9 +560,9 @@ class _AlternativeRow extends ConsumerWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(9),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: tc.cardBorder),
         ),
         clipBehavior: Clip.antiAlias,
         child: imageUrl != null && imageUrl.isNotEmpty
@@ -571,14 +572,14 @@ class _AlternativeRow extends ConsumerWidget {
                 height: 40,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Icon(_icon(alternative.bodyPart),
-                    size: 18, color: AppColors.textMuted),
+                    size: 18, color: tc.textMuted),
                 errorWidget: (context, url, error) => Icon(
                     _icon(alternative.bodyPart),
                     size: 18,
-                    color: AppColors.textMuted),
+                    color: tc.textMuted),
               )
             : Icon(_icon(alternative.bodyPart),
-                size: 18, color: AppColors.textMuted),
+                size: 18, color: tc.textMuted),
       ),
       title: Text(
         alternative.name,

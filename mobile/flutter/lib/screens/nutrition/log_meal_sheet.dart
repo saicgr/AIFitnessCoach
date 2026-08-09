@@ -608,7 +608,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Row(
               children: [
-                const Icon(Icons.auto_awesome, color: AppColors.textSecondary, size: 28),
+                Icon(Icons.auto_awesome, color: ThemeColors.of(context).textSecondary, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -783,7 +783,7 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, (confirmed: true, multiplier: portionMultiplier)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textMuted,
+                  backgroundColor: ThemeColors.of(context).textMuted,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),

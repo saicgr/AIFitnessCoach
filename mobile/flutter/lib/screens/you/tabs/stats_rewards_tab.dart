@@ -19,10 +19,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/design_system/section_header.dart';
@@ -566,6 +566,7 @@ class _PrimaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final pct = (progress.clamp(0.0, 1.0) * 100).round();
     // Signature flagship tile — hairline surface + accent LEFT edge (the
     // ZealovaCard `hero` grammar), Anton headline percentage, a 3px hairline
@@ -578,9 +579,9 @@ class _PrimaryTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: tc.cardBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,11 +596,11 @@ class _PrimaryTile extends StatelessWidget {
                     children: [
                       Text(title.toUpperCase(),
                           style: ZType.lbl(11,
-                              color: AppColors.textMuted, letterSpacing: 2)),
+                              color: tc.textMuted, letterSpacing: 2)),
                       const SizedBox(height: 6),
                       Text(subtitle,
                           style: TextStyle(
-                              color: AppColors.textSecondary, fontSize: 12.5)),
+                              color: tc.textSecondary, fontSize: 12.5)),
                     ],
                   ),
                 ),
@@ -612,11 +613,11 @@ class _PrimaryTile extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 4, left: 1),
                   child: Text('%',
                       style: ZType.lbl(11,
-                          color: AppColors.textMuted, letterSpacing: 0.5)),
+                          color: tc.textMuted, letterSpacing: 0.5)),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.chevron_right,
-                    size: 18, color: AppColors.textMuted),
+                Icon(Icons.chevron_right,
+                    size: 18, color: tc.textMuted),
               ],
             ),
             const SizedBox(height: 12),
@@ -627,7 +628,7 @@ class _PrimaryTile extends StatelessWidget {
                 height: 3,
                 child: Stack(
                   children: [
-                    Container(color: AppColors.hairlineStrong),
+                    Container(color: tc.hairlineStrong),
                     FractionallySizedBox(
                       widthFactor: progress.clamp(0.0, 1.0),
                       child: Container(color: accent),
@@ -672,6 +673,7 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     // Signature hairline surface. `highlight` (action-ready, e.g. rewards to
     // claim) is the ONE place the accent edge appears; otherwise a flat warm
     // hairline border — no glass-alpha surface, no accent-tinted icon chip.
@@ -683,18 +685,18 @@ class _MetricTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
           border: highlight
-              ? Border.all(color: AppColors.cardBorder, width: 1)
-              : Border.all(color: AppColors.cardBorder),
+              ? Border.all(color: tc.cardBorder, width: 1)
+              : Border.all(color: tc.cardBorder),
         ),
-        child: wide ? _wideLayout() : _compactLayout(),
+        child: wide ? _wideLayout(tc) : _compactLayout(tc),
       ),
     );
   }
 
-  Widget _compactLayout() {
+  Widget _compactLayout(ThemeColors tc) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -706,20 +708,20 @@ class _MetricTile extends StatelessWidget {
           height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: AppColors.textSecondary, size: 16),
+          child: Icon(icon, color: tc.textSecondary, size: 16),
         ),
         const SizedBox(height: 10),
         Text(title.toUpperCase(),
-            style: ZType.lbl(10, color: AppColors.textMuted, letterSpacing: 1.5)),
+            style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.5)),
         const SizedBox(height: 5),
         _MetricHeadline(headline: headline, fg: fg),
         const SizedBox(height: 3),
         Text(
           sub,
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+          style: TextStyle(color: tc.textMuted, fontSize: 11),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -727,7 +729,7 @@ class _MetricTile extends StatelessWidget {
     );
   }
 
-  Widget _wideLayout() {
+  Widget _wideLayout(ThemeColors tc) {
     return Row(
       children: [
         Container(
@@ -735,10 +737,10 @@ class _MetricTile extends StatelessWidget {
           height: 30,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: AppColors.textSecondary, size: 17),
+          child: Icon(icon, color: tc.textSecondary, size: 17),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -748,20 +750,20 @@ class _MetricTile extends StatelessWidget {
             children: [
               Text(title.toUpperCase(),
                   style: ZType.lbl(10,
-                      color: AppColors.textMuted, letterSpacing: 1.5)),
+                      color: tc.textMuted, letterSpacing: 1.5)),
               const SizedBox(height: 4),
               _MetricHeadline(headline: headline, fg: fg),
               const SizedBox(height: 2),
               Text(
                 sub,
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                style: TextStyle(color: tc.textMuted, fontSize: 11),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
-        const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
+        Icon(Icons.chevron_right, color: tc.textMuted, size: 18),
       ],
     );
   }

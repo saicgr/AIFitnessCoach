@@ -473,13 +473,13 @@ class _MetabolicAdaptationAlert extends StatelessWidget {
     Color alertColor;
     switch (adaptation.severity) {
       case 'high':
-        alertColor = AppColors.textMuted;
+        alertColor = ThemeColors.of(context).textMuted;
         break;
       case 'medium':
-        alertColor = AppColors.textSecondary;
+        alertColor = ThemeColors.of(context).textSecondary;
         break;
       default:
-        alertColor = AppColors.textSecondary;
+        alertColor = ThemeColors.of(context).textSecondary;
     }
 
     return Container(
@@ -571,13 +571,13 @@ class _AdherenceCard extends StatelessWidget {
     Color sustainColor;
     switch (adherence.sustainabilityRating) {
       case 'high':
-        sustainColor = AppColors.textPrimary;
+        sustainColor = ThemeColors.of(context).textPrimary;
         break;
       case 'medium':
-        sustainColor = AppColors.textSecondary;
+        sustainColor = ThemeColors.of(context).textSecondary;
         break;
       default:
-        sustainColor = AppColors.textMuted;
+        sustainColor = ThemeColors.of(context).textMuted;
     }
 
     return Container(
@@ -613,7 +613,7 @@ class _AdherenceCard extends StatelessWidget {
                 child: _ScoreCircle(
                   label: AppLocalizations.of(context).weeklyCheckinSheetAdherence,
                   value: adherence.averageAdherence,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                   isDark: isDark,
                 ),
               ),

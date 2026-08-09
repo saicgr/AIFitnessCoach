@@ -30,6 +30,7 @@ import '../../chat/widgets/media_picker_helper.dart';
 import 'import_equipment_result_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Maximum wall-clock time we will poll the job before surfacing a timeout.
 const _kPollTimeout = Duration(seconds: 60);
 
@@ -381,9 +382,9 @@ class _ImportEquipmentSheetState extends ConsumerState<ImportEquipmentSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
     return SizedBox(
@@ -752,11 +753,10 @@ class _InputTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return InkWell(
       onTap: onTap,

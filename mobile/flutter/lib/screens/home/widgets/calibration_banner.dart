@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// "Coach is learning you" banner on Home for new accounts.
 ///
@@ -165,13 +166,8 @@ class _CalibrationBannerState extends ConsumerState<CalibrationBanner> {
         ?.calibrationStatus;
     if (status == null || status.allReady) return const SizedBox.shrink();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final textSecondary = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     final ready = status.readyCount;
     final total = status.totalCount;

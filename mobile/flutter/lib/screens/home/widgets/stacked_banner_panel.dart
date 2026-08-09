@@ -11,6 +11,7 @@ import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart'
     show dailyCoachInsightProvider, CalibrationStatus;
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/discover_provider.dart';
 import '../../../data/providers/health_insight_provider.dart';
 import '../../../data/providers/scheduling_provider.dart';
@@ -759,11 +760,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   /// card format doesn't support in-place expansion, so tapping the card
   /// opens this sheet instead; the content is otherwise unchanged.
   void _showCalibrationDetailSheet(CalibrationStatus status) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     const signalLabels = <String, String>{
       'resting_hr': 'Resting HR baseline',
       'hrv': 'HRV baseline',
@@ -861,7 +861,6 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   }
 
   Future<void> _showCrateDismissConfirmation(List<BannerCardData> banners) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Collapse the pill immediately
     setState(() => _isDismissAllExpanded = false);
@@ -871,7 +870,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       context: context,
       barrierColor: Colors.black54,
       builder: (dialogContext) => Dialog(
-        backgroundColor: isDark ? AppColors.elevated : Colors.white,
+        backgroundColor: ThemeColors.of(context).elevated,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -885,7 +884,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? AppColors.textPrimary : Colors.black87,
+                  color: ThemeColors.of(context).textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -894,7 +893,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDark ? AppColors.textSecondary : Colors.black54,
+                  color: ThemeColors.of(context).textSecondary,
                 ),
               ),
               const SizedBox(height: 24),
@@ -924,7 +923,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                 child: Text(
                   AppLocalizations.of(context).stackedBannerPanelDismissAnyway,
                   style: TextStyle(
-                    color: isDark ? AppColors.textSecondary : Colors.black54,
+                    color: ThemeColors.of(context).textSecondary,
                   ),
                 ),
               ),
@@ -1349,7 +1348,6 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   }
 
   Widget _buildDismissAllBadge(List<BannerCardData> banners) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => _onDismissAllTap(banners),
@@ -1362,12 +1360,12 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
               vertical: 4,
             ),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+              color: ThemeColors.of(context).glassSurface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: _isDismissAllExpanded
                     ? context.accentColor.withOpacity(0.5)
-                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                    : (ThemeColors.of(context).cardBorder),
                 width: 0.5,
               ),
             ),
@@ -1379,7 +1377,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
                   size: 18,
                   color: _isDismissAllExpanded
                       ? context.accentColor
-                      : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary),
+                      : (ThemeColors.of(context).textSecondary),
                 ),
                 // Animated "Dismiss All" label
                 SizeTransition(
@@ -1556,18 +1554,17 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
   /// means something different (depth, not a quantity of a thing). A small
   /// layers icon disambiguates it at a glance (E2E #149).
   Widget _buildCountBadge(int count) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     return Semantics(
       label: '$count banners in this stack',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
+          color: ThemeColors.of(context).glassSurface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+            color: ThemeColors.of(context).cardBorder,
             width: 0.5,
           ),
         ),

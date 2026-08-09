@@ -508,7 +508,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
     final textSecondary = tc.textSecondary;
     final textMuted = tc.textMuted;
     final cardBg = tc.surface;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = ThemeColors.of(context).cardBorder;
     final teal = tc.accent;
     final isSearching = _activeSearchQuery != null && _activeSearchQuery!.isNotEmpty;
 

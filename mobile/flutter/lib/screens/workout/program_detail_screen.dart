@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/program_template.dart';
 import '../../data/providers/branded_program_provider.dart'
     show activeUserProgramProvider;
@@ -374,7 +375,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
   Widget build(BuildContext context) {
     final card = _card;
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: ThemeColors.of(context).background,
       body: card == null
           // No card yet (pure deep-link, first frame) — load the header lazily.
           ? FutureBuilder<
@@ -475,7 +476,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     final hasCover = (card.imageUrl ?? '').isNotEmpty;
 
     return SliverAppBar(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: ThemeColors.of(context).background,
       // Deliberately CONSTANT — see [_headerZoom] doc for why this must never
       // vary with the overscroll pull. The stretch is instead applied as a
       // paint-only Transform.scale on the hero background below, which never
@@ -516,7 +517,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           card.displayName,
           style: ZType.sans(
             15,
-            color: AppColors.textPrimary,
+            color: ThemeColors.of(context).textPrimary,
             weight: FontWeight.w700,
           ),
           maxLines: 1,
@@ -535,7 +536,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 child: Icon(
                   fav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                   size: 22,
-                  color: fav ? context.accentColor : AppColors.textPrimary,
+                  color: fav ? context.accentColor : ThemeColors.of(context).textPrimary,
                 ),
               ),
             );
@@ -633,7 +634,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   ],
                   Text(
                     card.displayName.toUpperCase(),
-                    style: ZType.disp(40, color: AppColors.textPrimary),
+                    style: ZType.disp(40, color: ThemeColors.of(context).textPrimary),
                   ),
                   if (subtitle.isNotEmpty) ...[
                     const SizedBox(height: 6),
@@ -641,7 +642,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                       subtitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: ZType.ser(15, color: AppColors.textSecondary),
+                      style: ZType.ser(15, color: ThemeColors.of(context).textSecondary),
                     ),
                   ],
                 ],
@@ -732,7 +733,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
         isScrollable: true,
         tabAlignment: TabAlignment.start,
         labelColor: context.accentColor,
-        unselectedLabelColor: AppColors.textMuted,
+        unselectedLabelColor: ThemeColors.of(context).textMuted,
         indicatorColor: context.accentColor,
         indicatorWeight: 2.5,
         indicatorSize: TabBarIndicatorSize.label,
@@ -767,7 +768,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
           'PHASES',
           style: ZType.lbl(
             13,
-            color: AppColors.textPrimary,
+            color: ThemeColors.of(context).textPrimary,
             letterSpacing: 1.8,
           ),
         ),
@@ -795,7 +796,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               'This program runs as a single continuous block.',
               style: ZType.sans(
                 13,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w500,
               ),
             ),
@@ -867,7 +868,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
               text = 'Fits your gym';
             } else if (cov.isUnknown) {
               icon = Icons.fitness_center_rounded;
-              tint = AppColors.textMuted;
+              tint = ThemeColors.of(context).textMuted;
               text = 'Set your gym equipment to tailor this';
               onTap = () => context.push('/settings/equipment');
             } else {
@@ -903,7 +904,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                           text,
                           style: ZType.sans(
                             12,
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                             weight: FontWeight.w600,
                           ),
                         ),
@@ -1040,12 +1041,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                     decoration: BoxDecoration(
                       color: isSelected
                           ? context.accentColor.withValues(alpha: 0.18)
-                          : AppColors.surface2,
+                          : ThemeColors.of(context).elevated,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? context.accentColor
-                            : AppColors.cardBorder,
+                            : ThemeColors.of(context).cardBorder,
                       ),
                     ),
                     child: Text(
@@ -1054,7 +1055,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                         12,
                         color: isSelected
                             ? context.accentColor
-                            : AppColors.textSecondary,
+                            : ThemeColors.of(context).textSecondary,
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -1106,7 +1107,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                 textAlign: TextAlign.center,
                 style: ZType.sans(
                   14,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                   weight: FontWeight.w500,
                 ),
               ),
@@ -1159,9 +1160,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
     final joined = card.joinedCount;
     final showJoined = joined != null && joined >= _kJoinedDisplayFloor;
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF09090B),
-        border: Border(top: BorderSide(color: AppColors.hairlineStrong)),
+      decoration: BoxDecoration(
+        color: ThemeColors.of(context).background,
+        border: Border(top: BorderSide(color: ThemeColors.of(context).cardBorder)),
       ),
       child: SafeArea(
         top: false,
@@ -1176,13 +1177,13 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen>
                   children: [
                     Text(
                       _formatJoined(joined),
-                      style: ZType.data(17, color: AppColors.textPrimary),
+                      style: ZType.data(17, color: ThemeColors.of(context).textPrimary),
                     ),
                     Text(
                       'JOINED',
                       style: ZType.lbl(
                         10,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                         letterSpacing: 1.6,
                       ),
                     ),
@@ -1262,7 +1263,7 @@ class _DifficultyPill extends StatelessWidget {
             level.toUpperCase(),
             style: ZType.lbl(
               11,
-              color: AppColors.textPrimary,
+              color: ThemeColors.of(context).textPrimary,
               letterSpacing: 1.4,
             ),
           ),
@@ -1319,10 +1320,10 @@ class _StatTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: accented
             ? context.accentColor.withValues(alpha: 0.14)
-            : AppColors.surface2,
+            : ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: accented ? context.accentColor : AppColors.cardBorder,
+          color: accented ? context.accentColor : ThemeColors.of(context).cardBorder,
         ),
       ),
       child: Column(
@@ -1331,7 +1332,7 @@ class _StatTile extends StatelessWidget {
             value,
             style: ZType.disp(
               28,
-              color: accented ? context.accentColor : AppColors.textPrimary,
+              color: accented ? context.accentColor : ThemeColors.of(context).textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -1339,7 +1340,7 @@ class _StatTile extends StatelessWidget {
             label,
             style: ZType.lbl(
               10,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
               letterSpacing: 1.4,
             ),
           ),
@@ -1369,9 +1370,9 @@ class _PhaseSkeleton extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.surface2,
+              color: ThemeColors.of(context).elevated,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -1409,7 +1410,7 @@ class _SkeletonBar extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -1438,9 +1439,9 @@ class _PhaseBlock extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -1458,7 +1459,7 @@ class _PhaseBlock extends StatelessWidget {
                     phase.title,
                     style: ZType.sans(
                       15,
-                      color: AppColors.textPrimary,
+                      color: ThemeColors.of(context).textPrimary,
                       weight: FontWeight.w700,
                     ),
                   ),
@@ -1472,7 +1473,7 @@ class _PhaseBlock extends StatelessWidget {
                       ].join(' · '),
                       style: ZType.sans(
                         12.5,
-                        color: AppColors.textSecondary,
+                        color: ThemeColors.of(context).textSecondary,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -1535,7 +1536,7 @@ class _OverviewNote extends StatelessWidget {
                   label,
                   style: ZType.lbl(
                     10.5,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                     letterSpacing: 1.6,
                   ),
                 ),
@@ -1544,7 +1545,7 @@ class _OverviewNote extends StatelessWidget {
                   body,
                   style: ZType.sans(
                     13.5,
-                    color: AppColors.textPrimary,
+                    color: ThemeColors.of(context).textPrimary,
                     weight: FontWeight.w500,
                     height: 1.35,
                   ),
@@ -1583,7 +1584,7 @@ class _WeekPhaseHeader extends StatelessWidget {
             week.focus!.trim(),
             style: ZType.sans(
               12.5,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
               weight: FontWeight.w500,
             ),
           ),
@@ -1609,23 +1610,23 @@ class _ScheduleDayCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.bedtime_outlined,
               size: 16,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               restDayLabel(day.dayName),
               style: ZType.sans(
                 13,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w600,
               ),
             ),
@@ -1638,9 +1639,9 @@ class _ScheduleDayCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1653,7 +1654,7 @@ class _ScheduleDayCard extends StatelessWidget {
                   day.dayName.toUpperCase(),
                   style: ZType.lbl(
                     13,
-                    color: AppColors.textPrimary,
+                    color: ThemeColors.of(context).textPrimary,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -1665,15 +1666,15 @@ class _ScheduleDayCard extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: ThemeColors.of(context).surface,
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Text(
                     day.workoutType!.toUpperCase(),
                     style: ZType.lbl(
                       9,
-                      color: AppColors.textMuted,
+                      color: ThemeColors.of(context).textMuted,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -1722,7 +1723,7 @@ class _ScheduleExerciseRow extends StatelessWidget {
               width: 40,
               height: 40,
               borderRadius: 8,
-              backgroundColor: AppColors.surface,
+              backgroundColor: ThemeColors.of(context).surface,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -1734,7 +1735,7 @@ class _ScheduleExerciseRow extends StatelessWidget {
                     ex.name,
                     style: ZType.sans(
                       13,
-                      color: AppColors.textPrimary,
+                      color: ThemeColors.of(context).textPrimary,
                       weight: FontWeight.w500,
                     ),
                     maxLines: 2,
@@ -1744,7 +1745,7 @@ class _ScheduleExerciseRow extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle.trim(),
-                      style: ZType.sans(11, color: AppColors.textMuted),
+                      style: ZType.sans(11, color: ThemeColors.of(context).textMuted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1756,14 +1757,14 @@ class _ScheduleExerciseRow extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 volume,
-                style: ZType.data(11, color: AppColors.textSecondary),
+                style: ZType.data(11, color: ThemeColors.of(context).textSecondary),
               ),
             ],
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
               size: 16,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
           ],
         ),
@@ -1788,23 +1789,23 @@ class _LegacyScheduleDayTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.bedtime_outlined,
               size: 16,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
             const SizedBox(width: 8),
             Text(
               restDayLabel(day.dayName),
               style: ZType.sans(
                 13,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w600,
               ),
             ),
@@ -1817,9 +1818,9 @@ class _LegacyScheduleDayTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1828,7 +1829,7 @@ class _LegacyScheduleDayTile extends StatelessWidget {
             day.dayName.toUpperCase(),
             style: ZType.lbl(
               13,
-              color: AppColors.textPrimary,
+              color: ThemeColors.of(context).textPrimary,
               letterSpacing: 1.2,
             ),
           ),
@@ -1845,7 +1846,7 @@ class _LegacyScheduleDayTile extends StatelessWidget {
                     width: 40,
                     height: 40,
                     borderRadius: 8,
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: ThemeColors.of(context).surface,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -1853,7 +1854,7 @@ class _LegacyScheduleDayTile extends StatelessWidget {
                       ex.name,
                       style: ZType.sans(
                         13,
-                        color: AppColors.textPrimary,
+                        color: ThemeColors.of(context).textPrimary,
                         weight: FontWeight.w500,
                       ),
                     ),
@@ -1861,7 +1862,7 @@ class _LegacyScheduleDayTile extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     '${ex.sets} × ${ex.repsLabel()}',
-                    style: ZType.data(11, color: AppColors.textSecondary),
+                    style: ZType.data(11, color: ThemeColors.of(context).textSecondary),
                   ),
                 ],
               ),
@@ -1890,10 +1891,10 @@ class _DetailError extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_rounded,
               size: 44,
-              color: AppColors.textSecondary,
+              color: ThemeColors.of(context).textSecondary,
             ),
             const SizedBox(height: 12),
             Text(
@@ -1901,7 +1902,7 @@ class _DetailError extends StatelessWidget {
               textAlign: TextAlign.center,
               style: ZType.sans(
                 14,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 weight: FontWeight.w500,
               ),
             ),
@@ -1923,7 +1924,7 @@ class _DetailError extends StatelessWidget {
                   'Go back',
                   style: ZType.sans(
                     13,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                     weight: FontWeight.w600,
                   ),
                 ),
@@ -1968,9 +1969,9 @@ class _DetailTabBarDelegate extends SliverPersistentHeaderDelegate {
     return Container(
       height: _extent,
       decoration: BoxDecoration(
-        color: AppColors.pureBlack,
+        color: ThemeColors.of(context).background,
         border: overlapping || overlapsContent
-            ? const Border(bottom: BorderSide(color: AppColors.hairlineStrong))
+            ? Border(bottom: BorderSide(color: ThemeColors.of(context).cardBorder))
             : null,
       ),
       alignment: Alignment.centerLeft,

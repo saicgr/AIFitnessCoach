@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/api_client.dart';
@@ -38,6 +39,10 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
   Map<String, dynamic>? _stats;
   bool _isLoading = true;
   String? _error;
+
+  /// Theme-aware colours for this screen's build-time helper methods (they
+  /// don't take a BuildContext param, so this reads the State's own context).
+  ThemeColors get _tc => ThemeColors.of(context);
 
   @override
   void initState() {
@@ -284,7 +289,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withValues(alpha: 0.2),
+              color: _tc.textMuted.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -365,7 +370,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
           label,
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textMuted,
+            color: _tc.textMuted,
           ),
         ),
       ],
@@ -376,7 +381,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
     return Container(
       height: 40,
       width: 1,
-      color: AppColors.cardBorder.withValues(alpha: 0.3),
+      color: _tc.cardBorder.withValues(alpha: 0.3),
     );
   }
 
@@ -418,7 +423,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
 
     // Determine result
     String resultText = '';
-    Color resultColor = AppColors.textMuted;
+    Color resultColor = _tc.textMuted;
     IconData resultIcon = Icons.schedule;
 
     if (status == 'completed') {
@@ -455,7 +460,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
       resultIcon = Icons.fitness_center;
     } else if (status == 'pending') {
       resultText = 'Pending';
-      resultColor = AppColors.textMuted;
+      resultColor = _tc.textMuted;
       resultIcon = Icons.schedule;
     }
 
@@ -508,14 +513,14 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                           Icon(
                             isReceived ? Icons.arrow_forward : Icons.arrow_back,
                             size: 14,
-                            color: AppColors.textMuted,
+                            color: _tc.textMuted,
                           ),
                           const SizedBox(width: 6),
                           Text(
                             isReceived ? AppLocalizations.of(context).navYou : AppLocalizations.of(context).discoverThem,
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textMuted,
+                              color: _tc.textMuted,
                             ),
                           ),
                         ],
@@ -525,7 +530,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                         timeago.format(createdAt),
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textMuted,
+                          color: _tc.textMuted,
                         ),
                       ),
                     ],
@@ -613,7 +618,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                             challenge['quit_reason'] as String,
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textMuted,
+                              color: _tc.textMuted,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -694,7 +699,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                 children: [
                   Text(
                     AppLocalizations.of(context).challengeHistoryYou,
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: _tc.textMuted),
                   ),
                   Text(
                     yourValue,
@@ -714,7 +719,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
                 children: [
                   Text(
                     AppLocalizations.of(context).challengeHistoryTarget,
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: _tc.textMuted),
                   ),
                   Text(
                     targetValue,
@@ -764,14 +769,14 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: AppColors.textMuted.withValues(alpha: 0.5)),
+            Icon(icon, size: 64, color: _tc.textMuted.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textMuted,
+                color: _tc.textMuted,
               ),
             ),
           ],
@@ -794,7 +799,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textMuted,
+                color: _tc.textMuted,
               ),
             ),
             const SizedBox(height: 8),
@@ -803,7 +808,7 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textMuted,
+                color: _tc.textMuted,
               ),
             ),
             const SizedBox(height: 16),

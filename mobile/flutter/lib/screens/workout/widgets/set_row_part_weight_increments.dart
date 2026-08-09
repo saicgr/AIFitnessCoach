@@ -243,11 +243,11 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
   Color get _setTypeColor {
     switch (widget.setData.setType) {
       case 'warmup':
-        return AppColors.glowOrange;
+        return ThemeColors.of(context).warning;
       case 'failure':
         return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
-        return AppColors.glowCyan;
+        return ThemeColors.of(context).accent;
     }
   }
 
@@ -422,11 +422,11 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
 
     Color percentColor;
     if (isOnTarget) {
-      percentColor = AppColors.glowGreen;
+      percentColor = ThemeColors.of(context).success;
     } else if (actualPercent > targetPercent) {
-      percentColor = AppColors.glowOrange;
+      percentColor = ThemeColors.of(context).warning;
     } else {
-      percentColor = AppColors.glowCyan;
+      percentColor = ThemeColors.of(context).accent;
     }
 
     return Container(
@@ -510,10 +510,10 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.glowGreen.withOpacity(0.08),
+        color: ThemeColors.of(context).success.withOpacity(0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.glowGreen.withOpacity(0.3),
+          color: ThemeColors.of(context).success.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -524,18 +524,18 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
             height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppColors.glowGreen.withOpacity(0.2),
+              color: ThemeColors.of(context).success.withOpacity(0.2),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.glowGreen.withOpacity(0.3),
+                  color: ThemeColors.of(context).success.withOpacity(0.3),
                   blurRadius: 6,
                 ),
               ],
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check_rounded,
               size: 20,
-              color: AppColors.glowGreen,
+              color: ThemeColors.of(context).success,
             ),
           ),
           const SizedBox(width: 12),
@@ -556,7 +556,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: AppColors.glowGreen,
+              color: ThemeColors.of(context).success,
             ),
           ),
           const SizedBox(width: 8),
@@ -571,7 +571,7 @@ class _FuturisticSetRowState extends State<FuturisticSetRow> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: AppColors.glowGreen,
+              color: ThemeColors.of(context).success,
             ),
           ),
         ],

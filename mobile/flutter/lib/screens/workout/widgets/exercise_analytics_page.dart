@@ -22,6 +22,7 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Exercise Analytics Page - full page with My Analytics and Friends tabs
 class ExerciseAnalyticsPage extends StatefulWidget {
   final WorkoutExercise exercise;
@@ -110,7 +111,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
         _buildChartCard(
           title: AppLocalizations.of(context).exerciseAnalyticsWeightProgression,
           icon: Icons.trending_up_rounded,
-          color: AppColors.electricBlue,
+          color: ThemeColors.of(context).electricBlue,
           isDark: isDark,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -339,12 +340,12 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppColors.electricBlue.withOpacity(0.15),
+              color: ThemeColors.of(context).electricBlue.withOpacity(0.15),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(
               Icons.history_rounded,
-              color: AppColors.electricBlue,
+              color: ThemeColors.of(context).electricBlue,
               size: 28,
             ),
           ),
@@ -447,7 +448,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             Icon(
               Icons.show_chart_rounded,
               size: 40,
-              color: AppColors.electricBlue.withOpacity(0.5),
+              color: ThemeColors.of(context).electricBlue.withOpacity(0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -549,7 +550,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildSetTypeItem(
                   label: AppLocalizations.of(context).exerciseAnalyticsWorking,
                   count: 0,
-                  color: AppColors.electricBlue,
+                  color: ThemeColors.of(context).electricBlue,
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
@@ -670,7 +671,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
                 child: _buildStatItem(
                   label: AppLocalizations.of(context).exerciseAnalyticsTotalSessions,
                   value: '0',
-                  color: AppColors.electricBlue,
+                  color: ThemeColors.of(context).electricBlue,
                   isDark: isDark,
                   textPrimary: textPrimary,
                   textMuted: textMuted,

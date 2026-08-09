@@ -10,6 +10,7 @@ import '../../workout/widgets/reschedule_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../data/providers/root_messenger.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Banner showing missed workout(s) with quick action buttons
 ///
 /// Displays when user has missed workout(s) from the past 3 days.
@@ -120,7 +121,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
         rootSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
-            backgroundColor: AppColors.elevated,
+            backgroundColor: ThemeColors.of(context).elevated,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -190,9 +191,9 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
 
   Widget _buildBanner(BuildContext context, MissedWorkout workout, bool isLoading) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final backgroundColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -360,7 +361,7 @@ class _MissedWorkoutBannerState extends ConsumerState<MissedWorkoutBanner>
                           borderRadius: BorderRadius.circular(12),
                         ),
                         side: BorderSide(
-                          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                          color: ThemeColors.of(context).cardBorder,
                         ),
                       ),
                       child: Text(
@@ -418,8 +419,8 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final textColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final bgColor = ThemeColors.of(context).glassSurface;
+    final textColor = ThemeColors.of(context).textSecondary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -461,11 +462,13 @@ class _SkipReasonSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    // nearBlack has no ThemeColors accessor; it's ~identical to pureBlack
+    // (0xFF0A0A0A vs 0xFF0A0A0B) so tc.background (pureBlack/pureWhite) is a
+    // safe, visually-indistinguishable substitute for this full-bleed sheet.
+    final backgroundColor = ThemeColors.of(context).background;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
 
     return Column(
         mainAxisSize: MainAxisSize.min,

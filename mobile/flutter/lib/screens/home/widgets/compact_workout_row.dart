@@ -8,6 +8,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'home_schedule_dates.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Compact workout row - minimal workout display with quick start
 /// Used below nutrition/fasting hero cards when workout isn't primary focus
 class CompactWorkoutRow extends ConsumerWidget {
@@ -45,11 +46,10 @@ class CompactWorkoutRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final borderColor = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final borderColor = ThemeColors.of(context).cardBorder;
 
     final dateLabel = _getDateLabel(workout.scheduledDate);
     final isToday = dateLabel == 'Today';

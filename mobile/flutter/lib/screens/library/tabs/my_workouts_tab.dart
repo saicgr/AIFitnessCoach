@@ -245,7 +245,7 @@ class _WorkoutTile extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
           ),
           padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
           child: Row(
@@ -256,7 +256,7 @@ class _WorkoutTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: tc.elevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                 ),
                 child: Icon(
                   done

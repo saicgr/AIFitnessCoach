@@ -13,6 +13,7 @@ import 'exercise_analytics_page.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Show exercise history bottom sheet
 void showExerciseHistorySheet({
   required BuildContext context,
@@ -61,7 +62,7 @@ void showExerciseHistorySheet({
           children: [
             Row(
               children: [
-                Icon(Icons.history_rounded, color: AppColors.electricBlue, size: 24),
+                Icon(Icons.history_rounded, color: ThemeColors.of(context).electricBlue, size: 24),
                 const SizedBox(width: 10),
                 Text(AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
@@ -71,7 +72,7 @@ void showExerciseHistorySheet({
             _buildHistoryItem(
               label: AppLocalizations.of(context).workoutSheetsMixinLastSession, value: lastDisplay,
               subtitle: lastDate.isNotEmpty ? lastDate : null,
-              color: AppColors.electricBlue, isDark: isDark,
+              color: ThemeColors.of(context).electricBlue, isDark: isDark,
               textPrimary: textPrimary, textMuted: textMuted,
             ),
             const SizedBox(height: 16),
@@ -297,7 +298,7 @@ void showRpeInfoSheet(BuildContext context) {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricBlue,
+                  backgroundColor: ThemeColors.of(context).electricBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

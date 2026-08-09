@@ -10,6 +10,7 @@ import '../health_breakdown_sheet.dart';
 import '../score_explain_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Single dish row in the Menu Analysis sheet. Shows:
 ///  • Checkbox + name + portion weight
 ///  • Macro row (decimal-precise, rounded only when value IS a clean
@@ -111,7 +112,7 @@ class MenuAnalysisItemCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? selectedAccent.withValues(alpha: 0.4)
-                : (isDark ? AppColors.cardBorder : Colors.grey.shade200),
+                : (isDark ? ThemeColors.of(context).cardBorder : Colors.grey.shade200),
           ),
         ),
         child: Column(
@@ -344,7 +345,7 @@ class _DishThumbnail extends StatelessWidget {
               : Colors.grey.shade100,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isDark ? AppColors.cardBorder : Colors.grey.shade300,
+            color: isDark ? ThemeColors.of(context).cardBorder : Colors.grey.shade300,
             width: 0.5,
           ),
         ),
@@ -1246,7 +1247,7 @@ class _PortionStepperState extends State<_PortionStepper> {
         }),
         if (hasWeight) ...[
           const SizedBox(width: 10),
-          Container(width: 1, height: 14, color: (isDark ? AppColors.cardBorder : Colors.grey.shade300)),
+          Container(width: 1, height: 14, color: (isDark ? ThemeColors.of(context).cardBorder : Colors.grey.shade300)),
           const SizedBox(width: 10),
           if (_editing)
             _weightEditor(isDark)

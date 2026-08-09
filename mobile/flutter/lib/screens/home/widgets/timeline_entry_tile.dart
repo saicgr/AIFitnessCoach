@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/timeline_entry.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 class TimelineEntryTile extends StatelessWidget {
   final TimelineEntry entry;
@@ -26,9 +27,9 @@ class TimelineEntryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     final iconBg = _domainColor(entry.type);
 
     // Samsung-Health-style 3-column layout (matches Image 19 reference):

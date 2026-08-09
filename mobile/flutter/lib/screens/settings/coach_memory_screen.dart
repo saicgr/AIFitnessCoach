@@ -720,7 +720,8 @@ class _SearchField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.cardBorder),
+          borderSide: BorderSide(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

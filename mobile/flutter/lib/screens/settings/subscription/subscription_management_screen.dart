@@ -927,7 +927,9 @@ class _SubscriptionManagementScreenState
   Color _getTierColor(SubscriptionTier tier) {
     switch (tier) {
       case SubscriptionTier.free:
-        return AppColors.textMuted;
+        return Theme.of(context).brightness == Brightness.dark
+            ? AppColors.textMuted
+            : AppColorsLight.textMuted;
       case SubscriptionTier.premium:
         return context.accentColor;
       case SubscriptionTier.premiumPlus:

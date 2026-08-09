@@ -5,6 +5,7 @@ import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// A prominent card for quick access to the exercise library
 class LibraryQuickAccessCard extends StatelessWidget {
   /// Whether the current theme is dark
@@ -17,7 +18,7 @@ class LibraryQuickAccessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     return Material(
       color: elevatedColor,

@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
@@ -39,6 +40,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+
+  /// Theme-aware colours for this screen's build-time helper methods (they
+  /// don't take a BuildContext param, so this reads the State's own context).
+  ThemeColors get _tc => ThemeColors.of(context);
   /// False until the first page has finished loading (success or error).
   /// Gates the empty state so a cold open shows a skeleton grid, not a
   /// premature "No images yet" while the first request is still in flight.
@@ -263,13 +268,13 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
           Icon(
             Icons.photo_library_outlined,
             size: 64,
-            color: AppColors.textMuted.withValues(alpha: 0.5),
+            color: _tc.textMuted.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
             AppLocalizations.of(context).workoutGalleryNoImagesYet,
             style: TextStyle(
-              color: AppColors.textMuted,
+              color: _tc.textMuted,
               fontSize: 18,
               fontWeight: FontWeight.w500,
             ),
@@ -278,7 +283,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
           Text(
             AppLocalizations.of(context).workoutGalleryCompleteAWorkoutAnd,
             style: TextStyle(
-              color: AppColors.textMuted.withValues(alpha: 0.7),
+              color: _tc.textMuted.withValues(alpha: 0.7),
               fontSize: 14,
             ),
             textAlign: TextAlign.center,
@@ -453,7 +458,7 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
       imageUrl: imageUrl,
       fit: BoxFit.cover,
       placeholder: (_, __) => Container(
-        color: AppColors.elevated,
+        color: _tc.elevated,
         child: const Center(
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
@@ -467,11 +472,11 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
 
   Widget _buildImageErrorWidget() {
     return Container(
-      color: AppColors.elevated,
+      color: _tc.elevated,
       child: Center(
         child: Icon(
           Icons.broken_image_rounded,
-          color: AppColors.textMuted,
+          color: _tc.textMuted,
           size: 32,
         ),
       ),

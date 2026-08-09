@@ -32,6 +32,7 @@ import '../../../services/intra_workout_autoregulator.dart';
 import 'package:dio/dio.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Mixin providing timer/rest functionality for the active workout screen.
 mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
   // ── State access (implemented by main class) ──
@@ -719,7 +720,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(ctx),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.electricBlue,
+                  backgroundColor: ThemeColors.of(context).electricBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(

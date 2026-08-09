@@ -9,6 +9,7 @@ import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// A banner that shows when the user's subscription is renewing soon (within 5 days)
 class RenewalReminderBanner extends ConsumerWidget {
   const RenewalReminderBanner({super.key});
@@ -134,8 +135,8 @@ class _RenewalBannerContentState extends ConsumerState<_RenewalBannerContent>
       icon = Icons.info_outline;
     }
 
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // Build message — include the cadence word so the user knows whether
     // they're paying for another month or another year.

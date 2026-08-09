@@ -7,6 +7,7 @@ import '../../../../data/services/api_client.dart';
 import '../../../../data/services/image_url_cache.dart';
 import '../../../../widgets/exercise_image.dart' show kExercisePlaceholderIcon;
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// A thumbnail widget for displaying exercise images
 /// Loads images from the API and caches them for performance
@@ -101,9 +102,9 @@ class _ExerciseImageThumbnailState
       width: widget.size,
       height: widget.size,
       decoration: BoxDecoration(
-        color: AppColors.elevated,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       clipBehavior: Clip.hardEdge,
       child: (_hasError && !_isLoading) ? _buildPlaceholder() : _buildContent(),

@@ -25,6 +25,7 @@ import 'set_tracking_sheets.dart' as sheets;
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 part 'set_tracking_overlay_ui_1.dart';
 part 'set_tracking_overlay_ui_2.dart';
 
@@ -747,7 +748,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
     required Color textPrimary,
     Color? accentColor,
   }) {
-    final color = accentColor ?? AppColors.electricBlue;
+    final color = accentColor ?? ThemeColors.of(context).electricBlue;
     return Container(
       decoration: BoxDecoration(
         color: isDark
@@ -805,10 +806,10 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           height: widget.isDoneButtonPressed ? 52 : 56,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: AppColors.electricBlue,
+            color: ThemeColors.of(context).electricBlue,
             boxShadow: [
               BoxShadow(
-                color: AppColors.electricBlue.withOpacity(widget.isDoneButtonPressed ? 0.4 : 0.25),
+                color: ThemeColors.of(context).electricBlue.withOpacity(widget.isDoneButtonPressed ? 0.4 : 0.25),
                 blurRadius: widget.isDoneButtonPressed ? 16 : 12,
                 spreadRadius: 0,
                 offset: const Offset(0, 4),
@@ -847,7 +848,7 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
           _buildSetModifierButton(
             icon: Icons.add_circle_outline,
             label: AppLocalizations.of(context).setTrackingOverlaySet,
-            color: AppColors.electricBlue,
+            color: ThemeColors.of(context).electricBlue,
             isDark: isDark,
             onTap: () {
               HapticFeedback.mediumImpact();
@@ -876,21 +877,21 @@ class _SetTrackingOverlayState extends State<SetTrackingOverlay> {
                 ? Colors.white.withOpacity(0.08)
                 : Colors.black.withOpacity(0.05),
             border: Border.all(
-              color: AppColors.electricBlue.withOpacity(0.3),
+              color: ThemeColors.of(context).electricBlue.withOpacity(0.3),
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.keyboard_return,
-                  size: 20, color: AppColors.electricBlue),
+                  size: 20, color: ThemeColors.of(context).electricBlue),
               const SizedBox(width: 10),
               Text(
                 AppLocalizations.of(context).setTrackingOverlayBackToCurrentExercise,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.electricBlue,
+                  color: ThemeColors.of(context).electricBlue,
                 ),
               ),
             ],

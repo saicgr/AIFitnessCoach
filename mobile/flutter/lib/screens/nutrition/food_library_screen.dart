@@ -556,7 +556,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               ),
             ],
           ),
-          backgroundColor: AppColors.textPrimary,
+          backgroundColor: ThemeColors.of(context).textPrimary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 2),
         ),
@@ -574,7 +574,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to log: $e'),
-          backgroundColor: AppColors.textMuted,
+          backgroundColor: ThemeColors.of(context).textMuted,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -630,7 +630,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Failed to load recipe: $e'),
-                    backgroundColor: AppColors.textMuted,
+                    backgroundColor: ThemeColors.of(context).textMuted,
                   ),
                 );
               }
@@ -687,7 +687,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).foodLibraryFailedToDelete),
-          backgroundColor: AppColors.textMuted,
+          backgroundColor: ThemeColors.of(context).textMuted,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -702,7 +702,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final textPrimary = tc.textPrimary;
     final textMuted = tc.textMuted;
     final elevated = tc.surface;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = ThemeColors.of(context).cardBorder;
     final accentColor = tc.accent;
 
     if (_userId == null) {
@@ -730,7 +730,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(Icons.sort_rounded, size: 18, color: textPrimary),
@@ -968,7 +968,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
             Icon(
               Icons.error_outline_rounded,
               size: 48,
-              color: AppColors.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
             const SizedBox(height: 16),
             Text(

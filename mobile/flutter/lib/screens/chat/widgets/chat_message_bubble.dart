@@ -132,11 +132,11 @@ class ChatMessageBubble extends ConsumerWidget {
         // Signature: matte hairline bubbles. The user's turn is marked by an
         // accent-tinted border (the reserved accent), the coach's by a plain
         // hairline. No solid accent fill — accent stays reserved.
-        color: isUser ? tc.surface : AppColors.elevated,
+        color: isUser ? tc.surface : tc.elevated,
         border: Border.all(
           color: isUser
               ? tc.accent.withValues(alpha: 0.55)
-              : AppColors.cardBorder,
+              : tc.cardBorder,
           width: 1,
         ),
         borderRadius: BorderRadius.circular(14).copyWith(
@@ -292,29 +292,29 @@ class ChatMessageBubble extends ConsumerWidget {
                   height: 48,
                   width: 140,
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border.all(color: AppColors.cardBorder),
+                    color: tc.surface,
+                    border: Border.all(color: tc.cardBorder),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(
+                      SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.textMuted,
+                          color: tc.textMuted,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context).storyCreateUploading,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
+                          color: tc.textSecondary,
                         ),
                       ),
                     ],
@@ -330,7 +330,7 @@ class ChatMessageBubble extends ConsumerWidget {
           else if (isUser && message.content.contains('[ACTIVE WORKOUT CONTEXT]'))
             _WorkoutContextMessage(
               content: message.content,
-              textColor: AppColors.textPrimary,
+              textColor: tc.textPrimary,
             )
           else
             Text(
@@ -339,8 +339,8 @@ class ChatMessageBubble extends ConsumerWidget {
               // leak through from older agent prompts. The /support route
               // does not exist; show_options chips render below instead.
               _scrubLegacyActionTokens(message.content),
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: tc.textPrimary,
                 fontSize: 15,
                 height: 1.4,
               ),
@@ -576,9 +576,9 @@ class ChatMessageBubble extends ConsumerWidget {
               children: [
                 Text(
                   _formatTime(context, message.timestamp ?? DateTime.now()),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.textMuted,
+                    color: tc.textMuted,
                   ),
                 ),
                 if (!isUser && message.responseTimeMs != null) ...[
@@ -586,7 +586,7 @@ class ChatMessageBubble extends ConsumerWidget {
                     ' · ${_formatResponseTime(message.responseTimeMs!)}',
                     style: TextStyle(
                       fontSize: 10,
-                      color: AppColors.textMuted,
+                      color: tc.textMuted,
                     ),
                   ),
                 ],
@@ -605,7 +605,7 @@ class ChatMessageBubble extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 9,
                   fontStyle: FontStyle.italic,
-                  color: AppColors.textMuted.withOpacity(0.6),
+                  color: tc.textMuted.withValues(alpha: 0.6),
                 ),
               ),
             ),
@@ -683,7 +683,7 @@ class ChatMessageBubble extends ConsumerWidget {
   }
 
   Widget _buildStatusIcon(BuildContext context, MessageStatus status) {
-    final statusColor = AppColors.textMuted;
+    final statusColor = ThemeColors.of(context).textMuted;
     switch (status) {
       case MessageStatus.pending:
         return Icon(Icons.access_time, size: 10, color: statusColor);
@@ -692,7 +692,7 @@ class ChatMessageBubble extends ConsumerWidget {
       case MessageStatus.delivered:
         return Icon(Icons.done_all, size: 10, color: context.accentColor);
       case MessageStatus.error:
-        return const Icon(Icons.close, size: 10, color: AppColors.error);  // accent-allowlist: error state
+        return Icon(Icons.close, size: 10, color: ThemeColors.of(context).error);  // accent-allowlist: error state
     }
   }
 
@@ -955,6 +955,7 @@ class ChatMessageBubble extends ConsumerWidget {
       return const SizedBox.shrink();
     }
     final prompt = data['prompt'] as String?;
+    final tc = ThemeColors.of(context);
 
     return Padding(
       padding: const EdgeInsets.only(top: 10),
@@ -967,7 +968,7 @@ class ChatMessageBubble extends ConsumerWidget {
               child: Text(
                 prompt,
                 style: TextStyle(
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                   fontSize: 13,
                 ),
               ),

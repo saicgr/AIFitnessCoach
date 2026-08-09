@@ -10,6 +10,7 @@ import 'import_equipment_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Equipment categories and their items - matching gym equipment structure
 const Map<String, List<String>> gymEquipmentCategories = {
   'Free Weights': [
@@ -383,8 +384,8 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final bgColor = isDark ? AppColors.elevated : AppColorsLight.surface;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final bgColor = ThemeColors.of(context).elevated;
     final accentColor = context.accentColor;
 
     return SizedBox(
@@ -500,10 +501,10 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surface : Colors.white,
+              color: ThemeColors.of(context).surface,
               border: Border(
                 top: BorderSide(
-                  color: isDark ? AppColors.elevated : AppColorsLight.cardBorder,
+                  color: ThemeColors.of(context).cardBorder,
                 ),
               ),
             ),
@@ -743,8 +744,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: (isDark ? AppColors.elevated : AppColorsLight.cardBorder)
-                  .withOpacity(0.5),
+              color: ThemeColors.of(context).cardBorder.withOpacity(0.5),
             ),
           ),
         ),
@@ -869,7 +869,7 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: (isDark ? AppColors.elevated : AppColorsLight.cardBorder).withOpacity(0.5),
+              color: ThemeColors.of(context).cardBorder.withOpacity(0.5),
             ),
           ),
         ),

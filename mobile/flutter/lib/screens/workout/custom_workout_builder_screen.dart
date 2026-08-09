@@ -18,6 +18,7 @@ import '../custom_exercises/widgets/create_exercise_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 /// Custom Workout Builder Screen
 ///
 /// Addresses the complaint: "It's much better to just use the Daily Strength app
@@ -1079,26 +1080,26 @@ class _CustomWorkoutBuilderScreenState
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? context.accentColor : AppColors.surface,
+            color: isSelected ? context.accentColor : ThemeColors.of(context).surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
                   ? context.accentColor
-                  : AppColors.textSecondary.withValues(alpha: 0.2),
+                  : ThemeColors.of(context).textSecondary.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                color: isSelected ? Colors.white : ThemeColors.of(context).textSecondary,
                 size: 20,
               ),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected ? Colors.white : ThemeColors.of(context).textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1126,18 +1127,18 @@ class _CustomWorkoutBuilderScreenState
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? color : AppColors.surface,
+            color: isSelected ? color : ThemeColors.of(context).surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
                   ? color
-                  : AppColors.textSecondary.withValues(alpha: 0.2),
+                  : ThemeColors.of(context).textSecondary.withValues(alpha: 0.2),
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected ? Colors.white : ThemeColors.of(context).textSecondary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -1344,7 +1345,7 @@ class _CustomWorkoutBuilderScreenState
         Text(
           label,
           style: TextStyle(
-            color: AppColors.textSecondary,
+            color: ThemeColors.of(context).textSecondary,
             fontSize: 11,
           ),
         ),
@@ -1357,15 +1358,15 @@ class _CustomWorkoutBuilderScreenState
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: ThemeColors.of(context).surface,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.remove,
                   size: 16,
                   color: value > min
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? ThemeColors.of(context).textPrimary
+                      : ThemeColors.of(context).textSecondary,
                 ),
               ),
             ),
@@ -1373,8 +1374,8 @@ class _CustomWorkoutBuilderScreenState
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Text(
                 value.toString(),
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: ThemeColors.of(context).textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1385,15 +1386,15 @@ class _CustomWorkoutBuilderScreenState
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: ThemeColors.of(context).surface,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.add,
                   size: 16,
                   color: value < max
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? ThemeColors.of(context).textPrimary
+                      : ThemeColors.of(context).textSecondary,
                 ),
               ),
             ),
@@ -1419,7 +1420,7 @@ class _CustomWorkoutBuilderScreenState
               child: Text(
                 label,
                 style: TextStyle(
-                  color: active ? Colors.white : AppColors.textSecondary,
+                  color: active ? Colors.white : ThemeColors.of(context).textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1431,12 +1432,12 @@ class _CustomWorkoutBuilderScreenState
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Text('Mode',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+            style: TextStyle(color: ThemeColors.of(context).textSecondary, fontSize: 11)),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: ThemeColors.of(context).surface,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1653,7 +1654,7 @@ class _CustomBuilderThumb extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(Icons.fitness_center,
-          size: 20, color: AppColors.textSecondary),
+          size: 20, color: ThemeColors.of(context).textSecondary),
     );
     if (url == null || url!.isEmpty) return placeholder;
     return ClipRRect(

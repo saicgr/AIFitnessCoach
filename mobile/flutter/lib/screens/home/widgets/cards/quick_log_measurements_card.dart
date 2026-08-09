@@ -25,10 +25,10 @@ class QuickLogMeasurementsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
     final accentColor = ref.colors(context).accent;
 
     final measurementsState = ref.watch(measurementsProvider);

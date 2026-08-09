@@ -20,12 +20,15 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
   late ScrollController _scrollController;
   bool _hasAnimated = false;
 
+  // 'color' was previously carried here but never read anywhere in this
+  // file — the pills' text/icon colour comes from ThemeColors at build time
+  // (see _CategoryPill.build), not from this static option list.
   static final List<Map<String, dynamic>> _focusOptions = [
-    {'label': 'For You', 'icon': Icons.star_rounded, 'route': null, 'color': AppColors.textPrimary},
-    {'label': 'Workout', 'icon': Icons.fitness_center, 'route': '/workouts', 'color': AppColors.textPrimary},
-    {'label': 'Nutrition', 'icon': Icons.restaurant, 'route': '/nutrition', 'color': AppColors.textPrimary},
+    {'label': 'For You', 'icon': Icons.star_rounded, 'route': null},
+    {'label': 'Workout', 'icon': Icons.fitness_center, 'route': '/workouts'},
+    {'label': 'Nutrition', 'icon': Icons.restaurant, 'route': '/nutrition'},
     // COMING SOON: Fasting pill — uncomment when fasting feature launches
-    // {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting', 'color': AppColors.textPrimary},
+    // {'label': 'Fasting', 'icon': Icons.timer, 'route': '/fasting'},
   ];
 
   @override
@@ -79,7 +82,7 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
     }
 
     final colors = ref.colors(context);
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     return AnimationLimiter(
       child: SingleChildScrollView(
@@ -100,9 +103,7 @@ class _WorkoutCategoryPillsState extends ConsumerState<WorkoutCategoryPills> {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.glassSurface
-                        : AppColorsLight.glassSurface,
+                    color: ThemeColors.of(context).glassSurface,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Icon(
@@ -173,13 +174,9 @@ class _CategoryPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final activeBg = activeColor;
-    final inactiveBg = isDark
-        ? AppColors.glassSurface
-        : AppColorsLight.glassSurface;
+    final inactiveBg = ThemeColors.of(context).glassSurface;
     final activeText = isDark ? Colors.black : Colors.white;
-    final inactiveText = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final inactiveText = ThemeColors.of(context).textSecondary;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -201,7 +198,7 @@ class _CategoryPill extends StatelessWidget {
               border: Border.all(
                 color: isActive
                     ? activeBg
-                    : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                    : (ThemeColors.of(context).cardBorder),
                 width: isActive ? 0 : 1,
               ),
             ),

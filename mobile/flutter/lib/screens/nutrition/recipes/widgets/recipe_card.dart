@@ -58,7 +58,7 @@ class RecipeCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -75,9 +75,9 @@ class RecipeCard extends StatelessWidget {
                           ? Image.network(
                               summary.imageUrl!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _placeholder(),
+                              errorBuilder: (_, __, ___) => _placeholder(context),
                             )
-                          : _placeholder(),
+                          : _placeholder(context),
                     ),
                   ),
 
@@ -140,7 +140,7 @@ class RecipeCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.cardBorder),
+                            border: Border.all(color: ThemeColors.of(context).cardBorder),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -161,11 +161,11 @@ class RecipeCard extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() => Container(
-        color: AppColors.elevated,
+  Widget _placeholder(BuildContext context) => Container(
+        color: ThemeColors.of(context).elevated,
         child: Center(
           child: Icon(Icons.restaurant_menu,
-              size: 36, color: AppColors.textMuted.withValues(alpha: 0.5)),
+              size: 36, color: ThemeColors.of(context).textMuted.withValues(alpha: 0.5)),
         ),
       );
 

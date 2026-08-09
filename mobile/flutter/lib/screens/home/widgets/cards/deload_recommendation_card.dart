@@ -26,6 +26,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../services/mesocycle_planner.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Title variant pool — 4 options per `feedback_dynamic_copy_not_robotic.md`.
 /// Seeded deterministically per-day so the title is stable within a day but
 /// rotates across days.
@@ -113,10 +114,10 @@ class _DeloadCardBodyState extends ConsumerState<_DeloadCardBody> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
     final title = _pickDeloadTitle();

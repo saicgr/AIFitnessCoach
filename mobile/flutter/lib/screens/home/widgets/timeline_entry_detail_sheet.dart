@@ -14,6 +14,7 @@ import '../../../data/providers/timeline_provider.dart';
 import '../../../data/services/api_client.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class TimelineEntryDetailSheet extends ConsumerWidget {
   final TimelineEntry entry;
 
@@ -23,9 +24,9 @@ class TimelineEntryDetailSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return SafeArea(
       child: Padding(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// A signature-v2 pill chip with a Barlow-Condensed uppercase label.
 ///
@@ -42,9 +42,10 @@ class ZChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final accent = context.accentColor;
-    final borderColor = selected ? accent : AppColors.cardBorder;
-    final textColor = selected ? accent : AppColors.textSecondary;
+    final borderColor = selected ? accent : tc.cardBorder;
+    final textColor = selected ? accent : tc.textSecondary;
 
     final chip = AnimatedContainer(
       duration: const Duration(milliseconds: 150),

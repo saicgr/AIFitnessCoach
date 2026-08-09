@@ -233,7 +233,7 @@ class RecipeDetailScreen extends StatelessWidget {
                   Text(
                     description,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textSecondary,
+                      color: ThemeColors.of(context).textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -474,12 +474,12 @@ class _HeroPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.glassSurface,
+      color: ThemeColors.of(context).glassSurface,
       alignment: Alignment.center,
       child: Icon(
         Icons.restaurant_outlined,
         size: 56,
-        color: AppColors.textMuted,
+        color: ThemeColors.of(context).textMuted,
       ),
     );
   }
@@ -504,7 +504,7 @@ class _MacroChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -635,7 +635,7 @@ class _NumberedItem extends StatelessWidget {
             height: 26,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
               shape: BoxShape.circle,
             ),
             child: Text(

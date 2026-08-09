@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/weekly_plan.dart';
+import '../../../core/theme/theme_colors.dart';
 // TODO: Re-enable when fasting feature launches
 // import '../../../data/providers/fasting_provider.dart';
 import '../../../data/providers/scores_provider.dart';
@@ -301,10 +302,9 @@ class _ContextualBannerState extends ConsumerState<ContextualBanner>
       return const SizedBox.shrink();
     }
 
-    final isDark = widget.isDark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     return Dismissible(
       key: ValueKey('contextual_banner_${content.dismissKey}'),

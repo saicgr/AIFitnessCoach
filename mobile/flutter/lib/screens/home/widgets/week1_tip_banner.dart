@@ -8,6 +8,7 @@ import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Banner that surfaces one progressive feature tip per day during the
 /// user's first week. Dismissed tips stay hidden for the rest of the day.
 class Week1TipBanner extends ConsumerStatefulWidget {
@@ -100,12 +101,11 @@ class _Week1TipBannerState extends ConsumerState<Week1TipBanner>
       return const SizedBox.shrink();
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBg = ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     // The single accent source — matches this banner's siblings in the same
     // stack (streak, missed-workout). See E2E register row 161: this used to
     // read a per-tip decorative literal (`tip.accentColor`) under a comment

@@ -396,8 +396,8 @@ class _StreakCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.hairline)),
       ),
       child: Row(
         children: [
@@ -483,8 +483,8 @@ class _AchievementCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.hairline)),
       ),
       child: Row(
         children: [
@@ -576,8 +576,8 @@ class _BadgeTile extends StatelessWidget {
     // Rarity tile — hairline top rule, radial-glow emblem, metal rarity chip
     return Container(
       padding: const EdgeInsets.fromLTRB(4, 11, 4, 10),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: c.hairline)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -650,8 +650,8 @@ class _PRCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: c.hairline)),
       ),
       child: Row(
         children: [

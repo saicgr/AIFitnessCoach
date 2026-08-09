@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// A reusable widget for displaying superset indicators and connectors.
 ///
 /// This widget provides visual elements for:
@@ -535,8 +535,8 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -548,7 +548,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textMuted.withOpacity(0.5),
+              color: ThemeColors.of(context).textMuted.withOpacity(0.5),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -578,14 +578,14 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: ThemeColors.of(context).textPrimary,
                       ),
                     ),
                     Text(
                       AppLocalizations.of(context).supersetIndicatorSelectTwoExercisesTo,
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                       ),
                     ),
                   ],
@@ -670,12 +670,12 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? context.accentColor.withOpacity(0.15)
-                          : AppColors.elevated,
+                          : ThemeColors.of(context).elevated,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? context.accentColor.withOpacity(0.5)
-                            : AppColors.cardBorder,
+                            : ThemeColors.of(context).cardBorder,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -688,7 +688,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? context.accentColor
-                                : AppColors.glassSurface,
+                                : ThemeColors.of(context).glassSurface,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -703,8 +703,8 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                                   )
                                 : Text(
                                     '${index + 1}',
-                                    style: const TextStyle(
-                                      color: AppColors.textMuted,
+                                    style: TextStyle(
+                                      color: ThemeColors.of(context).textMuted,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -718,7 +718,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                               fontSize: 14,
                               fontWeight:
                                   isSelected ? FontWeight.w600 : FontWeight.normal,
-                              color: AppColors.textPrimary,
+                              color: ThemeColors.of(context).textPrimary,
                             ),
                           ),
                         ),
@@ -753,7 +753,7 @@ class _SupersetPairingSheetState extends State<SupersetPairingSheet> {
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: context.accentColor,
-                disabledBackgroundColor: AppColors.glassSurface,
+                disabledBackgroundColor: ThemeColors.of(context).glassSurface,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

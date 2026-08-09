@@ -16,6 +16,7 @@ import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Breathing pattern types
 enum BreathingPattern {
   push, // Press/push exercises - exhale on effort (pushing up)
@@ -196,7 +197,7 @@ class _BreathingGuideSheetState extends State<BreathingGuideSheet>
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: AppColors.electricBlue,
+              color: ThemeColors.of(context).electricBlue,
             ),
             textAlign: TextAlign.center,
           ),

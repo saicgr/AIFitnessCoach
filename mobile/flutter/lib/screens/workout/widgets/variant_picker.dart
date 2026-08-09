@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/models/program_template.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/theme/theme_colors.dart';
 
 // ===========================================================================
 // Shared program-variant picker — the single implementation used by BOTH the
@@ -398,7 +398,7 @@ class _VariantSelectorRowState extends State<VariantSelectorRow> {
                   title.toUpperCase(),
                   style: ZType.lbl(
                     12,
-                    color: AppColors.textMuted,
+                    color: ThemeColors.of(context).textMuted,
                     letterSpacing: 1.6,
                   ),
                 ),
@@ -478,9 +478,9 @@ class _DropdownControl extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,7 +490,7 @@ class _DropdownControl extends StatelessWidget {
               caption,
               style: ZType.lbl(
                 10,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
                 letterSpacing: 1.4,
               ),
             ),
@@ -503,7 +503,7 @@ class _DropdownControl extends StatelessWidget {
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: ZType.disp(26, color: AppColors.textPrimary),
+                    style: ZType.disp(26, color: ThemeColors.of(context).textPrimary),
                   ),
                 ),
                 if (unit.isNotEmpty) ...[
@@ -514,7 +514,7 @@ class _DropdownControl extends StatelessWidget {
                       unit,
                       style: ZType.lbl(
                         10,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -571,10 +571,10 @@ class _PickerRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: option.isSelected
               ? context.accentColor.withValues(alpha: 0.12)
-              : AppColors.surface2,
+              : ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: option.isSelected ? context.accentColor : AppColors.cardBorder,
+            color: option.isSelected ? context.accentColor : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Row(
@@ -584,7 +584,7 @@ class _PickerRow extends StatelessWidget {
                 option.label,
                 style: ZType.sans(
                   15,
-                  color: AppColors.textPrimary,
+                  color: ThemeColors.of(context).textPrimary,
                   weight: option.isSelected ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
@@ -612,7 +612,7 @@ class _PickerRow extends StatelessWidget {
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_unchecked_rounded,
               size: 20,
-              color: option.isSelected ? context.accentColor : AppColors.textMuted,
+              color: option.isSelected ? context.accentColor : ThemeColors.of(context).textMuted,
             ),
           ],
         ),
@@ -643,7 +643,7 @@ class _IntensityChipRow extends StatelessWidget {
       children: [
         Text(
           'INTENSITY',
-          style: ZType.lbl(10, color: AppColors.textMuted, letterSpacing: 1.4),
+          style: ZType.lbl(10, color: ThemeColors.of(context).textMuted, letterSpacing: 1.4),
         ),
         const SizedBox(width: 10),
         Wrap(
@@ -661,10 +661,10 @@ class _IntensityChipRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? context.accentColor.withValues(alpha: 0.18)
-                      : AppColors.surface2,
+                      : ThemeColors.of(context).elevated,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? context.accentColor : AppColors.cardBorder,
+                    color: isSelected ? context.accentColor : ThemeColors.of(context).cardBorder,
                   ),
                 ),
                 child: Text(
@@ -673,7 +673,7 @@ class _IntensityChipRow extends StatelessWidget {
                     12,
                     color: isSelected
                         ? context.accentColor
-                        : AppColors.textSecondary,
+                        : ThemeColors.of(context).textSecondary,
                     weight: FontWeight.w600,
                   ),
                 ),

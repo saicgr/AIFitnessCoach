@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/difficulty_utils.dart';
 import '../../../data/services/context_logging_service.dart';
 import '../../../widgets/body_muscle_selector.dart';
@@ -528,7 +529,7 @@ class _MuscleBodyMapSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final mutedSelected = selectedMuscles.toSet();
 
     return Column(
@@ -553,10 +554,10 @@ class _MuscleBodyMapSection extends StatelessWidget {
         ],
         Container(
           decoration: BoxDecoration(
-            color: AppColors.surface2,
+            color: tc.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              color: tc.cardBorder,
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 8),

@@ -14,6 +14,7 @@ import 'edit_gym_profile_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Bottom sheet for managing gym profiles (reorder, edit, delete)
 class ManageGymProfilesSheet extends ConsumerStatefulWidget {
   /// Optional callback for back button - if null, no back button shown
@@ -212,9 +213,9 @@ class _ManageGymProfilesSheetState
   Widget build(BuildContext context) {
     final profilesAsync = ref.watch(gymProfilesProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final backgroundColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     // Sync profiles when provider updates
     profilesAsync.whenData((profiles) {

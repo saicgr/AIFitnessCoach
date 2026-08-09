@@ -36,6 +36,7 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../notifications/notifications_screen.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// The health-coaching insight card. Returns [SizedBox.shrink] whenever the
 /// resolved state says it should not show — safe to place unconditionally in
 /// a tile list, exactly like [DeloadRecommendationCard].
@@ -130,10 +131,10 @@ class _HealthInsightCardBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
     return GestureDetector(
@@ -286,7 +287,7 @@ class _DomainChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(

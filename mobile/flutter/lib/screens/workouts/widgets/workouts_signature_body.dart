@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/user_program_assignment.dart';
 import '../../../data/models/workout.dart';
@@ -171,9 +170,9 @@ class _QuickGenerateBlock extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             decoration: BoxDecoration(
-              color: AppColors.surface2,
+              color: tc.elevated,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: tc.cardBorder),
             ),
             child: Row(
               children: [
@@ -575,9 +574,10 @@ class _ProgressRule extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final tc = ThemeColors.of(context);
         return Stack(
           children: [
-            Container(height: 2, color: AppColors.hairlineStrong),
+            Container(height: 2, color: tc.cardBorder),
             Container(
               height: 2,
               width: constraints.maxWidth * progress,
@@ -802,8 +802,8 @@ class _HistoryRow extends StatelessWidget {
             },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.hairline)),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: tc.cardBorder)),
         ),
         child: Row(
           children: [

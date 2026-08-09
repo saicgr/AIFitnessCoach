@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
+import '../core/theme/theme_colors.dart';
 import '../data/models/workout_day_detail.dart';
 import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
@@ -73,6 +74,7 @@ class _SearchResultsList extends StatelessWidget {
     if (response.results.isEmpty) {
       return _NoResults(exerciseName: response.exerciseName);
     }
+    final tc = ThemeColors.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +94,7 @@ class _SearchResultsList extends StatelessWidget {
                 child: Text(
                   AppLocalizations.of(context)!.exerciseSearchResultsWorkoutsFound(response.exerciseName, response.totalResults),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: tc.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                 ),
@@ -120,7 +122,7 @@ class _SearchResultsList extends StatelessWidget {
               child: Text(
                 AppLocalizations.of(context)!.exerciseSearchResultsMoreWorkouts(response.results.length - 10),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
+                      color: tc.textMuted,
                     ),
               ),
             ),
@@ -142,6 +144,7 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final dateTime = result.dateTime;
     final formattedDate = DateFormat('MMM d, yyyy').format(dateTime);
 
@@ -151,11 +154,11 @@ class _ResultCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.glassSurface,
+          color: tc.glassSurface,
           borderRadius: BorderRadius.circular(12),
           border: result.hasPr
               ? Border.all(color: AppColors.yellow.withOpacity(0.3)) // accent-allowlist: personal-record (PR) badge, achievement gold not accent
-              : Border.all(color: AppColors.cardBorder),
+              : Border.all(color: tc.cardBorder),
         ),
         child: Row(
           children: [
@@ -169,13 +172,13 @@ class _ResultCard extends StatelessWidget {
                       Text(
                         formattedDate,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textMuted,
+                              color: tc.textMuted,
                             ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '•',
-                        style: TextStyle(color: AppColors.textMuted),
+                        style: TextStyle(color: tc.textMuted),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
@@ -202,7 +205,7 @@ class _ResultCard extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         '•',
-                        style: TextStyle(color: AppColors.textMuted),
+                        style: TextStyle(color: tc.textMuted),
                       ),
                       const SizedBox(width: 8),
                       Flexible(
@@ -210,7 +213,7 @@ class _ResultCard extends StatelessWidget {
                           AppLocalizations.of(context)!.exerciseSearchResultsBest(result.bestSetDisplay),
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.textSecondary,
+                                color: tc.textSecondary,
                               ),
                         ),
                       ),
@@ -255,7 +258,7 @@ class _ResultCard extends StatelessWidget {
             const SizedBox(width: 8),
             Icon(
               Icons.chevron_right,
-              color: AppColors.textMuted,
+              color: tc.textMuted,
               size: 20,
             ),
           ],
@@ -273,17 +276,18 @@ class _NoResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: tc.glassSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           Icon(
             Icons.search_off,
-            color: AppColors.textMuted,
+            color: tc.textMuted,
             size: 40,
           ),
           const SizedBox(height: 12),
@@ -297,7 +301,7 @@ class _NoResults extends StatelessWidget {
           Text(
             AppLocalizations.of(context)!.exerciseSearchResultsNoWorkoutsContainingIn(exerciseName),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
+                  color: tc.textMuted,
                 ),
             textAlign: TextAlign.center,
           ),
@@ -313,10 +317,11 @@ class _SearchLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: tc.glassSurface,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(

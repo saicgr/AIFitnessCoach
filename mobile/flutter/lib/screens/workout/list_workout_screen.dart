@@ -21,6 +21,7 @@ import 'widgets/exercise_set_tracker.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 /// List-based workout screen similar to Strong app
 class ListWorkoutScreen extends ConsumerStatefulWidget {
   final Workout workout;
@@ -464,8 +465,8 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
-        border: Border(bottom: BorderSide(color: AppColors.cardBorder)),
+        color: ThemeColors.of(context).glassSurface,
+        border: Border(bottom: BorderSide(color: ThemeColors.of(context).cardBorder)),
       ),
       child: Row(
         children: [
@@ -475,10 +476,10 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.elevated,
+                color: ThemeColors.of(context).elevated,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.expand_more, color: AppColors.textPrimary, size: 24),
+              child: Icon(Icons.expand_more, color: ThemeColors.of(context).textPrimary, size: 24),
             ),
           ),
 
@@ -502,10 +503,10 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
             child: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.elevated,
+                color: ThemeColors.of(context).elevated,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.history, color: AppColors.textSecondary, size: 24),
+              child: Icon(Icons.history, color: ThemeColors.of(context).textSecondary, size: 24),
             ),
           ),
 
@@ -550,9 +551,9 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.glassSurface,
+          color: ThemeColors.of(context).glassSurface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder, style: BorderStyle.solid),
+          border: Border.all(color: ThemeColors.of(context).cardBorder, style: BorderStyle.solid),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

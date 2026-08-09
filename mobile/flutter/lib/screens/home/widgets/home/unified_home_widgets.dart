@@ -770,7 +770,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
         : (overImage ? Colors.black.withValues(alpha: 0.42) : Colors.transparent);
     final Color pillBorder = isToday
         ? c.accent
-        : (overImage ? Colors.white.withValues(alpha: 0.38) : AppColors.cardBorder);
+        : (overImage ? Colors.white.withValues(alpha: 0.38) : c.cardBorder);
     final Color pillText = isToday
         ? c.accentContrast
         : (overImage ? Colors.white.withValues(alpha: 0.92) : c.textMuted);
@@ -862,8 +862,8 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
           child: Container(
             decoration: BoxDecoration(
               color: const Color(0xFF0F0F11), // --d-surface2
-              border: const Border(
-                top: BorderSide(color: AppColors.hairlineStrong),
+              border: Border(
+                top: BorderSide(color: c.hairlineStrong),
               ),
               // Exercise illustration behind the text. Lightly darkened here; the
               // bottom-anchored scrim below does the heavy lifting for text
@@ -1919,7 +1919,7 @@ class _StrengthBar extends StatelessWidget {
             child: LinearProgressIndicator(
               value: frac,
               minHeight: 4,
-              backgroundColor: AppColors.hairlineStrong,
+              backgroundColor: c.hairlineStrong,
               valueColor: AlwaysStoppedAnimation<Color>(c.textSecondary),
             ),
           ),

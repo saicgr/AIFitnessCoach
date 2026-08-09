@@ -14,9 +14,7 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary = isDark
-        ? AppColors.textSecondary
-        : AppColorsLight.textSecondary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
 
     return Row(
       mainAxisSize: MainAxisSize.min,

@@ -242,7 +242,7 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 7),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+        border: Border(bottom: BorderSide(color: ThemeColors.of(context).cardBorder)),
       ),
       child: Row(
         children: [
@@ -278,7 +278,7 @@ class _FridgeRecipeDetailSheetState extends ConsumerState<FridgeRecipeDetailShee
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: primary ? tc.accent : Colors.transparent,
-            border: primary ? null : Border.all(color: AppColors.cardBorder),
+            border: primary ? null : Border.all(color: ThemeColors.of(context).cardBorder),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(

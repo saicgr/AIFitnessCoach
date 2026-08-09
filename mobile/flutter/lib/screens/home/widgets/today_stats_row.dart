@@ -20,6 +20,7 @@ import '../../nutrition/widgets/calories_burned_sheet.dart';
 import 'edit_tracking_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Compact single-row tracking strip: Goals, Calories+Macros, Water, Burned.
 class TodayStatsRow extends ConsumerWidget {
   const TodayStatsRow({super.key});

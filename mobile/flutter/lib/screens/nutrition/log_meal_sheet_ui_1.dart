@@ -862,7 +862,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           const SizedBox(width: 8),
           Text(AppLocalizations.of(context).logMealSheetSavedToFavorites)
         ]),
-        backgroundColor: AppColors.textMuted,
+        backgroundColor: ThemeColors.of(context).textMuted,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         margin: EdgeInsets.only(left: 16, right: 16, bottom: bottomPadding + 100),
@@ -1238,7 +1238,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
-                              const BorderSide(color: AppColors.cardBorder),
+                              BorderSide(color: ThemeColors.of(context).cardBorder),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1247,7 +1247,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide:
-                              const BorderSide(color: AppColors.cardBorder),
+                              BorderSide(color: ThemeColors.of(context).cardBorder),
                         ),
                       ),
                     ),
@@ -1981,15 +1981,15 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                                   horizontal: 12, vertical: 10),
                               enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                      color: AppColors.cardBorder)),
+                                  borderSide: BorderSide(
+                                      color: colors.cardBorder)),
                               focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: BorderSide(color: colors.accent)),
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
-                                      color: AppColors.cardBorder)),
+                                  borderSide: BorderSide(
+                                      color: colors.cardBorder)),
                             ),
                           ),
                         ),
@@ -4057,7 +4057,7 @@ class _ServingChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: tc.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Text(
             label,
@@ -4099,7 +4099,7 @@ class _GlassMenuOption extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Row(
             children: [
@@ -4107,7 +4107,7 @@ class _GlassMenuOption extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, size: 18, color: colors.textSecondary),

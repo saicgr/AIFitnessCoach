@@ -486,6 +486,7 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     final currentStreak = streak?.currentStreak ?? 0;
     final hasLoggedInToday = streak?.hasLoggedInToday ?? false;
     const dailyLoginXP = 5;
+    final tc = ThemeColors.of(context);
 
     // v2 strips the boxed orange/teal hero: the streak reads as a hairline
     // row — a gold-ringed flame disc with an Anton day-count over it, a Barlow
@@ -493,10 +494,10 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     // reserved for the single CLAIM elsewhere; status colour here is gold.
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
-          top: BorderSide(color: AppColors.hairline),
-          bottom: BorderSide(color: AppColors.hairline),
+          top: BorderSide(color: tc.hairline),
+          bottom: BorderSide(color: tc.hairline),
         ),
       ),
       child: Row(

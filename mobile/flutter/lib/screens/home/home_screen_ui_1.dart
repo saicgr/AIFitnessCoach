@@ -41,7 +41,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     Color textPrimary,
     Color textSecondary,
   ) {
-    final cardBg = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final cardBg = ThemeColors.of(context).glassSurface;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -139,8 +139,8 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     Color textPrimary,
     Color textSecondary,
   ) {
-    final cardBg = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBg = ThemeColors.of(context).glassSurface;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -260,7 +260,7 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
 
   /// Build a section header for the home screen
   Widget _buildHomeSectionHeader(String title, bool isDark, {IconData? icon, bool showEdit = false}) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accentColor = isDark ? Colors.white : Colors.black;
 
     return Padding(

@@ -10,6 +10,7 @@ import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Compact readiness indicator card for home screen
 /// Shows today's readiness score or prompts for check-in
 class HomeReadinessCard extends ConsumerStatefulWidget {
@@ -66,9 +67,9 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
     bool isDark,
   ) {
     final levelColor = Color(readiness.levelColor);
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     final sleep = ref.watch(sleepProvider).valueOrNull;
     final recovery = ref.watch(recoveryProvider).valueOrNull;
@@ -202,9 +203,9 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
   }
 
   Widget _buildCheckInPromptCard(BuildContext context, bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accentColor = context.accentColor;
 
     final recovery = ref.watch(recoveryProvider).valueOrNull;

@@ -12,6 +12,7 @@ import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Show the exercise options info sheet
 Future<void> showExerciseOptionsInfoSheet({
   required BuildContext context,
@@ -50,12 +51,12 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.electricBlue.withOpacity(0.1),
+                          color: ThemeColors.of(context).electricBlue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           Icons.help_outline_rounded,
-                          color: AppColors.electricBlue,
+                          color: ThemeColors.of(context).electricBlue,
                           size: 24,
                         ),
                       ),
@@ -113,7 +114,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.history_rounded,
-                  iconColor: AppColors.electricBlue,
+                  iconColor: ThemeColors.of(context).electricBlue,
                   title: AppLocalizations.of(context).strainDashboardViewHistory,
                   description: AppLocalizations.of(context).exerciseOptionsInfoSeeYourPerformanceHistory,
                   isDark: isDark,
@@ -124,7 +125,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.swap_horiz,
-                  iconColor: AppColors.electricBlue,
+                  iconColor: ThemeColors.of(context).electricBlue,
                   title: AppLocalizations.of(context).expandedExerciseCardSwapExercise,
                   description: AppLocalizations.of(context).exerciseOptionsInfoReplaceWithASimilar,
                   isDark: isDark,
@@ -135,7 +136,7 @@ class ExerciseOptionsInfoSheet extends StatelessWidget {
                 _buildInfoItem(
                   context: context,
                   icon: Icons.link,
-                  iconColor: AppColors.electricBlue,
+                  iconColor: ThemeColors.of(context).electricBlue,
                   title: AppLocalizations.of(context).expandedExerciseCardLinkAsSuperset,
                   description: AppLocalizations.of(context).exerciseOptionsInfoPairWithAnotherExercise,
                   isDark: isDark,

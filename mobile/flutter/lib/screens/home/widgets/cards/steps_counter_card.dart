@@ -10,6 +10,7 @@ import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// Focused steps card — today's step count vs a 10,000-step daily goal with a
 /// progress ring.
@@ -60,12 +61,12 @@ class _DailyStepsTileState extends ConsumerState<DailyStepsTile> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        ThemeColors.of(context).cardBorder;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
 
     final syncState = ref.watch(healthSyncProvider);

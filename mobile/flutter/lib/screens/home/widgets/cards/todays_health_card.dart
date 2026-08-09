@@ -11,6 +11,7 @@ import '../../../../widgets/charts/mini_sparkline.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Composite "Today's Health" card matching the level of polish competitors
 /// (GymBeat, FitOn) ship: a hero steps progress block with the gap-to-goal
 /// readout, then a 3-up row of metric tiles for active calories, average
@@ -53,12 +54,12 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        ThemeColors.of(context).cardBorder;
 
     final sync = ref.watch(healthSyncProvider);
     // Permission denied / not connected: show a "Connect Health" CTA card
@@ -311,7 +312,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                               child: _TrendSpark(
                                 label: 'Resting HR · 14d',
                                 values: rhrSeries,
-                                color: AppColors.teal,
+                                color: ThemeColors.of(context).teal,
                                 textMuted: textMuted,
                               ),
                             ),
@@ -362,7 +363,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                         Expanded(
                           child: _MetricTile(
                             icon: Icons.bedtime_outlined,
-                            iconColor: AppColors.teal,
+                            iconColor: ThemeColors.of(context).teal,
                             value: restingHr != null ? '$restingHr' : '—',
                             unit: 'bpm',
                             label: AppLocalizations.of(context).todaysHealthCardRestingHr,
@@ -449,8 +450,8 @@ class _MetricTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final tileBg = isDark
         ? Colors.white.withValues(alpha: 0.04)
         : Colors.black.withValues(alpha: 0.03);

@@ -9,6 +9,7 @@ import '../../../data/providers/hormonal_health_provider.dart';
 import '../../onboarding/cycle_onboarding_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// SharedPreferences key — set once the prompt has been actioned (set up or
 /// dismissed) so it never reappears for this user/device.
 const _kCycleHomePromptDismissedKey = 'cycle_setup_home_prompt_dismissed';
@@ -90,8 +91,8 @@ class _CycleSetupHomePromptState extends ConsumerState<CycleSetupHomePrompt> {
     // Pink is the cycle feature accent (see the cycle plan / settings screen).
     const accent = Color(0xFFEC4899);  // accent-allowlist: cycle-tracking feature's own dedicated pink brand accent (comment: "Pink is the cycle feature accent"), not the app accent
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),

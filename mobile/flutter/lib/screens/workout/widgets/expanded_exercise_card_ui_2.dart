@@ -177,9 +177,9 @@ extension _ExpandedExerciseCardStateUI2 on _ExpandedExerciseCardState {
               ),
               Text(
                 description,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                 ),
               ),
             ],

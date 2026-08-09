@@ -588,7 +588,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                   fillColor: tc.surface,
                   enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.cardBorder)),
+                      borderSide: BorderSide(color: ThemeColors.of(context).cardBorder)),
                   focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: tc.accent)),
@@ -1024,7 +1024,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         padding: const EdgeInsets.symmetric(vertical: 11),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1049,7 +1049,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           children: [
@@ -1082,7 +1082,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           decoration: BoxDecoration(
             color: tc.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Row(
             children: [
@@ -1397,7 +1397,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                 padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1486,7 +1486,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         decoration: BoxDecoration(
           color: included ? accent.withValues(alpha: 0.14) : Colors.transparent,
           border: Border.all(
-              color: included ? accent.withValues(alpha: 0.4) : AppColors.cardBorder),
+              color: included ? accent.withValues(alpha: 0.4) : ThemeColors.of(context).cardBorder),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
@@ -1533,7 +1533,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1627,7 +1627,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                   padding: const EdgeInsets.only(top: 10),
                   decoration: BoxDecoration(
                     border:
-                        Border(top: BorderSide(color: AppColors.cardBorder)),
+                        Border(top: BorderSide(color: ThemeColors.of(context).cardBorder)),
                   ),
                   child: Text(
                       'View all filters — diets, allergies, cuisines & more →',
@@ -1679,7 +1679,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     return Container(
       decoration: BoxDecoration(
         color: tc.background,
-        border: Border(top: BorderSide(color: AppColors.cardBorder)),
+        border: Border(top: BorderSide(color: ThemeColors.of(context).cardBorder)),
       ),
       child: SafeArea(
         top: false,

@@ -7,24 +7,32 @@ import '../../../data/models/inflammation_analysis.dart';
 import '../../../data/providers/inflammation_analysis_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Colors for inflammation display - monochrome
+/// Colors for inflammation display - monochrome. No BuildContext is
+/// available at this call site (static utility, several callers are
+/// StatelessWidgets keying off their own `isDark` field) so this resolves
+/// off the theme flag the caller already has, mirroring the
+/// `isDark ? AppColors.X : AppColorsLight.X` convention used elsewhere.
 class InflammationColors {
-  static Color get inflammatory => AppColors.textMuted; // Gray for inflammatory
-  static Color get antiInflammatory => AppColors.textPrimary; // White for anti-inflammatory
-  static Color get neutral => AppColors.textMuted; // Gray
-  static Color get additive => AppColors.textSecondary; // Secondary gray
+  static Color inflammatory(bool isDark) =>
+      isDark ? AppColors.textMuted : AppColorsLight.textMuted; // Gray for inflammatory
+  static Color antiInflammatory(bool isDark) =>
+      isDark ? AppColors.textPrimary : AppColorsLight.textPrimary; // Primary text for anti-inflammatory
+  static Color neutral(bool isDark) =>
+      isDark ? AppColors.textMuted : AppColorsLight.textMuted; // Gray
+  static Color additive(bool isDark) =>
+      isDark ? AppColors.textSecondary : AppColorsLight.textSecondary; // Secondary gray
 
-  static Color getColor(InflammationType type) {
+  static Color getColor(InflammationType type, bool isDark) {
     switch (type) {
       case InflammationType.inflammatory:
-        return inflammatory;
+        return inflammatory(isDark);
       case InflammationType.antiInflammatory:
-        return antiInflammatory;
+        return antiInflammatory(isDark);
       case InflammationType.additive:
-        return additive;
+        return additive(isDark);
       case InflammationType.neutral:
       case InflammationType.unknown:
-        return neutral;
+        return neutral(isDark);
     }
   }
 }
@@ -302,11 +310,11 @@ class _InflammationScoreHeader extends StatelessWidget {
     // Color based on score (lower = healthier = green, higher = inflammatory = red)
     Color scoreColor;
     if (score <= 3) {
-      scoreColor = InflammationColors.antiInflammatory;
+      scoreColor = InflammationColors.antiInflammatory(isDark);
     } else if (score <= 6) {
       scoreColor = AppColors.warning;  // accent-allowlist: warning severity
     } else {
-      scoreColor = InflammationColors.inflammatory;
+      scoreColor = InflammationColors.inflammatory(isDark);
     }
 
     return Padding(
@@ -383,7 +391,7 @@ class _InflammationCountsRow extends StatelessWidget {
           _CountChip(
             count: antiInflammatoryCount,
             label: AppLocalizations.of(context).scoreExplainGood,
-            color: InflammationColors.antiInflammatory,
+            color: InflammationColors.antiInflammatory(isDark),
             icon: Icons.thumb_up_outlined,
             isDark: isDark,
           ),
@@ -391,7 +399,7 @@ class _InflammationCountsRow extends StatelessWidget {
           _CountChip(
             count: neutralCount,
             label: AppLocalizations.of(context).inflammationAnalysisNeutral,
-            color: InflammationColors.neutral,
+            color: InflammationColors.neutral(isDark),
             icon: Icons.remove,
             isDark: isDark,
           ),
@@ -399,7 +407,7 @@ class _InflammationCountsRow extends StatelessWidget {
           _CountChip(
             count: inflammatoryCount,
             label: AppLocalizations.of(context).inflammationAnalysisConcern,
-            color: InflammationColors.inflammatory,
+            color: InflammationColors.inflammatory(isDark),
             icon: Icons.warning_amber_outlined,
             isDark: isDark,
           ),
@@ -563,7 +571,7 @@ class _IngredientChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = InflammationColors.getColor(ingredient.type);
+    final color = InflammationColors.getColor(ingredient.type, isDark);
 
     // Use tap-trigger Tooltip on mobile so the user can explicitly reveal
       // the reason. Flutter's built-in Tooltip already uses the root overlay,

@@ -71,7 +71,7 @@ extension SupersetTypeExtension on SupersetType {
       case SupersetType.preExhaust:
         return AppColors.orange;  // accent-allowlist: superset-type legend — pre-exhaust is always this orange
       case SupersetType.custom:
-        return AppColors.teal;
+        return AppColors.teal;  // accent-allowlist: superset-type legend — custom is always this teal (enum getter has no BuildContext)
     }
   }
 }

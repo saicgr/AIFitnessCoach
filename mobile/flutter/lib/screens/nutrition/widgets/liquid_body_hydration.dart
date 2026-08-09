@@ -6,6 +6,7 @@ import 'package:muscle_selector/src/parser.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Animated anatomical muscle body with liquid water fill effect and wave animation.
 /// Uses the muscle_selector package SVG for a realistic body outline.
@@ -184,7 +185,7 @@ class _LiquidBodyHydrationState extends State<LiquidBodyHydration>
                     Text(
                       'HYDRATED',
                       // Row #182: below 40% fill this used plain
-                      // `AppColors.textMuted` (#71717A on #0A0A0B ≈ 4.09:1 —
+                      // `ThemeColors.of(context).textMuted` (#71717A on #0A0A0B ≈ 4.09:1 —
                       // under WCAG AA's 4.5:1 for this caption size), and the
                       // muscle line-art underneath is drawn in nearly the
                       // same grey, so the letters camouflaged into the

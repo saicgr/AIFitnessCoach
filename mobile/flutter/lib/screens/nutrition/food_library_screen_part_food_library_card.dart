@@ -21,7 +21,7 @@ class _FoodLibraryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
     final elevated = tc.surface;
-    final cardBorder = AppColors.cardBorder;
+    final cardBorder = ThemeColors.of(context).cardBorder;
     final textPrimary = tc.textPrimary;
     final textMuted = tc.textMuted;
     final accentColor = tc.accent;
@@ -419,8 +419,8 @@ class _FoodDetailSheet extends StatelessWidget {
 
     final isRecipe = item is RecipeLibraryItem;
     final typeColor = isRecipe
-        ? AppColors.textSecondary
-        : AppColors.textPrimary;
+        ? ThemeColors.of(context).textSecondary
+        : ThemeColors.of(context).textPrimary;
 
     // Extract details based on type
     RecipeSummary? recipe;
@@ -587,14 +587,14 @@ class _FoodDetailSheet extends StatelessWidget {
                           label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
                           value: item.calories?.toString() ?? '-',
                           unit: 'kcal',
-                          color: AppColors.textPrimary,
+                          color: ThemeColors.of(context).textPrimary,
                           isDark: isDark,
                         ),
                         _NutrientStat(
                           label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
                           value: item.protein?.round().toString() ?? '-',
                           unit: 'g',
-                          color: AppColors.textPrimary,
+                          color: ThemeColors.of(context).textPrimary,
                           isDark: isDark,
                         ),
                         if (savedFood != null) ...[
@@ -602,14 +602,14 @@ class _FoodDetailSheet extends StatelessWidget {
                             label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
                             value: savedFood.totalCarbsG?.round().toString() ?? '-',
                             unit: 'g',
-                            color: AppColors.textPrimary,
+                            color: ThemeColors.of(context).textPrimary,
                             isDark: isDark,
                           ),
                           _NutrientStat(
                             label: AppLocalizations.of(context).weeklyCheckinSheetFat,
                             value: savedFood.totalFatG?.round().toString() ?? '-',
                             unit: 'g',
-                            color: AppColors.textMuted,
+                            color: ThemeColors.of(context).textMuted,
                             isDark: isDark,
                           ),
                         ],
@@ -618,14 +618,14 @@ class _FoodDetailSheet extends StatelessWidget {
                             label: AppLocalizations.of(context).recipeBuilderServings,
                             value: recipe.servings.toString(),
                             unit: '',
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                             isDark: isDark,
                           ),
                           _NutrientStat(
                             label: AppLocalizations.of(context).recipeSuggestionCardIngredients,
                             value: recipe.ingredientCount.toString(),
                             unit: '',
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                             isDark: isDark,
                           ),
                         ],
@@ -742,9 +742,9 @@ class _FoodDetailSheet extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: onDelete,
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textMuted,
+                              foregroundColor: ThemeColors.of(context).textMuted,
                               side: BorderSide(
-                                  color: AppColors.textMuted.withValues(alpha:0.3)),
+                                  color: ThemeColors.of(context).textMuted.withValues(alpha:0.3)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),

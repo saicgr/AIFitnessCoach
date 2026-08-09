@@ -922,7 +922,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 subtitle: Text(
                   'See your remaining messages and limits',
                   style: TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                      fontSize: 12, color: ThemeColors.of(context).textSecondary),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -940,7 +940,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 subtitle: Text(
                   'Start a fresh conversation',
                   style: TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                      fontSize: 12, color: ThemeColors.of(context).textSecondary),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -956,7 +956,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 subtitle: Text(
                   l10n.chatScreenExtEmailOurSupportTeam,
                   style: TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                      fontSize: 12, color: ThemeColors.of(context).textSecondary),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -975,7 +975,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 subtitle: Text(
                   l10n.chatScreenExtSwitchToADifferent,
                   style: TextStyle(
-                      fontSize: 12, color: AppColors.textSecondary),
+                      fontSize: 12, color: ThemeColors.of(context).textSecondary),
                 ),
                 onTap: () {
                   Navigator.pop(context);
@@ -1379,7 +1379,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
-                              color: AppColors.textMuted,
+                              color: ThemeColors.of(context).textMuted,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -1722,9 +1722,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   duration: const Duration(milliseconds: 200),
                   child: FloatingActionButton.small(
                     heroTag: 'scroll_to_bottom',
-                    backgroundColor: AppColors.elevated,
+                    backgroundColor: ThemeColors.of(context).elevated,
                     onPressed: _scrollToBottom,
-                    child: const Icon(Icons.keyboard_arrow_down, color: AppColors.textPrimary),
+                    child: Icon(Icons.keyboard_arrow_down, color: ThemeColors.of(context).textPrimary),
                   ),
                 ),
               ),
@@ -2277,7 +2277,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
+        backgroundColor: ThemeColors.of(context).elevated,
         title: const Text('Clear Chat History?'),
         content: const Text(
           'This will delete all your conversation history with the AI coach. This action cannot be undone.',
@@ -2309,7 +2309,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.elevated,
+        backgroundColor: ThemeColors.of(context).elevated,
         title: Row(
           children: [
             CoachAvatar(

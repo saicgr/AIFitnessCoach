@@ -43,10 +43,10 @@ class WeeklyProgressCard extends ConsumerWidget {
     final progress = total > 0 ? completed / total : 0.0;
     final weekConfig = ref.watch(weekDisplayConfigProvider);
     final todayDataIndex = DateTime.now().weekday - 1; // 0=Mon (data model)
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).glassSurface;
+    final textMuted = ThemeColors.of(context).textMuted;
     // Use dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 

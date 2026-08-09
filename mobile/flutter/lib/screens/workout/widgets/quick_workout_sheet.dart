@@ -24,6 +24,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/glass_loading_overlay.dart';
 import '../../../widgets/main_shell.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 part 'quick_workout_sheet_part_quick_workout_sheet.dart';
 part 'quick_workout_sheet_part_quick_workout_sheet_state.dart';

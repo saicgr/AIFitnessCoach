@@ -11,6 +11,7 @@ import 'set_dial.dart';
 import 'set_row_visuals.dart';
 import 'voice_set_logging.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 
 part 'set_row_part_weight_increments.dart';
@@ -284,9 +285,9 @@ class _SetRowState extends State<SetRow> {
         // Target info
         Text(
           'Target: $targetPercent%',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
-            color: AppColors.textMuted,
+            color: ThemeColors.of(context).textMuted,
           ),
         ),
         const SizedBox(width: 4),
@@ -310,9 +311,9 @@ class _SetRowState extends State<SetRow> {
         // 1RM reference
         Text(
           '(1RM: ${oneRM.toStringAsFixed(0)})',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 9,
-            color: AppColors.textMuted,
+            color: ThemeColors.of(context).textMuted,
           ),
         ),
       ],
@@ -332,14 +333,14 @@ class _SetRowState extends State<SetRow> {
             ? context.accentColor.withOpacity(0.1)
             : isCompleted
                 ? AppColors.success.withOpacity(0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
-                : AppColors.glassSurface,
+                : ThemeColors.of(context).glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: widget.isCurrentSet && !isCompleted
               ? context.accentColor
               : isCompleted
                   ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
-                  : AppColors.cardBorder,
+                  : ThemeColors.of(context).cardBorder,
           width: widget.isCurrentSet ? 2 : 1,
         ),
       ),
@@ -404,9 +405,9 @@ class _SetRowState extends State<SetRow> {
                           // LIFTED weight — render it in the user's chosen
                           // workout unit, not a hardcoded kg.
                           'Prev: ${WeightUtils.formatWorkoutWeight(widget.setData.previousWeight!, useKg: widget.useKg)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
-                            color: AppColors.textMuted,
+                            color: ThemeColors.of(context).textMuted,
                           ),
                         ),
                         if (!isCompleted) ...[
@@ -459,8 +460,8 @@ class _SetRowState extends State<SetRow> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: isCompleted
-                              ? AppColors.textMuted
-                              : AppColors.textPrimary,
+                              ? ThemeColors.of(context).textMuted
+                              : ThemeColors.of(context).textPrimary,
                         ),
                         decoration: InputDecoration(
                           isDense: true,
@@ -472,7 +473,7 @@ class _SetRowState extends State<SetRow> {
                             _unitLabel,
                             style: TextStyle(
                               fontSize: 10,
-                              color: AppColors.textMuted,
+                              color: ThemeColors.of(context).textMuted,
                             ),
                           ),
                           border: OutlineInputBorder(
@@ -480,7 +481,7 @@ class _SetRowState extends State<SetRow> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: AppColors.elevated,
+                          fillColor: ThemeColors.of(context).elevated,
                         ),
                         onChanged: _updateWeight,
                         onSubmitted: (_) => _repsFocus.requestFocus(),
@@ -509,9 +510,9 @@ class _SetRowState extends State<SetRow> {
                     behavior: HitTestBehavior.opaque,
                     child: Text(
                       'Prev: ${widget.setData.previousReps} reps',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 10,
-                        color: AppColors.textMuted,
+                        color: ThemeColors.of(context).textMuted,
                       ),
                     ),
                   ),
@@ -533,8 +534,8 @@ class _SetRowState extends State<SetRow> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: isCompleted
-                              ? AppColors.textMuted
-                              : AppColors.textPrimary,
+                              ? ThemeColors.of(context).textMuted
+                              : ThemeColors.of(context).textPrimary,
                         ),
                         decoration: InputDecoration(
                           isDense: true,
@@ -542,11 +543,11 @@ class _SetRowState extends State<SetRow> {
                             horizontal: 8,
                             vertical: 8,
                           ),
-                          suffix: const Text(
+                          suffix: Text(
                             'reps',
                             style: TextStyle(
                               fontSize: 10,
-                              color: AppColors.textMuted,
+                              color: ThemeColors.of(context).textMuted,
                             ),
                           ),
                           border: OutlineInputBorder(
@@ -554,7 +555,7 @@ class _SetRowState extends State<SetRow> {
                             borderSide: BorderSide.none,
                           ),
                           filled: true,
-                          fillColor: AppColors.elevated,
+                          fillColor: ThemeColors.of(context).elevated,
                         ),
                         onChanged: _updateReps,
                       ),
@@ -704,10 +705,10 @@ class _SetRowState extends State<SetRow> {
           Expanded(
             child: Text(
               _onSetCaption!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10.5,
                 height: 1.25,
-                color: AppColors.textSecondary,
+                color: ThemeColors.of(context).textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),

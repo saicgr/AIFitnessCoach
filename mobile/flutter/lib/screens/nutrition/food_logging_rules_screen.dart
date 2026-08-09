@@ -379,7 +379,7 @@ class _FoodLoggingRulesScreenState
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Material(
         color: Colors.transparent,

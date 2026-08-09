@@ -23,10 +23,13 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
   List<QuickWorkoutPreset> _discoverPool = [];
   bool _presetsLoaded = false;
 
-  final List<Map<String, dynamic>> _focusOptions = [
-    {'value': 'cardio', 'label': 'Cardio / HIIT', 'icon': Icons.local_fire_department, 'color': AppColors.cardio},
-    {'value': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': AppColors.strength},
-    {'value': 'stretch', 'label': 'Stretch', 'icon': Icons.self_improvement, 'color': AppColors.flexibility},
+  // Getter (not a field initializer) — needs `context` for the theme-aware
+  // focus colors, and `context` isn't available yet during field/instance
+  // initialization (before the widget is mounted).
+  List<Map<String, dynamic>> get _focusOptions => [
+    {'value': 'cardio', 'label': 'Cardio / HIIT', 'icon': Icons.local_fire_department, 'color': ThemeColors.of(context).cardio},
+    {'value': 'strength', 'label': 'Strength', 'icon': Icons.fitness_center, 'color': ThemeColors.of(context).strength},
+    {'value': 'stretch', 'label': 'Stretch', 'icon': Icons.self_improvement, 'color': ThemeColors.of(context).flexibility},
     {'value': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new, 'color': null},
     {'value': 'upper_body', 'label': 'Upper Body', 'icon': Icons.sports_martial_arts, 'color': null},
     {'value': 'lower_body', 'label': 'Lower Body', 'icon': Icons.directions_walk, 'color': null},

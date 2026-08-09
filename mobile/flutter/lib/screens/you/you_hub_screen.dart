@@ -31,9 +31,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/providers/you_hub_tab_request_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/minigame_unlock_service.dart';
@@ -221,7 +221,8 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
     });
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final tc = ThemeColors.of(context);
+    final bg = tc.background;
     final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final accent = AccentColorScope.of(context).getColor(isDark);
     final minigamesUnlocked = ref.watch(minigameUnlockedProvider);
@@ -250,8 +251,8 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                           height: 40,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            border: Border.all(color: AppColors.cardBorder),
+                            color: tc.surface,
+                            border: Border.all(color: tc.cardBorder),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(

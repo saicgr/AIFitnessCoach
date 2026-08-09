@@ -9,6 +9,7 @@ import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// ROI Summary Card for home screen.
 /// Shows "Your Fitness Journey" with key ROI metrics.
 /// Taps to navigate to the full milestones screen.
@@ -40,10 +41,10 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(milestonesProvider);
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     // Show loading state if no data yet
     if (state.isLoading && state.roiSummary == null) {
@@ -240,8 +241,8 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
   }
 
   Widget _buildLoadingCard(bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -282,10 +283,10 @@ class _ROISummaryCardState extends ConsumerState<ROISummaryCard> {
   }
 
   Widget _buildEmptyCard(bool isDark) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -376,8 +377,8 @@ class _StatItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Expanded(
       child: Column(
@@ -419,7 +420,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       height: 40,
       width: 1,
-      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+      color: ThemeColors.of(context).cardBorder,
     );
   }
 }
@@ -440,9 +441,9 @@ class _SmallStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
     final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+        ThemeColors.of(context).glassSurface;
 
     final color = highlighted ? context.accentColor : textMuted;
 

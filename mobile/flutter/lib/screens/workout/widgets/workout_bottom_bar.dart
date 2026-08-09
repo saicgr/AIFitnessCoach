@@ -13,6 +13,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Bottom bar for workout actions - streamlined layout with exercise name centered
 class WorkoutBottomBar extends StatelessWidget {
@@ -141,7 +142,7 @@ class WorkoutBottomBar extends StatelessWidget {
               // Water button with + indicator
               _buildSmallActionButton(
                 icon: Icons.water_drop_outlined,
-                color: AppColors.teal,
+                color: ThemeColors.of(context).teal,
                 isDark: isDark,
                 showPlusIndicator: true,
                 onTap: () {
@@ -174,10 +175,10 @@ class WorkoutBottomBar extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.electricBlue.withOpacity(0.12),
+                  color: ThemeColors.of(context).electricBlue.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.electricBlue.withOpacity(0.3),
+                    color: ThemeColors.of(context).electricBlue.withOpacity(0.3),
                     width: 1.5,
                   ),
                 ),
@@ -188,7 +189,7 @@ class WorkoutBottomBar extends StatelessWidget {
                     Icon(
                       Icons.play_circle_outline,
                       size: 20,
-                      color: AppColors.electricBlue,
+                      color: ThemeColors.of(context).electricBlue,
                     ),
                     const SizedBox(width: 8),
                     Flexible(
@@ -197,7 +198,7 @@ class WorkoutBottomBar extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.electricBlue,
+                          color: ThemeColors.of(context).electricBlue,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -453,8 +454,8 @@ class _ExerciseStripItem extends StatelessWidget {
     Color borderColor;
     Color bgColor;
     if (isCurrent) {
-      borderColor = AppColors.electricBlue;
-      bgColor = AppColors.electricBlue.withOpacity(0.15);
+      borderColor = ThemeColors.of(context).electricBlue;
+      bgColor = ThemeColors.of(context).electricBlue.withOpacity(0.15);
     } else if (isCompleted || allSetsComplete) {
       borderColor = AppColors.success.withOpacity(0.6);  // accent-allowlist: success/positive state — must stay green regardless of accent
       bgColor = AppColors.success.withOpacity(0.1);  // accent-allowlist: success/positive state — must stay green regardless of accent
@@ -497,10 +498,10 @@ class _ExerciseStripItem extends StatelessWidget {
                       ? CachedNetworkImage(
                           imageUrl: exerciseImageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) => _buildPlaceholder(),
-                          errorWidget: (context, url, error) => _buildPlaceholder(),
+                          placeholder: (context, url) => _buildPlaceholder(context),
+                          errorWidget: (context, url, error) => _buildPlaceholder(context),
                         )
-                      : _buildPlaceholder(),
+                      : _buildPlaceholder(context),
                 ),
               ),
 
@@ -537,7 +538,7 @@ class _ExerciseStripItem extends StatelessWidget {
                     width: 20,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: AppColors.electricBlue,
+                      color: ThemeColors.of(context).electricBlue,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isDark ? AppColors.nearBlack : Colors.white,
@@ -568,7 +569,7 @@ class _ExerciseStripItem extends StatelessWidget {
               fontSize: 11,
               fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
               color: isCurrent
-                  ? AppColors.electricBlue
+                  ? ThemeColors.of(context).electricBlue
                   : (isCompleted
                       ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                       : (isDark ? AppColors.textMuted : AppColorsLight.textMuted)),
@@ -579,16 +580,16 @@ class _ExerciseStripItem extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Center(
       child: Icon(
         Icons.fitness_center_rounded,
         size: 22,
         color: isCurrent
-            ? AppColors.electricBlue
+            ? ThemeColors.of(context).electricBlue
             : (isCompleted
                 ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
-                : AppColors.textMuted.withOpacity(0.5)),
+                : ThemeColors.of(context).textMuted.withOpacity(0.5)),
       ),
     );
   }
@@ -639,13 +640,13 @@ class SetDotsIndicator extends StatelessWidget {
                 color: isCompleted
                     ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                     : isCurrent
-                        ? AppColors.electricBlue
+                        ? ThemeColors.of(context).electricBlue
                         : (isDark
                             ? Colors.white.withOpacity(0.1)
                             : Colors.black.withOpacity(0.08)),
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: isCurrent ? AppColors.electricBlue : Colors.transparent,
+                  color: isCurrent ? ThemeColors.of(context).electricBlue : Colors.transparent,
                   width: 2,
                 ),
               ),

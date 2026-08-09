@@ -10,6 +10,7 @@ import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Compact Apple-Watch-style concentric macro rings tile. Outer=Protein,
 /// middle=Carbs, inner=Fat. Below the rings, three legend chips show current
 /// grams vs target for each macro so the user can read progress without
@@ -30,10 +31,10 @@ class MacroRingsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;  // accent-allowlist: macro identity -- protein colour is fixed across nutrition surfaces
     final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;  // accent-allowlist: macro identity -- carbs colour is fixed across nutrition surfaces

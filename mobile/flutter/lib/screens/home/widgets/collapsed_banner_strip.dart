@@ -10,6 +10,7 @@ import 'daily_crate_banner.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Compact ~32dp strip that collapses all home screen banners into one line.
 ///
 /// **Collapsed view (~32dp):**
@@ -68,9 +69,9 @@ class _CollapsedBannerStripState extends ConsumerState<CollapsedBannerStrip> {
     final dailyGoals = xpState.dailyGoals;
 
     final bgColor =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+        ThemeColors.of(context).glassSurface;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     final completedGoals = dailyGoals?.completedCount ?? 0;
     final totalGoals = dailyGoals?.totalCount ?? 6;

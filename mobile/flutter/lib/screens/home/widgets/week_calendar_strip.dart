@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/week_start_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Persisted collapsed state for the week calendar strip.
 ///
@@ -178,8 +179,8 @@ class _CollapsedStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final isToday = DateUtils.isSameDay(selectedDate, DateTime.now());
     final dateLabel = isToday
         ? 'Today, ${DateFormat('MMM d').format(selectedDate)}'

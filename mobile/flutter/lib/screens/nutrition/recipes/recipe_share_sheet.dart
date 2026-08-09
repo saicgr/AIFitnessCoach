@@ -89,7 +89,7 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
               decoration: BoxDecoration(
                 color: tc.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
               ),
               child: Row(children: [
                 Expanded(

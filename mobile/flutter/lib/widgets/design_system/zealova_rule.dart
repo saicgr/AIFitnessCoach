@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 
@@ -17,10 +16,11 @@ class ZealovaRule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       margin: margin,
       height: height,
-      color: strong ? AppColors.hairlineStrong : AppColors.hairline,
+      color: strong ? tc.hairlineStrong : tc.hairline,
     );
   }
 }

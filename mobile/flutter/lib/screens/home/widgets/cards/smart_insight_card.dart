@@ -26,6 +26,7 @@ import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/providers/smart_insight_provider.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// The smart-insight card. Returns [SizedBox.shrink] whenever the resolved
 /// state says it should not show — safe to place unconditionally in a tile
 /// list, exactly like [DeloadRecommendationCard].
@@ -60,10 +61,10 @@ class _SmartInsightCardBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
     final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
     return Container(

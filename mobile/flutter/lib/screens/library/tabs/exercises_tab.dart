@@ -273,7 +273,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                 decoration: BoxDecoration(
                   color: tc.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: tc.cardBorder),
                 ),
                 child: Row(
                   children: [
@@ -564,7 +564,7 @@ class _MiniIconButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: tc.elevated,
             borderRadius: BorderRadius.circular(9),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: tc.cardBorder),
           ),
           child: Icon(icon, size: 18, color: tc.textPrimary),
         ),

@@ -100,7 +100,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 15),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -453,7 +453,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               child: Text(
                 actionText.toUpperCase(),
                 style: ZType.lbl(11,
-                    color: AppColors.textMuted, letterSpacing: 1.5),
+                    color: ThemeColors.of(context).textMuted, letterSpacing: 1.5),
               ),
             ),
         ],
@@ -564,9 +564,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.surface2,
+            color: ThemeColors.of(context).elevated,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.cardBorder, width: 1),
+            border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
           ),
           child: Center(
             child: Column(
@@ -682,9 +682,9 @@ class _PreviousSessionCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: tc.elevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: tc.cardBorder, width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -704,7 +704,7 @@ class _PreviousSessionCard extends StatelessWidget {
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: isToday ? accent : AppColors.cardBorder,
+                          color: isToday ? accent : tc.cardBorder,
                           width: 1,
                         ),
                       ),
@@ -821,9 +821,11 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
         height: height,
         decoration: BoxDecoration(
           // Signature: surface2 fill + hairline border (was kind-tinted glass).
-          color: AppColors.surface2,
+          color: isDark ? AppColors.surface2 : AppColorsLight.elevated,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              width: 1),
         ),
         child: Stack(
           children: [
@@ -858,7 +860,10 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
                                 horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: AppColors.cardBorder),
+                              border: Border.all(
+                                  color: isDark
+                                      ? AppColors.cardBorder
+                                      : AppColorsLight.cardBorder),
                             ),
                             child: Text(
                               kindTag.toUpperCase(),
@@ -1047,9 +1052,9 @@ class _EquipmentProfilePill extends StatelessWidget {
       padding: const EdgeInsetsDirectional.only(
           start: 10, end: 6, top: 5, bottom: 5),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: tc.elevated,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: tc.cardBorder, width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1105,9 +1110,9 @@ class _HairlineActionPill extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: tc.elevated,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: tc.cardBorder, width: 1),
         ),
         child: Center(child: inner),
       ),

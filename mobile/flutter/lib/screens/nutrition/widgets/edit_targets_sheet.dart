@@ -1271,7 +1271,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1333,7 +1333,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   border: Border.all(
                     color: locked
                         ? accent.withValues(alpha: 0.5)
-                        : AppColors.cardBorder,
+                        : ThemeColors.of(context).cardBorder,
                   ),
                 ),
                 child: Row(
@@ -1524,7 +1524,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -1573,7 +1573,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -1619,7 +1619,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -1740,7 +1740,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1806,7 +1806,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                     border: Border.all(
                       color: on
                           ? accent.withValues(alpha: 0.5)
-                          : AppColors.cardBorder,
+                          : ThemeColors.of(context).cardBorder,
                     ),
                   ),
                   child: Column(
@@ -2195,7 +2195,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   decoration: BoxDecoration(
                     color: surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -2232,7 +2232,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 decoration: BoxDecoration(
                   color: surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.cardBorder),
+                  border: Border.all(color: ThemeColors.of(context).cardBorder),
                 ),
                 padding: const EdgeInsets.all(3),
                 child: Row(
@@ -2547,7 +2547,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                         height: 52,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.cardBorder),
+                          border: Border.all(color: ThemeColors.of(context).cardBorder),
                           borderRadius: BorderRadius.circular(26),
                         ),
                         child: SizedBox(
@@ -2689,7 +2689,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             decoration: BoxDecoration(
               color: ThemeColors.of(context).surface,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             child: Row(
               children: [
@@ -2770,7 +2770,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         // single primary Save CTA.
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -2852,7 +2852,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           border: Border.all(
             color: _lockCalories
                 ? accent
-                : AppColors.cardBorder,
+                : ThemeColors.of(context).cardBorder,
           ),
         ),
         child: Row(
@@ -2991,7 +2991,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.cardBorder),
+                borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -3000,7 +3000,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.cardBorder),
+                borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
               ),
             ),
           ),
@@ -3635,7 +3635,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                       border: Border.all(
                         color: isSelected
                             ? accent
-                            : AppColors.cardBorder,
+                            : ThemeColors.of(context).cardBorder,
                       ),
                     ),
                     child: Column(

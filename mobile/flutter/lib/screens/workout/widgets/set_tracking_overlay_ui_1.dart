@@ -195,14 +195,14 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
       ),
       child: Row(
         children: [
-          const SizedBox(
+          SizedBox(
             width: 36,
             child: Text(
               'SET',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textMuted,
+                color: ThemeColors.of(context).textMuted,
                 letterSpacing: 0.3,
               ),
               textAlign: TextAlign.center,
@@ -247,15 +247,15 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.electricBlue.withOpacity(0.12),
+                  color: ThemeColors.of(context).electricBlue.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   widget.useKg ? 'KG' : 'LBS',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.electricBlue,
+                    color: ThemeColors.of(context).electricBlue,
                     letterSpacing: 0.3,
                   ),
                   textAlign: TextAlign.center,
@@ -268,10 +268,10 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
             flex: 2,
             child: Text(
               widget.exercise.isTimedExercise ? 'TIME' : 'REPS',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.electricBlue,
+                color: ThemeColors.of(context).electricBlue,
                 letterSpacing: 0.3,
               ),
               textAlign: TextAlign.center,
@@ -377,10 +377,10 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                     vertical: isCompact ? 4 : 5,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.electricBlue.withOpacity(0.15),
+                    color: ThemeColors.of(context).electricBlue.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: AppColors.electricBlue.withOpacity(0.4),
+                      color: ThemeColors.of(context).electricBlue.withOpacity(0.4),
                       width: 1.5,
                     ),
                   ),
@@ -390,7 +390,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                       Icon(
                         Icons.add_rounded,
                         size: isCompact ? 14 : 16,
-                        color: AppColors.electricBlue,
+                        color: ThemeColors.of(context).electricBlue,
                       ),
                       SizedBox(width: isCompact ? 2 : 4),
                       Text(
@@ -399,7 +399,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                         style: TextStyle(
                           fontSize: isCompact ? 11 : 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.electricBlue,
+                          color: ThemeColors.of(context).electricBlue,
                         ),
                       ),
                     ],
@@ -467,7 +467,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.electricBlue,
+                        color: ThemeColors.of(context).electricBlue,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -477,7 +477,7 @@ extension _SetTrackingOverlayStateUI1 on _SetTrackingOverlayState {
                       child: Icon(
                         Icons.keyboard_arrow_up,
                         size: 14,
-                        color: AppColors.electricBlue,
+                        color: ThemeColors.of(context).electricBlue,
                       ),
                     ),
                   ],

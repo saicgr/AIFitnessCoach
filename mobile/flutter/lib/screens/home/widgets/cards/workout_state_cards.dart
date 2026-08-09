@@ -4,6 +4,7 @@ import '../../../../widgets/empty_state.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Card shown when there are no workouts scheduled
 class EmptyWorkoutCard extends StatelessWidget {
   /// Callback when the generate button is pressed
@@ -18,9 +19,9 @@ class EmptyWorkoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -29,11 +30,11 @@ class EmptyWorkoutCard extends StatelessWidget {
           color: elevatedColor,
           borderRadius: BorderRadius.circular(20),
           border: Border(
-            left: BorderSide(color: AppColors.teal, width: 4),
+            left: BorderSide(color: ThemeColors.of(context).teal, width: 4),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.teal.withOpacity(0.15),
+              color: ThemeColors.of(context).teal.withOpacity(0.15),
               blurRadius: 16,
               offset: const Offset(0, 6),
               spreadRadius: 1,
@@ -54,13 +55,13 @@ class EmptyWorkoutCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.teal.withOpacity(0.15),
+                  color: ThemeColors.of(context).teal.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.fitness_center,
                   size: 40,
-                  color: AppColors.teal,
+                  color: ThemeColors.of(context).teal,
                 ),
               ),
               const SizedBox(height: 16),
@@ -92,7 +93,7 @@ class EmptyWorkoutCard extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onGenerate,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.teal,
+                    backgroundColor: ThemeColors.of(context).teal,
                     foregroundColor: Colors.white,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
@@ -178,8 +179,7 @@ class GeneratingWorkoutsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -250,8 +250,7 @@ class ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -373,9 +372,7 @@ class MoreWorkoutsLoadingBanner extends StatelessWidget {
               child: Text(
                 _formatMessage(),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.textSecondary
-                          : AppColorsLight.textSecondary,
+                      color: ThemeColors.of(context).textSecondary,
                     ),
               ),
             ),
@@ -419,8 +416,8 @@ class StreamingWorkoutGenerationCard extends StatelessWidget {
         ? context.accentColor.withOpacity(0.1)
         : context.accentColor.withOpacity(0.08);
     final borderColor = context.accentColor.withOpacity(0.3);
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
     final progress = totalWorkouts > 0 ? currentWorkout / totalWorkouts : 0.0;
 
     return Padding(

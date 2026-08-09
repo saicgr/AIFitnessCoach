@@ -603,7 +603,6 @@ class _RegenerateWorkoutSheetState
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colors = context.sheetColors;
 
     return GlassSheet(

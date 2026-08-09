@@ -428,7 +428,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Text(
           label.toUpperCase(),
@@ -445,7 +445,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Text(
         '\u2728 FORKED FROM $sourceName'.toUpperCase(),
@@ -459,7 +459,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Text(
         AppLocalizations.of(context).recipeDetailUd83cUdf1fCuratedRecipe.toUpperCase(),
@@ -687,8 +687,8 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: ThemeColors.of(context).cardBorder)),
       ),
       child: Row(
         children: [
@@ -1146,7 +1146,7 @@ class _ActionChip extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

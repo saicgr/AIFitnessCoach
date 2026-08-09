@@ -15,6 +15,7 @@ import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class CommunityRecipeSearchScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
@@ -85,10 +86,10 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
                 hintStyle: ZType.lbl(13, color: muted, letterSpacing: 0.5),
                 prefixIcon: Icon(Icons.public_rounded, color: accent, size: 20),
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: ThemeColors.of(context).surface,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                  borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -96,7 +97,7 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                  borderSide: BorderSide(color: ThemeColors.of(context).cardBorder),
                 ),
               ),
             ),
@@ -181,7 +182,7 @@ class _CommunityRow extends ConsumerWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -192,8 +193,8 @@ class _CommunityRow extends ConsumerWidget {
               width: 56, height: 56,
               child: summary.imageUrl != null
                   ? Image.network(summary.imageUrl!, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: AppColors.elevated))
-                  : Container(color: AppColors.elevated, child: Icon(Icons.restaurant_menu, color: muted)),
+                      errorBuilder: (_, __, ___) => Container(color: ThemeColors.of(context).elevated))
+                  : Container(color: ThemeColors.of(context).elevated, child: Icon(Icons.restaurant_menu, color: muted)),
             ),
           ),
           const SizedBox(width: 12),

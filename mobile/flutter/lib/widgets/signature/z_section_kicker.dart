@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// A Barlow-Condensed uppercase section label in the app accent,
 /// optionally followed by a trailing "SEE ALL ›" tap affordance.
@@ -39,6 +39,7 @@ class ZSectionKicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final effectiveColor = color ?? context.accentColor;
     return Row(
       children: [
@@ -60,13 +61,13 @@ class ZSectionKicker extends StatelessWidget {
                 Text(
                   seeAllLabel.toUpperCase(),
                   style: ZType.lbl(11.5,
-                      color: AppColors.textSecondary, letterSpacing: 1.4),
+                      color: tc.textSecondary, letterSpacing: 1.4),
                 ),
                 const SizedBox(width: 3),
-                const Text(
+                Text(
                   '›',
                   style: TextStyle(
-                    color: AppColors.textMuted,
+                    color: tc.textMuted,
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),

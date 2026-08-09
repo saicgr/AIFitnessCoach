@@ -7,6 +7,7 @@ import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'optional_trackers_strip.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Gap 7 — per-tracker detail screen (sugar / caffeine / alcohol). Shows
 /// today's total vs the user's limit, an editable limit, and a 7-day history
@@ -281,7 +282,7 @@ class _LimitRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           children: [

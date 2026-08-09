@@ -325,7 +325,7 @@ class _InlineRestRowState extends State<InlineRestRow>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -413,7 +413,7 @@ class _InlineRestRowState extends State<InlineRestRow>
           'Easy money \u2014 +$deltaStr $unit incoming',
         ]);
       case AdaptationFeedbackType.weightIncreased:
-        chipColor = AppColors.electricBlue;
+        chipColor = ThemeColors.of(context).electricBlue;
         icon = '\u2197';
         message = pickVariant([
           'Adding +$deltaStr $unit next set',
@@ -509,7 +509,7 @@ class _InlineRestRowState extends State<InlineRestRow>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(

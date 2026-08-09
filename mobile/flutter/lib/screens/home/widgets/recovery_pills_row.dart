@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../services/muscle_recovery_tracker.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Phase 4 — per-muscle recovery pills surfaced on Home.
 ///
 /// Wires the muscle_recovery_tracker.dart algorithm (which already runs
@@ -42,11 +43,10 @@ class _RecoveryPillsRowState extends ConsumerState<RecoveryPillsRow> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     if (!_loaded) {
       return const SizedBox(height: 44);

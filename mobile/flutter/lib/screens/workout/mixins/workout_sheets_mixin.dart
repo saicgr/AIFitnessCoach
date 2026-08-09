@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/models/set_progression.dart';

@@ -234,7 +234,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
     final hot = committed ? const Color(0xFF22C55E) : const Color(0xFFFF7A1A); // accent-allowlist: onboarding hold-to-confirm charge/commit visual (hot-orange charging to green on commit) - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
     final base = committed
         ? const Color(0xFF16A34A) // accent-allowlist: onboarding hold-to-confirm charge/commit visual (hot-orange charging to green on commit) - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
-        : AppColors.onboardingAccent;
+        : AppColors.onboardingAccent; // accent-allowlist: onboarding hold-to-confirm charge/commit visual - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
 
     return Opacity(
       opacity: widget.enabled ? 1.0 : 0.5,
@@ -245,7 +245,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: (committed ? hot : AppColors.onboardingAccent).withValues(
+              color: (committed ? hot : AppColors.onboardingAccent).withValues( // accent-allowlist: onboarding hold-to-confirm charge/commit visual - onboardingAccent identity, not the live accent
                 alpha: 0.10 + 0.45 * clamped,
               ),
               blurRadius: 14 + 22 * clamped,
@@ -267,7 +267,7 @@ class _HoldToConfirmButtonState extends State<HoldToConfirmButton>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          AppColors.onboardingAccent.withValues(alpha: 0.30),
+                          AppColors.onboardingAccent.withValues(alpha: 0.30), // accent-allowlist: onboarding hold-to-confirm charge/commit visual - onboardingAccent identity, not the live accent
                           const Color(0xFFFF6B00).withValues(alpha: 0.30), // accent-allowlist: onboarding hold-to-confirm charge/commit visual (hot-orange charging to green on commit) - onboarding runs before the user has chosen an accent, so it uses its own onboardingAccent identity, not the live accent
                         ],
                       ),

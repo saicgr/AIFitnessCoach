@@ -21,13 +21,13 @@ class _IncrementButton extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: AppColors.glassSurface,
+          color: ThemeColors.of(context).glassSurface,
           borderRadius: BorderRadius.circular(6),
         ),
         child: Icon(
           icon,
           size: 18,
-          color: onPressed != null ? AppColors.textSecondary : AppColors.textMuted,
+          color: onPressed != null ? ThemeColors.of(context).textSecondary : ThemeColors.of(context).textMuted,
         ),
       ),
     );

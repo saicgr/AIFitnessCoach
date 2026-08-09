@@ -221,7 +221,7 @@ class _ProtocolExplainer extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: colors.surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.cardBorder),
+                    border: Border.all(color: ThemeColors.of(context).cardBorder),
                   ),
                   child: Text(
                     _protocols[i].$1,
@@ -382,7 +382,7 @@ class _Faq extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.cardBorder),
+                border: Border.all(color: ThemeColors.of(context).cardBorder),
               ),
               child: Theme(
                 data: Theme.of(context)
@@ -436,7 +436,7 @@ class _SafetyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: ThemeColors.of(context).cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

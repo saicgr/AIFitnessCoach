@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/timeline_entry.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 class TimelineSummaryCard extends StatelessWidget {
   final TimelineSummary summary;
   final Color accent;
@@ -24,11 +25,11 @@ class TimelineSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cardColor =
-        isDark ? AppColors.elevated : AppColorsLight.elevated;
+        ThemeColors.of(context).elevated;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

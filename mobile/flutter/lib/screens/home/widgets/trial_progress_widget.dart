@@ -7,6 +7,7 @@ import '../../../data/services/api_client.dart';
 import '../../../widgets/plan_portability_badge.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Trial Progress Widget — Onboarding v5
 ///
 /// Persistent home-screen module shown only during the 7-day trial.
@@ -67,11 +68,10 @@ class _TrialProgressWidgetState extends ConsumerState<TrialProgressWidget> {
     final goalDate = _status?['goal_target_date'] as String?;
     final progress = (dayOfTrial / 7).clamp(0.0, 1.0);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

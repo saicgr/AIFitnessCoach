@@ -15,7 +15,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
@@ -106,9 +105,9 @@ class _CategoryTile extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.surface2,
+              color: tc.elevated,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.cardBorder, width: 1),
+              border: Border.all(color: tc.cardBorder, width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

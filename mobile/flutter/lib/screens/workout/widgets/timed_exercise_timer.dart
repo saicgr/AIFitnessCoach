@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Timer widget for timed exercises (planks, wall sits, holds, etc.)
 /// Supports pause/resume functionality to allow users to rest mid-exercise.
 class TimedExerciseTimer extends StatefulWidget {
@@ -165,13 +166,13 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.glassSurface,
+        color: ThemeColors.of(context).glassSurface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _isComplete
               ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
               : _isPaused
-                  ? AppColors.cardBorder
+                  ? ThemeColors.of(context).cardBorder
                   : context.accentColor,
           width: 2,
         ),
@@ -184,10 +185,10 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
             children: [
               Text(
                 AppLocalizations.of(context)!.timedExerciseTimerSetOf(widget.setNumber, widget.totalSets),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                 ),
               ),
               if (_isComplete)
@@ -256,8 +257,8 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                   child: CircularProgressIndicator(
                     value: 1.0,
                     strokeWidth: 8,
-                    backgroundColor: AppColors.surface,
-                    color: AppColors.surface,
+                    backgroundColor: ThemeColors.of(context).surface,
+                    color: ThemeColors.of(context).surface,
                   ),
                 ),
                 // Progress circle
@@ -267,7 +268,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                   child: CircularProgressIndicator(
                     value: _progress,
                     strokeWidth: 8,
-                    backgroundColor: AppColors.cardBorder,
+                    backgroundColor: ThemeColors.of(context).cardBorder,
                     color: _progressColor,
                     strokeCap: StrokeCap.round,
                   ),
@@ -302,15 +303,15 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                             fontWeight: FontWeight.bold,
                             color: _isComplete
                                 ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
-                                : AppColors.textPrimary,
+                                : ThemeColors.of(context).textPrimary,
                             fontFeatures: const [FontFeature.tabularFigures()],
                           ),
                         ),
                         Text(
                           _remainingSeconds == 1 ? 'second' : 'seconds',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                           ),
                         ),
                       ],
@@ -333,7 +334,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                   icon: Icons.refresh,
                   label: AppLocalizations.of(context).trophyFilterReset,
                   onTap: _resetTimer,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                 ),
                 const SizedBox(width: 16),
               ],
@@ -402,7 +403,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                   icon: Icons.skip_next,
                   label: AppLocalizations.of(context).onboardingSkip,
                   onTap: _completeTimer,
-                  color: AppColors.textSecondary,
+                  color: ThemeColors.of(context).textSecondary,
                 ),
               ],
             ],
@@ -416,7 +417,7 @@ class _TimedExerciseTimerState extends State<TimedExerciseTimer>
                 AppLocalizations.of(context).timedExerciseTimerTapPauseToRest,
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.textMuted.withOpacity(0.7),
+                  color: ThemeColors.of(context).textMuted.withOpacity(0.7),
                 ),
               ),
             ),
@@ -558,14 +559,14 @@ class _TimedSetRowState extends State<TimedSetRow> {
             ? context.accentColor.withOpacity(0.1)
             : widget.isCompleted
                 ? AppColors.success.withOpacity(0.1)  // accent-allowlist: success/positive state — must stay green regardless of accent
-                : AppColors.glassSurface,
+                : ThemeColors.of(context).glassSurface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: widget.isCurrentSet && !widget.isCompleted
               ? context.accentColor
               : widget.isCompleted
                   ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
-                  : AppColors.cardBorder,
+                  : ThemeColors.of(context).cardBorder,
           width: widget.isCurrentSet ? 2 : 1,
         ),
       ),
@@ -616,7 +617,7 @@ class _TimedSetRowState extends State<TimedSetRow> {
                         fontWeight: FontWeight.bold,
                         color: widget.isCompleted
                             ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
-                            : AppColors.textPrimary,
+                            : ThemeColors.of(context).textPrimary,
                         fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
@@ -639,7 +640,7 @@ class _TimedSetRowState extends State<TimedSetRow> {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: widget.isCompleted ? 1.0 : progress,
-                    backgroundColor: AppColors.cardBorder,
+                    backgroundColor: ThemeColors.of(context).cardBorder,
                     color: widget.isCompleted
                         ? AppColors.success  // accent-allowlist: success/positive state — must stay green regardless of accent
                         : context.accentColor,

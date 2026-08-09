@@ -136,7 +136,7 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                               height: 40,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                border: Border.all(color: AppColors.cardBorder),
+                                border: Border.all(color: ThemeColors.of(context).cardBorder),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text('V${v.versionNumber}',

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 
 enum ZealovaCardVariant {
@@ -43,7 +42,7 @@ class ZealovaCard extends StatelessWidget {
     // hero's accent left edge is painted as a clipped 3px overlay instead.
     final Border? border = variant == ZealovaCardVariant.flat
         ? null
-        : Border.all(color: AppColors.cardBorder, width: 1);
+        : Border.all(color: tc.cardBorder, width: 1);
 
     Widget card = Container(
       padding: padding,

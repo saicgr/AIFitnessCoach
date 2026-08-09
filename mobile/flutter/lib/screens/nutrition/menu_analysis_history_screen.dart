@@ -19,6 +19,7 @@ import '../../widgets/glass_sheet.dart';
 import 'menu_analysis_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/theme_colors.dart';
 class MenuAnalysisHistoryScreen extends ConsumerStatefulWidget {
   const MenuAnalysisHistoryScreen({super.key});
 
@@ -449,7 +450,7 @@ class _NoMatchesState extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.search_off, size: 56, color: AppColors.textMuted),
+        Icon(Icons.search_off, size: 56, color: ThemeColors.of(context).textMuted),
         const SizedBox(height: 12),
         Text(AppLocalizations.of(context).menuAnalysisHistoryNoMatchingMenus,
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
@@ -459,7 +460,7 @@ class _NoMatchesState extends StatelessWidget {
               ? AppLocalizations.of(context).menuAnalysisHistoryTryADifferentSearch
               : 'Nothing matched "${query.trim()}". Try another search.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 13, color: ThemeColors.of(context).textMuted),
         ),
       ]),
     );
@@ -594,7 +595,7 @@ class _Card extends StatelessWidget {
                       restaurant!,
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                          fontSize: 10.5, color: AppColors.textSecondary),
+                          fontSize: 10.5, color: ThemeColors.of(context).textSecondary),
                     ),
                   ],
                   // Free-text address with a location icon. Tap to edit.
@@ -605,14 +606,14 @@ class _Card extends StatelessWidget {
                       child: Row(
                         children: [
                           Icon(Icons.place_outlined,
-                              size: 11, color: AppColors.textMuted),
+                              size: 11, color: ThemeColors.of(context).textMuted),
                           const SizedBox(width: 2),
                           Expanded(
                             child: Text(
                               address!,
                               maxLines: 1, overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                  fontSize: 10, color: AppColors.textMuted),
+                                  fontSize: 10, color: ThemeColors.of(context).textMuted),
                             ),
                           ),
                         ],
@@ -627,13 +628,13 @@ class _Card extends StatelessWidget {
                         child: Row(
                           children: [
                             Icon(Icons.add_location_alt_outlined,
-                                size: 11, color: AppColors.textMuted),
+                                size: 11, color: ThemeColors.of(context).textMuted),
                             const SizedBox(width: 2),
                             Text(
                               AppLocalizations.of(context).menuAnalysisHistoryAddAddress,
                               style: TextStyle(
                                   fontSize: 10,
-                                  color: AppColors.textMuted,
+                                  color: ThemeColors.of(context).textMuted,
                                   fontStyle: FontStyle.italic),
                             ),
                           ],
@@ -643,7 +644,7 @@ class _Card extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     createdAt == null ? '' : DateFormat.MMMd().format(createdAt),
-                    style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 10, color: ThemeColors.of(context).textMuted),
                   ),
                 ],
               ),
@@ -662,14 +663,14 @@ class _EmptyState extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Icon(Icons.menu_book, size: 56, color: AppColors.textMuted),
+        Icon(Icons.menu_book, size: 56, color: ThemeColors.of(context).textMuted),
         const SizedBox(height: 12),
         Text(AppLocalizations.of(context).menuAnalysisHistoryNoSavedMenusYet, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
         const SizedBox(height: 4),
         Text(
           AppLocalizations.of(context).menuAnalysisHistoryTapTheBookmarkButton,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 13, color: ThemeColors.of(context).textMuted),
         ),
       ]),
     );

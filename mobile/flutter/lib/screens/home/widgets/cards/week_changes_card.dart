@@ -7,6 +7,7 @@ import '../../../../widgets/glass_sheet.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// A card showing what exercises changed this week compared to last week.
 /// Provides transparency into weekly exercise variation.
 class WeekChangesCard extends ConsumerWidget {
@@ -16,9 +17,9 @@ class WeekChangesCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final comparisonState = ref.watch(weekComparisonProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
 
     // Don't show if loading or error
     if (comparisonState.isLoading) {
@@ -48,7 +49,7 @@ class WeekChangesCard extends ConsumerWidget {
           border: Border.all(
             color: hasChanges
                 ? context.accentColor.withOpacity(0.3)
-                : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                : (ThemeColors.of(context).cardBorder),
           ),
         ),
         child: Material(
@@ -72,7 +73,7 @@ class WeekChangesCard extends ConsumerWidget {
                         decoration: BoxDecoration(
                           color: hasChanges
                               ? context.accentColor.withOpacity(0.15)
-                              : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                              : (ThemeColors.of(context).glassSurface),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -178,9 +179,9 @@ class WeekChangesCard extends ConsumerWidget {
   }
 
   void _showDetailsSheet(BuildContext context, comparison, bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final elevatedColor = ThemeColors.of(context).elevated;
 
     showGlassSheet(
       context: context,
@@ -345,8 +346,8 @@ class _StatBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final glassSurface = ThemeColors.of(context).glassSurface;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -371,7 +372,7 @@ class _StatBox extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+              color: ThemeColors.of(context).textMuted,
             ),
           ),
         ],
@@ -397,7 +398,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = ThemeColors.of(context).textPrimary;
 
     return Row(
       children: [
@@ -447,8 +448,8 @@ class _ExerciseListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final glassSurface = ThemeColors.of(context).glassSurface;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),

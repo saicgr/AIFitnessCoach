@@ -9,6 +9,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 /// Body Metrics & Score section for home screen
 /// Shows fitness score, strength score, and key body metrics
 class BodyMetricsSection extends ConsumerStatefulWidget {
@@ -46,10 +47,10 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final textSecondary = ThemeColors.of(context).textSecondary;
+    final cardBg = ThemeColors.of(context).elevated;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);

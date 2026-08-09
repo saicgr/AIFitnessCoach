@@ -11,6 +11,7 @@ import '../../../../data/services/health_service.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Daily Stats Tile - Shows steps and calorie deficit
 /// Steps from HealthKit/Google Fit
 /// Deficit = target - consumed + exercise burned
@@ -33,10 +34,10 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
     final size = widget.size;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevatedColor = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final cardBorder = ThemeColors.of(context).cardBorder;
 
     // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);

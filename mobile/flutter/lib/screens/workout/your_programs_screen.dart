@@ -19,6 +19,7 @@ import 'widgets/program_library_card.dart';
 import 'widgets/program_manage_sheet.dart';
 import 'widgets/program_schedule_sheet.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 
 /// Route metadata for the Your Programs hub.
 class YourProgramsRoute {
@@ -69,7 +70,7 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.pureBlack,
+      backgroundColor: ThemeColors.of(context).background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -95,9 +96,9 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
 
   Widget _buildHeader() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF09090B),
-        border: Border(bottom: BorderSide(color: AppColors.hairlineStrong)),
+      decoration: BoxDecoration(
+        color: ThemeColors.of(context).background,
+        border: Border(bottom: BorderSide(color: ThemeColors.of(context).cardBorder)),
       ),
       padding: const EdgeInsets.fromLTRB(14, 6, 18, 13),
       child: Row(
@@ -105,12 +106,12 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
           GestureDetector(
             onTap: _back,
             behavior: HitTestBehavior.opaque,
-            child: const Padding(
-              padding: EdgeInsets.only(right: 8, top: 2, bottom: 2),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8, top: 2, bottom: 2),
               child: Text(
                 '‹',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: ThemeColors.of(context).textPrimary,
                   fontSize: 32,
                   height: 1.0,
                   fontWeight: FontWeight.w400,
@@ -123,7 +124,7 @@ class _YourProgramsScreenState extends ConsumerState<YourProgramsScreen> {
               'YOUR PROGRAMS',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: ZType.disp(28, color: AppColors.textPrimary),
+              style: ZType.disp(28, color: ThemeColors.of(context).textPrimary),
             ),
           ),
         ],
@@ -411,21 +412,24 @@ class _TemplateActionsSheet extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: ZType.sans(15,
-                    color: AppColors.textPrimary, weight: FontWeight.w800),
+                    color: ThemeColors.of(context).textPrimary, weight: FontWeight.w800),
               ),
             ),
           ),
           _actionTile(
+            context,
             icon: Icons.event_available_rounded,
             label: 'Schedule this',
             onTap: onSchedule,
           ),
           _actionTile(
+            context,
             icon: Icons.edit_rounded,
             label: 'Edit',
             onTap: onEdit,
           ),
           _actionTile(
+            context,
             icon: Icons.delete_outline_rounded,
             label: 'Delete',
             iconColor: AppColors.error,  // accent-allowlist: error/destructive — must stay red
@@ -437,7 +441,8 @@ class _TemplateActionsSheet extends StatelessWidget {
     );
   }
 
-  Widget _actionTile({
+  Widget _actionTile(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
@@ -453,13 +458,13 @@ class _TemplateActionsSheet extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
           child: Row(
             children: [
-              Icon(icon, size: 20, color: iconColor ?? AppColors.textPrimary),
+              Icon(icon, size: 20, color: iconColor ?? ThemeColors.of(context).textPrimary),
               const SizedBox(width: 14),
               Text(
                 label,
                 style: ZType.sans(
                   14,
-                  color: labelColor ?? AppColors.textPrimary,
+                  color: labelColor ?? ThemeColors.of(context).textPrimary,
                   weight: FontWeight.w600,
                 ),
               ),
@@ -493,7 +498,7 @@ class _Section extends StatelessWidget {
             child: Text(
               title,
               style: ZType.lbl(14,
-                  color: AppColors.textPrimary, letterSpacing: 1.8),
+                  color: ThemeColors.of(context).textPrimary, letterSpacing: 1.8),
             ),
           ),
           child,
@@ -536,19 +541,19 @@ class _SectionEmpty extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 18),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface2,
+        color: ThemeColors.of(context).elevated,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.textMuted),
+          Icon(icon, size: 20, color: ThemeColors.of(context).textMuted),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               label,
               style: ZType.sans(13,
-                  color: AppColors.textSecondary, weight: FontWeight.w500),
+                  color: ThemeColors.of(context).textSecondary, weight: FontWeight.w500),
             ),
           ),
         ],
@@ -572,9 +577,9 @@ class _RailSkeleton extends StatelessWidget {
         itemBuilder: (_, __) => Container(
           width: 150,
           decoration: BoxDecoration(
-            color: AppColors.surface2,
+            color: ThemeColors.of(context).elevated,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border.all(color: ThemeColors.of(context).cardBorder),
           ),
         ),
       ),
@@ -604,9 +609,9 @@ class _ActiveProgramCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface2,
+          color: ThemeColors.of(context).elevated,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -626,12 +631,12 @@ class _ActiveProgramCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: ZType.sans(17,
-                  color: AppColors.textPrimary, weight: FontWeight.w800),
+                  color: ThemeColors.of(context).textPrimary, weight: FontWeight.w800),
             ),
             const SizedBox(height: 6),
             Text(
               assignment.weekLabel,
-              style: ZType.data(11, color: AppColors.textSecondary),
+              style: ZType.data(11, color: ThemeColors.of(context).textSecondary),
             ),
             const SizedBox(height: 10),
             // Thin progress bar.
@@ -640,7 +645,7 @@ class _ActiveProgramCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: pct,
                 minHeight: 5,
-                backgroundColor: AppColors.surface,
+                backgroundColor: ThemeColors.of(context).surface,
                 valueColor:
                     AlwaysStoppedAnimation<Color>(context.accentColor),
               ),

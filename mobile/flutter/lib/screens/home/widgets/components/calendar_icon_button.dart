@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../core/theme/theme_colors.dart';
 /// Calendar icon button for navigating to the schedule screen
 /// Used in the home screen header
 class CalendarIconButton extends ConsumerWidget {
@@ -18,7 +19,7 @@ class CalendarIconButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textMuted = ThemeColors.of(context).textMuted;
     return IconButton(
       icon: Icon(
         Icons.calendar_month_outlined,

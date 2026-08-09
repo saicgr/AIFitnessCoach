@@ -691,14 +691,14 @@ extension __LogMealSheetStateQuickPills on _LogMealSheetState {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: (_smartPillConfirmIsError
-                          ? AppColors.error
-                          : AppColors.success)
+                          ? ThemeColors.of(context).error
+                          : ThemeColors.of(context).success)
                       .withValues(alpha: isDark ? 0.16 : 0.10),  // accent-allowlist: success/error state
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: (_smartPillConfirmIsError
-                            ? AppColors.error
-                            : AppColors.success)
+                            ? ThemeColors.of(context).error
+                            : ThemeColors.of(context).success)
                         .withValues(alpha: 0.4),  // accent-allowlist: success/error state
                   ),
                 ),

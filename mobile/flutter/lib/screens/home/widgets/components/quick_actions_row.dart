@@ -435,9 +435,7 @@ class _DeboxedActionTileState extends State<_DeboxedActionTile> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final textColor = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
+    final textColor = ThemeColors.of(context).textPrimary;
     // Chip background carries the visual identity. In dark mode the tint is
     // boosted (0.22 vs 0.14) so the chip stays legible against the dark
     // home background without the old card frame behind it.

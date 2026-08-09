@@ -34,6 +34,7 @@ import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/workout_card_state_provider.dart';
 import '../../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
 import '../../pillar/widgets/ask_coach_button.dart';
+import '../../../core/theme/theme_colors.dart';
 // `workout_card_mode.dart` defines its own `CyclePhase` enum (with an
 // `unknown` member) used by the pure resolver. The hero card already
 // references the `hormonal_health.dart` `CyclePhase` for the phase chip
@@ -433,7 +434,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
           rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).nextWorkoutCardWorkoutSkipped),
-              backgroundColor: AppColors.textMuted,
+              backgroundColor: ThemeColors.of(context).textMuted,
             ),
           );
         }
@@ -483,7 +484,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
           rootSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context).heroWorkoutCardWorkoutUnmarked),
-              backgroundColor: AppColors.textMuted,
+              backgroundColor: ThemeColors.of(context).textMuted,
             ),
           );
         }

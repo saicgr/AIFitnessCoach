@@ -13,6 +13,7 @@ import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Show the workout plan drawer as a bottom sheet
 Future<void> showWorkoutPlanDrawer({
@@ -346,8 +347,8 @@ class _ExerciseRow extends StatelessWidget {
     Color borderColor;
     Color bgColor;
     if (isCurrent) {
-      borderColor = AppColors.electricBlue;
-      bgColor = AppColors.electricBlue.withOpacity(0.08);
+      borderColor = ThemeColors.of(context).electricBlue;
+      bgColor = ThemeColors.of(context).electricBlue.withOpacity(0.08);
     } else if (isCompleted) {
       borderColor = AppColors.success.withOpacity(0.5);  // accent-allowlist: success/positive state — must stay green regardless of accent
       bgColor = AppColors.success.withOpacity(0.05);  // accent-allowlist: success/positive state — must stay green regardless of accent
@@ -479,7 +480,7 @@ class _ExerciseRow extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.electricBlue.withOpacity(0.15),
+                              color: ThemeColors.of(context).electricBlue.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -487,7 +488,7 @@ class _ExerciseRow extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: isCompact ? 9 : 10,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.electricBlue,
+                                color: ThemeColors.of(context).electricBlue,
                               ),
                             ),
                           ),

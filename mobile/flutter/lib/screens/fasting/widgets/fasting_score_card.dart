@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Card displaying the fasting score with breakdown
 class FastingScoreCard extends StatelessWidget {
@@ -215,7 +216,7 @@ class FastingScoreCard extends StatelessWidget {
           score.durationComponent,
           20,
           Icons.timer_outlined,
-          AppColors.textSecondary,
+          isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
           textPrimary,
           textMuted,
         ),
@@ -225,7 +226,7 @@ class FastingScoreCard extends StatelessWidget {
           score.weeklyComponent,
           15,
           Icons.calendar_today_outlined,
-          AppColors.textMuted,
+          textMuted,
           textPrimary,
           textMuted,
         ),

@@ -9,6 +9,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/smart_weight_suggestion.dart';
 import '../../../widgets/glow_button.dart';
 import '../../../widgets/number_stepper.dart';
@@ -124,11 +125,11 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
   Color get _setTypeColor {
     switch (widget.setType) {
       case 'warmup':
-        return AppColors.glowOrange;
+        return ThemeColors.of(context).warning;
       case 'failure':
         return AppColors.error;  // accent-allowlist: error/destructive — must stay red
       default:
-        return AppColors.glowCyan;
+        return ThemeColors.of(context).accent;
     }
   }
 
@@ -254,8 +255,8 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
   }
 
   Widget _buildHeader(bool isDark) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textColor = isDark ? ThemeColors.of(context).textPrimary : AppColorsLight.textPrimary;
+    final mutedColor = isDark ? ThemeColors.of(context).textMuted : AppColorsLight.textMuted;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -344,12 +345,12 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                           decoration: BoxDecoration(
                             color: widget.targetRir == 0
                                 ? AppColors.error.withOpacity(0.2)  // accent-allowlist: error/destructive — must stay red
-                                : AppColors.glowOrange.withOpacity(0.2),
+                                : ThemeColors.of(context).warning.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
                               color: widget.targetRir == 0
                                   ? AppColors.error.withOpacity(0.5)  // accent-allowlist: error/destructive — must stay red
-                                  : AppColors.glowOrange.withOpacity(0.5),
+                                  : ThemeColors.of(context).warning.withOpacity(0.5),
                             ),
                           ),
                           child: Text(
@@ -359,7 +360,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                               fontWeight: FontWeight.bold,
                               color: widget.targetRir == 0
                                   ? AppColors.error  // accent-allowlist: error/destructive — must stay red
-                                  : AppColors.glowOrange,
+                                  : ThemeColors.of(context).warning,
                             ),
                           ),
                         ),
@@ -376,7 +377,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                           style: TextStyle(
                             fontSize: isSmallScreen ? 10 : 11,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
+                            color: ThemeColors.of(context).textSecondary,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -428,7 +429,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isCompleted
-                ? AppColors.glowGreen
+                ? ThemeColors.of(context).success
                 : isCurrent
                     ? _setTypeColor
                     : Colors.white.withOpacity(0.2),
@@ -438,7 +439,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
             boxShadow: isCompleted || isCurrent
                 ? [
                     BoxShadow(
-                      color: (isCompleted ? AppColors.glowGreen : _setTypeColor)
+                      color: (isCompleted ? ThemeColors.of(context).success : _setTypeColor)
                           .withOpacity(0.5),
                       blurRadius: 4,
                     ),
@@ -451,7 +452,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
   }
 
   Widget _buildPreviousSection(bool isDark) {
-    final mutedColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final mutedColor = isDark ? ThemeColors.of(context).textMuted : AppColorsLight.textMuted;
 
     return GestureDetector(
       onTap: () {
@@ -525,7 +526,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
           label,
           style: TextStyle(
             fontSize: 10,
-            color: AppColors.textMuted,
+            color: ThemeColors.of(context).textMuted,
           ),
         ),
         const SizedBox(height: 2),
@@ -534,7 +535,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+            color: ThemeColors.of(context).textSecondary,
           ),
         ),
       ],
@@ -543,7 +544,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
 
   Widget _buildAiSuggestedBadge(bool isDark) {
     final suggestion = widget.smartWeightSuggestion!;
-    final badgeColor = AppColors.glowPurple;
+    final badgeColor = ThemeColors.of(context).accent;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -647,7 +648,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                       style: TextStyle(
                         fontSize: 12,
                         color: isDark
-                            ? AppColors.textSecondary
+                            ? ThemeColors.of(context).textSecondary
                             : AppColorsLight.textSecondary,
                         height: 1.4,
                       ),
@@ -700,8 +701,8 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
                                     : Icons.trending_down,
                                 label: suggestion.modifierDescription!,
                                 color: suggestion.isIncrease
-                                    ? AppColors.glowGreen
-                                    : AppColors.glowOrange,
+                                    ? ThemeColors.of(context).success
+                                    : ThemeColors.of(context).warning,
                                 isDark: isDark,
                               ),
                           ],
@@ -743,7 +744,7 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                color: isDark ? ThemeColors.of(context).textMuted : AppColorsLight.textMuted,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -766,9 +767,9 @@ class _FuturisticSetCardState extends State<FuturisticSetCard> {
           icon: const Icon(Icons.skip_next_rounded, size: 20),
           label: Text(AppLocalizations.of(context).futuristicSetCardSkipExercise),
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.glowOrange,
-            side: BorderSide(color: AppColors.glowOrange.withOpacity(0.5)),
-            backgroundColor: AppColors.glowOrange.withOpacity(0.1),
+            foregroundColor: ThemeColors.of(context).warning,
+            side: BorderSide(color: ThemeColors.of(context).warning.withOpacity(0.5)),
+            backgroundColor: ThemeColors.of(context).warning.withOpacity(0.1),
             padding: const EdgeInsets.symmetric(vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -798,7 +799,7 @@ class CompletedSetsRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.glowGreen.withOpacity(0.1),
+        color: ThemeColors.of(context).success.withOpacity(0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -806,7 +807,7 @@ class CompletedSetsRow extends StatelessWidget {
           Icon(
             Icons.check_circle,
             size: 16,
-            color: AppColors.glowGreen,
+            color: ThemeColors.of(context).success,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -823,7 +824,7 @@ class CompletedSetsRow extends StatelessWidget {
                   'S${index + 1}: ${weight.toStringAsFixed(0)}${useKg ? 'kg' : 'lbs'}×$reps',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.glowGreen,
+                    color: ThemeColors.of(context).success,
                     fontWeight: FontWeight.w500,
                   ),
                 );

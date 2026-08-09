@@ -165,7 +165,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [
@@ -315,7 +315,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
         decoration: BoxDecoration(
           color: tc.surface,
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: ThemeColors.of(context).cardBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -385,7 +385,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
             decoration: BoxDecoration(
               color: tc.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.cardBorder),
+              border: Border.all(color: ThemeColors.of(context).cardBorder),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: TextField(
@@ -514,7 +514,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
       decoration: BoxDecoration(
         color: tc.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: ThemeColors.of(context).cardBorder),
       ),
       child: Row(
         children: [

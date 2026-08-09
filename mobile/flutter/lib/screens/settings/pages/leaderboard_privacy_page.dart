@@ -79,6 +79,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                               .setShowOnLeaderboard(v),
                           textPrimary: tc.textPrimary,
                           textMuted: textMuted,
+                          hairline: tc.hairline,
                           enabled: true,
                           isLast: false,
                         ),
@@ -93,6 +94,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                               .setAnonymous(v),
                           textPrimary: tc.textPrimary,
                           textMuted: textMuted,
+                          hairline: tc.hairline,
                           enabled: masterOn,
                           isLast: false,
                         ),
@@ -107,6 +109,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                               .setStatsVisible(v),
                           textPrimary: tc.textPrimary,
                           textMuted: textMuted,
+                          hairline: tc.hairline,
                           enabled: masterOn,
                           isLast: true,
                         ),
@@ -130,6 +133,7 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
     required ValueChanged<bool> onChanged,
     required Color textPrimary,
     required Color textMuted,
+    required Color hairline,
     required bool enabled,
     required bool isLast,
   }) {
@@ -140,8 +144,8 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: isLast
             ? null
-            : const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.hairline)),
+            : BoxDecoration(
+                border: Border(bottom: BorderSide(color: hairline)),
               ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -122,6 +123,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -196,7 +198,7 @@ class _WorkoutDaysSheetState extends State<WorkoutDaysSheet> {
                     width: 44,
                     height: 64,
                     decoration: BoxDecoration(
-                      gradient: isSelected ? AppColors.cyanGradient : null,
+                      gradient: isSelected ? tc.accentGradient : null,
                       color: isSelected
                           ? null
                           : (isDark

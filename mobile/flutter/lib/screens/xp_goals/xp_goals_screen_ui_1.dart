@@ -139,7 +139,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
           child: LinearProgressIndicator(
             value: progressFraction,
             minHeight: 6,
-            backgroundColor: AppColors.hairlineStrong,
+            backgroundColor: tc.hairlineStrong,
             valueColor: const AlwaysStoppedAnimation(AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
           ),
         ),
@@ -210,6 +210,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     const dailyLoginXP = 5;
 
     // Get actual daily goals state
@@ -288,8 +289,8 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
         // Summary meta line — Anton hero counts + Barlow labels on a hairline
         Container(
           padding: const EdgeInsets.only(bottom: 12),
-          decoration: const BoxDecoration(
-            border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: tc.hairline)),
           ),
           child: Row(
             children: [
@@ -361,6 +362,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final hairBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final extendedProgress = ref.watch(extendedWeeklyProgressProvider);
@@ -405,7 +407,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
               child: LinearProgressIndicator(
                 value: percentage,
                 minHeight: 6,
-                backgroundColor: AppColors.hairlineStrong,
+                backgroundColor: tc.hairlineStrong,
                 valueColor: const AlwaysStoppedAnimation(AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ),
@@ -420,9 +422,9 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
             ...checkpoints.map((cp) {
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   border: Border(
-                    top: BorderSide(color: AppColors.hairline),
+                    top: BorderSide(color: tc.hairline),
                   ),
                 ),
                 child: Row(
@@ -501,6 +503,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final hairBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final monthlyProgress = ref.watch(monthlyAchievementsProgressProvider);
@@ -563,7 +566,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
               child: LinearProgressIndicator(
                 value: percentage,
                 minHeight: 6,
-                backgroundColor: AppColors.hairlineStrong,
+                backgroundColor: tc.hairlineStrong,
                 valueColor: const AlwaysStoppedAnimation(AppColors.gamGold), // accent-allowlist: XP level/reward gamification gold + success/earned state
               ),
             ),
@@ -573,9 +576,9 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
             ...achievements.map((achievement) {
               return Container(
                 padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   border: Border(
-                    top: BorderSide(color: AppColors.hairline),
+                    top: BorderSide(color: tc.hairline),
                   ),
                 ),
                 child: Row(
@@ -622,7 +625,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                                     height: 3,
                                     margin: const EdgeInsets.only(top: 5),
                                     decoration: BoxDecoration(
-                                      color: AppColors.hairlineStrong,
+                                      color: tc.hairlineStrong,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                     child: FractionallySizedBox(

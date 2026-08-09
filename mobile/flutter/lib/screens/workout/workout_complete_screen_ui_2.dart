@@ -284,7 +284,7 @@ extension _WorkoutCompleteScreenStateUI2 on _WorkoutCompleteScreenState {
     return Builder(
       builder: (context) {
         final isDarkChart = Theme.of(context).brightness == Brightness.dark;
-        final textMutedChart = isDarkChart ? AppColors.textMuted : AppColorsLight.textMuted;
+        final textMutedChart = isDarkChart ? ThemeColors.of(context).textMuted : AppColorsLight.textMuted;
 
         if (sortedHistory.isEmpty) {
           return Center(child: Text(AppLocalizations.of(context).workoutCompleteScreenNoData, style: TextStyle(color: textMutedChart)));

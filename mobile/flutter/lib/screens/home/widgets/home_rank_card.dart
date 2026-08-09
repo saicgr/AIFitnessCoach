@@ -7,6 +7,7 @@ import '../../../data/providers/discover_provider.dart';
 import '../../../data/providers/user_cohort_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'leaderboard_standing_gate.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Workstream 2 — compact rank card shown only for week-1 users on home.
 ///
@@ -29,10 +30,10 @@ class HomeRankCard extends ConsumerWidget {
 
     final snapshotAsync = ref.watch(discoverSnapshotProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = ThemeColors.of(context).elevated;
+    final textColor = ThemeColors.of(context).textPrimary;
+    final textMuted = ThemeColors.of(context).textMuted;
+    final border = ThemeColors.of(context).cardBorder;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
 
     return snapshotAsync.when(

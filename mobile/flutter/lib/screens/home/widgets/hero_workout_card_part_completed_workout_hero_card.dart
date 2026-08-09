@@ -24,10 +24,8 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
+    final textPrimary = ThemeColors.of(context).textPrimary;
+    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;  // accent-allowlist: deliberate hero-card asymmetry -- dramatic full-bleed pure black in dark, raised light-grey elevated card (not plain white) in light so it stays visually separated from the page background
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
@@ -273,11 +271,11 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;
+    final cardBg = isDark ? AppColors.pureBlack : AppColorsLight.elevated;  // accent-allowlist: deliberate hero-card asymmetry -- dramatic full-bleed pure black in dark, raised light-grey elevated card (not plain white) in light so it stays visually separated from the page background
     final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        ThemeColors.of(context).textPrimary;
     final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        ThemeColors.of(context).textSecondary;
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 

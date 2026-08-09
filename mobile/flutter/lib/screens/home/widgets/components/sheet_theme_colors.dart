@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../core/theme/theme_colors.dart';
 
 /// Theme colors interface for bottom sheets
 /// Provides consistent theming across all customization sheets
@@ -23,18 +24,22 @@ class DarkSheetColors implements SheetColors {
   final Color accent;
   const DarkSheetColors(this.accent);
 
+  // This class IS a theme mapping (mirrors ThemeColors for bottom sheets) --
+  // SheetColorsExtension.sheetColors below picks DarkSheetColors vs
+  // LightSheetColors from the real Theme.of(context).brightness, so these
+  // getters resolve correctly per-theme even though they can't take context.
   @override
-  Color get elevated => AppColors.elevated;
+  Color get elevated => AppColors.elevated;  // accent-allowlist: sheet theme mapping -- see class doc above
   @override
-  Color get textPrimary => AppColors.textPrimary;
+  Color get textPrimary => AppColors.textPrimary;  // accent-allowlist: sheet theme mapping -- see class doc above
   @override
-  Color get textSecondary => AppColors.textSecondary;
+  Color get textSecondary => AppColors.textSecondary;  // accent-allowlist: sheet theme mapping -- see class doc above
   @override
-  Color get textMuted => AppColors.textMuted;
+  Color get textMuted => AppColors.textMuted;  // accent-allowlist: sheet theme mapping -- see class doc above
   @override
-  Color get cardBorder => AppColors.cardBorder;
+  Color get cardBorder => AppColors.cardBorder;  // accent-allowlist: sheet theme mapping -- see class doc above
   @override
-  Color get glassSurface => AppColors.glassSurface;
+  Color get glassSurface => AppColors.glassSurface;  // accent-allowlist: sheet theme mapping -- see class doc above
   @override
   Color get cyan => accent;
   @override
@@ -87,7 +92,8 @@ extension SheetColorsExtension on BuildContext {
 }
 
 /// Utility function to get difficulty color (monochrome)
-Color getDifficultyColor(String difficulty, {bool isDark = true}) {
+Color getDifficultyColor(BuildContext context, String difficulty) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
   switch (difficulty.toLowerCase()) {
     case 'easy':
       return isDark ? const Color(0xFF808080) : const Color(0xFF808080);
@@ -96,16 +102,16 @@ Color getDifficultyColor(String difficulty, {bool isDark = true}) {
     case 'hard':
       return isDark ? const Color(0xFFC0C0C0) : const Color(0xFF404040);
     case 'hell':
-      return isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+      return ThemeColors.of(context).textPrimary;
     default:
       return isDark ? const Color(0xFFA0A0A0) : const Color(0xFF606060);
   }
 }
 
 /// Utility function to get workout type color (monochrome)
-Color getWorkoutTypeColor(String type, {bool isDark = true}) {
+Color getWorkoutTypeColor(BuildContext context, String type) {
   // All workout types use the same monochrome accent
-  return isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+  return ThemeColors.of(context).textSecondary;
 }
 
 /// Utility function to get difficulty icon

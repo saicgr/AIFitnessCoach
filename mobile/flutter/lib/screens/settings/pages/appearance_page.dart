@@ -130,7 +130,7 @@ class _ThemeSegmented extends ConsumerWidget {
   }
 
   Widget _segDivider(ThemeColors tc) =>
-      Container(width: 1, height: 40, color: AppColors.hairline);
+      Container(width: 1, height: 40, color: tc.cardBorder);
 }
 
 class _ThemeSeg extends StatelessWidget {
