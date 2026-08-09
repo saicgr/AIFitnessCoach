@@ -45,8 +45,17 @@ Future<void> markHealthPrimerSeen() => _markDismissed();
 Future<void> showHealthConnectSheet(BuildContext context, WidgetRef ref) {
   return showGlassSheet(
     context: context,
+    // showHandle: false — GlassSheet's handle row also renders its OWN close
+    // "x" at the trailing edge, and this sheet's SheetHeader already provides
+    // one. That produced TWO x marks (user-reported), and the two were not
+    // equivalent: GlassSheet's merely pops, while the header's runs
+    // `_handleDismiss`, which records the dismissal so the primer does not
+    // re-prompt. Tapping the wrong one meant being nagged again.
+    //
+    // So the header owns both affordances here: it draws the handle and the
+    // single close that carries the right behaviour.
     builder: (ctx) => GlassSheet(
-      showHandle: true,
+      showHandle: false,
       child: _HealthConnectSheetContent(parentRef: ref),
     ),
   );
@@ -137,7 +146,10 @@ class _HealthConnectSheetContentState
           icon: Icons.monitor_heart_outlined,
           iconColor: AppColors.green, // accent-allowlist: Health Connect sync success/error state color, semantic
           title: AppLocalizations.of(context).todaysHealthCardConnectHealth,
-          showHandle: false, // GlassSheet already shows handle
+          // The header owns BOTH affordances: GlassSheet is built with
+          // showHandle:false above, because its handle row also draws a second
+          // close "x" that would only pop without marking the primer dismissed.
+          showHandle: true,
           onClose: _handleDismiss,
         ),
 
