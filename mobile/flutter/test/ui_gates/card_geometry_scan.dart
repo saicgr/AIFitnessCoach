@@ -60,6 +60,11 @@ const int kEstablishedMinCount = 50;
 /// non-established value to be flagged as a near-miss. See doc comment.
 const double kNearMissTolerance = 3.0;
 
+/// Values below this are not card geometry — hairlines, badge insets,
+/// indicator dots, icon padding. Scoring them as "near-misses" produced 178 of
+/// this gate's 317 initial findings and zero actionable ones.
+const double kCardGeometryFloor = 8;
+
 enum GeometryKind { radius, padding }
 
 final RegExp radiusPattern = RegExp(
@@ -191,6 +196,18 @@ bool isNearMiss(double value, Set<double> established,
     {double tolerance = kNearMissTolerance}) {
   if (established.isEmpty) return false;
   if (established.contains(value)) return false;
+  // Below [kCardGeometryFloor] this stops being CARD geometry. Those values are
+  // hairlines, badge insets, indicator dots and icon padding — a 3px inset
+  // around a 13px glyph is not "a near-miss of 4", it is just a small inset,
+  // and nobody can see the difference.
+  //
+  // This gate's own inventory made the case: of its 317 initial findings, 178
+  // were sub-8px micro values (radius=1 x31, radius=7 x33, padding=2 x33,
+  // padding=3 x23 ...) and only the 139 at >= 8 were actionable. Reporting the
+  // other 178 trains people to ignore the gate, which costs more than the
+  // drift it is trying to catch — and it already fired once on a 3px icon
+  // inset that had nothing wrong with it.
+  if (value < kCardGeometryFloor) return false;
   final d = _nearestDistance(value, established);
   return d > 0 && d <= tolerance;
 }

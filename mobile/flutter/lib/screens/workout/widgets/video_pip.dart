@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 /// Corner positions for the PiP video
 enum PipCorner {
@@ -210,18 +211,18 @@ class _VideoPipState extends State<VideoPip> with SingleTickerProviderStateMixin
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: AppColors.pureBlack,
+        color: ThemeColors.of(context).background,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: _isDragging
-              ? AppColors.glowCyan.withOpacity(0.6)
+              ? ThemeColors.of(context).accent.withOpacity(0.6)
               : Colors.white.withOpacity(0.2),
           width: _isDragging ? 2 : 1.5,
         ),
         boxShadow: [
           BoxShadow(
             color: _isDragging
-                ? AppColors.glowCyan.withOpacity(0.3)
+                ? ThemeColors.of(context).accent.withOpacity(0.3)
                 : Colors.black.withOpacity(0.5),
             blurRadius: _isDragging ? 16 : 12,
             spreadRadius: 0,
@@ -318,14 +319,14 @@ class _VideoPipState extends State<VideoPip> with SingleTickerProviderStateMixin
     // Loading
     if (widget.isLoading) {
       return Container(
-        color: AppColors.elevated,
-        child: const Center(
+        color: ThemeColors.of(context).elevated,
+        child: Center(
           child: SizedBox(
             width: 24,
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.glowCyan,
+              color: ThemeColors.of(context).accent,
             ),
           ),
         ),
@@ -354,7 +355,7 @@ class _VideoPipState extends State<VideoPip> with SingleTickerProviderStateMixin
         fit: BoxFit.cover,
         width: size,
         height: size,
-        placeholder: (_, __) => Container(color: AppColors.elevated),
+        placeholder: (_, __) => Container(color: ThemeColors.of(context).elevated),
         errorWidget: (_, __, ___) => _buildPlaceholder(),
       );
     }
@@ -364,12 +365,12 @@ class _VideoPipState extends State<VideoPip> with SingleTickerProviderStateMixin
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppColors.elevated,
-      child: const Center(
+      color: ThemeColors.of(context).elevated,
+      child: Center(
         child: Icon(
           Icons.fitness_center,
           size: 32,
-          color: AppColors.textMuted,
+          color: ThemeColors.of(context).textMuted,
         ),
       ),
     );
@@ -483,13 +484,20 @@ class FullScreenVideoModal extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: imageUrl!,
         fit: BoxFit.contain,
+        // deliberately-dark: this whole modal (`FullScreenVideoModal`) is a
+        // fixed-black full-screen video viewer (see `backgroundColor:
+        // Colors.black` in build() above) — not a themed app surface, so the
+        // placeholder/error glyphs stay on the dark-theme literals regardless
+        // of the app theme. `_buildMedia()` also has no BuildContext to read
+        // (StatelessWidget instance method, no context param).
         placeholder: (_, __) => const Center(
-          child: CircularProgressIndicator(color: AppColors.glowCyan),
+          child: CircularProgressIndicator(
+              color: AppColors.accent), // accent-allowlist: fixed-black full-screen video viewer, dark in both themes
         ),
         errorWidget: (_, __, ___) => const Icon(
           Icons.fitness_center,
           size: 80,
-          color: AppColors.textMuted,
+          color: AppColors.textMuted, // accent-allowlist: fixed-black full-screen video viewer, dark in both themes
         ),
       );
     }
@@ -497,7 +505,7 @@ class FullScreenVideoModal extends StatelessWidget {
     return const Icon(
       Icons.fitness_center,
       size: 80,
-      color: AppColors.textMuted,
+      color: AppColors.textMuted,  // deliberately-dark: see note above — fixed-black video viewer
     );
   }
 }
