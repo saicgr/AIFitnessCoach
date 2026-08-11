@@ -59,6 +59,13 @@ class GlassSheetStyle {
   static Color handleColor(bool isDark) => isDark
       ? AppColors.textMuted.withValues(alpha: 0.75)
       : AppColorsLight.textMuted.withValues(alpha: 0.65);
+
+  /// Scrim for a centred [GlassDialog]. Between the sheet scrim (0.2 — a
+  /// sheet covers the bottom of the screen, so the content it hides is
+  /// already mostly off-view) and the opaque-prompt scrim (0.55): a dialog
+  /// floats in the MIDDLE of live content, so it needs enough separation to
+  /// read as foreground while its own blur still has something to blur.
+  static Color dialogBarrierColor() => Colors.black.withValues(alpha: 0.4);
 }
 
 /// Shows a glassmorphic modal bottom sheet with standard styling.

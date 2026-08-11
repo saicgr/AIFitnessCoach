@@ -30,6 +30,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/scheduling_repository.dart' show MissedWorkout;
 import '../../../data/services/crate_notification_router.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_dialog.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/rating_prompt_sheet.dart';
 import '../../workout/widgets/reschedule_sheet.dart';
@@ -866,69 +867,69 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     setState(() => _isDismissAllExpanded = false);
     _dismissAllController.reverse();
 
-    final result = await showDialog<String>(
+    // Glassmorphic, matching every bottom sheet in the app — it used to be a
+    // flat opaque `elevated` card with its own 20pt radius and a hand-rolled
+    // black54 scrim, which read as a different design language than the
+    // sheets it sits alongside. `GlassDialog` reads its blur/radius/border/
+    // background straight off `GlassSheetStyle`, so the two can't drift.
+    final result = await showGlassDialog<String>(
       context: context,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: ThemeColors.of(context).elevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('🎁', style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 12),
-              Text(
-                AppLocalizations.of(context).stackedBannerPanelYouHaveUnopenedCrates,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: ThemeColors.of(context).textPrimary,
+      builder: (dialogContext) => GlassDialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🎁', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            Text(
+              AppLocalizations.of(context).stackedBannerPanelYouHaveUnopenedCrates,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: ThemeColors.of(context).textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              AppLocalizations.of(context).stackedBannerPanelOpenThemBeforeDismissing,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: ThemeColors.of(context).textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Open All button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(dialogContext, 'open'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate), gamification tier convention
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  AppLocalizations.of(context).stackedBannerPanelOpenAll,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context).stackedBannerPanelOpenThemBeforeDismissing,
-                textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            // Dismiss Anyway
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, 'dismiss'),
+              child: Text(
+                AppLocalizations.of(context).stackedBannerPanelDismissAnyway,
                 style: TextStyle(
-                  fontSize: 14,
                   color: ThemeColors.of(context).textSecondary,
                 ),
               ),
-              const SizedBox(height: 24),
-              // Open All button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(dialogContext, 'open'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFB300),  // accent-allowlist: crate-type reward identity colour (gold=activity crate), gamification tier convention
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context).stackedBannerPanelOpenAll,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              // Dismiss Anyway
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, 'dismiss'),
-                child: Text(
-                  AppLocalizations.of(context).stackedBannerPanelDismissAnyway,
-                  style: TextStyle(
-                    color: ThemeColors.of(context).textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1474,7 +1475,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.fromLTRB(16, 2, 16, 4),
         child: SizedBox(
           height: totalHeight,
           child: Stack(
