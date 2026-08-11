@@ -859,28 +859,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         if (insight.blocks.isNotEmpty)
           _graphsSection(c, insight.blocks.take(3).toList(),
               autoExpand: insight.recoveryFocus),
-        // Spec footer: a hairline rule, then "Adjust today" (muted) · "Ask
-        // coach ›" (accent) — replaces the Log/View CTA buttons.
-        const SizedBox(height: 13),
-        Container(height: 1, color: c.cardBorder),
-        const SizedBox(height: 11),
-        Row(
-          children: [
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _openChat(context, insight),
-              child: Text('ADJUST TODAY',
-                  style: ZType.lbl(11, color: c.textMuted, letterSpacing: 1.5)),
-            ),
-            const Spacer(),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => _openChat(context, insight),
-              child: Text('ASK COACH ›',
-                  style: ZType.lbl(11, color: c.accent, letterSpacing: 1.5)),
-            ),
-          ],
-        ),
+        // The old spec footer ("ADJUST TODAY" · "ASK COACH ›") is gone. Both
+        // labels invoked the SAME `_openChat(context, insight)` — two
+        // differently-styled affordances for one destination — on a card whose
+        // whole surface is already a tap-to-open-chat target (see the
+        // GestureDetector in `build`), in an app whose bottom nav has a
+        // dedicated Coach tab. Four routes to one place; the footer was the
+        // two that earned nothing and cost 25pt of card height.
         // (Tier-2 stacked contextual nudges removed from the expanded card —
         // the day's actions now live in the tappable TO DO TODAY carousel
         // above. `_CoachNudgeStack` is still mounted in the skeleton/error
