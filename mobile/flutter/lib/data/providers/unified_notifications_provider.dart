@@ -170,6 +170,20 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     state = AsyncValue.data(seed);
 
+    // The seed above is a ONE-SHOT read, and `notificationsProvider` is the
+    // live local feed: it hydrates from SharedPreferences asynchronously (so
+    // the seed is usually EMPTY on a cold start), and it keeps growing at
+    // runtime — StackedBannerPanel registers every banner it renders through
+    // `addNotification`, and push messages arrive via `addFromPushMessage`.
+    // Without this listener none of that ever reached the unified feed, so
+    // the bell's unread badge sat at zero while the home banner stack was
+    // showing six cards (reported). Re-merge on every local-feed mutation.
+    _ref.listen<List<NotificationItem>>(
+      notificationsProvider,
+      (_, next) => _syncLocal(next),
+      fireImmediately: true,
+    );
+
     _loadAll();
     // TODO: Re-enable when social features are launched
     // _startPolling();
@@ -179,6 +193,30 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
         _loadAll();
       }
     });
+  }
+
+  /// Ids minted by a REMOTE source (challenge / friend-request / social
+  /// fetches). Everything else in the unified feed came from the local
+  /// `notificationsProvider`, so a local-feed change fully replaces it.
+  static const _remoteIdPrefixes = ['challenge_', 'friend_request_', 'social_'];
+
+  static bool _isRemote(String id) =>
+      _remoteIdPrefixes.any((p) => id.startsWith(p));
+
+  /// Re-merge the local feed into the unified state, preserving whatever the
+  /// network merge has already contributed. Never downgrades the state to
+  /// loading/error — the local feed is always renderable on its own.
+  void _syncLocal(List<NotificationItem> local) {
+    if (!mounted) return;
+    final remote =
+        (state.valueOrNull ?? const <UnifiedNotification>[])
+            .where((n) => _isRemote(n.id))
+            .toList();
+    final merged = [
+      ...remote,
+      ...local.map(UnifiedNotification.fromLocal),
+    ]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    state = AsyncValue.data(merged);
   }
 
   void _startPolling() {

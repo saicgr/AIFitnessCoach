@@ -75,18 +75,40 @@ final unreadNotificationCountProvider = Provider<int>((ref) {
 });
 
 class NotificationsNotifier extends StateNotifier<List<NotificationItem>> {
+  /// Completes when the persisted feed has been read off disk and merged into
+  /// [state]. Writes await this so a notification recorded on the very first
+  /// frame can never persist a pre-hydration subset OVER the real history.
+  late final Future<void> _hydration;
+
   NotificationsNotifier() : super([]) {
-    _loadNotifications();
+    _hydration = _loadNotifications();
   }
 
+  /// Reads the persisted feed and MERGES it into whatever is already in
+  /// memory.
+  ///
+  /// This used to assign `state = <what was on disk>`, which raced every
+  /// caller: `StackedBannerPanel` records its banners from a post-frame
+  /// callback on the FIRST frame, which lands while this `await` is still in
+  /// flight. Whichever finished last won — so a banner would reach the bell on
+  /// one launch and vanish on the next. In-memory entries win the merge: they
+  /// are strictly newer than what was serialised.
   Future<void> _loadNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final jsonString = prefs.getString(_notificationsStorageKey);
-      if (jsonString != null) {
-        final List<dynamic> jsonList = jsonDecode(jsonString);
-        state = jsonList.map((json) => NotificationItem.fromJson(json)).toList();
+      if (jsonString == null) return;
+      final List<dynamic> jsonList = jsonDecode(jsonString);
+      final byId = <String, NotificationItem>{
+        for (final json in jsonList)
+          (json as Map<String, dynamic>)['id'] as String:
+              NotificationItem.fromJson(json),
+      };
+      for (final inFlight in state) {
+        byId[inFlight.id] = inFlight;
       }
+      state = byId.values.toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
     } catch (e) {
       debugPrint('🔔 [Notifications] Error loading notifications: $e');
     }
@@ -94,6 +116,9 @@ class NotificationsNotifier extends StateNotifier<List<NotificationItem>> {
 
   Future<void> _saveNotifications() async {
     try {
+      // Never overwrite the stored history with a partially-hydrated list.
+      await _hydration;
+      if (!mounted) return; // disposed while we waited
       final prefs = await SharedPreferences.getInstance();
       final jsonString = jsonEncode(state.map((n) => n.toJson()).toList());
       await prefs.setString(_notificationsStorageKey, jsonString);
@@ -102,9 +127,39 @@ class NotificationsNotifier extends StateNotifier<List<NotificationItem>> {
     }
   }
 
+  /// True when [a] and [b] fall on the same local calendar day.
+  static bool _sameLocalDay(DateTime a, DateTime b) {
+    final la = a.toLocal(), lb = b.toLocal();
+    return la.year == lb.year && la.month == lb.month && la.day == lb.day;
+  }
+
+  /// Records a notification, deduping by id WITHIN a local day.
+  ///
+  /// The day scoping is the whole point. Recurring banners carry a STABLE id —
+  /// `streak_at_risk`, `daily_crate`, `renewal`, `calibration`,
+  /// `rating_prompt`, the contextual ones — because that id is also their
+  /// dismiss key. A plain "ignore duplicate ids" rule therefore muted them
+  /// PERMANENTLY: the first day's entry got read, and every subsequent day's
+  /// genuinely-new banner was swallowed, so the bell sat empty while the home
+  /// stack showed cards (reported).
+  ///
+  /// Same local day  → true duplicate. Home rebuilds many times per session,
+  ///                   and a push and its matching banner share a
+  ///                   `<type>_<localdate>` `notif_id`; both must collapse to
+  ///                   one entry.
+  /// Earlier day     → a real new occurrence. Re-raise IN PLACE: today's
+  ///                   timestamp, unread again, moved to the top — one row per
+  ///                   recurring banner, not one per day.
   void addNotification(NotificationItem notification) {
-    // Don't add duplicates
-    if (state.any((n) => n.id == notification.id)) return;
+    final existingIndex = state.indexWhere((n) => n.id == notification.id);
+    if (existingIndex != -1) {
+      final existing = state[existingIndex];
+      if (_sameLocalDay(existing.timestamp, notification.timestamp)) return;
+      final rest = [...state]..removeAt(existingIndex);
+      state = [notification, ...rest];
+      _saveNotifications();
+      return;
+    }
 
     state = [notification, ...state];
     // Keep only last 100 notifications
@@ -187,11 +242,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     'Workouts': {'missed_workout', 'workout_reminder', 'rank_percentile'},
     'Coach': {'ai_coach', 'ai_coach_accountability', 'week1_tip', 'contextual',
               'health_coaching', 'nutrition_reminder', 'hydration_reminder',
-              'weekly_summary'},
-    'Rewards': {'daily_crate', 'double_xp', 'streak_alert', 'achievement', 'wrapped'},
+              'weekly_summary', 'calibration'},
+    'Rewards': {'daily_crate', 'double_xp', 'streak_alert', 'streak_at_risk',
+                'achievement', 'wrapped'},
     'Social': {'friend_request', 'friend_accepted', 'reaction', 'comment', 'mention',
                'challenge_received', 'challenge_accepted', 'challenge_completed', 'challenge_beaten'},
-    'System': {'renewal', 'billing', 'test'},
+    'System': {'renewal', 'billing', 'test', 'rating_prompt'},
   };
 
   void _navigateForNotificationType(BuildContext context, String type, {String? challengeId}) {
