@@ -1231,7 +1231,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Header — greeting + streak + bell + overflow. Fixed chrome.
               const SliverToBoxAdapter(child: MinimalHeader()),
 
-              const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
+              // Deliberately tighter than kHomeGap: the banner panel that
+              // follows floats its dismiss-all badge 8pt ABOVE its own top
+              // edge, so a full section gap here read as a dead band under
+              // the masthead. The panel and the metrics strip carry their own
+              // leading whitespace.
+              const SliverToBoxAdapter(child: SizedBox(height: 6)),
 
               // Stacked notification-panel banners — fixed system chrome,
               // always directly under the header. Self-collapses to zero

@@ -44,7 +44,11 @@ class MinimalHeader extends ConsumerWidget {
     // third unlabelled route into chat earned nothing.
     return Padding(
       key: AppTourKeys.topBarKey,
-      padding: const EdgeInsets.fromLTRB(20, 4, 8, 8),
+      // Tight bottom inset: the icon cluster below is 40pt tall (see
+      // NotificationBellButton / _SettingsButton), and the banner panel that
+      // follows adds its own 2pt. 8pt here stacked into a ~26pt dead band
+      // between the masthead and the first banner (reported).
+      padding: const EdgeInsets.fromLTRB(20, 4, 8, 2),
       child: Row(
         children: [
           const Expanded(child: _Greeting()),
@@ -114,7 +118,7 @@ class _SettingsButton extends StatelessWidget {
       icon: Icon(Icons.settings_outlined, size: 22, color: iconColor),
       tooltip: AppLocalizations.of(context).settingsTitle,
       padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
       onPressed: () {
         HapticService.light();
         context.push('/settings');

@@ -77,58 +77,23 @@ class HomeMetricsStrip extends ConsumerWidget {
 
     // Health never connected AND every health cell resolved to "no data":
     // four dead "—" cells at the top of Home read as "the app is broken".
-    // Repurpose the strip as a single Connect Health CTA instead (mirrors
-    // todays_health_card's not-connected treatment). The `!loading` guards
-    // keep the CTA from flashing during the brief pre-resolve window on a
-    // connected account's cold start; any single populated cell (e.g. a
-    // manually-logged sleep) restores the normal 4-cell strip.
+    // The strip COLLAPSES in that case — it does not become a Connect CTA.
+    // Connecting Health is a settings-shaped action and already lives at
+    // Settings → Health & Devices (which shows "Not connected" as its row
+    // value); a permanent CTA pinned under the masthead was pure nag chrome.
+    // The `!loading` guards keep the strip from flashing collapsed during the
+    // brief pre-resolve window on a connected account's cold start; any
+    // single populated cell (e.g. a manually-logged sleep) restores it.
     final syncConnected =
         ref.watch(healthSyncProvider.select((s) => s.isConnected));
-    final showConnectCta = !syncConnected &&
+    final noHealthData = !syncConnected &&
         steps.isEmpty &&
         sleep.isEmpty &&
         ready.isEmpty &&
         !stepsLoading &&
         !sleepLoading &&
         !readyLoading;
-    if (showConnectCta) {
-      return Padding(
-        padding: kHomeHPad,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: () {
-            HapticService.light();
-            ref.read(healthSyncProvider.notifier).connect();
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: c.cardBorder),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-            child: Row(
-              children: [
-                Icon(Icons.favorite_rounded, size: 14, color: c.accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Connect Health to see steps, sleep & readiness',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ZType.lbl(10, color: c.textMuted, letterSpacing: 0.4),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  'CONNECT',
-                  style: ZType.lbl(9, color: c.accent, letterSpacing: 1.3),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+    if (noHealthData) return const SizedBox.shrink();
 
     return Padding(
       padding: kHomeHPad,

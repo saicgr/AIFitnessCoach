@@ -33,6 +33,12 @@ class NotificationBellButton extends ConsumerWidget {
             color: unreadCount > 0 ? context.accentColor : textMuted,
             size: 24,
           ),
+          // Matches _SettingsButton's compact box. The stock 48pt IconButton
+          // made the masthead row 48pt tall against ~20pt of greeting text,
+          // which is most of the dead band the user saw between the top bar
+          // and the first banner.
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
           tooltip: AppLocalizations.of(context).permissionsPrimerNotifications,
           onPressed: () {
             HapticService.light();
@@ -40,9 +46,10 @@ class NotificationBellButton extends ConsumerWidget {
           },
         ),
         if (unreadCount > 0)
+          // Corner of the 24pt bell inside its 40pt box.
           Positioned(
-            right: 8,
-            top: 8,
+            right: 4,
+            top: 4,
             child: Container(
               width: 10,
               height: 10,
