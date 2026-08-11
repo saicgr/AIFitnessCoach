@@ -45,6 +45,7 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../../../workout/widgets/program_manage_sheet.dart';
 import '../week_calendar_strip.dart';
+import 'workout_hero_palette.dart';
 import '../workout_options_sheet.dart';
 import '../../../../data/providers/root_messenger.dart';
 import '../../../../core/theme/accent_color_provider.dart';
@@ -750,30 +751,20 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
     final subtitle = _heroSubtitle(workout, type);
     final isToday = widget.isToday;
 
-    // Legibility split: the muted theme greys (textMuted #71717A) were tuned for
-    // the flat surface2 fallback. The moment an exercise photo sits behind the
-    // text they wash out (subtitle/meta/date-pill became near-invisible — the
-    // bug). So when there's an image we switch the title/subtitle/meta and the
-    // non-today date pill to white-on-scrim with a drop shadow; without an image
-    // we keep the restrained greys over the dark surface.
+    // ── Theme-aware surface ────────────────────────────────────────────────
+    // The card fill, the direction the photo is pushed, the colour the scrim
+    // ramps into and every foreground are ONE decision, made together from a
+    // single `isDark` — see `workout_hero_palette.dart` for why they can't be
+    // picked independently (two shipped bugs came from exactly that).
     final bool overImage = _imageUrl != null;
-    final Color subColor =
-        overImage ? Colors.white.withValues(alpha: 0.88) : c.textMuted;
-    final Color metaColor = overImage
-        ? Colors.white.withValues(alpha: 0.80)
-        : c.textMuted.withValues(alpha: 0.7);
-    final List<Shadow> textShadows = overImage
-        ? const [Shadow(color: Colors.black, blurRadius: 8, offset: Offset(0, 1))]
-        : const <Shadow>[];
-    final Color pillFill = isToday
-        ? c.accent
-        : (overImage ? Colors.black.withValues(alpha: 0.42) : Colors.transparent);
-    final Color pillBorder = isToday
-        ? c.accent
-        : (overImage ? Colors.white.withValues(alpha: 0.38) : c.cardBorder);
-    final Color pillText = isToday
-        ? c.accentContrast
-        : (overImage ? Colors.white.withValues(alpha: 0.92) : c.textMuted);
+    final pal = WorkoutHeroPalette.of(c, overImage: overImage, isToday: isToday);
+    final Color titleColor = pal.titleColor;
+    final Color subColor = pal.subColor;
+    final Color metaColor = pal.metaColor;
+    final List<Shadow> textShadows = pal.textShadows;
+    final Color pillFill = pal.pillFill;
+    final Color pillBorder = pal.pillBorder;
+    final Color pillText = pal.pillText;
 
     // ---- Active program line -----------------------------------------
     // Folds in what used to be the standalone "My Programs" home section —
@@ -842,8 +833,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
               child: Text(
                 'ACTIVE',
                 style: ZType.lbl(9,
-                    color: overImage ? Colors.white : c.accent,
-                    letterSpacing: 1.0),
+                    color: pal.activeBadgeText, letterSpacing: 1.0),
               ),
             ),
           ],
@@ -861,22 +851,23 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
           borderRadius: BorderRadius.circular(14),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF0F0F11), // --d-surface2
+              color: pal.cardFill,
               border: Border(
                 top: BorderSide(color: c.hairlineStrong),
               ),
-              // Exercise illustration behind the text. Lightly darkened here; the
-              // bottom-anchored scrim below does the heavy lifting for text
-              // legibility so the photo still reads as a photo up top.
+              // Exercise illustration behind the text, pushed toward the card's
+              // own surface — darkened on dark, lightened on light — so it
+              // never fights the fill. The bottom-anchored scrim below does the
+              // heavy lifting for text legibility; this only keeps the photo
+              // from reading as a foreign block up top.
               image: overImage
                   ? DecorationImage(
                       image: CachedNetworkImageProvider(_imageUrl!,
                           maxWidth: 600, maxHeight: 360),
                       fit: BoxFit.cover,
                       alignment: const Alignment(0.0, -0.25),
-                      colorFilter: ColorFilter.mode(
-                          Colors.black.withValues(alpha: 0.45),
-                          BlendMode.darken),
+                      colorFilter:
+                          ColorFilter.mode(pal.imageTint, pal.imageBlendMode),
                     )
                   : null,
             ),
@@ -888,18 +879,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
                 if (overImage)
                   Positioned.fill(
                     child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.10),
-                            Colors.black.withValues(alpha: 0.48),
-                            Colors.black.withValues(alpha: 0.90),
-                          ],
-                          stops: const [0.0, 0.45, 1.0],
-                        ),
-                      ),
+                      decoration: BoxDecoration(gradient: pal.scrimGradient),
                     ),
                   ),
                 Padding(
@@ -937,7 +917,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: ZType.disp(30,
-                                color: c.textPrimary, letterSpacing: 0.5)
+                                color: titleColor, letterSpacing: 0.5)
                             .copyWith(height: 0.98, shadows: textShadows),
                       ),
                       if (subtitle.isNotEmpty) ...[
