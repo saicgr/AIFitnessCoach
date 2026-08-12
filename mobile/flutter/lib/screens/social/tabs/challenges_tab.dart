@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
@@ -128,7 +129,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+              16, 16, 16, 16 + kQuickLogFabClearance),
           itemCount: challenges.length,
           itemBuilder: (context, index) {
             final challenge = challenges[index];
@@ -188,7 +190,8 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
             .toList();
 
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+              16, 16, 16, 16 + kQuickLogFabClearance),
           children: [
             // Create Challenge Button
             _buildCreateChallengeButton(context, isDark),

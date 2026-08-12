@@ -19,6 +19,8 @@ import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 part 'activity_card_part_reaction_type.dart';
 part 'activity_card_part_challenge_leaderboard.dart';
 
@@ -49,6 +51,13 @@ class ActivityCard extends StatefulWidget {
   final bool isCurrentUserAdmin; // Whether current user is admin (can pin/unpin)
   final VoidCallback? onPin; // Callback to pin/unpin the post (admin only)
 
+  /// Injection seam for the saved-workouts API, used by the "Save as Routine"
+  /// action. Null in the app — the card builds its own, exactly as before —
+  /// and supplied by tests so the affordance can be exercised without a
+  /// network. Mirrors `SharedWorkoutDetailScreen.savedWorkoutsService`, which
+  /// already takes one for the same reason.
+  final SavedWorkoutsService? savedWorkoutsService;
+
   const ActivityCard({
     super.key,
     required this.activityId,
@@ -72,6 +81,7 @@ class ActivityCard extends StatefulWidget {
     this.isPinned = false,
     this.isCurrentUserAdmin = false,
     this.onPin,
+    this.savedWorkoutsService,
   });
 
   @override
@@ -88,11 +98,11 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    final storage = const FlutterSecureStorage(
-      aOptions: AndroidOptions(encryptedSharedPreferences: true),
-      iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-    );
-    _savedWorkoutsService = SavedWorkoutsService(ApiClient(storage));
+    _savedWorkoutsService = widget.savedWorkoutsService ??
+        SavedWorkoutsService(ApiClient(const FlutterSecureStorage(
+          aOptions: AndroidOptions(encryptedSharedPreferences: true),
+          iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+        )));
     _reactionAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 250),
@@ -365,10 +375,34 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               ],
             ),
           ),
+          // SAVE AS ROUTINE — a plain one-tap save on the feed post itself.
+          // See [_SaveAsRoutineButton] for why this is the change that turns a
+          // passive feed into a routine-distribution surface.
+          if (_canSaveAsRoutine)
+            _SaveAsRoutineButton(
+              service: _savedWorkoutsService,
+              currentUserId: widget.currentUserId,
+              activityId: widget.activityId,
+              cardBorder: cardBorder,
+            ),
         ],
       ),
     );
   }
+
+  /// Whether this post carries a workout the viewer could actually save.
+  ///
+  /// `save-from-activity` reads the activity's workout payload server-side, so
+  /// the affordance is gated on the post BEING a workout — never shown on an
+  /// achievement, a weight milestone or a plain text post, where the endpoint
+  /// would have nothing to copy. Own posts are excluded: the workout is
+  /// already in the author's own library.
+  bool get _canSaveAsRoutine =>
+      !_isOwnPost &&
+      (widget.activityType == 'workout_completed' ||
+          widget.activityType == 'workout_shared') &&
+      widget.activityId.isNotEmpty &&
+      widget.currentUserId.isNotEmpty;
 
   /// Whether the current user owns this post
   bool get _isOwnPost => widget.currentUserId == widget.postUserId;
@@ -894,5 +928,143 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
       return Text(caption, style: const TextStyle(fontSize: 15));
     }
     return const Text('shared an update');
+  }
+}
+
+/// The plain one-tap **Save as Routine** action on a feed post.
+///
+/// ## Why this is a copy-and-affordance change, not a build
+///
+/// `POST /saved-workouts/save-from-activity` — *"Save a workout from a social
+/// feed activity to user's library"* — has been live the whole time, surfaced
+/// as [SavedWorkoutsService.saveWorkoutFromActivity]. It was reachable only
+/// dressed up as something ELSE: `acceptChallenge()` (save + start the workout
+/// right now) and `saveAndSchedule()` (save into a "From Friends" folder and
+/// pick a date), both behind the shared-workout detail screen. Neither is the
+/// thing a user scrolling a feed wants, which is "that looks good, keep it".
+/// This calls the same endpoint with the plain intent, from the card itself.
+///
+/// ## Honest states, no optimism
+///
+/// Three states and no fourth: idle, in-flight (the tap is disabled, so a
+/// double tap cannot double-save), and saved. `saved` is set ONLY after the
+/// service returns — a failure surfaces the error copy and leaves the control
+/// tappable, rather than showing a checkmark for a save that never happened.
+class _SaveAsRoutineButton extends StatefulWidget {
+  final SavedWorkoutsService service;
+  final String currentUserId;
+  final String activityId;
+  final Color cardBorder;
+
+  const _SaveAsRoutineButton({
+    required this.service,
+    required this.currentUserId,
+    required this.activityId,
+    required this.cardBorder,
+  });
+
+  @override
+  State<_SaveAsRoutineButton> createState() => _SaveAsRoutineButtonState();
+}
+
+class _SaveAsRoutineButtonState extends State<_SaveAsRoutineButton> {
+  bool _saving = false;
+  bool _saved = false;
+
+  Future<void> _save() async {
+    if (_saving || _saved) return;
+    HapticFeedback.lightImpact();
+    setState(() => _saving = true);
+    final l10n = AppLocalizations.of(context);
+    try {
+      await widget.service.saveWorkoutFromActivity(
+        userId: widget.currentUserId,
+        activityId: widget.activityId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _saving = false;
+        _saved = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.communityRoutineSaved),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      // Stays tappable — the routine was NOT saved, so the control must not
+      // claim it was.
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.communityRoutineSaveFailed),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final accent = context.accentColor;
+    final label = _saved ? l10n.communityRoutineSaved : l10n.communitySaveAsRoutine;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: Semantics(
+        button: true,
+        enabled: !_saving && !_saved,
+        label: label,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _save,
+          child: ExcludeSemantics(
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+              decoration: BoxDecoration(
+                border: Border.all(color: widget.cardBorder),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (_saving)
+                    SizedBox(
+                      width: 13,
+                      height: 13,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.6,
+                        valueColor: AlwaysStoppedAnimation<Color>(accent),
+                      ),
+                    )
+                  else
+                    Icon(
+                      _saved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_add_outlined,
+                      size: 15,
+                      color: accent,
+                    ),
+                  const SizedBox(width: 7),
+                  Flexible(
+                    child: Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.lbl(10.5, color: accent, letterSpacing: 1.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

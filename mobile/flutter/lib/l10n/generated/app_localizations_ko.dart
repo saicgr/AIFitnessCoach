@@ -3706,6 +3706,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get classicStatsTemplateVolume => '볼륨';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => '무엇이든 물어보세요…';
 
   @override
@@ -22807,6 +22812,42 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get navHealth => '건강';
+
+  @override
+  String get navCommunity => '커뮤니티';
+
+  @override
+  String get communitySaveAsRoutine => '루틴으로 저장';
+
+  @override
+  String get communityRoutineSaved => '내 루틴에 저장되었습니다';
+
+  @override
+  String get communityRoutineSaveFailed => '루틴을 저장하지 못했습니다. 다시 시도해 주세요.';
+
+  @override
+  String get communityYourProfile => '내 프로필';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source에 연결됨';
+  }
+
+  @override
+  String get healthSourceSyncingBody => '수면, 컨디션, 바이탈이 자동으로 동기화됩니다.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '기준선보다 $percent% 낮음';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '기준선보다 $percent% 높음';
+  }
+
+  @override
+  String get vitalsOnBaseline => '기준선 수준';
 
   @override
   String get healthTabVitals => '바이탈';

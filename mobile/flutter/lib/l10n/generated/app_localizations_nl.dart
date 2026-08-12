@@ -3860,6 +3860,11 @@ class AppLocalizationsNl extends AppLocalizations {
   String get classicStatsTemplateVolume => 'VOLUME';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Vraag alles…';
 
   @override
@@ -23786,6 +23791,44 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get navHealth => 'Gezondheid';
+
+  @override
+  String get navCommunity => 'Community';
+
+  @override
+  String get communitySaveAsRoutine => 'Opslaan als routine';
+
+  @override
+  String get communityRoutineSaved => 'Opgeslagen in je routines';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Kon die routine niet opslaan. Probeer het opnieuw.';
+
+  @override
+  String get communityYourProfile => 'Je profiel';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Verbonden met $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Slaap, gereedheid en vitale waarden synchroniseren automatisch.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent% onder basislijn';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent% boven basislijn';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Op basislijn';
 
   @override
   String get healthTabVitals => 'Vitale waarden';

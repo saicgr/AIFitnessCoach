@@ -3921,6 +3921,11 @@ class AppLocalizationsTa extends AppLocalizations {
   String get classicStatsTemplateVolume => 'அளவு';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'எதையும் கேளுங்கள்…';
 
   @override
@@ -24102,6 +24107,44 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get navHealth => 'ஆரோக்கியம்';
+
+  @override
+  String get navCommunity => 'சமூகம்';
+
+  @override
+  String get communitySaveAsRoutine => 'வழக்கமாகச் சேமிக்கவும்';
+
+  @override
+  String get communityRoutineSaved => 'உங்கள் வழக்கங்களில் சேமிக்கப்பட்டது';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'அந்த வழக்கத்தைச் சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.';
+
+  @override
+  String get communityYourProfile => 'உங்கள் சுயவிவரம்';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source உடன் இணைக்கப்பட்டது';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'தூக்கம், தயார்நிலை மற்றும் உயிர்க்குறிகள் தானாகவே ஒத்திசைக்கப்படும்.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'அடிப்படையை விட $percent% குறைவு';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'அடிப்படையை விட $percent% அதிகம்';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'அடிப்படையில்';
 
   @override
   String get healthTabVitals => 'உயிர் அளவீடுகள்';

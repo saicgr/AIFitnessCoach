@@ -3845,6 +3845,11 @@ class AppLocalizationsTh extends AppLocalizations {
   String get classicStatsTemplateVolume => 'ปริมาณ';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'ถามอะไรก็ได้...';
 
   @override
@@ -23673,6 +23678,44 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get navHealth => 'สุขภาพ';
+
+  @override
+  String get navCommunity => 'ชุมชน';
+
+  @override
+  String get communitySaveAsRoutine => 'บันทึกเป็นกิจวัตร';
+
+  @override
+  String get communityRoutineSaved => 'บันทึกไปยังกิจวัตรของคุณแล้ว';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'บันทึกกิจวัตรนั้นไม่สำเร็จ ลองอีกครั้ง';
+
+  @override
+  String get communityYourProfile => 'โปรไฟล์ของคุณ';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'เชื่อมต่อกับ $source แล้ว';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'การนอน ความพร้อม และสัญญาณชีพจะซิงก์อัตโนมัติ';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'ต่ำกว่าค่าพื้นฐาน $percent%';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'สูงกว่าค่าพื้นฐาน $percent%';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'อยู่ที่ค่าพื้นฐาน';
 
   @override
   String get healthTabVitals => 'สัญญาณชีพ';

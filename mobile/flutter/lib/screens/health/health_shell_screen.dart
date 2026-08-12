@@ -54,6 +54,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/chrome_constants.dart';
@@ -65,8 +66,8 @@ import '../../data/repositories/heart_health_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/health_service.dart';
 import '../../l10n/generated/app_localizations.dart';
-import '../../widgets/design_system/zealova_chip.dart';
 import '../cardio/fitness_index_detail_screen.dart';
+import 'widgets/health_chrome.dart';
 import 'combined_health_screen.dart';
 import 'heart_health_detail_screen.dart';
 import 'sleep_detail_screen.dart';
@@ -98,6 +99,25 @@ enum HealthSubTab {
       return HealthSubTab.values[asIndex];
     }
     return HealthSubTab.overview;
+  }
+
+  /// The chip's glyph. The mockup's rail is icon-over-label, not text-only:
+  /// grid / moon / heart-pulse / pulse-line / person, 17 px, above a 5 px gap.
+  /// The icon is what lets the label drop to 10 px without the rail becoming
+  /// unscannable.
+  IconData get icon {
+    switch (this) {
+      case HealthSubTab.overview:
+        return Icons.grid_view_rounded;
+      case HealthSubTab.sleep:
+        return Icons.bedtime_outlined;
+      case HealthSubTab.recovery:
+        return Icons.monitor_heart_outlined;
+      case HealthSubTab.vitals:
+        return Icons.show_chart_rounded;
+      case HealthSubTab.body:
+        return Icons.person_outline;
+    }
   }
 
   /// The chip's localised label. Every one of these strings already shipped
@@ -209,7 +229,6 @@ class _HealthShellScreenState extends ConsumerState<HealthShellScreen> {
     });
 
     final tc = ThemeColors.of(context);
-    final l10n = AppLocalizations.of(context);
     final mq = MediaQuery.of(context);
     final sync = ref.watch(healthSyncProvider);
     final tabs = HealthSubTab.values;
@@ -222,18 +241,30 @@ class _HealthShellScreenState extends ConsumerState<HealthShellScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _HealthMasthead(isConnected: sync.isConnected),
-            // The only rail in the app. Same Barlow-uppercase + accent
-            // underline treatment every other tabbed surface uses
-            // (`ZealovaTextTabs`), so Health does not invent a sixth tab idiom.
+            // The only rail in the app.
+            //
+            // Built here rather than from `ZealovaTextTabs` because this rail's
+            // spec diverges from that widget in four ways the mockup is
+            // explicit about — icon over label, a full-chip-width underline,
+            // an ACCENT active label, and five chips distributed across the
+            // content width — and `ZealovaTextTabs` is shared by 14 other
+            // surfaces (stats, nutrition, skills, achievements, rewards,
+            // leaderboard, injuries, streaks, progress) that must not inherit
+            // any of it. Same tokens, local composition.
+            //
+            // No bottom padding and no sibling `Divider`: the rail draws its
+            // OWN 1 px bottom hairline so the active chip's 2 px accent
+            // underline rests directly on it (`.pillars{border-bottom}` +
+            // `.pill-chip.on{border-bottom-color:var(--accent)}`) instead of
+            // floating 10 px above a separate line.
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
-              child: ZealovaTextTabs(
-                tabs: [for (final t in tabs) t.label(l10n)],
+              padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+              child: HealthRail(
+                tabs: tabs,
                 activeIndex: _index,
                 onChanged: _select,
               ),
             ),
-            Divider(height: 1, thickness: 1, color: tc.hairline),
             Expanded(
               child: MediaQuery(
                 // The floating nav pill AND the quick-log / coach cluster paint
@@ -268,6 +299,148 @@ class _HealthShellScreenState extends ConsumerState<HealthShellScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Font size of a rail chip's label. 10 (mockup: 9.5) — the 17 px glyph above
+/// it carries the target size, so the label can be this quiet without the rail
+/// becoming hard to scan. At 12.5 it read a full step louder than the mockup
+/// and competed with the Anton masthead directly above it.
+const double _kRailLabelSize = 10.0;
+
+/// The Health rail — five icon-over-label chips on a shared hairline.
+///
+/// Public (rather than `_HealthRail`) so `test/navigation/health_tab_test.dart`
+/// can read [activeIndex] off the built widget and assert which chip a cold
+/// `initialTab` / a warm `healthTabRequestProvider` request actually selected —
+/// the same handle the rail's previous `ZealovaTextTabs` implementation gave
+/// those tests. Nothing outside this file constructs it.
+///
+/// Layout: `Row` of `Expanded` slots so the five chips SPAN the content width
+/// (`.pill-chip{flex:1 0 auto}`), which is what stops the rail hugging the left
+/// edge with dead space after BODY. Above ~1.3× text scale the labels can no
+/// longer fit five-across, so it degrades to the horizontal scroll strip rather
+/// than ellipsising navigation labels into uselessness — the same trade
+/// `ZealovaTextTabs` documents.
+class HealthRail extends StatelessWidget {
+  final List<HealthSubTab> tabs;
+  final int activeIndex;
+  final ValueChanged<int> onChanged;
+
+  const HealthRail({
+    super.key,
+    required this.tabs,
+    required this.activeIndex,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final scaled = MediaQuery.textScalerOf(context).scale(_kRailLabelSize);
+    final fitsFiveAcross = scaled <= _kRailLabelSize * 1.3;
+
+    final chips = <Widget>[
+      for (var i = 0; i < tabs.length; i++)
+        _RailChip(
+          tab: tabs[i],
+          label: tabs[i].label(l10n),
+          isActive: i == activeIndex,
+          onTap: () => onChanged(i),
+        ),
+    ];
+
+    return DecoratedBox(
+      // The line the active chip's accent underline sits ON.
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: tc.hairline, width: 1)),
+      ),
+      child: fitsFiveAcross
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [for (final c in chips) Expanded(child: c)],
+            )
+          : SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const ClampingScrollPhysics(),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  for (final c in chips)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 14),
+                      child: c,
+                    ),
+                ],
+              ),
+            ),
+    );
+  }
+}
+
+class _RailChip extends StatelessWidget {
+  final HealthSubTab tab;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _RailChip({
+    required this.tab,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    // The ACTIVE label turns accent (`.pill-chip.on{color:var(--accent-text)}`)
+    // — the underline is not the only cue, which also means the active chip
+    // survives for a user who cannot resolve a 2 px line.
+    final fg = isActive ? tc.accent : tc.textMuted;
+    return Semantics(
+      button: true,
+      selected: isActive,
+      label: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: ExcludeSemantics(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(2, 4, 2, 7),
+            decoration: BoxDecoration(
+              // The chip's OWN bottom border — full chip width, 2 px, drawn
+              // immediately above the rail's hairline so the two meet.
+              border: Border(
+                bottom: BorderSide(
+                  color: isActive ? tc.accent : Colors.transparent,
+                  width: 2,
+                ),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(tab.icon, size: 17, color: fg),
+                const SizedBox(height: 5),
+                Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(
+                    _kRailLabelSize,
+                    color: fg,
+                    letterSpacing: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -309,6 +482,18 @@ class _HealthMasthead extends ConsumerWidget {
           ),
           const SizedBox(width: 12),
           _HealthSourceChip(isConnected: isConnected),
+          const SizedBox(width: 8),
+          // The mockup's only masthead control is a 34 pt hairline gear; the
+          // shipped chip is kept BESIDE it rather than replaced by it, because
+          // the chip carries live state (disconnected / connected / syncing)
+          // that a gear cannot express and that the tab's whole data story
+          // depends on. The gear is the destination the mockup's own annotation
+          // implies — real source management, not a decorative icon.
+          HealthIconButton(
+            icon: Icons.settings_outlined,
+            tooltip: l10n.settingsHealthDevices,
+            onTap: () => context.push('/settings/health-devices'),
+          ),
         ],
       ),
     );
@@ -498,12 +683,10 @@ class _HealthTabEmpty extends ConsumerWidget {
             ),
             if (showConnect) ...[
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  HapticService.light();
-                  ref.read(healthSyncProvider.notifier).connect();
-                },
-                child: Text(l10n.combinedHealthConnectHealth),
+              HealthCtaPill(
+                label: l10n.combinedHealthConnectHealth,
+                onTap: () =>
+                    ref.read(healthSyncProvider.notifier).connect(),
               ),
             ],
           ],

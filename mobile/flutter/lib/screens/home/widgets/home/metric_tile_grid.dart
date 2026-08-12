@@ -9,9 +9,10 @@
 ///
 /// Two pages, and only two. **Page 1 is the daily glance; page 2 is opt-in
 /// depth.** Nothing is ever auto-assigned to page 2 — a tile is there because
-/// someone dragged it there — so page 2 cannot rot into a dumping ground. When
-/// page 2 is empty there is no pager and no dots: an empty page is not a
-/// feature to advertise.
+/// someone dragged it there — so page 2 cannot rot into a dumping ground. The
+/// two page dots are drawn at rest even while page 2 is empty (the second one
+/// dim): the dots are how anyone learns the second page exists, and a grid that
+/// only reveals it after you have already used it teaches nobody.
 ///
 /// Edit mode ships in build one, not as a fast-follow: drag-to-reorder with a
 /// live drop placeholder, per-tile remove, an S/M/L control on the focused
@@ -32,6 +33,7 @@ import '../../../../data/providers/metric_layout_provider.dart'
 import '../../../../data/providers/metric_tile_data_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/glass_sheet.dart';
+import '../../../../widgets/health_connect_sheet.dart';
 import 'metric_tile_card.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
 
@@ -40,6 +42,18 @@ const int kMetricGridColumns = 6;
 
 /// Gutter between tiles, both axes.
 const double kMetricTileGap = 10;
+
+/// Share of the grid width one page occupies when a second page exists.
+///
+/// The remainder is the peek. Page 1 stays FLUSH with the left edge of every
+/// other Home card (`padEnds: false` — Flutter's default centres the page and
+/// would inset the whole section by half the peek), and only page 2 bleeds past
+/// the right edge: ≈22pt on a 390pt phone, the mockup's measurement.
+const double kMetricPageViewportFraction = 0.94;
+
+/// The page-dots row — the affordance that says a second page exists at all,
+/// which is why it is drawn even while page 2 is empty.
+const Key kMetricTilePageDotsKey = ValueKey('metricTilePageDots');
 
 /// Packs [tiles] into rows of at most [kMetricGridColumns] columns, preserving
 /// order. Pure — the grid, the page-height calculation and the tests all use
@@ -101,7 +115,8 @@ class HomeMetricTileGrid extends ConsumerStatefulWidget {
 }
 
 class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
-  final PageController _pager = PageController(viewportFraction: 0.93);
+  final PageController _pager =
+      PageController(viewportFraction: kMetricPageViewportFraction);
   int _page = 0;
   bool _editing = false;
 
@@ -123,6 +138,10 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
 
     final pageOne = tilesOnPage(tiles, 1);
     final pageTwo = tilesOnPage(tiles, 2);
+    // The one recovery path for a dark grid, and it self-hides for anyone
+    // whose grid holds no sensor tile at all.
+    final showConnect =
+        !_editing && ref.watch(metricTilesNeedHealthConnectProvider);
 
     return Padding(
       padding: kHomeHPad,
@@ -147,7 +166,7 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
             const SizedBox(height: 10),
             if (pageTwo.isEmpty)
               _StaticGrid(tiles: pageOne, onOpen: _open, onEdit: _startEditing)
-            else ...[
+            else
               SizedBox(
                 height: [
                   metricGridHeight(pageOne, textScale: textScale),
@@ -155,21 +174,30 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
                 ].reduce((a, b) => a > b ? a : b),
                 child: PageView(
                   controller: _pager,
+                  // Page 1 flush left, page 2 peeking — see
+                  // [kMetricPageViewportFraction]. The peek is the viewport
+                  // fraction alone; an extra per-page inset would shrink every
+                  // page-1 tile and shift the section off the card grid.
+                  padEnds: false,
                   onPageChanged: (i) => setState(() => _page = i),
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: _StaticGrid(tiles: pageOne, onOpen: _open, onEdit: _startEditing),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: _StaticGrid(tiles: pageTwo, onOpen: _open, onEdit: _startEditing),
-                    ),
+                    _StaticGrid(
+                        tiles: pageOne, onOpen: _open, onEdit: _startEditing),
+                    _StaticGrid(
+                        tiles: pageTwo, onOpen: _open, onEdit: _startEditing),
                   ],
                 ),
               ),
-              const SizedBox(height: 11),
-              _PageDots(count: 2, active: _page, colors: c),
+            const SizedBox(height: 11),
+            // Always two dots, even with page 2 empty: the dim second dot is
+            // the only thing on a resting Home that says depth is one swipe
+            // away.
+            _PageDots(count: 2, active: _page, colors: c),
+            // The mockup's dot band is 11 above / 15 below, and the connect
+            // card sits directly under it.
+            if (showConnect) ...[
+              const SizedBox(height: 15),
+              _ConnectHealthCard(colors: c),
             ],
           ],
         ],
@@ -178,12 +206,42 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
   }
 
   Widget _header(ThemeColors c) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'MY METRICS',
-            style: ZType.lbl(10.5, color: c.textMuted, letterSpacing: 2),
-          ),
-          const Spacer(),
+          // Editing swaps the section kicker for the mockup's masthead pair:
+          // a display-face title and the reassurance that nothing here needs
+          // saving — there is no Cancel, so the promise has to be stated.
+          if (_editing)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'EDIT TILES',
+                    style: ZType.disp(22, color: c.textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'CHANGES SAVE INSTANTLY',
+                    style: ZType.lbl(
+                      10,
+                      color: c.textMuted,
+                      weight: FontWeight.w600,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            Text(
+              'MY METRICS',
+              style: ZType.lbl(10.5, color: c.textMuted, letterSpacing: 2),
+            ),
+            const Spacer(),
+          ],
+          const SizedBox(width: 10),
           if (_editing)
             GestureDetector(
               onTap: () {
@@ -325,6 +383,7 @@ class _PageDots extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
+        key: kMetricTilePageDotsKey,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           for (var i = 0; i < count; i++) ...[
@@ -370,8 +429,12 @@ class _MetricTileGridEditorState extends ConsumerState<MetricTileGridEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _pageLabel(c, 'PAGE 1 · DAILY GLANCE'),
-        const SizedBox(height: 8),
+        // Page 1 needs no chip while it is the only populated page — a label
+        // over the only grid on screen is chrome explaining itself.
+        if (pageTwo.isNotEmpty) ...[
+          _pageLabel(c, 'PAGE 1 · DAILY GLANCE'),
+          const SizedBox(height: 8),
+        ],
         _EditableGrid(
           tiles: pageOne,
           page: 1,
@@ -379,19 +442,27 @@ class _MetricTileGridEditorState extends ConsumerState<MetricTileGridEditor> {
           onSelect: _select,
           colors: c,
         ),
-        const SizedBox(height: 16),
-        _pageLabel(c, 'PAGE 2 · DEPTH'),
-        const SizedBox(height: 8),
-        _EditableGrid(
-          tiles: pageTwo,
-          page: 2,
-          selected: _selected,
-          onSelect: _select,
-          colors: c,
-          emptyHint: 'DRAG A TILE HERE FOR PAGE 2',
-        ),
         const SizedBox(height: 12),
         _AddMetricSlot(colors: c, onTap: () => _openAddSheet(context)),
+        const SizedBox(height: 14),
+        // An empty page 2 collapses to one dashed strip rather than a second
+        // full-height drop zone: edit mode must not be taller than the grid it
+        // is editing.
+        if (pageTwo.isEmpty)
+          _PageTwoStrip(colors: c)
+        else ...[
+          _pageLabel(c, 'PAGE 2 · DEPTH'),
+          const SizedBox(height: 8),
+          _EditableGrid(
+            tiles: pageTwo,
+            page: 2,
+            selected: _selected,
+            onSelect: _select,
+            colors: c,
+          ),
+        ],
+        const SizedBox(height: 14),
+        _PresetsRow(colors: c),
       ],
     );
   }
@@ -432,7 +503,6 @@ class _EditableGrid extends ConsumerWidget {
   final String? selected;
   final ValueChanged<String> onSelect;
   final ThemeColors colors;
-  final String? emptyHint;
 
   const _EditableGrid({
     required this.tiles,
@@ -440,7 +510,6 @@ class _EditableGrid extends ConsumerWidget {
     required this.selected,
     required this.onSelect,
     required this.colors,
-    this.emptyHint,
   });
 
   @override
@@ -461,7 +530,7 @@ class _EditableGrid extends ConsumerWidget {
           return _EmptyPageZone(
             colors: colors,
             highlight: highlight,
-            label: emptyHint ?? 'NO TILES ON THIS PAGE',
+            label: 'DRAG A TILE BACK TO PAGE $page',
           );
         }
         return LayoutBuilder(
@@ -668,20 +737,236 @@ class _DropPlaceholder extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: width,
-        height: height,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color: colors.accent.withValues(alpha: 0.14),
-          border: Border.all(color: colors.accent, width: 1.5),
+  Widget build(BuildContext context) => CustomPaint(
+        // Dashed, like every other placeholder in the grid — a solid accent
+        // outline would read as a filled tile mid-drag, not a target.
+        painter: MetricTileDashedBorder(
+          color: colors.accent,
+          radius: 14,
+          strokeWidth: 1.5,
         ),
-        child: Text(
-          'DROP HERE',
-          style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.8),
+        child: Container(
+          width: width,
+          height: height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            color: colors.accent.withValues(alpha: 0.14),
+          ),
+          child: Text(
+            'DROP HERE',
+            style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.8),
+          ),
         ),
       );
+}
+
+/// The collapsed page-2 editor: one dashed strip that is also the drop target
+/// for moving a tile across. No second grid, no second header — page 2 gets
+/// space on screen when it has content, and a sentence when it does not.
+class _PageTwoStrip extends ConsumerWidget {
+  final ThemeColors colors;
+
+  const _PageTwoStrip({required this.colors});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(homeMetricTilesProvider.notifier);
+    return DragTarget<String>(
+      onWillAcceptWithDetails: (_) => true,
+      onAcceptWithDetails: (details) {
+        HapticService.light();
+        notifier.moveTo(details.data, page: 2);
+      },
+      builder: (context, candidate, _) {
+        final hot = candidate.isNotEmpty;
+        return Opacity(
+          opacity: hot ? 1 : 0.55,
+          child: CustomPaint(
+            painter: MetricTileDashedBorder(
+              color: hot ? colors.accent : colors.cardBorder,
+              radius: 14,
+              strokeWidth: hot ? 1.5 : 1,
+            ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'PAGE 2 · DRAG A TILE HERE TO MOVE IT ACROSS',
+                maxLines: 2,
+                style: ZType.lbl(
+                  9.5,
+                  color: hot ? colors.accent : colors.textMuted,
+                  letterSpacing: 1.6,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Named layouts under the Add slot. A preset carries sizes and page
+/// assignment, not just a list of metrics, so tapping one never silently
+/// flattens the arrangement the user built.
+class _PresetsRow extends ConsumerWidget {
+  final ThemeColors colors;
+
+  const _PresetsRow({required this.colors});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final active = ref.watch(activeMetricTilePresetProvider);
+    final notifier = ref.read(homeMetricTilesProvider.notifier);
+    // "My layout" is the dirty state. It is offered as a destination only when
+    // there is something to go back to — a chip that does nothing is worse
+    // than no chip.
+    final showMine = active == null || notifier.hasLayoutBeforePreset;
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(
+          'PRESETS',
+          style: ZType.lbl(9.5, color: colors.textMuted, letterSpacing: 2),
+        ),
+        if (showMine)
+          _PresetChip(
+            label: 'My layout',
+            active: active == null,
+            colors: colors,
+            onTap: active == null
+                ? null
+                : () {
+                    HapticService.light();
+                    notifier.restoreLayoutBeforePreset();
+                  },
+          ),
+        for (final preset in kMetricTilePresets)
+          _PresetChip(
+            label: preset.label,
+            active: active?.id == preset.id,
+            colors: colors,
+            onTap: () {
+              HapticService.medium();
+              notifier.applyPreset(preset);
+            },
+          ),
+      ],
+    );
+  }
+}
+
+class _PresetChip extends StatelessWidget {
+  final String label;
+  final bool active;
+  final ThemeColors colors;
+  final VoidCallback? onTap;
+
+  const _PresetChip({
+    required this.label,
+    required this.active,
+    required this.colors,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: active ? colors.accent : colors.cardBorder,
+            ),
+          ),
+          child: Text(
+            label.toUpperCase(),
+            style: ZType.lbl(
+              9.5,
+              color: active ? colors.accent : colors.textSecondary,
+              letterSpacing: 1.6,
+            ),
+          ),
+        ),
+      );
+}
+
+/// The one recovery path for a grid whose sensor tiles are dark. It promises
+/// exactly what connecting does and nothing else — no estimated numbers appear
+/// anywhere as a consolation.
+class _ConnectHealthCard extends ConsumerWidget {
+  final ThemeColors colors;
+
+  const _ConnectHealthCard({required this.colors});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = colors;
+    return GestureDetector(
+      onTap: () {
+        HapticService.selection();
+        showHealthConnectSheet(context, ref);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+        decoration: BoxDecoration(
+          color: c.elevated,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              // Platform-aware: an Android user told to connect "Apple Health"
+              // has been handed an impossible instruction. Mirrors
+              // `_platformSourceName` in combined_health_screen.dart and the
+              // "Apple Health / Health Connect" phrasing in today_score_card.
+              'Connect ${_healthSourceName(context)}',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: c.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Steps, sleep and readiness fill in automatically — nothing is '
+              'estimated for you.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11.5,
+                height: 1.35,
+                color: c.textMuted,
+              ),
+            ),
+            const SizedBox(height: 11),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 9),
+              decoration: BoxDecoration(
+                color: c.accent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                'CONNECT HEALTH',
+                style: ZType.lbl(12, color: c.accentContrast, letterSpacing: 1.8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _EmptyPageZone extends StatelessWidget {
@@ -781,23 +1066,29 @@ class _AddMetricSlot extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: colors.cardBorder, width: 1.5),
+        child: CustomPaint(
+          // Dashed, not solid: the slot is a placeholder, and next to the
+          // dashed empty tiles a solid outline reads as a real card.
+          painter: MetricTileDashedBorder(
+            color: colors.cardBorder,
+            radius: 14,
+            strokeWidth: 1.5,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.add, size: 15, color: colors.textMuted),
-              const SizedBox(width: 8),
-              Text(
-                'ADD METRIC',
-                style: ZType.lbl(10.5, color: colors.textMuted, letterSpacing: 2),
-              ),
-            ],
+          child: Container(
+            height: 52,
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add, size: 15, color: colors.textMuted),
+                const SizedBox(width: 8),
+                Text(
+                  'ADD METRIC',
+                  style:
+                      ZType.lbl(10.5, color: colors.textMuted, letterSpacing: 2),
+                ),
+              ],
+            ),
           ),
         ),
       );
@@ -866,7 +1157,10 @@ class AddMetricTileSheet extends ConsumerWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            spec.label,
+                            // What the tile will actually say once placed —
+                            // picking "Move" and getting a tile headed STEPS
+                            // is a small lie the sheet doesn't need to tell.
+                            spec.tileLabel,
                             style: TextStyle(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
@@ -899,3 +1193,13 @@ class AddMetricTileSheet extends ConsumerWidget {
     );
   }
 }
+
+/// Name of the platform's health aggregator. iOS/macOS read Apple Health;
+/// everything else reads Health Connect. Same rule as
+/// `combined_health_screen.dart`'s `_platformSourceName` — kept local rather
+/// than imported so the tile grid does not depend on a screen.
+String _healthSourceName(BuildContext context) =>
+    Theme.of(context).platform == TargetPlatform.iOS ||
+            Theme.of(context).platform == TargetPlatform.macOS
+        ? 'Apple Health'
+        : 'Health Connect';

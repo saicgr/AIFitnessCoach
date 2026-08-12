@@ -3863,6 +3863,11 @@ class AppLocalizationsFi extends AppLocalizations {
   String get classicStatsTemplateVolume => 'VOLYYMI';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Kysy mitä vain…';
 
   @override
@@ -23771,6 +23776,44 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get navHealth => 'Terveys';
+
+  @override
+  String get navCommunity => 'Yhteisö';
+
+  @override
+  String get communitySaveAsRoutine => 'Tallenna rutiiniksi';
+
+  @override
+  String get communityRoutineSaved => 'Tallennettu rutiineihisi';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Rutiinin tallennus epäonnistui. Yritä uudelleen.';
+
+  @override
+  String get communityYourProfile => 'Profiilisi';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Yhdistetty: $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Uni, palautuminen ja elintoiminnot synkronoituvat automaattisesti.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent % perustason alle';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent % perustason yli';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Perustasolla';
 
   @override
   String get healthTabVitals => 'Elintoiminnot';

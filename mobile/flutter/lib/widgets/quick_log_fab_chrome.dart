@@ -65,12 +65,16 @@ export '../core/constants/chrome_constants.dart'
         kQuickLogFabBottomOffset,
         kQuickLogFabClearance;
 
-/// Corner radius of the quick-log button.
+/// Corner radius of the quick-log button at the EXPANDED end of the morph.
 ///
-/// Matches the shipped `.rh-plus` signature (the outlined rounded-rect already
-/// drawn in `widgets/main_shell.dart`), so adding the caption changes what the
-/// control SAYS without silently restyling it into a different shape.
-const double kQuickLogFabRadius = 6.0;
+/// A FULLY-ROUNDED PILL (`kQuickLogFabHeight / 2`), which is what the mockup
+/// specifies (`.qlog{border-radius:99px}`, measured 36 px tall / fully round).
+/// It used to be `6.0`, so the control morphed from a 44 pt circle into a
+/// rounded RECTANGLE and the corner radius visibly snapped 22 → 6 across the
+/// expand — the exact discontinuity the `buildAt` comment below complains
+/// about. Keeping it at half the height makes the radius lerp a no-op: the
+/// silhouette is a pill in BOTH states and only the width moves.
+const double kQuickLogFabRadius = kQuickLogFabHeight / 2;
 
 /// The labelled quick-log button that docks above the main nav.
 ///
@@ -143,11 +147,17 @@ class QuickLogFabChrome extends StatelessWidget {
         ),
         padding: EdgeInsets.symmetric(horizontal: ui.lerpDouble(0, 14, t)!),
         decoration: BoxDecoration(
-          color: tc.surface,
+          // The RAISED surface, not the standard card fill: the mockup's
+          // `.qlog{background:var(--raised)}` sits a luminance step above the
+          // page so the pill separates from whatever scrolls under it. On
+          // `tc.surface` the dark pill was flatter than the page it floats on.
+          color: tc.elevated,
           borderRadius: BorderRadius.circular(radius),
-          // Single accent source — never a literal. See
-          // core/theme/accent_color_provider.dart.
-          border: Border.all(color: tc.accent, width: 1.5),
+          // A 1 px HAIRLINE, not a 1.5 px accent ring. The accent belongs on
+          // the "+" glyph (`.qlog .plus{color:var(--accent-text)}`); spending
+          // it on the border made the pill out-shout every control around it
+          // and put two accent-bordered shapes in one cluster.
+          border: Border.all(color: tc.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
@@ -156,13 +166,26 @@ class QuickLogFabChrome extends StatelessWidget {
             ),
           ],
         ),
+        // DELIBERATELY DROPPED — the mockup's trailing arrow.
+        //
+        // `.qlog .arr` hangs an 18 px accent arrow off the pill at
+        // `right:-27px`, so ~6 of its 18 px show past the 390 px frame and the
+        // rest is clipped by the screen edge. On a real device that is not a
+        // flourish, it is a defect: it reads as a glyph that failed to render,
+        // it lands differently on every screen width / gesture-nav inset /
+        // tablet, it would flip to the LEADING edge under RTL (where it would
+        // collide with content instead of the bezel), and it adds an
+        // unlabelled non-interactive element inside a control whose entire
+        // point is one unambiguous tap target. The pill's meaning is already
+        // carried by the "+" glyph and the caption. Recorded, not overlooked.
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Constant size in both states — a 20↔24 jump is small but it is
             // the element the eye is actually tracking through the change.
-            Icon(Icons.add_rounded, size: 22, color: tc.textPrimary),
+            // The accent lives HERE and nowhere else on this control.
+            Icon(Icons.add_rounded, size: 16, color: tc.accent),
             // The caption is REVEALED rather than inserted: ClipRect + a
             // widthFactor that grows with t wipes it out from the icon, and
             // the opacity ramp keeps it from strobing at the very start.
@@ -190,10 +213,16 @@ class QuickLogFabChrome extends StatelessWidget {
                             label,
                             maxLines: 1,
                             softWrap: false,
+                            // A plain bold caption, NOT a tracked-out label:
+                            // `.qlog .qt{font-weight:700;font-size:13px}` with
+                            // no letter-spacing. At 11 px / w800 / 1.1 tracking
+                            // it read as a tiny system label rather than the
+                            // mockup's caption. The FittedBox above still
+                            // scales it down so long locales fit.
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.1,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
                               color: tc.textPrimary,
                             ),
                           ),

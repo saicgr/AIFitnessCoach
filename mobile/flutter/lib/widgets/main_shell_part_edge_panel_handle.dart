@@ -181,9 +181,12 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
         ? Colors.grey.shade900.withValues(alpha: 0.92)
         : Colors.grey.shade100.withValues(alpha: 0.95);
 
-    final iconMuted = isDark
-        ? Colors.grey.shade500
-        : Colors.grey.shade400;
+    // Unselected tabs read on the app's own muted-text token (#71717A in both
+    // themes — byte-identical to the mockup's light `--t3`), NOT raw Material
+    // greys. `Colors.grey.shade400` (#BDBDBD) on the white light background
+    // measured ~2.0:1, so four of the five tabs read as DISABLED rather than
+    // merely unselected.
+    final iconMuted = ThemeColors.of(context).textMuted;
 
     // Signature nav: a seamless FROSTED-GLASS bar — docked full-width but
     // translucent + blurred so the scrolling content shows softly through it
@@ -255,7 +258,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       key: AppTourKeys.workoutNavKey,
                       child: _ExpandableNavItem(
                         icon: Icons.fitness_center_outlined,
-                        selectedIcon: Icons.fitness_center,
                         label: AppLocalizations.of(context).navWorkout,
                         isSelected: selectedIndex == 1,
                         onTap: () => onItemTapped(1),
@@ -279,7 +281,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       // own, and inventing one here would be a lie.
                       child: _ExpandableNavItem(
                         icon: Icons.monitor_heart_outlined,
-                        selectedIcon: Icons.monitor_heart,
                         label: AppLocalizations.of(context).navHealth,
                         isSelected: selectedIndex == 2,
                         onTap: () => onItemTapped(2),
@@ -294,7 +295,6 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       key: AppTourKeys.nutritionNavKey,
                       child: _ExpandableNavItem(
                         icon: Icons.restaurant_outlined,
-                        selectedIcon: Icons.restaurant,
                         label: AppLocalizations.of(context).navNutrition,
                         isSelected: selectedIndex == 3,
                         onTap: () => onItemTapped(3),
@@ -306,18 +306,24 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                   ),
                   Expanded(
                     child: KeyedSubtree(
-                      key: AppTourKeys.profileNavKey,
-                      // "You" hub — Strava/Nike pattern. Profile + all
-                      // gamification surfaces (trophies, XP, achievements,
-                      // skills, wrapped, rewards, inventory, leaderboard)
-                      // collapse into this single tab's top-tabs. Research
-                      // (Material 3) caps bottom nav at 5.
+                      key: AppTourKeys.communityNavKey,
+                      // STEP 2 OF THE NAV EVOLUTION (recorded 2026-06-11):
+                      // "Future Social = stage 1 inside You; stage 2 (if
+                      // earned) You→Community tab, profile behind header
+                      // avatar." Social earned it, so the You slot CONVERTS —
+                      // the bar stays at five, a sixth tab was never on the
+                      // table (Material 3 caps bottom nav at 5).
+                      //
+                      // The You hub is not deleted and `/profile` is not
+                      // moved: it still lives in this same branch and is
+                      // reached from the Community masthead avatar, so all ~40
+                      // `/profile?tab=…` deep links keep landing exactly where
+                      // they did.
                       child: _ExpandableNavItem(
-                        // Signature spec: the "You" room uses a person glyph,
-                        // not a star.
-                        icon: Icons.person_outline,
-                        selectedIcon: Icons.person,
-                        label: AppLocalizations.of(context).navYou,
+                        // Two-person glyph, matching the mockup's Community
+                        // tab (a pair of heads), not the single "You" head.
+                        icon: Icons.people_outline,
+                        label: AppLocalizations.of(context).navCommunity,
                         isSelected: selectedIndex == 4,
                         onTap: () => onItemTapped(4),
                         accentColor: accentColor,
@@ -342,7 +348,13 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
 /// just the selected one); the selected tab is accent-tinted.
 class _ExpandableNavItem extends StatelessWidget {
   final IconData icon;
-  final IconData selectedIcon;
+
+  /// Glyph swapped in while selected. Optional — when omitted the tab keeps
+  /// its OUTLINED glyph when selected and is distinguished by the accent tint
+  /// + the underline alone, which is what the mockup does for every tab except
+  /// Home (`.tab.on` still carries `fill="none" stroke="currentColor"`).
+  /// Home is the one deliberate exception: its house fills.
+  final IconData? selectedIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -359,7 +371,7 @@ class _ExpandableNavItem extends StatelessWidget {
   const _ExpandableNavItem({
     super.key,
     required this.icon,
-    required this.selectedIcon,
+    this.selectedIcon,
     required this.label,
     required this.isSelected,
     required this.onTap,
@@ -384,51 +396,74 @@ class _ExpandableNavItem extends StatelessWidget {
         child: AnimatedContainer(
         duration: kMotionStandard,
         curve: kMotionCurve,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        // 6, not 10. The tap target is the WHOLE Expanded slot (the
+        // GestureDetector wraps the slot-filling Align, not this box), so the
+        // padding only buys visual air — and the tracking below needs the
+        // width more than the air does.
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         // Signature: no pill fill — the accent-tinted icon + Barlow label +
         // the accent underline carry the active state (reserved accent).
         decoration: const BoxDecoration(),
         // Icon over an always-visible Barlow Condensed uppercase label; the
-        // selected tab gets a short accent underline. Icon still spin-pops.
-        child: Column(
+        // selected tab gets an accent underline THE WIDTH OF ITS OWN LABEL.
+        //
+        // `IntrinsicWidth` is what makes that true: it sizes the column to its
+        // widest child (always the label — even "HOME" at 10 px Barlow
+        // Condensed + 1.5 tracking is wider than the 21 px icon), and
+        // `CrossAxisAlignment.stretch` then hands that exact width to the
+        // underline. Previously the bar was a fixed 16 px stub under every
+        // tab, so it read as a generic dot rather than the mockup's
+        // `.tab.on .nl::after{left:-1px;right:-1px}` label rule that grows
+        // under "NUTRITION" and shrinks under "YOU". One extra intrinsic pass
+        // for five short strings — immaterial.
+        child: IntrinsicWidth(
+          child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _IconSpinPop(
               isSelected: isSelected,
               child: Icon(
-                isSelected ? selectedIcon : icon,
+                isSelected ? (selectedIcon ?? icon) : icon,
                 color: color,
                 size: 21,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 5),
             Text(
               label.toUpperCase(),
               maxLines: 1,
+              textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontFamily: 'Barlow Condensed',
                 color: color,
                 fontSize: 10,
-                // Tighter tracking so "NUTRITION" / "WORKOUTS" fit one line
-                // without truncating to "NUTRITI…".
-                letterSpacing: 0.5,
+                // 1.5, per `.tab .nl{letter-spacing:1.5px}`. This tracking is
+                // what makes the label read as the Barlow-condensed system
+                // rather than a generic tab bar; it was cut to 0.5 to keep
+                // "NUTRITION" on one line, and the horizontal padding above
+                // (10 → 6) is what pays for it instead.
+                letterSpacing: 1.5,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                 height: 1.0,
               ),
             ),
-            const SizedBox(height: 3),
+            const SizedBox(height: 5),
+            // Colour cross-fade, not a width tween: the width is now the
+            // label's (see IntrinsicWidth above), so there is nothing left to
+            // animate horizontally.
             AnimatedContainer(
               duration: kMotionStandard,
               curve: kMotionCurve,
               height: 2,
-              width: isSelected ? 16 : 0,
               decoration: BoxDecoration(
                 color: isSelected ? accentColor : Colors.transparent,
                 borderRadius: BorderRadius.circular(1),
               ),
             ),
           ],
+        ),
         ),
       ),
       ),

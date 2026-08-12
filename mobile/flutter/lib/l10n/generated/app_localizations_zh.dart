@@ -3664,6 +3664,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get classicStatsTemplateVolume => '容量';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => '尽管问吧…';
 
   @override
@@ -22502,6 +22507,42 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get navHealth => '健康';
+
+  @override
+  String get navCommunity => '社区';
+
+  @override
+  String get communitySaveAsRoutine => '保存为训练计划';
+
+  @override
+  String get communityRoutineSaved => '已保存到你的训练计划';
+
+  @override
+  String get communityRoutineSaveFailed => '无法保存该训练计划。请重试。';
+
+  @override
+  String get communityYourProfile => '你的资料';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '已连接到 $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody => '睡眠、状态和生命体征会自动同步。';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '低于基线 $percent%';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '高于基线 $percent%';
+  }
+
+  @override
+  String get vitalsOnBaseline => '处于基线';
 
   @override
   String get healthTabVitals => '生命体征';

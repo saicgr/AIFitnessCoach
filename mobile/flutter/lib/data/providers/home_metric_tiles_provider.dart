@@ -73,8 +73,14 @@ class MetricTileSpec {
   /// Stable persistence id. Matches [RingKindX.id] for ring-backed metrics.
   final String id;
 
-  /// The tracked uppercase kicker on the tile.
+  /// The metric's name in lists and settings — the ring's own label.
   final String label;
+
+  /// The tracked uppercase kicker on the tile, which is NOT always the ring's
+  /// label: a ring is a scored contributor ("Move", "Recovery", "Hydration")
+  /// while a tile shows the raw number underneath it, so the tile says what
+  /// the number is — STEPS, READY, WATER. See [_kTileKickerOverrides].
+  final String tileLabel;
 
   /// The ring this tile reads, or null for [kTodayScoreTileId].
   final RingKind? ring;
@@ -92,6 +98,7 @@ class MetricTileSpec {
   const MetricTileSpec({
     required this.id,
     required this.label,
+    required this.tileLabel,
     required this.ring,
     required this.source,
     required this.route,
@@ -99,6 +106,20 @@ class MetricTileSpec {
     this.defaultSize = MetricSize.small,
   });
 }
+
+/// Tile kickers that deliberately differ from the ring's label. The ring is a
+/// scored contributor; the tile is the number itself, so it says what the
+/// number is. Everything not listed here uses the ring's own label verbatim.
+///
+/// These sit beside the ring labels in `ring_catalog.dart` as code constants
+/// rather than in the `.arb` bundles, for the same reason those do: the metric
+/// catalogue is one table and splitting half of it into localisation keys
+/// would leave the two halves free to drift.
+const Map<String, String> _kTileKickerOverrides = {
+  'move': 'Steps',
+  'recovery': 'Ready',
+  'hydration': 'Water',
+};
 
 MetricTileSource _sourceFor(RingKind k) {
   switch (k) {
@@ -178,6 +199,7 @@ final Map<String, MetricTileSpec> kHomeMetricTileCatalog = {
   kTodayScoreTileId: const MetricTileSpec(
     id: kTodayScoreTileId,
     label: 'Today Score',
+    tileLabel: 'Today Score',
     ring: null,
     source: MetricTileSource.computed,
     deviationStyle: MetricDeviationStyle.points,
@@ -188,6 +210,7 @@ final Map<String, MetricTileSpec> kHomeMetricTileCatalog = {
     k.id: MetricTileSpec(
       id: k.id,
       label: k.label,
+      tileLabel: _kTileKickerOverrides[k.id] ?? k.label,
       ring: k,
       source: _sourceFor(k),
       deviationStyle: _deviationStyleFor(k),
@@ -263,6 +286,77 @@ const List<HomeMetricTile> kDefaultMetricTiles = [
   HomeMetricTile(id: 'hydration', size: MetricSize.small),
   HomeMetricTile(id: 'weight', size: MetricSize.small),
 ];
+
+/// A named starting arrangement. A preset carries **everything the layout is**
+/// — which metrics, in what order, at what size, on which page — because a
+/// preset that only picked metrics would silently flatten a user's sizing the
+/// moment they tapped it.
+@immutable
+class MetricTilePreset {
+  /// Stable id (never shown).
+  final String id;
+
+  /// Chip label.
+  final String label;
+
+  final List<HomeMetricTile> tiles;
+
+  const MetricTilePreset({
+    required this.id,
+    required this.label,
+    required this.tiles,
+  });
+}
+
+/// The presets offered under the Add slot. Kept deliberately short: three
+/// named layouts and the user's own. Every id here must exist in
+/// [kHomeMetricTileCatalog] — `metricTilePresetsAreValid` asserts it in tests.
+const List<MetricTilePreset> kMetricTilePresets = [
+  MetricTilePreset(
+    id: 'minimal',
+    label: 'Minimal',
+    tiles: [
+      HomeMetricTile(id: kTodayScoreTileId, size: MetricSize.large),
+      HomeMetricTile(id: 'move', size: MetricSize.small),
+      HomeMetricTile(id: 'sleep', size: MetricSize.small),
+      HomeMetricTile(id: 'hydration', size: MetricSize.small),
+    ],
+  ),
+  MetricTilePreset(
+    id: 'training_day',
+    label: 'Training day',
+    tiles: [
+      HomeMetricTile(id: kTodayScoreTileId, size: MetricSize.large),
+      HomeMetricTile(id: 'train', size: MetricSize.wide),
+      HomeMetricTile(id: 'move', size: MetricSize.wide),
+      HomeMetricTile(id: 'protein', size: MetricSize.small),
+      HomeMetricTile(id: 'hydration', size: MetricSize.small),
+      HomeMetricTile(id: 'active_energy', size: MetricSize.small),
+    ],
+  ),
+  MetricTilePreset(
+    id: 'recovery',
+    label: 'Recovery',
+    tiles: [
+      HomeMetricTile(id: kTodayScoreTileId, size: MetricSize.large),
+      HomeMetricTile(id: 'sleep', size: MetricSize.wide),
+      HomeMetricTile(id: 'recovery', size: MetricSize.wide),
+      HomeMetricTile(id: 'hrv', size: MetricSize.small),
+      HomeMetricTile(id: 'heart_rate', size: MetricSize.small),
+      HomeMetricTile(id: 'stress', size: MetricSize.small),
+    ],
+  ),
+];
+
+/// True when [tiles] is exactly [preset]'s arrangement — same metrics, same
+/// order, same sizes, same pages. Anything else is the user's own layout.
+bool metricTilesMatchPreset(List<HomeMetricTile> tiles, MetricTilePreset p) {
+  if (tiles.length != p.tiles.length) return false;
+  for (var i = 0; i < tiles.length; i++) {
+    if (tiles[i] != p.tiles[i]) return false;
+  }
+  return true;
+}
 
 /// SharedPreferences key, scoped per account so switching users on one device
 /// doesn't bleed layouts. `_v1` is the migration version: bump it only to
@@ -455,6 +549,31 @@ class HomeMetricTilesNotifier extends StateNotifier<List<HomeMetricTile>> {
 
   void resetToDefault() => _set(kDefaultMetricTiles);
 
+  /// The arrangement the user had before they tried a preset, so "My layout"
+  /// is a real destination rather than a decorative chip. In memory only — a
+  /// preset the user kept across a relaunch IS their layout by then.
+  List<HomeMetricTile>? _layoutBeforePreset;
+
+  /// Whether tapping "My layout" would restore something.
+  bool get hasLayoutBeforePreset => _layoutBeforePreset != null;
+
+  /// Apply a named preset — metrics, order, sizes and pages together.
+  void applyPreset(MetricTilePreset preset) {
+    if (metricTilesMatchPreset(state, preset)) return;
+    if (!kMetricTilePresets.any((p) => metricTilesMatchPreset(state, p))) {
+      _layoutBeforePreset = List<HomeMetricTile>.of(state);
+    }
+    _set(preset.tiles);
+  }
+
+  /// Put back the layout the user had before the first preset tap.
+  void restoreLayoutBeforePreset() {
+    final previous = _layoutBeforePreset;
+    if (previous == null) return;
+    _layoutBeforePreset = null;
+    _set(previous);
+  }
+
   /// Index at which a tile belonging to [page] should be appended so the flat
   /// list stays grouped page-1-then-page-2 (the pager reads runs, not a sort).
   static int _appendIndexFor(List<HomeMetricTile> tiles, int page) {
@@ -469,6 +588,16 @@ final homeMetricTilesProvider =
     StateNotifierProvider<HomeMetricTilesNotifier, List<HomeMetricTile>>((ref) {
   ref.watch(currentUserIdProvider); // one layout per account
   return HomeMetricTilesNotifier(ref);
+});
+
+/// The preset the current arrangement exactly matches, or null — which is the
+/// "My layout" (dirty) state the chip row shows as active.
+final activeMetricTilePresetProvider = Provider<MetricTilePreset?>((ref) {
+  final tiles = ref.watch(homeMetricTilesProvider);
+  for (final p in kMetricTilePresets) {
+    if (metricTilesMatchPreset(tiles, p)) return p;
+  }
+  return null;
 });
 
 /// Metrics not currently on the grid — the Add-metric sheet's contents.

@@ -3885,6 +3885,11 @@ class AppLocalizationsEs extends AppLocalizations {
   String get classicStatsTemplateVolume => 'VOLUMEN';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Pregunta lo que quieras...';
 
   @override
@@ -23913,6 +23918,44 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get navHealth => 'Salud';
+
+  @override
+  String get navCommunity => 'Comunidad';
+
+  @override
+  String get communitySaveAsRoutine => 'Guardar como rutina';
+
+  @override
+  String get communityRoutineSaved => 'Guardado en tus rutinas';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'No se pudo guardar esa rutina. Inténtalo de nuevo.';
+
+  @override
+  String get communityYourProfile => 'Tu perfil';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Conectado a $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'El sueño, la disposición y las constantes se sincronizan automáticamente.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent% por debajo de la línea base';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent% por encima de la línea base';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'En la línea base';
 
   @override
   String get healthTabVitals => 'Signos vitales';

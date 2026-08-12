@@ -3903,6 +3903,11 @@ class AppLocalizationsMl extends AppLocalizations {
   String get classicStatsTemplateVolume => 'വോളിയം';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'എന്തും ചോദിക്കൂ...';
 
   @override
@@ -24109,6 +24114,44 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get navHealth => 'ഹെൽത്ത്';
+
+  @override
+  String get navCommunity => 'കമ്മ്യൂണിറ്റി';
+
+  @override
+  String get communitySaveAsRoutine => 'ദിനചര്യയായി സേവ് ചെയ്യുക';
+
+  @override
+  String get communityRoutineSaved => 'നിങ്ങളുടെ ദിനചര്യകളിൽ സേവ് ചെയ്തു';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'ആ ദിനചര്യ സേവ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.';
+
+  @override
+  String get communityYourProfile => 'നിങ്ങളുടെ പ്രൊഫൈൽ';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source ലേക്ക് കണക്റ്റ് ചെയ്തു';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'ഉറക്കം, റെഡിനെസ്, വൈറ്റൽസ് എന്നിവ സ്വയമേവ സിങ്ക് ആകും.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'ബേസ്‌ലൈനിനേക്കാൾ $percent% കുറവ്';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'ബേസ്‌ലൈനിനേക്കാൾ $percent% കൂടുതൽ';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'ബേസ്‌ലൈനിൽ';
 
   @override
   String get healthTabVitals => 'വൈറ്റൽസ്';

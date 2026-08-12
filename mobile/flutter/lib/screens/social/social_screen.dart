@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../core/accessibility/accessibility_provider.dart';
@@ -20,12 +21,39 @@ import 'friend_search_screen.dart';
 import 'conversation_screen.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../core/theme/accent_color_provider.dart';
+import 'package:go_router/go_router.dart';
 
 part 'social_screen_part_messages_screen.dart';
 
 
-/// Social screen - Shows activity feed, challenges, and friends
-/// Adapts UI based on accessibility mode (Normal vs Senior)
+/// Community tab — branch root for `/community` (Step 2 of the 2026-08 nav
+/// evolution).
+///
+/// This is a PROMOTION, not a build. The screen below already shipped as
+/// `/social`: activity feed, challenges, leaderboard, friends, messages,
+/// friend profiles, search, groups, stories, hashtag feeds, conversations,
+/// `create_post_sheet`, `comments_sheet` and reactions. Step 2 (recorded
+/// 2026-06-11: *"Future Social = stage 1 inside You; stage 2 (if earned)
+/// You→Community tab, profile behind header avatar"*) moves it from a route
+/// buried inside the Nutrition branch to the fifth bottom-nav slot, converted
+/// from You — the bar stays at five tabs.
+///
+/// ## Profile is behind the header avatar
+///
+/// The leading avatar pushes `/profile`, which still renders the whole
+/// [YouHubScreen] (Overview · Profile · Stats & Rewards) from this same
+/// branch. No `/profile` deep link moved, including the `?tab=` variants —
+/// see `app_router_main_shell_routes.dart`.
+///
+/// ## The social-graph topology is deliberately untouched
+///
+/// `social_service.dart` carries BOTH `followUser`/`followers`/`following` and
+/// `sendFriendRequest`/`acceptFriendRequest`. Which one the product surfaces
+/// (an open follow graph à la Hevy vs. the mutual friend graph shipped today)
+/// is a founder decision that has not been made, so this change surfaces
+/// NEITHER differently: the friend-request UX is exactly as it was, and the
+/// mockup's "suggested athletes" carousel — which only makes sense on a follow
+/// graph — is deliberately not built.
 class SocialScreen extends ConsumerStatefulWidget {
   /// Tab to open on: 0 Feed · 1 Challenges · 2 Leaderboard · 3 Friends.
   ///
@@ -100,13 +128,23 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
         backgroundColor: backgroundColor,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        // PROFILE BEHIND THE HEADER AVATAR — the whole point of Step 2. The
+        // You tab's slot became Community, so the profile hub has to keep a
+        // one-tap entry point; this is it (Strava / Instagram / Nike put the
+        // owner's avatar top-left for exactly this). Pushes `/profile`, which
+        // is still a route of THIS branch, so it opens over Community with the
+        // nav bar intact and pops straight back.
+        leadingWidth: 60,
+        leading: _buildProfileAvatar(context),
         title: Text(
-          l10n.socialSocial,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          l10n.navCommunity.toUpperCase(),
+          style: ZType.disp(
+            24,
+            color: ThemeColors.of(context).textPrimary,
+          ),
         ),
         centerTitle: false,
+        titleSpacing: 0,
         actions: [
           // Username chip (compact, tap to copy)
           _buildCompactUserChip(context, isDark, authState.user),
@@ -183,6 +221,41 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// The header avatar that now owns profile access (Step 2). Same 40 pt
+  /// rounded-square treatment the You hub's own header used, so the control
+  /// the user learned there is the control they find here.
+  Widget _buildProfileAvatar(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final label = AppLocalizations.of(context).communityYourProfile;
+    return Semantics(
+      button: true,
+      label: label,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16, right: 4),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            HapticFeedback.lightImpact();
+            context.push('/profile');
+          },
+          child: ExcludeSemantics(
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: tc.surface,
+                border: Border.all(color: tc.cardBorder),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.person_outline, size: 20, color: tc.accent),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -95,23 +95,38 @@ class CoachFloatingButton extends ConsumerWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
+              // QUIET BY CONSTRUCTION, VISUALLY TOO — not just behaviourally.
+              //
+              // This was a solid accent-filled puck with an accent glow, which
+              // made the smaller of the two controls the loudest thing on
+              // every screen and put TWO accent-filled shapes in one cluster.
+              // The mockup's `.qmini` is a raised-surface circle with a 1px
+              // hairline and the accent on the GLYPH ONLY, carrying the same
+              // neutral float shadow Quick Log uses so the pair reads as one
+              // cluster lifted off the page rather than two competing colours.
               Container(
                 width: kCoachPillDiameter,
                 height: kCoachPillDiameter,
                 decoration: BoxDecoration(
-                  color: tc.accent,
+                  color: tc.elevated,
                   shape: BoxShape.circle,
+                  border: Border.all(color: tc.cardBorder, width: 1),
                   boxShadow: [
+                    // Same float shadow as `QuickLogFabChrome` — neutral, not
+                    // an accent glow.
                     BoxShadow(
-                      color: tc.accent.withValues(alpha: 0.30),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: Colors.black
+                          .withValues(alpha: tc.isDark ? 0.45 : 0.12),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
                     ),
                   ],
                 ),
                 child: Center(
                   child: ExcludeSemantics(
-                    child: CoachSparkIcon(size: 18, color: tc.accentContrast),
+                    // 15 px ✦, matching the mockup's glyph, and the ONE place
+                    // the accent is spent on this control.
+                    child: CoachSparkIcon(size: 15, color: tc.accent),
                   ),
                 ),
               ),

@@ -3863,6 +3863,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get classicStatsTemplateVolume => 'KHỐI LƯỢNG';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Hỏi bất cứ điều gì...';
 
   @override
@@ -23758,6 +23763,44 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get navHealth => 'Sức khỏe';
+
+  @override
+  String get navCommunity => 'Cộng đồng';
+
+  @override
+  String get communitySaveAsRoutine => 'Lưu thành bài tập';
+
+  @override
+  String get communityRoutineSaved => 'Đã lưu vào bài tập của bạn';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Không thể lưu bài tập đó. Hãy thử lại.';
+
+  @override
+  String get communityYourProfile => 'Hồ sơ của bạn';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Đã kết nối với $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Giấc ngủ, độ sẵn sàng và chỉ số sinh tồn tự động đồng bộ.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'Thấp hơn mức nền $percent%';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'Cao hơn mức nền $percent%';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Ở mức nền';
 
   @override
   String get healthTabVitals => 'Chỉ số sinh tồn';

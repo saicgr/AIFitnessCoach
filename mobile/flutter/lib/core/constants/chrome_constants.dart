@@ -16,6 +16,16 @@ const double kMainNavBottomGap = 10.0;
 /// Height of the scrim gradient faded in above the nav pill.
 const double kMainNavFadeHeight = 36.0;
 
+/// Horizontal inset of the ✦-coach + Quick-Log cluster from the screen's
+/// trailing edge.
+///
+/// 14, per the 2026-08 nav mockup's `.fabband{right:14px}`. It used to be a
+/// bare `24` inside `main_shell.dart`, which parked the cluster 10 px inboard
+/// of the nav's own 6 px gutter so the two right edges never lined up. Named
+/// here because both the cluster's `PositionedDirectional(end:)` and the
+/// `maxWidth` bound it grows into have to agree.
+const double kFabClusterEdgeInset = 14.0;
+
 /// Vertical space (above the safe-area inset) a screen must clear so content
 /// can scroll fully out from under the floating nav: pill height + the gap
 /// below it, rounded up by 2 for the pill shadow. Historically written as

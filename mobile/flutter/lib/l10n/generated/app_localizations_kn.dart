@@ -3888,6 +3888,11 @@ class AppLocalizationsKn extends AppLocalizations {
   String get classicStatsTemplateVolume => 'ವಾಲ್ಯೂಮ್';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'ಏನನ್ನಾದರೂ ಕೇಳಿ...';
 
   @override
@@ -23926,6 +23931,44 @@ class AppLocalizationsKn extends AppLocalizations {
 
   @override
   String get navHealth => 'ಆರೋಗ್ಯ';
+
+  @override
+  String get navCommunity => 'ಸಮುದಾಯ';
+
+  @override
+  String get communitySaveAsRoutine => 'ದಿನಚರಿಯಾಗಿ ಉಳಿಸಿ';
+
+  @override
+  String get communityRoutineSaved => 'ನಿಮ್ಮ ದಿನಚರಿಗಳಿಗೆ ಉಳಿಸಲಾಗಿದೆ';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'ಆ ದಿನಚರಿಯನ್ನು ಉಳಿಸಲಾಗಲಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.';
+
+  @override
+  String get communityYourProfile => 'ನಿಮ್ಮ ಪ್ರೊಫೈಲ್';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source ಗೆ ಸಂಪರ್ಕಗೊಂಡಿದೆ';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'ನಿದ್ರೆ, ಸನ್ನದ್ಧತೆ ಮತ್ತು ಜೀವಸೂಚಕಗಳು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ಸಿಂಕ್ ಆಗುತ್ತವೆ.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'ಬೇಸ್‌ಲೈನ್‌ಗಿಂತ $percent% ಕಡಿಮೆ';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'ಬೇಸ್‌ಲೈನ್‌ಗಿಂತ $percent% ಹೆಚ್ಚು';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'ಬೇಸ್‌ಲೈನ್‌ನಲ್ಲಿ';
 
   @override
   String get healthTabVitals => 'ವೈಟಲ್ಸ್';

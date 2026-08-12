@@ -21,6 +21,7 @@ import '../data/providers/discover_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/recipe_providers.dart';
+import '../data/providers/social_provider.dart' show activityFeedProvider;
 import '../screens/nutrition/saved_hub_screen.dart'
     show savedFoodsHubProvider, savedMenusHubProvider;
 import '../data/providers/guest_usage_limits_provider.dart';
@@ -230,11 +231,15 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     if (navigationShell != null) return navigationShell!.currentIndex;
     final location = GoRouterState.of(context).matchedLocation;
-    // Branch order (2026-08 redesign): Home · Workout · Health · Nutrition · You.
+    // Branch order (2026-08 redesign, Step 2): Home · Workout · Health ·
+    // Nutrition · Community. `/profile` still resolves to slot 4 — the You hub
+    // did not move branches, it moved BEHIND the Community masthead avatar, so
+    // every shipped `/profile` deep link keeps highlighting the same tab.
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/workouts')) return 1;
     if (location.startsWith('/health')) return 2;
     if (location.startsWith('/nutrition')) return 3;
+    if (location.startsWith('/community')) return 4;
     if (location.startsWith('/profile')) return 4;
     return 0;
   }
@@ -287,7 +292,10 @@ class MainShell extends ConsumerWidget {
         context.go('/nutrition');
         break;
       case 4:
-        context.go('/profile');
+        // Step 2: the fifth slot is Community; profile lives behind its
+        // masthead avatar. (Fallback path only — with a shell present,
+        // `goBranch` above owns tab switching.)
+        context.go('/community');
         break;
     }
   }
@@ -710,7 +718,10 @@ class MainShell extends ConsumerWidget {
           // way, just narrower while content is moving under it.
           if (isNavBarVisible)
             PositionedDirectional(
-              end: 24,
+              // 14, matching the mockup's `.fabband{right:14px}`, so the
+              // cluster lines up with the nav's own 6 px gutter instead of
+              // floating a further 10 px inboard of everything below it.
+              end: kFabClusterEdgeInset,
               bottom:
                   MediaQuery.paddingOf(context).bottom +
                   kQuickLogFabBottomOffset,
@@ -730,7 +741,8 @@ class MainShell extends ConsumerWidget {
                 onQuickLog: () => showQuickLogSheet(context, ref),
                 // Bound the cluster so a long localisation or a large text
                 // scale widens it toward the screen edge and then stops.
-                maxWidth: MediaQuery.sizeOf(context).width - 48,
+                maxWidth: MediaQuery.sizeOf(context).width -
+                    kFabClusterEdgeInset * 2,
               ),
             ),
           // Nav bar at bottom — wrapped in Material so it participates in
@@ -873,7 +885,13 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
         ref.read(upcomingSchedulesProvider(userId));
       }
       break;
-    case 4: // You / Profile — XP state + unclaimed-crates badge.
+    case 4: // Community — the Feed chip is the tab's landing view, so its
+      // activity feed is the real first-paint dependency (disk cache-first,
+      // so a warm read paints instantly and revalidates behind it). XP +
+      // unclaimed crates stay warmed here too: they are the FIRST paint of
+      // `/profile`, which is one tap away behind this tab's masthead avatar
+      // and is still a route of this same branch.
+      if (hasUser) ref.read(activityFeedProvider(userId));
       ref.read(xpProvider);
       ref.read(unclaimedCratesCountProvider);
       break;

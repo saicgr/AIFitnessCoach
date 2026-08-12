@@ -239,6 +239,14 @@ class AppTourKeys {
   static GlobalKey get nutritionNavKey => TooltipAnchors.nutritionNav;
   static GlobalKey get profileNavKey => TooltipAnchors.profileNav;
 
+  /// The fifth nav slot's tour anchor under its Step-2 name (You → Community,
+  /// 2026-08). Deliberately the SAME `GlobalKey` as [profileNavKey] rather
+  /// than a second anchor: a `GlobalKey` may be mounted exactly once, the slot
+  /// is one widget, and the existing `nav_step_profile` tour step (declared in
+  /// `home_screen.dart`) still has to resolve. Two names, one slot, no
+  /// unmounted anchors.
+  static GlobalKey get communityNavKey => TooltipAnchors.profileNav;
+
   // Active Workout tour
   static GlobalKey get exerciseCardKey => TooltipAnchors.exerciseCard;
   static GlobalKey get setLoggingKey => TooltipAnchors.setLogging;

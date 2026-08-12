@@ -3860,6 +3860,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get classicStatsTemplateVolume => 'HACİM';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Her şeyi sor…';
 
   @override
@@ -23715,6 +23720,44 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get navHealth => 'Sağlık';
+
+  @override
+  String get navCommunity => 'Topluluk';
+
+  @override
+  String get communitySaveAsRoutine => 'Rutin olarak kaydet';
+
+  @override
+  String get communityRoutineSaved => 'Rutinlerine kaydedildi';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Bu rutin kaydedilemedi. Tekrar deneyin.';
+
+  @override
+  String get communityYourProfile => 'Profilin';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source ile bağlı';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Uyku, hazırlık ve yaşamsal veriler otomatik olarak eşitlenir.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'Temel değerin %$percent altında';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'Temel değerin %$percent üstünde';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Temel değerde';
 
   @override
   String get healthTabVitals => 'Yaşamsal veriler';

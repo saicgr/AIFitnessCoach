@@ -3849,6 +3849,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get classicStatsTemplateVolume => 'OBJEM';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Ptejte se na cokoli…';
 
   @override
@@ -23718,6 +23723,44 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get navHealth => 'Zdraví';
+
+  @override
+  String get navCommunity => 'Komunita';
+
+  @override
+  String get communitySaveAsRoutine => 'Uložit jako rutinu';
+
+  @override
+  String get communityRoutineSaved => 'Uloženo do vašich rutin';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Rutinu se nepodařilo uložit. Zkuste to znovu.';
+
+  @override
+  String get communityYourProfile => 'Tvůj profil';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Připojeno k $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Spánek, připravenost a vitální hodnoty se synchronizují automaticky.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent % pod základní hodnotou';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent % nad základní hodnotou';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Na základní hodnotě';
 
   @override
   String get healthTabVitals => 'Vitální funkce';

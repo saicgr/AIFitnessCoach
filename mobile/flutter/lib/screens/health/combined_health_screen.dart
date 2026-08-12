@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/stats/state_valence.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton_box.dart';
@@ -21,6 +23,8 @@ import '../../data/services/haptic_service.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/date_strip.dart';
 import '../../widgets/glass_back_button.dart';
+import 'widgets/health_chrome.dart';
+import 'vitals_detail_screen.dart' show vitalDeviationLine;
 import 'widgets/metric_history_card.dart';
 
 /// Combined Health hub — route `/health/combined`.
@@ -152,33 +156,43 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
     final sync = ref.watch(healthSyncProvider);
     final historyAsync = ref.watch(combinedHealthHistoryProvider);
 
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: widget.embedded ? Colors.transparent : bg,
       body: SafeArea(
         top: !widget.embedded,
         child: Column(
           children: [
-            Padding(
-              padding: EdgeInsets.fromLTRB(12, widget.embedded ? 0 : 8, 16, 4),
+            // The whole header row is pushed-route-only now. Embedded, every
+            // one of its three children was already gated off except the coach
+            // button — see below — so it was rendering a bare 4 px band inside
+            // the Health tab's own masthead.
+            if (!widget.embedded)
+              Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
               child: Row(
                 children: [
-                  if (!widget.embedded) ...[
-                    const GlassBackButton(),
-                    const SizedBox(width: 12),
-                    Text(
-                      l10n.combinedHealthHealth,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: textPrimary,
-                      ),
+                  const GlassBackButton(),
+                  const SizedBox(width: 12),
+                  Text(
+                    l10n.combinedHealthHealth,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary,
                     ),
-                  ],
+                  ),
                   const Spacer(),
                   // #19 — Ask the AI coach about your health metrics, scoped to
                   // this hub (recovery is the hero), so the chat surfaces
                   // metric quick-replies + inline trend charts.
+                  //
+                  // Inside the Health tab the shell floats the GLOBAL ✦ coach
+                  // circle over this exact screen, so leaving this button
+                  // mounted put TWO coach entry points on one frame — one at
+                  // the top-right of the Overview chip, one in the bottom-right
+                  // cluster. Pushed full-screen (`/health/combined`) there is
+                  // no global circle, so it still belongs here.
                   _HealthAiCoachButton(
                     accent: ref.colors(context).accent,
                     isDark: isDark,
@@ -219,7 +233,7 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
     bool isDark,
     CombinedHealthHistory history,
   ) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final day = history.dayFor(_selectedDate);
 
     return ListView(
@@ -242,7 +256,13 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         _ActivityStreakCard(history: history, isDark: isDark),
         const SizedBox(height: 12),
         // ── Samsung-parity health metrics (Vitals / Heart Health / Fitness Index)
-        const _VitalsHubCard(),
+        //
+        // Vitals is a CARD of per-signal capsules, not a one-line summary row.
+        // The Overview used to say only "All overnight signals in range" with a
+        // chevron, which is the one thing the frame is not supposed to do:
+        // every value and every deviation-vs-baseline lived a tap away. The
+        // hub row survives inside the card as its "see all" affordance.
+        const _VitalsOverviewCard(),
         const SizedBox(height: 12),
         const _HeartHealthHubCard(),
         const SizedBox(height: 12),
@@ -353,6 +373,12 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         const SizedBox(height: 12),
         // ── Goal setting
         _ActivityGoalsCard(isDark: isDark),
+        const SizedBox(height: 12),
+        // ── Where this data comes from. Persistent, not just an empty state:
+        // once connected, the ONLY source affordance on the whole tab was the
+        // 30 pt masthead chip, so "what is feeding this?" and "how do I add
+        // more?" had no answer anywhere in the connected Overview.
+        const _HealthSourceCard(),
       ],
     );
   }
@@ -657,7 +683,7 @@ class _ActivityStreakCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
@@ -760,7 +786,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.combinedHealthCouldNotSaveGoal)),
+          SnackBar(content: Text(AppLocalizations.of(context).combinedHealthCouldNotSaveGoal)),
         );
       }
     } finally {
@@ -770,7 +796,7 @@ class _ActivityGoalsCardState extends ConsumerState<_ActivityGoalsCard> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = widget.isDark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder =
@@ -936,6 +962,104 @@ class _GoalChip extends StatelessWidget {
   }
 }
 
+/// "Where this data comes from" — the persistent source card at the foot of
+/// the Overview.
+///
+/// The mockup's `.connect` block, and the answer to a question the connected
+/// tab had no answer for: once Health was connected, the ONLY source
+/// affordance anywhere was the 30 pt masthead chip, so there was no statement
+/// of what is feeding the numbers and no route to add or manage a wearable.
+///
+/// It names the real platform aggregator (Apple Health on iOS, Health Connect
+/// on Android) rather than a fabricated device count — the app connects to
+/// exactly one aggregator, and inventing "1 source connected · Garmin" would
+/// be claiming knowledge of a device list this app never reads.
+class _HealthSourceCard extends ConsumerWidget {
+  const _HealthSourceCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final sync = ref.watch(healthSyncProvider);
+    final connected = sync.isConnected;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: tc.cardBorder),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  // Semantic ramp, not the user-chosen accent: this IS a
+                  // "your data is flowing" state. Same dot the masthead chip
+                  // uses, so the two read as one status.
+                  color: connected ? tc.stateSupports : tc.textMuted,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  connected
+                      ? l10n.healthSourceConnectedTo(_platformSourceName(context))
+                      : l10n.combinedHealthConnectHealthToSee,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: tc.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            connected
+                ? l10n.healthSourceSyncingBody
+                : l10n.combinedHealthConnectHealthBody,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 11.5, color: tc.textMuted, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          // Connected → manage / add a wearable (the real destination, the
+          // Health & Devices settings page). Disconnected → the connect CTA.
+          HealthCtaPill(
+            label: connected
+                ? l10n.settingsHealthDevices
+                : l10n.combinedHealthConnectHealth,
+            onTap: () {
+              if (connected) {
+                context.push('/settings/health-devices');
+              } else {
+                ref.read(healthSyncProvider.notifier).connect();
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The platform aggregator this build actually reads from. Not a device
+  /// name — the app never sees one.
+  String _platformSourceName(BuildContext context) =>
+      Theme.of(context).platform == TargetPlatform.iOS ||
+              Theme.of(context).platform == TargetPlatform.macOS
+          ? 'Apple Health'
+          : 'Health Connect';
+}
+
 // ── Empty / error states ───────────────────────────────────────────────────
 class _ConnectHealthEmpty extends ConsumerWidget {
   final bool isDark;
@@ -943,7 +1067,7 @@ class _ConnectHealthEmpty extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -971,12 +1095,9 @@ class _ConnectHealthEmpty extends ConsumerWidget {
               style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                HapticService.light();
-                ref.read(healthSyncProvider.notifier).connect();
-              },
-              child: Text(AppLocalizations.of(context)!.combinedHealthConnectHealth),
+            HealthCtaPill(
+              label: AppLocalizations.of(context).combinedHealthConnectHealth,
+              onTap: () => ref.read(healthSyncProvider.notifier).connect(),
             ),
           ],
         ),
@@ -1028,7 +1149,7 @@ class _ErrorEmpty extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 40, color: textMuted),
             const SizedBox(height: 12),
             Text(
-              AppLocalizations.of(context)!.combinedHealthCouldNotLoadYour,
+              AppLocalizations.of(context).combinedHealthCouldNotLoadYour,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
@@ -1159,6 +1280,166 @@ class _MetricHubCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// The Overview's Vitals card: the hub row (the "see all" affordance) with the
+/// five per-signal capsules underneath it.
+///
+/// This is the frame's whole point restored. The Overview used to show only
+/// `_VitalsHubCard`'s one-line summary — "All overnight signals in range" and a
+/// chevron — so every value, every baseline and every deviation lived one tap
+/// away on `/health/vitals`. The capsules put the numbers on the Overview and
+/// state each one's deviation IN WORDS against the user's own 30-day baseline,
+/// with the ramp dot glued to that sentence ([DeviationLine]) so colour is
+/// never the sole encoding.
+class _VitalsOverviewCard extends ConsumerWidget {
+  const _VitalsOverviewCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final signals = ref.watch(vitalsProvider).valueOrNull?.signals;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const _VitalsHubCard(),
+        // No capsules until the payload lands — a grid of five placeholder
+        // tiles would be inventing structure the user has no data for.
+        if (signals != null && signals.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, c) {
+              // `flex:1 1 30%; min-width:100px` — three across when there is
+              // room, two when there isn't (narrow phones, large text).
+              final perRow = c.maxWidth >= 330 ? 3 : 2;
+              const gap = 8.0;
+              final w = (c.maxWidth - gap * (perRow - 1)) / perRow;
+              return Wrap(
+                spacing: gap,
+                runSpacing: gap,
+                children: [
+                  for (final s in signals)
+                    SizedBox(width: w, child: _VitalCapsule(signal: s)),
+                ],
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// One signal's capsule: label, value, and the deviation sentence.
+///
+/// A signal with no reading keeps its tile — DASHED border, muted value, and
+/// the honest "connect a wearable" line — rather than disappearing, so the user
+/// can see WHICH signal is missing instead of silently getting a shorter grid.
+class _VitalCapsule extends StatelessWidget {
+  final VitalSignal signal;
+
+  const _VitalCapsule({required this.signal});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final hasReading = signal.hasReading && signal.value != null;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(9, 8, 9, 9),
+      decoration: hasReading
+          ? BoxDecoration(
+              border: Border.all(color: tc.cardBorder),
+              borderRadius: BorderRadius.circular(10),
+            )
+          : null,
+      foregroundDecoration: hasReading
+          ? null
+          // Dashed skin for the no-data tile (`.cap.empty{border-style:dashed}`)
+          // — Flutter has no dashed BorderSide, so it is painted.
+          : _DashedBorder(color: tc.cardBorder, radius: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            signal.label.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.4),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            hasReading
+                ? '${_fmtVital(signal.value!)}${signal.unit.isEmpty ? '' : ' ${signal.unit}'}'
+                : l10n.healthTabNoDataYet,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZType.data(
+              13,
+              color: hasReading ? tc.textPrimary : tc.textMuted,
+            ),
+          ),
+          const SizedBox(height: 5),
+          if (hasReading)
+            vitalDeviationLine(context, signal)
+          else
+            Text(
+              l10n.metricsDashboardConnectWearable,
+              maxLines: 2,
+              style: TextStyle(fontSize: 10.5, color: tc.textMuted, height: 1.25),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+String _fmtVital(double v) =>
+    v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+
+/// Paints a dashed rounded rectangle as a `foregroundDecoration`.
+class _DashedBorder extends Decoration {
+  final Color color;
+  final double radius;
+
+  const _DashedBorder({required this.color, required this.radius});
+
+  @override
+  BoxPainter createBoxPainter([VoidCallback? onChanged]) =>
+      _DashedBorderPainter(color, radius);
+}
+
+class _DashedBorderPainter extends BoxPainter {
+  final Color color;
+  final double radius;
+
+  _DashedBorderPainter(this.color, this.radius);
+
+  @override
+  void paint(Canvas canvas, Offset offset, ImageConfiguration cfg) {
+    final size = cfg.size;
+    if (size == null) return;
+    final rrect = RRect.fromRectAndRadius(
+      (offset & size).deflate(0.5),
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rrect);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1
+      ..color = color;
+    const dash = 4.0;
+    const gap = 3.0;
+    for (final metric in path.computeMetrics()) {
+      var d = 0.0;
+      while (d < metric.length) {
+        final end = (d + dash).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(d, end), paint);
+        d = end + gap;
+      }
+    }
   }
 }
 

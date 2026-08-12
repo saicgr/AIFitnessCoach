@@ -3840,6 +3840,11 @@ class AppLocalizationsSv extends AppLocalizations {
   String get classicStatsTemplateVolume => 'VOLYM';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Fråga vad som helst...';
 
   @override
@@ -23677,6 +23682,44 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get navHealth => 'Hälsa';
+
+  @override
+  String get navCommunity => 'Community';
+
+  @override
+  String get communitySaveAsRoutine => 'Spara som rutin';
+
+  @override
+  String get communityRoutineSaved => 'Sparad i dina rutiner';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Kunde inte spara rutinen. Försök igen.';
+
+  @override
+  String get communityYourProfile => 'Din profil';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Ansluten till $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Sömn, återhämtning och vitalvärden synkas automatiskt.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent % under baslinjen';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent % över baslinjen';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'På baslinjen';
 
   @override
   String get healthTabVitals => 'Vitalvärden';

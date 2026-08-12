@@ -3857,6 +3857,11 @@ class AppLocalizationsJv extends AppLocalizations {
   String get classicStatsTemplateVolume => 'VOLUME';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Takon apa wae…';
 
   @override
@@ -23736,6 +23741,44 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get navHealth => 'Kesehatan';
+
+  @override
+  String get navCommunity => 'Komunitas';
+
+  @override
+  String get communitySaveAsRoutine => 'Simpen dadi rutinitas';
+
+  @override
+  String get communityRoutineSaved => 'Disimpen ing rutinitas sampeyan';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Ora bisa nyimpen rutinitas kasebut. Coba maneh.';
+
+  @override
+  String get communityYourProfile => 'Profil sampeyan';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Kasambung menyang $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Turu, kesiapan, lan vital sinkron kanthi otomatis.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent% ing ngisor baseline';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent% ing ndhuwur baseline';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Ing baseline';
 
   @override
   String get healthTabVitals => 'Tandha vital';

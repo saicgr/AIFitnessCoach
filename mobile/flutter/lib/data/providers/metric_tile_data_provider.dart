@@ -26,6 +26,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/stats/state_valence.dart';
 import '../../services/score_history_service.dart';
 import '../models/metric_value.dart';
+import '../services/health_service.dart' show healthSyncProvider;
 import 'home_metric_tiles_provider.dart';
 import 'metric_value_provider.dart';
 import 'today_score_provider.dart';
@@ -129,6 +130,12 @@ class MetricTileData {
   /// Why the tile is empty — rendered in a dashed capsule. Null when it isn't.
   final String? noDataReason;
 
+  /// True when [noDataReason] names a *source* the user can connect or log to
+  /// ("No source · connect Health", "Nothing logged yet") rather than a missing
+  /// signal. The capsule prefixes a circled-i in that case — the small
+  /// "tap to fix" affordance the mockup gives those two forms and no other.
+  final bool noDataNamesSource;
+
   /// Chart points normalised to 0..1 (1 = top of the plot band). Empty means
   /// draw no chart at all.
   final List<double> series;
@@ -173,6 +180,7 @@ class MetricTileData {
     required this.deviationLabelShort,
     required this.route,
     this.noDataReason,
+    this.noDataNamesSource = false,
     this.baselineY,
     this.claimsDeviation = false,
     this.deviation = 0,
@@ -205,6 +213,11 @@ String _emptyReasonFor(MetricTileSource source) {
   }
 }
 
+/// Whether the empty-state capsule earns its circled-i: health and in-app
+/// reasons name a source the user can act on, a computed one does not.
+bool _reasonNamesSource(MetricTileSource source) =>
+    source == MetricTileSource.health || source == MetricTileSource.inApp;
+
 String _directionWord(double amount) => amount > 0 ? 'above' : 'below';
 
 ({String long, String short}) _deviationCopy(
@@ -228,8 +241,18 @@ String _directionWord(double amount) => amount > 0 ? 'above' : 'below';
   );
 }
 
-/// Normalises [values] (and the baseline, when present) into 0..1.
-({List<double> series, double? baselineY}) _normalise(
+/// Headroom added to each end of the min→max range before normalising.
+///
+/// Without it every series — a 200-step spread on a 9,000-step week included —
+/// is stretched edge to edge and reads as a dramatic zigzag. Padding the range
+/// by a quarter keeps the shape honest AND lets a quiet week look quiet, which
+/// is the whole argument for putting a chart on a tile at all.
+const double kTileSeriesHeadroom = 0.125;
+
+/// Normalises [values] (and the baseline, when present) into 0..1, with
+/// [kTileSeriesHeadroom] of padding at each end. Public so the "a quiet week
+/// looks quiet" property is testable rather than a claim in a comment.
+({List<double> series, double? baselineY}) normaliseTileSeries(
   List<double> values,
   double? baseline,
 ) {
@@ -240,6 +263,9 @@ String _directionWord(double amount) => amount > 0 ? 'above' : 'below';
     if (baseline < lo) lo = baseline;
     if (baseline > hi) hi = baseline;
   }
+  final headroom = (hi - lo) * kTileSeriesHeadroom;
+  lo -= headroom;
+  hi += headroom;
   final span = hi - lo;
   if (span.abs() < 1e-9) {
     return (
@@ -256,6 +282,19 @@ String _directionWord(double amount) => amount > 0 ? 'above' : 'below';
 List<double> _tailValues(List<double> values) => values.length <= kTileChartPoints
     ? values
     : values.sublist(values.length - kTileChartPoints);
+
+/// Whether the grid should offer the Connect-Health recovery card underneath
+/// itself: Health is dark AND at least one placed tile actually reads from it.
+///
+/// The second half is what keeps it honest — a user whose grid holds only
+/// in-app metrics (water, weight, protein) is missing nothing, so pitching them
+/// a connect card would be an ad, not a fix.
+final metricTilesNeedHealthConnectProvider = Provider<bool>((ref) {
+  if (ref.watch(healthSyncProvider.select((s) => s.isConnected))) return false;
+  return ref.watch(homeMetricTilesProvider).any(
+        (t) => t.spec?.source == MetricTileSource.health,
+      );
+});
 
 /// Live tile state for [tileId]. Unknown ids resolve to an empty tile rather
 /// than throwing — a stale persisted layout must never crash Home.
@@ -289,11 +328,12 @@ final metricTileDataProvider =
     if (score.isSetupState) {
       return MetricTileData(
         id: spec.id,
-        label: spec.label,
+        label: spec.tileLabel,
         value: '—',
         unit: '',
         hasData: false,
         noDataReason: _emptyReasonFor(spec.source),
+        noDataNamesSource: _reasonNamesSource(spec.source),
         series: const [],
         valence: valence,
         deviationLabel: '',
@@ -312,13 +352,13 @@ final metricTileDataProvider =
       values.add(score.score.toDouble());
     }
     final dev = computeMetricDeviation(values, style: spec.deviationStyle);
-    final norm = _normalise(_tailValues(values), dev?.baseline);
+    final norm = normaliseTileSeries(_tailValues(values), dev?.baseline);
     final copy = dev == null
         ? null
         : _deviationCopy(dev, spec.deviationStyle, '');
     return MetricTileData(
       id: spec.id,
-      label: spec.label,
+      label: spec.tileLabel,
       value: '${score.score}',
       unit: '',
       hasData: true,
@@ -343,11 +383,12 @@ final metricTileDataProvider =
   if (mv.isEmpty) {
     return MetricTileData(
       id: spec.id,
-      label: spec.label,
+      label: spec.tileLabel,
       value: '—',
       unit: '',
       hasData: false,
       noDataReason: _emptyReasonFor(spec.source),
+      noDataNamesSource: _reasonNamesSource(spec.source),
       series: const [],
       valence: valence,
       deviationLabel: '',
@@ -370,13 +411,13 @@ final metricTileDataProvider =
   final dev = values.isEmpty
       ? null
       : computeMetricDeviation(values, style: spec.deviationStyle);
-  final norm = _normalise(_tailValues(values), dev?.baseline);
+  final norm = normaliseTileSeries(_tailValues(values), dev?.baseline);
   final copy =
       dev == null ? null : _deviationCopy(dev, spec.deviationStyle, mv.unit);
 
   return MetricTileData(
     id: spec.id,
-    label: spec.label,
+    label: spec.tileLabel,
     value: mv.headline,
     unit: unit,
     hasData: true,

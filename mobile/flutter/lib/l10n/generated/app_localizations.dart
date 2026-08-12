@@ -6582,6 +6582,12 @@ abstract class AppLocalizations {
   /// **'VOLUME'**
   String get classicStatsTemplateVolume;
 
+  /// No description provided for @contextualCardsMoreSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more suggestions'**
+  String contextualCardsMoreSuggestions(Object count);
+
   /// No description provided for @coachAskAnything.
   ///
   /// In en, this message translates to:
@@ -39841,6 +39847,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Health'**
   String get navHealth;
+
+  /// No description provided for @navCommunity.
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get navCommunity;
+
+  /// No description provided for @communitySaveAsRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Routine'**
+  String get communitySaveAsRoutine;
+
+  /// No description provided for @communityRoutineSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to your routines'**
+  String get communityRoutineSaved;
+
+  /// No description provided for @communityRoutineSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t save that routine. Try again.'**
+  String get communityRoutineSaveFailed;
+
+  /// No description provided for @communityYourProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Your profile'**
+  String get communityYourProfile;
+
+  /// No description provided for @healthSourceConnectedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to {source}'**
+  String healthSourceConnectedTo(Object source);
+
+  /// No description provided for @healthSourceSyncingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep, readiness and vitals sync automatically.'**
+  String get healthSourceSyncingBody;
+
+  /// No description provided for @vitalsPercentBelowBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% below baseline'**
+  String vitalsPercentBelowBaseline(Object percent);
+
+  /// No description provided for @vitalsPercentAboveBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% above baseline'**
+  String vitalsPercentAboveBaseline(Object percent);
+
+  /// No description provided for @vitalsOnBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'On baseline'**
+  String get vitalsOnBaseline;
 
   /// No description provided for @healthTabVitals.
   ///

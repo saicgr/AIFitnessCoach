@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/stats/state_valence.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/vitals_repository.dart';
+import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 import '../common/app_refresh_indicator.dart';
@@ -38,6 +39,66 @@ SemanticState _vitalState(VitalSignal s) {
     return s.isOutOfRange ? SemanticState.strains : SemanticState.neutral;
   }
   return SemanticState.resolve(valence: valence, deviation: z, epsilon: 1.0);
+}
+
+/// The deviation-vs-baseline line for ONE overnight signal — the sentence the
+/// whole Vitals frame exists to say ("4% below baseline"), with the ramp dot
+/// glued to it.
+///
+/// The single renderer for this, used by both the Vitals screen's own signal
+/// rows and the Health Overview's capsule grid. Before it, no
+/// percent-vs-baseline sentence reached the Health tab at all: the rows said
+/// "Baseline 52 bpm" with an In-range / High / Low pill, and [DeviationLine] —
+/// the exact dot-plus-deviation widget — shipped but was only ever mounted on
+/// Home tiles.
+///
+/// **How the colour stays correct.** [_vitalState] is this screen's existing,
+/// already-right resolution: it reads `VitalSignal.direction`
+/// (`high_bad` | `low_bad` | `either`) and the z-score against a ±1.5 SD band,
+/// including the `either` case that no single [GoodDirection] can express. So
+/// rather than re-deriving valence from the percent (which would get `either`
+/// signals wrong), this feeds [DeviationLine] a `(valence, deviation)` pair
+/// that provably resolves to exactly that same rung — supports, strains or
+/// neutral — and lets [DeviationLine] own the render.
+Widget vitalDeviationLine(
+  BuildContext context,
+  VitalSignal signal, {
+  double fontSize = 10.5,
+  int maxLines = 2,
+}) {
+  final l10n = AppLocalizations.of(context);
+  final state = _vitalState(signal);
+  // `SemanticState.resolve(higher, +1)` → supports; `(lower, +1)` → strains;
+  // `(neutral, _)` → neutral. epsilon 0 so the mapping is exact.
+  final (GoodDirection valence, double deviation) = switch (state) {
+    SemanticState.supports => (GoodDirection.higher, 1.0),
+    SemanticState.strains => (GoodDirection.lower, 1.0),
+    SemanticState.neutral => (GoodDirection.neutral, 0.0),
+  };
+
+  final value = signal.value;
+  final baseline = signal.baseline;
+  final String label;
+  if (value == null || baseline == null || baseline == 0) {
+    // No baseline yet — the honest line, not a fabricated 0%.
+    label = l10n.trainingLoadChartBuildingBaseline;
+  } else {
+    final pct = ((value - baseline) / baseline * 100).round();
+    label = pct == 0
+        ? l10n.vitalsOnBaseline
+        : (pct > 0
+            ? l10n.vitalsPercentAboveBaseline(pct)
+            : l10n.vitalsPercentBelowBaseline(-pct));
+  }
+
+  return DeviationLine(
+    valence: valence,
+    deviation: deviation,
+    label: label,
+    fontSize: fontSize,
+    dotSize: 6,
+    maxLines: maxLines,
+  );
 }
 
 class VitalsDetailScreen extends ConsumerWidget {
@@ -339,15 +400,7 @@ class _SignalRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isOut = signal.state == 'out_of_range';
     final noData = signal.state == 'no_data';
-    final pillColor = _vitalState(signal).colorFor(isDark);
-    // The word carries the meaning; the tint only reinforces it (WCAG 1.4.1).
-    // "High/Low" was ambiguous — the z sign already says which one it is.
-    final z = signal.z;
-    final pillLabel = isOut
-        ? (z == null ? 'Out of range' : (z > 0 ? 'High' : 'Low'))
-        : 'In range';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -388,19 +441,15 @@ class _SignalRow extends StatelessWidget {
             Text(signal.unit,
                 style: TextStyle(fontSize: 12, color: textSecondary)),
             const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: pillColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                pillLabel,
-                style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                    color: pillColor),
-              ),
+            // The deviation sentence replaces the In-range / High / Low pill.
+            // That pill only ever said which side of a band the reading fell
+            // on; this says HOW FAR from the user's own baseline it is, which
+            // is the number the screen's whole "vs your baseline" frame
+            // promises. Same ramp colour, still glued to words.
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 132),
+              child: vitalDeviationLine(context, signal,
+                  fontSize: 11.5, maxLines: 2),
             ),
           ] else
             Icon(Icons.watch_rounded,

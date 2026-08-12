@@ -19,6 +19,12 @@
 /// no data the tile keeps its exact footprint and grammar but draws **no chart
 /// at all** — a flat line through one point is a fabricated shape — and names
 /// the reason in a dashed capsule.
+///
+/// **These tiles define the card family on Home.** The two-up "Reports · Recap"
+/// row that the tile grammar was originally cut from no longer mounts on Home
+/// (Reports moved to Progress, Recap to You), so this file — not
+/// `reports_recap_row.dart` — is the reference for the kicker / value /
+/// sub-line / accent ↗ anatomy.
 library;
 
 import 'dart:math' as math;
@@ -69,19 +75,37 @@ String metricSizeLetter(MetricSize size) => switch (size) {
 /// Fraction of the tile height the chart band occupies, measured from the
 /// bottom. L is full-bleed-with-veil (treatment A); M/S get the lower-third
 /// band (treatment B).
+///
+/// The mockup's M band is 32%, but there the text is free to hang over the top
+/// of the band; here the text zone is the band's exact complement (that
+/// non-overlap is structural, not a hope), and a 32% band squeezes the second
+/// line of the deviation sentence. 30% keeps the sentence whole AND lands the
+/// drawn curve within a point of the mockup's, because
+/// [metricTileChartPlotBand] confines the curve to the middle of its band.
 double _chartBandFraction(MetricSize size) => switch (size) {
       MetricSize.large => 0.58,
-      MetricSize.wide => 0.28,
+      MetricSize.wide => 0.30,
       MetricSize.small => 0.30,
     };
+
+/// Where the curve sits INSIDE its band, as fractions of the band height.
+/// Public so the "quiet week reads quiet" geometry is testable.
+/// The mockup's M/S paths ride y 22–40 of a 52-unit band (≈42–77%) rather than
+/// filling it: a quiet week has to look quiet, so the plot area is deliberately
+/// a calm slice of the band instead of its full extent. L keeps the wider
+/// 44–88% because the hero's curve is the tile's only texture.
+({double top, double bottom}) metricTileChartPlotBand(MetricSize size) =>
+    size == MetricSize.large
+        ? (top: 0.44, bottom: 0.88)
+        : (top: 0.40, bottom: 0.78);
 
 /// Padding is size-specific so the text zone provably fits its content inside
 /// the band left over by [_chartBandFraction] — the "never overlap" guarantee
 /// for M and S is arithmetic, not a hope.
 EdgeInsets _tilePadding(MetricSize size) => switch (size) {
       MetricSize.large => const EdgeInsets.fromLTRB(12, 11, 12, 9),
-      MetricSize.wide => const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      MetricSize.small => const EdgeInsets.fromLTRB(10, 8, 10, 5),
+      MetricSize.wide => const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      MetricSize.small => const EdgeInsets.fromLTRB(10, 8, 10, 4),
     };
 
 class MetricTileCard extends StatelessWidget {
@@ -121,6 +145,11 @@ class MetricTileCard extends StatelessWidget {
     final isLarge = size == MetricSize.large;
     final hasChart = data.hasData && data.series.length >= 2;
     final bandFraction = _chartBandFraction(size);
+    final plot = metricTileChartPlotBand(size);
+    // Edit mode shows structure only: no reference line, no ↗ — the tile is
+    // being arranged, not read.
+    final baselineY =
+        (data.claimsDeviation && !chartRecedes) ? data.baselineY : null;
 
     final body = Stack(
       clipBehavior: Clip.hardEdge,
@@ -138,20 +167,21 @@ class MetricTileCard extends StatelessWidget {
                 painter: data.usesBars
                     ? _TileBarsPainter(
                         series: data.series,
-                        baselineY: data.claimsDeviation ? data.baselineY : null,
+                        baselineY: baselineY,
                         accent: c.accent,
                         baselineColor: c.textMuted,
                         opacity: chartRecedes ? 0.45 : 1,
                       )
                     : _TileLinePainter(
                         series: data.series,
-                        baselineY: data.claimsDeviation ? data.baselineY : null,
+                        baselineY: baselineY,
                         accent: c.accent,
                         baselineColor: c.textMuted,
                         // On the hero the curve rides the lower 60% so the
-                        // numeral above it stays on clean ground.
-                        topFraction: isLarge ? 0.44 : 0.14,
-                        bottomFraction: isLarge ? 0.88 : 0.86,
+                        // numeral above it stays on clean ground; M/S ride a
+                        // calm slice of their band.
+                        topFraction: plot.top,
+                        bottomFraction: plot.bottom,
                         opacity: chartRecedes ? 0.45 : (isLarge ? 0.8 : 1),
                       ),
                 size: Size.infinite,
@@ -185,7 +215,10 @@ class MetricTileCard extends StatelessWidget {
             placementLine: placementLine,
           ),
         ),
-        if (data.hasData && size != MetricSize.small)
+        // The tap-through ↗ is absent while editing: an edit tile carries the
+        // S/M/L segment and the remove button, and must not also read as
+        // tappable-through.
+        if (data.hasData && size != MetricSize.small && !chartRecedes)
           Positioned(
             right: 9,
             bottom: 7,
@@ -219,13 +252,16 @@ class MetricTileCard extends StatelessWidget {
                   ),
                 )
               : CustomPaint(
-                  painter: _DashedBorderPainter(
+                  painter: MetricTileDashedBorder(
                     color: c.cardBorder,
                     radius: 14,
                   ),
+                  // Same fill as a live tile: the dashed border carries the
+                  // WHOLE distinction. A second card colour in the same row
+                  // reads as a rendering fault, not a degraded metric.
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: c.surface,
+                      color: c.elevated,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: body,
@@ -279,7 +315,7 @@ class _TileBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: kickerStyle,
           ),
-          SizedBox(height: isSmall ? 5 : 6),
+          SizedBox(height: isLarge ? 6 : 5),
           // Shrink-to-fit, never truncate: an ellipsised numeral ("18…") is a
           // wrong number, and a wrong number is worse than a small one.
           _ShrinkToFit(child: _TileValue(
@@ -296,10 +332,11 @@ class _TileBody extends StatelessWidget {
             const Spacer(),
             _NoSourceCapsule(
               text: data.noDataReason ?? 'No source',
+              namesSource: data.noDataNamesSource,
               colors: c,
             ),
           ] else ...[
-            SizedBox(height: isLarge ? 9 : 6),
+            SizedBox(height: isLarge ? 9 : 5),
             Flexible(
               child: placementLine != null
                   ? Text(
@@ -403,28 +440,49 @@ class _TileValue extends StatelessWidget {
 }
 
 /// The dashed "why this tile is dark" capsule. Never a fabricated number.
+///
+/// A reason that names a source ("No source · connect Health", "Nothing logged
+/// yet") carries a circled-i so the capsule reads as *tap to fix*; a short
+/// reason that names a missing signal ("Needs HRV") stays text-only, exactly as
+/// the mockup draws the two forms.
 class _NoSourceCapsule extends StatelessWidget {
   final String text;
+  final bool namesSource;
   final ThemeColors colors;
 
-  const _NoSourceCapsule({required this.text, required this.colors});
+  const _NoSourceCapsule({
+    required this.text,
+    required this.namesSource,
+    required this.colors,
+  });
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _DashedBorderPainter(color: colors.cardBorder, radius: 6),
+      painter: MetricTileDashedBorder(color: colors.cardBorder, radius: 6),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(7, 3, 7, 3),
-        child: Text(
-          text.toUpperCase(),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: ZType.lbl(
-            9,
-            color: colors.textMuted,
-            weight: FontWeight.w600,
-            letterSpacing: 1.2,
-          ),
+        padding: EdgeInsets.fromLTRB(namesSource ? 5 : 7, 3, 7, 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (namesSource) ...[
+              Icon(Icons.info_outline, size: 10, color: colors.textMuted),
+              const SizedBox(width: 5),
+            ],
+            Flexible(
+              child: Text(
+                text.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.lbl(
+                  9,
+                  color: colors.textMuted,
+                  weight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -608,23 +666,36 @@ class _TileBarsPainter extends CustomPainter {
       old.opacity != opacity;
 }
 
-/// A dashed rounded-rect border — the empty tile and the no-source capsule.
-class _DashedBorderPainter extends CustomPainter {
+/// A dashed rounded-rect border — the empty tile, the no-source capsule, the
+/// drop placeholder and the Add slot all share this one stroke so a dashed
+/// outline means the same thing everywhere in the grid.
+class MetricTileDashedBorder extends CustomPainter {
   final Color color;
   final double radius;
+  final double strokeWidth;
 
-  const _DashedBorderPainter({required this.color, required this.radius});
+  const MetricTileDashedBorder({
+    required this.color,
+    required this.radius,
+    this.strokeWidth = 1,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    final inset = strokeWidth / 2;
     final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0.5, 0.5, size.width - 1, size.height - 1),
+      Rect.fromLTWH(
+        inset,
+        inset,
+        size.width - strokeWidth,
+        size.height - strokeWidth,
+      ),
       Radius.circular(radius),
     );
     final path = Path()..addRRect(rrect);
     final paint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
+      ..strokeWidth = strokeWidth
       ..color = color;
     const dash = 4.0;
     const gap = 3.0;
@@ -641,8 +712,10 @@ class _DashedBorderPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DashedBorderPainter old) =>
-      old.color != color || old.radius != radius;
+  bool shouldRepaint(MetricTileDashedBorder old) =>
+      old.color != color ||
+      old.radius != radius ||
+      old.strokeWidth != strokeWidth;
 }
 
 /// Cheap element-wise compare for the painters' `shouldRepaint`.

@@ -259,11 +259,106 @@ extension _ActivityCardStateUI on _ActivityCardState {
   }
 
 
+  /// Duration · Volume · PRs — the Hevy stat row that is the feed post's
+  /// spine, per the 2026-08 Community mockup (`.p-stats`: a bordered 3-up grid
+  /// of Anton value over a Barlow uppercase label).
+  ///
+  /// EVERY CELL IS GATED ON A REAL FIELD. `total_volume` and `total_volume_lbs`
+  /// are both read because the two producers disagree —
+  /// `SocialService.autoPostWorkoutCompletion` writes `total_volume` while
+  /// `create_post_sheet` writes `total_volume_lbs` — so a post from the
+  /// auto-share path and a post from the manual composer both render. A PR
+  /// count only appears if the payload actually carries one (`pr_count`, or a
+  /// `personal_records` list); no producer emits it today, so the cell simply
+  /// does not render rather than printing a fabricated "0 PRs".
+  Widget? _buildWorkoutStatRow(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final d = widget.activityData;
+
+    final cells = <(String, String)>[];
+
+    final duration = d['duration_minutes'];
+    if (duration is num && duration > 0) {
+      cells.add(('${duration.round()}m', l10n.workoutSummaryAdvancedDuration));
+    }
+
+    final volume = d['total_volume_lbs'] ?? d['total_volume'];
+    if (volume is num && volume > 0) {
+      cells.add((_groupedInt(volume.round()), l10n.activityCardUiVolume));
+    }
+
+    final prs = d['pr_count'] ??
+        (d['personal_records'] is List
+            ? (d['personal_records'] as List).length
+            : null);
+    if (prs is num) {
+      cells.add(('${prs.round()}', l10n.achievementsPrs));
+    }
+
+    if (cells.isEmpty) return null;
+
+    return Container(
+      margin: const EdgeInsets.only(top: 11, bottom: 11),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: tc.hairline),
+          bottom: BorderSide(color: tc.hairline),
+        ),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < cells.length; i++)
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(4, 9, 4, 8),
+                decoration: i == 0
+                    ? null
+                    : BoxDecoration(
+                        border: Border(
+                          left: BorderSide(color: tc.hairline),
+                        ),
+                      ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      cells[i].$1,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.disp(18, color: tc.textPrimary),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      cells[i].$2.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.8),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _groupedInt(int v) {
+    final s = v.abs().toString();
+    final b = StringBuffer(v < 0 ? '-' : '');
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+
   Widget _buildWorkoutContent(BuildContext context) {
     final workoutName = widget.activityData['workout_name'] ?? 'a workout';
-    final duration = widget.activityData['duration_minutes'] ?? 0;
     final exercises = widget.activityData['exercises_count'] ?? 0;
-    final totalVolume = widget.activityData['total_volume'];
+    final statRow = _buildWorkoutStatRow(context);
 
     final verb = widget.activityType == 'workout_shared' ? 'shared' : 'completed';
 
@@ -313,17 +408,17 @@ extension _ActivityCardStateUI on _ActivityCardState {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _buildStat(Icons.timer_outlined, '$duration min'),
-              _buildStat(Icons.fitness_center_outlined, '$exercises exercises'),
-              if (totalVolume != null)
-                _buildStat(Icons.trending_up_outlined, '${totalVolume.toStringAsFixed(0)} lbs'),
-            ],
-          ),
+          // Duration · Volume · PRs as the post's spine — the mockup's
+          // anatomy. The exercise count keeps its own quiet line below it:
+          // it is real data the row has no cell for, and dropping it would
+          // lose information the card already showed.
+          if (statRow != null) statRow else const SizedBox(height: 8),
+          if (exercises is num && exercises > 0)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: _buildStat(
+                  Icons.fitness_center_outlined, '$exercises exercises'),
+            ),
         ],
       ),
     );

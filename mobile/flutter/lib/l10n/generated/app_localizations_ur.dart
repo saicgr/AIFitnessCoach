@@ -3854,6 +3854,11 @@ class AppLocalizationsUr extends AppLocalizations {
   String get classicStatsTemplateVolume => 'والیوم';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'کچھ بھی پوچھیں...';
 
   @override
@@ -23742,6 +23747,44 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get navHealth => 'صحت';
+
+  @override
+  String get navCommunity => 'کمیونٹی';
+
+  @override
+  String get communitySaveAsRoutine => 'روٹین کے طور پر محفوظ کریں';
+
+  @override
+  String get communityRoutineSaved => 'آپ کے روٹینز میں محفوظ ہو گیا';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'وہ روٹین محفوظ نہیں ہو سکا۔ دوبارہ کوشش کریں۔';
+
+  @override
+  String get communityYourProfile => 'آپ کا پروفائل';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source سے منسلک';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'نیند، تیاری اور حیاتی علامات خودکار طور پر سنک ہوتی ہیں۔';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'بیس لائن سے $percent% کم';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'بیس لائن سے $percent% زیادہ';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'بیس لائن پر';
 
   @override
   String get healthTabVitals => 'حیاتی علامات';

@@ -46,6 +46,7 @@ MetricTileData _tile({
   String unit = '',
   bool hasData = true,
   String? noDataReason,
+  bool noDataNamesSource = false,
   List<double> series = const [0.1, 0.4, 0.2, 0.8, 0.5, 0.9],
   double? baselineY = 0.5,
   bool claimsDeviation = true,
@@ -63,6 +64,7 @@ MetricTileData _tile({
       unit: unit,
       hasData: hasData,
       noDataReason: noDataReason,
+      noDataNamesSource: noDataNamesSource,
       series: series,
       baselineY: baselineY,
       claimsDeviation: claimsDeviation,
@@ -98,6 +100,19 @@ Finder _veil() => find.byWidgetPredicate((w) =>
     w is DecoratedBox &&
     w.decoration is BoxDecoration &&
     (w.decoration as BoxDecoration).gradient is LinearGradient);
+
+/// Every card fill in the tile — the rounded 14pt decoration a tile paints
+/// under its content. Empty and live tiles must return the same colour.
+Color? _tileFill(WidgetTester tester) {
+  final box = tester.widgetList<DecoratedBox>(find.byType(DecoratedBox)).firstWhere(
+        (w) =>
+            w.decoration is BoxDecoration &&
+            (w.decoration as BoxDecoration).borderRadius ==
+                BorderRadius.circular(14) &&
+            (w.decoration as BoxDecoration).color != null,
+      );
+  return (box.decoration as BoxDecoration).color;
+}
 
 Color? _deviationColor(WidgetTester tester) {
   final text = tester.widget<Text>(
@@ -265,6 +280,152 @@ void main() {
     });
   });
 
+  // ─────────────────────────────── the tile's own chrome (mockup fidelity)
+
+  group('tile chrome', () {
+    testWidgets('an empty tile shares the live tile\'s fill; only the border '
+        'differs', (tester) async {
+      await tester.pumpWidget(_host(
+        MetricTileCard(data: _tile(), size: MetricSize.wide, width: 174),
+      ));
+      final liveFill = _tileFill(tester);
+
+      await tester.pumpWidget(_host(
+        MetricTileCard(
+          data: _tile(
+            hasData: false,
+            noDataReason: 'No source · connect Health',
+            series: const [],
+            baselineY: null,
+            claimsDeviation: false,
+          ),
+          size: MetricSize.wide,
+          width: 174,
+        ),
+      ));
+      expect(_tileFill(tester), liveFill,
+          reason: 'two card colours in one row read as a rendering fault');
+      // The dashed border is what carries the whole distinction.
+      expect(
+        find.byWidgetPredicate(
+            (w) => w is CustomPaint && w.painter is MetricTileDashedBorder),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('a source-naming capsule carries the circled-i, a short one '
+        'does not', (tester) async {
+      await tester.pumpWidget(_host(
+        MetricTileCard(
+          data: _tile(
+            hasData: false,
+            noDataReason: 'No source · connect Health',
+            noDataNamesSource: true,
+            series: const [],
+            baselineY: null,
+            claimsDeviation: false,
+          ),
+          size: MetricSize.wide,
+          width: 174,
+        ),
+      ));
+      expect(find.byIcon(Icons.info_outline), findsOneWidget);
+
+      await tester.pumpWidget(_host(
+        MetricTileCard(
+          data: _tile(
+            hasData: false,
+            noDataReason: 'Needs HRV',
+            series: const [],
+            baselineY: null,
+            claimsDeviation: false,
+          ),
+          size: MetricSize.small,
+          width: 112,
+        ),
+      ));
+      expect(find.byIcon(Icons.info_outline), findsNothing);
+    });
+
+    testWidgets('editing drops the ↗ and the reference line', (tester) async {
+      await tester.pumpWidget(_host(
+        MetricTileCard(data: _tile(), size: MetricSize.wide, width: 174),
+      ));
+      expect(find.byIcon(Icons.north_east_rounded), findsOneWidget);
+
+      await tester.pumpWidget(_host(
+        MetricTileCard(
+          data: _tile(),
+          size: MetricSize.wide,
+          width: 174,
+          chartRecedes: true,
+          placementLine: 'M · page 1 · #2',
+        ),
+      ));
+      expect(find.byIcon(Icons.north_east_rounded), findsNothing,
+          reason: 'an edit tile must not read as tappable-through');
+      // …and no dashed baseline: no deviation is being claimed while editing.
+      final painter = tester.widget<CustomPaint>(_chartPaint()).painter!;
+      expect(
+        (painter as dynamic).baselineY,
+        isNull,
+        reason: 'edit tiles show structure only',
+      );
+    });
+
+    testWidgets('the deviation sentence is never vertically clipped',
+        (tester) async {
+      for (final entry in const {
+        MetricSize.wide: 174.0,
+        MetricSize.small: 112.0,
+      }.entries) {
+        await tester.pumpWidget(_host(
+          MetricTileCard(data: _tile(), size: entry.key, width: entry.value),
+        ));
+        final text = find.descendant(
+          of: find.byType(DeviationLine),
+          matching: find.byType(Text),
+        );
+        final box = tester.renderObject<RenderBox>(text);
+        expect(
+          box.size.height,
+          greaterThanOrEqualTo(box.getMaxIntrinsicHeight(box.size.width)),
+          reason: '${entry.key}: the text zone must fit the copy it carries — '
+              'the chart band cannot be widened at its expense',
+        );
+      }
+    });
+
+    test('M/S curves ride a calm slice of their band, not its full extent', () {
+      final ms = metricTileChartPlotBand(MetricSize.wide);
+      expect(ms, metricTileChartPlotBand(MetricSize.small));
+      expect(ms.top, greaterThanOrEqualTo(0.35));
+      expect(ms.bottom, lessThanOrEqualTo(0.80));
+      // The hero keeps the wider sweep — its curve is the tile's only texture.
+      final large = metricTileChartPlotBand(MetricSize.large);
+      expect(large.bottom - large.top, greaterThan(ms.bottom - ms.top));
+    });
+
+    test('normalisation pads the range so a flat week reads flat', () {
+      // A 200-step spread on a 9,000-step week: without headroom this is
+      // stretched edge to edge and reads as a dramatic zigzag.
+      final quiet = normaliseTileSeries(
+        const [9000, 9100, 9050, 9200, 9080, 9120],
+        9080,
+      );
+      expect(quiet.series.reduce((a, b) => a < b ? a : b),
+          greaterThan(0.0 + 1e-9));
+      expect(quiet.series.reduce((a, b) => a > b ? a : b), lessThan(1.0 - 1e-9));
+      // Shape is preserved — the padding is symmetric, not a rescale.
+      expect(quiet.series[3], greaterThan(quiet.series[0]));
+      expect(quiet.baselineY, isNotNull);
+
+      // A genuinely flat series still collapses to the middle of the band.
+      final flat = normaliseTileSeries(const [70, 70, 70], 70);
+      expect(flat.series, everyElement(moreOrLessEquals(0.5, epsilon: 1e-9)));
+    });
+  });
+
   // ───────────────────────────────────────────── 3. valence, never the sign
 
   group('deviation colour encodes valence, not the sign', () {
@@ -376,6 +537,25 @@ void main() {
     });
   });
 
+  // ─────────────────────────────────────────── the tile kicker vocabulary
+
+  group('tile kickers', () {
+    test('a tile says what its number is, not what its ring is called', () {
+      expect(kHomeMetricTileCatalog['move']!.tileLabel, 'Steps');
+      expect(kHomeMetricTileCatalog['recovery']!.tileLabel, 'Ready');
+      expect(kHomeMetricTileCatalog['hydration']!.tileLabel, 'Water');
+      // The ring keeps its own name for lists and settings.
+      expect(kHomeMetricTileCatalog['move']!.label, 'Move');
+      // Everything else reuses the ring label verbatim.
+      expect(kHomeMetricTileCatalog['sleep']!.tileLabel, 'Sleep');
+      expect(kHomeMetricTileCatalog[kTodayScoreTileId]!.tileLabel,
+          'Today Score');
+      for (final spec in kHomeMetricTileCatalog.values) {
+        expect(spec.tileLabel, isNotEmpty);
+      }
+    });
+  });
+
   // ─────────────────────────────────────────────────── grid packing maths
 
   group('grid packing', () {
@@ -413,13 +593,22 @@ void main() {
     /// Feeds the grid synthetic tile data so the composition (packing, row
     /// widths, page dots, edit mode) is exercised without the live provider
     /// graph — which needs a Supabase session a bare widget test can't have.
-    List<Override> tileOverrides(Iterable<String> ids) => [
+    List<Override> tileOverrides(
+      Iterable<String> ids, {
+      bool needsHealthConnect = false,
+    }) =>
+        [
           currentUserIdProvider.overrideWithValue(_userId),
+          // The connect card's gate reaches into the health plugin; the grid
+          // reads it as one bool so a widget test can state the condition.
+          metricTilesNeedHealthConnectProvider
+              .overrideWithValue(needsHealthConnect),
           for (final id in ids)
             metricTileDataProvider(id).overrideWithValue(
               _tile(
                 id: id,
-                label: kHomeMetricTileCatalog[id]!.label,
+                // The tile-facing kicker, which is NOT always the ring label.
+                label: kHomeMetricTileCatalog[id]!.tileLabel,
               ),
             ),
         ];
@@ -429,13 +618,17 @@ void main() {
       Map<String, Object> prefs = const {},
       double screenWidth = 390,
       double textScale = 1,
+      bool needsHealthConnect = false,
     }) async {
       SharedPreferences.setMockInitialValues(prefs);
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = Size(screenWidth, 2400);
       addTearDown(tester.view.reset);
       await tester.pumpWidget(ProviderScope(
-        overrides: tileOverrides(kHomeMetricTileCatalog.keys),
+        overrides: tileOverrides(
+          kHomeMetricTileCatalog.keys,
+          needsHealthConnect: needsHealthConnect,
+        ),
         child: MaterialApp(
           theme: ThemeData.dark(),
           builder: (context, child) => MediaQuery(
@@ -456,9 +649,31 @@ void main() {
 
       expect(find.byType(MetricTileCard), findsNWidgets(kDefaultMetricTiles.length));
       expect(find.text('MY METRICS'), findsOneWidget);
-      // Page 2 is empty by default, so there is no pager and no dots to explain.
+      // Page 2 is empty by default, so there is no pager…
       expect(find.byType(PageView), findsNothing);
+      // …but the dots are still drawn: the dim second dot is the only thing on
+      // a resting Home that says a second page exists at all.
+      expect(find.byKey(kMetricTilePageDotsKey), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the default kickers are the mockup\'s six', (tester) async {
+      await pumpGrid(tester);
+      for (final kicker in const [
+        'TODAY SCORE',
+        'STEPS',
+        'SLEEP',
+        'READY',
+        'WATER',
+        'WEIGHT',
+      ]) {
+        expect(find.text(kicker), findsOneWidget,
+            reason: '$kicker is what the tile says, not its ring\'s name');
+      }
+      // The ring names those three tiles replaced must not surface here.
+      for (final ringLabel in const ['MOVE', 'RECOVERY', 'HYDRATION']) {
+        expect(find.text(ringLabel), findsNothing);
+      }
     });
 
     testWidgets('the pencil opens edit mode with reorder, resize and add',
@@ -474,7 +689,6 @@ void main() {
       // long-press lift so a plain vertical drag still scrolls Home.
       expect(find.byType(LongPressDraggable<String>), findsWidgets);
       expect(find.byIcon(Icons.remove), findsWidgets);
-      expect(find.text('PAGE 2 · DEPTH'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       // Tapping a tile reveals its S/M/L control.
@@ -530,7 +744,142 @@ void main() {
       await tester.pump();
 
       expect(find.byType(PageView), findsOneWidget);
+      expect(find.byKey(kMetricTilePageDotsKey), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('page 1 stays flush left; only page 2 bleeds past the edge',
+        (tester) async {
+      await pumpGrid(tester, prefs: {
+        homeMetricTilesStorageKey(_userId): jsonEncode([
+          {'id': kTodayScoreTileId, 'size': 'large', 'page': 1},
+          {'id': 'move', 'size': 'wide', 'page': 1},
+          {'id': 'hrv', 'size': 'wide', 'page': 2},
+        ]),
+      });
+      await tester.pump();
+
+      final pager = tester.widget<PageView>(find.byType(PageView));
+      expect(pager.padEnds, isFalse,
+          reason: 'padEnds centres the page and insets the whole section');
+
+      // The hero's left edge sits on the same 16pt gutter as every other Home
+      // card — not half a peek in from it.
+      final heroLeft = tester.getTopLeft(find.byType(MetricTileCard).first).dx;
+      expect(heroLeft, moreOrLessEquals(16, epsilon: 0.5));
+
+      // …and the peek is real: page 1 is narrower than the grid by ~22pt.
+      final heroWidth = tester.getSize(find.byType(MetricTileCard).first).width;
+      expect(390 - 32 - heroWidth, inInclusiveRange(18, 26));
+    });
+
+    testWidgets('edit mode swaps the masthead and collapses page 2',
+        (tester) async {
+      await pumpGrid(tester);
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pump();
+
+      expect(find.text('EDIT TILES'), findsOneWidget);
+      expect(find.text('CHANGES SAVE INSTANTLY'), findsOneWidget,
+          reason: 'there is no Cancel, so the promise has to be stated');
+      expect(find.text('MY METRICS'), findsNothing);
+
+      // An empty page 2 is one dashed strip, not a second grid with a label.
+      expect(find.text('PAGE 2 · DRAG A TILE HERE TO MOVE IT ACROSS'),
+          findsOneWidget);
+      expect(find.text('PAGE 1 · DAILY GLANCE'), findsNothing,
+          reason: 'the only populated grid needs no label');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the Add slot is dashed, like every other placeholder',
+        (tester) async {
+      await pumpGrid(tester);
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pump();
+
+      final addSlot = find.ancestor(
+        of: find.text('ADD METRIC'),
+        matching: find.byWidgetPredicate(
+          (w) => w is CustomPaint && w.painter is MetricTileDashedBorder,
+        ),
+      );
+      expect(addSlot, findsWidgets);
+      expect(
+        (tester.widgetList<CustomPaint>(addSlot).first.painter
+                as MetricTileDashedBorder)
+            .strokeWidth,
+        1.5,
+      );
+      // …and it paints no solid border of its own.
+      expect(
+        find.descendant(
+          of: addSlot.first,
+          matching: find.byWidgetPredicate((w) =>
+              w is Container &&
+              w.decoration is BoxDecoration &&
+              (w.decoration as BoxDecoration).border != null),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('presets carry sizes and pages, and My layout comes back',
+        (tester) async {
+      await pumpGrid(tester);
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pump();
+
+      expect(find.text('PRESETS'), findsOneWidget);
+      for (final p in kMetricTilePresets) {
+        expect(find.text(p.label.toUpperCase()), findsOneWidget);
+      }
+      // Nothing matches a preset out of the box, so the dirty state is active.
+      expect(find.text('MY LAYOUT'), findsOneWidget);
+
+      await tester.tap(find.text('RECOVERY'));
+      await tester.pump();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MetricTileGridEditor)),
+      );
+      final applied = container.read(homeMetricTilesProvider);
+      final recovery =
+          kMetricTilePresets.firstWhere((p) => p.id == 'recovery');
+      expect(applied, recovery.tiles,
+          reason: 'a preset carries size and page, not just the metric list');
+      expect(container.read(activeMetricTilePresetProvider)?.id, 'recovery');
+
+      // "My layout" is a destination, not decoration.
+      await tester.tap(find.text('MY LAYOUT'));
+      await tester.pump();
+      expect(container.read(homeMetricTilesProvider), kDefaultMetricTiles);
+      expect(container.read(activeMetricTilePresetProvider), isNull);
+    });
+
+    testWidgets('the connect card appears under the grid only when Health is '
+        'dark and a sensor tile is placed', (tester) async {
+      await pumpGrid(tester);
+      expect(find.text('CONNECT HEALTH'), findsNothing);
+
+      await pumpGrid(tester, needsHealthConnect: true);
+      // Platform-aware since the Android-told-to-connect-Apple-Health fix:
+      // the test binding reports TargetPlatform.android, so this resolves to
+      // Health Connect. Asserting the prefix keeps the test honest on both.
+      expect(find.textContaining('Connect '), findsWidgets);
+      expect(
+        find.textContaining('Apple Health'),
+        findsNothing,
+        reason: 'the default test platform is Android; naming Apple Health '
+            'here is the exact defect this became a fix for',
+      );
+      expect(find.text('CONNECT HEALTH'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // …and never over the editor.
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pump();
+      expect(find.text('CONNECT HEALTH'), findsNothing);
     });
   });
 
@@ -605,6 +954,44 @@ void main() {
         container.read(unplacedMetricTilesProvider).map((s) => s.id),
         contains('sleep'),
       );
+    });
+
+    test('every preset places only real metrics, and none fills page 2',
+        () async {
+      for (final preset in kMetricTilePresets) {
+        for (final tile in preset.tiles) {
+          expect(kHomeMetricTileCatalog.containsKey(tile.id), isTrue,
+              reason: '${preset.id} places an unknown metric "${tile.id}"');
+          expect(tile.page, 1,
+              reason: 'a preset must not invent a page-2 dumping ground');
+        }
+        expect(
+          preset.tiles.map((t) => t.id).toSet().length,
+          preset.tiles.length,
+          reason: '${preset.id} places the same metric twice',
+        );
+      }
+    });
+
+    test('a preset applies through the store and is detected as active',
+        () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = _container();
+      final notifier = container.read(homeMetricTilesProvider.notifier);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(activeMetricTilePresetProvider), isNull);
+      notifier.applyPreset(kMetricTilePresets.first);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(activeMetricTilePresetProvider)?.id,
+          kMetricTilePresets.first.id);
+      // …and it persists like any other layout edit.
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString(homeMetricTilesStorageKey(_userId)), isNotNull);
+
+      notifier.restoreLayoutBeforePreset();
+      expect(container.read(homeMetricTilesProvider), kDefaultMetricTiles);
     });
 
     test('nothing is ever auto-assigned to page 2', () async {

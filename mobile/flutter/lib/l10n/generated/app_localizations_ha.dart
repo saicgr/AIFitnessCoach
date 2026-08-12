@@ -3845,6 +3845,11 @@ class AppLocalizationsHa extends AppLocalizations {
   String get classicStatsTemplateVolume => 'YAWAN AIKI';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Tambayi komai...';
 
   @override
@@ -23820,6 +23825,44 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get navHealth => 'Lafiya';
+
+  @override
+  String get navCommunity => 'Al’umma';
+
+  @override
+  String get communitySaveAsRoutine => 'Ajiye a matsayin tsari';
+
+  @override
+  String get communityRoutineSaved => 'An ajiye a cikin tsare-tsarenka';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'An kasa ajiye wannan tsarin. Sake gwadawa.';
+
+  @override
+  String get communityYourProfile => 'Bayanan martabarka';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'An haɗa da $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Barci, shirye-shirye da alamun rayuwa suna daidaitawa ta atomatik.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent% ƙasa da matsakaici';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent% sama da matsakaici';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Daidai da matsakaici';
 
   @override
   String get healthTabVitals => 'Alamun rayuwa';

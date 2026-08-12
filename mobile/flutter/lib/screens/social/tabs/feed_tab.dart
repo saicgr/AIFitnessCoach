@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
@@ -245,7 +246,14 @@ class _FeedTabState extends ConsumerState<FeedTab> {
                         // Activity Feed List
                         if (hasActivities)
                           SliverPadding(
-                            padding: const EdgeInsets.all(16),
+                            // Community is a primary tab now (Step 2), so the
+                            // shell's ✦-coach + Quick Log cluster floats over
+                            // the bottom of this list. Reserve the cluster's
+                            // real footprint from the shared token — otherwise
+                            // the last post's reaction row and its "Save as
+                            // Routine" action sit underneath it.
+                            padding: const EdgeInsets.fromLTRB(
+                                16, 16, 16, 16 + kQuickLogFabClearance),
                             sliver: SliverList(
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) {
@@ -295,10 +303,19 @@ class _FeedTabState extends ConsumerState<FeedTab> {
           },
         ),
 
-        // Floating Action Button for creating posts
-        Positioned(
-          bottom: MediaQuery.of(context).padding.bottom + 72,
-          right: 16,
+        // Floating Action Button for creating posts.
+        //
+        // Stacked ABOVE the shell's ✦-coach + Quick Log cluster, not beside
+        // it: at the old `+ 72` this circle occupied [72, 128] above the safe
+        // inset while the cluster occupies [92, 136], so the two floating
+        // controls physically overlapped in the same corner. Derived from the
+        // cluster's own tokens (`chrome_constants.dart`) so the two can never
+        // drift back into each other.
+        PositionedDirectional(
+          bottom: MediaQuery.of(context).padding.bottom +
+              kQuickLogFabClearance +
+              8,
+          end: 16,
           child: Builder(
             builder: (context) {
               final isDark = Theme.of(context).brightness == Brightness.dark;

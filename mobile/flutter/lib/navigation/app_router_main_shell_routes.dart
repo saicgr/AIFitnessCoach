@@ -1,5 +1,15 @@
 part of 'app_router.dart';
 
+/// `/social` → `/community`, **preserving the query string**.
+///
+/// The query is load-bearing: challenge notifications deep-link with
+/// `?tab=challenges`, and dropping it lands every one of them on the Feed.
+/// Named (not an inline closure) so it is directly testable.
+String socialToCommunityRedirect(Uri uri) {
+  final q = uri.query;
+  return q.isEmpty ? '/community' : '/community?$q';
+}
+
 /// Main app shell routes extracted from app_router.dart
 List<RouteBase> _mainShellRoutes() => [
   // === Main App Shell ===
@@ -135,8 +145,41 @@ List<RouteBase> _mainShellRoutes() => [
             // pushing /fasting is a normal navigator push and pop returns to
             // the actual referrer (Home or Nutrition) rather than corrupting
             // the branch state.
+            // NOTE: `/social` used to be registered HERE, inside the Nutrition
+            // branch, which is the same trap `/fasting` fell into above — the
+            // branch remembered it as its "current" page, so after visiting
+            // Social the Nutrition tab restored to Social instead of
+            // Nutrition. It is now the Community BRANCH ROOT (branch 4), and
+            // `/social` survives as a top-level redirect that preserves the
+            // query string, so all ~15 `context.go('/social?tab=challenges')`
+            // call sites keep working unchanged.
+          ]),
+          // Branch 4: COMMUNITY (2026-08 nav evolution, Step 2 — recorded
+          // 2026-06-11: "Future Social = stage 1 inside You; stage 2 (if
+          // earned) You→Community tab, profile behind header avatar").
+          //
+          // The slot CONVERTS from You; the bar stays at five. Two routes live
+          // in this branch, in this order:
+          //
+          //   `/community` — the branch's DEFAULT location (first route wins),
+          //                  the already-built `SocialScreen`.
+          //   `/profile`   — the You hub, UNMOVED. It is still a route of this
+          //                  branch, so every one of the ~40 shipped
+          //                  `/profile` deep links (including
+          //                  `?tab=overview|profile|rewards`, `?scrollTo=`
+          //                  and the `/discover` → `?tab=rewards` redirect)
+          //                  resolves exactly as before, activates this
+          //                  branch, and keeps the nav bar. The Community
+          //                  masthead avatar pushes it, so it also pops back
+          //                  to Community.
+          //
+          // Re-tapping the Community tab while already on it passes
+          // `initialLocation: true` (see `MainShell._onItemTapped`), which
+          // pops back to `/community` — so a user who wandered into their
+          // profile is never stuck having to tap the tab twice.
+          StatefulShellBranch(routes: [
             GoRoute(
-              path: '/social',
+              path: '/community',
               // `?tab=` selects the top-tab. Challenge notifications used to
               // push a `/challenges` route that never existed (E2E row 118),
               // so they 404'd; challenges are a TAB here, not a route.
@@ -148,19 +191,13 @@ List<RouteBase> _mainShellRoutes() => [
                   'friends': 3,
                 };
                 return NoTransitionPage(
+                  key: state.pageKey,
                   child: SocialScreen(
                     initialTab: tabIndex[state.uri.queryParameters['tab']] ?? 0,
                   ),
                 );
               },
             ),
-          ]),
-          // Branch 4: You (formerly Profile) — hub screen wrapping the
-          // existing ProfileScreen as one of three top-tabs plus an
-          // Overview aggregation and a Stats & Rewards deep-link grid.
-          // Old `/profile` URL still works to preserve deep links — they
-          // land on the Profile tab inside the You hub.
-          StatefulShellBranch(routes: [
             GoRoute(
               path: '/profile',
               pageBuilder: (context, state) {
@@ -204,6 +241,20 @@ List<RouteBase> _mainShellRoutes() => [
         ],
       ),
 
+      // `/social` is the Community tab's former path. ~15 shipped call sites
+      // (`context.go('/social?tab=challenges')` from notifications, the
+      // `/share` widget deep link, nudge payloads, workout-complete) still use
+      // it, so it redirects rather than 404s. The QUERY STRING IS PRESERVED —
+      // dropping it would silently land every challenge notification on the
+      // Feed tab instead of Challenges.
+      GoRoute(
+        path: '/social',
+        // Delegates to the named function below so a test can assert THIS
+        // logic rather than a copy of it. The test that used to cover this
+        // re-implemented the same expression inside the test file, so
+        // breaking production left it green.
+        redirect: (context, state) => socialToCommunityRedirect(state.uri),
+      ),
       // Leaderboard (formerly the Discover tab; 2026-06 redesign, Change 1).
       // The percentile-leaderboard screen is unchanged — it just opens as a
       // pushed full screen from You › Stats & Rewards › Social instead of

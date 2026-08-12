@@ -3701,6 +3701,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get classicStatsTemplateVolume => 'ボリューム';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => '何でも聞いてください…';
 
   @override
@@ -22791,6 +22796,42 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get navHealth => 'ヘルス';
+
+  @override
+  String get navCommunity => 'コミュニティ';
+
+  @override
+  String get communitySaveAsRoutine => 'ルーティンとして保存';
+
+  @override
+  String get communityRoutineSaved => 'ルーティンに保存しました';
+
+  @override
+  String get communityRoutineSaveFailed => 'そのルーティンを保存できませんでした。もう一度お試しください。';
+
+  @override
+  String get communityYourProfile => 'プロフィール';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return '$source に接続済み';
+  }
+
+  @override
+  String get healthSourceSyncingBody => '睡眠・コンディション・バイタルは自動で同期されます。';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'ベースラインより $percent% 低い';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'ベースラインより $percent% 高い';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'ベースライン通り';
 
   @override
   String get healthTabVitals => 'バイタル';

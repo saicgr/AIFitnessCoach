@@ -3886,6 +3886,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get classicStatsTemplateVolume => 'ОБЪЕМ';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Спросить о чем угодно…';
 
   @override
@@ -23834,6 +23839,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get navHealth => 'Здоровье';
+
+  @override
+  String get navCommunity => 'Сообщество';
+
+  @override
+  String get communitySaveAsRoutine => 'Сохранить как программу';
+
+  @override
+  String get communityRoutineSaved => 'Сохранено в ваших программах';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Не удалось сохранить программу. Попробуйте ещё раз.';
+
+  @override
+  String get communityYourProfile => 'Ваш профиль';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Подключено к $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Сон, готовность и показатели синхронизируются автоматически.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return 'На $percent% ниже базового уровня';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return 'На $percent% выше базового уровня';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'На базовом уровне';
 
   @override
   String get healthTabVitals => 'Показатели';

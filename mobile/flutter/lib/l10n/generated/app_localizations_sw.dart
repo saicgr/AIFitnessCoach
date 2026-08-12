@@ -3872,6 +3872,11 @@ class AppLocalizationsSw extends AppLocalizations {
   String get classicStatsTemplateVolume => 'KIASI';
 
   @override
+  String contextualCardsMoreSuggestions(Object count) {
+    return '+$count more suggestions';
+  }
+
+  @override
   String get coachAskAnything => 'Uliza chochote…';
 
   @override
@@ -23809,6 +23814,44 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get navHealth => 'Afya';
+
+  @override
+  String get navCommunity => 'Jumuiya';
+
+  @override
+  String get communitySaveAsRoutine => 'Hifadhi kama utaratibu';
+
+  @override
+  String get communityRoutineSaved => 'Imehifadhiwa kwenye taratibu zako';
+
+  @override
+  String get communityRoutineSaveFailed =>
+      'Haikuweza kuhifadhi utaratibu huo. Jaribu tena.';
+
+  @override
+  String get communityYourProfile => 'Wasifu wako';
+
+  @override
+  String healthSourceConnectedTo(Object source) {
+    return 'Imeunganishwa na $source';
+  }
+
+  @override
+  String get healthSourceSyncingBody =>
+      'Usingizi, utayari na viashiria muhimu husawazishwa kiotomatiki.';
+
+  @override
+  String vitalsPercentBelowBaseline(Object percent) {
+    return '$percent% chini ya kiwango cha msingi';
+  }
+
+  @override
+  String vitalsPercentAboveBaseline(Object percent) {
+    return '$percent% juu ya kiwango cha msingi';
+  }
+
+  @override
+  String get vitalsOnBaseline => 'Kwenye kiwango cha msingi';
 
   @override
   String get healthTabVitals => 'Viashiria vya mwili';

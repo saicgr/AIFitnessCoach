@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
@@ -365,7 +366,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+              16, 16, 16, 16 + kQuickLogFabClearance),
           itemCount: friends.length,
           itemBuilder: (context, index) {
             final friend = friends[index];
@@ -424,7 +426,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+              16, 16, 16, 16 + kQuickLogFabClearance),
           itemCount: followers.length,
           itemBuilder: (context, index) {
             final follower = followers[index];
@@ -484,7 +487,8 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(
+              16, 16, 16, 16 + kQuickLogFabClearance),
           itemCount: following.length,
           itemBuilder: (context, index) {
             final follow = following[index];
