@@ -398,13 +398,14 @@ class _NutritionScalarStrip extends StatelessWidget {
                         isDark: isDark,
                         delta: hasWeight
                             ? StatDeltaChip(
-                                // For a cut, a decrease in body weight is the
-                                // win, so positiveIsGood:false makes "down"
-                                // read green.
+                                // Body weight is valence-NEUTRAL: a cut and a
+                                // bulk flip which direction is the win, and we
+                                // never ask the user to declare one. The number
+                                // and the arrow are factual; no tint judges it.
                                 value: weightDisplay,
                                 magnitudeLabel:
                                     '${weightDisplay.abs().toStringAsFixed(1)} $weightUnit',
-                                positiveIsGood: false,
+                                valence: GoodDirection.neutral,
                                 neutralEpsilon: 0.05,
                                 flatLabel: 'no change',
                                 isDark: isDark,

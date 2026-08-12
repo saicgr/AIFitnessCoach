@@ -35,7 +35,18 @@ import 'widgets/metric_history_card.dart';
 /// when only some metrics have data (case 17); no Health connection shows a
 /// connect prompt instead of the hub.
 class CombinedHealthScreen extends ConsumerStatefulWidget {
-  const CombinedHealthScreen({super.key});
+  /// True when this screen is composed INSIDE the Health tab's shell
+  /// (`HealthShellScreen`) rather than pushed as a full-screen route.
+  ///
+  /// Embedded, the shell already draws the "Health" masthead and the
+  /// OVERVIEW·SLEEP·RECOVERY·VITALS·BODY rail, and there is nothing to pop
+  /// back to — so this screen drops its own back-button header row and its
+  /// opaque background (the shell paints it). Everything below the header is
+  /// byte-identical in both modes; pushed `/health/combined` deep links are
+  /// completely unaffected.
+  final bool embedded;
+
+  const CombinedHealthScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<CombinedHealthScreen> createState() =>
@@ -143,24 +154,27 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
 
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: widget.embedded ? Colors.transparent : bg,
       body: SafeArea(
+        top: !widget.embedded,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(12, widget.embedded ? 0 : 8, 16, 4),
               child: Row(
                 children: [
-                  const GlassBackButton(),
-                  const SizedBox(width: 12),
-                  Text(
-                    l10n.combinedHealthHealth,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
+                  if (!widget.embedded) ...[
+                    const GlassBackButton(),
+                    const SizedBox(width: 12),
+                    Text(
+                      l10n.combinedHealthHealth,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimary,
+                      ),
                     ),
-                  ),
+                  ],
                   const Spacer(),
                   // #19 — Ask the AI coach about your health metrics, scoped to
                   // this hub (recovery is the hero), so the chat surfaces

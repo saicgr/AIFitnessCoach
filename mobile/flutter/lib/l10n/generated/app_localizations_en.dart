@@ -23573,6 +23573,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navCoach => 'Coach';
 
   @override
+  String get navHealth => 'Health';
+
+  @override
+  String get healthTabVitals => 'Vitals';
+
+  @override
+  String get healthTabNoDataYet => 'No data yet';
+
+  @override
   String get neatAchievementCardNew => 'NEW!';
 
   @override

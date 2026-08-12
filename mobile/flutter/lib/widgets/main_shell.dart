@@ -10,7 +10,6 @@ import 'first_run/first_run_gate.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/chrome_constants.dart';
 import '../core/constants/motion_tokens.dart';
-import '../core/constants/type_scale.dart';
 import '../core/providers/serious_mode_provider.dart';
 import '../core/providers/subscription_provider.dart';
 import '../data/services/recipe_notification_router.dart';
@@ -18,7 +17,6 @@ import '../core/theme/accent_color_provider.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/coach_refresh_coordinator.dart';
-import '../data/providers/coach_unread_provider.dart';
 import '../data/providers/discover_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
@@ -34,13 +32,13 @@ import '../data/repositories/auth_repository.dart' show authStateProvider;
 import '../screens/nutrition/quick_log_overlay.dart';
 import '../screens/home/widgets/quick_log_sheet.dart' show showQuickLogSheet;
 import 'coach_avatar.dart';
+import 'coach_quick_log_cluster.dart';
 import 'app_tour/app_tour_controller.dart';
 import 'floating_chat/floating_chat_bubble.dart';
 import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
 import 'offline_banner.dart';
 import 'email_verification_banner.dart';
-import 'quick_log_fab_chrome.dart';
 import '../data/providers/xp_provider.dart'
     show
         xpProvider,
@@ -81,6 +79,16 @@ import '../data/providers/daily_coach_insight_provider.dart'
     show dailyCoachInsightProvider;
 import '../data/providers/contextual_nudge_provider.dart'
     show contextualNudgeProvider;
+// Health tab (branch 2) first-paint providers — the Overview chip's combined
+// history + recovery hero, and the three Samsung-parity hub cards it renders.
+import '../data/providers/combined_health_provider.dart'
+    show combinedHealthHistoryProvider;
+import '../data/providers/recovery_provider.dart' show recoveryProvider;
+import '../data/repositories/vitals_repository.dart' show vitalsProvider;
+import '../data/repositories/heart_health_repository.dart'
+    show heartHealthProvider;
+import '../data/repositories/fitness_index_repository.dart'
+    show fitnessIndexProvider;
 
 part 'main_shell_part_edge_panel_handle.dart';
 part 'main_shell_part_guest_mode_banner.dart';
@@ -222,10 +230,10 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     if (navigationShell != null) return navigationShell!.currentIndex;
     final location = GoRouterState.of(context).matchedLocation;
-    // Branch order (2026-06 redesign): Home · Workout · Coach · Nutrition · You.
+    // Branch order (2026-08 redesign): Home · Workout · Health · Nutrition · You.
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/workouts')) return 1;
-    if (location.startsWith('/coach')) return 2;
+    if (location.startsWith('/health')) return 2;
     if (location.startsWith('/nutrition')) return 3;
     if (location.startsWith('/profile')) return 4;
     return 0;
@@ -273,7 +281,7 @@ class MainShell extends ConsumerWidget {
         context.go('/workouts');
         break;
       case 2:
-        context.go('/coach');
+        context.go('/health');
         break;
       case 3:
         context.go('/nutrition');
@@ -307,14 +315,15 @@ class MainShell extends ConsumerWidget {
     ).routerDelegate.currentConfiguration.uri.path;
     final pathWantsHidden = currentPath.startsWith('/fasting');
     final providerWantsHidden = !ref.watch(floatingNavBarVisibleProvider);
-    // Coach tab: hide the nav while the keyboard is up so the chat composer
-    // (which sits above the nav clearance — see CoachTabScreen) docks to the
-    // keyboard like a normal chat app instead of floating above two bars.
-    final keyboardWantsHidden =
-        _calculateSelectedIndex(context) == 2 &&
-        MediaQuery.viewInsetsOf(context).bottom > 0;
-    final isNavBarVisible =
-        !(pathWantsHidden || providerWantsHidden || keyboardWantsHidden);
+    // NOTE: index 2 used to hide the nav whenever the keyboard was up, so the
+    // Coach tab's chat composer could dock to the keyboard instead of floating
+    // above two bars. That gate died with the Coach tab (2026-08): Health has
+    // no keyboard-docked composer, and keeping it would have yanked the whole
+    // bottom nav away the moment any editable field on Health took focus (the
+    // hub's "correct steps / sleep" dialogs, for one) for no reason at all.
+    // The full-screen `/chat` route is outside the shell, so it never had or
+    // needed this.
+    final isNavBarVisible = !(pathWantsHidden || providerWantsHidden);
     final isGuestMode = ref.watch(isGuestModeProvider);
 
     // ── Tab prewarm (staggered, active-tab-first) ─────────────────────
@@ -655,12 +664,27 @@ class MainShell extends ConsumerWidget {
               ],
             ),
           ),
-          // "Ask coach" FAB retired (2026-06 redesign, Change 1): the Coach
-          // bottom-nav tab supersedes it — always reachable, never collapses
-          // on scroll. Contextual chat deep links (coach hero card, active
-          // workout, food tips) still push the /chat overlay unchanged.
-          // Signature quick-log button — docks on every tab except Coach (a
-          // floating button over the chat composer is clutter; spec .rh-plus).
+          // ── The bottom-right FAB cluster (Placement D, 2026-08) ─────────
+          //
+          // ONE right-anchored Row holding the global ✦ coach circle inboard
+          // of the Quick Log pill — not two independent `Positioned` floats.
+          // Quick Log's width morphs on scroll (`quickLogFabExpandedProvider`,
+          // 12 px collapse / 8 px re-expand hysteresis, listener above), so a
+          // separately-anchored coach button would have the gap between the
+          // two breathing open and shut on every scroll. Laid out as one Row
+          // the gap is a constant and the morph slides the pair as a unit.
+          //
+          // Quick Log stays the larger, expanded target (44 pt, captioned) —
+          // it is the daily habitual action. Coach is the quiet secondary
+          // (40 pt, icon-only, never labelled). Target size matches frequency
+          // ordering. The coach circle owns its own hide rules (coach screen /
+          // active workout) inside `CoachFloatingButton`.
+          //
+          // Quick Log now docks on ALL FIVE tabs. The old `selectedIndex != 2`
+          // exclusion existed because index 2 was Coach and a floating button
+          // over a chat composer is clutter; index 2 is Health now, which has
+          // no composer and reserves `kQuickLogFabClearance` like every other
+          // tab (see `HealthShellScreen`'s MediaQuery bump).
           //
           // E2E register row 16: this used to be a bare 44×44 square with a
           // naked "+" glyph and no Semantics, so its action was unknowable
@@ -684,40 +708,29 @@ class MainShell extends ConsumerWidget {
           // collapses it to the icon-only circle the instant this tab
           // scrolls, and re-expands it back at the top — never hidden either
           // way, just narrower while content is moving under it.
-          if (isNavBarVisible && selectedIndex != 2)
-            Positioned(
-              right: 24,
+          if (isNavBarVisible)
+            PositionedDirectional(
+              end: 24,
               bottom:
                   MediaQuery.paddingOf(context).bottom +
                   kQuickLogFabBottomOffset,
-              // Anchor for nav-tour step 3 ("Quick Log") — the spotlight must
-              // ring THIS always-visible button. The key used to live on the
-              // home QuickActionsRow section, which is opt-in (hidden for new
-              // users), so the tour showed a dim with no cutout.
-              child: KeyedSubtree(
-                key: AppTourKeys.quickLogKey,
-                // Bound the caption so a long localisation or a large text
-                // scale widens the button toward the screen edge and then
-                // stops — inside, the caption scales down rather than being
-                // ellipsised away (row 108).
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.sizeOf(context).width - 48,
-                  ),
-                  child: QuickLogFabChrome(
-                    // Existing shipped key — already translated in all 36
-                    // locales, so the caption is never English-only.
-                    label: AppLocalizations.of(context).quickLogOverlayQuickLog,
-                    // Opens the Signature quick-actions grid (Scan menu, Log
-                    // workout, Log water, …), not the bare food-log dialog.
-                    onTap: () => showQuickLogSheet(context, ref),
-                    // Pill at rest, icon-only the instant this tab scrolls —
-                    // see quickLogFabExpandedProvider above.
-                    expanded: ref.watch(
-                      quickLogFabExpandedProvider(selectedIndex),
-                    ),
-                  ),
-                ),
+              child: CoachQuickLogCluster(
+                // Pill at rest, icon-only the instant this tab scrolls — see
+                // quickLogFabExpandedProvider above. ONE read, shared by both
+                // members of the cluster, which is what keeps them moving as
+                // one and the gap between them from breathing.
+                quickLogExpanded:
+                    ref.watch(quickLogFabExpandedProvider(selectedIndex)),
+                // Existing shipped key — already translated in all 36 locales,
+                // so the caption is never English-only.
+                quickLogLabel:
+                    AppLocalizations.of(context).quickLogOverlayQuickLog,
+                // Opens the Signature quick-actions grid (Scan menu, Log
+                // workout, Log water, …), not the bare food-log dialog.
+                onQuickLog: () => showQuickLogSheet(context, ref),
+                // Bound the cluster so a long localisation or a large text
+                // scale widens it toward the screen edge and then stops.
+                maxWidth: MediaQuery.sizeOf(context).width - 48,
               ),
             ),
           // Nav bar at bottom — wrapped in Material so it participates in
@@ -749,9 +762,13 @@ class MainShell extends ConsumerWidget {
             ),
           ),
           // Optional draggable chat-head bubble (Settings → AI Coach
-          // opt-in). Default off — most users get the "Ask coach" FAB
-          // above. Rendered AFTER the nav so its drag-dismiss-zone
-          // overlay paints on top of the nav when active.
+          // opt-in). Default off — most users get the ✦ coach circle in the
+          // `CoachQuickLogCluster` above instead. The two are the same
+          // affordance in different forms and share the bottom-right band, so
+          // they are mutually exclusive: this flag turning ON suppresses the
+          // circle (see `CoachFloatingButton.suppressedIn`). Rendered AFTER
+          // the nav so its drag-dismiss-zone overlay paints on top of the nav
+          // when active.
           if (isNavBarVisible && ref.watch(edgeHandleEnabledProvider))
             const FloatingChatBubble(),
           // Note: Workout mini player is now handled globally in app.dart.
@@ -833,10 +850,18 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
       ref.read(workoutScreenSummaryProvider);
       ref.read(syncedWorkoutsProvider);
       break;
-    case 2: // Coach — the daily insight feeds the briefing/greeting open
-      // ladder, so it's the chat tab's first-paint dependency.
-      ref.read(dailyCoachInsightProvider);
-      ref.read(contextualNudgeProvider);
+    case 2: // Health — the Overview chip (the rail's default) paints from the
+      // combined-health history, the recovery hero and the three Samsung-parity
+      // hub cards, so those are the tab's real first-paint dependencies. The
+      // other four chips are lazy (built on first selection), so nothing else
+      // is warmed here — warming Sleep/Vitals/Heart/Fitness eagerly would put
+      // four more requests into Dio's pool for views the user may never open.
+      ref.read(combinedHealthHistoryProvider);
+      ref.read(recoveryProvider);
+      ref.read(dailyActivityProvider);
+      ref.read(vitalsProvider);
+      ref.read(heartHealthProvider);
+      ref.read(fitnessIndexProvider);
       break;
     case 3: // Nutrition — daily summary + preferences gate the first paint;
       // batch-cook events + upcoming schedules feed the Daily tab.

@@ -249,15 +249,16 @@ class _TrendChip extends StatelessWidget {
   final double previous;
   final String suffix;
 
-  /// When true, a positive delta is good (green). When false, a negative
-  /// delta is good (e.g. body fat decrease).
-  final bool positiveIsGood;
+  /// Which way is good for this metric. Required — the old boolean defaulted
+  /// to "up is good", which silently claimed higher-is-better for every caller
+  /// that forgot to think about it.
+  final GoodDirection valence;
 
   const _TrendChip({
     required this.current,
     required this.previous,
+    required this.valence,
     this.suffix = '',
-    this.positiveIsGood = true,
   });
 
   @override
@@ -267,10 +268,13 @@ class _TrendChip extends StatelessWidget {
     if (delta == 0) return const SizedBox.shrink();
 
     final isPositive = delta > 0;
-    final isGood = positiveIsGood ? isPositive : !isPositive;
-    final color = isGood
-        ? (isDark ? AppColors.success : AppColorsLight.success)  // accent-allowlist: success/positive state — must stay green regardless of accent
-        : (isDark ? context.accentColor : context.accentColor);
+    // Semantic state ramp: valence + sign, never sign alone. The "bad" branch
+    // used to paint the user's own accent colour, so a strained metric looked
+    // identical to every ordinary accent in the app.
+    final color = SemanticState.resolve(
+      valence: valence,
+      deviation: delta,
+    ).colorFor(isDark);
 
     final displayDelta = delta.abs();
     final deltaText = displayDelta == displayDelta.roundToDouble()
@@ -406,6 +410,7 @@ class _OverviewCard extends StatelessWidget {
                 _TrendChip(
                   current: totals.workoutsCompleted.toDouble(),
                   previous: previousTotals!.workoutsCompleted.toDouble(),
+                  valence: GoodDirection.higher,
                 ),
             ],
           ),
@@ -443,6 +448,7 @@ class _OverviewCard extends StatelessWidget {
                         current: totals.totalTimeMinutes.toDouble(),
                         previous: previousTotals!.totalTimeMinutes.toDouble(),
                         suffix: 'm',
+                        valence: GoodDirection.higher,
                       )
                     : null,
               ),
@@ -454,8 +460,11 @@ class _OverviewCard extends StatelessWidget {
                 isDark: isDark,
                 trend: previousTotals != null
                     ? _TrendChip(
+                        // Calories BURNED in sessions, not eaten — more work
+                        // done supports the training goal.
                         current: totals.totalCalories.toDouble(),
                         previous: previousTotals!.totalCalories.toDouble(),
+                        valence: GoodDirection.higher,
                       )
                     : null,
               ),
@@ -644,6 +653,7 @@ class _NutritionCard extends StatelessWidget {
                       current: adherence,
                       previous: previousTotals!.avgNutritionAdherence!,
                       suffix: '%',
+                      valence: GoodDirection.higher,
                     ),
                   ),
               ],
@@ -787,6 +797,7 @@ class _RecoveryCard extends StatelessWidget {
                       child: _TrendChip(
                         current: readiness,
                         previous: previousTotals!.avgReadiness!,
+                        valence: GoodDirection.higher,
                       ),
                     ),
                 ],

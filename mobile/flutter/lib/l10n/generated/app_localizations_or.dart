@@ -23856,6 +23856,15 @@ class AppLocalizationsOr extends AppLocalizations {
   String get navCoach => 'କୋଚ୍';
 
   @override
+  String get navHealth => 'ସ୍ୱାସ୍ଥ୍ୟ';
+
+  @override
+  String get healthTabVitals => 'ଭାଇଟାଲ୍ସ';
+
+  @override
+  String get healthTabNoDataYet => 'ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ଡାଟା ନାହିଁ';
+
+  @override
   String get neatAchievementCardNew => 'ନୂଆ!';
 
   @override

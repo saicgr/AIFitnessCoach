@@ -67,8 +67,7 @@ import 'widgets/hero_fasting_card.dart';
 import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/home/unified_home_widgets.dart';
-import 'widgets/home/metric_summary_deck.dart';
-import 'widgets/home/home_metrics_strip.dart';
+import 'widgets/home/metric_tile_grid.dart';
 import 'widgets/home/home_timeline.dart';
 import 'widgets/home/reports_recap_row.dart';
 import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
@@ -1259,12 +1258,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // dismissed it once.
               const SliverToBoxAdapter(child: CycleSetupHomePrompt()),
 
-              // SIGNATURE V2 — glanceable metrics strip directly under the
-              // masthead: STEPS · SLEEP · READY · SCORE, tappable, so the
-              // day's key numbers are seen without scrolling. The full metric
-              // deck (ring + tiles + trends) stays below the fold.
+              // The customisable metric tile grid — the section that absorbed
+              // the old four-cell STEPS · SLEEP · READY · SCORE strip. Every
+              // number that strip showed is a tile here, so the strip is
+              // removed rather than duplicated. Sizes (S/M/L), order and page
+              // are the user's, persisted in `homeMetricTilesProvider`; the
+              // pencil enters edit mode in place.
               const SliverToBoxAdapter(
-                child: RepaintBoundary(child: HomeMetricsStrip()),
+                child: RepaintBoundary(child: HomeMetricTileGrid()),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
@@ -1331,7 +1332,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Drop sections that are GUARANTEED to render nothing today so they don't
     // leave a phantom kHomeGap (issue 6):
     //  • strainCoach  — folded into the workout hero, always SizedBox.shrink.
-    //  • metricTrio   — folded into the MetricSummaryDeck, always shrink.
+    //  • metricTrio   — absorbed by the metric tile grid, always shrink.
     //  • cycle        — self-hides unless menstrual tracking is enabled; the
     //    gate is cheap (hormonalProfileProvider), so filter it here too rather
     //    than leave a ~14px void between the nutrition card and Reports/Recap.
@@ -1542,8 +1543,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // the fold; the full nutrition card lives on the Nutrition tab.
         return const HomeFuelStrip();
       case HomeSection.metricTrio:
-        // Folded into the MetricSummaryDeck (Direction C). Kept in the enum so
-        // a user's persisted ordering doesn't break; renders nothing now.
+        // Absorbed by the Home metric tile grid — steps / calories / sleep are
+        // tiles now. Kept in the enum so a user's persisted ordering doesn't
+        // break; renders nothing.
         return const SizedBox.shrink();
       case HomeSection.weeklyReport:
         // Two-up "Reports · Recap" row (issue 7) — replaces the full-width

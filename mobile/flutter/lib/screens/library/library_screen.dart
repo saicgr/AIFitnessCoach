@@ -439,13 +439,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
               ],
             ),
 
-            // Coach access on Library. The screen uses its own top pill row (not
-            // a bottom FloatingTabBar), so it never inherits a coach-sparkle
-            // slot — mount the CoachFloatingButton in collapsed (icon-only)
-            // form. liftAboveNav:false drops it to the real bottom edge. The
-            // "Build a workout" CTA now lives on the Custom pill, so there's no
-            // docked button to clear anymore.
-            const CoachFloatingButton(liftAboveNav: false),
+            // Coach access on Library. This is a pushed full-screen route, so
+            // it is OUTSIDE the shell and never gets the global ✦ + Quick Log
+            // cluster — it mounts its own corner copy instead, dropped to the
+            // real bottom edge (no nav pill to clear). The "Build a workout"
+            // CTA now lives on the Custom pill, so there's no docked button to
+            // clear anymore.
+            const CoachFloatingButtonCorner(),
           ],
         ),
       ),

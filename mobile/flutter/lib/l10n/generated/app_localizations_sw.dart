@@ -23808,6 +23808,15 @@ class AppLocalizationsSw extends AppLocalizations {
   String get navCoach => 'Kocha';
 
   @override
+  String get navHealth => 'Afya';
+
+  @override
+  String get healthTabVitals => 'Viashiria vya mwili';
+
+  @override
+  String get healthTabNoDataYet => 'Hakuna data bado';
+
+  @override
   String get neatAchievementCardNew => 'MPYA!';
 
   @override

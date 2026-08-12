@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/stats/state_valence.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
@@ -208,19 +209,24 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
     );
   }
 
-  /// Determines whether a positive change is "good" for this metric. Weight
-  /// and body-fat losses are the goal; muscle / torso circumferences are
-  /// aimed at increase (unless the user is cutting waist/hips, handled as
-  /// neutral — we still go with increase = good for lack of better signal).
-  bool get _positiveIsGood {
+  /// This metric's declared valence for the state ramp.
+  ///
+  /// Body fat / waist / hips have a health consensus that lower is better, so
+  /// they declare [GoodDirection.lower]. **Body weight does not** — a cut and
+  /// a bulk flip which direction is the win — so it declares
+  /// [GoodDirection.neutral] and renders a factual arrow with no judgment,
+  /// matching the rest of the app (the previous code lumped it in with body
+  /// fat and told bulking users their gained pound was a failure).
+  GoodDirection get _valence {
     switch (widget.type) {
       case MeasurementType.weight:
+        return GoodDirection.neutral;
       case MeasurementType.bodyFat:
       case MeasurementType.waist:
       case MeasurementType.hips:
-        return false; // decrease trends toward goals for most users
+        return GoodDirection.lower;
       default:
-        return true; // growth = progress
+        return GoodDirection.higher; // circumference growth = progress
     }
   }
 
@@ -235,8 +241,11 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
     final change = widget.change;
     if (hasData && change != null && change.abs() >= 0.1) {
       final isUp = change > 0;
-      final aligned = isUp == _positiveIsGood;
-      final color = aligned ? AppColors.success : AppColors.error;  // accent-allowlist: success/positive state — must stay green regardless of accent; error/destructive state — must stay red regardless of accent
+      final color = SemanticState.resolve(
+        valence: _valence,
+        deviation: change,
+        epsilon: 0.1,
+      ).colorFor(Theme.of(context).brightness == Brightness.dark);
       trendArrow = Padding(
         padding: const EdgeInsetsDirectional.only(start: 2),
         child: Icon(

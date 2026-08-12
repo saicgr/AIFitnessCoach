@@ -24101,6 +24101,15 @@ class AppLocalizationsTa extends AppLocalizations {
   String get navCoach => 'கோச்';
 
   @override
+  String get navHealth => 'ஆரோக்கியம்';
+
+  @override
+  String get healthTabVitals => 'உயிர் அளவீடுகள்';
+
+  @override
+  String get healthTabNoDataYet => 'இதுவரை தரவு இல்லை';
+
+  @override
   String get neatAchievementCardNew => 'புதியது!';
 
   @override

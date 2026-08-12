@@ -23735,6 +23735,15 @@ class AppLocalizationsJv extends AppLocalizations {
   String get navCoach => 'Pelatih';
 
   @override
+  String get navHealth => 'Kesehatan';
+
+  @override
+  String get healthTabVitals => 'Tandha vital';
+
+  @override
+  String get healthTabNoDataYet => 'Durung ana data';
+
+  @override
   String get neatAchievementCardNew => 'ANYAR!';
 
   @override

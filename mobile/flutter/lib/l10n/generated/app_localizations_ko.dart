@@ -22806,6 +22806,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get navCoach => '코치';
 
   @override
+  String get navHealth => '건강';
+
+  @override
+  String get healthTabVitals => '바이탈';
+
+  @override
+  String get healthTabNoDataYet => '아직 데이터가 없습니다';
+
+  @override
   String get neatAchievementCardNew => '새로운 기능!';
 
   @override

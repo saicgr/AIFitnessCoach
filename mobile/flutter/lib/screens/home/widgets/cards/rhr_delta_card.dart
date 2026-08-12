@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/stats/state_valence.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/rhr_delta_provider.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -26,9 +27,22 @@ class RhrDeltaCard extends ConsumerWidget {
     final rhr = data.todayRhrBpm!;
     final delta = data.deltaBpm ?? 0.0;
     final lower = delta <= -3.0;
-    final tint = data.elevated
-        ? const Color(0xFFF87171)  // accent-allowlist: resting-heart-rate delta alert colour (elevated=red/lower=green; falls back to accent for the neutral case)
-        : (lower ? const Color(0xFF34D399) : c.accent);  // accent-allowlist: resting-heart-rate delta alert colour (elevated=red/lower=green; falls back to accent for the neutral case)
+    // Resting HR declares lower-is-better, so ABOVE baseline strains and below
+    // supports. Previously two raw hex literals encoded that by hand; the tint
+    // now comes from the metric's declared valence, and the neutral band drops
+    // the user's accent (accent is user-chosen, so it never reliably read as
+    // "calm").
+    // The backend owns the band ("elevated"); the app owns the valence. The
+    // sign below is the BAND, not the raw delta, and it is fed through the
+    // metric's declared direction — so re-declaring resting HR would flip
+    // every tint on this card without editing it.
+    const valence = GoodDirection.lower; // MetricValence.declarations['resting_heart_rate']
+    final bandSign = data.elevated ? 1.0 : (lower ? -1.0 : 0.0);
+    final state =
+        SemanticState.resolve(valence: valence, deviation: bandSign);
+    final tint = state == SemanticState.neutral
+        ? c.textSecondary
+        : state.color(context);
     final label = data.elevated
         ? 'Elevated — consider an easier session today'
         : (lower
@@ -70,10 +84,15 @@ class RhrDeltaCard extends ConsumerWidget {
                       color: c.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(label,
-                      style:
-                          TextStyle(fontSize: 12, color: c.textSecondary)),
+                  const SizedBox(height: 3),
+                  // The ramp dot never travels without its sentence — the copy
+                  // carries the meaning, the tint only reinforces it.
+                  DeviationLine(
+                    valence: valence,
+                    deviation: bandSign,
+                    label: label,
+                    fontSize: 12,
+                  ),
                 ],
               ),
             ),

@@ -24108,6 +24108,15 @@ class AppLocalizationsMl extends AppLocalizations {
   String get navCoach => 'കോച്ച്';
 
   @override
+  String get navHealth => 'ഹെൽത്ത്';
+
+  @override
+  String get healthTabVitals => 'വൈറ്റൽസ്';
+
+  @override
+  String get healthTabNoDataYet => 'ഇതുവരെ ഡാറ്റ ഇല്ല';
+
+  @override
   String get neatAchievementCardNew => 'പുതിയത്!';
 
   @override

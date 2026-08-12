@@ -23720,6 +23720,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get navCoach => 'कोच';
 
   @override
+  String get navHealth => 'स्वास्थ्य';
+
+  @override
+  String get healthTabVitals => 'वाइटल्स';
+
+  @override
+  String get healthTabNoDataYet => 'अभी कोई डेटा नहीं';
+
+  @override
   String get neatAchievementCardNew => 'नया!';
 
   @override

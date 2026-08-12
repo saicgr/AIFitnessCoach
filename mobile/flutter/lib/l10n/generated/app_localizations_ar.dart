@@ -23490,6 +23490,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navCoach => 'المدرب';
 
   @override
+  String get navHealth => 'الصحة';
+
+  @override
+  String get healthTabVitals => 'المؤشرات الحيوية';
+
+  @override
+  String get healthTabNoDataYet => 'لا توجد بيانات بعد';
+
+  @override
   String get neatAchievementCardNew => 'جديد!';
 
   @override

@@ -23925,6 +23925,15 @@ class AppLocalizationsKn extends AppLocalizations {
   String get navCoach => 'ಕೋಚ್';
 
   @override
+  String get navHealth => 'ಆರೋಗ್ಯ';
+
+  @override
+  String get healthTabVitals => 'ವೈಟಲ್ಸ್';
+
+  @override
+  String get healthTabNoDataYet => 'ಇನ್ನೂ ಡೇಟಾ ಇಲ್ಲ';
+
+  @override
   String get neatAchievementCardNew => 'ಹೊಸದು!';
 
   @override

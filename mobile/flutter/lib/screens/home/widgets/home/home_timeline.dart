@@ -768,8 +768,13 @@ class HomeTimeline extends ConsumerWidget {
   /// Shell nav-tab routes. Navigating to one of these MUST use `go` (switch
   /// the tab) — `push` would stack a 2nd copy of a tab screen and its static
   /// tooltip GlobalKeys collide ("Multiple widgets used the same GlobalKey").
+  /// Must mirror the branch order in `app_router_main_shell_routes.dart`.
+  /// `/coach` was removed 2026-08: Coach gave up its branch to Health and is
+  /// now a redirect to the full-screen `/chat`, so `go('/coach')` would
+  /// REPLACE the stack rather than switch a tab. Listing it here was a trap
+  /// for the next editor even though `_routeFor` never emits it.
   static const _tabRoutes = {
-    '/home', '/workouts', '/coach', '/nutrition', '/profile',
+    '/home', '/workouts', '/health', '/nutrition', '/profile',
   };
 
   /// Navigate to [route]: `go` for nav tabs, `push` for standalone screens.

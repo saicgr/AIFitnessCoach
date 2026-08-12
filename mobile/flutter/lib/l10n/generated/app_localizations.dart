@@ -39836,6 +39836,24 @@ abstract class AppLocalizations {
   /// **'Coach'**
   String get navCoach;
 
+  /// No description provided for @navHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get navHealth;
+
+  /// No description provided for @healthTabVitals.
+  ///
+  /// In en, this message translates to:
+  /// **'Vitals'**
+  String get healthTabVitals;
+
+  /// No description provided for @healthTabNoDataYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get healthTabNoDataYet;
+
   /// No description provided for @neatAchievementCardNew.
   ///
   /// In en, this message translates to:

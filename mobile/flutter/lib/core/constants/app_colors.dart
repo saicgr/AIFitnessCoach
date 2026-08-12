@@ -76,6 +76,29 @@ class AppColors {
   static const Color info = Color(0xFF3B82F6);
 
   // ═══════════════════════════════════════════════════════════════
+  // SEMANTIC STATE RAMP — supports · neutral · strains
+  //
+  // The ramp encodes VALENCE ("is this reading good for this metric?"),
+  // never position ("is this above or below the baseline?"). A resting-HR
+  // reading 2% ABOVE baseline tints `stateStrains`; a steps reading 2%
+  // above baseline tints `stateSupports`. Sign alone must never pick the
+  // colour — see `lib/core/design/state_valence.dart`, which is the only
+  // sanctioned way to resolve one of these.
+  //
+  // Deliberately NOT `success`/`warning`: those are event outcomes ("saved",
+  // "quota low"). A baseline deviation is a state, and reusing the alert
+  // palette for it made every ordinary day look like an alarm.
+  //
+  // The dark values are ~25% less saturated than the light ones (HSL S 0.40
+  // vs 0.94 for supports, 0.68 vs 0.90 for strains). Fully saturated colour
+  // vibrates against a near-black surface; the light theme needs the deeper,
+  // more saturated tone to hold contrast on white.
+  // ═══════════════════════════════════════════════════════════════
+  static const Color stateSupports = Color(0xFF7EC8A2); // accent-allowlist: semantic state ramp — encodes valence (supports), never follows the user accent
+  static const Color stateStrains = Color(0xFFE0A45E); // accent-allowlist: semantic state ramp — encodes valence (strains), never follows the user accent
+  static const Color stateNeutral = textMuted; // accent-allowlist: semantic state ramp — neutral rung reuses the muted text role by design
+
+  // ═══════════════════════════════════════════════════════════════
   // RIR (Reps in Reserve) Badge Colors - Monochrome
   // ═══════════════════════════════════════════════════════════════
   static const Color rir1 = Color(0xFFFFFFFF); // White - 1 RIR (hardest)
@@ -283,4 +306,11 @@ class AppColorsLight {
   static const Color warning = Color(0xFFD97706);
   static const Color error = Color(0xFFDC2626);
   static const Color info = Color(0xFF2563EB);
+
+  // Semantic state ramp — see the AppColors block for the full contract.
+  // Light gets the deeper, more saturated tone (it has to hold contrast on
+  // white); dark gets the desaturated pastel so it doesn't vibrate.
+  static const Color stateSupports = Color(0xFF047857); // accent-allowlist: semantic state ramp — encodes valence (supports), never follows the user accent
+  static const Color stateStrains = Color(0xFFB45309); // accent-allowlist: semantic state ramp — encodes valence (strains), never follows the user accent
+  static const Color stateNeutral = textMuted; // accent-allowlist: semantic state ramp — neutral rung reuses the muted text role by design
 }

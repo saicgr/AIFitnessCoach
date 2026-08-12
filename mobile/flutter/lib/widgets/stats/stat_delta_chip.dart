@@ -1,14 +1,23 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import '../../core/stats/state_valence.dart';
+
+/// Callers must name a [GoodDirection] to build this chip, so it travels with
+/// the widget rather than forcing a second import at every call site.
+export '../../core/stats/state_valence.dart' show GoodDirection;
 
 /// A small ▲/▼ delta chip ("+12%", "-0.4 kg") used beneath a [BigStat].
 ///
-/// The tint encodes good/bad rather than up/down: pass [positiveIsGood] =
-/// false for metrics where a decrease is the win (e.g. body weight in a cut),
-/// so "down" reads green. A magnitude at or below [neutralEpsilon] renders as
-/// a muted "no change" pill — never a fabricated trend.
+/// The tint is the semantic state ramp (supports/neutral/strains) and encodes
+/// VALENCE, not direction: the caller declares the metric's [valence], so a
+/// drop in resting HR reads "supports" while the same drop in steps reads
+/// "strains". A magnitude at or below [neutralEpsilon] renders as a muted "no
+/// change" pill — never a fabricated trend.
+///
+/// [valence] is required: there is no sane default for "which way is good",
+/// and the old `positiveIsGood: true` default silently claimed higher-is-better
+/// for every metric that forgot to pass it.
 class StatDeltaChip extends StatelessWidget {
-  /// Signed change. Sign drives the arrow; [positiveIsGood] drives the tint.
+  /// Signed change. Sign drives the arrow; sign + [valence] drive the tint.
   final double value;
 
   /// Pre-formatted magnitude text, e.g. "12%", "0.4 kg", "3". Sign is added
@@ -18,7 +27,10 @@ class StatDeltaChip extends StatelessWidget {
   /// Optional flat-change label (defaults to "—").
   final String? flatLabel;
 
-  final bool positiveIsGood;
+  /// Which way is good for this metric. `higher` → an increase supports the
+  /// goal; `lower` → a decrease does; `neutral` → we don't judge (body weight,
+  /// calories) and the chip stays muted.
+  final GoodDirection valence;
   final double neutralEpsilon;
   final bool isDark;
 
@@ -27,21 +39,21 @@ class StatDeltaChip extends StatelessWidget {
     required this.value,
     required this.magnitudeLabel,
     required this.isDark,
+    required this.valence,
     this.flatLabel,
-    this.positiveIsGood = true,
     this.neutralEpsilon = 0.0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final isFlat = value.abs() <= neutralEpsilon;
     final isUp = value > 0;
-    final isGood = isUp == positiveIsGood;
 
-    final Color color = isFlat
-        ? muted
-        : (isGood ? AppColors.success : AppColors.error); // accent-allowlist: stat delta up/down color, success/error semantic
+    final Color color = SemanticState.resolve(
+      valence: valence,
+      deviation: value,
+      epsilon: neutralEpsilon,
+    ).colorFor(isDark);
     final IconData icon = isFlat
         ? Icons.trending_flat
         : (isUp ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded);

@@ -32,16 +32,50 @@ List<RouteBase> _mainShellRoutes() => [
               },
             ),
           ]),
-          // Branch 2: Coach (2026-06 redesign, Change 1) — the AI coach gets
-          // the center tab; the scroll-collapsing Home FAB is retired. Hosts
-          // the existing ChatScreen in embedded mode. Pushed /chat deep links
-          // (insight prefill, ?workout_id…) still open the overlay chat.
+          // Branch 2: Health (2026-08 nav redesign) — Coach gives up the
+          // centre tab so sleep, recovery and body data get the top-level home
+          // they never had. Coach is now the global ✦ pill riding beside Quick
+          // Log on every screen (see `coach_floating_button.dart`), which is a
+          // promotion of an existing widget, not a new control.
+          //
+          // This branch owns exactly ONE path. The five `/health/*` DETAIL
+          // routes deliberately stay top-level (see `app_router_utility_routes
+          // .dart`): ~23 call sites across Home, Nutrition, You, chat and
+          // notifications `push` those paths and depend on `GlassBackButton`
+          // popping back to the screen they came from. Re-registering them
+          // inside this branch would instead switch the active branch, leave
+          // the previous tab behind in the IndexedStack, and make that back
+          // button pop to the Health root — or, on a cold push-notification
+          // deep link, no-op and strand the user. The rail inside
+          // `HealthShellScreen` therefore switches views with local state, not
+          // navigation.
+          //
+          // `?tab=overview|sleep|recovery|vitals|body` (or a bare index)
+          // selects a rail chip. Like the You hub, the intent is ALSO pushed
+          // through a nonce request so a deep link arriving while the branch is
+          // already alive in the IndexedStack still moves the rail — initState
+          // alone only covers a cold first build.
           StatefulShellBranch(routes: [
             GoRoute(
-              path: '/coach',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: CoachTabScreen(),
-              ),
+              path: '/health',
+              pageBuilder: (context, state) {
+                final tab = HealthSubTab.fromParam(
+                  state.uri.queryParameters['tab'],
+                );
+                if (state.uri.queryParameters.containsKey('tab')) {
+                  final container =
+                      ProviderScope.containerOf(context, listen: false);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    container
+                        .read(healthTabRequestProvider.notifier)
+                        .requestTab(tab.index);
+                  });
+                }
+                return NoTransitionPage(
+                  key: state.pageKey,
+                  child: HealthShellScreen(initialTab: tab),
+                );
+              },
             ),
           ]),
           // Branch 3: Nutrition (includes Fasting as a secondary page)
@@ -183,6 +217,18 @@ List<RouteBase> _mainShellRoutes() => [
       GoRoute(
         path: '/discover',
         redirect: (context, state) => '/profile?tab=rewards',
+      ),
+
+      // `/coach` was the Coach bottom-nav branch until the 2026-08 nav
+      // redesign handed that slot to Health. Kept as a redirect rather than
+      // deleted: home-timeline entries, widgets and older notification
+      // payloads still carry the literal, and dropping the path would land
+      // them on the router's "Page not found" error screen. The coach itself
+      // did not go anywhere — it is the full-screen chat plus the global ✦
+      // pill now, so that is where the old path points.
+      GoRoute(
+        path: '/coach',
+        redirect: (context, state) => '/chat?source=legacy_coach_tab',
       ),
 
       // Stats (full screen, no bottom nav)

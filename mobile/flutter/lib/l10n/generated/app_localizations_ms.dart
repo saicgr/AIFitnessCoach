@@ -23771,6 +23771,15 @@ class AppLocalizationsMs extends AppLocalizations {
   String get navCoach => 'Jurulatih';
 
   @override
+  String get navHealth => 'Kesihatan';
+
+  @override
+  String get healthTabVitals => 'Tanda vital';
+
+  @override
+  String get healthTabNoDataYet => 'Belum ada data';
+
+  @override
   String get neatAchievementCardNew => 'BAHARU!';
 
   @override

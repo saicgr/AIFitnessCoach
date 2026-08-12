@@ -526,7 +526,10 @@ void main() {
                 icon: Icons.bolt_rounded,
                 accent: Colors.orange,
                 delta: const StatDeltaChip(
-                    value: 12, magnitudeLabel: '12%', isDark: true),
+                    value: 12,
+                    magnitudeLabel: '12%',
+                    isDark: true,
+                    valence: GoodDirection.higher),
                 trend: const MiniSparkline(
                     values: [2, 5, 3, 8, 6, 9, 12], color: Colors.orange),
               ));
@@ -535,7 +538,10 @@ void main() {
       await _mount(tester,
           name: 'StatDeltaChip positive',
           builder: (_) => const StatDeltaChip(
-              value: 8, magnitudeLabel: '8%', isDark: false));
+              value: 8,
+              magnitudeLabel: '8%',
+              isDark: false,
+              valence: GoodDirection.higher));
     });
     testWidgets('StatDeltaChip negative', (tester) async {
       await _mount(tester,
@@ -544,7 +550,7 @@ void main() {
               value: -4,
               magnitudeLabel: '4 kg',
               isDark: true,
-              positiveIsGood: false));
+              valence: GoodDirection.lower));
     });
     testWidgets('StatSectionHeader full', (tester) async {
       await _mount(tester,

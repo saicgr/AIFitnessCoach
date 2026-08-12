@@ -23917,6 +23917,15 @@ class AppLocalizationsTe extends AppLocalizations {
   String get navCoach => 'కోచ్';
 
   @override
+  String get navHealth => 'ఆరోగ్యం';
+
+  @override
+  String get healthTabVitals => 'వైటల్స్';
+
+  @override
+  String get healthTabNoDataYet => 'ఇంకా డేటా లేదు';
+
+  @override
   String get neatAchievementCardNew => 'కొత్తది!';
 
   @override

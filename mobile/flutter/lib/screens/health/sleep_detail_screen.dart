@@ -34,7 +34,13 @@ import '../../l10n/generated/app_localizations.dart';
 /// most-recent night; future days are unreachable (the date strip disables
 /// them); no Health connection shows a connect prompt instead of the screen.
 class SleepDetailScreen extends ConsumerStatefulWidget {
-  const SleepDetailScreen({super.key});
+  /// True when composed inside the Health tab's shell rather than pushed as
+  /// a full-screen route — see [CombinedHealthScreen.embedded]. Drops the
+  /// back-button row (nothing to pop) and the opaque background; the night
+  /// caption, Ask-Coach button and the whole body are unchanged.
+  final bool embedded;
+
+  const SleepDetailScreen({super.key, this.embedded = false});
 
   @override
   ConsumerState<SleepDetailScreen> createState() => _SleepDetailScreenState();
@@ -73,21 +79,25 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
         : null;
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: widget.embedded ? Colors.transparent : bg,
       body: SafeArea(
+        top: !widget.embedded,
         child: Column(
           children: [
             // ── Header: ← Health muted left, night caption faint right.
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 16, 0),
+              padding: EdgeInsets.fromLTRB(12, widget.embedded ? 0 : 8, 16, 0),
               child: Row(
                 children: [
-                  const GlassBackButton(),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Health',
-                    style: ZType.lbl(12, color: textMuted, letterSpacing: 1.2),
-                  ),
+                  if (!widget.embedded) ...[
+                    const GlassBackButton(),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Health',
+                      style:
+                          ZType.lbl(12, color: textMuted, letterSpacing: 1.2),
+                    ),
+                  ],
                   const Spacer(),
                   if (nightCaption != null)
                     Text(
@@ -107,17 +117,21 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
                 ],
               ),
             ),
-            // ── Anton masthead.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'SLEEP & RECOVERY',
-                  style: ZType.disp(28, color: textPrimary, letterSpacing: 0.5),
+            // ── Anton masthead. Suppressed when embedded: the shell's own
+            // rail already names this view (SLEEP), so a second 28pt title
+            // under it is pure duplication.
+            if (!widget.embedded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'SLEEP & RECOVERY',
+                    style:
+                        ZType.disp(28, color: textPrimary, letterSpacing: 0.5),
+                  ),
                 ),
               ),
-            ),
             if (!sync.isConnected)
               Expanded(child: _ConnectHealthEmpty(isDark: isDark))
             else

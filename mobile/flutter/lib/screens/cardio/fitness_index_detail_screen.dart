@@ -17,7 +17,13 @@ import '../common/app_refresh_indicator.dart';
 /// percentile per axis. The radar animates in; axes with no data draw at the
 /// center with a muted label (honest, never fabricated).
 class FitnessIndexDetailScreen extends ConsumerWidget {
-  const FitnessIndexDetailScreen({super.key});
+  /// True when composed inside the Health tab's shell rather than pushed as
+  /// a full-screen route — see [CombinedHealthScreen.embedded]. Drops the
+  /// back-button row (nothing to pop) and the opaque background; the
+  /// Ask-Coach button and the whole body are unchanged.
+  final bool embedded;
+
+  const FitnessIndexDetailScreen({super.key, this.embedded = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,21 +34,24 @@ class FitnessIndexDetailScreen extends ConsumerWidget {
     final async = ref.watch(fitnessIndexProvider);
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: embedded ? Colors.transparent : bg,
       body: SafeArea(
+        top: !embedded,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(12, embedded ? 0 : 8, 16, 4),
               child: Row(
                 children: [
-                  const GlassBackButton(),
-                  const SizedBox(width: 12),
-                  Text('Fitness index',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary)),
+                  if (!embedded) ...[
+                    const GlassBackButton(),
+                    const SizedBox(width: 12),
+                    Text('Fitness index',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary)),
+                  ],
                   const Spacer(),
                   AskCoachButton(
                     contextLabel: 'Fitness index · 5-axis',

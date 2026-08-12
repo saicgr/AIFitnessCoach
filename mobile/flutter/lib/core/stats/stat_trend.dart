@@ -1,9 +1,14 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../constants/app_colors.dart';
 import '../constants/stat_typography.dart';
+import 'state_valence.dart';
 import '../../widgets/trends/trend_correlation.dart' show TrendPoint, ewmaPoints;
+
+/// [GoodDirection] now lives with the semantic state ramp it feeds
+/// (`state_valence.dart`) — re-exported here so the existing importers of this
+/// file keep compiling against one vocabulary, not two.
+export 'state_valence.dart' show GoodDirection, SemanticState, DeviationLine;
 
 /// Generic trend math + presentation for the "glanceable stats" redesign.
 ///
@@ -19,11 +24,6 @@ import '../../widgets/trends/trend_correlation.dart' show TrendPoint, ewmaPoints
 /// [GoodDirection] (which way is "good"), so a custom metric whose direction is
 /// unknown simply uses [GoodDirection.neutral] and shows a factual arrow with
 /// no green/red judgment.
-
-/// Which way is "good" for a metric. `lower` = a decrease is an improvement
-/// (weight cut, resting HR, body fat); `higher` = an increase is (1RM, steps);
-/// `neutral` = we don't judge (a user-defined metric with no stated direction).
-enum GoodDirection { higher, lower, neutral }
 
 /// The factual direction of a change, independent of whether it's "good".
 enum TrendDirection { up, down, flat }
@@ -84,30 +84,29 @@ class StatChange {
 class StatTrend {
   StatTrend._();
 
-  static bool _isDark(BuildContext c) =>
-      Theme.of(c).brightness == Brightness.dark;
-
-  static Color _success(BuildContext c) =>
-      _isDark(c) ? AppColors.success : AppColorsLight.success; // accent-allowlist: success/error semantic trend color, must stay green/red regardless of accent
-  static Color _error(BuildContext c) =>
-      _isDark(c) ? AppColors.error : AppColorsLight.error; // accent-allowlist: success/error semantic trend color, must stay green/red regardless of accent
-  static Color _muted(BuildContext c) =>
-      _isDark(c) ? AppColors.textMuted : AppColorsLight.textMuted;
+  /// Resolves a factual [TrendDirection] into a ramp rung given which
+  /// direction is good for the metric. A flat change or a metric that refuses
+  /// to judge ([GoodDirection.neutral]) is [SemanticState.neutral].
+  static SemanticState state(TrendDirection dir, GoodDirection good) {
+    final deviation = switch (dir) {
+      TrendDirection.up => 1.0,
+      TrendDirection.down => -1.0,
+      TrendDirection.flat => 0.0,
+    };
+    return SemanticState.resolve(valence: good, deviation: deviation);
+  }
 
   /// Resolves the color for a change given which direction is good.
-  /// Flat or neutral-goodness → muted (no judgment); good → success; bad → error.
+  ///
+  /// Reads the semantic state ramp (supports/neutral/strains), NOT
+  /// success/error: a metric moving away from its goal is a state, not a
+  /// failed operation.
   static Color color(
     BuildContext context,
     TrendDirection dir,
     GoodDirection good,
-  ) {
-    if (dir == TrendDirection.flat || good == GoodDirection.neutral) {
-      return _muted(context);
-    }
-    final isGood =
-        good == GoodDirection.higher ? dir == TrendDirection.up : dir == TrendDirection.down;
-    return isGood ? _success(context) : _error(context);
-  }
+  ) =>
+      state(dir, good).color(context);
 
   static IconData icon(TrendDirection dir) {
     switch (dir) {

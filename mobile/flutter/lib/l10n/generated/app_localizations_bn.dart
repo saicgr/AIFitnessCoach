@@ -23792,6 +23792,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get navCoach => 'কোচ';
 
   @override
+  String get navHealth => 'স্বাস্থ্য';
+
+  @override
+  String get healthTabVitals => 'ভাইটালস';
+
+  @override
+  String get healthTabNoDataYet => 'এখনও কোনো ডেটা নেই';
+
+  @override
   String get neatAchievementCardNew => 'নতুন!';
 
   @override

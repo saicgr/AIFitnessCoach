@@ -23727,6 +23727,15 @@ class AppLocalizationsMr extends AppLocalizations {
   String get navCoach => 'कोच';
 
   @override
+  String get navHealth => 'आरोग्य';
+
+  @override
+  String get healthTabVitals => 'व्हायटल्स';
+
+  @override
+  String get healthTabNoDataYet => 'अद्याप डेटा नाही';
+
+  @override
   String get neatAchievementCardNew => 'नवीन!';
 
   @override

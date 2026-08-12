@@ -153,6 +153,23 @@ class ThemeColors {
   Color get info => isDark ? AppColors.info : AppColorsLight.info;
 
   // ─────────────────────────────────────────────────────────────────
+  // Semantic state ramp (supports · neutral · strains)
+  //
+  // These are NOT accent-following: the ramp carries meaning, so it must
+  // read the same for every user regardless of their chosen accent. Resolve
+  // one through `SemanticState` (lib/core/design/state_valence.dart) rather
+  // than reaching for a rung directly — the whole point of the ramp is that
+  // the metric's valence, not the sign of the deviation, picks the rung.
+  // ─────────────────────────────────────────────────────────────────
+
+  Color get stateSupports =>
+      isDark ? AppColors.stateSupports : AppColorsLight.stateSupports;
+  Color get stateStrains =>
+      isDark ? AppColors.stateStrains : AppColorsLight.stateStrains;
+  Color get stateNeutral =>
+      isDark ? AppColors.stateNeutral : AppColorsLight.stateNeutral;
+
+  // ─────────────────────────────────────────────────────────────────
   // Workout Type Colors (theme-aware monochrome)
   // ─────────────────────────────────────────────────────────────────
 

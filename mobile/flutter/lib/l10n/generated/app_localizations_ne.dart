@@ -23854,6 +23854,15 @@ class AppLocalizationsNe extends AppLocalizations {
   String get navCoach => 'कोच';
 
   @override
+  String get navHealth => 'स्वास्थ्य';
+
+  @override
+  String get healthTabVitals => 'भाइटल्स';
+
+  @override
+  String get healthTabNoDataYet => 'अहिलेसम्म डाटा छैन';
+
+  @override
   String get neatAchievementCardNew => 'नयाँ!';
 
   @override

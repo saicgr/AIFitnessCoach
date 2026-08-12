@@ -23676,6 +23676,15 @@ class AppLocalizationsSv extends AppLocalizations {
   String get navCoach => 'Coach';
 
   @override
+  String get navHealth => 'Hälsa';
+
+  @override
+  String get healthTabVitals => 'Vitalvärden';
+
+  @override
+  String get healthTabNoDataYet => 'Inga data ännu';
+
+  @override
   String get neatAchievementCardNew => 'NY!';
 
   @override

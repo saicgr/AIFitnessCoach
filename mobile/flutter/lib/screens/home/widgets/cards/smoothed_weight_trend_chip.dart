@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/user_provider.dart';
+import '../../../../core/stats/state_valence.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
 
@@ -90,13 +91,18 @@ class SmoothedWeightTrendChip extends ConsumerWidget {
     final effectiveUnit = currentEma != null
         ? unit
         : (signal.unit == 'kg' ? 'kg' : 'lb');
-    final isDown = delta != null && delta < 0;
-    final isFlat = delta != null && delta.abs() < 0.1;
+    // Body weight is valence-NEUTRAL (MetricValence declares it so): a cut and
+    // a bulk flip which direction is the win, so the delta ships factual and
+    // untinted rather than congratulating a drop the user may not want. This
+    // used to render `isDown ? success : warning`, which told a bulking user
+    // their gained pound was a warning.
     final deltaColor = delta == null
-        ? c.textMuted
-        : (isFlat
-            ? c.textMuted
-            : (isDown ? c.success : c.warning));
+        ? c.stateNeutral
+        : SemanticState.resolve(
+            valence: MetricValence.forKey('weight'),
+            deviation: delta,
+            epsilon: 0.1,
+          ).color(context);
 
     return GestureDetector(
       onTap: () => context.go('/progress'),

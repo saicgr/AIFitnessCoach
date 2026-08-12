@@ -23833,6 +23833,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navCoach => 'Тренер';
 
   @override
+  String get navHealth => 'Здоровье';
+
+  @override
+  String get healthTabVitals => 'Показатели';
+
+  @override
+  String get healthTabNoDataYet => 'Пока нет данных';
+
+  @override
   String get neatAchievementCardNew => 'НОВИНКА!';
 
   @override

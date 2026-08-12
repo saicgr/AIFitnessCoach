@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/stats/state_valence.dart';
 import '../providers/trend_series_provider.dart';
 import '../../widgets/trends/premium_metric_chart.dart';
 
@@ -58,8 +59,19 @@ class MetricDescriptor {
   final TrendMetric? series;
 
   /// True when higher is better (steps, sleep). False when lower is better
-  /// (resting HR, body fat, weight toward a target). Drives goal-met colouring.
+  /// (resting HR, body fat, weight toward a target). Drives goal-met colouring
+  /// and the chart's goal band ONLY.
+  ///
+  /// Do NOT reuse this to tint a baseline deviation: it defaults to `true`, so
+  /// every descriptor that never thought about it silently claims
+  /// higher-is-better. Use [valence] for that — it defaults to "no judgment".
   final bool goalDirectionUp;
+
+  /// This metric's declared valence for the semantic state ramp, read from the
+  /// app's single declaration table by [id]. A metric with no declaration is
+  /// [GoodDirection.neutral] — a factual number and no tint — rather than a
+  /// guess.
+  GoodDirection get valence => MetricValence.forKey(id);
 
   /// Resolves the goal value (nullable) from live providers, or null.
   final double? Function(WidgetRef ref)? goalOf;

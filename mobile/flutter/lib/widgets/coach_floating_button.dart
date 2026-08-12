@@ -1,176 +1,153 @@
-/// Persistent coach-access FAB rendered by `MainShell` above the floating
-/// nav bar on every main tab. Adapts its shape to the active tab:
+/// The global ✦ coach button — **Placement D** (2026-08 nav redesign).
 ///
-///   * **Home** (no sub-tab strip on screen): renders as an extended pill
-///     ("Ask coach" + sparkle) at the top of scroll, collapses to icon
-///     once the user scrolls past ~24pt. Scroll-driven morph state lives
-///     in [coachFabExpandedProvider], driven by a NotificationListener
-///     in `main_shell.dart`.
-///   * **Workout / Nutrition / Discover / You** (sub-tab strips exist):
-///     always renders icon-only (44pt circle) so the FAB never obscures
-///     a strip tab behind it.
+/// Coach gave up its bottom-nav tab to Health, so coach access became a small
+/// icon-only ✦ circle that rides immediately **inboard of** (to the left of)
+/// the Quick Log pill, in one bottom-right cluster. It is a promotion of this
+/// already-shipped widget, not a new control.
 ///
-/// In both cases tap → `/chat?source=coach_fab`. Light haptic + explicit
-/// hero tag. Rendered BEFORE the nav in the Stack so any downward shadow
-/// bleed is covered by the nav's paint area.
+/// ## Why one cluster and not two floats
+///
+/// Quick Log is not fixed-width: `quickLogFabExpandedProvider` (12 px collapse
+/// / 8 px re-expand hysteresis, `main_shell.dart`) morphs it between a labelled
+/// pill and a 44 pt circle the instant the tab scrolls. Anything anchored
+/// beside it with its own independent `Positioned(right:)` would have the gap
+/// between the two breathing open and shut on every scroll. So the two are laid
+/// out as ONE right-anchored `Row` in `main_shell.dart` — the coach circle is
+/// fixed at 40 pt, the gap is a constant, and Quick Log's morph slides the
+/// whole cluster as a unit. That is what "shares Quick Log's collapse state"
+/// means mechanically; there is no second morph provider to drift out of sync
+/// (the old `coachFabExpandedProvider` was retired with this change).
+///
+/// ## Why bottom-RIGHT
+///
+/// Bottom-left is the one quadrant a right-handed one-handed user cannot reach
+/// without a grip change — roughly a third of sessions. Bottom-right is also
+/// the established convention for assistant entry points and the default FAB
+/// corner, and it is where this widget already lived.
+///
+/// ## Quiet by construction
+///
+/// Google Health users report triggering their AI coach *accidentally* and say
+/// it obstructs their data. So: icon-only (never a labelled pill competing with
+/// Quick Log), the smaller of the two targets, never animated unprompted, and
+/// it never opens anything on its own — one deliberate tap → `/chat`.
+///
+/// Two hide rules, both enforced here rather than at the call site so they hold
+/// wherever the button is mounted:
+///
+///   * **On the coach screen itself** (`/chat…`) — a coach button floating over
+///     the coach is clutter, and it would sit on the composer.
+///   * **During an active workout** — that flow has its own Ask-coach pill and
+///     its own docked mini player in this exact band.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/providers/workout_mini_player_provider.dart';
 import '../core/theme/theme_colors.dart';
+import '../data/providers/coach_unread_provider.dart';
 import '../data/services/haptic_service.dart';
 import 'coach_spark_icon.dart';
+// `edgeHandleEnabledProvider` — the chat-head opt-in this button defers to.
+import 'main_shell.dart';
 
-/// Whether the FAB is in extended ("Ask coach" pill) state. Owned by
-/// `MainShell` (NotificationListener writes it on scroll threshold cross);
-/// read by [CoachFloatingButton]. Only consulted on Home; other tabs
-/// force icon-only regardless of this flag.
-///
-/// Surface 1.8 — defaults to collapsed (icon-only). The FAB expands to
-/// the "Ask coach" pill after the user idles at scroll position 0 for
-/// 800ms (driven by the scroll listener in `main_shell.dart`). Any scroll
-/// collapses it immediately.
-final coachFabExpandedProvider = StateProvider<bool>((ref) => false);
+/// Diameter of the icon-only coach circle. Deliberately smaller than
+/// `kQuickLogFabHeight` (44) — target size matches frequency ordering, and
+/// Quick Log is the daily habitual action.
+const double kCoachPillDiameter = 40.0;
+
+/// Gap between the coach circle and the Quick Log pill inside the cluster.
+/// A constant, not a computed value: the whole point of the cluster is that
+/// this distance never changes while Quick Log morphs.
+const double kCoachPillClusterGap = 10.0;
 
 class CoachFloatingButton extends ConsumerWidget {
-  /// True when the active tab is Home — drives the pill-vs-icon decision.
-  /// Set by `MainShell` from its `selectedIndex`. Defaults to false so a
-  /// stale construction never accidentally shows the wide pill on a
-  /// strip-having tab.
-  final bool isHomeTab;
+  const CoachFloatingButton({super.key});
 
-  /// When true (default), the FAB is lifted to clear the floating bottom nav
-  /// (`bottomInset + nav + gap`). Screens pushed ON TOP of the shell that have
-  /// NO bottom nav (e.g. the Library) pass `false` so the FAB sits near the
-  /// real bottom edge instead of floating ~100pt up over content (issue 10).
-  final bool liftAboveNav;
-
-  /// Extra vertical lift (pt) added to the resolved `bottom`. Screens that dock
-  /// their own full-width CTA at the bottom (e.g. Library's "BUILD CUSTOM
-  /// WORKOUT") pass the CTA's height + gap so the FAB floats clearly ABOVE the
-  /// button instead of overlapping its right edge.
-  final double extraBottomOffset;
-
-  const CoachFloatingButton({
-    super.key,
-    this.isHomeTab = false,
-    this.liftAboveNav = true,
-    this.extraBottomOffset = 0,
-  });
-
-  /// Vertical gap between the top of the floating nav and the bottom of
-  /// the FAB. Surface 1.8 tucks the FAB up 24pt so it sits in the empty
-  /// gap above the Workout hero on Home rather than over the Reports /
-  /// Today rings card. Previously 20pt.
-  static const double _gapAboveNav = 44.0;
-  static const double _navHeight = 56.0;
+  /// True when the coach button must stand down for this location / session
+  /// state. Exposed so the shell can decide whether to reserve cluster space
+  /// without duplicating the rules, and so tests can assert them directly.
+  static bool isSuppressed({
+    required String location,
+    required bool workoutActive,
+  }) =>
+      // `/chat` also prefixes `/chat/sessions` — the conversation list is the
+      // same coach surface, so it stands down there too.
+      location.startsWith('/chat') || workoutActive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final c = ThemeColors.of(context);
-    final bottomInset = MediaQuery.viewPaddingOf(context).bottom;
-    // Only Home tab is allowed to extend; other tabs force the FAB to
-    // its icon-only form regardless of scroll-position state.
-    final isExtended = isHomeTab && ref.watch(coachFabExpandedProvider);
+    if (suppressedIn(context, ref)) return const SizedBox.shrink();
+    final tc = ThemeColors.of(context);
+    final unread = ref.watch(coachUnreadCountProvider);
 
-    return Positioned(
-      right: 16,
-      bottom: (liftAboveNav
-              ? bottomInset + _navHeight + _gapAboveNav
-              // No nav on this screen — sit just above the home indicator.
-              : bottomInset + 16) +
-          extraBottomOffset,
+    return Semantics(
+      button: true,
+      label: 'Ask coach',
       child: GestureDetector(
         onTap: () => _open(context),
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          // Pill (extended) ↔ 36pt circle (collapsed). The collapsed
-          // form is intentionally the SAME visual as the strip's coach
-          // slot (`_FloatingTabBarCoachSlot` in floating_tab_bar.dart)
-          // — same 36pt diameter, same accent fill, same accent shadow.
-          // When the user scrolls on Home, the FAB shrinks into that
-          // exact look so the affordance reads identically across
-          // tabs.
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeOutCubic,
-          height: isExtended ? 48 : 36,
-          padding: EdgeInsets.symmetric(
-            horizontal: isExtended ? 12 : 0,
-          ),
-          decoration: BoxDecoration(
-            color: c.accent,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: c.accent.withValues(alpha: 0.35),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: SizedBox(
+          width: kCoachPillDiameter,
+          height: kCoachPillDiameter,
+          child: Stack(
+            clipBehavior: Clip.none,
             children: [
-              // Icon container sized to 36pt always — matches the strip
-              // slot exactly. When extended, this 36pt circle sits at
-              // the left of the pill alongside the label; when
-              // collapsed it IS the entire FAB.
-              SizedBox(
-                width: 36,
-                height: 36,
+              Container(
+                width: kCoachPillDiameter,
+                height: kCoachPillDiameter,
+                decoration: BoxDecoration(
+                  color: tc.accent,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: tc.accent.withValues(alpha: 0.30),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Center(
-                  child: CoachSparkIcon(
-                    size: 18,
-                    color: c.accentContrast,
+                  child: ExcludeSemantics(
+                    child: CoachSparkIcon(size: 18, color: tc.accentContrast),
                   ),
                 ),
               ),
-              // Label area — slides + fades horizontally as it appears
-              // / disappears, so the morph reads as the pill growing
-              // out from / contracting into the small circle rather
-              // than a hard pop.
-              ClipRect(
-                child: AnimatedSize(
-                  duration: const Duration(milliseconds: 280),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.centerLeft,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 220),
-                    switchInCurve: Curves.easeOut,
-                    switchOutCurve: Curves.easeIn,
-                    transitionBuilder: (child, anim) => FadeTransition(
-                      opacity: anim,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(-0.25, 0),
-                          end: Offset.zero,
-                        ).animate(anim),
-                        child: child,
+              // Unread proactive coach messages. This badge used to live on the
+              // Coach nav item; the nav item is gone, and this button is a
+              // strictly better home for it — it is visible on EVERY tab, not
+              // just while some other tab is selected. Cleared by ChatScreen on
+              // open, whatever the entry point.
+              if (unread > 0)
+                PositionedDirectional(
+                  top: -2,
+                  end: -4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    constraints:
+                        const BoxConstraints(minWidth: 15, minHeight: 15),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tc.accent,
+                      borderRadius: BorderRadius.circular(8),
+                      // Rings the badge against the accent circle behind it so
+                      // the count stays legible where the two overlap.
+                      border: Border.all(color: tc.background, width: 1.5),
+                    ),
+                    child: Text(
+                      unread > 9 ? '9+' : '$unread',
+                      style: TextStyle(
+                        color: tc.accentContrast,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        height: 1.0,
                       ),
                     ),
-                    child: isExtended
-                        ? Padding(
-                            key: const ValueKey('label'),
-                            padding: const EdgeInsets.only(left: 4, right: 4),
-                            child: Text(
-                              'Ask coach',
-                              style: TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.1,
-                                color: c.accentContrast,
-                              ),
-                            ),
-                          )
-                        : const SizedBox.shrink(
-                            key: ValueKey('empty'),
-                          ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -178,17 +155,52 @@ class CoachFloatingButton extends ConsumerWidget {
     );
   }
 
+  /// Resolves [isSuppressed] against the live router location and workout
+  /// session. Public so the cluster can drop the inter-button gap in lockstep
+  /// with the circle instead of leaving a hole where it used to be.
+  static bool suppressedIn(BuildContext context, WidgetRef ref) {
+    // The draggable chat-head bubble (Settings → AI Coach, default OFF) is the
+    // SAME affordance in a different form, and `main_shell` mounts it into the
+    // same bottom-right band. Rendering both gives an opt-in user two coach
+    // entry points stacked on each other. The toggle picks one: bubble on →
+    // circle off. Resolved here rather than at either mount site so the
+    // cluster's inter-button gap closes in lockstep (see
+    // `CoachQuickLogCluster._coachHidden`).
+    if (ref.watch(edgeHandleEnabledProvider)) return true;
+    // A workout is live for as long as the mini player holds its workout —
+    // `close()` is the only thing that clears it.
+    final workoutActive =
+        ref.watch(workoutMiniPlayerProvider.select((s) => s.workout != null));
+    final router = GoRouter.maybeOf(context);
+    final location =
+        router?.routerDelegate.currentConfiguration.uri.path ?? '';
+    return isSuppressed(location: location, workoutActive: workoutActive);
+  }
+
   void _open(BuildContext context) {
     HapticService.light();
-    try {
-      context.push('/chat?source=coach_fab');
-    } catch (_) {
-      context.go('/chat');
-    }
+    context.push('/chat?source=coach_fab');
   }
 }
 
-// `_ExtendedPill` and `_IconOnly` helper widgets were removed — the
-// build method now uses a single `FloatingActionButton.extended` with
-// `isExtended` toggling between states, so Flutter's native morph
-// animation handles the smooth pill↔icon transition.
+/// Corner mount for surfaces that have **no** main nav / Quick Log cluster to
+/// join — a pushed full-screen route such as the Library.
+///
+/// Inside the shell the button is part of the cluster in `main_shell.dart`;
+/// never mount both, or the two floats fight for the same band.
+class CoachFloatingButtonCorner extends StatelessWidget {
+  /// Extra vertical lift (pt) for screens that dock their own CTA at the
+  /// bottom edge, so the circle floats clearly above it.
+  final double extraBottomOffset;
+
+  const CoachFloatingButtonCorner({super.key, this.extraBottomOffset = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    return PositionedDirectional(
+      end: 16,
+      bottom: MediaQuery.viewPaddingOf(context).bottom + 16 + extraBottomOffset,
+      child: const CoachFloatingButton(),
+    );
+  }
+}

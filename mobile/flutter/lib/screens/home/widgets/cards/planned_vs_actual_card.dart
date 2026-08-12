@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/stats/state_valence.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/home_signals_providers.dart';
 import '../../../../data/providers/today_workout_provider.dart';
@@ -37,8 +38,15 @@ class PlannedVsActualCard extends ConsumerWidget {
     final deltaLabel = delta == null
         ? null
         : (delta >= 0 ? '+${delta.toStringAsFixed(0)}%' : '${delta.toStringAsFixed(0)}%');
-    final deltaColor =
-        delta == null ? c.textSecondary : (delta >= 0 ? c.success : c.warning);
+    // Hitting or beating the planned volume supports the session's goal;
+    // falling short strains it. Declared, not inferred from the sign.
+    final deltaColor = delta == null
+        ? c.textSecondary
+        : SemanticState.resolve(
+            valence: GoodDirection.higher,
+            deviation: delta,
+            epsilon: 0.5,
+          ).color(context);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

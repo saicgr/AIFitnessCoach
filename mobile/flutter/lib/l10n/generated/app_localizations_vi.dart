@@ -23757,6 +23757,15 @@ class AppLocalizationsVi extends AppLocalizations {
   String get navCoach => 'HLV';
 
   @override
+  String get navHealth => 'Sức khỏe';
+
+  @override
+  String get healthTabVitals => 'Chỉ số sinh tồn';
+
+  @override
+  String get healthTabNoDataYet => 'Chưa có dữ liệu';
+
+  @override
   String get neatAchievementCardNew => 'MỚI!';
 
   @override

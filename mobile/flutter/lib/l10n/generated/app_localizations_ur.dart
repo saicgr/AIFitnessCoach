@@ -23741,6 +23741,15 @@ class AppLocalizationsUr extends AppLocalizations {
   String get navCoach => 'کوچ';
 
   @override
+  String get navHealth => 'صحت';
+
+  @override
+  String get healthTabVitals => 'حیاتی علامات';
+
+  @override
+  String get healthTabNoDataYet => 'ابھی کوئی ڈیٹا نہیں';
+
+  @override
   String get neatAchievementCardNew => 'نیا!';
 
   @override

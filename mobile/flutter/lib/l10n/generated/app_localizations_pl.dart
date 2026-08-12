@@ -23817,6 +23817,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get navCoach => 'Trener';
 
   @override
+  String get navHealth => 'Zdrowie';
+
+  @override
+  String get healthTabVitals => 'Parametry życiowe';
+
+  @override
+  String get healthTabNoDataYet => 'Brak danych';
+
+  @override
   String get neatAchievementCardNew => 'NOWOŚĆ!';
 
   @override

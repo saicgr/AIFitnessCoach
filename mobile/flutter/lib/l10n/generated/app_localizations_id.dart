@@ -23743,6 +23743,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get navCoach => 'Pelatih';
 
   @override
+  String get navHealth => 'Kesehatan';
+
+  @override
+  String get healthTabVitals => 'Tanda vital';
+
+  @override
+  String get healthTabNoDataYet => 'Belum ada data';
+
+  @override
   String get neatAchievementCardNew => 'BARU!';
 
   @override

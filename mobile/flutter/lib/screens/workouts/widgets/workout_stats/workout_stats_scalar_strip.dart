@@ -114,7 +114,8 @@ class _ScalarStrip extends ConsumerWidget {
         value: scoreChange.toDouble(),
         magnitudeLabel: scoreChange.abs().toString(),
         isDark: isDark,
-        positiveIsGood: true,
+        // Strength score: a rising score supports the training goal.
+        valence: GoodDirection.higher,
       );
     }
 

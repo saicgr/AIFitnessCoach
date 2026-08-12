@@ -22501,6 +22501,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navCoach => '教练';
 
   @override
+  String get navHealth => '健康';
+
+  @override
+  String get healthTabVitals => '生命体征';
+
+  @override
+  String get healthTabNoDataYet => '暂无数据';
+
+  @override
   String get neatAchievementCardNew => '新！';
 
   @override

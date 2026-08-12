@@ -49,6 +49,7 @@ class TooltipAnchors {
   static final heroCarousel = GlobalKey(debugLabel: 'tour_heroCarousel');
   static final quickLog = GlobalKey(debugLabel: 'tour_quickLog');
   static final workoutNav = GlobalKey(debugLabel: 'tour_workoutNav');
+  static final healthNav = GlobalKey(debugLabel: 'tour_healthNav');
   static final aiChat = GlobalKey(debugLabel: 'tour_aiChat');
   static final nutritionNav = GlobalKey(debugLabel: 'tour_nutritionNav');
   static final profileNav = GlobalKey(debugLabel: 'tour_profileNav');

@@ -23672,6 +23672,15 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navCoach => 'โค้ช';
 
   @override
+  String get navHealth => 'สุขภาพ';
+
+  @override
+  String get healthTabVitals => 'สัญญาณชีพ';
+
+  @override
+  String get healthTabNoDataYet => 'ยังไม่มีข้อมูล';
+
+  @override
   String get neatAchievementCardNew => 'ใหม่!';
 
   @override

@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/stats/state_valence.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/today_score.dart';
 import '../../../data/providers/pillar_history_provider.dart';
@@ -543,7 +544,12 @@ class _PillarDeltaChip extends ConsumerWidget {
     if (delta == 0) return const SizedBox.shrink();
 
     final isUp = delta > 0;
-    final color = isUp ? const Color(0xFF3FA66B) : const Color(0xFFEC8B2C);  // accent-allowlist: score trend delta colour (up/down arrow), reuses the Train/Nourish ring palette convention
+    // Pillar completion declares higher-is-better, so more completion today
+    // than yesterday supports. Two raw hexes used to encode that inline.
+    final color = SemanticState.resolve(
+      valence: GoodDirection.higher,
+      deviation: delta.toDouble(),
+    ).color(context);
     final label = isUp ? '▲${delta.abs()}' : '▼${delta.abs()}';
 
     return Padding(

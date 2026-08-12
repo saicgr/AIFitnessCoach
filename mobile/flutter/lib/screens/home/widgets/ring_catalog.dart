@@ -370,10 +370,16 @@ class RingVisibility {
 
 /// SharedPreferences storage key. Scoped per user when an id is available so
 /// switching accounts on the same device doesn't bleed customisations.
-String _ringOrderKey(String? userId) =>
-    userId == null || userId.isEmpty
-        ? 'home_ring_order_anon'
-        : 'home_ring_order_$userId';
+///
+/// Public because the Home metric-tile store migrates off it: a user who
+/// arranged their metrics here before tiles existed keeps that arrangement,
+/// and the only honest way to know they arranged anything at all is whether
+/// this key was ever written (see `home_metric_tiles_provider.dart`).
+String ringOrderStorageKey(String? userId) => userId == null || userId.isEmpty
+    ? 'home_ring_order_anon'
+    : 'home_ring_order_$userId';
+
+String _ringOrderKey(String? userId) => ringOrderStorageKey(userId);
 
 class RingVisibilityNotifier extends StateNotifier<List<RingKind>> {
   final Ref _ref;

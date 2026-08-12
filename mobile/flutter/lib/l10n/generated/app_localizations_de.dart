@@ -23910,6 +23910,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get navCoach => 'Coach';
 
   @override
+  String get navHealth => 'Gesundheit';
+
+  @override
+  String get healthTabVitals => 'Vitalwerte';
+
+  @override
+  String get healthTabNoDataYet => 'Noch keine Daten';
+
+  @override
   String get neatAchievementCardNew => 'NEU!';
 
   @override

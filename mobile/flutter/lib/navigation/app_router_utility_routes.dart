@@ -91,6 +91,31 @@ List<RouteBase> _utilityRoutes() => [
         },
       ),
 
+      // ── `/health/*` detail routes ────────────────────────────────────────
+      //
+      // These stay TOP-LEVEL (siblings of the StatefulShellRoute, no bottom
+      // nav) even though the 2026-08 redesign gave Health a bottom-nav branch.
+      // That is deliberate, not an oversight:
+      //
+      //   ~23 call sites — Home cards, Nutrition, You, the coach's own CTAs,
+      //   `notifications_screen.dart`, `daily_coach_insight_provider`'s
+      //   `CoachCta`, plus four `.go('/health/vitals')` metric tiles — push
+      //   these paths as overlays and rely on `GlassBackButton`'s
+      //   `context.pop()` returning to the exact screen (and scroll position)
+      //   the user came from.
+      //
+      // Moving them inside the Health branch would instead switch the active
+      // branch: the bottom nav visibly jumps to Health, the previous tab is
+      // left behind in the shell's IndexedStack rather than popped to, and
+      // that back button pops to the Health branch root — or, on a cold
+      // push-notification deep link into a branch with no prior entry, no-ops
+      // entirely and strands the user on a screen whose back button is dead.
+      //
+      // The Health TAB reaches the same five screens by composing them
+      // (`HealthShellScreen`, `embedded: true`) and switches between them with
+      // local state, so it needs no routes of its own beyond `/health`.
+      // Deep-link the tab view with `/health?tab=sleep`.
+
       // Sleep detail — date strip, hypnogram, sleep score, debt/regularity,
       // 7-night + 30-day charts, monthly summary, coaching, sleep goal.
       // Reached by tapping the "Last Night's Sleep" card.

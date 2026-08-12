@@ -23955,6 +23955,15 @@ class AppLocalizationsTl extends AppLocalizations {
   String get navCoach => 'Coach';
 
   @override
+  String get navHealth => 'Kalusugan';
+
+  @override
+  String get healthTabVitals => 'Vitals';
+
+  @override
+  String get healthTabNoDataYet => 'Wala pang data';
+
+  @override
   String get neatAchievementCardNew => 'BAGO!';
 
   @override

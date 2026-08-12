@@ -6,13 +6,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../data/providers/home_sections_provider.dart';
-import '../../data/providers/metric_layout_provider.dart';
-import '../../data/providers/metric_value_provider.dart';
 import '../../data/providers/saved_trends_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_sheet.dart';
-import 'widgets/home/metric_summary_deck.dart' show MetricRowViz;
-import 'widgets/ring_catalog.dart';
+import 'widgets/home/metric_tile_grid.dart' show MetricTileGridEditor;
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -830,22 +826,16 @@ class _AddTrendButton extends StatelessWidget {
 
 // ============================================================ Metrics tab
 //
-// Direction C — edits the home metric deck: per-metric size (S/W/L), chart
-// style, color and date range, plus show/hide. Every row shows a live
-// mini-graph + number (see [MetricRowViz] + [metricValueProvider]). The Today
-// score's contributors are core and can't be hidden. Reordering stays in the
-// home customize-rings sheet.
-
-const List<int> _kMetricSwatches = [
-  0xFFEC8B2C,
-  0xFF3E8FD0,
-  0xFF3FA66B,
-  0xFF8B5CF6,
-  0xFFE5544D,
-  0xFF06B6D4,
-  0xFFA855F7,
-  0xFF64748B,
-];
+// The Home metric-tile customiser. This is the ONE editor for the tile grid —
+// Home's in-place edit mode mounts the very same [MetricTileGridEditor] widget
+// against the very same store, so there is no second, parallel place where a
+// user's metric layout can be defined and silently diverge.
+//
+// It replaced a list of ring rows that edited `ringVisibilityProvider` +
+// `metricLayoutProvider`: state nothing on Home ever rendered, because the
+// widget meant to draw it (the old `MetricSummaryDeck`, since deleted) never
+// mounted. Reorder, resize, remove and add now all land on tiles the user can
+// actually see.
 
 class _MetricsTab extends ConsumerWidget {
   const _MetricsTab();
@@ -859,11 +849,10 @@ class _MetricsTab extends ConsumerWidget {
   }
 }
 
-/// The shared body of the metric-customization surface — used by both the
-/// My Space "Metrics" tab and the glassmorphic settings sheet opened from the
-/// home deck's tune button ([showMetricSettingsSheet]). Each row carries a
-/// live mini-graph + current number ([MetricRowViz] + [metricValueProvider]);
-/// the SHOWING set is drag-reorderable (long-press); core metrics are pinned.
+/// The shared body of the metric-customisation surface — the My Space
+/// "Metrics" tab and the glass settings sheet both render it. Drag a tile to
+/// reorder, tap it for S/M/L, − to remove, and the Add slot to place a new
+/// metric; every edit writes straight through to `homeMetricTilesProvider`.
 class MetricsSettingsBody extends ConsumerWidget {
   /// When true (glass sheet), the intro paragraph is dropped — the sheet has
   /// its own title row.
@@ -873,10 +862,6 @@ class MetricsSettingsBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ref.colors(context);
-    final visible = ref.watch(ringVisibilityProvider);
-    final hidden = ref.watch(hiddenRingsProvider);
-    final core = visible.where((k) => kRingCatalog[k]!.isCore).toList();
-    final showing = visible.where((k) => !kRingCatalog[k]!.isCore).toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -884,51 +869,15 @@ class MetricsSettingsBody extends ConsumerWidget {
       children: [
         if (!compact) ...[
           Text(
-            'Resize, restyle, recolor or hide each metric on your home deck. '
-            'Drag to reorder; tap the gear to change its chart and date range.',
+            'Drag a tile to reorder it, tap it to resize (S / M / L), and drag '
+            'it onto page 2 for the metrics you only check sometimes. Removing '
+            'a tile hides it — the metric and its history stay put.',
             style: TextStyle(fontSize: 13, height: 1.45, color: c.textSecondary),
           ),
           const SizedBox(height: 16),
         ],
-        _label(c, 'CORE'),
-        for (final k in core) _MetricRow(kind: k, colors: c, core: true),
-        if (showing.isNotEmpty) ...[
-          const SizedBox(height: 18),
-          _label(c, 'SHOWING'),
-          ReorderableListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            buildDefaultDragHandles: false,
-            itemCount: showing.length,
-            onReorder: (oldIndex, newIndex) {
-              HapticService.light();
-              final reordered = List<RingKind>.of(showing);
-              final idx = newIndex > oldIndex ? newIndex - 1 : newIndex;
-              final moved = reordered.removeAt(oldIndex);
-              reordered.insert(idx, moved);
-              // Core stays pinned at the front; persist core + reordered tail.
-              ref
-                  .read(ringVisibilityProvider.notifier)
-                  .setOrder([...core, ...reordered]);
-            },
-            itemBuilder: (context, i) {
-              final k = showing[i];
-              // Long-press anywhere on the row to drag — no extra handle, so
-              // the rich trailing controls (size/gear/toggle) never overflow.
-              return ReorderableDelayedDragStartListener(
-                key: ValueKey('msrow_${k.id}'),
-                index: i,
-                child: _MetricRow(kind: k, colors: c),
-              );
-            },
-          ),
-        ],
-        if (hidden.isNotEmpty) ...[
-          const SizedBox(height: 18),
-          _label(c, 'ADD METRIC'),
-          for (final k in hidden) _MetricRow(kind: k, colors: c, off: true),
-        ],
-        const SizedBox(height: 18),
+        const MetricTileGridEditor(),
+        const SizedBox(height: 22),
         _label(c, 'CUSTOM TRENDS'),
         const _SavedTrendsList(),
         const SizedBox(height: 10),
@@ -949,388 +898,4 @@ class MetricsSettingsBody extends ConsumerWidget {
       ),
     ),
   );
-}
-
-class _MetricRow extends ConsumerWidget {
-  final RingKind kind;
-  final ThemeColors colors;
-  final bool core;
-  final bool off;
-  const _MetricRow({
-    required this.kind,
-    required this.colors,
-    this.core = false,
-    this.off = false,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = colors;
-    final m = ref.watch(metricValueProvider(kind));
-    final cfg = ref.watch(metricLayoutProvider.notifier).configFor(kind);
-    final layout = ref.read(metricLayoutProvider.notifier);
-    final rings = ref.read(ringVisibilityProvider.notifier);
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: c.elevated,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: c.cardBorder),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                color: off ? c.textMuted.withValues(alpha: 0.4) : m.color,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(width: 11),
-            Expanded(
-              child: Text(
-                kRingCatalog[kind]!.label,
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: off ? c.textMuted : c.textPrimary,
-                ),
-              ),
-            ),
-            MetricRowViz(kind: kind),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 52,
-              child: Text(
-                m.isEmpty
-                    ? '—'
-                    : '${m.headline}${m.unit.isNotEmpty ? ' ${m.unit}' : ''}',
-                textAlign: TextAlign.right,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
-                  color: off ? c.textMuted : c.textSecondary,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            if (off)
-              _Toggle(
-                on: false,
-                color: c,
-                onTap: () {
-                  HapticService.light();
-                  rings.addRing(kind);
-                },
-              )
-            else if (core)
-              _CorePill(c)
-            else ...[
-              _SizeChips(
-                current: cfg.size,
-                color: c,
-                onPick: (s) {
-                  HapticService.light();
-                  layout.setSize(kind, s);
-                },
-              ),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () => _showMetricEditor(context, kind),
-                child: Icon(
-                  Icons.settings_outlined,
-                  size: 18,
-                  color: c.textMuted,
-                ),
-              ),
-              const SizedBox(width: 4),
-              _Toggle(
-                on: true,
-                color: c,
-                onTap: () {
-                  HapticService.light();
-                  rings.removeRing(kind);
-                },
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CorePill extends StatelessWidget {
-  final ThemeColors c;
-  const _CorePill(this.c);
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-    decoration: BoxDecoration(
-      color: c.accent.withValues(alpha: 0.14),
-      borderRadius: BorderRadius.circular(999),
-    ),
-    child: Text(
-      'CORE',
-      style: TextStyle(
-        fontSize: 8.5,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.4,
-        color: c.accent,
-      ),
-    ),
-  );
-}
-
-class _SizeChips extends StatelessWidget {
-  final MetricSize current;
-  final ThemeColors color;
-  final ValueChanged<MetricSize> onPick;
-  const _SizeChips({
-    required this.current,
-    required this.color,
-    required this.onPick,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final c = color;
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: c.cardBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final s in MetricSize.values)
-            GestureDetector(
-              onTap: () => onPick(s),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: current == s ? c.textPrimary : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  s.shortLabel,
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    color: current == s ? c.background : c.textMuted,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Toggle extends StatelessWidget {
-  final bool on;
-  final ThemeColors color;
-  final VoidCallback onTap;
-  const _Toggle({required this.on, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final c = color;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 24,
-        decoration: BoxDecoration(
-          color: on ? c.accent : c.cardBorder,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: AnimatedAlign(
-          duration: const Duration(milliseconds: 140),
-          alignment: on ? Alignment.centerRight : Alignment.centerLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(2.5),
-            child: Container(
-              width: 19,
-              height: 19,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-void _showMetricEditor(BuildContext context, RingKind kind) {
-  showGlassSheet<void>(
-    context: context,
-    builder: (ctx) => GlassSheet(child: _MetricEditor(kind: kind)),
-  );
-}
-
-class _MetricEditor extends ConsumerWidget {
-  final RingKind kind;
-  const _MetricEditor({required this.kind});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final c = ref.colors(context);
-    final cfg = ref.watch(metricLayoutProvider.notifier).configFor(kind);
-    final layout = ref.read(metricLayoutProvider.notifier);
-    // ignore: deprecated_member_use
-    final selectedColor = cfg.colorOverride ?? kRingCatalog[kind]!.color.value;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 4, 18, 26),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            kRingCatalog[kind]!.label,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: c.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _editLabel(c, 'COLOR'),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  layout.setColor(kind, null);
-                },
-                child: Text(
-                  'Default',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: c.accent,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final sw in _kMetricSwatches)
-                GestureDetector(
-                  onTap: () {
-                    HapticService.light();
-                    layout.setColor(kind, sw);
-                  },
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: Color(sw),
-                      borderRadius: BorderRadius.circular(9),
-                      border: Border.all(
-                        color: selectedColor == sw
-                            ? c.textPrimary
-                            : Colors.transparent,
-                        width: 2.5,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          _editLabel(c, 'CHART'),
-          const SizedBox(height: 8),
-          _chips<MetricChart>(
-            c,
-            values: MetricChart.values,
-            current: cfg.chart,
-            labelOf: (v) => v.label,
-            onPick: (v) {
-              HapticService.light();
-              layout.setChart(kind, v);
-            },
-          ),
-          const SizedBox(height: 18),
-          _editLabel(c, 'RANGE'),
-          const SizedBox(height: 8),
-          _chips<MetricRange>(
-            c,
-            values: MetricRange.values,
-            current: cfg.range,
-            labelOf: (v) => v.label,
-            onPick: (v) {
-              HapticService.light();
-              layout.setRange(kind, v);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _editLabel(ThemeColors c, String t) => Text(
-    t,
-    style: TextStyle(
-      fontSize: 10.5,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 0.6,
-      color: c.textMuted,
-    ),
-  );
-
-  Widget _chips<T>(
-    ThemeColors c, {
-    required List<T> values,
-    required T current,
-    required String Function(T) labelOf,
-    required ValueChanged<T> onPick,
-  }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final v in values)
-          GestureDetector(
-            onTap: () => onPick(v),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: v == current ? c.textPrimary : c.surface,
-                borderRadius: BorderRadius.circular(9),
-                border: Border.all(
-                  color: v == current ? c.textPrimary : c.cardBorder,
-                ),
-              ),
-              child: Text(
-                labelOf(v),
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w800,
-                  color: v == current ? c.background : c.textMuted,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
 }

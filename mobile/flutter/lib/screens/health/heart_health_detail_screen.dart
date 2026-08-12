@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/stats/state_valence.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/heart_health_repository.dart';
 import '../../widgets/glass_back_button.dart';
@@ -17,7 +18,13 @@ import '../common/app_refresh_indicator.dart';
 /// gradient gauge with a day-over-day delta chip, a 2x2 component breakdown,
 /// and a grounded coach read. Honest "No data" tiles where a driver is absent.
 class HeartHealthDetailScreen extends ConsumerWidget {
-  const HeartHealthDetailScreen({super.key});
+  /// True when composed inside the Health tab's shell rather than pushed as
+  /// a full-screen route — see [CombinedHealthScreen.embedded]. Drops the
+  /// back-button row (nothing to pop) and the opaque background; the
+  /// Ask-Coach button and the whole body are unchanged.
+  final bool embedded;
+
+  const HeartHealthDetailScreen({super.key, this.embedded = false});
 
   static const Color _good = Color(0xFF22C55E); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
   static const Color _fair = Color(0xFFF59E0B); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
@@ -35,21 +42,24 @@ class HeartHealthDetailScreen extends ConsumerWidget {
     final async = ref.watch(heartHealthProvider);
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: embedded ? Colors.transparent : bg,
       body: SafeArea(
+        top: !embedded,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(12, embedded ? 0 : 8, 16, 4),
               child: Row(
                 children: [
-                  const GlassBackButton(),
-                  const SizedBox(width: 12),
-                  Text('Heart health',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary)),
+                  if (!embedded) ...[
+                    const GlassBackButton(),
+                    const SizedBox(width: 12),
+                    Text('Heart health',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary)),
+                  ],
                   const Spacer(),
                   AskCoachButton(
                     contextLabel: 'Heart health · habit score',
@@ -254,7 +264,12 @@ class _DeltaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final up = delta > 0;
-    final c = up ? const Color(0xFF22C55E) : const Color(0xFFF97316); // accent-allowlist: heart-rate zone severity scale, matches hr_zones_card.dart convention
+    // Heart-health score declares higher-is-better: a rising composite
+    // supports, a falling one strains. Was two raw hexes picked off the sign.
+    final c = SemanticState.resolve(
+      valence: MetricValence.forKey('heart_health'),
+      deviation: delta.toDouble(),
+    ).color(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
       decoration: BoxDecoration(

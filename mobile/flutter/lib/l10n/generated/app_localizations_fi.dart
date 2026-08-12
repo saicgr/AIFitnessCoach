@@ -23770,6 +23770,15 @@ class AppLocalizationsFi extends AppLocalizations {
   String get navCoach => 'Valmentaja';
 
   @override
+  String get navHealth => 'Terveys';
+
+  @override
+  String get healthTabVitals => 'Elintoiminnot';
+
+  @override
+  String get healthTabNoDataYet => 'Ei vielä tietoja';
+
+  @override
   String get neatAchievementCardNew => 'UUSI!';
 
   @override

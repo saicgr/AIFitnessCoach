@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/providers/user_provider.dart';
+import '../../../../core/stats/state_valence.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/models/nutrition_preferences.dart' show WeightLog;
@@ -129,13 +130,17 @@ class TimelineTrendsRail extends ConsumerWidget {
         label: 'Weight',
         color: c.info,
         valueText: '${latest.toStringAsFixed(1)} $unitLabel',
-        // Body-weight loss is the common goal → a drop reads as positive.
+        // Body weight is valence-NEUTRAL. This used to tint a drop green and a
+        // gain red, which reads as a verdict on a user who is deliberately
+        // bulking. The number stays; the judgment goes.
         deltaText: values.length < 2
             ? null
             : '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)}',
-        deltaColor: delta.abs() < 0.05
-            ? c.textMuted
-            : (delta < 0 ? c.success : c.error),
+        deltaState: SemanticState.resolve(
+          valence: MetricValence.forKey('weight'),
+          deviation: delta,
+          epsilon: 0.05,
+        ),
         points: [for (var i = 0; i < values.length; i++) Offset(i.toDouble(), values[i])],
         onTap: () => context.push('/measurements'),
       ));
@@ -154,9 +159,10 @@ class TimelineTrendsRail extends ConsumerWidget {
         deltaText: sleepPoints.length < 2
             ? null
             : '${delta >= 0 ? '+' : '-'}${_fmtDuration(delta.abs(), short: true)}',
-        deltaColor: delta == 0
-            ? c.textMuted
-            : (delta > 0 ? c.success : c.warning),
+        deltaState: SemanticState.resolve(
+          valence: MetricValence.forKey('sleep'),
+          deviation: delta.toDouble(),
+        ),
         points: sleepPoints,
         onTap: () => context.push('/measurements'),
       ));
@@ -194,7 +200,12 @@ class TimelineTrendsRail extends ConsumerWidget {
         deltaText: cals.length < 2
             ? null
             : '${delta >= 0 ? '+' : ''}${_fmtThousands(delta.abs())}',
-        deltaColor: c.textMuted,
+        // Calories eaten is valence-neutral (a deficit and a surplus are both
+        // somebody's goal), declared rather than hardcoded to muted.
+        deltaState: SemanticState.resolve(
+          valence: MetricValence.forKey('calories'),
+          deviation: delta.toDouble(),
+        ),
         points: cals,
         onTap: () => context.push('/nutrition'),
       ));
@@ -214,7 +225,7 @@ class TimelineTrendsRail extends ConsumerWidget {
             ? '${(latestMl / 1000).toStringAsFixed(1)}/${(goalMl / 1000).toStringAsFixed(1)}L'
             : '${(latestMl / 1000).toStringAsFixed(1)}L',
         deltaText: null,
-        deltaColor: c.textMuted,
+        deltaState: SemanticState.neutral,
         points: water,
         onTap: () => context.push('/nutrition'),
       ));
@@ -250,7 +261,11 @@ class _TrendSpec {
   final Color color;
   final String valueText;
   final String? deltaText;
-  final Color deltaColor;
+
+  /// The ramp rung for [deltaText]. A [SemanticState] rather than a raw
+  /// [Color] so a spec cannot be built without its metric declaring which way
+  /// is good — that declaration is the whole point of the ramp.
+  final SemanticState deltaState;
 
   /// (x = day-offset, y = value) — sorted ascending by x. 1 point = no line.
   final List<Offset> points;
@@ -263,7 +278,7 @@ class _TrendSpec {
     required this.color,
     required this.valueText,
     required this.deltaText,
-    required this.deltaColor,
+    required this.deltaState,
     required this.points,
     required this.onTap,
   });
@@ -336,7 +351,7 @@ class _TrendCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w700,
-                      color: spec.deltaColor,
+                      color: spec.deltaState.color(context),
                     ),
                   ),
                 ],

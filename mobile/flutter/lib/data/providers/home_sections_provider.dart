@@ -220,6 +220,23 @@ class HomeSectionsState {
       );
 }
 
+/// v35 (2026-08, R4) — three corrections, and deliberately NOTHING else. The
+/// 2026-06-11 home reorder was rejected: this layout is heavily user-tuned, so
+/// no section is re-sequenced here, ever, without that being the whole point of
+/// the change.
+///  * `strainCoach` and `metricTrio` are REMOVED from the default. Both have
+///    rendered `SizedBox.shrink()` since they were folded into the workout hero
+///    and the metric deck respectively — listing them meant My Space offered
+///    two rows that toggle nothing, and a fresh layout carried two no-op
+///    entries. The enum values STAY (a persisted layout may reference them; the
+///    loader and `_widgetForSection` still handle them).
+///  * `metricsCarousel` is ADDED at the position its own enum comment and the
+///    live render order have always claimed — immediately after `coachHero`.
+///    It was absent from this list entirely, so it never entered `order` and
+///    was invisible in My Space even though Home renders it. This is not a
+///    re-sequence: it puts the missing section where it already draws.
+/// Every other entry keeps its exact v34 position.
+///
 /// v31 default — Direction C feedback: the compact metric deck (todayScore)
 /// rises to the very top, directly beneath the notification banners, and the
 /// Coach Hero card drops to BELOW it (issue 1). The deck owns the Log / Trends
@@ -243,13 +260,14 @@ const List<HomeSection> _defaultOrder = [
   // actions → coach (framing) → workout (act). Only affects users on the
   // default layout; My Space reorders are preserved.
   HomeSection.coachHero,
+  // Sits immediately after coachHero — the position its enum comment declares
+  // and the position home_screen already renders it at.
+  HomeSection.metricsCarousel,
   HomeSection.workoutCard,
-  HomeSection.strainCoach,
   HomeSection.nutritionCard,
   // The Cycle card self-hides unless menstrual tracking is enabled, so it is
   // safe to keep in the default order for everyone.
   HomeSection.cycle,
-  HomeSection.metricTrio,
   // weeklyReport renders as a two-up "Reports · Recap" row (issue 7).
   HomeSection.weeklyReport,
   HomeSection.timeline,
@@ -266,6 +284,16 @@ const HomeSectionsState _defaultState = HomeSectionsState(
   hidden: <HomeSection>{HomeSection.weekStrip},
 );
 
+/// Sections that render `SizedBox.shrink()` unconditionally — folded into
+/// another card long ago. They stay in [HomeSection] because a persisted
+/// layout may still name them (and `_widgetForSection` still handles them),
+/// but they are stripped out of the loaded order so My Space stops offering
+/// rows that toggle nothing and a reorder doesn't have to step over holes.
+const Set<HomeSection> _kRetiredSections = {
+  HomeSection.strainCoach, // → the workout hero's intensity chip
+  HomeSection.metricTrio, // → absorbed by the metric deck
+};
+
 // v6 order: metric deck hoisted to top, Coach Hero dropped below it (issue 1).
 // v5 order: quick actions moved below the rings card.
 // v4 order: Strain Coach inserted between Coach Hero and Today Score (P5).
@@ -277,7 +305,14 @@ const HomeSectionsState _defaultState = HomeSectionsState(
 // being shadowed by a previously-persisted v6 layout. (A key bump re-seeds
 // order from `_defaultOrder`; a one-time reset of any custom home arrangement
 // is the accepted cost of guaranteeing the new default ships.)
-const String _kOrderKey = 'home_section_order_v7';
+// v8 (2026-08, R4): dead sections dropped from the default, metricsCarousel
+// added at the slot it already renders in. Unlike every earlier bump this one
+// is NON-DESTRUCTIVE: a missing v8 key falls back to reading v7, so a user's
+// tuned arrangement carries across and is simply cleaned of the retired
+// entries. Home layout is heavily user-tuned — re-seeding it wholesale to ship
+// two deletions would cost far more than it fixes.
+const String _kOrderKey = 'home_section_order_v8';
+const List<String> _kLegacyOrderKeys = <String>['home_section_order_v7'];
 const String _kHiddenKey = 'home_section_hidden_v2';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)
@@ -290,7 +325,19 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
   Future<void> _load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedOrder = prefs.getStringList(_kOrderKey);
+      var savedOrder = prefs.getStringList(_kOrderKey);
+      // Carry a pre-v8 arrangement forward rather than re-seeding it away.
+      var migratedFromLegacy = false;
+      if (savedOrder == null) {
+        for (final legacy in _kLegacyOrderKeys) {
+          final previous = prefs.getStringList(legacy);
+          if (previous != null) {
+            savedOrder = previous;
+            migratedFromLegacy = true;
+            break;
+          }
+        }
+      }
       // Distinguish "user has never persisted under this key" (null) from
       // "user explicitly cleared their hides" (empty list). The null case
       // must fall back to `_defaultState.hidden` (e.g. weekStrip hidden by
@@ -305,7 +352,8 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
       if (savedOrder != null) {
         for (final key in savedOrder) {
           final s = HomeSectionMeta.fromStorageKey(key);
-          if (s != null && !order.contains(s)) order.add(s);
+          if (s == null || _kRetiredSections.contains(s)) continue;
+          if (!order.contains(s)) order.add(s);
         }
       }
       // Append any section the saved layout didn't know about, at its
@@ -335,6 +383,9 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
       if (mounted) {
         state = HomeSectionsState(order: order, hidden: hidden);
       }
+      // Write the carried-over arrangement under the new key so the legacy
+      // read happens exactly once.
+      if (migratedFromLegacy) await _persist();
     } catch (e) {
       debugPrint('⚠️ [HomeSections] load failed, using default: $e');
     }
@@ -390,17 +441,22 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
   /// Apply a preset layout from the Discover tab. The Today Score (core) is
   /// always kept visible regardless of the preset.
   void applyPreset(HomeSectionPreset preset) {
-    final visible = <HomeSection>[...preset.visible];
+    final visible = <HomeSection>[
+      for (final s in preset.visible)
+        if (!_kRetiredSections.contains(s)) s,
+    ];
     if (!visible.contains(HomeSection.todayScore)) {
       visible.insert(0, HomeSection.todayScore);
     }
     final order = <HomeSection>[...visible];
     for (final s in HomeSection.values) {
+      if (_kRetiredSections.contains(s)) continue;
       if (!order.contains(s)) order.add(s);
     }
     final hidden = <HomeSection>{
       for (final s in HomeSection.values)
-        if (!visible.contains(s) && !s.isCore) s,
+        if (!_kRetiredSections.contains(s) && !visible.contains(s) && !s.isCore)
+          s,
     };
     state = HomeSectionsState(order: order, hidden: hidden);
     _persist();
@@ -464,7 +520,6 @@ const List<HomeSectionPreset> homeSectionPresets = [
       HomeSection.quickActions,
       HomeSection.todayScore,
       HomeSection.nutritionCard,
-      HomeSection.metricTrio,
       HomeSection.timeline,
     ],
   ),
@@ -475,7 +530,6 @@ const List<HomeSectionPreset> homeSectionPresets = [
     visible: [
       HomeSection.quickActions,
       HomeSection.todayScore,
-      HomeSection.metricTrio,
       HomeSection.weeklyReport,
       HomeSection.weekStrip,
       HomeSection.habits,

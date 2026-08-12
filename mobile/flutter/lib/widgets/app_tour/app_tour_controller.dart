@@ -234,6 +234,7 @@ class AppTourKeys {
   static GlobalKey get heroCarouselKey => TooltipAnchors.heroCarousel;
   static GlobalKey get quickLogKey => TooltipAnchors.quickLog;
   static GlobalKey get workoutNavKey => TooltipAnchors.workoutNav;
+  static GlobalKey get healthNavKey => TooltipAnchors.healthNav;
   static GlobalKey get aiChatKey => TooltipAnchors.aiChat;
   static GlobalKey get nutritionNavKey => TooltipAnchors.nutritionNav;
   static GlobalKey get profileNavKey => TooltipAnchors.profileNav;

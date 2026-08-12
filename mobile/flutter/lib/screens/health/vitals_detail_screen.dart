@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/stats/state_valence.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/vitals_repository.dart';
 import '../../widgets/glass_back_button.dart';
@@ -16,10 +17,38 @@ import '../common/app_refresh_indicator.dart';
 /// shaded normal band (±1.5 SD) with a dot at last night's reading — inside
 /// the band reads calm, outside flags an out-of-range signal. Honest per-signal
 /// empty states when no wearable reading exists.
-class VitalsDetailScreen extends ConsumerWidget {
-  const VitalsDetailScreen({super.key});
+/// Resolves one signal onto the semantic state ramp.
+///
+/// This is the first place `VitalSignal.direction` (`high_bad` | `low_bad` |
+/// `either`) has ever reached the UI. The screen used to colour purely off
+/// `state` (in/out of range) with one hardcoded amber, which meant a signal
+/// drifting toward its bad side got no cue at all, and an HRV reading that was
+/// out of range on the GOOD side (unusually high) was painted the same alarm
+/// colour as an elevated resting HR.
+///
+/// The band is ±1.5 SD, so an `epsilon` of 1.0 keeps an ordinary night calm
+/// and gives the 1.0–1.5 SD drift a soft directional cue before it breaches.
+SemanticState _vitalState(VitalSignal s) {
+  final z = s.z;
+  if (s.state == 'no_data' || z == null) return SemanticState.neutral;
+  final valence = MetricValence.fromBackendDirection(s.direction);
+  if (valence == GoodDirection.neutral) {
+    // `either`: both tails are the concern, so there is no "good side" —
+    // breaching the band strains, sitting inside it is calm.
+    return s.isOutOfRange ? SemanticState.strains : SemanticState.neutral;
+  }
+  return SemanticState.resolve(valence: valence, deviation: z, epsilon: 1.0);
+}
 
-  static const Color _danger = Color(0xFFF97316); // warm amber-orange // accent-allowlist: vitals metric identity color
+class VitalsDetailScreen extends ConsumerWidget {
+  /// True when composed inside the Health tab's shell rather than pushed as
+  /// a full-screen route — see [CombinedHealthScreen.embedded]. Drops the
+  /// back-button row (nothing to pop) and the opaque background; the
+  /// Ask-Coach button and the whole body are unchanged.
+  final bool embedded;
+
+  const VitalsDetailScreen({super.key, this.embedded = false});
+
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,21 +59,24 @@ class VitalsDetailScreen extends ConsumerWidget {
     final async = ref.watch(vitalsProvider);
 
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: embedded ? Colors.transparent : bg,
       body: SafeArea(
+        top: !embedded,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(12, embedded ? 0 : 8, 16, 4),
               child: Row(
                 children: [
-                  const GlassBackButton(),
-                  const SizedBox(width: 12),
-                  Text('Vitals',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary)),
+                  if (!embedded) ...[
+                    const GlassBackButton(),
+                    const SizedBox(width: 12),
+                    Text('Vitals',
+                        style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary)),
+                  ],
                   const Spacer(),
                   AskCoachButton(
                     contextLabel: 'Vitals · overnight signals',
@@ -79,6 +111,14 @@ class VitalsDetailScreen extends ConsumerWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final card = isDark ? AppColors.surface : AppColorsLight.surface;
+    // The hero speaks the ramp, not the accent: the accent is user-chosen, so
+    // "all vitals in range" was only reliably calm for users who happened to
+    // pick a calm accent.
+    final heroTint = data.outOfRangeCount > 0
+        ? SemanticState.strains.colorFor(isDark)
+        : (data.hasAnyReading
+            ? SemanticState.supports.colorFor(isDark)
+            : SemanticState.neutral.colorFor(isDark));
 
     return AppRefreshIndicator(
       onRefresh: () async => ref.invalidate(vitalsProvider),
@@ -94,12 +134,10 @@ class VitalsDetailScreen extends ConsumerWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: data.outOfRangeCount > 0
-                    ? [_danger.withValues(alpha: 0.16), card]
-                    : [accent.withValues(alpha: 0.14), card],
+                    ? [heroTint.withValues(alpha: 0.16), card]
+                    : [heroTint.withValues(alpha: 0.14), card],
               ),
-              border: Border.all(
-                  color: (data.outOfRangeCount > 0 ? _danger : accent)
-                      .withValues(alpha: 0.25)),
+              border: Border.all(color: heroTint.withValues(alpha: 0.25)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +151,7 @@ class VitalsDetailScreen extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: data.outOfRangeCount > 0 ? _danger : textPrimary,
+                    color: data.outOfRangeCount > 0 ? heroTint : textPrimary,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -121,8 +159,6 @@ class VitalsDetailScreen extends ConsumerWidget {
                   height: 150,
                   child: _VitalsBars(
                     signals: data.signals,
-                    accent: accent,
-                    danger: _danger,
                     isDark: isDark,
                   ),
                 ),
@@ -148,8 +184,7 @@ class VitalsDetailScreen extends ConsumerWidget {
           ...data.signals.map((s) => _SignalRow(
                 signal: s,
                 card: card,
-                accent: accent,
-                danger: _danger,
+                isDark: isDark,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               )),
@@ -162,13 +197,9 @@ class VitalsDetailScreen extends ConsumerWidget {
 /// The hero row of per-signal deviation capsules.
 class _VitalsBars extends StatelessWidget {
   final List<VitalSignal> signals;
-  final Color accent;
-  final Color danger;
   final bool isDark;
   const _VitalsBars({
     required this.signals,
-    required this.accent,
-    required this.danger,
     required this.isDark,
   });
 
@@ -194,11 +225,9 @@ class _VitalsBars extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: signals.map((s) {
-        final color = s.state == 'out_of_range'
-            ? danger
-            : (s.state == 'no_data'
-                ? (isDark ? Colors.white24 : Colors.black26)
-                : accent);
+        final color = s.state == 'no_data'
+            ? (isDark ? Colors.white24 : Colors.black26)
+            : _vitalState(s).colorFor(isDark);
         return Expanded(
           child: Column(
             children: [
@@ -297,15 +326,13 @@ class _CapsulePainter extends CustomPainter {
 class _SignalRow extends StatelessWidget {
   final VitalSignal signal;
   final Color card;
-  final Color accent;
-  final Color danger;
+  final bool isDark;
   final Color textPrimary;
   final Color textSecondary;
   const _SignalRow({
     required this.signal,
     required this.card,
-    required this.accent,
-    required this.danger,
+    required this.isDark,
     required this.textPrimary,
     required this.textSecondary,
   });
@@ -314,7 +341,13 @@ class _SignalRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOut = signal.state == 'out_of_range';
     final noData = signal.state == 'no_data';
-    final pillColor = isOut ? danger : accent;
+    final pillColor = _vitalState(signal).colorFor(isDark);
+    // The word carries the meaning; the tint only reinforces it (WCAG 1.4.1).
+    // "High/Low" was ambiguous — the z sign already says which one it is.
+    final z = signal.z;
+    final pillLabel = isOut
+        ? (z == null ? 'Out of range' : (z > 0 ? 'High' : 'Low'))
+        : 'In range';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -362,7 +395,7 @@ class _SignalRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                isOut ? 'High/Low' : 'In range',
+                pillLabel,
                 style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,

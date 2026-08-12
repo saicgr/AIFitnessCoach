@@ -23717,6 +23717,15 @@ class AppLocalizationsCs extends AppLocalizations {
   String get navCoach => 'Kouč';
 
   @override
+  String get navHealth => 'Zdraví';
+
+  @override
+  String get healthTabVitals => 'Vitální funkce';
+
+  @override
+  String get healthTabNoDataYet => 'Zatím žádná data';
+
+  @override
   String get neatAchievementCardNew => 'NOVINKA!';
 
   @override

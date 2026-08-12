@@ -22790,6 +22790,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navCoach => 'コーチ';
 
   @override
+  String get navHealth => 'ヘルス';
+
+  @override
+  String get healthTabVitals => 'バイタル';
+
+  @override
+  String get healthTabNoDataYet => 'データがまだありません';
+
+  @override
   String get neatAchievementCardNew => '新規！';
 
   @override

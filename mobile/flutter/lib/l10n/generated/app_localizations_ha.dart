@@ -23819,6 +23819,15 @@ class AppLocalizationsHa extends AppLocalizations {
   String get navCoach => 'Koci';
 
   @override
+  String get navHealth => 'Lafiya';
+
+  @override
+  String get healthTabVitals => 'Alamun rayuwa';
+
+  @override
+  String get healthTabNoDataYet => 'Babu bayanai tukuna';
+
+  @override
   String get neatAchievementCardNew => 'SABO!';
 
   @override

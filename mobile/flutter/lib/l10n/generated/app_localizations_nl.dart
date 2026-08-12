@@ -23785,6 +23785,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get navCoach => 'Coach';
 
   @override
+  String get navHealth => 'Gezondheid';
+
+  @override
+  String get healthTabVitals => 'Vitale waarden';
+
+  @override
+  String get healthTabNoDataYet => 'Nog geen gegevens';
+
+  @override
   String get neatAchievementCardNew => 'NIEUW!';
 
   @override

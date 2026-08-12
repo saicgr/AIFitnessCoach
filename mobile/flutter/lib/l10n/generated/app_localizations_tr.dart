@@ -23714,6 +23714,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get navCoach => 'Koç';
 
   @override
+  String get navHealth => 'Sağlık';
+
+  @override
+  String get healthTabVitals => 'Yaşamsal veriler';
+
+  @override
+  String get healthTabNoDataYet => 'Henüz veri yok';
+
+  @override
   String get neatAchievementCardNew => 'YENİ!';
 
   @override

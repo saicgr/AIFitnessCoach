@@ -23706,6 +23706,15 @@ class AppLocalizationsPa extends AppLocalizations {
   String get navCoach => 'ਕੋਚ';
 
   @override
+  String get navHealth => 'ਸਿਹਤ';
+
+  @override
+  String get healthTabVitals => 'ਵਾਈਟਲਸ';
+
+  @override
+  String get healthTabNoDataYet => 'ਅਜੇ ਕੋਈ ਡਾਟਾ ਨਹੀਂ';
+
+  @override
   String get neatAchievementCardNew => 'ਨਵਾਂ!';
 
   @override

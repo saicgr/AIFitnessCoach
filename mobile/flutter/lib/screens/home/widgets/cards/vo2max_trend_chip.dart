@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/stats/state_valence.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/repositories/vo2max_repository.dart';
 
@@ -59,9 +60,16 @@ class Vo2maxTrendChip extends ConsumerWidget {
             : delta < -0.05
                 ? Icons.arrow_downward
                 : Icons.remove);
+    // Valence, not direction: VO2max declares higher-is-better, so a rise
+    // supports and a drop strains. The 0.05 epsilon matches the arrow's own
+    // flat band so the tint and the glyph never disagree.
     final deltaColor = delta == null
-        ? c.textMuted
-        : (delta >= 0 ? c.success : c.warning);
+        ? c.stateNeutral
+        : SemanticState.resolve(
+            valence: MetricValence.forKey('vo2max'),
+            deviation: delta,
+            epsilon: 0.05,
+          ).color(context);
 
     return GestureDetector(
       onTap: () => context.go('/progress'),
