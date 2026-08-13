@@ -45134,4 +45134,156 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Разовая цена для участников-основателей, тот же 7-дневный бесплатный пробный период. Это предложение больше не вернётся.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ждут показателей: $count',
+      one: '1 показатель ждёт',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Ваша сетка заполнится сама.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source заполнит их автоматически.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Подключить $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Заполнятся из того, что вы записываете.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Записать что-нибудь';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Начнётся в день старта вашего плана.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Завершить настройку';
+
+  @override
+  String get metricSetupPanelFooter => 'Мы ничего не додумываем за вас.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Нет источника · подключите Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Подключить Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Пока нет данных Health';
+
+  @override
+  String get metricTileNoDataYet => 'Пока нет данных';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Пока ничего не записано';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Нет записей';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Плана ещё нет · завершите настройку';
+
+  @override
+  String get metricTileNeedsHrv => 'Нужен HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Нет базы';
+
+  @override
+  String get metricTileNoData => 'Нет данных';
+
+  @override
+  String get metricGridMyMetrics => 'МОИ ПОКАЗАТЕЛИ';
+
+  @override
+  String get metricGridEditTiles => 'ИЗМЕНИТЬ ПЛИТКИ';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ИЗМЕНЕНИЯ СОХРАНЯЮТСЯ СРАЗУ';
+
+  @override
+  String get metricGridEditHint =>
+      'ПЕРЕТАЩИТЕ, ЧТОБЫ ИЗМЕНИТЬ ПОРЯДОК · НАЖМИТЕ ДЛЯ РАЗМЕРА · − УБИРАЕТ';
+
+  @override
+  String get metricGridDone => 'ГОТОВО';
+
+  @override
+  String get metricGridPageOneLabel => 'СТРАНИЦА 1 · ВЗГЛЯД НА ДЕНЬ';
+
+  @override
+  String get metricGridPageTwoLabel => 'СТРАНИЦА 2 · ПОДРОБНО';
+
+  @override
+  String get metricGridPageTwoDragHint => 'СТРАНИЦА 2 · ПЕРЕТАЩИТЕ ПЛИТКУ СЮДА';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'ПЕРЕТАЩИТЕ ПЛИТКУ НА СТРАНИЦУ $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'ОТПУСТИТЕ ЗДЕСЬ';
+
+  @override
+  String get metricGridDragging => 'ПЕРЕТАСКИВАНИЕ…';
+
+  @override
+  String get metricGridPresets => 'ПРЕСЕТЫ';
+
+  @override
+  String get metricGridPresetMyLayout => 'Мой макет';
+
+  @override
+  String get metricGridPresetMinimal => 'Минимум';
+
+  @override
+  String get metricGridPresetTrainingDay => 'День тренировки';
+
+  @override
+  String get metricGridPresetRecovery => 'Восстановление';
+
+  @override
+  String get metricGridAddMetric => 'ДОБАВИТЬ ПОКАЗАТЕЛЬ';
+
+  @override
+  String get metricGridConnectBody =>
+      'Шаги, сон и готовность заполнятся сами — мы ничего не додумываем за вас.';
+
+  @override
+  String get metricGridConnectCta => 'ПОДКЛЮЧИТЬ HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Все показатели уже есть на вашей сетке.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Записано в приложении';
+
+  @override
+  String get metricGridSourceComputed => 'Вычисляется';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · стр. $page · #$position';
+  }
 }

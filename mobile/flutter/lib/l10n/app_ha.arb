@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Bari mu fara motsa jikinka na farko",
   "workoutShowcaseNextTargetRaised": "An shigar da saiti {set} — an ƙara maƙasudi na gaba kai tsaye zuwa {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "MATAKI {current} DAGA {total}",
-  "quizAlmostDone": "KUSAN AN GAMA"
+  "quizAlmostDone": "KUSAN AN GAMA",
+  "metricSetupPanelKicker": "{count, plural, =1{Ma'auni 1 na jira} other{Ma'auni {count} suna jira}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Gridin ka yana cika da kansa.",
+  "metricSetupPanelHealthBody": "{source} yana cika waɗannan ta atomatik.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Haɗa {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Waɗannan suna cika daga abin da ka rubuta.",
+  "metricSetupPanelLogCta": "Rubuta wani abu",
+  "metricSetupPanelSetupBody": "Yana farawa ranar da shirinka ya fara.",
+  "metricSetupPanelSetupCta": "Kammala saitin",
+  "metricSetupPanelFooter": "Ba a kiyasta komai a madadinka.",
+  "metricTileNoSourceConnectHealth": "Babu tushe · haɗa Health",
+  "metricTileConnectHealthShort": "Haɗa Health",
+  "metricTileNoHealthDataYet": "Babu bayanan Health tukuna",
+  "metricTileNoDataYet": "Babu bayanai tukuna",
+  "metricTileNothingLoggedYet": "Ba a rubuta komai tukuna",
+  "metricTileNothingLoggedShort": "Babu rubutu",
+  "metricTileNoPlanYetFinishSetup": "Babu shiri tukuna · kammala saitin",
+  "metricTileNeedsHrv": "Yana buƙatar HRV",
+  "metricTileNoBaseline": "Babu ma'auni",
+  "metricTileNoData": "Babu bayanai",
+  "metricGridMyMetrics": "MA'AUNAINA",
+  "metricGridEditTiles": "GYARA FALALEN",
+  "metricGridChangesSaveInstantly": "SAUYE-SAUYE NA AJIYE NAN TAKE",
+  "metricGridEditHint": "JA DON SAKE TSARI · TABA FALE DON GIRMA · − DON CIRE",
+  "metricGridDone": "AN GAMA",
+  "metricGridPageOneLabel": "SHAFI 1 · DUBAN YAU",
+  "metricGridPageTwoLabel": "SHAFI 2 · ZURFI",
+  "metricGridPageTwoDragHint": "SHAFI 2 · JA FALE ZUWA NAN",
+  "metricGridDragBackToPage": "JA FALE KOMA SHAFI {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "SAKA NAN",
+  "metricGridDragging": "ANA JAWO…",
+  "metricGridPresets": "SAITUKA",
+  "metricGridPresetMyLayout": "Tsarina",
+  "metricGridPresetMinimal": "Sauƙi",
+  "metricGridPresetTrainingDay": "Ranar horo",
+  "metricGridPresetRecovery": "Farfaɗowa",
+  "metricGridAddMetric": "ƘARA MA'AUNI",
+  "metricGridConnectBody": "Matakai, barci da shirye-shirye suna cika ta atomatik — ba a kiyasta komai a madadinka.",
+  "metricGridConnectCta": "HAƊA HEALTH",
+  "metricGridEveryMetricPlaced": "Duk ma'aunai suna kan gridin ka riga.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "An rubuta a cikin manhaja",
+  "metricGridSourceComputed": "An ƙidaya",
+  "metricGridPlacementLine": "{size} · shafi {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

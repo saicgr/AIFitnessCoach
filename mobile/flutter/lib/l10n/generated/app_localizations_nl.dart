@@ -45003,4 +45003,154 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Eenmalige founding-member-prijs, dezelfde gratis proefperiode van 7 dagen. Deze aanbieding komt niet terug.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metingen wachten',
+      one: '1 meting wacht',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Je raster vult zichzelf.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source vult deze automatisch.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source koppelen';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Deze vullen zich met wat je logt.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Iets loggen';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Start zodra jouw plan start.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Instellen voltooien';
+
+  @override
+  String get metricSetupPanelFooter => 'Er wordt niets voor je geschat.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Geen bron · Health koppelen';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health koppelen';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Nog geen Health-gegevens';
+
+  @override
+  String get metricTileNoDataYet => 'Nog geen gegevens';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Nog niets gelogd';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Niets gelogd';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Nog geen plan · instellen voltooien';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV nodig';
+
+  @override
+  String get metricTileNoBaseline => 'Geen basislijn';
+
+  @override
+  String get metricTileNoData => 'Geen gegevens';
+
+  @override
+  String get metricGridMyMetrics => 'MIJN METINGEN';
+
+  @override
+  String get metricGridEditTiles => 'TEGELS BEWERKEN';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'WIJZIGINGEN WORDEN DIRECT OPGESLAGEN';
+
+  @override
+  String get metricGridEditHint =>
+      'SLEEP OM TE ORDENEN · TIK EEN TEGEL VOOR GROOTTE · − OM TE VERWIJDEREN';
+
+  @override
+  String get metricGridDone => 'KLAAR';
+
+  @override
+  String get metricGridPageOneLabel => 'PAGINA 1 · DAGELIJKSE BLIK';
+
+  @override
+  String get metricGridPageTwoLabel => 'PAGINA 2 · DIEPGANG';
+
+  @override
+  String get metricGridPageTwoDragHint => 'PAGINA 2 · SLEEP HIER EEN TEGEL';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'SLEEP EEN TEGEL TERUG NAAR PAGINA $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'HIER NEERZETTEN';
+
+  @override
+  String get metricGridDragging => 'SLEPEN…';
+
+  @override
+  String get metricGridPresets => 'VOORINSTELLINGEN';
+
+  @override
+  String get metricGridPresetMyLayout => 'Mijn indeling';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimaal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Trainingsdag';
+
+  @override
+  String get metricGridPresetRecovery => 'Herstel';
+
+  @override
+  String get metricGridAddMetric => 'METING TOEVOEGEN';
+
+  @override
+  String get metricGridConnectBody =>
+      'Stappen, slaap en herstel vullen zichzelf — er wordt niets voor je geschat.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH KOPPELEN';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Alle metingen staan al op je raster.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'In de app gelogd';
+
+  @override
+  String get metricGridSourceComputed => 'Berekend';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · pagina $page · #$position';
+  }
 }

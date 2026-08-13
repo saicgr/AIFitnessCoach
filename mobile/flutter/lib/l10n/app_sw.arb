@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Tuanze mazoezi yako ya kwanza",
   "workoutShowcaseNextTargetRaised": "Seti {set} imerekodiwa — lengo lijalo limeongezwa hadi {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "HATUA {current} KATI YA {total}",
-  "quizAlmostDone": "KARIBU KUMALIZA"
+  "quizAlmostDone": "KARIBU KUMALIZA",
+  "metricSetupPanelKicker": "{count, plural, =1{Kipimo 1 kinasubiri} other{Vipimo {count} vinasubiri}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Gridi yako hujijaza yenyewe.",
+  "metricSetupPanelHealthBody": "{source} hujaza hivi kiotomatiki.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Unganisha {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Hivi hujazwa kutokana na unachorekodi.",
+  "metricSetupPanelLogCta": "Rekodi kitu",
+  "metricSetupPanelSetupBody": "Huanza siku mpango wako unapoanza.",
+  "metricSetupPanelSetupCta": "Kamilisha usanidi",
+  "metricSetupPanelFooter": "Hakuna kinachokadiriwa kwa niaba yako.",
+  "metricTileNoSourceConnectHealth": "Hakuna chanzo · unganisha Health",
+  "metricTileConnectHealthShort": "Unganisha Health",
+  "metricTileNoHealthDataYet": "Bado hakuna data ya Health",
+  "metricTileNoDataYet": "Bado hakuna data",
+  "metricTileNothingLoggedYet": "Bado hujarekodi chochote",
+  "metricTileNothingLoggedShort": "Hakuna rekodi",
+  "metricTileNoPlanYetFinishSetup": "Bado hakuna mpango · kamilisha usanidi",
+  "metricTileNeedsHrv": "Inahitaji HRV",
+  "metricTileNoBaseline": "Hakuna kigezo",
+  "metricTileNoData": "Hakuna data",
+  "metricGridMyMetrics": "VIPIMO VYANGU",
+  "metricGridEditTiles": "HARIRI VIGAE",
+  "metricGridChangesSaveInstantly": "MABADILIKO HUHIFADHIWA PAPO HAPO",
+  "metricGridEditHint": "BURUTA KUPANGA UPYA · GUSA KIGAE KWA UKUBWA · − KUONDOA",
+  "metricGridDone": "IMEKAMILIKA",
+  "metricGridPageOneLabel": "UKURASA 1 · MTAZAMO WA KILA SIKU",
+  "metricGridPageTwoLabel": "UKURASA 2 · KINA",
+  "metricGridPageTwoDragHint": "UKURASA 2 · BURUTA KIGAE HAPA",
+  "metricGridDragBackToPage": "BURUTA KIGAE KURUDI UKURASA {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "ACHIA HAPA",
+  "metricGridDragging": "INABURUTWA…",
+  "metricGridPresets": "MIPANGILIO TAYARI",
+  "metricGridPresetMyLayout": "Mpangilio wangu",
+  "metricGridPresetMinimal": "Kidogo",
+  "metricGridPresetTrainingDay": "Siku ya mazoezi",
+  "metricGridPresetRecovery": "Kupona",
+  "metricGridAddMetric": "ONGEZA KIPIMO",
+  "metricGridConnectBody": "Hatua, usingizi na utayari hujazwa kiotomatiki — hakuna kinachokadiriwa kwa niaba yako.",
+  "metricGridConnectCta": "UNGANISHA HEALTH",
+  "metricGridEveryMetricPlaced": "Vipimo vyote tayari viko kwenye gridi yako.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Imerekodiwa kwenye programu",
+  "metricGridSourceComputed": "Imekokotolewa",
+  "metricGridPlacementLine": "{size} · ukurasa {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Simulan na natin ang unang workout mo",
   "workoutShowcaseNextTargetRaised": "Na-log ang Set {set} — awtomatikong itinaas ang susunod na target sa {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "HAKBANG {current} SA {total}",
-  "quizAlmostDone": "MALAPIT NANG MATAPOS"
+  "quizAlmostDone": "MALAPIT NANG MATAPOS",
+  "metricSetupPanelKicker": "{count, plural, =1{1 sukatan ang naghihintay} other{{count} sukatan ang naghihintay}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Kusang napupuno ang iyong grid.",
+  "metricSetupPanelHealthBody": "Awtomatikong pinupuno ito ng {source}.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Ikonekta ang {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Napupuno ito mula sa mga tala mo.",
+  "metricSetupPanelLogCta": "Mag-log ng kahit ano",
+  "metricSetupPanelSetupBody": "Magsisimula sa araw na magsisimula ang plano mo.",
+  "metricSetupPanelSetupCta": "Tapusin ang setup",
+  "metricSetupPanelFooter": "Walang tinatantiya para sa iyo.",
+  "metricTileNoSourceConnectHealth": "Walang pinagkukunan · ikonekta ang Health",
+  "metricTileConnectHealthShort": "Ikonekta ang Health",
+  "metricTileNoHealthDataYet": "Wala pang datos sa Health",
+  "metricTileNoDataYet": "Wala pang datos",
+  "metricTileNothingLoggedYet": "Wala pang na-log",
+  "metricTileNothingLoggedShort": "Walang na-log",
+  "metricTileNoPlanYetFinishSetup": "Wala pang plano · tapusin ang setup",
+  "metricTileNeedsHrv": "Kailangan ng HRV",
+  "metricTileNoBaseline": "Walang baseline",
+  "metricTileNoData": "Walang datos",
+  "metricGridMyMetrics": "AKING MGA SUKATAN",
+  "metricGridEditTiles": "I-EDIT ANG MGA TILE",
+  "metricGridChangesSaveInstantly": "AGAD NASE-SAVE ANG MGA PAGBABAGO",
+  "metricGridEditHint": "I-DRAG PARA MAG-AYOS · I-TAP ANG TILE PARA SA LAKI · − PARA ALISIN",
+  "metricGridDone": "TAPOS",
+  "metricGridPageOneLabel": "PAHINA 1 · ARAW-ARAW NA SULYAP",
+  "metricGridPageTwoLabel": "PAHINA 2 · LALIM",
+  "metricGridPageTwoDragHint": "PAHINA 2 · MAG-DRAG NG TILE DITO",
+  "metricGridDragBackToPage": "I-DRAG PABALIK ANG TILE SA PAHINA {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "IBABA DITO",
+  "metricGridDragging": "DINADALA…",
+  "metricGridPresets": "MGA PRESET",
+  "metricGridPresetMyLayout": "Aking layout",
+  "metricGridPresetMinimal": "Minimal",
+  "metricGridPresetTrainingDay": "Araw ng ensayo",
+  "metricGridPresetRecovery": "Pagbawi",
+  "metricGridAddMetric": "MAGDAGDAG NG SUKATAN",
+  "metricGridConnectBody": "Awtomatikong napupuno ang hakbang, tulog at readiness — walang tinatantiya para sa iyo.",
+  "metricGridConnectCta": "IKONEKTA ANG HEALTH",
+  "metricGridEveryMetricPlaced": "Nasa grid mo na ang lahat ng sukatan.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Naka-log sa app",
+  "metricGridSourceComputed": "Kinalkula",
+  "metricGridPlacementLine": "{size} · pahina {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

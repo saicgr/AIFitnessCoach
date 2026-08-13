@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "ଆସନ୍ତୁ ଆପଣଙ୍କ ପ୍ରଥମ ୱାର୍କଆଉଟ୍ ଆରମ୍ଭ କରିବା",
   "workoutShowcaseNextTargetRaised": "ସେଟ୍ {set} ଲଗ୍ ହେଲା — ପରବର୍ତ୍ତୀ ଲକ୍ଷ୍ୟ ସ୍ୱୟଂ {weight} lb କୁ ବଢ଼ିଲା (+{delta} lb)",
   "quizStepOfTotal": "ପଦକ୍ଷେପ {current} / {total}",
-  "quizAlmostDone": "ପ୍ରାୟ ସମ୍ପୂର୍ଣ୍ଣ"
+  "quizAlmostDone": "ପ୍ରାୟ ସମ୍ପୂର୍ଣ୍ଣ",
+  "metricSetupPanelKicker": "{count, plural, =1{1 ମେଟ୍ରିକ୍ ଅପେକ୍ଷାରେ} other{{count} ମେଟ୍ରିକ୍ ଅପେକ୍ଷାରେ}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "ଆପଣଙ୍କ ଗ୍ରିଡ୍ ନିଜେ ପୂର୍ଣ୍ଣ ହେବ।",
+  "metricSetupPanelHealthBody": "{source} ଏଗୁଡ଼ିକ ସ୍ୱୟଂଚାଳିତ ଭାବେ ପୂରଣ କରେ।",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} ସଂଯୋଗ କରନ୍ତୁ",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "ଆପଣ ଲଗ୍ କରୁଥିବା ତଥ୍ୟରୁ ଏଗୁଡ଼ିକ ପୂରଣ ହୁଏ।",
+  "metricSetupPanelLogCta": "କିଛି ଲଗ୍ କରନ୍ତୁ",
+  "metricSetupPanelSetupBody": "ଆପଣଙ୍କ ଯୋଜନା ଆରମ୍ଭ ହେବା ଦିନରୁ ଆରମ୍ଭ ହୁଏ।",
+  "metricSetupPanelSetupCta": "ସେଟଅପ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ",
+  "metricSetupPanelFooter": "ଆପଣଙ୍କ ପାଇଁ କିଛି ଅନୁମାନ କରାଯାଏ ନାହିଁ।",
+  "metricTileNoSourceConnectHealth": "ଉତ୍ସ ନାହିଁ · Health ସଂଯୋଗ କରନ୍ତୁ",
+  "metricTileConnectHealthShort": "Health ସଂଯୋଗ କରନ୍ତୁ",
+  "metricTileNoHealthDataYet": "ଏପର୍ଯ୍ୟନ୍ତ Health ଡାଟା ନାହିଁ",
+  "metricTileNoDataYet": "ଏପର୍ଯ୍ୟନ୍ତ ଡାଟା ନାହିଁ",
+  "metricTileNothingLoggedYet": "ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଲଗ୍ ହୋଇନାହିଁ",
+  "metricTileNothingLoggedShort": "କିଛି ଲଗ୍ ନାହିଁ",
+  "metricTileNoPlanYetFinishSetup": "ଏପର୍ଯ୍ୟନ୍ତ ଯୋଜନା ନାହିଁ · ସେଟଅପ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ",
+  "metricTileNeedsHrv": "HRV ଆବଶ୍ୟକ",
+  "metricTileNoBaseline": "ବେସଲାଇନ୍ ନାହିଁ",
+  "metricTileNoData": "ଡାଟା ନାହିଁ",
+  "metricGridMyMetrics": "ମୋର ମେଟ୍ରିକ୍",
+  "metricGridEditTiles": "ଟାଇଲ୍ ସମ୍ପାଦନା",
+  "metricGridChangesSaveInstantly": "ପରିବର୍ତ୍ତନ ତୁରନ୍ତ ସେଭ୍ ହୁଏ",
+  "metricGridEditHint": "କ୍ରମ ବଦଳାଇବାକୁ ଟାଣନ୍ତୁ · ଆକାର ପାଇଁ ଟାଇଲ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ · କାଢ଼ିବାକୁ −",
+  "metricGridDone": "ସମାପ୍ତ",
+  "metricGridPageOneLabel": "ପୃଷ୍ଠା 1 · ଦୈନିକ ଝଲକ",
+  "metricGridPageTwoLabel": "ପୃଷ୍ଠା 2 · ଗଭୀରତା",
+  "metricGridPageTwoDragHint": "ପୃଷ୍ଠା 2 · ଏଠାକୁ ଏକ ଟାଇଲ୍ ଟାଣନ୍ତୁ",
+  "metricGridDragBackToPage": "ଏକ ଟାଇଲ୍ ପୃଷ୍ଠା {page} କୁ ଟାଣନ୍ତୁ",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "ଏଠାରେ ଛାଡ଼ନ୍ତୁ",
+  "metricGridDragging": "ଟାଣୁଛି…",
+  "metricGridPresets": "ପ୍ରିସେଟ୍",
+  "metricGridPresetMyLayout": "ମୋର ଲେଆଉଟ୍",
+  "metricGridPresetMinimal": "ସର୍ବନିମ୍ନ",
+  "metricGridPresetTrainingDay": "ତାଲିମ ଦିନ",
+  "metricGridPresetRecovery": "ପୁନରୁଦ୍ଧାର",
+  "metricGridAddMetric": "ମେଟ୍ରିକ୍ ଯୋଡ଼ନ୍ତୁ",
+  "metricGridConnectBody": "ପାଦ, ନିଦ ଏବଂ ପ୍ରସ୍ତୁତି ସ୍ୱୟଂଚାଳିତ ଭାବେ ପୂରଣ ହୁଏ — ଆପଣଙ୍କ ପାଇଁ କିଛି ଅନୁମାନ କରାଯାଏ ନାହିଁ।",
+  "metricGridConnectCta": "HEALTH ସଂଯୋଗ କରନ୍ତୁ",
+  "metricGridEveryMetricPlaced": "ସମସ୍ତ ମେଟ୍ରିକ୍ ପୂର୍ବରୁ ଆପଣଙ୍କ ଗ୍ରିଡ୍‌ରେ ଅଛି।",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "ଆପ୍‌ରେ ଲଗ୍ ହୋଇଛି",
+  "metricGridSourceComputed": "ଗଣନା କରାଯାଇଛି",
+  "metricGridPlacementLine": "{size} · ପୃଷ୍ଠା {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

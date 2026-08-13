@@ -45122,4 +45122,153 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Jednorazowa cena dla członków-założycieli, ten sam 7-dniowy darmowy okres próbny. Ta oferta już nie wróci.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Czeka $count wskaźników',
+      one: '1 wskaźnik czeka',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Twoja siatka wypełni się sama.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source uzupełni je automatycznie.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Połącz $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Uzupełnią się z tego, co zapiszesz.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Zapisz coś';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Ruszy w dniu startu twojego planu.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Dokończ konfigurację';
+
+  @override
+  String get metricSetupPanelFooter => 'Niczego za ciebie nie szacujemy.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Brak źródła · połącz Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Połącz Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Brak danych z Health';
+
+  @override
+  String get metricTileNoDataYet => 'Brak danych';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Nic jeszcze nie zapisano';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Brak zapisów';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Brak planu · dokończ konfigurację';
+
+  @override
+  String get metricTileNeedsHrv => 'Wymaga HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Brak odniesienia';
+
+  @override
+  String get metricTileNoData => 'Brak danych';
+
+  @override
+  String get metricGridMyMetrics => 'MOJE WSKAŹNIKI';
+
+  @override
+  String get metricGridEditTiles => 'EDYTUJ KAFELKI';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ZMIANY ZAPISUJĄ SIĘ OD RAZU';
+
+  @override
+  String get metricGridEditHint =>
+      'PRZECIĄGNIJ, BY ZMIENIĆ KOLEJNOŚĆ · DOTKNIJ, BY ZMIENIĆ ROZMIAR · − USUWA';
+
+  @override
+  String get metricGridDone => 'GOTOWE';
+
+  @override
+  String get metricGridPageOneLabel => 'STRONA 1 · CODZIENNY RZUT OKA';
+
+  @override
+  String get metricGridPageTwoLabel => 'STRONA 2 · SZCZEGÓŁY';
+
+  @override
+  String get metricGridPageTwoDragHint => 'STRONA 2 · PRZECIĄGNIJ TU KAFELEK';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'PRZECIĄGNIJ KAFELEK NA STRONĘ $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'UPUŚĆ TUTAJ';
+
+  @override
+  String get metricGridDragging => 'PRZECIĄGANIE…';
+
+  @override
+  String get metricGridPresets => 'USTAWIENIA WSTĘPNE';
+
+  @override
+  String get metricGridPresetMyLayout => 'Mój układ';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimalny';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Dzień treningowy';
+
+  @override
+  String get metricGridPresetRecovery => 'Regeneracja';
+
+  @override
+  String get metricGridAddMetric => 'DODAJ WSKAŹNIK';
+
+  @override
+  String get metricGridConnectBody =>
+      'Kroki, sen i gotowość uzupełnią się same — niczego za ciebie nie szacujemy.';
+
+  @override
+  String get metricGridConnectCta => 'POŁĄCZ HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Wszystkie wskaźniki są już na siatce.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Zapisane w aplikacji';
+
+  @override
+  String get metricGridSourceComputed => 'Obliczone';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · strona $page · #$position';
+  }
 }

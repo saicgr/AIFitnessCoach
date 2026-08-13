@@ -28454,5 +28454,94 @@
   "paywallV7DownsellSub": "One-time founding-member price, same 7-day free trial. This offer doesn't come back.",
   "@paywallV7DownsellSub": {
     "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "metricSetupPanelKicker": "{count, plural, =1{1 metric waiting} other{{count} metrics waiting}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Your grid fills itself in.",
+  "metricSetupPanelHealthBody": "{source} fills these in automatically.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Connect {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "These fill in from what you log.",
+  "metricSetupPanelLogCta": "Log something",
+  "metricSetupPanelSetupBody": "Starts the day your plan does.",
+  "metricSetupPanelSetupCta": "Finish setup",
+  "metricSetupPanelFooter": "Nothing is estimated for you.",
+  "metricTileNoSourceConnectHealth": "No source · connect Health",
+  "metricTileConnectHealthShort": "Connect Health",
+  "metricTileNoHealthDataYet": "No Health data yet",
+  "metricTileNoDataYet": "No data yet",
+  "metricTileNothingLoggedYet": "Nothing logged yet",
+  "metricTileNothingLoggedShort": "Nothing logged",
+  "metricTileNoPlanYetFinishSetup": "No plan yet · finish setup",
+  "metricTileNeedsHrv": "Needs HRV",
+  "metricTileNoBaseline": "No baseline",
+  "metricTileNoData": "No data",
+  "metricGridMyMetrics": "MY METRICS",
+  "metricGridEditTiles": "EDIT TILES",
+  "metricGridChangesSaveInstantly": "CHANGES SAVE INSTANTLY",
+  "metricGridEditHint": "DRAG TO REORDER · TAP A TILE FOR SIZE · − TO REMOVE",
+  "metricGridDone": "DONE",
+  "metricGridPageOneLabel": "PAGE 1 · DAILY GLANCE",
+  "metricGridPageTwoLabel": "PAGE 2 · DEPTH",
+  "metricGridPageTwoDragHint": "PAGE 2 · DRAG A TILE HERE",
+  "metricGridDragBackToPage": "DRAG A TILE BACK TO PAGE {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "DROP HERE",
+  "metricGridDragging": "DRAGGING…",
+  "metricGridPresets": "PRESETS",
+  "metricGridPresetMyLayout": "My layout",
+  "metricGridPresetMinimal": "Minimal",
+  "metricGridPresetTrainingDay": "Training day",
+  "metricGridPresetRecovery": "Recovery",
+  "metricGridAddMetric": "ADD METRIC",
+  "metricGridConnectBody": "Steps, sleep and readiness fill in automatically — nothing is estimated for you.",
+  "metricGridConnectCta": "CONNECT HEALTH",
+  "metricGridEveryMetricPlaced": "Every metric is already on your grid.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Logged in-app",
+  "metricGridSourceComputed": "Computed",
+  "metricGridPlacementLine": "{size} · page {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
   }
 }

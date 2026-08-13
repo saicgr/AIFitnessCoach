@@ -44916,4 +44916,152 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Jednorázová cena pro zakládající členy, stejná 7denní zkušební doba zdarma. Tato nabídka se už nevrátí.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Čeká $count metrik',
+      one: '1 metrika čeká',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Mřížka se doplní sama.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source je doplní automaticky.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Připojit $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Doplní se z toho, co si zapíšeš.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Něco zapsat';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Začne dnem, kdy začne tvůj plán.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Dokončit nastavení';
+
+  @override
+  String get metricSetupPanelFooter => 'Nic za tebe neodhadujeme.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Bez zdroje · připoj Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Připojit Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Zatím žádná data z Health';
+
+  @override
+  String get metricTileNoDataYet => 'Zatím žádná data';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Zatím nic zapsáno';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Nic zapsáno';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Zatím bez plánu · dokonči nastavení';
+
+  @override
+  String get metricTileNeedsHrv => 'Chybí HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Bez základu';
+
+  @override
+  String get metricTileNoData => 'Žádná data';
+
+  @override
+  String get metricGridMyMetrics => 'MOJE METRIKY';
+
+  @override
+  String get metricGridEditTiles => 'UPRAVIT DLAŽDICE';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ZMĚNY SE UKLÁDAJÍ IHNED';
+
+  @override
+  String get metricGridEditHint =>
+      'PŘETAŽENÍM SEŘADÍŠ · KLEPNUTÍM ZMĚNÍŠ VELIKOST · − ODEBERE';
+
+  @override
+  String get metricGridDone => 'HOTOVO';
+
+  @override
+  String get metricGridPageOneLabel => 'STRANA 1 · DENNÍ PŘEHLED';
+
+  @override
+  String get metricGridPageTwoLabel => 'STRANA 2 · DETAILY';
+
+  @override
+  String get metricGridPageTwoDragHint => 'STRANA 2 · PŘETÁHNI SEM DLAŽDICI';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'PŘETÁHNI DLAŽDICI ZPĚT NA STRANU $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'PUSŤ SEM';
+
+  @override
+  String get metricGridDragging => 'TAHÁNÍ…';
+
+  @override
+  String get metricGridPresets => 'PŘEDVOLBY';
+
+  @override
+  String get metricGridPresetMyLayout => 'Moje rozložení';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimální';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Tréninkový den';
+
+  @override
+  String get metricGridPresetRecovery => 'Regenerace';
+
+  @override
+  String get metricGridAddMetric => 'PŘIDAT METRIKU';
+
+  @override
+  String get metricGridConnectBody =>
+      'Kroky, spánek a připravenost se doplní samy — nic za tebe neodhadujeme.';
+
+  @override
+  String get metricGridConnectCta => 'PŘIPOJIT HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced => 'Všechny metriky už na mřížce máš.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Zapsáno v aplikaci';
+
+  @override
+  String get metricGridSourceComputed => 'Vypočteno';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · strana $page · #$position';
+  }
 }

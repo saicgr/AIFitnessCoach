@@ -60,6 +60,10 @@ import '../core/theme/theme_colors.dart';
 // `kQuickLogFabClearance` and friends unchanged.
 export '../core/constants/chrome_constants.dart'
     show
+        kFloatCircleDiameter,
+        kFloatClusterGap,
+        kFloatGlyphSize,
+        kFloatShadowBleed,
         kQuickLogFabHeight,
         kQuickLogFabGapAboveNav,
         kQuickLogFabBottomOffset,
@@ -74,7 +78,7 @@ export '../core/constants/chrome_constants.dart'
 /// expand — the exact discontinuity the `buildAt` comment below complains
 /// about. Keeping it at half the height makes the radius lerp a no-op: the
 /// silhouette is a pill in BOTH states and only the width moves.
-const double kQuickLogFabRadius = kQuickLogFabHeight / 2;
+const double kQuickLogFabRadius = kFloatCircleDiameter / 2;
 
 /// The labelled quick-log button that docks above the main nav.
 ///
@@ -135,15 +139,19 @@ class QuickLogFabChrome extends StatelessWidget {
     // Everything below is driven by a single t (0 = circle, 1 = pill).
     Widget buildAt(double t) {
       final radius =
-          ui.lerpDouble(kQuickLogFabHeight / 2, kQuickLogFabRadius, t)!;
+          ui.lerpDouble(kFloatCircleDiameter / 2, kQuickLogFabRadius, t)!;
       return Container(
-        height: kQuickLogFabHeight,
+        // SLOT 2 of the two-slot float band. Collapsed (t=0) this is a
+        // [kFloatCircleDiameter] circle, identical in size to the coach ✦
+        // beside it; expanded it grows in WIDTH only, so the pair never
+        // disagrees about how tall a float is.
+        height: kFloatCircleDiameter,
         // minWidth holds the 44pt circle at t=0 and releases as it expands, so
         // the pill hugs its caption at t=1. NOT `alignment:` — a Container
         // with an alignment fills bounded constraints, which is what made the
         // pill span the whole screen once already.
         constraints: BoxConstraints(
-          minWidth: ui.lerpDouble(kQuickLogFabHeight, 0, t)!,
+          minWidth: ui.lerpDouble(kFloatCircleDiameter, 0, t)!,
         ),
         padding: EdgeInsets.symmetric(horizontal: ui.lerpDouble(0, 14, t)!),
         decoration: BoxDecoration(
@@ -185,7 +193,12 @@ class QuickLogFabChrome extends StatelessWidget {
             // Constant size in both states — a 20↔24 jump is small but it is
             // the element the eye is actually tracking through the change.
             // The accent lives HERE and nowhere else on this control.
-            Icon(Icons.add_rounded, size: 16, color: tc.accent),
+            //
+            // [kFloatGlyphSize], shared with the coach ✦ next to it: now that
+            // both floats are one diameter (D4), a 16-vs-15 glyph mismatch is
+            // the last thing that would still make the pair read as two
+            // unrelated controls.
+            Icon(Icons.add_rounded, size: kFloatGlyphSize, color: tc.accent),
             // The caption is REVEALED rather than inserted: ClipRect + a
             // widthFactor that grows with t wipes it out from the icon, and
             // the opacity ramp keeps it from strobing at the very start.

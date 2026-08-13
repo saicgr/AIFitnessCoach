@@ -75707,6 +75707,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'One-time founding-member price, same 7-day free trial. This offer doesn\'t come back.'**
   String get paywallV7DownsellSub;
+
+  /// First-run metric grid panel: how many placed tiles are still waiting for a source.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 metric waiting} other{{count} metrics waiting}}'**
+  String metricSetupPanelKicker(num count);
+
+  /// No description provided for @metricSetupPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your grid fills itself in.'**
+  String get metricSetupPanelTitle;
+
+  /// First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.
+  ///
+  /// In en, this message translates to:
+  /// **'{source} fills these in automatically.'**
+  String metricSetupPanelHealthBody(String source);
+
+  /// First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {source}'**
+  String metricSetupPanelHealthCta(String source);
+
+  /// No description provided for @metricSetupPanelLogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'These fill in from what you log.'**
+  String get metricSetupPanelLogBody;
+
+  /// No description provided for @metricSetupPanelLogCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Log something'**
+  String get metricSetupPanelLogCta;
+
+  /// No description provided for @metricSetupPanelSetupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts the day your plan does.'**
+  String get metricSetupPanelSetupBody;
+
+  /// No description provided for @metricSetupPanelSetupCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish setup'**
+  String get metricSetupPanelSetupCta;
+
+  /// No description provided for @metricSetupPanelFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is estimated for you.'**
+  String get metricSetupPanelFooter;
+
+  /// No description provided for @metricTileNoSourceConnectHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'No source · connect Health'**
+  String get metricTileNoSourceConnectHealth;
+
+  /// No description provided for @metricTileConnectHealthShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Health'**
+  String get metricTileConnectHealthShort;
+
+  /// No description provided for @metricTileNoHealthDataYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No Health data yet'**
+  String get metricTileNoHealthDataYet;
+
+  /// No description provided for @metricTileNoDataYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get metricTileNoDataYet;
+
+  /// No description provided for @metricTileNothingLoggedYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged yet'**
+  String get metricTileNothingLoggedYet;
+
+  /// No description provided for @metricTileNothingLoggedShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing logged'**
+  String get metricTileNothingLoggedShort;
+
+  /// No description provided for @metricTileNoPlanYetFinishSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'No plan yet · finish setup'**
+  String get metricTileNoPlanYetFinishSetup;
+
+  /// No description provided for @metricTileNeedsHrv.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs HRV'**
+  String get metricTileNeedsHrv;
+
+  /// No description provided for @metricTileNoBaseline.
+  ///
+  /// In en, this message translates to:
+  /// **'No baseline'**
+  String get metricTileNoBaseline;
+
+  /// No description provided for @metricTileNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get metricTileNoData;
+
+  /// No description provided for @metricGridMyMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'MY METRICS'**
+  String get metricGridMyMetrics;
+
+  /// No description provided for @metricGridEditTiles.
+  ///
+  /// In en, this message translates to:
+  /// **'EDIT TILES'**
+  String get metricGridEditTiles;
+
+  /// No description provided for @metricGridChangesSaveInstantly.
+  ///
+  /// In en, this message translates to:
+  /// **'CHANGES SAVE INSTANTLY'**
+  String get metricGridChangesSaveInstantly;
+
+  /// No description provided for @metricGridEditHint.
+  ///
+  /// In en, this message translates to:
+  /// **'DRAG TO REORDER · TAP A TILE FOR SIZE · − TO REMOVE'**
+  String get metricGridEditHint;
+
+  /// No description provided for @metricGridDone.
+  ///
+  /// In en, this message translates to:
+  /// **'DONE'**
+  String get metricGridDone;
+
+  /// No description provided for @metricGridPageOneLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PAGE 1 · DAILY GLANCE'**
+  String get metricGridPageOneLabel;
+
+  /// No description provided for @metricGridPageTwoLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'PAGE 2 · DEPTH'**
+  String get metricGridPageTwoLabel;
+
+  /// No description provided for @metricGridPageTwoDragHint.
+  ///
+  /// In en, this message translates to:
+  /// **'PAGE 2 · DRAG A TILE HERE'**
+  String get metricGridPageTwoDragHint;
+
+  /// Metric grid editor: empty page drop zone label.
+  ///
+  /// In en, this message translates to:
+  /// **'DRAG A TILE BACK TO PAGE {page}'**
+  String metricGridDragBackToPage(Object page);
+
+  /// No description provided for @metricGridDropHere.
+  ///
+  /// In en, this message translates to:
+  /// **'DROP HERE'**
+  String get metricGridDropHere;
+
+  /// No description provided for @metricGridDragging.
+  ///
+  /// In en, this message translates to:
+  /// **'DRAGGING…'**
+  String get metricGridDragging;
+
+  /// No description provided for @metricGridPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'PRESETS'**
+  String get metricGridPresets;
+
+  /// No description provided for @metricGridPresetMyLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'My layout'**
+  String get metricGridPresetMyLayout;
+
+  /// No description provided for @metricGridPresetMinimal.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimal'**
+  String get metricGridPresetMinimal;
+
+  /// No description provided for @metricGridPresetTrainingDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Training day'**
+  String get metricGridPresetTrainingDay;
+
+  /// No description provided for @metricGridPresetRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get metricGridPresetRecovery;
+
+  /// No description provided for @metricGridAddMetric.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD METRIC'**
+  String get metricGridAddMetric;
+
+  /// No description provided for @metricGridConnectBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps, sleep and readiness fill in automatically — nothing is estimated for you.'**
+  String get metricGridConnectBody;
+
+  /// No description provided for @metricGridConnectCta.
+  ///
+  /// In en, this message translates to:
+  /// **'CONNECT HEALTH'**
+  String get metricGridConnectCta;
+
+  /// No description provided for @metricGridEveryMetricPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Every metric is already on your grid.'**
+  String get metricGridEveryMetricPlaced;
+
+  /// No description provided for @metricGridSourceHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get metricGridSourceHealth;
+
+  /// No description provided for @metricGridSourceInApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged in-app'**
+  String get metricGridSourceInApp;
+
+  /// No description provided for @metricGridSourceComputed.
+  ///
+  /// In en, this message translates to:
+  /// **'Computed'**
+  String get metricGridSourceComputed;
+
+  /// Metric grid editor: a tile's size, page and position while editing.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} · page {page} · #{position}'**
+  String metricGridPlacementLine(String size, Object page, Object position);
 }
 
 class _AppLocalizationsDelegate

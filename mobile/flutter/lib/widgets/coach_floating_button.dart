@@ -12,11 +12,12 @@
 /// pill and a 44 pt circle the instant the tab scrolls. Anything anchored
 /// beside it with its own independent `Positioned(right:)` would have the gap
 /// between the two breathing open and shut on every scroll. So the two are laid
-/// out as ONE right-anchored `Row` in `main_shell.dart` — the coach circle is
-/// fixed at 40 pt, the gap is a constant, and Quick Log's morph slides the
-/// whole cluster as a unit. That is what "shares Quick Log's collapse state"
-/// means mechanically; there is no second morph provider to drift out of sync
-/// (the old `coachFabExpandedProvider` was retired with this change).
+/// out as ONE right-anchored `Row` in `main_shell.dart` — both floats are
+/// [kFloatCircleDiameter], the gap is [kFloatClusterGap], and Quick Log's morph
+/// slides the whole cluster as a unit. That is what "shares Quick Log's
+/// collapse state" means mechanically; there is no second morph provider to
+/// drift out of sync (the old `coachFabExpandedProvider` was retired with this
+/// change).
 ///
 /// ## Why bottom-RIGHT
 ///
@@ -29,8 +30,15 @@
 ///
 /// Google Health users report triggering their AI coach *accidentally* and say
 /// it obstructs their data. So: icon-only (never a labelled pill competing with
-/// Quick Log), the smaller of the two targets, never animated unprompted, and
-/// it never opens anything on its own — one deliberate tap → `/chat`.
+/// Quick Log), never animated unprompted, and it never opens anything on its
+/// own — one deliberate tap → `/chat`.
+///
+/// It used to also be physically SMALLER than Quick Log (40 vs 44) to encode
+/// "secondary". D4 killed that: on a real device three floats at three
+/// diameters read as three unrelated controls dropped on the screen, and 40 pt
+/// is under the platform touch-target minimum besides. Secondary is now carried
+/// by fill and label — raised surface + icon-only, against Quick Log's caption
+/// — not by shrinking one member of a matched pair.
 ///
 /// Two hide rules, both enforced here rather than at the call site so they hold
 /// wherever the button is mounted:
@@ -45,6 +53,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../core/constants/chrome_constants.dart';
 import '../core/providers/workout_mini_player_provider.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/providers/coach_unread_provider.dart';
@@ -53,15 +62,15 @@ import 'coach_spark_icon.dart';
 // `edgeHandleEnabledProvider` — the chat-head opt-in this button defers to.
 import 'main_shell.dart';
 
-/// Diameter of the icon-only coach circle. Deliberately smaller than
-/// `kQuickLogFabHeight` (44) — target size matches frequency ordering, and
-/// Quick Log is the daily habitual action.
-const double kCoachPillDiameter = 40.0;
-
-/// Gap between the coach circle and the Quick Log pill inside the cluster.
-/// A constant, not a computed value: the whole point of the cluster is that
-/// this distance never changes while Quick Log morphs.
-const double kCoachPillClusterGap = 10.0;
+// The coach circle's geometry is NOT its own any more. `kCoachPillDiameter`
+// (40) and `kCoachPillClusterGap` (10) used to be declared here, independent of
+// Quick Log's `kQuickLogFabHeight` (44) and of the chat-head's hardcoded 56 —
+// three literals for one band, which is precisely how D4's three-different-
+// diameters defect became writable. Every float now derives from the single
+// [kFloatCircleDiameter] token in `chrome_constants.dart`; re-exported here so
+// the cluster and its tests import the geometry from the control that uses it.
+export '../core/constants/chrome_constants.dart'
+    show kFloatCircleDiameter, kFloatGlyphSize, kFloatClusterGap;
 
 class CoachFloatingButton extends ConsumerWidget {
   const CoachFloatingButton({super.key});
@@ -90,8 +99,8 @@ class CoachFloatingButton extends ConsumerWidget {
         onTap: () => _open(context),
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          width: kCoachPillDiameter,
-          height: kCoachPillDiameter,
+          width: kFloatCircleDiameter,
+          height: kFloatCircleDiameter,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
@@ -105,8 +114,8 @@ class CoachFloatingButton extends ConsumerWidget {
               // neutral float shadow Quick Log uses so the pair reads as one
               // cluster lifted off the page rather than two competing colours.
               Container(
-                width: kCoachPillDiameter,
-                height: kCoachPillDiameter,
+                width: kFloatCircleDiameter,
+                height: kFloatCircleDiameter,
                 decoration: BoxDecoration(
                   color: tc.elevated,
                   shape: BoxShape.circle,
@@ -124,9 +133,16 @@ class CoachFloatingButton extends ConsumerWidget {
                 ),
                 child: Center(
                   child: ExcludeSemantics(
-                    // 15 px ✦, matching the mockup's glyph, and the ONE place
-                    // the accent is spent on this control.
-                    child: CoachSparkIcon(size: 15, color: tc.accent),
+                    // [kFloatGlyphSize] — the SAME optical size as Quick Log's
+                    // "+", and the ONE place the accent is spent on this
+                    // control. It was 15 against Quick Log's 16: matched
+                    // circles with mismatched glyphs still read as two
+                    // different controls, and at 15 px the old composite
+                    // bubble-plus-sparkle glyph lost its sparkle entirely (D3).
+                    child: CoachSparkIcon(
+                      size: kFloatGlyphSize,
+                      color: tc.accent,
+                    ),
                   ),
                 ),
               ),

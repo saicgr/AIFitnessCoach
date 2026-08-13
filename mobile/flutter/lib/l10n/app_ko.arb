@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "첫 운동을 시작해요",
   "workoutShowcaseNextTargetRaised": "{set}세트 기록 완료 — 다음 목표 자동 상향 {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "{total}단계 중 {current}단계",
-  "quizAlmostDone": "거의 다 됐어요"
+  "quizAlmostDone": "거의 다 됐어요",
+  "metricSetupPanelKicker": "{count, plural, other{{count}개 지표 대기 중}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "지표는 저절로 채워집니다.",
+  "metricSetupPanelHealthBody": "{source}이(가) 자동으로 채웁니다.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} 연결",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "기록한 내용으로 채워집니다.",
+  "metricSetupPanelLogCta": "무언가 기록하기",
+  "metricSetupPanelSetupBody": "플랜이 시작되는 날부터 시작됩니다.",
+  "metricSetupPanelSetupCta": "설정 완료하기",
+  "metricSetupPanelFooter": "추정값은 보여주지 않습니다.",
+  "metricTileNoSourceConnectHealth": "소스 없음 · Health 연결",
+  "metricTileConnectHealthShort": "Health 연결",
+  "metricTileNoHealthDataYet": "아직 Health 데이터 없음",
+  "metricTileNoDataYet": "데이터 없음",
+  "metricTileNothingLoggedYet": "아직 기록 없음",
+  "metricTileNothingLoggedShort": "기록 없음",
+  "metricTileNoPlanYetFinishSetup": "아직 플랜 없음 · 설정 완료하기",
+  "metricTileNeedsHrv": "HRV 필요",
+  "metricTileNoBaseline": "기준값 없음",
+  "metricTileNoData": "데이터 없음",
+  "metricGridMyMetrics": "내 지표",
+  "metricGridEditTiles": "타일 편집",
+  "metricGridChangesSaveInstantly": "변경 사항은 즉시 저장됩니다",
+  "metricGridEditHint": "드래그해 순서 변경 · 탭해 크기 변경 · −로 제거",
+  "metricGridDone": "완료",
+  "metricGridPageOneLabel": "페이지 1 · 오늘 한눈에",
+  "metricGridPageTwoLabel": "페이지 2 · 심화",
+  "metricGridPageTwoDragHint": "페이지 2 · 여기로 타일을 드래그",
+  "metricGridDragBackToPage": "타일을 페이지 {page}로 다시 드래그",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "여기에 놓기",
+  "metricGridDragging": "드래그 중…",
+  "metricGridPresets": "프리셋",
+  "metricGridPresetMyLayout": "내 레이아웃",
+  "metricGridPresetMinimal": "미니멀",
+  "metricGridPresetTrainingDay": "훈련일",
+  "metricGridPresetRecovery": "회복",
+  "metricGridAddMetric": "지표 추가",
+  "metricGridConnectBody": "걸음 수, 수면, 컨디션이 자동으로 채워집니다 — 추정값은 보여주지 않습니다.",
+  "metricGridConnectCta": "HEALTH 연결",
+  "metricGridEveryMetricPlaced": "모든 지표가 이미 그리드에 있습니다.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "앱에서 기록",
+  "metricGridSourceComputed": "계산됨",
+  "metricGridPlacementLine": "{size} · {page}페이지 · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

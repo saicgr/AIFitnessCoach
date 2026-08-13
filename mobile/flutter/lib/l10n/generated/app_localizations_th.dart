@@ -44827,4 +44827,152 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'ราคาสมาชิกผู้ก่อตั้งครั้งเดียว พร้อมทดลองฟรี 7 วันเหมือนเดิม ข้อเสนอนี้จะไม่กลับมาอีก';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ตัวชี้วัดกำลังรอ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'ตารางของคุณจะเติมข้อมูลเอง';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source จะเติมข้อมูลเหล่านี้ให้อัตโนมัติ';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'เชื่อมต่อ $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'ข้อมูลเหล่านี้เติมจากสิ่งที่คุณบันทึก';
+
+  @override
+  String get metricSetupPanelLogCta => 'บันทึกบางอย่าง';
+
+  @override
+  String get metricSetupPanelSetupBody => 'เริ่มในวันที่แผนของคุณเริ่ม';
+
+  @override
+  String get metricSetupPanelSetupCta => 'ตั้งค่าให้เสร็จ';
+
+  @override
+  String get metricSetupPanelFooter => 'เราไม่ประมาณค่าใดๆ ให้คุณ';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'ไม่มีแหล่งข้อมูล · เชื่อมต่อ Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'เชื่อมต่อ Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'ยังไม่มีข้อมูล Health';
+
+  @override
+  String get metricTileNoDataYet => 'ยังไม่มีข้อมูล';
+
+  @override
+  String get metricTileNothingLoggedYet => 'ยังไม่ได้บันทึกอะไร';
+
+  @override
+  String get metricTileNothingLoggedShort => 'ไม่มีบันทึก';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup => 'ยังไม่มีแผน · ตั้งค่าให้เสร็จ';
+
+  @override
+  String get metricTileNeedsHrv => 'ต้องใช้ HRV';
+
+  @override
+  String get metricTileNoBaseline => 'ไม่มีค่าอ้างอิง';
+
+  @override
+  String get metricTileNoData => 'ไม่มีข้อมูล';
+
+  @override
+  String get metricGridMyMetrics => 'ตัวชี้วัดของฉัน';
+
+  @override
+  String get metricGridEditTiles => 'แก้ไขไทล์';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'บันทึกการเปลี่ยนแปลงทันที';
+
+  @override
+  String get metricGridEditHint =>
+      'ลากเพื่อจัดลำดับ · แตะไทล์เพื่อเปลี่ยนขนาด · − เพื่อลบ';
+
+  @override
+  String get metricGridDone => 'เสร็จ';
+
+  @override
+  String get metricGridPageOneLabel => 'หน้า 1 · ภาพรวมประจำวัน';
+
+  @override
+  String get metricGridPageTwoLabel => 'หน้า 2 · เชิงลึก';
+
+  @override
+  String get metricGridPageTwoDragHint => 'หน้า 2 · ลากไทล์มาที่นี่';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'ลากไทล์กลับไปหน้า $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'วางที่นี่';
+
+  @override
+  String get metricGridDragging => 'กำลังลาก…';
+
+  @override
+  String get metricGridPresets => 'ค่าที่ตั้งไว้';
+
+  @override
+  String get metricGridPresetMyLayout => 'เลย์เอาต์ของฉัน';
+
+  @override
+  String get metricGridPresetMinimal => 'เรียบง่าย';
+
+  @override
+  String get metricGridPresetTrainingDay => 'วันฝึกซ้อม';
+
+  @override
+  String get metricGridPresetRecovery => 'ฟื้นตัว';
+
+  @override
+  String get metricGridAddMetric => 'เพิ่มตัวชี้วัด';
+
+  @override
+  String get metricGridConnectBody =>
+      'ก้าวเดิน การนอน และความพร้อมจะเติมให้อัตโนมัติ — เราไม่ประมาณค่าใดๆ ให้คุณ';
+
+  @override
+  String get metricGridConnectCta => 'เชื่อมต่อ HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'ตัวชี้วัดทั้งหมดอยู่บนตารางของคุณแล้ว';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'บันทึกในแอป';
+
+  @override
+  String get metricGridSourceComputed => 'คำนวณให้';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · หน้า $page · #$position';
+  }
 }

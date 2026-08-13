@@ -45332,4 +45332,153 @@ class AppLocalizationsKn extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'ಒಮ್ಮೆ ಮಾತ್ರದ ಫೌಂಡಿಂಗ್-ಮೆಂಬರ್ ಬೆಲೆ, ಅದೇ 7-ದಿನದ ಉಚಿತ ಟ್ರಯಲ್. ಈ ಆಫರ್ ಮತ್ತೆ ಬರುವುದಿಲ್ಲ.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ಮೆಟ್ರಿಕ್‌ಗಳು ಕಾಯುತ್ತಿವೆ',
+      one: '1 ಮೆಟ್ರಿಕ್ ಕಾಯುತ್ತಿದೆ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'ನಿಮ್ಮ ಗ್ರಿಡ್ ತಾನಾಗಿಯೇ ತುಂಬುತ್ತದೆ.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source ಇವುಗಳನ್ನು ಸ್ವಯಂಚಾಲಿತವಾಗಿ ತುಂಬುತ್ತದೆ.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source ಸಂಪರ್ಕಿಸಿ';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'ನೀವು ದಾಖಲಿಸಿದ್ದರಿಂದ ಇವು ತುಂಬುತ್ತವೆ.';
+
+  @override
+  String get metricSetupPanelLogCta => 'ಏನಾದರೂ ದಾಖಲಿಸಿ';
+
+  @override
+  String get metricSetupPanelSetupBody => 'ನಿಮ್ಮ ಯೋಜನೆ ಆರಂಭವಾದ ದಿನವೇ ಆರಂಭ.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'ಸೆಟಪ್ ಪೂರ್ಣಗೊಳಿಸಿ';
+
+  @override
+  String get metricSetupPanelFooter => 'ನಿಮಗಾಗಿ ಯಾವುದನ್ನೂ ಅಂದಾಜು ಮಾಡುವುದಿಲ್ಲ.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'ಮೂಲವಿಲ್ಲ · Health ಸಂಪರ್ಕಿಸಿ';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health ಸಂಪರ್ಕಿಸಿ';
+
+  @override
+  String get metricTileNoHealthDataYet => 'ಇನ್ನೂ Health ಡೇಟಾ ಇಲ್ಲ';
+
+  @override
+  String get metricTileNoDataYet => 'ಇನ್ನೂ ಡೇಟಾ ಇಲ್ಲ';
+
+  @override
+  String get metricTileNothingLoggedYet => 'ಇನ್ನೂ ಏನೂ ದಾಖಲಾಗಿಲ್ಲ';
+
+  @override
+  String get metricTileNothingLoggedShort => 'ಏನೂ ದಾಖಲಾಗಿಲ್ಲ';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'ಇನ್ನೂ ಯೋಜನೆ ಇಲ್ಲ · ಸೆಟಪ್ ಪೂರ್ಣಗೊಳಿಸಿ';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV ಬೇಕು';
+
+  @override
+  String get metricTileNoBaseline => 'ಆಧಾರ ಇಲ್ಲ';
+
+  @override
+  String get metricTileNoData => 'ಡೇಟಾ ಇಲ್ಲ';
+
+  @override
+  String get metricGridMyMetrics => 'ನನ್ನ ಮೆಟ್ರಿಕ್‌ಗಳು';
+
+  @override
+  String get metricGridEditTiles => 'ಟೈಲ್‌ಗಳನ್ನು ಸಂಪಾದಿಸಿ';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ಬದಲಾವಣೆಗಳು ತಕ್ಷಣ ಉಳಿಯುತ್ತವೆ';
+
+  @override
+  String get metricGridEditHint =>
+      'ಕ್ರಮ ಬದಲಿಸಲು ಎಳೆಯಿರಿ · ಗಾತ್ರಕ್ಕೆ ಟೈಲ್ ಟ್ಯಾಪ್ ಮಾಡಿ · ತೆಗೆಯಲು −';
+
+  @override
+  String get metricGridDone => 'ಮುಗಿಯಿತು';
+
+  @override
+  String get metricGridPageOneLabel => 'ಪುಟ 1 · ದಿನದ ನೋಟ';
+
+  @override
+  String get metricGridPageTwoLabel => 'ಪುಟ 2 · ಆಳ';
+
+  @override
+  String get metricGridPageTwoDragHint => 'ಪುಟ 2 · ಇಲ್ಲಿಗೆ ಟೈಲ್ ಎಳೆಯಿರಿ';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'ಟೈಲ್ ಅನ್ನು ಪುಟ $page ಗೆ ಎಳೆಯಿರಿ';
+  }
+
+  @override
+  String get metricGridDropHere => 'ಇಲ್ಲಿ ಬಿಡಿ';
+
+  @override
+  String get metricGridDragging => 'ಎಳೆಯಲಾಗುತ್ತಿದೆ…';
+
+  @override
+  String get metricGridPresets => 'ಪ್ರೀಸೆಟ್‌ಗಳು';
+
+  @override
+  String get metricGridPresetMyLayout => 'ನನ್ನ ವಿನ್ಯಾಸ';
+
+  @override
+  String get metricGridPresetMinimal => 'ಕನಿಷ್ಠ';
+
+  @override
+  String get metricGridPresetTrainingDay => 'ತರಬೇತಿ ದಿನ';
+
+  @override
+  String get metricGridPresetRecovery => 'ಚೇತರಿಕೆ';
+
+  @override
+  String get metricGridAddMetric => 'ಮೆಟ್ರಿಕ್ ಸೇರಿಸಿ';
+
+  @override
+  String get metricGridConnectBody =>
+      'ಹೆಜ್ಜೆ, ನಿದ್ರೆ ಮತ್ತು ಸಿದ್ಧತೆ ಸ್ವಯಂಚಾಲಿತವಾಗಿ ತುಂಬುತ್ತವೆ — ನಿಮಗಾಗಿ ಯಾವುದನ್ನೂ ಅಂದಾಜು ಮಾಡುವುದಿಲ್ಲ.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH ಸಂಪರ್ಕಿಸಿ';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'ಎಲ್ಲಾ ಮೆಟ್ರಿಕ್‌ಗಳು ಈಗಾಗಲೇ ನಿಮ್ಮ ಗ್ರಿಡ್‌ನಲ್ಲಿವೆ.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'ಆ್ಯಪ್‌ನಲ್ಲಿ ದಾಖಲು';
+
+  @override
+  String get metricGridSourceComputed => 'ಗಣಿಸಲಾಗಿದೆ';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · ಪುಟ $page · #$position';
+  }
 }

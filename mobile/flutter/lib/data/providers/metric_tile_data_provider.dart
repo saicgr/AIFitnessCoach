@@ -128,12 +128,26 @@ class MetricTileData {
   final bool hasData;
 
   /// Why the tile is empty — rendered in a dashed capsule. Null when it isn't.
+  ///
+  /// English. The rendering layer prefers the localised form resolved from
+  /// [emptyReason]; this stays as the semantics fallback and as the only copy
+  /// available for an id the catalogue no longer knows.
   final String? noDataReason;
 
-  /// True when [noDataReason] names a *source* the user can connect or log to
-  /// ("No source · connect Health", "Nothing logged yet") rather than a missing
-  /// signal. The capsule prefixes a circled-i in that case — the small
-  /// "tap to fix" affordance the mockup gives those two forms and no other.
+  /// Small-tile form of [noDataReason] ("Connect Health"). A 100pt S tile
+  /// ellipsises the long form into a truncated non-sentence, which is how
+  /// `NO BASELINE Y…` shipped.
+  final String? noDataReasonShort;
+
+  /// *Why* the tile is dark, as a value the grid can aggregate — the piece
+  /// that lets one consolidated first-run panel exist at all. Null when the
+  /// tile has data, or for an id the catalogue no longer knows.
+  final MetricEmptyReason? emptyReason;
+
+  /// True when [noDataReason] names something the user can act on ("connect
+  /// Health", "nothing logged yet", "finish setup") rather than a missing
+  /// signal ("No Health data yet"). The capsule prefixes a circled-i in that
+  /// case — the small "tap to fix" affordance, and nowhere else.
   final bool noDataNamesSource;
 
   /// Chart points normalised to 0..1 (1 = top of the plot band). Empty means
@@ -180,6 +194,8 @@ class MetricTileData {
     required this.deviationLabelShort,
     required this.route,
     this.noDataReason,
+    this.noDataReasonShort,
+    this.emptyReason,
     this.noDataNamesSource = false,
     this.baselineY,
     this.claimsDeviation = false,
@@ -202,21 +218,140 @@ const Set<String> _barMetrics = {
   'mindful_minutes',
 };
 
-String _emptyReasonFor(MetricTileSource source) {
-  switch (source) {
-    case MetricTileSource.health:
-      return 'No source · connect Health';
-    case MetricTileSource.inApp:
-      return 'Nothing logged yet';
-    case MetricTileSource.computed:
-      return 'No plan yet · finish setup';
-  }
+/// The tile id whose empty state is a missing *signal* rather than a missing
+/// source: readiness needs HRV samples specifically, and saying "no Health
+/// data" there would hide which signal is actually absent.
+const String _kRecoveryTileId = 'recovery';
+
+/// Why one tile is dark. Resolved from the metric's source **and the live
+/// health-connection state** — the source alone cannot tell "you never
+/// connected Health" from "Health is connected and has nothing for today",
+/// which is why the old copy kept saying *connect Health* to users who
+/// already had.
+enum MetricEmptyReason {
+  /// Health-sourced, and Health is not connected. Actionable: connect it.
+  healthDisconnected,
+
+  /// Health-sourced, Health IS connected, and there are no samples. Not
+  /// actionable by anything the app can offer — no CTA exists for it.
+  healthNoSamples,
+
+  /// In-app-sourced and nothing has been logged. Actionable: log something.
+  nothingLogged,
+
+  /// Computed from a plan that does not exist yet. Actionable: finish setup.
+  needsSetup,
 }
 
-/// Whether the empty-state capsule earns its circled-i: health and in-app
-/// reasons name a source the user can act on, a computed one does not.
-bool _reasonNamesSource(MetricTileSource source) =>
-    source == MetricTileSource.health || source == MetricTileSource.inApp;
+/// What a dark tile is asking the user to DO. Tiles that ask the same thing
+/// consolidate into one group in the first-run panel; [MetricEmptyAction.none]
+/// never consolidates, because there is no shared CTA to consolidate *into*.
+enum MetricEmptyAction { connectHealth, logInApp, finishSetup, none }
+
+extension MetricEmptyReasonX on MetricEmptyReason {
+  MetricEmptyAction get action => switch (this) {
+        MetricEmptyReason.healthDisconnected => MetricEmptyAction.connectHealth,
+        MetricEmptyReason.nothingLogged => MetricEmptyAction.logInApp,
+        MetricEmptyReason.needsSetup => MetricEmptyAction.finishSetup,
+        MetricEmptyReason.healthNoSamples => MetricEmptyAction.none,
+      };
+}
+
+/// The nine empty-state strings, as one bundle.
+///
+/// There is exactly ONE table mapping a reason to its copy
+/// ([metricEmptyCopyFor]); this bundle is how the same table serves both
+/// callers — the provider passes [kMetricEmptyCopyEn] (no BuildContext exists
+/// there), the tile passes an [AppLocalizations]-backed bundle. A second
+/// switch statement in the widget layer is exactly how the two halves would
+/// drift.
+@immutable
+class MetricEmptyCopy {
+  final String noSourceConnectHealth;
+  final String connectHealthShort;
+  final String noHealthDataYet;
+  final String noDataYet;
+  final String nothingLoggedYet;
+  final String nothingLoggedShort;
+  final String noPlanYetFinishSetup;
+  final String finishSetupShort;
+  final String needsHrv;
+
+  const MetricEmptyCopy({
+    required this.noSourceConnectHealth,
+    required this.connectHealthShort,
+    required this.noHealthDataYet,
+    required this.noDataYet,
+    required this.nothingLoggedYet,
+    required this.nothingLoggedShort,
+    required this.noPlanYetFinishSetup,
+    required this.finishSetupShort,
+    required this.needsHrv,
+  });
+}
+
+/// English copy — what the provider stores on [MetricTileData] for semantics
+/// and for any reader without a BuildContext.
+const MetricEmptyCopy kMetricEmptyCopyEn = MetricEmptyCopy(
+  noSourceConnectHealth: 'No source · connect Health',
+  connectHealthShort: 'Connect Health',
+  noHealthDataYet: 'No Health data yet',
+  noDataYet: 'No data yet',
+  nothingLoggedYet: 'Nothing logged yet',
+  nothingLoggedShort: 'Nothing logged',
+  noPlanYetFinishSetup: 'No plan yet · finish setup',
+  finishSetupShort: 'Finish setup',
+  needsHrv: 'Needs HRV',
+);
+
+/// The one reason → copy table. [tileId] is threaded because readiness names
+/// the signal it is missing rather than the source.
+///
+/// `namesSource` is the circled-i rule: it is true exactly when the line names
+/// something the user can act on.
+({String long, String short, bool namesSource}) metricEmptyCopyFor(
+  String tileId,
+  MetricEmptyReason reason,
+  MetricEmptyCopy copy,
+) {
+  if (reason == MetricEmptyReason.healthNoSamples &&
+      tileId == _kRecoveryTileId) {
+    return (long: copy.needsHrv, short: copy.needsHrv, namesSource: false);
+  }
+  return switch (reason) {
+    MetricEmptyReason.healthDisconnected => (
+        long: copy.noSourceConnectHealth,
+        short: copy.connectHealthShort,
+        namesSource: true,
+      ),
+    MetricEmptyReason.healthNoSamples => (
+        long: copy.noHealthDataYet,
+        short: copy.noDataYet,
+        namesSource: false,
+      ),
+    MetricEmptyReason.nothingLogged => (
+        long: copy.nothingLoggedYet,
+        short: copy.nothingLoggedShort,
+        namesSource: true,
+      ),
+    MetricEmptyReason.needsSetup => (
+        long: copy.noPlanYetFinishSetup,
+        short: copy.finishSetupShort,
+        namesSource: true,
+      ),
+  };
+}
+
+/// Resolves [source] against the live Health connection.
+MetricEmptyReason _emptyReasonFor(MetricTileSource source,
+        {required bool healthConnected}) =>
+    switch (source) {
+      MetricTileSource.health => healthConnected
+          ? MetricEmptyReason.healthNoSamples
+          : MetricEmptyReason.healthDisconnected,
+      MetricTileSource.inApp => MetricEmptyReason.nothingLogged,
+      MetricTileSource.computed => MetricEmptyReason.needsSetup,
+    };
 
 String _directionWord(double amount) => amount > 0 ? 'above' : 'below';
 
@@ -296,6 +431,139 @@ final metricTilesNeedHealthConnectProvider = Provider<bool>((ref) {
       );
 });
 
+/// How many *actionable* dark tiles on one page turn a grid of empty states
+/// into one consolidated panel.
+///
+/// 3 is the anti-pattern boundary, not a taste call: one or two dashed
+/// capsules read as "these two signals are missing"; three or more of the
+/// same sentence read as a broken screen, which is exactly what a fresh
+/// account saw — four inline "connect Health" capsules plus a full-width
+/// connect card underneath, five renderings of one instruction.
+const int kMetricGridCollapseThreshold = 3;
+
+/// How dark one page of the grid is, as one value the section can branch on.
+///
+/// The whole point is that emptiness stops being a per-tile decision made in
+/// isolation: nothing here reads [healthSyncProvider] directly, only each
+/// tile's own resolved state, which is what keeps Water and Weight (in-app
+/// sourced, live at 0 oz / 82.0 lb on a Health-less phone) out of the
+/// "connect Health" story they have nothing to do with.
+@immutable
+class MetricGridDarkness {
+  /// Tiles with real data, in the user's order.
+  final List<HomeMetricTile> live;
+
+  /// Dark tiles with no CTA to consolidate into ([MetricEmptyAction.none]).
+  /// They stay on the grid as tiles: each names a different missing signal,
+  /// so folding them together would say less than they already do.
+  final List<HomeMetricTile> inertDark;
+
+  /// Everything that is NOT absorbed by the panel — [live] and [inertDark]
+  /// merged back into the user's order. This is what the collapsed state
+  /// draws under the panel.
+  final List<HomeMetricTile> survivors;
+
+  /// Absorbed tiles grouped by what they ask for, in first-seen order.
+  final Map<MetricEmptyAction, List<MetricTileData>> darkByAction;
+
+  const MetricGridDarkness({
+    required this.live,
+    required this.inertDark,
+    required this.survivors,
+    required this.darkByAction,
+  });
+
+  /// Dark tiles the panel can actually offer an action for.
+  int get actionableDarkCount {
+    var n = 0;
+    for (final group in darkByAction.values) {
+      n += group.length;
+    }
+    return n;
+  }
+
+  bool get collapse => actionableDarkCount >= kMetricGridCollapseThreshold;
+
+  /// The group that earns the filled button. Largest wins; a tie resolves
+  /// connect → log → setup, because that is the order of how much the grid
+  /// gets back per tap.
+  MetricEmptyAction get primaryAction {
+    var best = MetricEmptyAction.none;
+    var bestCount = 0;
+    for (final a in const [
+      MetricEmptyAction.connectHealth,
+      MetricEmptyAction.logInApp,
+      MetricEmptyAction.finishSetup,
+    ]) {
+      final n = darkByAction[a]?.length ?? 0;
+      if (n > bestCount) {
+        best = a;
+        bestCount = n;
+      }
+    }
+    return best;
+  }
+}
+
+/// [MetricGridDarkness] for one page of the grid.
+final metricGridDarknessProvider =
+    Provider.family<MetricGridDarkness, int>((ref, page) {
+  final tiles = tilesOnPage(ref.watch(homeMetricTilesProvider), page);
+  final live = <HomeMetricTile>[];
+  final inertDark = <HomeMetricTile>[];
+  final survivors = <HomeMetricTile>[];
+  final darkByAction = <MetricEmptyAction, List<MetricTileData>>{};
+
+  for (final t in tiles) {
+    final data = ref.watch(metricTileDataProvider(t.id));
+    if (data.hasData) {
+      live.add(t);
+      survivors.add(t);
+      continue;
+    }
+    final action = data.emptyReason?.action ?? MetricEmptyAction.none;
+    if (action == MetricEmptyAction.none) {
+      inertDark.add(t);
+      survivors.add(t);
+      continue;
+    }
+    (darkByAction[action] ??= <MetricTileData>[]).add(data);
+  }
+
+  return MetricGridDarkness(
+    live: List.unmodifiable(live),
+    inertDark: List.unmodifiable(inertDark),
+    survivors: List.unmodifiable(survivors),
+    darkByAction: Map.unmodifiable(darkByAction),
+  );
+});
+
+/// A dark tile, with its reason and both copy forms resolved through the one
+/// table. Every empty return in [metricTileDataProvider] comes through here.
+MetricTileData _emptyTile(
+  MetricTileSpec spec,
+  GoodDirection valence,
+  MetricEmptyReason reason,
+) {
+  final copy = metricEmptyCopyFor(spec.id, reason, kMetricEmptyCopyEn);
+  return MetricTileData(
+    id: spec.id,
+    label: spec.tileLabel,
+    value: '—',
+    unit: '',
+    hasData: false,
+    emptyReason: reason,
+    noDataReason: copy.long,
+    noDataReasonShort: copy.short,
+    noDataNamesSource: copy.namesSource,
+    series: const [],
+    valence: valence,
+    deviationLabel: '',
+    deviationLabelShort: '',
+    route: spec.route,
+  );
+}
+
 /// Live tile state for [tileId]. Unknown ids resolve to an empty tile rather
 /// than throwing — a stale persisted layout must never crash Home.
 final metricTileDataProvider =
@@ -326,19 +594,16 @@ final metricTileDataProvider =
     final score = ref.watch(todayScoreProvider);
     final history = ref.watch(scoreHistoryProvider).days;
     if (score.isSetupState) {
-      return MetricTileData(
-        id: spec.id,
-        label: spec.tileLabel,
-        value: '—',
-        unit: '',
-        hasData: false,
-        noDataReason: _emptyReasonFor(spec.source),
-        noDataNamesSource: _reasonNamesSource(spec.source),
-        series: const [],
-        valence: valence,
-        deviationLabel: '',
-        deviationLabelShort: '',
-        route: spec.route,
+      return _emptyTile(
+        spec,
+        valence,
+        _emptyReasonFor(
+          spec.source,
+          // Short-circuits for the computed source, so the score tile does not
+          // subscribe to the health plugin just to say "finish setup".
+          healthConnected: spec.source == MetricTileSource.health &&
+              ref.watch(healthSyncProvider.select((s) => s.isConnected)),
+        ),
       );
     }
     final values = <double>[
@@ -381,19 +646,14 @@ final metricTileDataProvider =
   final unit = _impliedUnits.contains(mv.unit) ? '' : mv.unit;
 
   if (mv.isEmpty) {
-    return MetricTileData(
-      id: spec.id,
-      label: spec.tileLabel,
-      value: '—',
-      unit: '',
-      hasData: false,
-      noDataReason: _emptyReasonFor(spec.source),
-      noDataNamesSource: _reasonNamesSource(spec.source),
-      series: const [],
-      valence: valence,
-      deviationLabel: '',
-      deviationLabelShort: '',
-      route: spec.route,
+    return _emptyTile(
+      spec,
+      valence,
+      _emptyReasonFor(
+        spec.source,
+        healthConnected:
+            ref.watch(healthSyncProvider.select((s) => s.isConnected)),
+      ),
     );
   }
 
@@ -430,7 +690,9 @@ final metricTileDataProvider =
     // With no baseline the tile falls back to the metric's own honest line
     // ("Goal 2.5 L", "of 10k") and claims nothing about a trend.
     deviationLabel: copy?.long ?? mv.deltaLabel ?? 'Not enough history yet',
-    deviationLabelShort: copy?.short ?? mv.deltaLabel ?? 'No baseline yet',
+    // 'No baseline yet' ellipsises to `NO BASELINE Y…` inside a 100pt S tile —
+    // the short form has to actually be short.
+    deviationLabelShort: copy?.short ?? mv.deltaLabel ?? 'No baseline',
     usesBars: _barMetrics.contains(spec.id),
     route: spec.route,
   );

@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Ayo mulai latihan pertama Anda",
   "workoutShowcaseNextTargetRaised": "Set {set} dicatat — target berikutnya naik ke {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "LANGKAH {current} DARI {total}",
-  "quizAlmostDone": "HAMPIR SELESAI"
+  "quizAlmostDone": "HAMPIR SELESAI",
+  "metricSetupPanelKicker": "{count, plural, other{{count} metrik menunggu}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Kisi Anda terisi dengan sendirinya.",
+  "metricSetupPanelHealthBody": "{source} mengisinya secara otomatis.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Hubungkan {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Ini terisi dari yang Anda catat.",
+  "metricSetupPanelLogCta": "Catat sesuatu",
+  "metricSetupPanelSetupBody": "Dimulai saat rencana Anda dimulai.",
+  "metricSetupPanelSetupCta": "Selesaikan penyiapan",
+  "metricSetupPanelFooter": "Tidak ada yang diperkirakan untuk Anda.",
+  "metricTileNoSourceConnectHealth": "Tanpa sumber · hubungkan Health",
+  "metricTileConnectHealthShort": "Hubungkan Health",
+  "metricTileNoHealthDataYet": "Belum ada data Health",
+  "metricTileNoDataYet": "Belum ada data",
+  "metricTileNothingLoggedYet": "Belum ada catatan",
+  "metricTileNothingLoggedShort": "Tanpa catatan",
+  "metricTileNoPlanYetFinishSetup": "Belum ada rencana · selesaikan penyiapan",
+  "metricTileNeedsHrv": "Perlu HRV",
+  "metricTileNoBaseline": "Tanpa dasar",
+  "metricTileNoData": "Tidak ada data",
+  "metricGridMyMetrics": "METRIK SAYA",
+  "metricGridEditTiles": "EDIT UBIN",
+  "metricGridChangesSaveInstantly": "PERUBAHAN LANGSUNG TERSIMPAN",
+  "metricGridEditHint": "SERET UNTUK MENATA · KETUK UBIN UNTUK UKURAN · − UNTUK MENGHAPUS",
+  "metricGridDone": "SELESAI",
+  "metricGridPageOneLabel": "HALAMAN 1 · SEKILAS HARIAN",
+  "metricGridPageTwoLabel": "HALAMAN 2 · KEDALAMAN",
+  "metricGridPageTwoDragHint": "HALAMAN 2 · SERET UBIN KE SINI",
+  "metricGridDragBackToPage": "SERET UBIN KEMBALI KE HALAMAN {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "LEPAS DI SINI",
+  "metricGridDragging": "MENYERET…",
+  "metricGridPresets": "PRASETEL",
+  "metricGridPresetMyLayout": "Tata letak saya",
+  "metricGridPresetMinimal": "Minimal",
+  "metricGridPresetTrainingDay": "Hari latihan",
+  "metricGridPresetRecovery": "Pemulihan",
+  "metricGridAddMetric": "TAMBAH METRIK",
+  "metricGridConnectBody": "Langkah, tidur, dan kesiapan terisi otomatis — tidak ada yang diperkirakan untuk Anda.",
+  "metricGridConnectCta": "HUBUNGKAN HEALTH",
+  "metricGridEveryMetricPlaced": "Semua metrik sudah ada di kisi Anda.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Dicatat di aplikasi",
+  "metricGridSourceComputed": "Dihitung",
+  "metricGridPlacementLine": "{size} · halaman {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

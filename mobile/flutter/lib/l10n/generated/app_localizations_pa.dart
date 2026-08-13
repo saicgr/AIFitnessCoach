@@ -44912,4 +44912,156 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'ਇੱਕ ਵਾਰ ਦੀ ਫਾਊਂਡਿੰਗ-ਮੈਂਬਰ ਕੀਮਤ, ਉਹੀ 7-ਦਿਨਾਂ ਦਾ ਮੁਫ਼ਤ ਟ੍ਰਾਇਲ। ਇਹ ਪੇਸ਼ਕਸ਼ ਵਾਪਸ ਨਹੀਂ ਆਉਂਦੀ।';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ਮੈਟ੍ਰਿਕ ਉਡੀਕ ਵਿੱਚ',
+      one: '1 ਮੈਟ੍ਰਿਕ ਉਡੀਕ ਵਿੱਚ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'ਤੁਹਾਡਾ ਗਰਿੱਡ ਆਪਣੇ ਆਪ ਭਰ ਜਾਂਦਾ ਹੈ।';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source ਇਹ ਆਪਣੇ ਆਪ ਭਰਦਾ ਹੈ।';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source ਕਨੈਕਟ ਕਰੋ';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'ਇਹ ਤੁਹਾਡੇ ਲੌਗ ਕੀਤੇ ਡਾਟੇ ਤੋਂ ਭਰਦੇ ਹਨ।';
+
+  @override
+  String get metricSetupPanelLogCta => 'ਕੁਝ ਲੌਗ ਕਰੋ';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'ਜਿਸ ਦਿਨ ਤੁਹਾਡੀ ਯੋਜਨਾ ਸ਼ੁਰੂ ਹੁੰਦੀ ਹੈ, ਉਸੇ ਦਿਨ ਸ਼ੁਰੂ।';
+
+  @override
+  String get metricSetupPanelSetupCta => 'ਸੈੱਟਅੱਪ ਪੂਰਾ ਕਰੋ';
+
+  @override
+  String get metricSetupPanelFooter =>
+      'ਤੁਹਾਡੇ ਲਈ ਕੁਝ ਵੀ ਅੰਦਾਜ਼ਨ ਨਹੀਂ ਲਾਇਆ ਜਾਂਦਾ।';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'ਕੋਈ ਸਰੋਤ ਨਹੀਂ · Health ਕਨੈਕਟ ਕਰੋ';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health ਕਨੈਕਟ ਕਰੋ';
+
+  @override
+  String get metricTileNoHealthDataYet => 'ਹਾਲੇ ਕੋਈ Health ਡਾਟਾ ਨਹੀਂ';
+
+  @override
+  String get metricTileNoDataYet => 'ਹਾਲੇ ਕੋਈ ਡਾਟਾ ਨਹੀਂ';
+
+  @override
+  String get metricTileNothingLoggedYet => 'ਹਾਲੇ ਕੁਝ ਲੌਗ ਨਹੀਂ ਕੀਤਾ';
+
+  @override
+  String get metricTileNothingLoggedShort => 'ਕੁਝ ਲੌਗ ਨਹੀਂ';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'ਹਾਲੇ ਕੋਈ ਯੋਜਨਾ ਨਹੀਂ · ਸੈੱਟਅੱਪ ਪੂਰਾ ਕਰੋ';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV ਚਾਹੀਦਾ';
+
+  @override
+  String get metricTileNoBaseline => 'ਕੋਈ ਆਧਾਰ ਨਹੀਂ';
+
+  @override
+  String get metricTileNoData => 'ਕੋਈ ਡਾਟਾ ਨਹੀਂ';
+
+  @override
+  String get metricGridMyMetrics => 'ਮੇਰੇ ਮੈਟ੍ਰਿਕ';
+
+  @override
+  String get metricGridEditTiles => 'ਟਾਈਲਾਂ ਸੋਧੋ';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ਬਦਲਾਅ ਤੁਰੰਤ ਸੰਭਾਲੇ ਜਾਂਦੇ ਹਨ';
+
+  @override
+  String get metricGridEditHint =>
+      'ਕ੍ਰਮ ਬਦਲਣ ਲਈ ਖਿੱਚੋ · ਆਕਾਰ ਲਈ ਟਾਈਲ ਟੈਪ ਕਰੋ · ਹਟਾਉਣ ਲਈ −';
+
+  @override
+  String get metricGridDone => 'ਹੋ ਗਿਆ';
+
+  @override
+  String get metricGridPageOneLabel => 'ਪੰਨਾ 1 · ਰੋਜ਼ਾਨਾ ਝਲਕ';
+
+  @override
+  String get metricGridPageTwoLabel => 'ਪੰਨਾ 2 · ਡੂੰਘਾਈ';
+
+  @override
+  String get metricGridPageTwoDragHint => 'ਪੰਨਾ 2 · ਇੱਥੇ ਇੱਕ ਟਾਈਲ ਖਿੱਚੋ';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'ਟਾਈਲ ਨੂੰ ਪੰਨਾ $page \'ਤੇ ਵਾਪਸ ਖਿੱਚੋ';
+  }
+
+  @override
+  String get metricGridDropHere => 'ਇੱਥੇ ਛੱਡੋ';
+
+  @override
+  String get metricGridDragging => 'ਖਿੱਚਿਆ ਜਾ ਰਿਹਾ…';
+
+  @override
+  String get metricGridPresets => 'ਪ੍ਰੀਸੈੱਟ';
+
+  @override
+  String get metricGridPresetMyLayout => 'ਮੇਰਾ ਲੇਆਉਟ';
+
+  @override
+  String get metricGridPresetMinimal => 'ਘੱਟੋ-ਘੱਟ';
+
+  @override
+  String get metricGridPresetTrainingDay => 'ਸਿਖਲਾਈ ਦਿਨ';
+
+  @override
+  String get metricGridPresetRecovery => 'ਰਿਕਵਰੀ';
+
+  @override
+  String get metricGridAddMetric => 'ਮੈਟ੍ਰਿਕ ਸ਼ਾਮਲ ਕਰੋ';
+
+  @override
+  String get metricGridConnectBody =>
+      'ਕਦਮ, ਨੀਂਦ ਅਤੇ ਤਿਆਰੀ ਆਪਣੇ ਆਪ ਭਰਦੇ ਹਨ — ਤੁਹਾਡੇ ਲਈ ਕੁਝ ਵੀ ਅੰਦਾਜ਼ਨ ਨਹੀਂ ਲਾਇਆ ਜਾਂਦਾ।';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH ਕਨੈਕਟ ਕਰੋ';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'ਸਾਰੇ ਮੈਟ੍ਰਿਕ ਪਹਿਲਾਂ ਹੀ ਤੁਹਾਡੇ ਗਰਿੱਡ \'ਤੇ ਹਨ।';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'ਐਪ ਵਿੱਚ ਲੌਗ ਕੀਤਾ';
+
+  @override
+  String get metricGridSourceComputed => 'ਗਿਣਿਆ ਗਿਆ';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · ਪੰਨਾ $page · #$position';
+  }
 }

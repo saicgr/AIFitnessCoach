@@ -45194,4 +45194,156 @@ class AppLocalizationsOr extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'ଗୋଟିଏ-ଥରର ପ୍ରତିଷ୍ଠାତା-ସଦସ୍ୟ ମୂଲ୍ୟ, ସେହି ସମାନ 7-ଦିନିଆ ମାଗଣା ଟ୍ରାଏଲ୍। ଏହି ଅଫର୍ ଆଉ ଫେରିବ ନାହିଁ।';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ମେଟ୍ରିକ୍ ଅପେକ୍ଷାରେ',
+      one: '1 ମେଟ୍ରିକ୍ ଅପେକ୍ଷାରେ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'ଆପଣଙ୍କ ଗ୍ରିଡ୍ ନିଜେ ପୂର୍ଣ୍ଣ ହେବ।';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source ଏଗୁଡ଼ିକ ସ୍ୱୟଂଚାଳିତ ଭାବେ ପୂରଣ କରେ।';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source ସଂଯୋଗ କରନ୍ତୁ';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'ଆପଣ ଲଗ୍ କରୁଥିବା ତଥ୍ୟରୁ ଏଗୁଡ଼ିକ ପୂରଣ ହୁଏ।';
+
+  @override
+  String get metricSetupPanelLogCta => 'କିଛି ଲଗ୍ କରନ୍ତୁ';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'ଆପଣଙ୍କ ଯୋଜନା ଆରମ୍ଭ ହେବା ଦିନରୁ ଆରମ୍ଭ ହୁଏ।';
+
+  @override
+  String get metricSetupPanelSetupCta => 'ସେଟଅପ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ';
+
+  @override
+  String get metricSetupPanelFooter => 'ଆପଣଙ୍କ ପାଇଁ କିଛି ଅନୁମାନ କରାଯାଏ ନାହିଁ।';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'ଉତ୍ସ ନାହିଁ · Health ସଂଯୋଗ କରନ୍ତୁ';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health ସଂଯୋଗ କରନ୍ତୁ';
+
+  @override
+  String get metricTileNoHealthDataYet => 'ଏପର୍ଯ୍ୟନ୍ତ Health ଡାଟା ନାହିଁ';
+
+  @override
+  String get metricTileNoDataYet => 'ଏପର୍ଯ୍ୟନ୍ତ ଡାଟା ନାହିଁ';
+
+  @override
+  String get metricTileNothingLoggedYet => 'ଏପର୍ଯ୍ୟନ୍ତ କିଛି ଲଗ୍ ହୋଇନାହିଁ';
+
+  @override
+  String get metricTileNothingLoggedShort => 'କିଛି ଲଗ୍ ନାହିଁ';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'ଏପର୍ଯ୍ୟନ୍ତ ଯୋଜନା ନାହିଁ · ସେଟଅପ୍ ସମ୍ପୂର୍ଣ୍ଣ କରନ୍ତୁ';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV ଆବଶ୍ୟକ';
+
+  @override
+  String get metricTileNoBaseline => 'ବେସଲାଇନ୍ ନାହିଁ';
+
+  @override
+  String get metricTileNoData => 'ଡାଟା ନାହିଁ';
+
+  @override
+  String get metricGridMyMetrics => 'ମୋର ମେଟ୍ରିକ୍';
+
+  @override
+  String get metricGridEditTiles => 'ଟାଇଲ୍ ସମ୍ପାଦନା';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ପରିବର୍ତ୍ତନ ତୁରନ୍ତ ସେଭ୍ ହୁଏ';
+
+  @override
+  String get metricGridEditHint =>
+      'କ୍ରମ ବଦଳାଇବାକୁ ଟାଣନ୍ତୁ · ଆକାର ପାଇଁ ଟାଇଲ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ · କାଢ଼ିବାକୁ −';
+
+  @override
+  String get metricGridDone => 'ସମାପ୍ତ';
+
+  @override
+  String get metricGridPageOneLabel => 'ପୃଷ୍ଠା 1 · ଦୈନିକ ଝଲକ';
+
+  @override
+  String get metricGridPageTwoLabel => 'ପୃଷ୍ଠା 2 · ଗଭୀରତା';
+
+  @override
+  String get metricGridPageTwoDragHint => 'ପୃଷ୍ଠା 2 · ଏଠାକୁ ଏକ ଟାଇଲ୍ ଟାଣନ୍ତୁ';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'ଏକ ଟାଇଲ୍ ପୃଷ୍ଠା $page କୁ ଟାଣନ୍ତୁ';
+  }
+
+  @override
+  String get metricGridDropHere => 'ଏଠାରେ ଛାଡ଼ନ୍ତୁ';
+
+  @override
+  String get metricGridDragging => 'ଟାଣୁଛି…';
+
+  @override
+  String get metricGridPresets => 'ପ୍ରିସେଟ୍';
+
+  @override
+  String get metricGridPresetMyLayout => 'ମୋର ଲେଆଉଟ୍';
+
+  @override
+  String get metricGridPresetMinimal => 'ସର୍ବନିମ୍ନ';
+
+  @override
+  String get metricGridPresetTrainingDay => 'ତାଲିମ ଦିନ';
+
+  @override
+  String get metricGridPresetRecovery => 'ପୁନରୁଦ୍ଧାର';
+
+  @override
+  String get metricGridAddMetric => 'ମେଟ୍ରିକ୍ ଯୋଡ଼ନ୍ତୁ';
+
+  @override
+  String get metricGridConnectBody =>
+      'ପାଦ, ନିଦ ଏବଂ ପ୍ରସ୍ତୁତି ସ୍ୱୟଂଚାଳିତ ଭାବେ ପୂରଣ ହୁଏ — ଆପଣଙ୍କ ପାଇଁ କିଛି ଅନୁମାନ କରାଯାଏ ନାହିଁ।';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH ସଂଯୋଗ କରନ୍ତୁ';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'ସମସ୍ତ ମେଟ୍ରିକ୍ ପୂର୍ବରୁ ଆପଣଙ୍କ ଗ୍ରିଡ୍‌ରେ ଅଛି।';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'ଆପ୍‌ରେ ଲଗ୍ ହୋଇଛି';
+
+  @override
+  String get metricGridSourceComputed => 'ଗଣନା କରାଯାଇଛି';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · ପୃଷ୍ଠା $page · #$position';
+  }
 }

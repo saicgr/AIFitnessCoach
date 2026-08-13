@@ -44950,4 +44950,156 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'एक बार का फाउंडिंग-मेंबर मूल्य, वही 7-दिन का फ्री ट्रायल। यह ऑफ़र दोबारा नहीं आएगा।';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count मीट्रिक प्रतीक्षा में',
+      one: '1 मीट्रिक प्रतीक्षा में',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'आपका ग्रिड अपने आप भर जाएगा।';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source इन्हें अपने आप भर देता है।';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source कनेक्ट करें';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'ये आपके लॉग किए गए डेटा से भरते हैं।';
+
+  @override
+  String get metricSetupPanelLogCta => 'कुछ लॉग करें';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'जिस दिन आपकी योजना शुरू होगी, उसी दिन शुरू।';
+
+  @override
+  String get metricSetupPanelSetupCta => 'सेटअप पूरा करें';
+
+  @override
+  String get metricSetupPanelFooter =>
+      'आपके लिए कुछ भी अनुमानित नहीं किया जाता।';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'कोई स्रोत नहीं · Health जोड़ें';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health जोड़ें';
+
+  @override
+  String get metricTileNoHealthDataYet => 'अभी तक कोई Health डेटा नहीं';
+
+  @override
+  String get metricTileNoDataYet => 'अभी कोई डेटा नहीं';
+
+  @override
+  String get metricTileNothingLoggedYet => 'अभी कुछ लॉग नहीं किया';
+
+  @override
+  String get metricTileNothingLoggedShort => 'कुछ लॉग नहीं';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'अभी कोई योजना नहीं · सेटअप पूरा करें';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV चाहिए';
+
+  @override
+  String get metricTileNoBaseline => 'कोई आधार नहीं';
+
+  @override
+  String get metricTileNoData => 'कोई डेटा नहीं';
+
+  @override
+  String get metricGridMyMetrics => 'मेरे मीट्रिक';
+
+  @override
+  String get metricGridEditTiles => 'टाइल संपादित करें';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'बदलाव तुरंत सहेजे जाते हैं';
+
+  @override
+  String get metricGridEditHint =>
+      'क्रम बदलने के लिए खींचें · आकार के लिए टाइल टैप करें · हटाने के लिए −';
+
+  @override
+  String get metricGridDone => 'पूर्ण';
+
+  @override
+  String get metricGridPageOneLabel => 'पृष्ठ 1 · दैनिक झलक';
+
+  @override
+  String get metricGridPageTwoLabel => 'पृष्ठ 2 · गहराई';
+
+  @override
+  String get metricGridPageTwoDragHint => 'पृष्ठ 2 · यहाँ एक टाइल खींचें';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'पृष्ठ $page पर टाइल वापस खींचें';
+  }
+
+  @override
+  String get metricGridDropHere => 'यहाँ छोड़ें';
+
+  @override
+  String get metricGridDragging => 'खींचा जा रहा है…';
+
+  @override
+  String get metricGridPresets => 'प्रीसेट';
+
+  @override
+  String get metricGridPresetMyLayout => 'मेरा लेआउट';
+
+  @override
+  String get metricGridPresetMinimal => 'न्यूनतम';
+
+  @override
+  String get metricGridPresetTrainingDay => 'प्रशिक्षण दिवस';
+
+  @override
+  String get metricGridPresetRecovery => 'रिकवरी';
+
+  @override
+  String get metricGridAddMetric => 'मीट्रिक जोड़ें';
+
+  @override
+  String get metricGridConnectBody =>
+      'कदम, नींद और तैयारी अपने आप भर जाते हैं — आपके लिए कुछ भी अनुमानित नहीं किया जाता।';
+
+  @override
+  String get metricGridConnectCta => 'Health कनेक्ट करें';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'सभी मीट्रिक पहले से आपके ग्रिड पर हैं।';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'ऐप में लॉग किया गया';
+
+  @override
+  String get metricGridSourceComputed => 'गणना किया गया';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · पृष्ठ $page · #$position';
+  }
 }

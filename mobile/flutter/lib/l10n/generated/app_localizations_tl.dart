@@ -45367,4 +45367,156 @@ class AppLocalizationsTl extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'One-time founding-member na presyo, parehong 7-araw na libreng trial. Hindi na babalik ang alok na ito.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sukatan ang naghihintay',
+      one: '1 sukatan ang naghihintay',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Kusang napupuno ang iyong grid.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return 'Awtomatikong pinupuno ito ng $source.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Ikonekta ang $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Napupuno ito mula sa mga tala mo.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Mag-log ng kahit ano';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Magsisimula sa araw na magsisimula ang plano mo.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Tapusin ang setup';
+
+  @override
+  String get metricSetupPanelFooter => 'Walang tinatantiya para sa iyo.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Walang pinagkukunan · ikonekta ang Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Ikonekta ang Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Wala pang datos sa Health';
+
+  @override
+  String get metricTileNoDataYet => 'Wala pang datos';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Wala pang na-log';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Walang na-log';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Wala pang plano · tapusin ang setup';
+
+  @override
+  String get metricTileNeedsHrv => 'Kailangan ng HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Walang baseline';
+
+  @override
+  String get metricTileNoData => 'Walang datos';
+
+  @override
+  String get metricGridMyMetrics => 'AKING MGA SUKATAN';
+
+  @override
+  String get metricGridEditTiles => 'I-EDIT ANG MGA TILE';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'AGAD NASE-SAVE ANG MGA PAGBABAGO';
+
+  @override
+  String get metricGridEditHint =>
+      'I-DRAG PARA MAG-AYOS · I-TAP ANG TILE PARA SA LAKI · − PARA ALISIN';
+
+  @override
+  String get metricGridDone => 'TAPOS';
+
+  @override
+  String get metricGridPageOneLabel => 'PAHINA 1 · ARAW-ARAW NA SULYAP';
+
+  @override
+  String get metricGridPageTwoLabel => 'PAHINA 2 · LALIM';
+
+  @override
+  String get metricGridPageTwoDragHint => 'PAHINA 2 · MAG-DRAG NG TILE DITO';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'I-DRAG PABALIK ANG TILE SA PAHINA $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'IBABA DITO';
+
+  @override
+  String get metricGridDragging => 'DINADALA…';
+
+  @override
+  String get metricGridPresets => 'MGA PRESET';
+
+  @override
+  String get metricGridPresetMyLayout => 'Aking layout';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Araw ng ensayo';
+
+  @override
+  String get metricGridPresetRecovery => 'Pagbawi';
+
+  @override
+  String get metricGridAddMetric => 'MAGDAGDAG NG SUKATAN';
+
+  @override
+  String get metricGridConnectBody =>
+      'Awtomatikong napupuno ang hakbang, tulog at readiness — walang tinatantiya para sa iyo.';
+
+  @override
+  String get metricGridConnectCta => 'IKONEKTA ANG HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Nasa grid mo na ang lahat ng sukatan.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Naka-log sa app';
+
+  @override
+  String get metricGridSourceComputed => 'Kinalkula';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · pahina $page · #$position';
+  }
 }

@@ -583,6 +583,11 @@ class HomeMetricTilesNotifier extends StateNotifier<List<HomeMetricTile>> {
   }
 }
 
+/// Tiles on one page, in order. Lives here rather than in the grid widget so
+/// the aggregate providers can page-partition without a data → screens import.
+List<HomeMetricTile> tilesOnPage(List<HomeMetricTile> tiles, int page) =>
+    [for (final t in tiles) if (t.page == page) t];
+
 /// The Home metric grid's tiles, in flat render order across both pages.
 final homeMetricTilesProvider =
     StateNotifierProvider<HomeMetricTilesNotifier, List<HomeMetricTile>>((ref) {

@@ -44932,4 +44932,152 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Tek seferlik kurucu üye fiyatı, aynı 7 günlük ücretsiz deneme. Bu teklif bir daha gelmez.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count ölçüm bekliyor',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Kılavuzun kendi kendine dolar.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source bunları otomatik doldurur.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source bağla';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Bunlar kaydettiklerinden dolar.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Bir şey kaydet';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Planın başladığı gün başlar.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Kurulumu tamamla';
+
+  @override
+  String get metricSetupPanelFooter => 'Senin adına hiçbir şey tahmin edilmez.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Kaynak yok · Health bağla';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health bağla';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Henüz Health verisi yok';
+
+  @override
+  String get metricTileNoDataYet => 'Henüz veri yok';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Henüz kayıt yok';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Kayıt yok';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Henüz plan yok · kurulumu tamamla';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV gerekli';
+
+  @override
+  String get metricTileNoBaseline => 'Referans yok';
+
+  @override
+  String get metricTileNoData => 'Veri yok';
+
+  @override
+  String get metricGridMyMetrics => 'ÖLÇÜMLERİM';
+
+  @override
+  String get metricGridEditTiles => 'KARTLARI DÜZENLE';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'DEĞİŞİKLİKLER ANINDA KAYDEDİLİR';
+
+  @override
+  String get metricGridEditHint =>
+      'SIRALAMAK İÇİN SÜRÜKLE · BOYUT İÇİN DOKUN · KALDIRMAK İÇİN −';
+
+  @override
+  String get metricGridDone => 'BİTTİ';
+
+  @override
+  String get metricGridPageOneLabel => 'SAYFA 1 · GÜNLÜK BAKIŞ';
+
+  @override
+  String get metricGridPageTwoLabel => 'SAYFA 2 · DERİNLİK';
+
+  @override
+  String get metricGridPageTwoDragHint => 'SAYFA 2 · BURAYA BİR KART SÜRÜKLE';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'BİR KARTI SAYFA $page\'E GERİ SÜRÜKLE';
+  }
+
+  @override
+  String get metricGridDropHere => 'BURAYA BIRAK';
+
+  @override
+  String get metricGridDragging => 'SÜRÜKLENİYOR…';
+
+  @override
+  String get metricGridPresets => 'HAZIR AYARLAR';
+
+  @override
+  String get metricGridPresetMyLayout => 'Düzenim';
+
+  @override
+  String get metricGridPresetMinimal => 'Sade';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Antrenman günü';
+
+  @override
+  String get metricGridPresetRecovery => 'Toparlanma';
+
+  @override
+  String get metricGridAddMetric => 'ÖLÇÜM EKLE';
+
+  @override
+  String get metricGridConnectBody =>
+      'Adım, uyku ve hazırlık otomatik dolar — senin adına hiçbir şey tahmin edilmez.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH BAĞLA';
+
+  @override
+  String get metricGridEveryMetricPlaced => 'Tüm ölçümler zaten kılavuzunda.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Uygulamada kaydedildi';
+
+  @override
+  String get metricGridSourceComputed => 'Hesaplanan';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · sayfa $page · #$position';
+  }
 }

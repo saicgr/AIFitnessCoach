@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/chrome_constants.dart';
+
 /// State for the floating chat bubble and overlay
 class FloatingChatState {
   final bool isExpanded;
@@ -12,8 +14,13 @@ class FloatingChatState {
   const FloatingChatState({
     this.isExpanded = false,
     this.isDragging = false,
-    this.bubbleRight = 16,
-    this.bubbleBottom = 100,
+    // The chat-head's resting position is the FLOAT BAND's position, not two
+    // independent literals. It used to default to `right: 16, bottom: 100`,
+    // derived from nothing — which put it at screen band [100, 156] against
+    // the cluster's [92, 136], a 36 pt overlap with the very control it is
+    // supposed to REPLACE (D4, 2026-08).
+    this.bubbleRight = kFabClusterEdgeInset,
+    this.bubbleBottom = kQuickLogFabBottomOffset,
     this.isOverDismissZone = false,
   });
 

@@ -44823,4 +44823,153 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Engångspris för grundarmedlemmar, samma 7 dagars gratis provperiod. Det här erbjudandet kommer inte tillbaka.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mätvärden väntar',
+      one: '1 mätvärde väntar',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Ditt rutnät fylls i av sig självt.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source fyller i dem automatiskt.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Anslut $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'De fylls i från det du loggar.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Logga något';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Startar samma dag som din plan.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Slutför konfigurationen';
+
+  @override
+  String get metricSetupPanelFooter => 'Inget uppskattas åt dig.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Ingen källa · anslut Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Anslut Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Inga Health-data ännu';
+
+  @override
+  String get metricTileNoDataYet => 'Inga data ännu';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Inget loggat ännu';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Inget loggat';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Ingen plan ännu · slutför konfigurationen';
+
+  @override
+  String get metricTileNeedsHrv => 'Behöver HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Ingen baslinje';
+
+  @override
+  String get metricTileNoData => 'Inga data';
+
+  @override
+  String get metricGridMyMetrics => 'MINA MÄTVÄRDEN';
+
+  @override
+  String get metricGridEditTiles => 'REDIGERA RUTOR';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'ÄNDRINGAR SPARAS DIREKT';
+
+  @override
+  String get metricGridEditHint =>
+      'DRA FÖR ATT SORTERA · TRYCK PÅ EN RUTA FÖR STORLEK · − TAR BORT';
+
+  @override
+  String get metricGridDone => 'KLAR';
+
+  @override
+  String get metricGridPageOneLabel => 'SIDA 1 · DAGENS ÖVERBLICK';
+
+  @override
+  String get metricGridPageTwoLabel => 'SIDA 2 · DJUP';
+
+  @override
+  String get metricGridPageTwoDragHint => 'SIDA 2 · DRA HIT EN RUTA';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'DRA TILLBAKA EN RUTA TILL SIDA $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'SLÄPP HÄR';
+
+  @override
+  String get metricGridDragging => 'DRAR…';
+
+  @override
+  String get metricGridPresets => 'FÖRINSTÄLLNINGAR';
+
+  @override
+  String get metricGridPresetMyLayout => 'Min layout';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Träningsdag';
+
+  @override
+  String get metricGridPresetRecovery => 'Återhämtning';
+
+  @override
+  String get metricGridAddMetric => 'LÄGG TILL MÄTVÄRDE';
+
+  @override
+  String get metricGridConnectBody =>
+      'Steg, sömn och återhämtning fylls i automatiskt — inget uppskattas åt dig.';
+
+  @override
+  String get metricGridConnectCta => 'ANSLUT HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Alla mätvärden finns redan i ditt rutnät.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Loggat i appen';
+
+  @override
+  String get metricGridSourceComputed => 'Beräknat';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · sida $page · #$position';
+  }
 }

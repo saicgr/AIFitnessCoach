@@ -45256,4 +45256,156 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Einmaliger Gründungsmitglieder-Preis, gleiche 7-tägige kostenlose Testphase. Dieses Angebot kommt nicht zurück.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count Werte warten',
+      one: '1 Wert wartet',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Dein Raster füllt sich von selbst.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source füllt diese automatisch.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source verbinden';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Diese füllen sich aus deinen Einträgen.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Etwas eintragen';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Startet, sobald dein Plan startet.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Einrichtung abschließen';
+
+  @override
+  String get metricSetupPanelFooter => 'Nichts wird für dich geschätzt.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Keine Quelle · Health verbinden';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health verbinden';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Noch keine Health-Daten';
+
+  @override
+  String get metricTileNoDataYet => 'Noch keine Daten';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Noch nichts eingetragen';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Nichts eingetragen';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Noch kein Plan · Einrichtung abschließen';
+
+  @override
+  String get metricTileNeedsHrv => 'Braucht HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Kein Basiswert';
+
+  @override
+  String get metricTileNoData => 'Keine Daten';
+
+  @override
+  String get metricGridMyMetrics => 'MEINE WERTE';
+
+  @override
+  String get metricGridEditTiles => 'KACHELN BEARBEITEN';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'ÄNDERUNGEN WERDEN SOFORT GESPEICHERT';
+
+  @override
+  String get metricGridEditHint =>
+      'ZIEHEN ZUM SORTIEREN · TIPPEN FÜR GRÖSSE · − ZUM ENTFERNEN';
+
+  @override
+  String get metricGridDone => 'FERTIG';
+
+  @override
+  String get metricGridPageOneLabel => 'SEITE 1 · TAGESBLICK';
+
+  @override
+  String get metricGridPageTwoLabel => 'SEITE 2 · TIEFE';
+
+  @override
+  String get metricGridPageTwoDragHint => 'SEITE 2 · KACHEL HIERHER ZIEHEN';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'KACHEL ZURÜCK AUF SEITE $page ZIEHEN';
+  }
+
+  @override
+  String get metricGridDropHere => 'HIER ABLEGEN';
+
+  @override
+  String get metricGridDragging => 'ZIEHEN…';
+
+  @override
+  String get metricGridPresets => 'VORLAGEN';
+
+  @override
+  String get metricGridPresetMyLayout => 'Mein Layout';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Trainingstag';
+
+  @override
+  String get metricGridPresetRecovery => 'Erholung';
+
+  @override
+  String get metricGridAddMetric => 'WERT HINZUFÜGEN';
+
+  @override
+  String get metricGridConnectBody =>
+      'Schritte, Schlaf und Bereitschaft füllen sich automatisch — nichts wird für dich geschätzt.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH VERBINDEN';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Alle Werte sind bereits auf deinem Raster.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'In der App erfasst';
+
+  @override
+  String get metricGridSourceComputed => 'Berechnet';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · Seite $page · #$position';
+  }
 }

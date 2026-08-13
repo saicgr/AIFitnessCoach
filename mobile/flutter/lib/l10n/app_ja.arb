@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "最初のワークアウトを始めましょう",
   "workoutShowcaseNextTargetRaised": "セット{set}を記録 — 次の目標を自動で{weight} lbに引き上げ（+{delta} lb）",
   "quizStepOfTotal": "ステップ {current}／{total}",
-  "quizAlmostDone": "あと少し"
+  "quizAlmostDone": "あと少し",
+  "metricSetupPanelKicker": "{count, plural, other{{count}件の指標が待機中}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "指標は自動で埋まります。",
+  "metricSetupPanelHealthBody": "{source} が自動で入力します。",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} を接続",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "記録した内容から埋まります。",
+  "metricSetupPanelLogCta": "何か記録する",
+  "metricSetupPanelSetupBody": "プランが始まる日から始まります。",
+  "metricSetupPanelSetupCta": "設定を完了",
+  "metricSetupPanelFooter": "推定値は一切表示しません。",
+  "metricTileNoSourceConnectHealth": "ソースなし · Health を接続",
+  "metricTileConnectHealthShort": "Health を接続",
+  "metricTileNoHealthDataYet": "Health のデータはまだありません",
+  "metricTileNoDataYet": "データなし",
+  "metricTileNothingLoggedYet": "記録はまだありません",
+  "metricTileNothingLoggedShort": "記録なし",
+  "metricTileNoPlanYetFinishSetup": "プラン未作成 · 設定を完了",
+  "metricTileNeedsHrv": "HRV が必要",
+  "metricTileNoBaseline": "基準値なし",
+  "metricTileNoData": "データなし",
+  "metricGridMyMetrics": "マイ指標",
+  "metricGridEditTiles": "タイルを編集",
+  "metricGridChangesSaveInstantly": "変更はすぐに保存されます",
+  "metricGridEditHint": "ドラッグで並べ替え · タップでサイズ変更 · − で削除",
+  "metricGridDone": "完了",
+  "metricGridPageOneLabel": "ページ 1 · 今日のひと目",
+  "metricGridPageTwoLabel": "ページ 2 · 詳細",
+  "metricGridPageTwoDragHint": "ページ 2 · タイルをここへドラッグ",
+  "metricGridDragBackToPage": "タイルをページ {page} に戻す",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "ここにドロップ",
+  "metricGridDragging": "ドラッグ中…",
+  "metricGridPresets": "プリセット",
+  "metricGridPresetMyLayout": "マイレイアウト",
+  "metricGridPresetMinimal": "ミニマル",
+  "metricGridPresetTrainingDay": "トレーニング日",
+  "metricGridPresetRecovery": "リカバリー",
+  "metricGridAddMetric": "指標を追加",
+  "metricGridConnectBody": "歩数・睡眠・コンディションは自動で入ります。推定値は一切表示しません。",
+  "metricGridConnectCta": "Health を接続",
+  "metricGridEveryMetricPlaced": "すべての指標がすでにグリッドにあります。",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "アプリで記録",
+  "metricGridSourceComputed": "自動計算",
+  "metricGridPlacementLine": "{size} · {page}ページ · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

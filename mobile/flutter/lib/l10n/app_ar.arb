@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "لنبدأ تمرينك الأول",
   "workoutShowcaseNextTargetRaised": "تم تسجيل المجموعة {set} — رُفع الهدف التالي تلقائيًا إلى {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "الخطوة {current} من {total}",
-  "quizAlmostDone": "أوشكت على الانتهاء"
+  "quizAlmostDone": "أوشكت على الانتهاء",
+  "metricSetupPanelKicker": "{count, plural, =1{مقياس واحد في الانتظار} other{{count} مقاييس في الانتظار}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "شبكتك تمتلئ تلقائيًا.",
+  "metricSetupPanelHealthBody": "‏{source} يملأ هذه تلقائيًا.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "‏ربط {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "تمتلئ هذه مما تسجّله.",
+  "metricSetupPanelLogCta": "سجّل شيئًا",
+  "metricSetupPanelSetupBody": "يبدأ يوم بدء خطتك.",
+  "metricSetupPanelSetupCta": "أكمل الإعداد",
+  "metricSetupPanelFooter": "لا يُقدَّر لك أي رقم.",
+  "metricTileNoSourceConnectHealth": "لا مصدر · اربط Health",
+  "metricTileConnectHealthShort": "اربط Health",
+  "metricTileNoHealthDataYet": "لا توجد بيانات Health بعد",
+  "metricTileNoDataYet": "لا بيانات بعد",
+  "metricTileNothingLoggedYet": "لم يُسجَّل شيء بعد",
+  "metricTileNothingLoggedShort": "لا تسجيل",
+  "metricTileNoPlanYetFinishSetup": "لا خطة بعد · أكمل الإعداد",
+  "metricTileNeedsHrv": "يحتاج HRV",
+  "metricTileNoBaseline": "لا خط أساس",
+  "metricTileNoData": "لا بيانات",
+  "metricGridMyMetrics": "مقاييسي",
+  "metricGridEditTiles": "تعديل البطاقات",
+  "metricGridChangesSaveInstantly": "التغييرات تُحفظ فورًا",
+  "metricGridEditHint": "اسحب لإعادة الترتيب · اضغط بطاقة للحجم · − للإزالة",
+  "metricGridDone": "تم",
+  "metricGridPageOneLabel": "الصفحة 1 · نظرة اليوم",
+  "metricGridPageTwoLabel": "الصفحة 2 · تفاصيل",
+  "metricGridPageTwoDragHint": "الصفحة 2 · اسحب بطاقة إلى هنا",
+  "metricGridDragBackToPage": "اسحب بطاقة إلى الصفحة {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "أفلت هنا",
+  "metricGridDragging": "جارٍ السحب…",
+  "metricGridPresets": "إعدادات جاهزة",
+  "metricGridPresetMyLayout": "تخطيطي",
+  "metricGridPresetMinimal": "بسيط",
+  "metricGridPresetTrainingDay": "يوم تدريب",
+  "metricGridPresetRecovery": "التعافي",
+  "metricGridAddMetric": "إضافة مقياس",
+  "metricGridConnectBody": "الخطوات والنوم والجاهزية تُملأ تلقائيًا — لا يُقدَّر لك أي رقم.",
+  "metricGridConnectCta": "اربط Health",
+  "metricGridEveryMetricPlaced": "كل المقاييس موجودة بالفعل على شبكتك.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "مسجَّل في التطبيق",
+  "metricGridSourceComputed": "محسوب",
+  "metricGridPlacementLine": "{size} · صفحة {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

@@ -28276,5 +28276,94 @@
   "workoutShowcaseIntroTitle": "Pojďme začít tvůj první trénink",
   "workoutShowcaseNextTargetRaised": "Série {set} zaznamenána — další cíl automaticky zvýšen na {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "KROK {current} Z {total}",
-  "quizAlmostDone": "TÉMĚŘ HOTOVO"
+  "quizAlmostDone": "TÉMĚŘ HOTOVO",
+  "metricSetupPanelKicker": "{count, plural, =1{1 metrika čeká} other{Čeká {count} metrik}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Mřížka se doplní sama.",
+  "metricSetupPanelHealthBody": "{source} je doplní automaticky.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Připojit {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Doplní se z toho, co si zapíšeš.",
+  "metricSetupPanelLogCta": "Něco zapsat",
+  "metricSetupPanelSetupBody": "Začne dnem, kdy začne tvůj plán.",
+  "metricSetupPanelSetupCta": "Dokončit nastavení",
+  "metricSetupPanelFooter": "Nic za tebe neodhadujeme.",
+  "metricTileNoSourceConnectHealth": "Bez zdroje · připoj Health",
+  "metricTileConnectHealthShort": "Připojit Health",
+  "metricTileNoHealthDataYet": "Zatím žádná data z Health",
+  "metricTileNoDataYet": "Zatím žádná data",
+  "metricTileNothingLoggedYet": "Zatím nic zapsáno",
+  "metricTileNothingLoggedShort": "Nic zapsáno",
+  "metricTileNoPlanYetFinishSetup": "Zatím bez plánu · dokonči nastavení",
+  "metricTileNeedsHrv": "Chybí HRV",
+  "metricTileNoBaseline": "Bez základu",
+  "metricTileNoData": "Žádná data",
+  "metricGridMyMetrics": "MOJE METRIKY",
+  "metricGridEditTiles": "UPRAVIT DLAŽDICE",
+  "metricGridChangesSaveInstantly": "ZMĚNY SE UKLÁDAJÍ IHNED",
+  "metricGridEditHint": "PŘETAŽENÍM SEŘADÍŠ · KLEPNUTÍM ZMĚNÍŠ VELIKOST · − ODEBERE",
+  "metricGridDone": "HOTOVO",
+  "metricGridPageOneLabel": "STRANA 1 · DENNÍ PŘEHLED",
+  "metricGridPageTwoLabel": "STRANA 2 · DETAILY",
+  "metricGridPageTwoDragHint": "STRANA 2 · PŘETÁHNI SEM DLAŽDICI",
+  "metricGridDragBackToPage": "PŘETÁHNI DLAŽDICI ZPĚT NA STRANU {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "PUSŤ SEM",
+  "metricGridDragging": "TAHÁNÍ…",
+  "metricGridPresets": "PŘEDVOLBY",
+  "metricGridPresetMyLayout": "Moje rozložení",
+  "metricGridPresetMinimal": "Minimální",
+  "metricGridPresetTrainingDay": "Tréninkový den",
+  "metricGridPresetRecovery": "Regenerace",
+  "metricGridAddMetric": "PŘIDAT METRIKU",
+  "metricGridConnectBody": "Kroky, spánek a připravenost se doplní samy — nic za tebe neodhadujeme.",
+  "metricGridConnectCta": "PŘIPOJIT HEALTH",
+  "metricGridEveryMetricPlaced": "Všechny metriky už na mřížce máš.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Zapsáno v aplikaci",
+  "metricGridSourceComputed": "Vypočteno",
+  "metricGridPlacementLine": "{size} · strana {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

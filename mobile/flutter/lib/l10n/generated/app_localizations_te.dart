@@ -45297,4 +45297,156 @@ class AppLocalizationsTe extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'ఒకే ఒక్కసారి ఫౌండింగ్-మెంబర్ ధర, అదే 7-రోజుల ఉచిత ట్రయల్. ఈ ఆఫర్ మళ్లీ రాదు.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count మెట్రిక్‌లు వేచి ఉన్నాయి',
+      one: '1 మెట్రిక్ వేచి ఉంది',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'మీ గ్రిడ్ దానంతట అదే నిండుతుంది.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source వీటిని ఆటోమేటిక్‌గా నింపుతుంది.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source కనెక్ట్ చేయండి';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'మీరు లాగ్ చేసిన దాని నుండి ఇవి నిండుతాయి.';
+
+  @override
+  String get metricSetupPanelLogCta => 'ఏదైనా లాగ్ చేయండి';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'మీ ప్లాన్ మొదలైన రోజే ఇది మొదలవుతుంది.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'సెటప్ పూర్తి చేయండి';
+
+  @override
+  String get metricSetupPanelFooter => 'మీ కోసం ఏదీ అంచనా వేయబడదు.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'మూలం లేదు · Health కనెక్ట్ చేయండి';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health కనెక్ట్ చేయండి';
+
+  @override
+  String get metricTileNoHealthDataYet => 'ఇంకా Health డేటా లేదు';
+
+  @override
+  String get metricTileNoDataYet => 'ఇంకా డేటా లేదు';
+
+  @override
+  String get metricTileNothingLoggedYet => 'ఇంకా ఏమీ లాగ్ చేయలేదు';
+
+  @override
+  String get metricTileNothingLoggedShort => 'లాగ్ లేదు';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'ఇంకా ప్లాన్ లేదు · సెటప్ పూర్తి చేయండి';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV అవసరం';
+
+  @override
+  String get metricTileNoBaseline => 'బేస్‌లైన్ లేదు';
+
+  @override
+  String get metricTileNoData => 'డేటా లేదు';
+
+  @override
+  String get metricGridMyMetrics => 'నా మెట్రిక్‌లు';
+
+  @override
+  String get metricGridEditTiles => 'టైల్స్ సవరించండి';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'మార్పులు వెంటనే సేవ్ అవుతాయి';
+
+  @override
+  String get metricGridEditHint =>
+      'క్రమం మార్చడానికి లాగండి · పరిమాణం కోసం టైల్ నొక్కండి · తీసివేయడానికి −';
+
+  @override
+  String get metricGridDone => 'పూర్తయింది';
+
+  @override
+  String get metricGridPageOneLabel => 'పేజీ 1 · రోజువారీ చూపు';
+
+  @override
+  String get metricGridPageTwoLabel => 'పేజీ 2 · లోతు';
+
+  @override
+  String get metricGridPageTwoDragHint => 'పేజీ 2 · ఇక్కడికి టైల్ లాగండి';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'టైల్‌ను పేజీ $pageకి తిరిగి లాగండి';
+  }
+
+  @override
+  String get metricGridDropHere => 'ఇక్కడ వదలండి';
+
+  @override
+  String get metricGridDragging => 'లాగుతోంది…';
+
+  @override
+  String get metricGridPresets => 'ప్రీసెట్‌లు';
+
+  @override
+  String get metricGridPresetMyLayout => 'నా లేఅవుట్';
+
+  @override
+  String get metricGridPresetMinimal => 'కనీసం';
+
+  @override
+  String get metricGridPresetTrainingDay => 'శిక్షణ రోజు';
+
+  @override
+  String get metricGridPresetRecovery => 'రికవరీ';
+
+  @override
+  String get metricGridAddMetric => 'మెట్రిక్ జోడించండి';
+
+  @override
+  String get metricGridConnectBody =>
+      'అడుగులు, నిద్ర, సంసిద్ధత ఆటోమేటిక్‌గా నిండుతాయి — మీ కోసం ఏదీ అంచనా వేయబడదు.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH కనెక్ట్ చేయండి';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'అన్ని మెట్రిక్‌లు ఇప్పటికే మీ గ్రిడ్‌లో ఉన్నాయి.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'యాప్‌లో లాగ్ చేసినది';
+
+  @override
+  String get metricGridSourceComputed => 'గణించినది';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · పేజీ $page · #$position';
+  }
 }

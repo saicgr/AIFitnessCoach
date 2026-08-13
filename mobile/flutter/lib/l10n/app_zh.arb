@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "开始你的第一次训练",
   "workoutShowcaseNextTargetRaised": "第 {set} 组已记录 — 下个目标自动提升至 {weight} lb（+{delta} lb）",
   "quizStepOfTotal": "第 {current} 步，共 {total} 步",
-  "quizAlmostDone": "即将完成"
+  "quizAlmostDone": "即将完成",
+  "metricSetupPanelKicker": "{count, plural, other{{count} 项指标待接入}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "你的指标会自动填满。",
+  "metricSetupPanelHealthBody": "{source} 会自动填入这些数据。",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "连接 {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "这些会根据你的记录填入。",
+  "metricSetupPanelLogCta": "记录一项",
+  "metricSetupPanelSetupBody": "计划开始那天它就开始。",
+  "metricSetupPanelSetupCta": "完成设置",
+  "metricSetupPanelFooter": "我们不会为你估算任何数字。",
+  "metricTileNoSourceConnectHealth": "无数据源 · 连接 Health",
+  "metricTileConnectHealthShort": "连接 Health",
+  "metricTileNoHealthDataYet": "暂无 Health 数据",
+  "metricTileNoDataYet": "暂无数据",
+  "metricTileNothingLoggedYet": "尚无记录",
+  "metricTileNothingLoggedShort": "无记录",
+  "metricTileNoPlanYetFinishSetup": "尚无计划 · 完成设置",
+  "metricTileNeedsHrv": "需要 HRV",
+  "metricTileNoBaseline": "无基准",
+  "metricTileNoData": "无数据",
+  "metricGridMyMetrics": "我的指标",
+  "metricGridEditTiles": "编辑磁贴",
+  "metricGridChangesSaveInstantly": "更改即时保存",
+  "metricGridEditHint": "拖动可排序 · 点按磁贴改大小 · − 可移除",
+  "metricGridDone": "完成",
+  "metricGridPageOneLabel": "第 1 页 · 每日一览",
+  "metricGridPageTwoLabel": "第 2 页 · 深入",
+  "metricGridPageTwoDragHint": "第 2 页 · 把磁贴拖到这里",
+  "metricGridDragBackToPage": "把磁贴拖回第 {page} 页",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "拖放到这里",
+  "metricGridDragging": "拖动中…",
+  "metricGridPresets": "预设",
+  "metricGridPresetMyLayout": "我的布局",
+  "metricGridPresetMinimal": "极简",
+  "metricGridPresetTrainingDay": "训练日",
+  "metricGridPresetRecovery": "恢复",
+  "metricGridAddMetric": "添加指标",
+  "metricGridConnectBody": "步数、睡眠和状态会自动填入 — 我们不会为你估算任何数字。",
+  "metricGridConnectCta": "连接 HEALTH",
+  "metricGridEveryMetricPlaced": "所有指标都已在你的网格上。",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "应用内记录",
+  "metricGridSourceComputed": "自动计算",
+  "metricGridPlacementLine": "{size} · 第{page}页 · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

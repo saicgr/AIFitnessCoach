@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "നിങ്ങളുടെ ആദ്യ വർക്കൗട്ട് തുടങ്ങാം",
   "workoutShowcaseNextTargetRaised": "സെറ്റ് {set} രേഖപ്പെടുത്തി — അടുത്ത ലക്ഷ്യം സ്വയമേവ {weight} lb ആയി ഉയർത്തി (+{delta} lb)",
   "quizStepOfTotal": "ഘട്ടം {current} / {total}",
-  "quizAlmostDone": "ഏതാണ്ട് പൂർത്തിയായി"
+  "quizAlmostDone": "ഏതാണ്ട് പൂർത്തിയായി",
+  "metricSetupPanelKicker": "{count, plural, =1{1 മെട്രിക് കാത്തിരിക്കുന്നു} other{{count} മെട്രിക്കുകൾ കാത്തിരിക്കുന്നു}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "നിങ്ങളുടെ ഗ്രിഡ് സ്വയം നിറയും.",
+  "metricSetupPanelHealthBody": "{source} ഇവ സ്വയമേവ പൂരിപ്പിക്കും.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} കണക്റ്റ് ചെയ്യുക",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "നിങ്ങൾ രേഖപ്പെടുത്തുന്നതിൽ നിന്ന് ഇവ നിറയും.",
+  "metricSetupPanelLogCta": "എന്തെങ്കിലും രേഖപ്പെടുത്തുക",
+  "metricSetupPanelSetupBody": "നിങ്ങളുടെ പ്ലാൻ തുടങ്ങുന്ന ദിവസം തുടങ്ങും.",
+  "metricSetupPanelSetupCta": "സജ്ജീകരണം പൂർത്തിയാക്കുക",
+  "metricSetupPanelFooter": "നിങ്ങൾക്കായി ഒന്നും ഊഹിക്കുന്നില്ല.",
+  "metricTileNoSourceConnectHealth": "ഉറവിടം ഇല്ല · Health കണക്റ്റ് ചെയ്യുക",
+  "metricTileConnectHealthShort": "Health കണക്റ്റ് ചെയ്യുക",
+  "metricTileNoHealthDataYet": "ഇതുവരെ Health ഡാറ്റ ഇല്ല",
+  "metricTileNoDataYet": "ഇതുവരെ ഡാറ്റ ഇല്ല",
+  "metricTileNothingLoggedYet": "ഇതുവരെ ഒന്നും രേഖപ്പെടുത്തിയിട്ടില്ല",
+  "metricTileNothingLoggedShort": "രേഖപ്പെടുത്തിയിട്ടില്ല",
+  "metricTileNoPlanYetFinishSetup": "ഇതുവരെ പ്ലാൻ ഇല്ല · സജ്ജീകരണം പൂർത്തിയാക്കുക",
+  "metricTileNeedsHrv": "HRV വേണം",
+  "metricTileNoBaseline": "അടിസ്ഥാനം ഇല്ല",
+  "metricTileNoData": "ഡാറ്റ ഇല്ല",
+  "metricGridMyMetrics": "എന്റെ മെട്രിക്കുകൾ",
+  "metricGridEditTiles": "ടൈലുകൾ എഡിറ്റ് ചെയ്യുക",
+  "metricGridChangesSaveInstantly": "മാറ്റങ്ങൾ ഉടൻ സേവ് ആകും",
+  "metricGridEditHint": "ക്രമം മാറ്റാൻ വലിക്കുക · വലുപ്പത്തിന് ടൈൽ ടാപ്പ് ചെയ്യുക · നീക്കാൻ −",
+  "metricGridDone": "പൂർത്തിയായി",
+  "metricGridPageOneLabel": "പേജ് 1 · ദൈനംദിന കാഴ്ച",
+  "metricGridPageTwoLabel": "പേജ് 2 · ആഴം",
+  "metricGridPageTwoDragHint": "പേജ് 2 · ഒരു ടൈൽ ഇവിടേക്ക് വലിക്കുക",
+  "metricGridDragBackToPage": "ഒരു ടൈൽ പേജ് {page}-ലേക്ക് വലിക്കുക",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "ഇവിടെ ഇടുക",
+  "metricGridDragging": "വലിക്കുന്നു…",
+  "metricGridPresets": "പ്രീസെറ്റുകൾ",
+  "metricGridPresetMyLayout": "എന്റെ ലേഔട്ട്",
+  "metricGridPresetMinimal": "മിനിമൽ",
+  "metricGridPresetTrainingDay": "പരിശീലന ദിവസം",
+  "metricGridPresetRecovery": "വീണ്ടെടുപ്പ്",
+  "metricGridAddMetric": "മെട്രിക് ചേർക്കുക",
+  "metricGridConnectBody": "ചുവടുകൾ, ഉറക്കം, തയ്യാറെടുപ്പ് സ്വയമേവ നിറയും — നിങ്ങൾക്കായി ഒന്നും ഊഹിക്കുന്നില്ല.",
+  "metricGridConnectCta": "HEALTH കണക്റ്റ് ചെയ്യുക",
+  "metricGridEveryMetricPlaced": "എല്ലാ മെട്രിക്കുകളും ഇതിനകം നിങ്ങളുടെ ഗ്രിഡിലുണ്ട്.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "ആപ്പിൽ രേഖപ്പെടുത്തി",
+  "metricGridSourceComputed": "കണക്കാക്കിയത്",
+  "metricGridPlacementLine": "{size} · പേജ് {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

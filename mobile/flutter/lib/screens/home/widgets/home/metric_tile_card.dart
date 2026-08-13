@@ -36,6 +36,7 @@ import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/metric_layout_provider.dart' show MetricSize;
 import '../../../../data/providers/metric_tile_data_provider.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 
 /// Tile heights, from the mockup's 6-column grid.
 ///
@@ -107,6 +108,42 @@ EdgeInsets _tilePadding(MetricSize size) => switch (size) {
       MetricSize.wide => const EdgeInsets.fromLTRB(12, 10, 12, 4),
       MetricSize.small => const EdgeInsets.fromLTRB(10, 8, 10, 4),
     };
+
+/// The tile's empty-state line, localised.
+///
+/// Goes through [metricEmptyCopyFor] — the same table the provider used to
+/// fill the English fallbacks — so the widget layer never grows a second
+/// reason → copy switch that can drift from it. An id the catalogue no longer
+/// knows has no reason at all; it keeps whatever the provider wrote.
+({String long, String short, bool namesSource}) metricTileEmptyCopy(
+  BuildContext context,
+  MetricTileData data,
+) {
+  final l10n = AppLocalizations.of(context);
+  final reason = data.emptyReason;
+  if (reason == null) {
+    return (
+      long: data.noDataReason ?? l10n.metricTileNoData,
+      short: data.noDataReasonShort ?? data.noDataReason ?? l10n.metricTileNoData,
+      namesSource: data.noDataNamesSource,
+    );
+  }
+  return metricEmptyCopyFor(
+    data.id,
+    reason,
+    MetricEmptyCopy(
+      noSourceConnectHealth: l10n.metricTileNoSourceConnectHealth,
+      connectHealthShort: l10n.metricTileConnectHealthShort,
+      noHealthDataYet: l10n.metricTileNoHealthDataYet,
+      noDataYet: l10n.metricTileNoDataYet,
+      nothingLoggedYet: l10n.metricTileNothingLoggedYet,
+      nothingLoggedShort: l10n.metricTileNothingLoggedShort,
+      noPlanYetFinishSetup: l10n.metricTileNoPlanYetFinishSetup,
+      finishSetupShort: l10n.metricSetupPanelSetupCta,
+      needsHrv: l10n.metricTileNeedsHrv,
+    ),
+  );
+}
 
 class MetricTileCard extends StatelessWidget {
   final MetricTileData data;
@@ -232,7 +269,7 @@ class MetricTileCard extends StatelessWidget {
       height: height,
       child: Semantics(
         label: '${data.label}. '
-            '${data.hasData ? data.value : (data.noDataReason ?? 'No data')}. '
+            '${data.hasData ? data.value : metricTileEmptyCopy(context, data).long}. '
             '${data.hasData ? data.deviationLabel : ''}',
         button: onTap != null,
         child: GestureDetector(
@@ -330,11 +367,17 @@ class _TileBody extends StatelessWidget {
           )),
           if (!data.hasData) ...[
             const Spacer(),
-            _NoSourceCapsule(
-              text: data.noDataReason ?? 'No source',
-              namesSource: data.noDataNamesSource,
-              colors: c,
-            ),
+            // A 100pt S tile ellipsises the long form into a truncated
+            // non-sentence, so the short form is a real string, not a
+            // `maxLines` hope.
+            Builder(builder: (context) {
+              final copy = metricTileEmptyCopy(context, data);
+              return _NoSourceCapsule(
+                text: isSmall ? copy.short : copy.long,
+                namesSource: copy.namesSource,
+                colors: c,
+              );
+            }),
           ] else ...[
             SizedBox(height: isLarge ? 9 : 5),
             Flexible(

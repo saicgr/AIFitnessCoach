@@ -44631,4 +44631,152 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'One-time founding-member price, same 7-day free trial. This offer doesn\'t come back.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metrics waiting',
+      one: '1 metric waiting',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Your grid fills itself in.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source fills these in automatically.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Connect $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'These fill in from what you log.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Log something';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Starts the day your plan does.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Finish setup';
+
+  @override
+  String get metricSetupPanelFooter => 'Nothing is estimated for you.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'No source · connect Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Connect Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'No Health data yet';
+
+  @override
+  String get metricTileNoDataYet => 'No data yet';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Nothing logged yet';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Nothing logged';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup => 'No plan yet · finish setup';
+
+  @override
+  String get metricTileNeedsHrv => 'Needs HRV';
+
+  @override
+  String get metricTileNoBaseline => 'No baseline';
+
+  @override
+  String get metricTileNoData => 'No data';
+
+  @override
+  String get metricGridMyMetrics => 'MY METRICS';
+
+  @override
+  String get metricGridEditTiles => 'EDIT TILES';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'CHANGES SAVE INSTANTLY';
+
+  @override
+  String get metricGridEditHint =>
+      'DRAG TO REORDER · TAP A TILE FOR SIZE · − TO REMOVE';
+
+  @override
+  String get metricGridDone => 'DONE';
+
+  @override
+  String get metricGridPageOneLabel => 'PAGE 1 · DAILY GLANCE';
+
+  @override
+  String get metricGridPageTwoLabel => 'PAGE 2 · DEPTH';
+
+  @override
+  String get metricGridPageTwoDragHint => 'PAGE 2 · DRAG A TILE HERE';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'DRAG A TILE BACK TO PAGE $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'DROP HERE';
+
+  @override
+  String get metricGridDragging => 'DRAGGING…';
+
+  @override
+  String get metricGridPresets => 'PRESETS';
+
+  @override
+  String get metricGridPresetMyLayout => 'My layout';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Training day';
+
+  @override
+  String get metricGridPresetRecovery => 'Recovery';
+
+  @override
+  String get metricGridAddMetric => 'ADD METRIC';
+
+  @override
+  String get metricGridConnectBody =>
+      'Steps, sleep and readiness fill in automatically — nothing is estimated for you.';
+
+  @override
+  String get metricGridConnectCta => 'CONNECT HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Every metric is already on your grid.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Logged in-app';
+
+  @override
+  String get metricGridSourceComputed => 'Computed';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · page $page · #$position';
+  }
 }

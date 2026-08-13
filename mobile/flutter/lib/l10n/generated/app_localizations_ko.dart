@@ -43214,4 +43214,149 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       '단 한 번뿐인 창립 멤버 가격, 동일한 7일 무료 체험. 이 혜택은 다시 오지 않습니다.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count개 지표 대기 중',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => '지표는 저절로 채워집니다.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source이(가) 자동으로 채웁니다.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source 연결';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => '기록한 내용으로 채워집니다.';
+
+  @override
+  String get metricSetupPanelLogCta => '무언가 기록하기';
+
+  @override
+  String get metricSetupPanelSetupBody => '플랜이 시작되는 날부터 시작됩니다.';
+
+  @override
+  String get metricSetupPanelSetupCta => '설정 완료하기';
+
+  @override
+  String get metricSetupPanelFooter => '추정값은 보여주지 않습니다.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => '소스 없음 · Health 연결';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health 연결';
+
+  @override
+  String get metricTileNoHealthDataYet => '아직 Health 데이터 없음';
+
+  @override
+  String get metricTileNoDataYet => '데이터 없음';
+
+  @override
+  String get metricTileNothingLoggedYet => '아직 기록 없음';
+
+  @override
+  String get metricTileNothingLoggedShort => '기록 없음';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup => '아직 플랜 없음 · 설정 완료하기';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV 필요';
+
+  @override
+  String get metricTileNoBaseline => '기준값 없음';
+
+  @override
+  String get metricTileNoData => '데이터 없음';
+
+  @override
+  String get metricGridMyMetrics => '내 지표';
+
+  @override
+  String get metricGridEditTiles => '타일 편집';
+
+  @override
+  String get metricGridChangesSaveInstantly => '변경 사항은 즉시 저장됩니다';
+
+  @override
+  String get metricGridEditHint => '드래그해 순서 변경 · 탭해 크기 변경 · −로 제거';
+
+  @override
+  String get metricGridDone => '완료';
+
+  @override
+  String get metricGridPageOneLabel => '페이지 1 · 오늘 한눈에';
+
+  @override
+  String get metricGridPageTwoLabel => '페이지 2 · 심화';
+
+  @override
+  String get metricGridPageTwoDragHint => '페이지 2 · 여기로 타일을 드래그';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return '타일을 페이지 $page로 다시 드래그';
+  }
+
+  @override
+  String get metricGridDropHere => '여기에 놓기';
+
+  @override
+  String get metricGridDragging => '드래그 중…';
+
+  @override
+  String get metricGridPresets => '프리셋';
+
+  @override
+  String get metricGridPresetMyLayout => '내 레이아웃';
+
+  @override
+  String get metricGridPresetMinimal => '미니멀';
+
+  @override
+  String get metricGridPresetTrainingDay => '훈련일';
+
+  @override
+  String get metricGridPresetRecovery => '회복';
+
+  @override
+  String get metricGridAddMetric => '지표 추가';
+
+  @override
+  String get metricGridConnectBody =>
+      '걸음 수, 수면, 컨디션이 자동으로 채워집니다 — 추정값은 보여주지 않습니다.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH 연결';
+
+  @override
+  String get metricGridEveryMetricPlaced => '모든 지표가 이미 그리드에 있습니다.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => '앱에서 기록';
+
+  @override
+  String get metricGridSourceComputed => '계산됨';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · $page페이지 · #$position';
+  }
 }

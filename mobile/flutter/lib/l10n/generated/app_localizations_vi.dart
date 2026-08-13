@@ -44996,4 +44996,155 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Giá thành viên sáng lập chỉ một lần, vẫn 7 ngày dùng thử miễn phí. Ưu đãi này sẽ không quay lại.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chỉ số đang chờ',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Lưới của bạn sẽ tự lấp đầy.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source tự động điền những mục này.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Kết nối $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Những mục này điền từ dữ liệu bạn ghi.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Ghi lại điều gì đó';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Bắt đầu vào ngày kế hoạch của bạn bắt đầu.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Hoàn tất thiết lập';
+
+  @override
+  String get metricSetupPanelFooter => 'Không có gì được ước tính thay bạn.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Chưa có nguồn · kết nối Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Kết nối Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Chưa có dữ liệu Health';
+
+  @override
+  String get metricTileNoDataYet => 'Chưa có dữ liệu';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Chưa ghi gì';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Chưa ghi';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Chưa có kế hoạch · hoàn tất thiết lập';
+
+  @override
+  String get metricTileNeedsHrv => 'Cần HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Chưa có mốc';
+
+  @override
+  String get metricTileNoData => 'Không có dữ liệu';
+
+  @override
+  String get metricGridMyMetrics => 'CHỈ SỐ CỦA TÔI';
+
+  @override
+  String get metricGridEditTiles => 'SỬA Ô';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'THAY ĐỔI LƯU NGAY';
+
+  @override
+  String get metricGridEditHint =>
+      'KÉO ĐỂ SẮP XẾP · CHẠM Ô ĐỂ ĐỔI CỠ · − ĐỂ XOÁ';
+
+  @override
+  String get metricGridDone => 'XONG';
+
+  @override
+  String get metricGridPageOneLabel => 'TRANG 1 · NHÌN NHANH MỖI NGÀY';
+
+  @override
+  String get metricGridPageTwoLabel => 'TRANG 2 · CHI TIẾT';
+
+  @override
+  String get metricGridPageTwoDragHint => 'TRANG 2 · KÉO MỘT Ô VÀO ĐÂY';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'KÉO MỘT Ô VỀ TRANG $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'THẢ VÀO ĐÂY';
+
+  @override
+  String get metricGridDragging => 'ĐANG KÉO…';
+
+  @override
+  String get metricGridPresets => 'CÀI ĐẶT SẴN';
+
+  @override
+  String get metricGridPresetMyLayout => 'Bố cục của tôi';
+
+  @override
+  String get metricGridPresetMinimal => 'Tối giản';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Ngày tập';
+
+  @override
+  String get metricGridPresetRecovery => 'Phục hồi';
+
+  @override
+  String get metricGridAddMetric => 'THÊM CHỈ SỐ';
+
+  @override
+  String get metricGridConnectBody =>
+      'Bước chân, giấc ngủ và độ sẵn sàng tự điền — không có gì được ước tính thay bạn.';
+
+  @override
+  String get metricGridConnectCta => 'KẾT NỐI HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Mọi chỉ số đã có trên lưới của bạn.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Ghi trong ứng dụng';
+
+  @override
+  String get metricGridSourceComputed => 'Tính toán';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · trang $page · #$position';
+  }
 }

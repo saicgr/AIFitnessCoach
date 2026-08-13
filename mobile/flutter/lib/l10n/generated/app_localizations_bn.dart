@@ -45041,4 +45041,156 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'প্রতিষ্ঠাতা-সদস্যের এককালীন মূল্য, সেই একই ৭ দিনের ফ্রি ট্রায়াল। এই অফার আর ফিরে আসবে না।';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি মেট্রিক অপেক্ষায়',
+      one: '১টি মেট্রিক অপেক্ষায়',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'আপনার গ্রিড নিজেই পূর্ণ হবে।';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source এগুলি স্বয়ংক্রিয়ভাবে পূরণ করে।';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source সংযুক্ত করুন';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'আপনি যা লগ করেন তা থেকে এগুলি পূরণ হয়।';
+
+  @override
+  String get metricSetupPanelLogCta => 'কিছু লগ করুন';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'আপনার পরিকল্পনা শুরু হওয়ার দিন থেকেই শুরু।';
+
+  @override
+  String get metricSetupPanelSetupCta => 'সেটআপ শেষ করুন';
+
+  @override
+  String get metricSetupPanelFooter => 'আপনার জন্য কিছুই অনুমান করা হয় না।';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'উৎস নেই · Health যুক্ত করুন';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health যুক্ত করুন';
+
+  @override
+  String get metricTileNoHealthDataYet => 'এখনও Health ডেটা নেই';
+
+  @override
+  String get metricTileNoDataYet => 'এখনও ডেটা নেই';
+
+  @override
+  String get metricTileNothingLoggedYet => 'এখনও কিছু লগ করা হয়নি';
+
+  @override
+  String get metricTileNothingLoggedShort => 'কিছু লগ হয়নি';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'এখনও পরিকল্পনা নেই · সেটআপ শেষ করুন';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV প্রয়োজন';
+
+  @override
+  String get metricTileNoBaseline => 'বেসলাইন নেই';
+
+  @override
+  String get metricTileNoData => 'ডেটা নেই';
+
+  @override
+  String get metricGridMyMetrics => 'আমার মেট্রিক';
+
+  @override
+  String get metricGridEditTiles => 'টাইল সম্পাদনা';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'পরিবর্তন সঙ্গে সঙ্গে সংরক্ষিত হয়';
+
+  @override
+  String get metricGridEditHint =>
+      'সাজাতে টানুন · আকারের জন্য টাইলে ট্যাপ · − সরাতে';
+
+  @override
+  String get metricGridDone => 'সম্পন্ন';
+
+  @override
+  String get metricGridPageOneLabel => 'পৃষ্ঠা ১ · দৈনিক ঝলক';
+
+  @override
+  String get metricGridPageTwoLabel => 'পৃষ্ঠা ২ · গভীরতা';
+
+  @override
+  String get metricGridPageTwoDragHint => 'পৃষ্ঠা ২ · এখানে একটি টাইল টানুন';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'পৃষ্ঠা $page-এ একটি টাইল টেনে আনুন';
+  }
+
+  @override
+  String get metricGridDropHere => 'এখানে ছাড়ুন';
+
+  @override
+  String get metricGridDragging => 'টানা হচ্ছে…';
+
+  @override
+  String get metricGridPresets => 'প্রিসেট';
+
+  @override
+  String get metricGridPresetMyLayout => 'আমার বিন্যাস';
+
+  @override
+  String get metricGridPresetMinimal => 'সরল';
+
+  @override
+  String get metricGridPresetTrainingDay => 'প্রশিক্ষণ দিবস';
+
+  @override
+  String get metricGridPresetRecovery => 'রিকভারি';
+
+  @override
+  String get metricGridAddMetric => 'মেট্রিক যোগ করুন';
+
+  @override
+  String get metricGridConnectBody =>
+      'ধাপ, ঘুম ও প্রস্তুতি স্বয়ংক্রিয়ভাবে পূরণ হয় — আপনার জন্য কিছুই অনুমান করা হয় না।';
+
+  @override
+  String get metricGridConnectCta => 'Health যুক্ত করুন';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'সব মেট্রিক ইতিমধ্যে আপনার গ্রিডে আছে।';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'অ্যাপে লগ করা';
+
+  @override
+  String get metricGridSourceComputed => 'গণনাকৃত';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · পৃষ্ঠা $page · #$position';
+  }
 }

@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "มาเริ่มออกกำลังกายครั้งแรกของคุณกัน",
   "workoutShowcaseNextTargetRaised": "บันทึกเซ็ต {set} แล้ว — เป้าหมายถัดไปเพิ่มอัตโนมัติเป็น {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "ขั้นที่ {current} จาก {total}",
-  "quizAlmostDone": "ใกล้เสร็จแล้ว"
+  "quizAlmostDone": "ใกล้เสร็จแล้ว",
+  "metricSetupPanelKicker": "{count, plural, other{{count} ตัวชี้วัดกำลังรอ}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "ตารางของคุณจะเติมข้อมูลเอง",
+  "metricSetupPanelHealthBody": "{source} จะเติมข้อมูลเหล่านี้ให้อัตโนมัติ",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "เชื่อมต่อ {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "ข้อมูลเหล่านี้เติมจากสิ่งที่คุณบันทึก",
+  "metricSetupPanelLogCta": "บันทึกบางอย่าง",
+  "metricSetupPanelSetupBody": "เริ่มในวันที่แผนของคุณเริ่ม",
+  "metricSetupPanelSetupCta": "ตั้งค่าให้เสร็จ",
+  "metricSetupPanelFooter": "เราไม่ประมาณค่าใดๆ ให้คุณ",
+  "metricTileNoSourceConnectHealth": "ไม่มีแหล่งข้อมูล · เชื่อมต่อ Health",
+  "metricTileConnectHealthShort": "เชื่อมต่อ Health",
+  "metricTileNoHealthDataYet": "ยังไม่มีข้อมูล Health",
+  "metricTileNoDataYet": "ยังไม่มีข้อมูล",
+  "metricTileNothingLoggedYet": "ยังไม่ได้บันทึกอะไร",
+  "metricTileNothingLoggedShort": "ไม่มีบันทึก",
+  "metricTileNoPlanYetFinishSetup": "ยังไม่มีแผน · ตั้งค่าให้เสร็จ",
+  "metricTileNeedsHrv": "ต้องใช้ HRV",
+  "metricTileNoBaseline": "ไม่มีค่าอ้างอิง",
+  "metricTileNoData": "ไม่มีข้อมูล",
+  "metricGridMyMetrics": "ตัวชี้วัดของฉัน",
+  "metricGridEditTiles": "แก้ไขไทล์",
+  "metricGridChangesSaveInstantly": "บันทึกการเปลี่ยนแปลงทันที",
+  "metricGridEditHint": "ลากเพื่อจัดลำดับ · แตะไทล์เพื่อเปลี่ยนขนาด · − เพื่อลบ",
+  "metricGridDone": "เสร็จ",
+  "metricGridPageOneLabel": "หน้า 1 · ภาพรวมประจำวัน",
+  "metricGridPageTwoLabel": "หน้า 2 · เชิงลึก",
+  "metricGridPageTwoDragHint": "หน้า 2 · ลากไทล์มาที่นี่",
+  "metricGridDragBackToPage": "ลากไทล์กลับไปหน้า {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "วางที่นี่",
+  "metricGridDragging": "กำลังลาก…",
+  "metricGridPresets": "ค่าที่ตั้งไว้",
+  "metricGridPresetMyLayout": "เลย์เอาต์ของฉัน",
+  "metricGridPresetMinimal": "เรียบง่าย",
+  "metricGridPresetTrainingDay": "วันฝึกซ้อม",
+  "metricGridPresetRecovery": "ฟื้นตัว",
+  "metricGridAddMetric": "เพิ่มตัวชี้วัด",
+  "metricGridConnectBody": "ก้าวเดิน การนอน และความพร้อมจะเติมให้อัตโนมัติ — เราไม่ประมาณค่าใดๆ ให้คุณ",
+  "metricGridConnectCta": "เชื่อมต่อ HEALTH",
+  "metricGridEveryMetricPlaced": "ตัวชี้วัดทั้งหมดอยู่บนตารางของคุณแล้ว",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "บันทึกในแอป",
+  "metricGridSourceComputed": "คำนวณให้",
+  "metricGridPlacementLine": "{size} · หน้า {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

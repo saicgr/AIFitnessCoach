@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Bắt đầu buổi tập đầu tiên của bạn",
   "workoutShowcaseNextTargetRaised": "Đã ghi hiệp {set} — mục tiêu tiếp theo tự tăng lên {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "BƯỚC {current}/{total}",
-  "quizAlmostDone": "SẮP XONG"
+  "quizAlmostDone": "SẮP XONG",
+  "metricSetupPanelKicker": "{count, plural, other{{count} chỉ số đang chờ}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Lưới của bạn sẽ tự lấp đầy.",
+  "metricSetupPanelHealthBody": "{source} tự động điền những mục này.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Kết nối {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Những mục này điền từ dữ liệu bạn ghi.",
+  "metricSetupPanelLogCta": "Ghi lại điều gì đó",
+  "metricSetupPanelSetupBody": "Bắt đầu vào ngày kế hoạch của bạn bắt đầu.",
+  "metricSetupPanelSetupCta": "Hoàn tất thiết lập",
+  "metricSetupPanelFooter": "Không có gì được ước tính thay bạn.",
+  "metricTileNoSourceConnectHealth": "Chưa có nguồn · kết nối Health",
+  "metricTileConnectHealthShort": "Kết nối Health",
+  "metricTileNoHealthDataYet": "Chưa có dữ liệu Health",
+  "metricTileNoDataYet": "Chưa có dữ liệu",
+  "metricTileNothingLoggedYet": "Chưa ghi gì",
+  "metricTileNothingLoggedShort": "Chưa ghi",
+  "metricTileNoPlanYetFinishSetup": "Chưa có kế hoạch · hoàn tất thiết lập",
+  "metricTileNeedsHrv": "Cần HRV",
+  "metricTileNoBaseline": "Chưa có mốc",
+  "metricTileNoData": "Không có dữ liệu",
+  "metricGridMyMetrics": "CHỈ SỐ CỦA TÔI",
+  "metricGridEditTiles": "SỬA Ô",
+  "metricGridChangesSaveInstantly": "THAY ĐỔI LƯU NGAY",
+  "metricGridEditHint": "KÉO ĐỂ SẮP XẾP · CHẠM Ô ĐỂ ĐỔI CỠ · − ĐỂ XOÁ",
+  "metricGridDone": "XONG",
+  "metricGridPageOneLabel": "TRANG 1 · NHÌN NHANH MỖI NGÀY",
+  "metricGridPageTwoLabel": "TRANG 2 · CHI TIẾT",
+  "metricGridPageTwoDragHint": "TRANG 2 · KÉO MỘT Ô VÀO ĐÂY",
+  "metricGridDragBackToPage": "KÉO MỘT Ô VỀ TRANG {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "THẢ VÀO ĐÂY",
+  "metricGridDragging": "ĐANG KÉO…",
+  "metricGridPresets": "CÀI ĐẶT SẴN",
+  "metricGridPresetMyLayout": "Bố cục của tôi",
+  "metricGridPresetMinimal": "Tối giản",
+  "metricGridPresetTrainingDay": "Ngày tập",
+  "metricGridPresetRecovery": "Phục hồi",
+  "metricGridAddMetric": "THÊM CHỈ SỐ",
+  "metricGridConnectBody": "Bước chân, giấc ngủ và độ sẵn sàng tự điền — không có gì được ước tính thay bạn.",
+  "metricGridConnectCta": "KẾT NỐI HEALTH",
+  "metricGridEveryMetricPlaced": "Mọi chỉ số đã có trên lưới của bạn.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Ghi trong ứng dụng",
+  "metricGridSourceComputed": "Tính toán",
+  "metricGridPlacementLine": "{size} · trang {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

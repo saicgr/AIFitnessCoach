@@ -45007,4 +45007,154 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Kertaluonteinen perustajajäsenen hinta, sama 7 päivän ilmainen kokeilu. Tämä tarjous ei palaa.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mittaria odottaa',
+      one: '1 mittari odottaa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Ruudukko täyttyy itsestään.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source täyttää nämä automaattisesti.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Yhdistä $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Nämä täyttyvät siitä, mitä kirjaat.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Kirjaa jotain';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Alkaa samana päivänä kuin ohjelmasi.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Viimeistele käyttöönotto';
+
+  @override
+  String get metricSetupPanelFooter => 'Mitään ei arvioida puolestasi.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Ei lähdettä · yhdistä Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Yhdistä Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Ei vielä Health-tietoja';
+
+  @override
+  String get metricTileNoDataYet => 'Ei vielä tietoja';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Ei vielä kirjauksia';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Ei kirjauksia';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Ei vielä ohjelmaa · viimeistele';
+
+  @override
+  String get metricTileNeedsHrv => 'Tarvitsee HRV:n';
+
+  @override
+  String get metricTileNoBaseline => 'Ei vertailutasoa';
+
+  @override
+  String get metricTileNoData => 'Ei tietoja';
+
+  @override
+  String get metricGridMyMetrics => 'OMAT MITTARIT';
+
+  @override
+  String get metricGridEditTiles => 'MUOKKAA RUUTUJA';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'MUUTOKSET TALLENTUVAT HETI';
+
+  @override
+  String get metricGridEditHint =>
+      'VEDÄ JÄRJESTÄÄKSESI · NAPAUTA RUUTUA KOKOA VARTEN · − POISTAA';
+
+  @override
+  String get metricGridDone => 'VALMIS';
+
+  @override
+  String get metricGridPageOneLabel => 'SIVU 1 · PÄIVÄN KATSAUS';
+
+  @override
+  String get metricGridPageTwoLabel => 'SIVU 2 · SYVYYS';
+
+  @override
+  String get metricGridPageTwoDragHint => 'SIVU 2 · VEDÄ RUUTU TÄHÄN';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'VEDÄ RUUTU TAKAISIN SIVULLE $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'PUDOTA TÄHÄN';
+
+  @override
+  String get metricGridDragging => 'VEDETÄÄN…';
+
+  @override
+  String get metricGridPresets => 'ESIASETUKSET';
+
+  @override
+  String get metricGridPresetMyLayout => 'Oma asettelu';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimaalinen';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Treenipäivä';
+
+  @override
+  String get metricGridPresetRecovery => 'Palautuminen';
+
+  @override
+  String get metricGridAddMetric => 'LISÄÄ MITTARI';
+
+  @override
+  String get metricGridConnectBody =>
+      'Askeleet, uni ja palautuneisuus täyttyvät itsestään — mitään ei arvioida puolestasi.';
+
+  @override
+  String get metricGridConnectCta => 'YHDISTÄ HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Kaikki mittarit ovat jo ruudukossasi.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Kirjattu sovelluksessa';
+
+  @override
+  String get metricGridSourceComputed => 'Laskettu';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · sivu $page · #$position';
+  }
 }

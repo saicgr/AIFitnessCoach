@@ -672,6 +672,46 @@ class MainShell extends ConsumerWidget {
               ],
             ),
           ),
+          // ── Z-ORDER: nav scrim FIRST, then the float cluster ────────────
+          //
+          // The nav's scrim box now reaches UP to `bottomPadding + 158`
+          // (`kMainNavFadeHeight` is derived from `kQuickLogFabClearance` — see
+          // chrome_constants.dart), which means it spans the entire float band.
+          // It therefore has to paint BENEATH the floats: a Stack paints its
+          // children in order, so if the nav still came last the scrim would
+          // veil the coach circle and the Quick Log pill themselves instead of
+          // the content behind them — the exact opposite of the fix. Hit
+          // testing is unaffected: the scrim is wrapped in `IgnorePointer` and
+          // the nav's tappable icon row sits at `bottom: bottomPadding`, well
+          // below the band.
+          // Nav bar at bottom — wrapped in Material so it participates in
+          // Flutter's elevation/z-index system. This ensures OS-level
+          // Tooltips (which use the root overlay) render UNDER the nav,
+          // and that any Stack child rendered above content can't visually
+          // cover the nav by accident. ✅
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Material(
+              elevation: 8,
+              type: MaterialType.transparency,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                offset: isNavBarVisible ? Offset.zero : const Offset(0, 1.5),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isNavBarVisible ? 1.0 : 0.0,
+                  child: _FloatingNavBarWithAI(
+                    selectedIndex: selectedIndex,
+                    isSecondaryPage: _isSecondaryPage(context),
+                    onItemTapped: (index) => _onItemTapped(ref, context, index),
+                  ),
+                ),
+              ),
+            ),
+          ),
           // ── The bottom-right FAB cluster (Placement D, 2026-08) ─────────
           //
           // ONE right-anchored Row holding the global ✦ coach circle inboard
@@ -682,11 +722,19 @@ class MainShell extends ConsumerWidget {
           // two breathing open and shut on every scroll. Laid out as one Row
           // the gap is a constant and the morph slides the pair as a unit.
           //
-          // Quick Log stays the larger, expanded target (44 pt, captioned) —
-          // it is the daily habitual action. Coach is the quiet secondary
-          // (40 pt, icon-only, never labelled). Target size matches frequency
-          // ordering. The coach circle owns its own hide rules (coach screen /
+          // EXACTLY TWO SLOTS, ONE DIAMETER. Both floats are
+          // `kFloatCircleDiameter` (44) — D4 (2026-08): three floats at three
+          // diameters read as three unrelated controls dropped on the screen,
+          // and 40 pt was under the platform touch-target minimum besides.
+          // Hierarchy is carried by fill and caption (Quick Log expands into a
+          // labelled pill; coach never labels itself), not by shrinking one
+          // circle. The coach circle owns its own hide rules (coach screen /
           // active workout) inside `CoachFloatingButton`.
+          //
+          // Nothing else may add a third `Positioned` to this band. A new
+          // floating affordance either REPLACES a slot under mutual exclusion
+          // (as the opt-in chat-head does — see `suppressedIn`) or becomes a
+          // row inside the Quick Log sheet.
           //
           // Quick Log now docks on ALL FIVE tabs. The old `selectedIndex != 2`
           // exclusion existed because index 2 was Coach and a floating button
@@ -745,34 +793,6 @@ class MainShell extends ConsumerWidget {
                     kFabClusterEdgeInset * 2,
               ),
             ),
-          // Nav bar at bottom — wrapped in Material so it participates in
-          // Flutter's elevation/z-index system. This ensures OS-level
-          // Tooltips (which use the root overlay) render UNDER the nav,
-          // and that any Stack child rendered above content can't visually
-          // cover the nav by accident. ✅
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Material(
-              elevation: 8,
-              type: MaterialType.transparency,
-              child: AnimatedSlide(
-                duration: const Duration(milliseconds: 250),
-                curve: Curves.easeInOut,
-                offset: isNavBarVisible ? Offset.zero : const Offset(0, 1.5),
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: isNavBarVisible ? 1.0 : 0.0,
-                  child: _FloatingNavBarWithAI(
-                    selectedIndex: selectedIndex,
-                    isSecondaryPage: _isSecondaryPage(context),
-                    onItemTapped: (index) => _onItemTapped(ref, context, index),
-                  ),
-                ),
-              ),
-            ),
-          ),
           // Optional draggable chat-head bubble (Settings → AI Coach
           // opt-in). Default off — most users get the ✦ coach circle in the
           // `CoachQuickLogCluster` above instead. The two are the same

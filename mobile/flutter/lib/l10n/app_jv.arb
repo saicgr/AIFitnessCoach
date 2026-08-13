@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Ayo miwiti latihan sepisananmu",
   "workoutShowcaseNextTargetRaised": "Set {set} dicatet — target sabanjure munggah dadi {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "LANGKAH {current} SAKA {total}",
-  "quizAlmostDone": "MEH RAMPUNG"
+  "quizAlmostDone": "MEH RAMPUNG",
+  "metricSetupPanelKicker": "{count, plural, other{{count} metrik ngenteni}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Grid sampeyan bakal kebak dhewe.",
+  "metricSetupPanelHealthBody": "{source} ngisi iki kanthi otomatis.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Sambungake {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Iki kaisi saka apa sing sampeyan cathet.",
+  "metricSetupPanelLogCta": "Cathet apa wae",
+  "metricSetupPanelSetupBody": "Diwiwiti nalika rencana sampeyan diwiwiti.",
+  "metricSetupPanelSetupCta": "Rampungake persiapan",
+  "metricSetupPanelFooter": "Ora ana sing dikira-kira kanggo sampeyan.",
+  "metricTileNoSourceConnectHealth": "Ora ana sumber · sambungake Health",
+  "metricTileConnectHealthShort": "Sambungake Health",
+  "metricTileNoHealthDataYet": "Durung ana data Health",
+  "metricTileNoDataYet": "Durung ana data",
+  "metricTileNothingLoggedYet": "Durung ana sing dicathet",
+  "metricTileNothingLoggedShort": "Ora ana cathetan",
+  "metricTileNoPlanYetFinishSetup": "Durung ana rencana · rampungake persiapan",
+  "metricTileNeedsHrv": "Butuh HRV",
+  "metricTileNoBaseline": "Ora ana dhasar",
+  "metricTileNoData": "Ora ana data",
+  "metricGridMyMetrics": "METRIKKU",
+  "metricGridEditTiles": "EDIT UBIN",
+  "metricGridChangesSaveInstantly": "OWAHAN LANGSUNG KASIMPEN",
+  "metricGridEditHint": "SERET KANGGO NATA · TUTUK UBIN KANGGO UKURAN · − KANGGO MBUSAK",
+  "metricGridDone": "RAMPUNG",
+  "metricGridPageOneLabel": "KACA 1 · SAWANGAN SABEN DINA",
+  "metricGridPageTwoLabel": "KACA 2 · JERO",
+  "metricGridPageTwoDragHint": "KACA 2 · SERET UBIN MRENE",
+  "metricGridDragBackToPage": "SERET UBIN BALI MENYANG KACA {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "CULNA KENE",
+  "metricGridDragging": "NYERET…",
+  "metricGridPresets": "PRASETEL",
+  "metricGridPresetMyLayout": "Tata letakku",
+  "metricGridPresetMinimal": "Minimal",
+  "metricGridPresetTrainingDay": "Dina latihan",
+  "metricGridPresetRecovery": "Pemulihan",
+  "metricGridAddMetric": "TAMBAH METRIK",
+  "metricGridConnectBody": "Langkah, turu, lan kesiapan kaisi otomatis — ora ana sing dikira-kira kanggo sampeyan.",
+  "metricGridConnectCta": "SAMBUNGAKE HEALTH",
+  "metricGridEveryMetricPlaced": "Kabeh metrik wis ana ing grid sampeyan.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Dicathet ing app",
+  "metricGridSourceComputed": "Diétung",
+  "metricGridPlacementLine": "{size} · kaca {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

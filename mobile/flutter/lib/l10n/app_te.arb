@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "మీ మొదటి వర్కౌట్ ప్రారంభిద్దాం",
   "workoutShowcaseNextTargetRaised": "సెట్ {set} నమోదైంది — తదుపరి లక్ష్యం స్వయంచాలకంగా {weight} lb కు పెరిగింది (+{delta} lb)",
   "quizStepOfTotal": "దశ {current} / {total}",
-  "quizAlmostDone": "దాదాపు పూర్తయింది"
+  "quizAlmostDone": "దాదాపు పూర్తయింది",
+  "metricSetupPanelKicker": "{count, plural, =1{1 మెట్రిక్ వేచి ఉంది} other{{count} మెట్రిక్‌లు వేచి ఉన్నాయి}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "మీ గ్రిడ్ దానంతట అదే నిండుతుంది.",
+  "metricSetupPanelHealthBody": "{source} వీటిని ఆటోమేటిక్‌గా నింపుతుంది.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} కనెక్ట్ చేయండి",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "మీరు లాగ్ చేసిన దాని నుండి ఇవి నిండుతాయి.",
+  "metricSetupPanelLogCta": "ఏదైనా లాగ్ చేయండి",
+  "metricSetupPanelSetupBody": "మీ ప్లాన్ మొదలైన రోజే ఇది మొదలవుతుంది.",
+  "metricSetupPanelSetupCta": "సెటప్ పూర్తి చేయండి",
+  "metricSetupPanelFooter": "మీ కోసం ఏదీ అంచనా వేయబడదు.",
+  "metricTileNoSourceConnectHealth": "మూలం లేదు · Health కనెక్ట్ చేయండి",
+  "metricTileConnectHealthShort": "Health కనెక్ట్ చేయండి",
+  "metricTileNoHealthDataYet": "ఇంకా Health డేటా లేదు",
+  "metricTileNoDataYet": "ఇంకా డేటా లేదు",
+  "metricTileNothingLoggedYet": "ఇంకా ఏమీ లాగ్ చేయలేదు",
+  "metricTileNothingLoggedShort": "లాగ్ లేదు",
+  "metricTileNoPlanYetFinishSetup": "ఇంకా ప్లాన్ లేదు · సెటప్ పూర్తి చేయండి",
+  "metricTileNeedsHrv": "HRV అవసరం",
+  "metricTileNoBaseline": "బేస్‌లైన్ లేదు",
+  "metricTileNoData": "డేటా లేదు",
+  "metricGridMyMetrics": "నా మెట్రిక్‌లు",
+  "metricGridEditTiles": "టైల్స్ సవరించండి",
+  "metricGridChangesSaveInstantly": "మార్పులు వెంటనే సేవ్ అవుతాయి",
+  "metricGridEditHint": "క్రమం మార్చడానికి లాగండి · పరిమాణం కోసం టైల్ నొక్కండి · తీసివేయడానికి −",
+  "metricGridDone": "పూర్తయింది",
+  "metricGridPageOneLabel": "పేజీ 1 · రోజువారీ చూపు",
+  "metricGridPageTwoLabel": "పేజీ 2 · లోతు",
+  "metricGridPageTwoDragHint": "పేజీ 2 · ఇక్కడికి టైల్ లాగండి",
+  "metricGridDragBackToPage": "టైల్‌ను పేజీ {page}కి తిరిగి లాగండి",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "ఇక్కడ వదలండి",
+  "metricGridDragging": "లాగుతోంది…",
+  "metricGridPresets": "ప్రీసెట్‌లు",
+  "metricGridPresetMyLayout": "నా లేఅవుట్",
+  "metricGridPresetMinimal": "కనీసం",
+  "metricGridPresetTrainingDay": "శిక్షణ రోజు",
+  "metricGridPresetRecovery": "రికవరీ",
+  "metricGridAddMetric": "మెట్రిక్ జోడించండి",
+  "metricGridConnectBody": "అడుగులు, నిద్ర, సంసిద్ధత ఆటోమేటిక్‌గా నిండుతాయి — మీ కోసం ఏదీ అంచనా వేయబడదు.",
+  "metricGridConnectCta": "HEALTH కనెక్ట్ చేయండి",
+  "metricGridEveryMetricPlaced": "అన్ని మెట్రిక్‌లు ఇప్పటికే మీ గ్రిడ్‌లో ఉన్నాయి.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "యాప్‌లో లాగ్ చేసినది",
+  "metricGridSourceComputed": "గణించినది",
+  "metricGridPlacementLine": "{size} · పేజీ {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

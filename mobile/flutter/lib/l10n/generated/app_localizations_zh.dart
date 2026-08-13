@@ -42678,4 +42678,148 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get paywallV7DownsellSub => '一次性创始会员价，同样享 7 天免费试用。此优惠不会再出现。';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 项指标待接入',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => '你的指标会自动填满。';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source 会自动填入这些数据。';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '连接 $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => '这些会根据你的记录填入。';
+
+  @override
+  String get metricSetupPanelLogCta => '记录一项';
+
+  @override
+  String get metricSetupPanelSetupBody => '计划开始那天它就开始。';
+
+  @override
+  String get metricSetupPanelSetupCta => '完成设置';
+
+  @override
+  String get metricSetupPanelFooter => '我们不会为你估算任何数字。';
+
+  @override
+  String get metricTileNoSourceConnectHealth => '无数据源 · 连接 Health';
+
+  @override
+  String get metricTileConnectHealthShort => '连接 Health';
+
+  @override
+  String get metricTileNoHealthDataYet => '暂无 Health 数据';
+
+  @override
+  String get metricTileNoDataYet => '暂无数据';
+
+  @override
+  String get metricTileNothingLoggedYet => '尚无记录';
+
+  @override
+  String get metricTileNothingLoggedShort => '无记录';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup => '尚无计划 · 完成设置';
+
+  @override
+  String get metricTileNeedsHrv => '需要 HRV';
+
+  @override
+  String get metricTileNoBaseline => '无基准';
+
+  @override
+  String get metricTileNoData => '无数据';
+
+  @override
+  String get metricGridMyMetrics => '我的指标';
+
+  @override
+  String get metricGridEditTiles => '编辑磁贴';
+
+  @override
+  String get metricGridChangesSaveInstantly => '更改即时保存';
+
+  @override
+  String get metricGridEditHint => '拖动可排序 · 点按磁贴改大小 · − 可移除';
+
+  @override
+  String get metricGridDone => '完成';
+
+  @override
+  String get metricGridPageOneLabel => '第 1 页 · 每日一览';
+
+  @override
+  String get metricGridPageTwoLabel => '第 2 页 · 深入';
+
+  @override
+  String get metricGridPageTwoDragHint => '第 2 页 · 把磁贴拖到这里';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return '把磁贴拖回第 $page 页';
+  }
+
+  @override
+  String get metricGridDropHere => '拖放到这里';
+
+  @override
+  String get metricGridDragging => '拖动中…';
+
+  @override
+  String get metricGridPresets => '预设';
+
+  @override
+  String get metricGridPresetMyLayout => '我的布局';
+
+  @override
+  String get metricGridPresetMinimal => '极简';
+
+  @override
+  String get metricGridPresetTrainingDay => '训练日';
+
+  @override
+  String get metricGridPresetRecovery => '恢复';
+
+  @override
+  String get metricGridAddMetric => '添加指标';
+
+  @override
+  String get metricGridConnectBody => '步数、睡眠和状态会自动填入 — 我们不会为你估算任何数字。';
+
+  @override
+  String get metricGridConnectCta => '连接 HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced => '所有指标都已在你的网格上。';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => '应用内记录';
+
+  @override
+  String get metricGridSourceComputed => '自动计算';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · 第$page页 · #$position';
+  }
 }

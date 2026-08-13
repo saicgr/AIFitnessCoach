@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Начнём вашу первую тренировку",
   "workoutShowcaseNextTargetRaised": "Подход {set} записан — следующая цель повышена до {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "ШАГ {current} ИЗ {total}",
-  "quizAlmostDone": "ПОЧТИ ГОТОВО"
+  "quizAlmostDone": "ПОЧТИ ГОТОВО",
+  "metricSetupPanelKicker": "{count, plural, =1{1 показатель ждёт} other{Ждут показателей: {count}}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Ваша сетка заполнится сама.",
+  "metricSetupPanelHealthBody": "{source} заполнит их автоматически.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Подключить {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Заполнятся из того, что вы записываете.",
+  "metricSetupPanelLogCta": "Записать что-нибудь",
+  "metricSetupPanelSetupBody": "Начнётся в день старта вашего плана.",
+  "metricSetupPanelSetupCta": "Завершить настройку",
+  "metricSetupPanelFooter": "Мы ничего не додумываем за вас.",
+  "metricTileNoSourceConnectHealth": "Нет источника · подключите Health",
+  "metricTileConnectHealthShort": "Подключить Health",
+  "metricTileNoHealthDataYet": "Пока нет данных Health",
+  "metricTileNoDataYet": "Пока нет данных",
+  "metricTileNothingLoggedYet": "Пока ничего не записано",
+  "metricTileNothingLoggedShort": "Нет записей",
+  "metricTileNoPlanYetFinishSetup": "Плана ещё нет · завершите настройку",
+  "metricTileNeedsHrv": "Нужен HRV",
+  "metricTileNoBaseline": "Нет базы",
+  "metricTileNoData": "Нет данных",
+  "metricGridMyMetrics": "МОИ ПОКАЗАТЕЛИ",
+  "metricGridEditTiles": "ИЗМЕНИТЬ ПЛИТКИ",
+  "metricGridChangesSaveInstantly": "ИЗМЕНЕНИЯ СОХРАНЯЮТСЯ СРАЗУ",
+  "metricGridEditHint": "ПЕРЕТАЩИТЕ, ЧТОБЫ ИЗМЕНИТЬ ПОРЯДОК · НАЖМИТЕ ДЛЯ РАЗМЕРА · − УБИРАЕТ",
+  "metricGridDone": "ГОТОВО",
+  "metricGridPageOneLabel": "СТРАНИЦА 1 · ВЗГЛЯД НА ДЕНЬ",
+  "metricGridPageTwoLabel": "СТРАНИЦА 2 · ПОДРОБНО",
+  "metricGridPageTwoDragHint": "СТРАНИЦА 2 · ПЕРЕТАЩИТЕ ПЛИТКУ СЮДА",
+  "metricGridDragBackToPage": "ПЕРЕТАЩИТЕ ПЛИТКУ НА СТРАНИЦУ {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "ОТПУСТИТЕ ЗДЕСЬ",
+  "metricGridDragging": "ПЕРЕТАСКИВАНИЕ…",
+  "metricGridPresets": "ПРЕСЕТЫ",
+  "metricGridPresetMyLayout": "Мой макет",
+  "metricGridPresetMinimal": "Минимум",
+  "metricGridPresetTrainingDay": "День тренировки",
+  "metricGridPresetRecovery": "Восстановление",
+  "metricGridAddMetric": "ДОБАВИТЬ ПОКАЗАТЕЛЬ",
+  "metricGridConnectBody": "Шаги, сон и готовность заполнятся сами — мы ничего не додумываем за вас.",
+  "metricGridConnectCta": "ПОДКЛЮЧИТЬ HEALTH",
+  "metricGridEveryMetricPlaced": "Все показатели уже есть на вашей сетке.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Записано в приложении",
+  "metricGridSourceComputed": "Вычисляется",
+  "metricGridPlacementLine": "{size} · стр. {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

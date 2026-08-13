@@ -45637,4 +45637,158 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'ஒரே முறை நிறுவன-உறுப்பினர் விலை, அதே 7-நாள் இலவச சோதனை. இந்த சலுகை திரும்ப வராது.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count அளவீடுகள் காத்திருக்கின்றன',
+      one: '1 அளவீடு காத்திருக்கிறது',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'உங்கள் கட்டம் தானாகவே நிரம்பும்.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source இவற்றைத் தானாகவே நிரப்பும்.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source இணைக்கவும்';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'நீங்கள் பதிவு செய்வதிலிருந்து இவை நிரம்பும்.';
+
+  @override
+  String get metricSetupPanelLogCta => 'ஏதாவது பதிவு செய்யவும்';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'உங்கள் திட்டம் தொடங்கும் நாளில் தொடங்கும்.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'அமைப்பை முடிக்கவும்';
+
+  @override
+  String get metricSetupPanelFooter =>
+      'உங்களுக்காக எதுவும் மதிப்பிடப்படுவதில்லை.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'மூலம் இல்லை · Health இணைக்கவும்';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health இணைக்கவும்';
+
+  @override
+  String get metricTileNoHealthDataYet => 'இன்னும் Health தரவு இல்லை';
+
+  @override
+  String get metricTileNoDataYet => 'இன்னும் தரவு இல்லை';
+
+  @override
+  String get metricTileNothingLoggedYet => 'இன்னும் எதுவும் பதிவு செய்யவில்லை';
+
+  @override
+  String get metricTileNothingLoggedShort => 'பதிவு இல்லை';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'இன்னும் திட்டம் இல்லை · அமைப்பை முடிக்கவும்';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV தேவை';
+
+  @override
+  String get metricTileNoBaseline => 'அடிப்படை இல்லை';
+
+  @override
+  String get metricTileNoData => 'தரவு இல்லை';
+
+  @override
+  String get metricGridMyMetrics => 'என் அளவீடுகள்';
+
+  @override
+  String get metricGridEditTiles => 'டைல்களைத் திருத்து';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'மாற்றங்கள் உடனே சேமிக்கப்படும்';
+
+  @override
+  String get metricGridEditHint =>
+      'வரிசை மாற்ற இழுக்கவும் · அளவுக்கு டைலைத் தட்டவும் · நீக்க −';
+
+  @override
+  String get metricGridDone => 'முடிந்தது';
+
+  @override
+  String get metricGridPageOneLabel => 'பக்கம் 1 · தினசரி பார்வை';
+
+  @override
+  String get metricGridPageTwoLabel => 'பக்கம் 2 · ஆழம்';
+
+  @override
+  String get metricGridPageTwoDragHint =>
+      'பக்கம் 2 · இங்கே ஒரு டைலை இழுக்கவும்';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'ஒரு டைலை பக்கம் $page-க்கு இழுக்கவும்';
+  }
+
+  @override
+  String get metricGridDropHere => 'இங்கே விடவும்';
+
+  @override
+  String get metricGridDragging => 'இழுக்கப்படுகிறது…';
+
+  @override
+  String get metricGridPresets => 'முன்னமைவுகள்';
+
+  @override
+  String get metricGridPresetMyLayout => 'என் தளவமைப்பு';
+
+  @override
+  String get metricGridPresetMinimal => 'குறைந்தபட்சம்';
+
+  @override
+  String get metricGridPresetTrainingDay => 'பயிற்சி நாள்';
+
+  @override
+  String get metricGridPresetRecovery => 'மீட்பு';
+
+  @override
+  String get metricGridAddMetric => 'அளவீட்டைச் சேர்';
+
+  @override
+  String get metricGridConnectBody =>
+      'படிகள், தூக்கம், தயார்நிலை தானாகவே நிரம்பும் — உங்களுக்காக எதுவும் மதிப்பிடப்படுவதில்லை.';
+
+  @override
+  String get metricGridConnectCta => 'HEALTH இணைக்கவும்';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'எல்லா அளவீடுகளும் ஏற்கனவே உங்கள் கட்டத்தில் உள்ளன.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'ஆப்பில் பதிவு';
+
+  @override
+  String get metricGridSourceComputed => 'கணக்கிடப்பட்டது';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · பக்கம் $page · #$position';
+  }
 }

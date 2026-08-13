@@ -9,10 +9,19 @@
 ///
 /// Two pages, and only two. **Page 1 is the daily glance; page 2 is opt-in
 /// depth.** Nothing is ever auto-assigned to page 2 — a tile is there because
-/// someone dragged it there — so page 2 cannot rot into a dumping ground. The
-/// two page dots are drawn at rest even while page 2 is empty (the second one
-/// dim): the dots are how anyone learns the second page exists, and a grid that
-/// only reveals it after you have already used it teaches nobody.
+/// someone dragged it there — so page 2 cannot rot into a dumping ground. It
+/// follows that a default account has no page 2 and no [PageView] in its tree,
+/// which is why **the dots render only inside the pager branch**: a dot is a
+/// promise that a swipe exists, and drawing one over a plain Column promised a
+/// gesture the widget tree could not perform. Page 2 is taught in edit mode,
+/// by the drop strip that actually creates it.
+///
+/// **When every tile is dark the section stops repeating itself.** Emptiness
+/// used to be decided per tile in isolation, so a fresh account rendered the
+/// same "connect Health" instruction five times. [metricGridDarknessProvider]
+/// aggregates it, and [MetricSetupPanel] absorbs the tiles that share one
+/// action into one panel with one button — while tiles that carry real data
+/// (water, weight: logged in-app, alive without a wearable) stay on the grid.
 ///
 /// Edit mode ships in build one, not as a fast-follow: drag-to-reorder with a
 /// live drop placeholder, per-tile remove, an S/M/L control on the focused
@@ -32,8 +41,10 @@ import '../../../../data/providers/metric_layout_provider.dart'
     show MetricSize;
 import '../../../../data/providers/metric_tile_data_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/health_connect_sheet.dart';
+import '../quick_log_sheet.dart' show showQuickLogSheet;
 import 'metric_tile_card.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
 
@@ -51,9 +62,46 @@ const double kMetricTileGap = 10;
 /// the right edge: ≈22pt on a 390pt phone, the mockup's measurement.
 const double kMetricPageViewportFraction = 0.94;
 
-/// The page-dots row — the affordance that says a second page exists at all,
-/// which is why it is drawn even while page 2 is empty.
+/// The page-dots row. Rendered **only alongside a mounted [PageView]** — one
+/// dot per reachable page, never a dot for a page nothing can swipe to.
 const Key kMetricTilePageDotsKey = ValueKey('metricTilePageDots');
+
+/// Re-packs the tiles that survive a collapsed page into full rows.
+///
+/// Rows of at most three, sized by how many are in the row — 1 → L, 2 → M,
+/// 3 → S — so two survivors read as a deliberate pair instead of two thirds of
+/// a row with a hole where the absorbed tiles used to be. Reuses the three
+/// existing sizes exactly: no new geometry, and [packMetricTileRows] lays the
+/// result out unchanged.
+///
+/// Render-only. Nothing here is persisted; the user's stored sizes come back
+/// untouched on the first build that does not collapse.
+List<HomeMetricTile> repackMetricSurvivors(List<HomeMetricTile> survivors) {
+  final out = <HomeMetricTile>[];
+  for (var i = 0; i < survivors.length; i += 3) {
+    final end = i + 3 > survivors.length ? survivors.length : i + 3;
+    final size = switch (end - i) {
+      1 => MetricSize.large,
+      2 => MetricSize.wide,
+      _ => MetricSize.small,
+    };
+    for (var j = i; j < end; j++) {
+      out.add(survivors[j].copyWith(size: size));
+    }
+  }
+  return out;
+}
+
+/// A preset's chip label in the reader's language. The preset table itself is
+/// a code constant (it carries sizes and pages, not copy), so the label is
+/// mapped by id here rather than duplicating the table into the bundles.
+String metricTilePresetLabel(AppLocalizations l10n, MetricTilePreset p) =>
+    switch (p.id) {
+      'minimal' => l10n.metricGridPresetMinimal,
+      'training_day' => l10n.metricGridPresetTrainingDay,
+      'recovery' => l10n.metricGridPresetRecovery,
+      _ => p.label,
+    };
 
 /// Packs [tiles] into rows of at most [kMetricGridColumns] columns, preserving
 /// order. Pure — the grid, the page-height calculation and the tests all use
@@ -101,10 +149,6 @@ double metricTileWidth(MetricSize size, double available) {
   return col * span + kMetricTileGap * (span - 1);
 }
 
-/// Tiles on one page, in order.
-List<HomeMetricTile> tilesOnPage(List<HomeMetricTile> tiles, int page) =>
-    [for (final t in tiles) if (t.page == page) t];
-
 // ══════════════════════════════════════════════════════ the Home section
 
 class HomeMetricTileGrid extends ConsumerStatefulWidget {
@@ -129,6 +173,7 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final tiles = ref.watch(homeMetricTilesProvider);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
 
@@ -138,21 +183,44 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
 
     final pageOne = tilesOnPage(tiles, 1);
     final pageTwo = tilesOnPage(tiles, 2);
-    // The one recovery path for a dark grid, and it self-hides for anyone
-    // whose grid holds no sensor tile at all.
-    final showConnect =
-        !_editing && ref.watch(metricTilesNeedHealthConnectProvider);
+
+    // ── The first-run branch. This is the only place both _StaticGrid and
+    // the connect card are reached from, so nothing can render one of them
+    // around it.
+    //
+    // Editing never collapses: the editor exists to move and remove the real
+    // tiles, and it cannot do that to tiles a panel has swallowed.
+    final dark1 = ref.watch(metricGridDarknessProvider(1));
+    final dark2 =
+        pageTwo.isEmpty ? null : ref.watch(metricGridDarknessProvider(2));
+    final collapsed1 = !_editing && dark1.collapse;
+    final collapsed2 = !_editing && (dark2?.collapse ?? false);
+
+    // The connect affordance renders EXACTLY ONCE per grid, ever — but the
+    // suppression keys off whether a panel is actually OFFERING it, not merely
+    // on something having collapsed. A page that collapsed around "nothing
+    // logged yet" says nothing about Health, and dropping the card there would
+    // trade five copies of one instruction for zero.
+    final panelOffersConnect = (collapsed1 &&
+            dark1.darkByAction.containsKey(MetricEmptyAction.connectHealth)) ||
+        (collapsed2 &&
+            (dark2?.darkByAction
+                    .containsKey(MetricEmptyAction.connectHealth) ??
+                false));
+    final showConnect = !_editing &&
+        !panelOffersConnect &&
+        ref.watch(metricTilesNeedHealthConnectProvider);
 
     return Padding(
       padding: kHomeHPad,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(c),
+          _header(c, l10n),
           if (_editing) ...[
             const SizedBox(height: 2),
             Text(
-              'DRAG TO REORDER · TAP A TILE FOR SIZE · − TO REMOVE',
+              l10n.metricGridEditHint,
               style: ZType.lbl(
                 10,
                 color: c.textMuted,
@@ -165,12 +233,12 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
           ] else ...[
             const SizedBox(height: 10),
             if (pageTwo.isEmpty)
-              _StaticGrid(tiles: pageOne, onOpen: _open, onEdit: _startEditing)
-            else
+              _pageBody(pageOne, dark1, collapsed1)
+            else ...[
               SizedBox(
                 height: [
-                  metricGridHeight(pageOne, textScale: textScale),
-                  metricGridHeight(pageTwo, textScale: textScale),
+                  _pageHeight(pageOne, dark1, collapsed1, textScale),
+                  _pageHeight(pageTwo, dark2!, collapsed2, textScale),
                 ].reduce((a, b) => a > b ? a : b),
                 child: PageView(
                   controller: _pager,
@@ -181,20 +249,25 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
                   padEnds: false,
                   onPageChanged: (i) => setState(() => _page = i),
                   children: [
-                    _StaticGrid(
-                        tiles: pageOne, onOpen: _open, onEdit: _startEditing),
-                    _StaticGrid(
-                        tiles: pageTwo, onOpen: _open, onEdit: _startEditing),
+                    // Each page keeps its own top alignment: the pager box is
+                    // the taller of the two, and a short page must not stretch
+                    // to fill it.
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: _pageBody(pageOne, dark1, collapsed1),
+                    ),
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: _pageBody(pageTwo, dark2, collapsed2),
+                    ),
                   ],
                 ),
               ),
-            const SizedBox(height: 11),
-            // Always two dots, even with page 2 empty: the dim second dot is
-            // the only thing on a resting Home that says depth is one swipe
-            // away.
-            _PageDots(count: 2, active: _page, colors: c),
-            // The mockup's dot band is 11 above / 15 below, and the connect
-            // card sits directly under it.
+              // Dots live INSIDE this branch, with the pager they describe.
+              const SizedBox(height: 11),
+              _PageDots(count: 2, active: _page, colors: c),
+            ],
+            // The mockup's band is 15 above the connect card.
             if (showConnect) ...[
               const SizedBox(height: 15),
               _ConnectHealthCard(colors: c),
@@ -205,7 +278,53 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
     );
   }
 
-  Widget _header(ThemeColors c) => Row(
+  /// One page's content: the user's real layout, or — when that page has gone
+  /// dark enough to stop meaning anything — the panel followed by whatever
+  /// still carries data.
+  Widget _pageBody(
+    List<HomeMetricTile> tiles,
+    MetricGridDarkness dark,
+    bool collapsed,
+  ) {
+    if (!collapsed) {
+      return _StaticGrid(tiles: tiles, onOpen: _open, onEdit: _startEditing);
+    }
+    final survivors = repackMetricSurvivors(dark.survivors);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Panel first, then the survivors. A deliberate deviation from the
+        // user's order, scoped to this state only — stored order and sizes are
+        // untouched and return on the first build that does not collapse.
+        MetricSetupPanel(darkness: dark, onOpen: _open),
+        if (survivors.isNotEmpty) ...[
+          const SizedBox(height: kMetricTileGap),
+          _StaticGrid(tiles: survivors, onOpen: _open, onEdit: _startEditing),
+        ],
+      ],
+    );
+  }
+
+  /// [_pageBody]'s height, known before layout — the property that lets the
+  /// pager be a fixed-height box with no measure pass. [metricSetupPanelHeight]
+  /// is a ceiling and every text inside the panel is line-capped to match, so
+  /// the reservation can only ever be too generous, never too small.
+  double _pageHeight(
+    List<HomeMetricTile> tiles,
+    MetricGridDarkness dark,
+    bool collapsed,
+    double textScale,
+  ) {
+    if (!collapsed) return metricGridHeight(tiles, textScale: textScale);
+    final survivors = repackMetricSurvivors(dark.survivors);
+    final grid = survivors.isEmpty
+        ? 0.0
+        : metricGridHeight(survivors, textScale: textScale) + kMetricTileGap;
+    return metricSetupPanelHeight(dark, textScale: textScale) + grid;
+  }
+
+  Widget _header(ThemeColors c, AppLocalizations l10n) => Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Editing swaps the section kicker for the mockup's masthead pair:
@@ -218,12 +337,12 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'EDIT TILES',
+                    l10n.metricGridEditTiles,
                     style: ZType.disp(22, color: c.textPrimary),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'CHANGES SAVE INSTANTLY',
+                    l10n.metricGridChangesSaveInstantly,
                     style: ZType.lbl(
                       10,
                       color: c.textMuted,
@@ -236,7 +355,7 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
             )
           else ...[
             Text(
-              'MY METRICS',
+              l10n.metricGridMyMetrics,
               style: ZType.lbl(10.5, color: c.textMuted, letterSpacing: 2),
             ),
             const Spacer(),
@@ -255,7 +374,7 @@ class _HomeMetricTileGridState extends ConsumerState<HomeMetricTileGrid> {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  'DONE',
+                  l10n.metricGridDone,
                   style: ZType.lbl(12, color: c.accentContrast, letterSpacing: 1.8),
                 ),
               ),
@@ -403,6 +522,353 @@ class _PageDots extends StatelessWidget {
       );
 }
 
+// ═══════════════════════════════════════════════ the first-run panel
+
+// Panel geometry. These are named because [metricSetupPanelHeight] must be the
+// exact arithmetic of what [MetricSetupPanel.build] lays out — the pager needs
+// the height before layout, and a guessed number would either clip the panel or
+// leave a hole under it. Every value is a CEILING for its slot, and every text
+// in the panel is line-capped to match, so the reservation cannot come up short.
+const double _kPanelPad = 14;
+/// The `Border.all` stroke, which a `BoxDecoration` adds INSIDE the box on
+/// every edge — 2pt of height the padding arithmetic would otherwise miss.
+const double _kPanelBorder = 1;
+const double _kPanelKickerH = 14;
+const double _kPanelKickerGap = 7;
+const double _kPanelTitleH = 24;
+const double _kPanelTitleGap = 12;
+const double _kPanelChipsH = 22;
+const double _kPanelChipsGap = 7;
+const double _kPanelBodyLineH = 16;
+const int _kPanelBodyLines = 2;
+const double _kPanelCtaGap = 9;
+const double _kPanelPrimaryCtaH = 35;
+const double _kPanelLinkH = 16;
+const double _kPanelSepGap = 12;
+const double _kPanelHairline = 1;
+const double _kPanelFooterGap = 12;
+const double _kPanelFooterTopGap = 11;
+const double _kPanelFooterH = 14;
+
+/// Height [MetricSetupPanel] occupies for [dark], gaps and padding included.
+double metricSetupPanelHeight(MetricGridDarkness dark, {double textScale = 1}) {
+  final groups = dark.darkByAction.keys.toList();
+  if (groups.isEmpty) return 0;
+  final primary = dark.primaryAction;
+  var h = _kPanelKickerH + _kPanelKickerGap + _kPanelTitleH + _kPanelTitleGap;
+  for (var i = 0; i < groups.length; i++) {
+    if (i > 0) h += _kPanelSepGap + _kPanelHairline + _kPanelSepGap;
+    h += _kPanelChipsH +
+        _kPanelChipsGap +
+        _kPanelBodyLineH * _kPanelBodyLines +
+        _kPanelCtaGap +
+        (groups[i] == primary ? _kPanelPrimaryCtaH : _kPanelLinkH);
+  }
+  h += _kPanelFooterGap + _kPanelHairline + _kPanelFooterTopGap + _kPanelFooterH;
+  return h * textScale.clamp(1.0, 2.0) +
+      _kPanelPad * 2 +
+      _kPanelBorder * 2;
+}
+
+/// The consolidated first-run state: one panel that says how many metrics are
+/// waiting, which ones, and the single thing that turns each group on.
+///
+/// It replaces the tiles it absorbs — and ONLY those. A tile with real data is
+/// never swept in here, because "connect Health" is not what a manually logged
+/// water total is waiting for, and a tile whose reason has no CTA
+/// ([MetricEmptyAction.none]) is not either: it already names the one signal it
+/// is missing, which is more than this panel could say for it.
+class MetricSetupPanel extends ConsumerWidget {
+  final MetricGridDarkness darkness;
+  final ValueChanged<String> onOpen;
+
+  const MetricSetupPanel({
+    super.key,
+    required this.darkness,
+    required this.onOpen,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
+    final groups = darkness.darkByAction.entries.toList();
+    if (groups.isEmpty) return const SizedBox.shrink();
+    final primary = darkness.primaryAction;
+    final source = _healthSourceName(context);
+
+    return Container(
+      padding: const EdgeInsets.all(_kPanelPad),
+      decoration: BoxDecoration(
+        color: c.elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: _kPanelKickerH,
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome, size: 12, color: c.accent),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    // The real count, not a rounded reassurance.
+                    l10n.metricSetupPanelKicker(darkness.actionableDarkCount),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        ZType.lbl(10.5, color: c.accent, letterSpacing: 2),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: _kPanelKickerGap),
+          SizedBox(
+            height: _kPanelTitleH,
+            child: Text(
+              l10n.metricSetupPanelTitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.3,
+                color: c.textPrimary,
+              ),
+            ),
+          ),
+          const SizedBox(height: _kPanelTitleGap),
+          for (var i = 0; i < groups.length; i++) ...[
+            if (i > 0) ...[
+              const SizedBox(height: _kPanelSepGap),
+              Container(height: _kPanelHairline, color: c.hairline),
+              const SizedBox(height: _kPanelSepGap),
+            ],
+            _group(
+              context: context,
+              ref: ref,
+              colors: c,
+              action: groups[i].key,
+              tiles: groups[i].value,
+              isPrimary: groups[i].key == primary,
+              source: source,
+              l10n: l10n,
+            ),
+          ],
+          const SizedBox(height: _kPanelFooterGap),
+          Container(height: _kPanelHairline, color: c.hairline),
+          const SizedBox(height: _kPanelFooterTopGap),
+          SizedBox(
+            height: _kPanelFooterH,
+            child: Text(
+              // The promise the whole empty-state grammar rests on.
+              l10n.metricSetupPanelFooter,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 10.5, color: c.textMuted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _group({
+    required BuildContext context,
+    required WidgetRef ref,
+    required ThemeColors colors,
+    required MetricEmptyAction action,
+    required List<MetricTileData> tiles,
+    required bool isPrimary,
+    required String source,
+    required AppLocalizations l10n,
+  }) {
+    final body = switch (action) {
+      MetricEmptyAction.connectHealth =>
+        l10n.metricSetupPanelHealthBody(source),
+      MetricEmptyAction.logInApp => l10n.metricSetupPanelLogBody,
+      MetricEmptyAction.finishSetup => l10n.metricSetupPanelSetupBody,
+      MetricEmptyAction.none => '',
+    };
+    final cta = switch (action) {
+      MetricEmptyAction.connectHealth =>
+        l10n.metricSetupPanelHealthCta(source),
+      MetricEmptyAction.logInApp => l10n.metricSetupPanelLogCta,
+      MetricEmptyAction.finishSetup => l10n.metricSetupPanelSetupCta,
+      MetricEmptyAction.none => '',
+    };
+
+    void act() {
+      HapticService.selection();
+      switch (action) {
+        case MetricEmptyAction.connectHealth:
+          showHealthConnectSheet(context, ref);
+        case MetricEmptyAction.logInApp:
+          showQuickLogSheet(context, ref);
+        case MetricEmptyAction.finishSetup:
+          // The first absorbed tile's own destination — the screen that
+          // actually unblocks it, not a generic settings hub.
+          onOpen(tiles.first.route);
+        case MetricEmptyAction.none:
+          break;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: _kPanelChipsH,
+          child: Row(
+            children: [
+              for (var i = 0; i < tiles.length; i++) ...[
+                if (i > 0) const SizedBox(width: 6),
+                // Loose flex, never a scroll view: a horizontal scrollable
+                // inside the pager would eat the page swipe. Four chips share
+                // the width and ellipsise instead.
+                Flexible(
+                  child: _chip(colors, tiles[i]),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: _kPanelChipsGap),
+        SizedBox(
+          height: _kPanelBodyLineH * _kPanelBodyLines,
+          child: Text(
+            body,
+            maxLines: _kPanelBodyLines,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.35,
+              color: colors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(height: _kPanelCtaGap),
+        Semantics(
+          button: true,
+          label: cta,
+          child: GestureDetector(
+            onTap: act,
+            behavior: HitTestBehavior.opaque,
+            child: isPrimary
+                ? _primaryCta(colors, cta)
+                : _linkCta(colors, cta),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// One absorbed tile, named. Inert on purpose — it is a receipt for a tile
+  /// that is no longer on screen, not a second tap target competing with the
+  /// one button the group is offering.
+  Widget _chip(ThemeColors c, MetricTileData data) => CustomPaint(
+        painter: MetricTileDashedBorder(color: c.cardBorder, radius: 7),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(metricTileGlyph(data.id), size: 10, color: c.textMuted),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  data.label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(
+                    9.5,
+                    color: c.textSecondary,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _primaryCta(ThemeColors c, String label) => Container(
+        height: _kPanelPrimaryCtaH,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: c.accent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.lbl(
+                  12.5,
+                  color: c.accentContrast,
+                  letterSpacing: 1.8,
+                ),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Icon(Icons.arrow_forward_rounded, size: 13, color: c.accentContrast),
+          ],
+        ),
+      );
+
+  Widget _linkCta(ThemeColors c, String label) => SizedBox(
+        height: _kPanelLinkH,
+        child: Row(
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.lbl(11, color: c.accent, letterSpacing: 1.5),
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 11, color: c.accent),
+            const Spacer(),
+          ],
+        ),
+      );
+}
+
+/// The 10pt glyph a metric wears on its panel chip. A UI concern, so it lives
+/// with the UI: the tile catalogue is a data table and does not carry icons.
+IconData metricTileGlyph(String tileId) => switch (tileId) {
+      kTodayScoreTileId => Icons.bolt_rounded,
+      'move' => Icons.directions_walk_rounded,
+      'sleep' || 'sleep_latency' || 'wake_consistency' || 'bedtime_window' =>
+        Icons.bedtime_rounded,
+      'recovery' => Icons.battery_charging_full_rounded,
+      'hrv' || 'heart_rate' => Icons.favorite_rounded,
+      'stress' => Icons.psychology_rounded,
+      'hydration' => Icons.water_drop_rounded,
+      'weight' || 'body_fat' => Icons.monitor_weight_rounded,
+      'nourish' || 'protein' => Icons.restaurant_rounded,
+      'train' => Icons.fitness_center_rounded,
+      'active_energy' => Icons.local_fire_department_rounded,
+      'zone_minutes' || 'vo2max' || 'cardio_distance' =>
+        Icons.monitor_heart_rounded,
+      'mindful_minutes' => Icons.self_improvement_rounded,
+      'step_streak' => Icons.local_fire_department_rounded,
+      'cycle' => Icons.calendar_month_rounded,
+      _ => Icons.insights_rounded,
+    };
+
 // ══════════════════════════════════════════════════════════ edit mode
 
 /// Drag-to-reorder, resize, remove and add — the whole customiser, in one
@@ -422,6 +888,7 @@ class _MetricTileGridEditorState extends ConsumerState<MetricTileGridEditor> {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final tiles = ref.watch(homeMetricTilesProvider);
     final pageOne = tilesOnPage(tiles, 1);
     final pageTwo = tilesOnPage(tiles, 2);
@@ -432,7 +899,7 @@ class _MetricTileGridEditorState extends ConsumerState<MetricTileGridEditor> {
         // Page 1 needs no chip while it is the only populated page — a label
         // over the only grid on screen is chrome explaining itself.
         if (pageTwo.isNotEmpty) ...[
-          _pageLabel(c, 'PAGE 1 · DAILY GLANCE'),
+          _pageLabel(c, l10n.metricGridPageOneLabel),
           const SizedBox(height: 8),
         ],
         _EditableGrid(
@@ -451,7 +918,7 @@ class _MetricTileGridEditorState extends ConsumerState<MetricTileGridEditor> {
         if (pageTwo.isEmpty)
           _PageTwoStrip(colors: c)
         else ...[
-          _pageLabel(c, 'PAGE 2 · DEPTH'),
+          _pageLabel(c, l10n.metricGridPageTwoLabel),
           const SizedBox(height: 8),
           _EditableGrid(
             tiles: pageTwo,
@@ -530,7 +997,7 @@ class _EditableGrid extends ConsumerWidget {
           return _EmptyPageZone(
             colors: colors,
             highlight: highlight,
-            label: 'DRAG A TILE BACK TO PAGE $page',
+            label: AppLocalizations.of(context).metricGridDragBackToPage(page),
           );
         }
         return LayoutBuilder(
@@ -607,8 +1074,11 @@ class _EditableTile extends ConsumerWidget {
       size: tile.size,
       width: width,
       chartRecedes: true,
-      placementLine: '${metricSizeLetter(tile.size)} · '
-          'page ${tile.page} · #${position + 1}',
+      placementLine: AppLocalizations.of(context).metricGridPlacementLine(
+        metricSizeLetter(tile.size),
+        tile.page,
+        position + 1,
+      ),
     );
 
     final decorated = Stack(
@@ -696,7 +1166,7 @@ class _EditableTile extends ConsumerWidget {
               size: tile.size,
               width: width,
               chartRecedes: true,
-              placementLine: 'DRAGGING…',
+              placementLine: AppLocalizations.of(context).metricGridDragging,
             ),
           ),
         ),
@@ -754,7 +1224,7 @@ class _DropPlaceholder extends StatelessWidget {
             color: colors.accent.withValues(alpha: 0.14),
           ),
           child: Text(
-            'DROP HERE',
+            AppLocalizations.of(context).metricGridDropHere,
             style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.8),
           ),
         ),
@@ -792,7 +1262,7 @@ class _PageTwoStrip extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               alignment: Alignment.centerLeft,
               child: Text(
-                'PAGE 2 · DRAG A TILE HERE TO MOVE IT ACROSS',
+                AppLocalizations.of(context).metricGridPageTwoDragHint,
                 maxLines: 2,
                 style: ZType.lbl(
                   9.5,
@@ -818,6 +1288,7 @@ class _PresetsRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final active = ref.watch(activeMetricTilePresetProvider);
     final notifier = ref.read(homeMetricTilesProvider.notifier);
     // "My layout" is the dirty state. It is offered as a destination only when
@@ -831,12 +1302,12 @@ class _PresetsRow extends ConsumerWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          'PRESETS',
+          l10n.metricGridPresets,
           style: ZType.lbl(9.5, color: colors.textMuted, letterSpacing: 2),
         ),
         if (showMine)
           _PresetChip(
-            label: 'My layout',
+            label: l10n.metricGridPresetMyLayout,
             active: active == null,
             colors: colors,
             onTap: active == null
@@ -848,7 +1319,7 @@ class _PresetsRow extends ConsumerWidget {
           ),
         for (final preset in kMetricTilePresets)
           _PresetChip(
-            label: preset.label,
+            label: metricTilePresetLabel(l10n, preset),
             active: active?.id == preset.id,
             colors: colors,
             onTap: () {
@@ -931,7 +1402,8 @@ class _ConnectHealthCard extends ConsumerWidget {
               // has been handed an impossible instruction. Mirrors
               // `_platformSourceName` in combined_health_screen.dart and the
               // "Apple Health / Health Connect" phrasing in today_score_card.
-              'Connect ${_healthSourceName(context)}',
+              AppLocalizations.of(context)
+                  .metricSetupPanelHealthCta(_healthSourceName(context)),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13.5,
@@ -941,8 +1413,7 @@ class _ConnectHealthCard extends ConsumerWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              'Steps, sleep and readiness fill in automatically — nothing is '
-              'estimated for you.',
+              AppLocalizations.of(context).metricGridConnectBody,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11.5,
@@ -958,7 +1429,7 @@ class _ConnectHealthCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
-                'CONNECT HEALTH',
+                AppLocalizations.of(context).metricGridConnectCta,
                 style: ZType.lbl(12, color: c.accentContrast, letterSpacing: 1.8),
               ),
             ),
@@ -1083,7 +1554,7 @@ class _AddMetricSlot extends StatelessWidget {
                 Icon(Icons.add, size: 15, color: colors.textMuted),
                 const SizedBox(width: 8),
                 Text(
-                  'ADD METRIC',
+                  AppLocalizations.of(context).metricGridAddMetric,
                   style:
                       ZType.lbl(10.5, color: colors.textMuted, letterSpacing: 2),
                 ),
@@ -1103,6 +1574,7 @@ class AddMetricTileSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
+    final l10n = AppLocalizations.of(context);
     final available = ref.watch(unplacedMetricTilesProvider);
     final notifier = ref.read(homeMetricTilesProvider.notifier);
 
@@ -1113,7 +1585,7 @@ class AddMetricTileSheet extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
           child: Text(
-            'ADD METRIC',
+            l10n.metricGridAddMetric,
             style: ZType.lbl(11, color: c.textMuted, letterSpacing: 2),
           ),
         ),
@@ -1121,7 +1593,7 @@ class AddMetricTileSheet extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
             child: Text(
-              'Every metric is already on your grid.',
+              l10n.metricGridEveryMetricPlaced,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: c.textSecondary),
             ),
@@ -1170,9 +1642,10 @@ class AddMetricTileSheet extends ConsumerWidget {
                         ),
                         Text(
                           switch (spec.source) {
-                            MetricTileSource.health => 'Health',
-                            MetricTileSource.inApp => 'Logged in-app',
-                            MetricTileSource.computed => 'Computed',
+                            MetricTileSource.health => l10n.metricGridSourceHealth,
+                            MetricTileSource.inApp => l10n.metricGridSourceInApp,
+                            MetricTileSource.computed =>
+                              l10n.metricGridSourceComputed,
                           },
                           style: TextStyle(
                             fontSize: 11.5,

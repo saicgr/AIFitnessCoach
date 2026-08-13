@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Nu startar vi ditt första träningspass",
   "workoutShowcaseNextTargetRaised": "Set {set} loggat — nästa mål automatiskt höjt till {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "STEG {current} AV {total}",
-  "quizAlmostDone": "NÄSTAN KLAR"
+  "quizAlmostDone": "NÄSTAN KLAR",
+  "metricSetupPanelKicker": "{count, plural, =1{1 mätvärde väntar} other{{count} mätvärden väntar}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Ditt rutnät fylls i av sig självt.",
+  "metricSetupPanelHealthBody": "{source} fyller i dem automatiskt.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Anslut {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "De fylls i från det du loggar.",
+  "metricSetupPanelLogCta": "Logga något",
+  "metricSetupPanelSetupBody": "Startar samma dag som din plan.",
+  "metricSetupPanelSetupCta": "Slutför konfigurationen",
+  "metricSetupPanelFooter": "Inget uppskattas åt dig.",
+  "metricTileNoSourceConnectHealth": "Ingen källa · anslut Health",
+  "metricTileConnectHealthShort": "Anslut Health",
+  "metricTileNoHealthDataYet": "Inga Health-data ännu",
+  "metricTileNoDataYet": "Inga data ännu",
+  "metricTileNothingLoggedYet": "Inget loggat ännu",
+  "metricTileNothingLoggedShort": "Inget loggat",
+  "metricTileNoPlanYetFinishSetup": "Ingen plan ännu · slutför konfigurationen",
+  "metricTileNeedsHrv": "Behöver HRV",
+  "metricTileNoBaseline": "Ingen baslinje",
+  "metricTileNoData": "Inga data",
+  "metricGridMyMetrics": "MINA MÄTVÄRDEN",
+  "metricGridEditTiles": "REDIGERA RUTOR",
+  "metricGridChangesSaveInstantly": "ÄNDRINGAR SPARAS DIREKT",
+  "metricGridEditHint": "DRA FÖR ATT SORTERA · TRYCK PÅ EN RUTA FÖR STORLEK · − TAR BORT",
+  "metricGridDone": "KLAR",
+  "metricGridPageOneLabel": "SIDA 1 · DAGENS ÖVERBLICK",
+  "metricGridPageTwoLabel": "SIDA 2 · DJUP",
+  "metricGridPageTwoDragHint": "SIDA 2 · DRA HIT EN RUTA",
+  "metricGridDragBackToPage": "DRA TILLBAKA EN RUTA TILL SIDA {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "SLÄPP HÄR",
+  "metricGridDragging": "DRAR…",
+  "metricGridPresets": "FÖRINSTÄLLNINGAR",
+  "metricGridPresetMyLayout": "Min layout",
+  "metricGridPresetMinimal": "Minimal",
+  "metricGridPresetTrainingDay": "Träningsdag",
+  "metricGridPresetRecovery": "Återhämtning",
+  "metricGridAddMetric": "LÄGG TILL MÄTVÄRDE",
+  "metricGridConnectBody": "Steg, sömn och återhämtning fylls i automatiskt — inget uppskattas åt dig.",
+  "metricGridConnectCta": "ANSLUT HEALTH",
+  "metricGridEveryMetricPlaced": "Alla mätvärden finns redan i ditt rutnät.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Loggat i appen",
+  "metricGridSourceComputed": "Beräknat",
+  "metricGridPlacementLine": "{size} · sida {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

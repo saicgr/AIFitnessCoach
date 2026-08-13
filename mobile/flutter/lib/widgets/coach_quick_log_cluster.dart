@@ -6,11 +6,24 @@
 /// re-expand hysteresis, driven by the shell-level scroll listener in
 /// `main_shell.dart`), so a separately-anchored coach button would have the gap
 /// between the two breathing open and shut on every scroll. Laid out as one Row
-/// with a constant [kCoachPillClusterGap], the morph slides the pair as a unit
-/// and the gap is structurally incapable of changing.
+/// with a constant [kFloatClusterGap], the morph slides the pair as a unit and
+/// the gap is structurally incapable of changing.
 ///
-/// Size encodes frequency: Quick Log is the larger, captioned, expanding target
-/// (the daily habitual action); coach is the quiet 40 pt icon-only secondary.
+/// ## Exactly two slots — this widget owns the whole band
+///
+/// The trailing-edge band `[safeArea + kQuickLogFabBottomOffset,
+/// safeArea + kQuickLogFabClearance]` belongs to this Row and to nothing else.
+/// Both members are [kFloatCircleDiameter]; hierarchy is carried by fill and
+/// caption (Quick Log expands into a labelled pill, coach never does), NOT by
+/// making one circle smaller — D4 (2026-08) is what mismatched float diameters
+/// look like on a real device.
+///
+/// A new floating affordance may only (a) REPLACE a slot under mutual
+/// exclusion — `CoachFloatingButton.suppressedIn` ↔ `FloatingChatBubble`
+/// already does exactly that — or (b) become a row inside the Quick Log sheet.
+/// Never a third `Positioned`.
+/// `test/widgets/coach_pill_placement_test.dart` fails if a third float is
+/// added here or if the two stop sharing a diameter.
 ///
 /// Returns a plain [Row] — the caller owns the anchoring, so the shell can
 /// position it against the nav pill and a nav-less surface can position it
@@ -55,13 +68,13 @@ class CoachQuickLogCluster extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Inboard of Quick Log — further from the screen edge, still deep
-        // inside the right-thumb arc. `CoachFloatingButton` owns its own hide
+        // inside the right-thumb arc. SLOT 1 of exactly two. `CoachFloatingButton` owns its own hide
         // rules (coach screen / active workout) and renders a zero-size box
         // when suppressed, so the cluster collapses cleanly to Quick Log alone
         // instead of leaving a hole where the circle was.
         const CoachFloatingButton(),
         if (!_coachHidden(context, ref))
-          const SizedBox(width: kCoachPillClusterGap),
+          const SizedBox(width: kFloatClusterGap),
         // Anchor for nav-tour step 3 ("Quick Log") — the spotlight must ring
         // THIS always-visible button. The key used to live on the home
         // QuickActionsRow section, which is opt-in (hidden for new users), so
@@ -71,8 +84,8 @@ class CoachQuickLogCluster extends ConsumerWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth:
-                  (maxWidth - kCoachPillDiameter - kCoachPillClusterGap)
-                      .clamp(kQuickLogFabHeight, double.infinity),
+                  (maxWidth - kFloatCircleDiameter - kFloatClusterGap)
+                      .clamp(kFloatCircleDiameter, double.infinity),
             ),
             child: QuickLogFabChrome(
               label: quickLogLabel,
@@ -86,8 +99,9 @@ class CoachQuickLogCluster extends ConsumerWidget {
   }
 
   /// Mirrors [CoachFloatingButton]'s own suppression so the gap disappears
-  /// with the circle — a 10 px hole hanging off Quick Log's left edge on the
-  /// chat screen would be a visible artefact of a control that isn't there.
+  /// with the circle — a [kFloatClusterGap] hole hanging off Quick Log's
+  /// leading edge on the chat screen would be a visible artefact of a control
+  /// that isn't there.
   bool _coachHidden(BuildContext context, WidgetRef ref) =>
       CoachFloatingButton.suppressedIn(context, ref);
 }

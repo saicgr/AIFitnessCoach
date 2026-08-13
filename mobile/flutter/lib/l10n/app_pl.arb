@@ -28276,5 +28276,94 @@
   "workoutShowcaseIntroTitle": "Zacznijmy Twój pierwszy trening",
   "workoutShowcaseNextTargetRaised": "Seria {set} zapisana — następny cel automatycznie podniesiony do {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "KROK {current} Z {total}",
-  "quizAlmostDone": "PRAWIE GOTOWE"
+  "quizAlmostDone": "PRAWIE GOTOWE",
+  "metricSetupPanelKicker": "{count, plural, =1{1 wskaźnik czeka} other{Czeka {count} wskaźników}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Twoja siatka wypełni się sama.",
+  "metricSetupPanelHealthBody": "{source} uzupełni je automatycznie.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Połącz {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Uzupełnią się z tego, co zapiszesz.",
+  "metricSetupPanelLogCta": "Zapisz coś",
+  "metricSetupPanelSetupBody": "Ruszy w dniu startu twojego planu.",
+  "metricSetupPanelSetupCta": "Dokończ konfigurację",
+  "metricSetupPanelFooter": "Niczego za ciebie nie szacujemy.",
+  "metricTileNoSourceConnectHealth": "Brak źródła · połącz Health",
+  "metricTileConnectHealthShort": "Połącz Health",
+  "metricTileNoHealthDataYet": "Brak danych z Health",
+  "metricTileNoDataYet": "Brak danych",
+  "metricTileNothingLoggedYet": "Nic jeszcze nie zapisano",
+  "metricTileNothingLoggedShort": "Brak zapisów",
+  "metricTileNoPlanYetFinishSetup": "Brak planu · dokończ konfigurację",
+  "metricTileNeedsHrv": "Wymaga HRV",
+  "metricTileNoBaseline": "Brak odniesienia",
+  "metricTileNoData": "Brak danych",
+  "metricGridMyMetrics": "MOJE WSKAŹNIKI",
+  "metricGridEditTiles": "EDYTUJ KAFELKI",
+  "metricGridChangesSaveInstantly": "ZMIANY ZAPISUJĄ SIĘ OD RAZU",
+  "metricGridEditHint": "PRZECIĄGNIJ, BY ZMIENIĆ KOLEJNOŚĆ · DOTKNIJ, BY ZMIENIĆ ROZMIAR · − USUWA",
+  "metricGridDone": "GOTOWE",
+  "metricGridPageOneLabel": "STRONA 1 · CODZIENNY RZUT OKA",
+  "metricGridPageTwoLabel": "STRONA 2 · SZCZEGÓŁY",
+  "metricGridPageTwoDragHint": "STRONA 2 · PRZECIĄGNIJ TU KAFELEK",
+  "metricGridDragBackToPage": "PRZECIĄGNIJ KAFELEK NA STRONĘ {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "UPUŚĆ TUTAJ",
+  "metricGridDragging": "PRZECIĄGANIE…",
+  "metricGridPresets": "USTAWIENIA WSTĘPNE",
+  "metricGridPresetMyLayout": "Mój układ",
+  "metricGridPresetMinimal": "Minimalny",
+  "metricGridPresetTrainingDay": "Dzień treningowy",
+  "metricGridPresetRecovery": "Regeneracja",
+  "metricGridAddMetric": "DODAJ WSKAŹNIK",
+  "metricGridConnectBody": "Kroki, sen i gotowość uzupełnią się same — niczego za ciebie nie szacujemy.",
+  "metricGridConnectCta": "POŁĄCZ HEALTH",
+  "metricGridEveryMetricPlaced": "Wszystkie wskaźniki są już na siatce.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Zapisane w aplikacji",
+  "metricGridSourceComputed": "Obliczone",
+  "metricGridPlacementLine": "{size} · strona {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

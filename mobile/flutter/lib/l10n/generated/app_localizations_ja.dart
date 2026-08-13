@@ -43199,4 +43199,148 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       '一度きりの創業メンバー価格、同じ7日間無料トライアル付き。このオファーは二度と戻りません。';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count件の指標が待機中',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => '指標は自動で埋まります。';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source が自動で入力します。';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '$source を接続';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => '記録した内容から埋まります。';
+
+  @override
+  String get metricSetupPanelLogCta => '何か記録する';
+
+  @override
+  String get metricSetupPanelSetupBody => 'プランが始まる日から始まります。';
+
+  @override
+  String get metricSetupPanelSetupCta => '設定を完了';
+
+  @override
+  String get metricSetupPanelFooter => '推定値は一切表示しません。';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'ソースなし · Health を接続';
+
+  @override
+  String get metricTileConnectHealthShort => 'Health を接続';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Health のデータはまだありません';
+
+  @override
+  String get metricTileNoDataYet => 'データなし';
+
+  @override
+  String get metricTileNothingLoggedYet => '記録はまだありません';
+
+  @override
+  String get metricTileNothingLoggedShort => '記録なし';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup => 'プラン未作成 · 設定を完了';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV が必要';
+
+  @override
+  String get metricTileNoBaseline => '基準値なし';
+
+  @override
+  String get metricTileNoData => 'データなし';
+
+  @override
+  String get metricGridMyMetrics => 'マイ指標';
+
+  @override
+  String get metricGridEditTiles => 'タイルを編集';
+
+  @override
+  String get metricGridChangesSaveInstantly => '変更はすぐに保存されます';
+
+  @override
+  String get metricGridEditHint => 'ドラッグで並べ替え · タップでサイズ変更 · − で削除';
+
+  @override
+  String get metricGridDone => '完了';
+
+  @override
+  String get metricGridPageOneLabel => 'ページ 1 · 今日のひと目';
+
+  @override
+  String get metricGridPageTwoLabel => 'ページ 2 · 詳細';
+
+  @override
+  String get metricGridPageTwoDragHint => 'ページ 2 · タイルをここへドラッグ';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'タイルをページ $page に戻す';
+  }
+
+  @override
+  String get metricGridDropHere => 'ここにドロップ';
+
+  @override
+  String get metricGridDragging => 'ドラッグ中…';
+
+  @override
+  String get metricGridPresets => 'プリセット';
+
+  @override
+  String get metricGridPresetMyLayout => 'マイレイアウト';
+
+  @override
+  String get metricGridPresetMinimal => 'ミニマル';
+
+  @override
+  String get metricGridPresetTrainingDay => 'トレーニング日';
+
+  @override
+  String get metricGridPresetRecovery => 'リカバリー';
+
+  @override
+  String get metricGridAddMetric => '指標を追加';
+
+  @override
+  String get metricGridConnectBody => '歩数・睡眠・コンディションは自動で入ります。推定値は一切表示しません。';
+
+  @override
+  String get metricGridConnectCta => 'Health を接続';
+
+  @override
+  String get metricGridEveryMetricPlaced => 'すべての指標がすでにグリッドにあります。';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'アプリで記録';
+
+  @override
+  String get metricGridSourceComputed => '自動計算';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · $pageページ · #$position';
+  }
 }

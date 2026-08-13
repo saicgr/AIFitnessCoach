@@ -44937,4 +44937,156 @@ class AppLocalizationsJv extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Rega founding member mung sapisan, karo uji coba gratis 7 dina sing padha. Tawaran iki ora bakal bali.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metrik ngenteni',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Grid sampeyan bakal kebak dhewe.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source ngisi iki kanthi otomatis.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Sambungake $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Iki kaisi saka apa sing sampeyan cathet.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Cathet apa wae';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Diwiwiti nalika rencana sampeyan diwiwiti.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Rampungake persiapan';
+
+  @override
+  String get metricSetupPanelFooter =>
+      'Ora ana sing dikira-kira kanggo sampeyan.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Ora ana sumber · sambungake Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Sambungake Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Durung ana data Health';
+
+  @override
+  String get metricTileNoDataYet => 'Durung ana data';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Durung ana sing dicathet';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Ora ana cathetan';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Durung ana rencana · rampungake persiapan';
+
+  @override
+  String get metricTileNeedsHrv => 'Butuh HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Ora ana dhasar';
+
+  @override
+  String get metricTileNoData => 'Ora ana data';
+
+  @override
+  String get metricGridMyMetrics => 'METRIKKU';
+
+  @override
+  String get metricGridEditTiles => 'EDIT UBIN';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'OWAHAN LANGSUNG KASIMPEN';
+
+  @override
+  String get metricGridEditHint =>
+      'SERET KANGGO NATA · TUTUK UBIN KANGGO UKURAN · − KANGGO MBUSAK';
+
+  @override
+  String get metricGridDone => 'RAMPUNG';
+
+  @override
+  String get metricGridPageOneLabel => 'KACA 1 · SAWANGAN SABEN DINA';
+
+  @override
+  String get metricGridPageTwoLabel => 'KACA 2 · JERO';
+
+  @override
+  String get metricGridPageTwoDragHint => 'KACA 2 · SERET UBIN MRENE';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'SERET UBIN BALI MENYANG KACA $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'CULNA KENE';
+
+  @override
+  String get metricGridDragging => 'NYERET…';
+
+  @override
+  String get metricGridPresets => 'PRASETEL';
+
+  @override
+  String get metricGridPresetMyLayout => 'Tata letakku';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Dina latihan';
+
+  @override
+  String get metricGridPresetRecovery => 'Pemulihan';
+
+  @override
+  String get metricGridAddMetric => 'TAMBAH METRIK';
+
+  @override
+  String get metricGridConnectBody =>
+      'Langkah, turu, lan kesiapan kaisi otomatis — ora ana sing dikira-kira kanggo sampeyan.';
+
+  @override
+  String get metricGridConnectCta => 'SAMBUNGAKE HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Kabeh metrik wis ana ing grid sampeyan.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Dicathet ing app';
+
+  @override
+  String get metricGridSourceComputed => 'Diétung';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · kaca $page · #$position';
+  }
 }

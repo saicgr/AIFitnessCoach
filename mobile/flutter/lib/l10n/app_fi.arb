@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Aloitetaan ensimmäinen treenisi",
   "workoutShowcaseNextTargetRaised": "Sarja {set} kirjattu — seuraava tavoite nostettu automaattisesti {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "VAIHE {current} / {total}",
-  "quizAlmostDone": "MELKEIN VALMIS"
+  "quizAlmostDone": "MELKEIN VALMIS",
+  "metricSetupPanelKicker": "{count, plural, =1{1 mittari odottaa} other{{count} mittaria odottaa}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Ruudukko täyttyy itsestään.",
+  "metricSetupPanelHealthBody": "{source} täyttää nämä automaattisesti.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Yhdistä {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Nämä täyttyvät siitä, mitä kirjaat.",
+  "metricSetupPanelLogCta": "Kirjaa jotain",
+  "metricSetupPanelSetupBody": "Alkaa samana päivänä kuin ohjelmasi.",
+  "metricSetupPanelSetupCta": "Viimeistele käyttöönotto",
+  "metricSetupPanelFooter": "Mitään ei arvioida puolestasi.",
+  "metricTileNoSourceConnectHealth": "Ei lähdettä · yhdistä Health",
+  "metricTileConnectHealthShort": "Yhdistä Health",
+  "metricTileNoHealthDataYet": "Ei vielä Health-tietoja",
+  "metricTileNoDataYet": "Ei vielä tietoja",
+  "metricTileNothingLoggedYet": "Ei vielä kirjauksia",
+  "metricTileNothingLoggedShort": "Ei kirjauksia",
+  "metricTileNoPlanYetFinishSetup": "Ei vielä ohjelmaa · viimeistele",
+  "metricTileNeedsHrv": "Tarvitsee HRV:n",
+  "metricTileNoBaseline": "Ei vertailutasoa",
+  "metricTileNoData": "Ei tietoja",
+  "metricGridMyMetrics": "OMAT MITTARIT",
+  "metricGridEditTiles": "MUOKKAA RUUTUJA",
+  "metricGridChangesSaveInstantly": "MUUTOKSET TALLENTUVAT HETI",
+  "metricGridEditHint": "VEDÄ JÄRJESTÄÄKSESI · NAPAUTA RUUTUA KOKOA VARTEN · − POISTAA",
+  "metricGridDone": "VALMIS",
+  "metricGridPageOneLabel": "SIVU 1 · PÄIVÄN KATSAUS",
+  "metricGridPageTwoLabel": "SIVU 2 · SYVYYS",
+  "metricGridPageTwoDragHint": "SIVU 2 · VEDÄ RUUTU TÄHÄN",
+  "metricGridDragBackToPage": "VEDÄ RUUTU TAKAISIN SIVULLE {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "PUDOTA TÄHÄN",
+  "metricGridDragging": "VEDETÄÄN…",
+  "metricGridPresets": "ESIASETUKSET",
+  "metricGridPresetMyLayout": "Oma asettelu",
+  "metricGridPresetMinimal": "Minimaalinen",
+  "metricGridPresetTrainingDay": "Treenipäivä",
+  "metricGridPresetRecovery": "Palautuminen",
+  "metricGridAddMetric": "LISÄÄ MITTARI",
+  "metricGridConnectBody": "Askeleet, uni ja palautuneisuus täyttyvät itsestään — mitään ei arvioida puolestasi.",
+  "metricGridConnectCta": "YHDISTÄ HEALTH",
+  "metricGridEveryMetricPlaced": "Kaikki mittarit ovat jo ruudukossasi.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Kirjattu sovelluksessa",
+  "metricGridSourceComputed": "Laskettu",
+  "metricGridPlacementLine": "{size} · sivu {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

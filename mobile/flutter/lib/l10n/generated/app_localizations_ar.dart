@@ -44479,4 +44479,152 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'سعر العضو المؤسس لمرة واحدة، مع نفس التجربة المجانية لمدة 7 أيام. هذا العرض لن يعود.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مقاييس في الانتظار',
+      one: 'مقياس واحد في الانتظار',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'شبكتك تمتلئ تلقائيًا.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '‏$source يملأ هذه تلقائيًا.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return '‏ربط $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'تمتلئ هذه مما تسجّله.';
+
+  @override
+  String get metricSetupPanelLogCta => 'سجّل شيئًا';
+
+  @override
+  String get metricSetupPanelSetupBody => 'يبدأ يوم بدء خطتك.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'أكمل الإعداد';
+
+  @override
+  String get metricSetupPanelFooter => 'لا يُقدَّر لك أي رقم.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'لا مصدر · اربط Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'اربط Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'لا توجد بيانات Health بعد';
+
+  @override
+  String get metricTileNoDataYet => 'لا بيانات بعد';
+
+  @override
+  String get metricTileNothingLoggedYet => 'لم يُسجَّل شيء بعد';
+
+  @override
+  String get metricTileNothingLoggedShort => 'لا تسجيل';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup => 'لا خطة بعد · أكمل الإعداد';
+
+  @override
+  String get metricTileNeedsHrv => 'يحتاج HRV';
+
+  @override
+  String get metricTileNoBaseline => 'لا خط أساس';
+
+  @override
+  String get metricTileNoData => 'لا بيانات';
+
+  @override
+  String get metricGridMyMetrics => 'مقاييسي';
+
+  @override
+  String get metricGridEditTiles => 'تعديل البطاقات';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'التغييرات تُحفظ فورًا';
+
+  @override
+  String get metricGridEditHint =>
+      'اسحب لإعادة الترتيب · اضغط بطاقة للحجم · − للإزالة';
+
+  @override
+  String get metricGridDone => 'تم';
+
+  @override
+  String get metricGridPageOneLabel => 'الصفحة 1 · نظرة اليوم';
+
+  @override
+  String get metricGridPageTwoLabel => 'الصفحة 2 · تفاصيل';
+
+  @override
+  String get metricGridPageTwoDragHint => 'الصفحة 2 · اسحب بطاقة إلى هنا';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'اسحب بطاقة إلى الصفحة $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'أفلت هنا';
+
+  @override
+  String get metricGridDragging => 'جارٍ السحب…';
+
+  @override
+  String get metricGridPresets => 'إعدادات جاهزة';
+
+  @override
+  String get metricGridPresetMyLayout => 'تخطيطي';
+
+  @override
+  String get metricGridPresetMinimal => 'بسيط';
+
+  @override
+  String get metricGridPresetTrainingDay => 'يوم تدريب';
+
+  @override
+  String get metricGridPresetRecovery => 'التعافي';
+
+  @override
+  String get metricGridAddMetric => 'إضافة مقياس';
+
+  @override
+  String get metricGridConnectBody =>
+      'الخطوات والنوم والجاهزية تُملأ تلقائيًا — لا يُقدَّر لك أي رقم.';
+
+  @override
+  String get metricGridConnectCta => 'اربط Health';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'كل المقاييس موجودة بالفعل على شبكتك.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'مسجَّل في التطبيق';
+
+  @override
+  String get metricGridSourceComputed => 'محسوب';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · صفحة $page · #$position';
+  }
 }

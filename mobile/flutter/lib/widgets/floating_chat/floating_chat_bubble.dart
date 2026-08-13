@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/chat_message.dart';
@@ -157,7 +158,10 @@ class _FloatingChatBubbleState extends ConsumerState<FloatingChatBubble> {
               // finger moves down. Hence the inverted signs.
               final newRight =
                   (_dragOriginRight - details.offsetFromOrigin.dx)
-                      .clamp(16.0, screenSize.width - 72);
+                      .clamp(
+                kFabClusterEdgeInset,
+                screenSize.width - kFloatCircleDiameter - kFabClusterEdgeInset,
+              );
               final newBottom =
                   (_dragOriginBottom - details.offsetFromOrigin.dy)
                       .clamp(0.0, screenSize.height - 200);
@@ -179,12 +183,13 @@ class _FloatingChatBubbleState extends ConsumerState<FloatingChatBubble> {
                 // Reset position so the head reappears at a sane default
                 // next time the user un-minimizes (next-day rollover or
                 // tap on the side tab).
-                notifier.updateBubblePosition(16, 100);
+                notifier.updateBubblePosition(
+                    kFabClusterEdgeInset, kQuickLogFabBottomOffset);
               } else {
                 // Snap back if dragged too low but not into dismiss zone
-                if (chatState.bubbleBottom < 100) {
+                if (chatState.bubbleBottom < kQuickLogFabBottomOffset) {
                   notifier.updateBubblePosition(
-                      chatState.bubbleRight, 100);
+                      chatState.bubbleRight, kQuickLogFabBottomOffset);
                 }
               }
               notifier.setDragging(false);
@@ -240,8 +245,13 @@ class _GlassSparkleHead extends StatelessWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
-          width: 56,
-          height: 56,
+          // [kFloatCircleDiameter], NOT the hardcoded 56 this carried until
+          // D4 (2026-08). This head is the same affordance as the ✦ coach
+          // circle in the cluster (the two are mutually exclusive — see
+          // `CoachFloatingButton.suppressedIn`), so the user who flips the
+          // opt-in must get the same-sized control back, not a bigger one.
+          width: kFloatCircleDiameter,
+          height: kFloatCircleDiameter,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
@@ -263,7 +273,8 @@ class _GlassSparkleHead extends StatelessWidget {
           child: Icon(
             Icons.auto_awesome,
             color: c.accentContrast,
-            size: 24,
+            // Same optical glyph size as both cluster floats.
+            size: kFloatGlyphSize,
           ),
         ),
       ),

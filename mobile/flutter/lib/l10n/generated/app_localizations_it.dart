@@ -45274,4 +45274,155 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Prezzo founding member una tantum, stessa prova gratuita di 7 giorni. Questa offerta non tornerà.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metriche in attesa',
+      one: '1 metrica in attesa',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'La tua griglia si riempie da sola.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source le compila automaticamente.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Collega $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Si compilano da ciò che registri.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Registra qualcosa';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Parte il giorno in cui parte il tuo piano.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Completa la configurazione';
+
+  @override
+  String get metricSetupPanelFooter => 'Nulla viene stimato al posto tuo.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Nessuna fonte · collega Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Collega Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Ancora nessun dato Health';
+
+  @override
+  String get metricTileNoDataYet => 'Ancora nessun dato';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Ancora nulla registrato';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Nulla registrato';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Ancora nessun piano · completa la configurazione';
+
+  @override
+  String get metricTileNeedsHrv => 'Serve HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Nessun riferimento';
+
+  @override
+  String get metricTileNoData => 'Nessun dato';
+
+  @override
+  String get metricGridMyMetrics => 'LE MIE METRICHE';
+
+  @override
+  String get metricGridEditTiles => 'MODIFICA RIQUADRI';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'LE MODIFICHE SI SALVANO SUBITO';
+
+  @override
+  String get metricGridEditHint =>
+      'TRASCINA PER RIORDINARE · TOCCA UN RIQUADRO PER LA DIMENSIONE · − PER RIMUOVERE';
+
+  @override
+  String get metricGridDone => 'FATTO';
+
+  @override
+  String get metricGridPageOneLabel => 'PAGINA 1 · SGUARDO GIORNALIERO';
+
+  @override
+  String get metricGridPageTwoLabel => 'PAGINA 2 · DETTAGLIO';
+
+  @override
+  String get metricGridPageTwoDragHint => 'PAGINA 2 · TRASCINA QUI UN RIQUADRO';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'TRASCINA UN RIQUADRO ALLA PAGINA $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'RILASCIA QUI';
+
+  @override
+  String get metricGridDragging => 'TRASCINAMENTO…';
+
+  @override
+  String get metricGridPresets => 'PRESET';
+
+  @override
+  String get metricGridPresetMyLayout => 'Il mio layout';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimale';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Giorno di allenamento';
+
+  @override
+  String get metricGridPresetRecovery => 'Recupero';
+
+  @override
+  String get metricGridAddMetric => 'AGGIUNGI METRICA';
+
+  @override
+  String get metricGridConnectBody =>
+      'Passi, sonno e prontezza si compilano da soli: nulla viene stimato al posto tuo.';
+
+  @override
+  String get metricGridConnectCta => 'COLLEGA HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Tutte le metriche sono già sulla tua griglia.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Registrato nell\'app';
+
+  @override
+  String get metricGridSourceComputed => 'Calcolato';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · pagina $page · #$position';
+  }
 }

@@ -45027,4 +45027,154 @@ class AppLocalizationsMs extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Harga ahli pengasas sekali sahaja, percubaan percuma 7 hari yang sama. Tawaran ini takkan kembali.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count metrik menunggu',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Grid anda akan terisi sendiri.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source mengisinya secara automatik.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Sambungkan $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody => 'Ini diisi daripada apa yang anda log.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Log sesuatu';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Bermula pada hari pelan anda bermula.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Selesaikan persediaan';
+
+  @override
+  String get metricSetupPanelFooter => 'Tiada apa-apa dianggarkan untuk anda.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Tiada sumber · sambungkan Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Sambungkan Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Belum ada data Health';
+
+  @override
+  String get metricTileNoDataYet => 'Belum ada data';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Belum ada log';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Tiada log';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Belum ada pelan · selesaikan persediaan';
+
+  @override
+  String get metricTileNeedsHrv => 'Perlukan HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Tiada garis dasar';
+
+  @override
+  String get metricTileNoData => 'Tiada data';
+
+  @override
+  String get metricGridMyMetrics => 'METRIK SAYA';
+
+  @override
+  String get metricGridEditTiles => 'EDIT JUBIN';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'PERUBAHAN DISIMPAN SERTA-MERTA';
+
+  @override
+  String get metricGridEditHint =>
+      'SERET UNTUK SUSUN SEMULA · KETIK JUBIN UNTUK SAIZ · − UNTUK BUANG';
+
+  @override
+  String get metricGridDone => 'SELESAI';
+
+  @override
+  String get metricGridPageOneLabel => 'HALAMAN 1 · SEKILAS HARIAN';
+
+  @override
+  String get metricGridPageTwoLabel => 'HALAMAN 2 · MENDALAM';
+
+  @override
+  String get metricGridPageTwoDragHint => 'HALAMAN 2 · SERET JUBIN KE SINI';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'SERET JUBIN KEMBALI KE HALAMAN $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'LEPAS DI SINI';
+
+  @override
+  String get metricGridDragging => 'MENYERET…';
+
+  @override
+  String get metricGridPresets => 'PRASET';
+
+  @override
+  String get metricGridPresetMyLayout => 'Susun atur saya';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimum';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Hari latihan';
+
+  @override
+  String get metricGridPresetRecovery => 'Pemulihan';
+
+  @override
+  String get metricGridAddMetric => 'TAMBAH METRIK';
+
+  @override
+  String get metricGridConnectBody =>
+      'Langkah, tidur dan kesediaan diisi automatik — tiada apa-apa dianggarkan untuk anda.';
+
+  @override
+  String get metricGridConnectCta => 'SAMBUNGKAN HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Semua metrik sudah ada pada grid anda.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Dilog dalam apl';
+
+  @override
+  String get metricGridSourceComputed => 'Dikira';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · halaman $page · #$position';
+  }
 }

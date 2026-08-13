@@ -28276,5 +28276,94 @@
   "workoutShowcaseIntroTitle": "Iniziamo il tuo primo allenamento",
   "workoutShowcaseNextTargetRaised": "Serie {set} registrata — prossimo obiettivo aumentato a {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "PASSO {current} DI {total}",
-  "quizAlmostDone": "QUASI FATTO"
+  "quizAlmostDone": "QUASI FATTO",
+  "metricSetupPanelKicker": "{count, plural, =1{1 metrica in attesa} other{{count} metriche in attesa}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "La tua griglia si riempie da sola.",
+  "metricSetupPanelHealthBody": "{source} le compila automaticamente.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Collega {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Si compilano da ciò che registri.",
+  "metricSetupPanelLogCta": "Registra qualcosa",
+  "metricSetupPanelSetupBody": "Parte il giorno in cui parte il tuo piano.",
+  "metricSetupPanelSetupCta": "Completa la configurazione",
+  "metricSetupPanelFooter": "Nulla viene stimato al posto tuo.",
+  "metricTileNoSourceConnectHealth": "Nessuna fonte · collega Health",
+  "metricTileConnectHealthShort": "Collega Health",
+  "metricTileNoHealthDataYet": "Ancora nessun dato Health",
+  "metricTileNoDataYet": "Ancora nessun dato",
+  "metricTileNothingLoggedYet": "Ancora nulla registrato",
+  "metricTileNothingLoggedShort": "Nulla registrato",
+  "metricTileNoPlanYetFinishSetup": "Ancora nessun piano · completa la configurazione",
+  "metricTileNeedsHrv": "Serve HRV",
+  "metricTileNoBaseline": "Nessun riferimento",
+  "metricTileNoData": "Nessun dato",
+  "metricGridMyMetrics": "LE MIE METRICHE",
+  "metricGridEditTiles": "MODIFICA RIQUADRI",
+  "metricGridChangesSaveInstantly": "LE MODIFICHE SI SALVANO SUBITO",
+  "metricGridEditHint": "TRASCINA PER RIORDINARE · TOCCA UN RIQUADRO PER LA DIMENSIONE · − PER RIMUOVERE",
+  "metricGridDone": "FATTO",
+  "metricGridPageOneLabel": "PAGINA 1 · SGUARDO GIORNALIERO",
+  "metricGridPageTwoLabel": "PAGINA 2 · DETTAGLIO",
+  "metricGridPageTwoDragHint": "PAGINA 2 · TRASCINA QUI UN RIQUADRO",
+  "metricGridDragBackToPage": "TRASCINA UN RIQUADRO ALLA PAGINA {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "RILASCIA QUI",
+  "metricGridDragging": "TRASCINAMENTO…",
+  "metricGridPresets": "PRESET",
+  "metricGridPresetMyLayout": "Il mio layout",
+  "metricGridPresetMinimal": "Minimale",
+  "metricGridPresetTrainingDay": "Giorno di allenamento",
+  "metricGridPresetRecovery": "Recupero",
+  "metricGridAddMetric": "AGGIUNGI METRICA",
+  "metricGridConnectBody": "Passi, sonno e prontezza si compilano da soli: nulla viene stimato al posto tuo.",
+  "metricGridConnectCta": "COLLEGA HEALTH",
+  "metricGridEveryMetricPlaced": "Tutte le metriche sono già sulla tua griglia.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Registrato nell'app",
+  "metricGridSourceComputed": "Calcolato",
+  "metricGridPlacementLine": "{size} · pagina {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

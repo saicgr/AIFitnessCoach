@@ -28276,5 +28276,94 @@
   "workoutShowcaseIntroTitle": "Commençons votre premier entraînement",
   "workoutShowcaseNextTargetRaised": "Série {set} enregistrée — prochain objectif porté à {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "ÉTAPE {current} SUR {total}",
-  "quizAlmostDone": "PRESQUE TERMINÉ"
+  "quizAlmostDone": "PRESQUE TERMINÉ",
+  "metricSetupPanelKicker": "{count, plural, =1{1 mesure en attente} other{{count} mesures en attente}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Votre grille se remplit toute seule.",
+  "metricSetupPanelHealthBody": "{source} les remplit automatiquement.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "Connecter {source}",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Elles se remplissent avec ce que vous enregistrez.",
+  "metricSetupPanelLogCta": "Enregistrer quelque chose",
+  "metricSetupPanelSetupBody": "Démarre le jour où votre plan démarre.",
+  "metricSetupPanelSetupCta": "Terminer la configuration",
+  "metricSetupPanelFooter": "Rien n'est estimé à votre place.",
+  "metricTileNoSourceConnectHealth": "Aucune source · connecter Health",
+  "metricTileConnectHealthShort": "Connecter Health",
+  "metricTileNoHealthDataYet": "Pas encore de données Health",
+  "metricTileNoDataYet": "Pas encore de données",
+  "metricTileNothingLoggedYet": "Rien d'enregistré pour l'instant",
+  "metricTileNothingLoggedShort": "Rien d'enregistré",
+  "metricTileNoPlanYetFinishSetup": "Pas encore de plan · terminer la configuration",
+  "metricTileNeedsHrv": "HRV requise",
+  "metricTileNoBaseline": "Pas de référence",
+  "metricTileNoData": "Aucune donnée",
+  "metricGridMyMetrics": "MES MESURES",
+  "metricGridEditTiles": "MODIFIER LES TUILES",
+  "metricGridChangesSaveInstantly": "LES MODIFICATIONS SONT ENREGISTRÉES AUSSITÔT",
+  "metricGridEditHint": "GLISSEZ POUR RÉORGANISER · TOUCHEZ POUR LA TAILLE · − POUR RETIRER",
+  "metricGridDone": "TERMINÉ",
+  "metricGridPageOneLabel": "PAGE 1 · COUP D'ŒIL DU JOUR",
+  "metricGridPageTwoLabel": "PAGE 2 · DÉTAIL",
+  "metricGridPageTwoDragHint": "PAGE 2 · GLISSEZ UNE TUILE ICI",
+  "metricGridDragBackToPage": "GLISSEZ UNE TUILE VERS LA PAGE {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "DÉPOSER ICI",
+  "metricGridDragging": "DÉPLACEMENT…",
+  "metricGridPresets": "PRÉRÉGLAGES",
+  "metricGridPresetMyLayout": "Ma disposition",
+  "metricGridPresetMinimal": "Minimal",
+  "metricGridPresetTrainingDay": "Jour d'entraînement",
+  "metricGridPresetRecovery": "Récupération",
+  "metricGridAddMetric": "AJOUTER UNE MESURE",
+  "metricGridConnectBody": "Pas, sommeil et forme se remplissent automatiquement — rien n'est estimé à votre place.",
+  "metricGridConnectCta": "CONNECTER HEALTH",
+  "metricGridEveryMetricPlaced": "Toutes les mesures sont déjà sur votre grille.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Saisi dans l'app",
+  "metricGridSourceComputed": "Calculé",
+  "metricGridPlacementLine": "{size} · page {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

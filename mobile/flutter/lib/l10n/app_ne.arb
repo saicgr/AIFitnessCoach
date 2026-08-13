@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "आउनुहोस् तपाईंको पहिलो वर्कआउट सुरु गरौं",
   "workoutShowcaseNextTargetRaised": "सेट {set} रेकर्ड भयो — अर्को लक्ष्य स्वतः {weight} lb मा बढाइयो (+{delta} lb)",
   "quizStepOfTotal": "चरण {current} / {total}",
-  "quizAlmostDone": "लगभग सकियो"
+  "quizAlmostDone": "लगभग सकियो",
+  "metricSetupPanelKicker": "{count, plural, =1{1 मेट्रिक पर्खिरहेको} other{{count} मेट्रिक पर्खिरहेका}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "तपाईंको ग्रिड आफैं भरिन्छ।",
+  "metricSetupPanelHealthBody": "{source} ले यी स्वतः भर्छ।",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} जडान गर्नुहोस्",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "तपाईंले लग गरेको कुराबाट यी भरिन्छन्।",
+  "metricSetupPanelLogCta": "केही लग गर्नुहोस्",
+  "metricSetupPanelSetupBody": "तपाईंको योजना सुरु भएकै दिन सुरु हुन्छ।",
+  "metricSetupPanelSetupCta": "सेटअप पूरा गर्नुहोस्",
+  "metricSetupPanelFooter": "तपाईंका लागि केही पनि अनुमान गरिँदैन।",
+  "metricTileNoSourceConnectHealth": "स्रोत छैन · Health जडान गर्नुहोस्",
+  "metricTileConnectHealthShort": "Health जडान गर्नुहोस्",
+  "metricTileNoHealthDataYet": "अझै Health डेटा छैन",
+  "metricTileNoDataYet": "अझै डेटा छैन",
+  "metricTileNothingLoggedYet": "अझै केही लग गरिएको छैन",
+  "metricTileNothingLoggedShort": "केही लग छैन",
+  "metricTileNoPlanYetFinishSetup": "अझै योजना छैन · सेटअप पूरा गर्नुहोस्",
+  "metricTileNeedsHrv": "HRV चाहिन्छ",
+  "metricTileNoBaseline": "आधाररेखा छैन",
+  "metricTileNoData": "डेटा छैन",
+  "metricGridMyMetrics": "मेरा मेट्रिक",
+  "metricGridEditTiles": "टाइल सम्पादन",
+  "metricGridChangesSaveInstantly": "परिवर्तन तुरुन्तै सुरक्षित हुन्छ",
+  "metricGridEditHint": "क्रम मिलाउन तान्नुहोस् · आकारका लागि टाइल ट्याप गर्नुहोस् · हटाउन −",
+  "metricGridDone": "सम्पन्न",
+  "metricGridPageOneLabel": "पृष्ठ 1 · दैनिक झलक",
+  "metricGridPageTwoLabel": "पृष्ठ 2 · गहिराइ",
+  "metricGridPageTwoDragHint": "पृष्ठ 2 · यहाँ टाइल तान्नुहोस्",
+  "metricGridDragBackToPage": "टाइल पृष्ठ {page} मा फर्काउनुहोस्",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "यहाँ छोड्नुहोस्",
+  "metricGridDragging": "तानिँदै…",
+  "metricGridPresets": "प्रिसेट",
+  "metricGridPresetMyLayout": "मेरो लेआउट",
+  "metricGridPresetMinimal": "न्यूनतम",
+  "metricGridPresetTrainingDay": "तालिम दिन",
+  "metricGridPresetRecovery": "रिकभरी",
+  "metricGridAddMetric": "मेट्रिक थप्नुहोस्",
+  "metricGridConnectBody": "पाइला, निद्रा र तयारी स्वतः भरिन्छ — तपाईंका लागि केही पनि अनुमान गरिँदैन।",
+  "metricGridConnectCta": "HEALTH जडान गर्नुहोस्",
+  "metricGridEveryMetricPlaced": "सबै मेट्रिक पहिले नै तपाईंको ग्रिडमा छन्।",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "एपमा लग गरिएको",
+  "metricGridSourceComputed": "गणना गरिएको",
+  "metricGridPlacementLine": "{size} · पृष्ठ {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/chrome_constants.dart';
 import '../data/services/haptic_service.dart';
 
 /// Circular glassmorphic FAB used across the measurements flow. Matches
@@ -17,6 +18,13 @@ class GlassCircleFab extends StatelessWidget {
   final IconData icon;
 
   /// Visual size of the button (it stays a perfect circle).
+  ///
+  /// Defaults to [kFloatCircleDiameter] — the app's ONE float diameter. It was
+  /// a hardcoded 56, a third independent circular-float size alongside the
+  /// coach circle's 40 and Quick Log's 44 (D4, 2026-08). These screens are
+  /// pushed full-screen routes so this button never shares a band with the
+  /// cluster today, but "no two circular floats may disagree about how big a
+  /// float is" is the rule, and a rule with an exception is not a rule.
   final double size;
 
   /// Screen-reader / long-press label. Since there's no visible caption
@@ -28,7 +36,7 @@ class GlassCircleFab extends StatelessWidget {
     super.key,
     required this.onPressed,
     this.icon = Icons.add_rounded,
-    this.size = 56,
+    this.size = kFloatCircleDiameter,
     this.tooltip,
   });
 
@@ -65,7 +73,9 @@ class GlassCircleFab extends StatelessWidget {
               color: isDark
                   ? Colors.white.withValues(alpha: 0.9)
                   : AppColorsLight.textPrimary,
-              size: size * 0.46,
+              // The float family's glyph ratio (18 / 44), so this button's
+              // icon is optically identical to the ✦ and the + in the cluster.
+              size: size * (kFloatGlyphSize / kFloatCircleDiameter),
             ),
           ),
         ),

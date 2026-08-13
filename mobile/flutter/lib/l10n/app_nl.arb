@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "Laten we je eerste workout starten",
   "workoutShowcaseNextTargetRaised": "Set {set} vastgelegd — volgende doel automatisch verhoogd naar {weight} lb (+{delta} lb)",
   "quizStepOfTotal": "STAP {current} VAN {total}",
-  "quizAlmostDone": "BIJNA KLAAR"
+  "quizAlmostDone": "BIJNA KLAAR",
+  "metricSetupPanelKicker": "{count, plural, =1{1 meting wacht} other{{count} metingen wachten}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Je raster vult zichzelf.",
+  "metricSetupPanelHealthBody": "{source} vult deze automatisch.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} koppelen",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Deze vullen zich met wat je logt.",
+  "metricSetupPanelLogCta": "Iets loggen",
+  "metricSetupPanelSetupBody": "Start zodra jouw plan start.",
+  "metricSetupPanelSetupCta": "Instellen voltooien",
+  "metricSetupPanelFooter": "Er wordt niets voor je geschat.",
+  "metricTileNoSourceConnectHealth": "Geen bron · Health koppelen",
+  "metricTileConnectHealthShort": "Health koppelen",
+  "metricTileNoHealthDataYet": "Nog geen Health-gegevens",
+  "metricTileNoDataYet": "Nog geen gegevens",
+  "metricTileNothingLoggedYet": "Nog niets gelogd",
+  "metricTileNothingLoggedShort": "Niets gelogd",
+  "metricTileNoPlanYetFinishSetup": "Nog geen plan · instellen voltooien",
+  "metricTileNeedsHrv": "HRV nodig",
+  "metricTileNoBaseline": "Geen basislijn",
+  "metricTileNoData": "Geen gegevens",
+  "metricGridMyMetrics": "MIJN METINGEN",
+  "metricGridEditTiles": "TEGELS BEWERKEN",
+  "metricGridChangesSaveInstantly": "WIJZIGINGEN WORDEN DIRECT OPGESLAGEN",
+  "metricGridEditHint": "SLEEP OM TE ORDENEN · TIK EEN TEGEL VOOR GROOTTE · − OM TE VERWIJDEREN",
+  "metricGridDone": "KLAAR",
+  "metricGridPageOneLabel": "PAGINA 1 · DAGELIJKSE BLIK",
+  "metricGridPageTwoLabel": "PAGINA 2 · DIEPGANG",
+  "metricGridPageTwoDragHint": "PAGINA 2 · SLEEP HIER EEN TEGEL",
+  "metricGridDragBackToPage": "SLEEP EEN TEGEL TERUG NAAR PAGINA {page}",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "HIER NEERZETTEN",
+  "metricGridDragging": "SLEPEN…",
+  "metricGridPresets": "VOORINSTELLINGEN",
+  "metricGridPresetMyLayout": "Mijn indeling",
+  "metricGridPresetMinimal": "Minimaal",
+  "metricGridPresetTrainingDay": "Trainingsdag",
+  "metricGridPresetRecovery": "Herstel",
+  "metricGridAddMetric": "METING TOEVOEGEN",
+  "metricGridConnectBody": "Stappen, slaap en herstel vullen zichzelf — er wordt niets voor je geschat.",
+  "metricGridConnectCta": "HEALTH KOPPELEN",
+  "metricGridEveryMetricPlaced": "Alle metingen staan al op je raster.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "In de app gelogd",
+  "metricGridSourceComputed": "Berekend",
+  "metricGridPlacementLine": "{size} · pagina {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }

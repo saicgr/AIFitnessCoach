@@ -45090,4 +45090,156 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Bei ya mara moja ya mwanachama-mwanzilishi, jaribio lile lile la bure la siku 7. Ofa hii hairudi tena.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Vipimo $count vinasubiri',
+      one: 'Kipimo 1 kinasubiri',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Gridi yako hujijaza yenyewe.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source hujaza hivi kiotomatiki.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Unganisha $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Hivi hujazwa kutokana na unachorekodi.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Rekodi kitu';
+
+  @override
+  String get metricSetupPanelSetupBody => 'Huanza siku mpango wako unapoanza.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Kamilisha usanidi';
+
+  @override
+  String get metricSetupPanelFooter => 'Hakuna kinachokadiriwa kwa niaba yako.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Hakuna chanzo · unganisha Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Unganisha Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Bado hakuna data ya Health';
+
+  @override
+  String get metricTileNoDataYet => 'Bado hakuna data';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Bado hujarekodi chochote';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Hakuna rekodi';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Bado hakuna mpango · kamilisha usanidi';
+
+  @override
+  String get metricTileNeedsHrv => 'Inahitaji HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Hakuna kigezo';
+
+  @override
+  String get metricTileNoData => 'Hakuna data';
+
+  @override
+  String get metricGridMyMetrics => 'VIPIMO VYANGU';
+
+  @override
+  String get metricGridEditTiles => 'HARIRI VIGAE';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'MABADILIKO HUHIFADHIWA PAPO HAPO';
+
+  @override
+  String get metricGridEditHint =>
+      'BURUTA KUPANGA UPYA · GUSA KIGAE KWA UKUBWA · − KUONDOA';
+
+  @override
+  String get metricGridDone => 'IMEKAMILIKA';
+
+  @override
+  String get metricGridPageOneLabel => 'UKURASA 1 · MTAZAMO WA KILA SIKU';
+
+  @override
+  String get metricGridPageTwoLabel => 'UKURASA 2 · KINA';
+
+  @override
+  String get metricGridPageTwoDragHint => 'UKURASA 2 · BURUTA KIGAE HAPA';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'BURUTA KIGAE KURUDI UKURASA $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'ACHIA HAPA';
+
+  @override
+  String get metricGridDragging => 'INABURUTWA…';
+
+  @override
+  String get metricGridPresets => 'MIPANGILIO TAYARI';
+
+  @override
+  String get metricGridPresetMyLayout => 'Mpangilio wangu';
+
+  @override
+  String get metricGridPresetMinimal => 'Kidogo';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Siku ya mazoezi';
+
+  @override
+  String get metricGridPresetRecovery => 'Kupona';
+
+  @override
+  String get metricGridAddMetric => 'ONGEZA KIPIMO';
+
+  @override
+  String get metricGridConnectBody =>
+      'Hatua, usingizi na utayari hujazwa kiotomatiki — hakuna kinachokadiriwa kwa niaba yako.';
+
+  @override
+  String get metricGridConnectCta => 'UNGANISHA HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Vipimo vyote tayari viko kwenye gridi yako.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Imerekodiwa kwenye programu';
+
+  @override
+  String get metricGridSourceComputed => 'Imekokotolewa';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · ukurasa $page · #$position';
+  }
 }

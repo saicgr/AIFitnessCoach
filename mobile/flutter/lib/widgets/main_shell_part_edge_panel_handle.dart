@@ -175,6 +175,21 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     // Compact nav bar dimensions (single source: chrome_constants.dart)
     const navBarHeight = kMainNavBarHeight;
     const fadeHeight = kMainNavFadeHeight;
+    // Total height of this scrim box, measured from the RAW screen bottom.
+    // Every gradient stop below is a real distance measured DOWN from this
+    // box's top edge, divided by h — not a hand-picked fraction.
+    final scrimHeight = navBarHeight + bottomPadding + fadeHeight;
+    // Where the float band sits inside this box, measured from the box top:
+    //   box top      = bottomPadding + navBarHeight + fadeHeight  (= +158)
+    //   FAB centre   = bottomPadding + kQuickLogFabBottomOffset + 22 (= +114)
+    //   FAB bottom   = bottomPadding + kQuickLogFabBottomOffset     (= +92)
+    //   nav pill top = bottomPadding + navBarHeight                 (= +56)
+    const bandTopToFabCentre =
+        navBarHeight + fadeHeight - kQuickLogFabBottomOffset -
+            kFloatCircleDiameter / 2; // 44
+    const bandTopToFabBottom =
+        navBarHeight + fadeHeight - kQuickLogFabBottomOffset; // 66
+    const bandTopToNavTop = fadeHeight; // 102
 
     // Clean pill bar colors
     final pillBarColor = isDark
@@ -193,7 +208,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     // (no hard opaque bar, only a whisper-thin top edge). Home-indicator inset
     // padded inside so the glass runs to the very bottom.
     return SizedBox(
-      height: navBarHeight + bottomPadding + fadeHeight,
+      height: scrimHeight,
       child: Stack(
         children: [
           // NO blur (a BackdropFilter draws a hard-edged box). Just a soft fade —
@@ -206,13 +221,39 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
+                    // D4 (2026-08) — THE OVERLAP ROOT CAUSE.
+                    //
+                    // `fadeHeight` was 36, so this box's top edge landed at
+                    // `bottomPadding + 92` — EXACTLY the FAB's bottom edge.
+                    // The whole 44 pt cluster plus its 24 px shadow therefore
+                    // floated on raw, fully-opaque content, which is why the
+                    // coach circle sat on top of the founder's Connect Health
+                    // card. Home's trailing `kQuickLogFabClearance` sliver
+                    // cannot fix that: it reserves room to scroll PAST the
+                    // band, and on any page taller than the viewport
+                    // *something* is under the band at rest.
+                    //
+                    // fadeHeight is now derived from `kQuickLogFabClearance`
+                    // (102), so the scrim starts 10 pt ABOVE the band and the
+                    // floats always sit on a veiled ground. The stops are
+                    // computed from the real box height rather than left as
+                    // the literal [0.0, 0.4, 0.65, 1.0], which pinned the
+                    // opaque region to a fraction that meant nothing once the
+                    // box grew.
                     colors: [
                       backgroundColor.withValues(alpha: 0.0),
-                      backgroundColor.withValues(alpha: 0.85),
+                      backgroundColor.withValues(alpha: 0.72),
+                      backgroundColor.withValues(alpha: 0.90),
                       backgroundColor,
                       backgroundColor,
                     ],
-                    stops: const [0.0, 0.4, 0.65, 1.0],
+                    stops: [
+                      0.0,
+                      bandTopToFabCentre / scrimHeight,
+                      bandTopToFabBottom / scrimHeight,
+                      bandTopToNavTop / scrimHeight,
+                      1.0,
+                    ],
                   ),
                 ),
               ),

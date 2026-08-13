@@ -45069,4 +45069,155 @@ class AppLocalizationsHa extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Farashin memba na farko na sau ɗaya, gwaji kyauta na kwana 7 iri ɗaya. Wannan tayin ba zai dawo ba.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ma\'auni $count suna jira',
+      one: 'Ma\'auni 1 na jira',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Gridin ka yana cika da kansa.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source yana cika waɗannan ta atomatik.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Haɗa $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Waɗannan suna cika daga abin da ka rubuta.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Rubuta wani abu';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Yana farawa ranar da shirinka ya fara.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Kammala saitin';
+
+  @override
+  String get metricSetupPanelFooter => 'Ba a kiyasta komai a madadinka.';
+
+  @override
+  String get metricTileNoSourceConnectHealth => 'Babu tushe · haɗa Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Haɗa Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Babu bayanan Health tukuna';
+
+  @override
+  String get metricTileNoDataYet => 'Babu bayanai tukuna';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Ba a rubuta komai tukuna';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Babu rubutu';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Babu shiri tukuna · kammala saitin';
+
+  @override
+  String get metricTileNeedsHrv => 'Yana buƙatar HRV';
+
+  @override
+  String get metricTileNoBaseline => 'Babu ma\'auni';
+
+  @override
+  String get metricTileNoData => 'Babu bayanai';
+
+  @override
+  String get metricGridMyMetrics => 'MA\'AUNAINA';
+
+  @override
+  String get metricGridEditTiles => 'GYARA FALALEN';
+
+  @override
+  String get metricGridChangesSaveInstantly => 'SAUYE-SAUYE NA AJIYE NAN TAKE';
+
+  @override
+  String get metricGridEditHint =>
+      'JA DON SAKE TSARI · TABA FALE DON GIRMA · − DON CIRE';
+
+  @override
+  String get metricGridDone => 'AN GAMA';
+
+  @override
+  String get metricGridPageOneLabel => 'SHAFI 1 · DUBAN YAU';
+
+  @override
+  String get metricGridPageTwoLabel => 'SHAFI 2 · ZURFI';
+
+  @override
+  String get metricGridPageTwoDragHint => 'SHAFI 2 · JA FALE ZUWA NAN';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'JA FALE KOMA SHAFI $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'SAKA NAN';
+
+  @override
+  String get metricGridDragging => 'ANA JAWO…';
+
+  @override
+  String get metricGridPresets => 'SAITUKA';
+
+  @override
+  String get metricGridPresetMyLayout => 'Tsarina';
+
+  @override
+  String get metricGridPresetMinimal => 'Sauƙi';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Ranar horo';
+
+  @override
+  String get metricGridPresetRecovery => 'Farfaɗowa';
+
+  @override
+  String get metricGridAddMetric => 'ƘARA MA\'AUNI';
+
+  @override
+  String get metricGridConnectBody =>
+      'Matakai, barci da shirye-shirye suna cika ta atomatik — ba a kiyasta komai a madadinka.';
+
+  @override
+  String get metricGridConnectCta => 'HAƊA HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Duk ma\'aunai suna kan gridin ka riga.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'An rubuta a cikin manhaja';
+
+  @override
+  String get metricGridSourceComputed => 'An ƙidaya';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · shafi $page · #$position';
+  }
 }

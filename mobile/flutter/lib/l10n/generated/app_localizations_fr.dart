@@ -45519,4 +45519,157 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get paywallV7DownsellSub =>
       'Prix unique de membre fondateur, avec le même essai gratuit de 7 jours. Cette offre ne reviendra pas.';
+
+  @override
+  String metricSetupPanelKicker(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count mesures en attente',
+      one: '1 mesure en attente',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get metricSetupPanelTitle => 'Votre grille se remplit toute seule.';
+
+  @override
+  String metricSetupPanelHealthBody(String source) {
+    return '$source les remplit automatiquement.';
+  }
+
+  @override
+  String metricSetupPanelHealthCta(String source) {
+    return 'Connecter $source';
+  }
+
+  @override
+  String get metricSetupPanelLogBody =>
+      'Elles se remplissent avec ce que vous enregistrez.';
+
+  @override
+  String get metricSetupPanelLogCta => 'Enregistrer quelque chose';
+
+  @override
+  String get metricSetupPanelSetupBody =>
+      'Démarre le jour où votre plan démarre.';
+
+  @override
+  String get metricSetupPanelSetupCta => 'Terminer la configuration';
+
+  @override
+  String get metricSetupPanelFooter => 'Rien n\'est estimé à votre place.';
+
+  @override
+  String get metricTileNoSourceConnectHealth =>
+      'Aucune source · connecter Health';
+
+  @override
+  String get metricTileConnectHealthShort => 'Connecter Health';
+
+  @override
+  String get metricTileNoHealthDataYet => 'Pas encore de données Health';
+
+  @override
+  String get metricTileNoDataYet => 'Pas encore de données';
+
+  @override
+  String get metricTileNothingLoggedYet => 'Rien d\'enregistré pour l\'instant';
+
+  @override
+  String get metricTileNothingLoggedShort => 'Rien d\'enregistré';
+
+  @override
+  String get metricTileNoPlanYetFinishSetup =>
+      'Pas encore de plan · terminer la configuration';
+
+  @override
+  String get metricTileNeedsHrv => 'HRV requise';
+
+  @override
+  String get metricTileNoBaseline => 'Pas de référence';
+
+  @override
+  String get metricTileNoData => 'Aucune donnée';
+
+  @override
+  String get metricGridMyMetrics => 'MES MESURES';
+
+  @override
+  String get metricGridEditTiles => 'MODIFIER LES TUILES';
+
+  @override
+  String get metricGridChangesSaveInstantly =>
+      'LES MODIFICATIONS SONT ENREGISTRÉES AUSSITÔT';
+
+  @override
+  String get metricGridEditHint =>
+      'GLISSEZ POUR RÉORGANISER · TOUCHEZ POUR LA TAILLE · − POUR RETIRER';
+
+  @override
+  String get metricGridDone => 'TERMINÉ';
+
+  @override
+  String get metricGridPageOneLabel => 'PAGE 1 · COUP D\'ŒIL DU JOUR';
+
+  @override
+  String get metricGridPageTwoLabel => 'PAGE 2 · DÉTAIL';
+
+  @override
+  String get metricGridPageTwoDragHint => 'PAGE 2 · GLISSEZ UNE TUILE ICI';
+
+  @override
+  String metricGridDragBackToPage(Object page) {
+    return 'GLISSEZ UNE TUILE VERS LA PAGE $page';
+  }
+
+  @override
+  String get metricGridDropHere => 'DÉPOSER ICI';
+
+  @override
+  String get metricGridDragging => 'DÉPLACEMENT…';
+
+  @override
+  String get metricGridPresets => 'PRÉRÉGLAGES';
+
+  @override
+  String get metricGridPresetMyLayout => 'Ma disposition';
+
+  @override
+  String get metricGridPresetMinimal => 'Minimal';
+
+  @override
+  String get metricGridPresetTrainingDay => 'Jour d\'entraînement';
+
+  @override
+  String get metricGridPresetRecovery => 'Récupération';
+
+  @override
+  String get metricGridAddMetric => 'AJOUTER UNE MESURE';
+
+  @override
+  String get metricGridConnectBody =>
+      'Pas, sommeil et forme se remplissent automatiquement — rien n\'est estimé à votre place.';
+
+  @override
+  String get metricGridConnectCta => 'CONNECTER HEALTH';
+
+  @override
+  String get metricGridEveryMetricPlaced =>
+      'Toutes les mesures sont déjà sur votre grille.';
+
+  @override
+  String get metricGridSourceHealth => 'Health';
+
+  @override
+  String get metricGridSourceInApp => 'Saisi dans l\'app';
+
+  @override
+  String get metricGridSourceComputed => 'Calculé';
+
+  @override
+  String metricGridPlacementLine(String size, Object page, Object position) {
+    return '$size · page $page · #$position';
+  }
 }

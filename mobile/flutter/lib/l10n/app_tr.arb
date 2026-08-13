@@ -28277,5 +28277,94 @@
   "workoutShowcaseIntroTitle": "İlk antrenmanına başlayalım",
   "workoutShowcaseNextTargetRaised": "Set {set} kaydedildi — sonraki hedef {weight} lb'ye yükseldi (+{delta} lb)",
   "quizStepOfTotal": "ADIM {current} / {total}",
-  "quizAlmostDone": "NEREDEYSE BİTTİ"
+  "quizAlmostDone": "NEREDEYSE BİTTİ",
+  "metricSetupPanelKicker": "{count, plural, other{{count} ölçüm bekliyor}}",
+  "@metricSetupPanelKicker": {
+    "description": "First-run metric grid panel: how many placed tiles are still waiting for a source.",
+    "placeholders": {
+      "count": {
+        "type": "num"
+      }
+    }
+  },
+  "metricSetupPanelTitle": "Kılavuzun kendi kendine dolar.",
+  "metricSetupPanelHealthBody": "{source} bunları otomatik doldurur.",
+  "@metricSetupPanelHealthBody": {
+    "description": "First-run metric grid panel: what connecting the platform health source does. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelHealthCta": "{source} bağla",
+  "@metricSetupPanelHealthCta": {
+    "description": "First-run metric grid panel: connect CTA. {source} is Apple Health / Health Connect.",
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "metricSetupPanelLogBody": "Bunlar kaydettiklerinden dolar.",
+  "metricSetupPanelLogCta": "Bir şey kaydet",
+  "metricSetupPanelSetupBody": "Planın başladığı gün başlar.",
+  "metricSetupPanelSetupCta": "Kurulumu tamamla",
+  "metricSetupPanelFooter": "Senin adına hiçbir şey tahmin edilmez.",
+  "metricTileNoSourceConnectHealth": "Kaynak yok · Health bağla",
+  "metricTileConnectHealthShort": "Health bağla",
+  "metricTileNoHealthDataYet": "Henüz Health verisi yok",
+  "metricTileNoDataYet": "Henüz veri yok",
+  "metricTileNothingLoggedYet": "Henüz kayıt yok",
+  "metricTileNothingLoggedShort": "Kayıt yok",
+  "metricTileNoPlanYetFinishSetup": "Henüz plan yok · kurulumu tamamla",
+  "metricTileNeedsHrv": "HRV gerekli",
+  "metricTileNoBaseline": "Referans yok",
+  "metricTileNoData": "Veri yok",
+  "metricGridMyMetrics": "ÖLÇÜMLERİM",
+  "metricGridEditTiles": "KARTLARI DÜZENLE",
+  "metricGridChangesSaveInstantly": "DEĞİŞİKLİKLER ANINDA KAYDEDİLİR",
+  "metricGridEditHint": "SIRALAMAK İÇİN SÜRÜKLE · BOYUT İÇİN DOKUN · KALDIRMAK İÇİN −",
+  "metricGridDone": "BİTTİ",
+  "metricGridPageOneLabel": "SAYFA 1 · GÜNLÜK BAKIŞ",
+  "metricGridPageTwoLabel": "SAYFA 2 · DERİNLİK",
+  "metricGridPageTwoDragHint": "SAYFA 2 · BURAYA BİR KART SÜRÜKLE",
+  "metricGridDragBackToPage": "BİR KARTI SAYFA {page}'E GERİ SÜRÜKLE",
+  "@metricGridDragBackToPage": {
+    "description": "Metric grid editor: empty page drop zone label.",
+    "placeholders": {
+      "page": {
+        "type": "Object"
+      }
+    }
+  },
+  "metricGridDropHere": "BURAYA BIRAK",
+  "metricGridDragging": "SÜRÜKLENİYOR…",
+  "metricGridPresets": "HAZIR AYARLAR",
+  "metricGridPresetMyLayout": "Düzenim",
+  "metricGridPresetMinimal": "Sade",
+  "metricGridPresetTrainingDay": "Antrenman günü",
+  "metricGridPresetRecovery": "Toparlanma",
+  "metricGridAddMetric": "ÖLÇÜM EKLE",
+  "metricGridConnectBody": "Adım, uyku ve hazırlık otomatik dolar — senin adına hiçbir şey tahmin edilmez.",
+  "metricGridConnectCta": "HEALTH BAĞLA",
+  "metricGridEveryMetricPlaced": "Tüm ölçümler zaten kılavuzunda.",
+  "metricGridSourceHealth": "Health",
+  "metricGridSourceInApp": "Uygulamada kaydedildi",
+  "metricGridSourceComputed": "Hesaplanan",
+  "metricGridPlacementLine": "{size} · sayfa {page} · #{position}",
+  "@metricGridPlacementLine": {
+    "description": "Metric grid editor: a tile's size, page and position while editing.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      },
+      "page": {
+        "type": "Object"
+      },
+      "position": {
+        "type": "Object"
+      }
+    }
+  }
 }
